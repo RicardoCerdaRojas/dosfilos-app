@@ -1,31 +1,37 @@
 import { BookMarked } from 'lucide-react';
-import type { RAGSource } from '@dosfilos/domain';
+import type { CitationManifest, RAGSource } from '@dosfilos/domain';
+import { citationAnchorId } from '@/lib/citationMarkers';
 
 interface SermonBibliographySectionProps {
     bibliography: RAGSource[] | undefined;
+    /**
+     * Phase B: when present, the section is rendered from the manifest
+     * so the numbering matches the inline `[N]` markers and each row is
+     * anchored as `#cite-N` so popovers can scroll to it. RAGSource
+     * entries are merged in by `sourceId` to pick up `usedFor` notes
+     * the LLM provided. Absent manifest = legacy ragSources-only mode.
+     */
+    manifest?: CitationManifest;
     /** Optional className for the wrapping <section>. */
     className?: string;
 }
 
 /**
  * Renders the list of library sources the generator pulled context
- * from while writing the sermon (Fase 1 of audit follow-up). Each
- * entry shows title + author + page (when present) + a brief
- * `usedFor` note explaining how the source informed the sermon.
+ * from while writing the sermon. Phase B uses the manifest as the
+ * authoritative source — numbering, ordering, and metadata all come
+ * from there, with the LLM-authored `usedFor` blurbs merged in by
+ * `sourceId`. Legacy sermons fall back to the previous ragSources-only
+ * rendering.
  *
  * Returns `null` when there's nothing to show so callers can drop the
  * component in unconditionally — sermons generated without RAG context
- * (standalone wizard with empty library, pre-fix legacy content)
- * simply don't render a section. The section is intentionally rendered
- * at the bottom of the sermon viewer so it reads as an academic
- * "Fuentes" footer rather than interrupting the homiletic prose.
- *
- * Fase 2 will add inline footnote markers (`[^1]`) tied to specific
- * sermon sections; this component will then handle the back-references
- * too.
+ * simply don't render a section. The section is rendered at the bottom
+ * of the sermon viewer so it reads as an academic "Fuentes" footer
+ * rather than interrupting the homiletic prose.
  */
-export function SermonBibliographySection({ bibliography, className }: SermonBibliographySectionProps) {
-    const entries = (bibliography ?? []).filter((s) => s?.title?.trim());
+export function SermonBibliographySection({ bibliography, manifest, className }: SermonBibliographySectionProps) {
+    const entries = buildEntries(manifest, bibliography);
     if (entries.length === 0) return null;
 
     return (
@@ -45,18 +51,22 @@ export function SermonBibliographySection({ bibliography, className }: SermonBib
                 El asistente usó estos recursos de tu biblioteca para construir el sermón.
             </p>
             <ol className="space-y-2 list-decimal pl-5 marker:text-muted-foreground">
-                {entries.map((source, idx) => (
-                    <li key={`${source.title}-${idx}`} className="text-sm leading-relaxed">
-                        <span className="font-medium text-foreground">{source.title}</span>
-                        {source.author && (
-                            <span className="text-foreground/80">{' '}— {source.author}</span>
+                {entries.map((entry) => (
+                    <li
+                        key={entry.key}
+                        id={entry.anchorId}
+                        className="text-sm leading-relaxed scroll-mt-24 transition-shadow rounded"
+                    >
+                        <span className="font-medium text-foreground">{entry.title}</span>
+                        {entry.author && (
+                            <span className="text-foreground/80">{' '}— {entry.author}</span>
                         )}
-                        {source.page && (
-                            <span className="text-muted-foreground">{' '}(p. {source.page})</span>
+                        {entry.page && (
+                            <span className="text-muted-foreground">{' '}(p. {entry.page})</span>
                         )}
-                        {source.usedFor && (
+                        {entry.usedFor && (
                             <p className="text-xs text-muted-foreground mt-0.5 italic">
-                                {source.usedFor}
+                                {entry.usedFor}
                             </p>
                         )}
                     </li>
@@ -64,4 +74,49 @@ export function SermonBibliographySection({ bibliography, className }: SermonBib
             </ol>
         </section>
     );
+}
+
+interface RenderedEntry {
+    key: string;
+    anchorId?: string;
+    title: string;
+    author?: string;
+    page?: string;
+    usedFor?: string;
+}
+
+function buildEntries(
+    manifest: CitationManifest | undefined,
+    bibliography: RAGSource[] | undefined,
+): RenderedEntry[] {
+    if (manifest && manifest.entries.length > 0) {
+        const ragBySourceId = new Map<string, RAGSource>();
+        for (const rag of bibliography ?? []) {
+            if (rag.sourceId) ragBySourceId.set(rag.sourceId, rag);
+        }
+        return manifest.entries.map((entry, idx) => {
+            const rag = ragBySourceId.get(entry.sourceId);
+            const ordinal = idx + 1;
+            return {
+                key: `${entry.sourceId}-${idx}`,
+                anchorId: citationAnchorId(ordinal),
+                title: rag?.title || entry.title,
+                author: rag?.author || entry.author,
+                page: rag?.page || entry.page,
+                usedFor: rag?.usedFor,
+            };
+        });
+    }
+
+    // Legacy / no-manifest path: render ragSources verbatim, same as
+    // PR #241 behavior, with no anchors (nothing to link to).
+    return (bibliography ?? [])
+        .filter((s) => s?.title?.trim())
+        .map((source, idx) => ({
+            key: `${source.title}-${idx}`,
+            title: source.title,
+            author: source.author,
+            page: source.page,
+            usedFor: source.usedFor,
+        }));
 }

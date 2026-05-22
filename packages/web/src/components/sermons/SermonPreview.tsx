@@ -14,6 +14,12 @@ import { useTranslation } from 'react-i18next';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { LocalBibleService } from '@/services/LocalBibleService';
+import type { CitationManifest } from '@dosfilos/domain';
+import {
+  CitationManifestContext,
+  CitationMarker,
+  wrapCitationMarkers,
+} from '@/lib/citationMarkers';
 
 interface SermonPreviewProps {
   title: string;
@@ -25,6 +31,14 @@ interface SermonPreviewProps {
   category?: string;
   status?: string;
   fontSize?: number;
+  /**
+   * Phase B: when present, inline `[N]` markers in the prose are
+   * rendered as interactive popover buttons that surface the manifest
+   * entry (title/author/page/excerpt) and link to the matching
+   * bibliography row. When absent (legacy sermons), markers fall back
+   * to plain `[N]` text.
+   */
+  citationManifest?: CitationManifest;
 }
 
 export function SermonPreview({
@@ -36,7 +50,8 @@ export function SermonPreview({
   tags = [],
   category,
   status = 'draft',
-  fontSize = 18
+  fontSize = 18,
+  citationManifest,
 }: SermonPreviewProps) {
   const { t, i18n } = useTranslation('sermonDetail');
   
@@ -107,7 +122,15 @@ export function SermonPreview({
       const trimmedRef = ref.trim();
       return `${prefix}[📖 ${trimmedRef}](#bible-${encodeURIComponent(trimmedRef)})`;
     });
-    
+
+    // Step 4: Wrap numeric citation markers (`[1]`, `[1, 3]`) into
+    // spans the markdown renderer hands to `<CitationMarker>`. Runs
+    // AFTER Bible-link wrapping so it can't collide with `[📖 …]`
+    // markdown links (regex requires a digit immediately after `[`).
+    if (citationManifest && citationManifest.entries.length > 0) {
+      processed = wrapCitationMarkers(processed);
+    }
+
     return processed;
   };
 
@@ -144,6 +167,14 @@ export function SermonPreview({
     // Custom heading styling
     h2: ({ node, ...props }: any) => <h2 {...props} className="text-2xl font-bold mt-6 mb-3" />,
     h3: ({ node, ...props }: any) => <h3 {...props} className="text-xl font-semibold mt-5 mb-2" />,
+    // Phase B: inline citation marker popovers. The `wrapCitationMarkers`
+    // pre-processor stamps `data-cite-id` on `<span>` nodes; everything
+    // else falls through as a plain span so we don't disturb embedded
+    // HTML (Hebrew/Greek runs, scripture refs, etc.).
+    span: ({ node, ...props }: any) => {
+      if (props['data-cite-id']) return <CitationMarker {...props} />;
+      return <span {...props} />;
+    },
   };
 
   const getStatusBadge = (status: string) => {
@@ -218,13 +249,15 @@ export function SermonPreview({
               margin-top: 0 !important;
             }
           `}</style>
-          <ReactMarkdown 
-            components={components}
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeRaw]}
-          >
-            {processContent(content)}
-          </ReactMarkdown>
+          <CitationManifestContext.Provider value={citationManifest}>
+            <ReactMarkdown
+              components={components}
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+            >
+              {processContent(content)}
+            </ReactMarkdown>
+          </CitationManifestContext.Provider>
         </div>
 
         {/* Footer Info */}
