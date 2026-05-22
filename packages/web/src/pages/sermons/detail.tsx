@@ -181,6 +181,29 @@ export function SermonDetailPage() {
     }
   };
 
+  const handleExportDocx = async () => {
+    if (!sermon) return;
+    try {
+      setExporting(true);
+      const { exportSermonToDocx } = await import('@/lib/sermon/exportSermonToDocx');
+      const blob = await exportSermonToDocx(sermon);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${sermon.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(t('toast.exportSuccess'));
+    } catch (error) {
+      console.error('Error exporting sermon to docx:', error);
+      toast.error(t('toast.exportError'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleShareToggle = async (checked: boolean) => {
     if (!id) return;
     try {
@@ -386,6 +409,10 @@ export function SermonDetailPage() {
                 <DropdownMenuItem onClick={handleExport} disabled={exporting}>
                   <Download className="mr-2 h-4 w-4" />
                   {t('actions.exportPdf')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportDocx} disabled={exporting}>
+                  <Download className="mr-2 h-4 w-4" />
+                  {t('actions.exportDocx')}
                 </DropdownMenuItem>
                 {sermon.isShared && (
                   <DropdownMenuItem onClick={() => window.open(`/share/${sermon.shareToken}`, '_blank')}>
