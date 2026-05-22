@@ -261,13 +261,24 @@ export class SermonGeneratorService {
         // Phase B: enforce the citation contract server-side. Strips
         // unknown `[Sn]` markers, drops hallucinated `ragSources`
         // entries, and renumbers survivors 1..M so prose, manifest,
-        // and bibliography stay aligned.
+        // and bibliography stay aligned. Stats persist on the
+        // returned content so engineering can audit drop rates after
+        // the fact without re-running generation.
         if (manifest && manifest.entries.length > 0) {
             const validated = validateCitations(rawDraft, manifest);
             if (validated.stats.markersDropped > 0 || validated.stats.droppedEntries.length > 0) {
-                console.warn('[generateSermonDraft] citation validator dropped content', validated.stats);
+                console.warn('[generateSermonDraft] citation validator dropped content', {
+                    markersDropped: validated.stats.markersDropped,
+                    droppedEntries: validated.stats.droppedEntries.length,
+                    surfaces: validated.stats.surfaces,
+                });
             }
-            return { draft: validated.content };
+            return {
+                draft: {
+                    ...validated.content,
+                    citationValidation: validated.stats,
+                },
+            };
         }
 
         return { draft: rawDraft };

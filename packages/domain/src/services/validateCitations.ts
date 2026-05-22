@@ -1,21 +1,16 @@
 import type {
     CitationManifest,
     CitationManifestEntry,
+    CitationValidationStats,
     RAGSource,
     SermonContent,
 } from '../entities/SermonGenerator';
 
-/**
- * Per-validation diagnostics — returned to callers so the application
- * layer can log + report stats (how many junk markers the LLM emitted,
- * how many bogus ragSource entries got stripped, etc.).
- */
-export interface CitationValidationStats {
-    markersValid: number;
-    markersDropped: number;
-    droppedEntries: { reason: 'unknown-id' | 'no-id'; entry: RAGSource }[];
-    surfaces: ('introduction' | 'body' | 'conclusion' | 'callToAction')[];
-}
+// Re-exported for backward compatibility with imports that still
+// pull `CitationValidationStats` from this module. The canonical
+// definition lives on the entity so persistence layers can reference
+// it without taking a dependency on the validator implementation.
+export type { CitationValidationStats };
 
 export interface ValidateCitationsResult {
     content: SermonContent;
