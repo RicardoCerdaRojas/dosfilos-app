@@ -556,6 +556,7 @@ export function StepDraft() {
                                     bibleReferences={[exegesis.passage]}
                                     tags={exegesis.keyWords.map((kw) => kw.original)}
                                     status="draft"
+                                    citationManifest={draft.citationManifest}
                                 />
                                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
                                     <SermonBibliographySection
@@ -564,6 +565,7 @@ export function StepDraft() {
                                             homileticsSources: homiletics?.ragSources,
                                             draftSources: draft.ragSources,
                                         })}
+                                        manifest={draft.citationManifest}
                                     />
                                 </div>
                             </>
