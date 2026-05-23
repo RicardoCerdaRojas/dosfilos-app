@@ -123,6 +123,50 @@ export interface UserMetadata {
     };
 }
 
+/**
+ * Canonical list of feature flags toggleable per-user. Add new entries here
+ * so consumers (`useFeatureFlag`) get a narrow union and the admin UI can
+ * enumerate them.
+ *
+ * Defaults are `false` when absent — code must treat missing flags as off.
+ */
+export const FEATURE_FLAG_NAMES = [
+    /**
+     * Gates the Pastoral Fidelity reformed wizard (six-step spine, three
+     * witnesses, claim/source fidelity, etc.). When false the user stays on
+     * the legacy sermon generator surface. Phase 0 of the initiative wires
+     * this flag; subsequent phases consume it.
+     */
+    'pastoral_fidelity_flow',
+] as const;
+
+export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];
+
+export type FeatureFlags = Partial<Record<FeatureFlagName, boolean>>;
+
+/**
+ * Declared confessional identity (ADR-007). Free-form string so we can
+ * accept any `Confession.id` from the catalog plus the synthetic
+ * `'non-confessional'` option for pastors who don't subscribe to a
+ * historic confession.
+ */
+export type DeclaredConfessionId = string;
+
+/**
+ * `'non-confessional'` is the only non-catalog value Phase 0 ships. The
+ * three-witness mechanism treats it as "no Testigo 3" — no doctrinal
+ * gate, only the cross-reference + claim/source witnesses fire.
+ */
+export const NON_CONFESSIONAL: DeclaredConfessionId = 'non-confessional';
+
+/**
+ * Visibility of a pastor's declared confession. Default `'private'`
+ * per ADR-007 § Q3. `'public-in-profile'` becomes available once a
+ * public pastoral profile feature lands; until then the toggle is
+ * dormant.
+ */
+export type ConfessionVisibility = 'private' | 'public-in-profile';
+
 export interface User {
     id: string;
     email: string;
@@ -156,6 +200,22 @@ export interface User {
 
     // Metadata
     metadata?: UserMetadata;
+
+    /**
+     * Per-user feature toggles. Mutated only via the admin callable
+     * `setUserFeatureFlags`; clients read but never write. See
+     * `FEATURE_FLAG_NAMES` for the canonical list.
+     */
+    featureFlags?: FeatureFlags;
+
+    /**
+     * Pastoral Fidelity (ADR-007) — declared confessional identity.
+     * Persisted from the onboarding wizard or `/settings/confession`.
+     * Powers Testigo 3 in the three-witness mechanism (Phase 2).
+     */
+    declaredConfession?: DeclaredConfessionId;
+    confessionAffirmedAt?: Date;
+    confessionVisibility?: ConfessionVisibility;
 
     createdAt: Date;
     updatedAt: Date;

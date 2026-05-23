@@ -1,11 +1,14 @@
 // Entities
 export * from './entities/User';
+export * from './entities/citationRights';
+export * from './entities/Confession';
 export * from './entities/CreditPack';
 export * from './entities/ExegesisOperationCatalog';
 export * from './services/computeExegesisQuotaState';
 export * from './services/aggregateRagSources';
 export * from './services/validateCitations';
 export * from './services/buildCitationManifest';
+export * from './services/aggregateRequiredAttributions';
 export * from './services/detectIllustrationDuplicates';
 export * from './entities/LlamaParseAccount';
 export * from './entities/Feature';
@@ -58,6 +61,9 @@ export * from './repositories/IExtractionRepository'; // 🎓 Multi-Agent Persis
 export * from './repositories/IUserIntegrationsRepository'; // 🎓 Per-user 3rd-party integration creds
 export * from './repositories/IAuthRepository';
 export * from './repositories/IVectorRepository';
+export * from './repositories/IConfessionRepository';
+export * from './repositories/ICrossReferenceRepository';
+export * from './bible/cross-references/CrossReference';
 
 // Config
 export * from './config/planMetadata';

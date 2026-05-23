@@ -218,6 +218,20 @@
             "subtitle": "Pick the path that best matches your goal. We'll take you straight there and remember your choice to make better suggestions later.",
             "comingSoonBadge": "Coming soon"
         },
+        "confession": {
+            "eyebrow": "Confessional identity",
+            "title": "What is your theological confession?",
+            "subtitle": "Your declaration anchors the doctrinal contrast the assistant runs when reviewing your convictions.",
+            "explainer": "We never impose positions. We use your declared confession to flag when an observation of yours tensions your own tradition. Private by default. Editable later in settings.",
+            "nonConfessional": {
+                "title": "Declared non-confessional",
+                "description": "I don't formally subscribe to a historic confession. The system skips the confessional contrast; the rest of the safeguards stay active."
+            },
+            "toasts": {
+                "success": "Confession declared",
+                "error": "Failed to save confession"
+            }
+        },
         "intents": {
             "exegesis-paper": {
                 "title": "Academic exegetical study",
@@ -368,6 +382,33 @@
             "backToList": "Back to list",
             "relaunchWizard": "Replay the welcome",
             "fabAria": "Open help center"
+        }
+    },
+    "confession": {
+        "banner": {
+            "title": "Declare your theological confession",
+            "description": "To activate the pastoral fidelity flow we need to know which tradition you work under. Private by default.",
+            "cta": "Declare"
+        },
+        "settings": {
+            "title": "Declared confession",
+            "back": "Back",
+            "explainer": "Your declaration anchors the assistant's doctrinal contrast. Private by default. Each change is recorded in the audit log.",
+            "lastAffirmed": "Last affirmed",
+            "pickLabel": "Pick your confession",
+            "visibilityLabel": "Visibility",
+            "visibilityHelp": "Private stays internal. Public appears on your pastoral profile (once that feature ships).",
+            "visibility": {
+                "private": "Private",
+                "public-in-profile": "Public"
+            },
+            "cancel": "Cancel",
+            "save": "Save"
+        },
+        "gate": {
+            "flagDisabled": "The pastoral fidelity flow is disabled for your account. Contact your administrator to enable it.",
+            "confessionRequired": "Declare your confession first to access the pastoral fidelity flow.",
+            "declareCta": "Declare confession"
         }
     }
 }

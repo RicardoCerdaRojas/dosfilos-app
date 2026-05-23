@@ -218,6 +218,20 @@
             "subtitle": "Elige el camino que mejor describe tu objetivo. Te llevamos directo allá y guardamos tu interés para sugerirte mejor después.",
             "comingSoonBadge": "Próximamente"
         },
+        "confession": {
+            "eyebrow": "Identidad confesional",
+            "title": "¿Cuál es tu confesión teológica?",
+            "subtitle": "Esta declaración orienta el contraste doctrinal cuando el asistente revisa tus convicciones.",
+            "explainer": "No imponemos posiciones. Usamos tu confesión declarada para señalar cuándo una observación tuya tensiona tu propia tradición. Privada por defecto. Editable después en configuración.",
+            "nonConfessional": {
+                "title": "No-confesional declarado",
+                "description": "No subscribo formalmente a una confesión histórica. El sistema omite el contraste confesional, los demás controles permanecen activos."
+            },
+            "toasts": {
+                "success": "Confesión declarada",
+                "error": "Error al guardar la confesión"
+            }
+        },
         "intents": {
             "exegesis-paper": {
                 "title": "Estudio exegético académico",
@@ -368,6 +382,33 @@
             "backToList": "Volver al listado",
             "relaunchWizard": "Volver a ver la bienvenida",
             "fabAria": "Abrir centro de ayuda"
+        }
+    },
+    "confession": {
+        "banner": {
+            "title": "Declara tu confesión teológica",
+            "description": "Para activar el flujo de fidelidad pastoral necesitamos saber bajo qué tradición trabajas. Privada por defecto.",
+            "cta": "Declarar"
+        },
+        "settings": {
+            "title": "Confesión declarada",
+            "back": "Volver",
+            "explainer": "Esta declaración orienta el contraste doctrinal del asistente. Privada por defecto. Cada cambio queda registrado en audit log.",
+            "lastAffirmed": "Última afirmación",
+            "pickLabel": "Selecciona tu confesión",
+            "visibilityLabel": "Visibilidad",
+            "visibilityHelp": "Privada solo se usa internamente. Pública aparece en tu perfil pastoral (cuando exista esa feature).",
+            "visibility": {
+                "private": "Privada",
+                "public-in-profile": "Pública"
+            },
+            "cancel": "Cancelar",
+            "save": "Guardar"
+        },
+        "gate": {
+            "flagDisabled": "El flujo de fidelidad pastoral está deshabilitado para tu cuenta. Contacta al administrador para activarlo.",
+            "confessionRequired": "Para acceder al flujo de fidelidad pastoral declara tu confesión primero.",
+            "declareCta": "Declarar confesión"
         }
     }
 }

@@ -187,6 +187,17 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         if (resource.isSystemSource !== undefined) {
             doc.isSystemSource = resource.isSystemSource;
         }
+        // ADR-006 / PR 0.3 — rights-aware citation metadata. Persist
+        // only when explicitly set so the conservative defaults in
+        // `firestoreToResource` continue to govern legacy docs.
+        if (resource.license !== undefined) doc.license = resource.license;
+        if (resource.licenseUrl !== undefined) doc.licenseUrl = resource.licenseUrl;
+        if (resource.copyrightNotice !== undefined) doc.copyrightNotice = resource.copyrightNotice;
+        if (resource.ingestionStatus !== undefined) doc.ingestionStatus = resource.ingestionStatus;
+        if (resource.riskLevel !== undefined) doc.riskLevel = resource.riskLevel;
+        if (resource.requiredAttribution !== undefined) doc.requiredAttribution = resource.requiredAttribution;
+        if (resource.specialHandling !== undefined) doc.specialHandling = resource.specialHandling;
+        if (resource.citation !== undefined) doc.citation = resource.citation;
         return doc;
     }
 
@@ -237,6 +248,23 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
             : [];
         (resource as any).scope = data.scope ?? 'book';
         (resource as any).isSystemSource = data.isSystemSource === true ? true : undefined;
+        // ADR-006 / PR 0.3 — rights-aware citation metadata.
+        // Legacy docs lack these fields entirely; default to conservative
+        // values (`unknown` license + `requires_manual_review`) so the
+        // citation engine treats unclassified user uploads as restricted
+        // until the admin tags them via CoreLibraryAdmin.
+        (resource as any).license = data.license ?? 'unknown';
+        (resource as any).licenseUrl = data.licenseUrl ?? undefined;
+        (resource as any).copyrightNotice = data.copyrightNotice ?? undefined;
+        (resource as any).ingestionStatus = data.ingestionStatus ?? 'requires_manual_review';
+        (resource as any).riskLevel = data.riskLevel ?? undefined;
+        (resource as any).requiredAttribution = Array.isArray(data.requiredAttribution)
+            ? data.requiredAttribution
+            : undefined;
+        (resource as any).specialHandling = Array.isArray(data.specialHandling)
+            ? data.specialHandling
+            : undefined;
+        (resource as any).citation = data.citation ?? undefined;
         return resource;
     }
 }

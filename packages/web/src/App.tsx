@@ -60,6 +60,7 @@ const ExpositoryAssistantPage = lazy(() => import('@/pages/series/ExpositoryAssi
 const LibraryManager = lazy(() => import('@/pages/library/LibraryManager').then(m => ({ default: m.LibraryManager })));
 const PlannerWizard = lazy(() => import('@/pages/planner/PlannerWizard').then(m => ({ default: m.PlannerWizard })));
 const GeneratorSettings = lazy(() => import('@/pages/settings/GeneratorSettings').then(m => ({ default: m.GeneratorSettings })));
+const ConfessionSettings = lazy(() => import('@/pages/settings/ConfessionSettings').then(m => ({ default: m.ConfessionSettings })));
 const IntegrationsSettings = lazy(() => import('@/pages/settings/IntegrationsSettings').then(m => ({ default: m.IntegrationsSettings })));
 const SubscriptionPage = lazy(() => import('@/pages/subscription/SubscriptionPage'));
 
@@ -68,6 +69,8 @@ const AdminLeads = lazy(() => import('@/pages/admin/AdminLeads').then(m => ({ de
 const AdminLeadMagnets = lazy(() => import('@/pages/admin/AdminLeadMagnets').then(m => ({ default: m.AdminLeadMagnets })));
 const AdminEmailPreviews = lazy(() => import('@/pages/admin/AdminEmailPreviews').then(m => ({ default: m.AdminEmailPreviews })));
 const CoreLibraryAdmin = lazy(() => import('@/pages/admin/CoreLibraryAdmin'));
+const ConfessionsAdmin = lazy(() => import('@/pages/admin/ConfessionsAdmin').then(m => ({ default: m.ConfessionsAdmin })));
+const CrossReferencesAdmin = lazy(() => import('@/pages/admin/CrossReferencesAdmin').then(m => ({ default: m.CrossReferencesAdmin })));
 const AnalyticsDashboard = lazy(() => import('@/pages/admin/AnalyticsDashboard').then(m => ({ default: m.AnalyticsDashboard })));
 const GeographicDashboard = lazy(() => import('@/pages/admin/GeographicDashboard').then(m => ({ default: m.GeographicDashboard })));
 const UserManagement = lazy(() => import('@/pages/admin/UserManagement').then(m => ({ default: m.UserManagement })));
@@ -348,10 +351,14 @@ function App() {
 
             {/* Settings — unified hub: Asistentes / Biblioteca / Integraciones / Suscripción / Avanzado as tabs */}
             <Route path="settings" element={<GeneratorSettings />} />
+            <Route path="settings/confession" element={<ConfessionSettings />} />
             <Route path="settings/integrations" element={<Navigate to="/dashboard/settings?tab=integrations" replace />} />
 
             {/* 🎯 Admin Routes - Inside Dashboard Layout */}
             <Route path="admin/core-library" element={<CoreLibraryAdmin />} />
+            <Route path="admin/confessions" element={<ConfessionsAdmin />} />
+            <Route path="admin/confessions/:confessionId" element={<ConfessionsAdmin />} />
+            <Route path="admin/cross-references" element={<CrossReferencesAdmin />} />
             <Route path="admin/analytics" element={<AnalyticsDashboard />} />
             <Route path="admin/geographic" element={<GeographicDashboard />} />
             <Route path="admin/users" element={<UserManagement />} />

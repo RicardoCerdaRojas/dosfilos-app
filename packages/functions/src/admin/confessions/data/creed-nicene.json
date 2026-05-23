@@ -1,0 +1,31 @@
+{
+  "confessionId": "nicene-creed",
+  "language": "en",
+  "edition": "Nicaea 325 / Constantinople 381 — Western received text (CCEL, Schaff Creeds Vol. II)",
+  "sections": [
+    {
+      "sectionReference": "1",
+      "title": "On the Father",
+      "text": "I believe in one God the Father Almighty, Maker of heaven and earth, and of all things visible and invisible.",
+      "order": 1
+    },
+    {
+      "sectionReference": "2",
+      "title": "On the Son",
+      "text": "And in one Lord Jesus Christ, the only-begotten Son of God, begotten of the Father before all worlds; God of God, Light of Light, very God of very God; begotten, not made, being of one substance with the Father, by whom all things were made; who, for us men and for our salvation, came down from heaven, and was incarnate by the Holy Ghost of the Virgin Mary, and was made man; and was crucified also for us under Pontius Pilate; he suffered and was buried; and the third day he rose again, according to the Scriptures; and ascended into heaven, and sitteth on the right hand of the Father; and he shall come again, with glory, to judge both the quick and the dead; whose kingdom shall have no end.",
+      "order": 2
+    },
+    {
+      "sectionReference": "3",
+      "title": "On the Holy Spirit",
+      "text": "And I believe in the Holy Ghost, the Lord, and Giver of Life, who proceedeth from the Father and the Son; who with the Father and the Son together is worshipped and glorified; who spake by the Prophets.",
+      "order": 3
+    },
+    {
+      "sectionReference": "4",
+      "title": "On the Church and Last Things",
+      "text": "And I believe in one holy catholic and apostolic Church. I acknowledge one Baptism for the remission of sins; and I look for the resurrection of the dead, and the life of the world to come. Amen.",
+      "order": 4
+    }
+  ]
+}

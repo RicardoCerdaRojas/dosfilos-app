@@ -15,7 +15,12 @@ export type AdminAuditAction =
     | 'user.bulk_enable'
     | 'user.grant_credits'
     | 'user.reset_quota'
-    | 'user.extend_trial';
+    | 'user.extend_trial'
+    | 'user.set_feature_flags'
+    | 'core_library.ingest'
+    | 'core_library.tag_doctrine_levels'
+    | 'core_library.update_doctrine_level'
+    | 'cross_references.ingest';
 
 interface WriteAuditLogParams {
     /** Firebase UID of the admin who triggered the action. */

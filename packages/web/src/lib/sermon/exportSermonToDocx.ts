@@ -5,7 +5,12 @@ import {
     Paragraph,
     TextRun,
 } from 'docx';
-import type { CitationManifest, RAGSource, Sermon } from '@dosfilos/domain';
+import {
+    aggregateRequiredAttributions,
+    type CitationManifest,
+    type RAGSource,
+    type Sermon,
+} from '@dosfilos/domain';
 
 /**
  * Renders a `Sermon` to a Word `.docx` Blob, preserving the inline
@@ -123,6 +128,43 @@ export async function exportSermonToDocx(sermon: Sermon): Promise<Blob> {
                 }));
             }
         });
+    }
+
+    // PR 0.3 (ADR-006): mandatory attribution footer for licences that
+    // require explicit attribution (CC BY 4.0 → SBLGNT, etc.). Rendered
+    // as a final section after the bibliography so the legal block is
+    // surfaced in the same document the pastor distributes.
+    const attributionBlocks = aggregateRequiredAttributions(sermon.citationManifest);
+    if (attributionBlocks.length > 0) {
+        paragraphs.push(new Paragraph({
+            heading: HeadingLevel.HEADING_2,
+            children: [new TextRun({ text: 'Atribuciones' })],
+            spacing: { before: 480, after: 120 },
+        }));
+        paragraphs.push(new Paragraph({
+            children: [new TextRun({
+                text: 'Atribuciones obligatorias por licencia para las fuentes citadas en este documento.',
+                italics: true,
+                color: '666666',
+            })],
+            spacing: { after: 200 },
+        }));
+        for (const block of attributionBlocks) {
+            paragraphs.push(new Paragraph({
+                children: [new TextRun({ text: block.title, bold: true })],
+                spacing: { after: 80 },
+            }));
+            for (const line of block.lines) {
+                paragraphs.push(new Paragraph({
+                    children: [new TextRun({ text: line })],
+                    spacing: { after: 60 },
+                }));
+            }
+            paragraphs.push(new Paragraph({
+                children: [new TextRun({ text: '' })],
+                spacing: { after: 160 },
+            }));
+        }
     }
 
     const doc = new Document({

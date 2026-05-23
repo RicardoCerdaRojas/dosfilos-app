@@ -5,7 +5,76 @@
             "description": "No tienes permisos para ver esta página.",
             "homeButton": "Volver al inicio"
         },
-        "noPermission": "No tienes permisos para acceder a esta página"
+        "noPermission": "No tienes permisos para acceder a esta página",
+        "back": "Volver",
+        "refresh": "Actualizar"
+    },
+    "crossRefs": {
+        "title": "Cross-references (TSK)",
+        "ingestTitle": "Ingest del dataset",
+        "ingestDescription": "Carga el seed bundled (~12 versos ancla) al colección Firestore. El dataset TSK completo (~340k links) llega en PR follow-up.",
+        "ingestSample": "Ingest sample",
+        "lookupTitle": "Lookup interactivo",
+        "lookupDescription": "Resolvé paralelos por verso exacto o por pericope (rango startVerse..endVerse).",
+        "book": "Libro",
+        "chapter": "Capítulo",
+        "verse": "Verso",
+        "verseEnd": "Verso final",
+        "verseEndPlaceholder": "(opcional, para pericope)",
+        "lookup": "Buscar",
+        "resultsTitle": "Resultados",
+        "noResults": "Sin paralelos para esa referencia.",
+        "parallels": "paralelos",
+        "toasts": {
+            "ingestSuccess": "Cross-references ingestadas: {{written}} versos desde {{source}}",
+            "ingestError": "Error al hacer ingest del dataset"
+        }
+    },
+    "confessions": {
+        "title": "Catálogo CORE — Confesiones",
+        "description": "Catálogo de fuentes confesionales del proyecto Pastoral Fidelity (ADR-006). Ingest desde JSON canónico + parsers per source-type.",
+        "totalCount": "{{count}} fuentes en el catálogo",
+        "ingestAll": "Ingest CORE v1",
+        "empty": "Catálogo vacío",
+        "emptyHint": "Click \"Ingest CORE v1\" para poblar el catálogo desde el JSON canónico.",
+        "notFound": "Confesión no encontrada",
+        "viewSections": "Ver secciones",
+        "reingest": "Re-ingest",
+        "tradition": "Tradición",
+        "year": "Año",
+        "license": "Licencia",
+        "sectionCount": "Secciones",
+        "noSections": "Sin secciones persistidas",
+        "pendingHint": "Ingest de contenido aún no completado para esta fuente. Programado para PR follow-up.",
+        "filter": {
+            "all": "Todas",
+            "sectioned": "Con secciones",
+            "reference": "Referencia"
+        },
+        "status": {
+            "complete": "Completo",
+            "partial": "Parcial",
+            "pending": "Pendiente contenido",
+            "not-applicable": "Solo metadata"
+        },
+        "tagLlm": "Tag con LLM",
+        "tagLlmForce": "Re-taggear todo (force)",
+        "tagForceConfirm": "¿Re-taggear todas las secciones desde cero? Esto sobreescribe niveles ya asignados y resetea reviewStatus.",
+        "taggingSummary": "{{total}} secciones · {{untagged}} sin taggear · {{pendingReview}} pendientes de review",
+        "reviewPending": "Pendiente review",
+        "reviewed": "Revisado",
+        "rationale": "Justificación",
+        "levelLabel": "Nivel doctrinal",
+        "levelPlaceholder": "Sin nivel",
+        "markReviewed": "Marcar revisado",
+        "toasts": {
+            "ingestSuccess": "Ingest completado: {{ingested}} con contenido, {{pending}} pendientes, {{reference}} solo metadata",
+            "ingestError": "Error al hacer ingest del catálogo CORE",
+            "tagSuccess": "Tagging completado: {{tagged}} taggeadas, {{skipped}} omitidas, {{failed}} fallidas",
+            "tagError": "Error al taggear niveles doctrinales",
+            "reviewSuccess": "Nivel actualizado",
+            "reviewError": "Error al actualizar nivel"
+        }
     },
     "users": {
         "title": "Gestión de Usuarios",
@@ -229,7 +298,8 @@
                 "timeline": "Timeline",
                 "usage": "Uso & cuotas",
                 "subscription": "Suscripción",
-                "audit": "Audit log"
+                "audit": "Audit log",
+                "flags": "Flags"
             }
         },
         "timeline": {
@@ -354,7 +424,18 @@
             "extendTrialSuccess": "Trial extendido correctamente",
             "extendTrialError": "Error al extender el trial",
             "resetQuotaSuccess": "Cuotas reseteadas: {{standard}} estándar · {{premium}} premium",
-            "resetQuotaError": "Error al resetear cuotas"
+            "resetQuotaError": "Error al resetear cuotas",
+            "featureFlagsSuccess": "Flags actualizadas",
+            "featureFlagsError": "Error al actualizar flags"
+        },
+        "featureFlags": {
+            "title": "Feature flags",
+            "description": "Habilita o deshabilita features experimentales para este usuario. Cada cambio queda registrado en el audit log.",
+            "flags": {
+                "pastoral_fidelity_flow": {
+                    "description": "Activa el flujo reformado de fidelidad pastoral (six-step spine, tres testigos). Requiere que el usuario haya declarado confesión."
+                }
+            }
         },
         "grantCreditsDialog": {
             "title": "Acreditar páginas a {{name}}",

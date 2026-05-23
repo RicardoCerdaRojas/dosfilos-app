@@ -16,8 +16,10 @@ import {
 } from './onboardingIntents';
 import { WelcomeIllustration } from './WelcomeIllustration';
 import { WorkflowStoryboard } from './WorkflowStoryboard';
+import { ConfessionStep } from './ConfessionStep';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
-type Step = 'welcome' | 'intent' | 'workflow' | 'confirm';
+type Step = 'welcome' | 'intent' | 'confession' | 'workflow' | 'confirm';
 
 interface OnboardingWizardProps {
     isOpen: boolean;
@@ -28,7 +30,7 @@ interface OnboardingWizardProps {
     startStep?: Step;
 }
 
-const STEP_ORDER: Step[] = ['welcome', 'intent', 'workflow', 'confirm'];
+const STEP_ORDER: Step[] = ['welcome', 'intent', 'confession', 'workflow', 'confirm'];
 
 /**
  * Full-screen onboarding takeover. Replaces the old `OnboardingWelcomeModal`
@@ -50,9 +52,18 @@ export function OnboardingWizard({ isOpen, onClose, startStep = 'welcome' }: Onb
     const navigate = useNavigate();
     const { user } = useFirebase();
     const { t } = useTranslation('dashboard');
+    const { profile } = useUserProfile();
 
     const [step, setStep] = useState<Step>(startStep);
     const [selectedIntent, setSelectedIntent] = useState<OnboardingIntentId | null>(null);
+
+    /**
+     * Skip the confession step when the user has already declared one
+     * (returning from a help-FAB relaunch, mid-flow refresh, etc.). The
+     * step is mandatory for new users but idempotent — once declared,
+     * subsequent runs jump straight to workflow.
+     */
+    const hasDeclaredConfession = !!profile?.declaredConfession;
 
     // Sync internal state with the requested start step every time the wizard
     // opens. FAB re-launches set `startStep="intent"` to skip welcome.
@@ -105,14 +116,18 @@ export function OnboardingWizard({ isOpen, onClose, startStep = 'welcome' }: Onb
 
     const goNext = () => {
         if (step === 'welcome') setStep('intent');
-        else if (step === 'intent' && selectedIntent) setStep('workflow');
+        else if (step === 'intent' && selectedIntent) {
+            setStep(hasDeclaredConfession ? 'workflow' : 'confession');
+        }
+        else if (step === 'confession') setStep('workflow');
         else if (step === 'workflow') setStep('confirm');
         else if (step === 'confirm') handleComplete();
     };
 
     const goPrev = () => {
         if (step === 'intent') setStep('welcome');
-        else if (step === 'workflow') setStep('intent');
+        else if (step === 'confession') setStep('intent');
+        else if (step === 'workflow') setStep(hasDeclaredConfession ? 'intent' : 'confession');
         else if (step === 'confirm') setStep('workflow');
     };
 
@@ -285,6 +300,14 @@ export function OnboardingWizard({ isOpen, onClose, startStep = 'welcome' }: Onb
                                     </Button>
                                 </div>
                             </motion.div>
+                        )}
+
+                        {step === 'confession' && user && (
+                            <ConfessionStep
+                                userId={user.uid}
+                                onCompleted={() => setStep('workflow')}
+                                onBack={() => setStep('intent')}
+                            />
                         )}
 
                         {step === 'workflow' && intent && (
