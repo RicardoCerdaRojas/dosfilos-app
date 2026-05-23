@@ -2,7 +2,7 @@
 
 ## Estado
 
-`planning` — bloqueada por completion de Fase 0.
+`planning` — **destrabada 2026-05-23**. Fase 0 cerrada, prereqs satisfechos (ver tabla abajo). Lista para arranque vía `/iniciar-fase 1`.
 
 ## Objetivo
 
@@ -12,11 +12,21 @@ Esta fase es el **punto de inversión** del producto: aquí cambia el flow de "A
 
 ## Prerequisitos
 
-- Fase 0 completa:
-  - Catálogo de confesiones live
-  - `declaredConfession` persistido por usuario
-  - Feature flag `pastoral_fidelity_flow` operativo
-  - Schema de `Project` definido (aunque migración sea Fase 5 — esta fase ya escribe contra `Project`)
+- Fase 0 completa (✅ cerrada 2026-05-23, commit `132a3db1`):
+  - [x] **Catálogo de confesiones live** — 14 catalog entries Firestore (`/confessions/{id}`). 4 creeds con sections full (17 sections taggeables), 7 confesiones grandes con stubs `ingestStatus: pending` (content fill follow-up). PR 0.2.
+  - [x] **`declaredConfession` persistido por usuario** — `User.declaredConfession` + `confessionAffirmedAt` + `confessionVisibility`. Onboarding obligatorio para users nuevos (PR 0.6) + banner backfill + `/settings/confession` para existentes (PR 0.7).
+  - [x] **Feature flag `pastoral_fidelity_flow` operativo** — `User.featureFlags` + callable `setUserFeatureFlags` super_admin-only + admin Flags tab + hook `useFeatureFlag('pastoral_fidelity_flow')`. PR 0.1.
+  - [x] **Hook combinado** `usePastoralFidelityGate()` con 4 reasons (loading / flag-disabled / confession-required / allowed) — listo para gate del flow reformado. PR 0.7.
+  - [x] **Cross-reference engine sample** — `lookupCrossReferences` callable (auth users) + sample dataset (~12 anchor verses) para Step 4 (Reconocimiento). PR 0.5.
+  - [x] **doctrineLevel tagging operacional** — `ConfessionSection.doctrineLevel` taggeado vía Gemini 2.5 Flash + `reviewStatus` workflow. PR 0.4.
+  - [x] **Rights-aware citation schema** — `LibraryResource` + `Confession` con license/citation templates. SBLGNT attribution PDF + Word export. PR 0.3.
+  - [ ] **Schema de `Project`** — **diferido a Fase 5** (sin consumer aún). Phase 1 puede operar contra wizard standalone existente; refactor a `Project` será unbox de Fase 5. **Decisión registrada en bitácora Phase 0**.
+
+### Prereqs NO satisfechos (asumir o accionar)
+
+- **Content fill 7 confesiones largas** (WCF/WSC/WLC/Belgic/Heidelberg/Dort/Augsburg): puede iniciar Phase 1 sin ellas. Si Step 4 (Reconocimiento) o Step 6 (Insight) requiere referencia confesional, solo 4 creeds responden hoy. Phase 2 Testigo 3 será limitado hasta parsers CCEL aterricen.
+- **TSK full dataset (~340k links)**: Step 4 trabaja con sample (~12 versos). Para producción real ingest CSV de openbible.info debe correr antes de release a usuarios.
+- **Pastoral review doctrineLevel**: secciones taggeadas viven con `reviewStatus: 'pending-pastoral-review'`. Phase 1 no consume `doctrineLevel` directamente (es input de Phase 2 override policy). No bloquea.
 
 ## Decisiones tomadas
 
@@ -276,3 +286,17 @@ Tests manuales:
 ## Bitácora
 
 - **2026-05-22** — Phase doc creado. Esperando completar Fase 0 antes de codear.
+- **2026-05-23** — **Prereqs actualizados al cerrar Fase 0**. Phase 0 entrega: feature flag operacional + confession catalog (14 fuentes) + declaredConfession persistido + cross-ref engine sample + doctrineLevel tagging + rights-aware schema + `usePastoralFidelityGate()` hook. Schema `Project` diferido a Fase 5. UI audit ([phase-0-ui-audit.md](../phase-0-ui-audit.md)) entrega kill-list directa: Categoría 1 (StepHomiletics auto-generate) + Categoría 4 (paperToWizardProgress prefill risk) son scope Phase 1. Phase 1 destrabada, lista para arranque.
+
+## Cross-references desde Fase 0 (handoff)
+
+Insumos Phase 0 que Phase 1 consume directamente:
+
+| Insumo Phase 0 | Path | Uso en Phase 1 |
+|---|---|---|
+| `usePastoralFidelityGate()` | `packages/web/src/hooks/usePastoralFidelityGate.ts` | Wizard reformado debe consultar antes de entrar — render CTA según reason |
+| `lookupCrossReferences` callable | `packages/functions/src/admin/cross-references/lookupCrossReferences.ts` | `RecognitionStep` (Paso 4) suggests paralelos |
+| `Confession` + `ConfessionSection` Firestore | `/confessions/{id}/sections/{sectionId}` | Prompt builder referencia secciones por id en `PRIMARY VOICE` block |
+| `User.declaredConfession` | `User` entity + `useUserProfile` | Prompt builder include "tu confesión declara sobre este tema: ..." (Paso 6 manifiesto, proactivo) |
+| `aggregateRequiredAttributions` | `packages/domain/src/services/aggregateRequiredAttributions.ts` | Export del sermón hereda atribución automática sin acción adicional |
+| UI audit kill-list | `docs/pastoral-fidelity/phase-0-ui-audit.md` | Categoría 1 + Categoría 4 son acciones de Phase 1 (gate auto-generate + AI-forbidden fields) |
