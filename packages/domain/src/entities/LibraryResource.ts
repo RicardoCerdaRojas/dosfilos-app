@@ -1,6 +1,12 @@
 import { WorkflowPhase } from './SermonWorkflow';
 import type { SourceType as ExegesisSourceType } from '../exegesis/entities/SourceType';
 import type { BibleBookId } from '../bible/canon/BibleCanon';
+import type {
+    License,
+    IngestionStatus,
+    RiskLevel,
+    CitationTemplates,
+} from './citationRights';
 
 /**
  * Granularity of what a library resource covers (v1.7 paper-corpus
@@ -231,6 +237,52 @@ export interface LibraryResource {
      */
     isSystemSource?: boolean;
 
+    // ── Rights-aware citation metadata (ADR-006, PR 0.3) ──────────────
+    //
+    // Mirrors the two-axis model from [07-citation-policy.md]:
+    //   `ingestionStatus` × `license` → operational behaviour at render
+    //   + export time. Legacy chunks default to
+    //   { license: 'unknown', ingestionStatus: 'requires_manual_review' }
+    //   on read (FirebaseLibraryRepository) so existing rows behave
+    //   conservatively without a destructive backfill.
+
+    /**
+     * Effective copyright license for the source text. Drives whether
+     * the export pipeline emits a mandatory attribution footer
+     * (CC BY / CC BY-SA) and whether the citation engine treats the
+     * source as freely renderable, attributed, or restricted.
+     */
+    license?: License;
+    licenseUrl?: string;
+    /**
+     * Human-readable copyright line attached to the source (e.g.
+     * "Copyright 2010 Logos Bible Software and SBL"). Rendered verbatim
+     * in the export attribution footer.
+     */
+    copyrightNotice?: string;
+    ingestionStatus?: IngestionStatus;
+    riskLevel?: RiskLevel;
+    /**
+     * Mandatory attribution lines that must appear in every exported
+     * artefact that cites this source. The export pipeline aggregates
+     * these across the artefact's citation manifest and renders them in
+     * an "Atribuciones" section after the bibliography.
+     */
+    requiredAttribution?: string[];
+    /**
+     * Free-form policy hints (e.g. "Verify edition before ingestion",
+     * "Quote only under fair use"). Surfaced in CoreLibraryAdmin so the
+     * admin can read the source's rights status at a glance.
+     */
+    specialHandling?: string[];
+    /**
+     * Citation render templates per context (sermon / bible_study /
+     * essay_or_article / rag_answer). Populated from the JSON canonical
+     * seed for CORE Library sources; per-user uploads inherit defaults
+     * derived from `author` + `title`.
+     */
+    citation?: CitationTemplates;
+
     createdAt: Date;
     updatedAt: Date;
 }
@@ -277,6 +329,20 @@ export class LibraryResourceEntity implements LibraryResource {
      * render the "system" badge and to suppress edit/delete controls.
      */
     public isSystemSource?: boolean;
+    /**
+     * ADR-006 / PR 0.3 — rights-aware citation metadata. Owned by
+     * deserialization; legacy docs default to `license: 'unknown'` +
+     * `ingestionStatus: 'requires_manual_review'` in the repo so the
+     * citation engine treats them conservatively until classified.
+     */
+    public license?: License;
+    public licenseUrl?: string;
+    public copyrightNotice?: string;
+    public ingestionStatus?: IngestionStatus;
+    public riskLevel?: RiskLevel;
+    public requiredAttribution?: string[];
+    public specialHandling?: string[];
+    public citation?: CitationTemplates;
 
     constructor(
         public id: string,

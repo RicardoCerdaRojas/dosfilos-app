@@ -56,6 +56,16 @@ export interface GrantUserCreditsArgs {
     reason: string;
 }
 
+export interface SetUserFeatureFlagsArgs {
+    userId: string;
+    flags: Record<string, boolean>;
+}
+
+export interface SetUserFeatureFlagsResponse {
+    success: boolean;
+    flags: Record<string, boolean>;
+}
+
 export interface ResendWelcomeEmailResponse {
     success: boolean;
     [key: string]: unknown;
@@ -134,6 +144,15 @@ export class AdminUserService {
             'bulkUserAction',
         );
         const { data } = await fn({ action, userIds });
+        return data;
+    }
+
+    async setUserFeatureFlags(args: SetUserFeatureFlagsArgs): Promise<SetUserFeatureFlagsResponse> {
+        const fn = httpsCallable<SetUserFeatureFlagsArgs, SetUserFeatureFlagsResponse>(
+            getFunctions(),
+            'setUserFeatureFlags',
+        );
+        const { data } = await fn(args);
         return data;
     }
 }

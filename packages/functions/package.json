@@ -4,7 +4,8 @@
     "private": true,
     "main": "./dist/index.js",
     "scripts": {
-        "build": "tsc",
+        "build": "tsc && npm run copy-assets",
+        "copy-assets": "mkdir -p dist/admin/confessions/data dist/admin/cross-references/data && cp -R src/admin/confessions/data/. dist/admin/confessions/data/ && cp -R src/admin/cross-references/data/. dist/admin/cross-references/data/",
         "serve": "npm run build && firebase emulators:start --only functions",
         "shell": "npm run build && firebase functions:shell",
         "deploy": "npm run build && firebase deploy --only functions",

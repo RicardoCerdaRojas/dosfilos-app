@@ -1,11 +1,80 @@
 {
+    "crossRefs": {
+        "title": "Cross-references (TSK)",
+        "ingestTitle": "Dataset ingest",
+        "ingestDescription": "Loads the bundled seed (~12 anchor verses) into the Firestore collection. The full TSK dataset (~340k links) lands in a follow-up PR.",
+        "ingestSample": "Ingest sample",
+        "lookupTitle": "Interactive lookup",
+        "lookupDescription": "Resolve parallels by exact verse or by pericope (startVerse..endVerse range).",
+        "book": "Book",
+        "chapter": "Chapter",
+        "verse": "Verse",
+        "verseEnd": "End verse",
+        "verseEndPlaceholder": "(optional, for pericope)",
+        "lookup": "Lookup",
+        "resultsTitle": "Results",
+        "noResults": "No parallels for that reference.",
+        "parallels": "parallels",
+        "toasts": {
+            "ingestSuccess": "Cross-references ingested: {{written}} verses from {{source}}",
+            "ingestError": "Failed to ingest dataset"
+        }
+    },
+    "confessions": {
+        "title": "CORE Catalog — Confessions",
+        "description": "Confessional source catalog for the Pastoral Fidelity initiative (ADR-006). Ingested from the canonical JSON + per-source parsers.",
+        "totalCount": "{{count}} sources in catalog",
+        "ingestAll": "Ingest CORE v1",
+        "empty": "Catalog empty",
+        "emptyHint": "Click \"Ingest CORE v1\" to populate the catalog from the canonical JSON.",
+        "notFound": "Confession not found",
+        "viewSections": "View sections",
+        "reingest": "Re-ingest",
+        "tradition": "Tradition",
+        "year": "Year",
+        "license": "License",
+        "sectionCount": "Sections",
+        "noSections": "No sections persisted",
+        "pendingHint": "Content ingest not yet completed for this source. Scheduled for a follow-up PR.",
+        "filter": {
+            "all": "All",
+            "sectioned": "Sectioned",
+            "reference": "Reference"
+        },
+        "status": {
+            "complete": "Complete",
+            "partial": "Partial",
+            "pending": "Content pending",
+            "not-applicable": "Metadata only"
+        },
+        "tagLlm": "Tag with LLM",
+        "tagLlmForce": "Re-tag all (force)",
+        "tagForceConfirm": "Re-tag every section from scratch? This overwrites assigned levels and resets reviewStatus.",
+        "taggingSummary": "{{total}} sections · {{untagged}} untagged · {{pendingReview}} pending review",
+        "reviewPending": "Pending review",
+        "reviewed": "Reviewed",
+        "rationale": "Rationale",
+        "levelLabel": "Doctrine level",
+        "levelPlaceholder": "No level",
+        "markReviewed": "Mark reviewed",
+        "toasts": {
+            "ingestSuccess": "Ingest complete: {{ingested}} with content, {{pending}} pending, {{reference}} metadata-only",
+            "ingestError": "Failed to ingest CORE catalog",
+            "tagSuccess": "Tagging complete: {{tagged}} tagged, {{skipped}} skipped, {{failed}} failed",
+            "tagError": "Failed to tag doctrine levels",
+            "reviewSuccess": "Level updated",
+            "reviewError": "Failed to update level"
+        }
+    },
     "common": {
         "accessDenied": {
             "title": "Access Denied",
             "description": "You don't have permission to view this page.",
             "homeButton": "Back to home"
         },
-        "noPermission": "You don't have permission to access this page"
+        "noPermission": "You don't have permission to access this page",
+        "back": "Back",
+        "refresh": "Refresh"
     },
     "users": {
         "title": "User Management",
@@ -229,7 +298,8 @@
                 "timeline": "Timeline",
                 "usage": "Usage & quotas",
                 "subscription": "Subscription",
-                "audit": "Audit log"
+                "audit": "Audit log",
+                "flags": "Flags"
             }
         },
         "timeline": {
@@ -354,7 +424,18 @@
             "extendTrialSuccess": "Trial extended successfully",
             "extendTrialError": "Error extending trial",
             "resetQuotaSuccess": "Quotas reset: {{standard}} standard · {{premium}} premium",
-            "resetQuotaError": "Error resetting quotas"
+            "resetQuotaError": "Error resetting quotas",
+            "featureFlagsSuccess": "Flags updated",
+            "featureFlagsError": "Failed to update flags"
+        },
+        "featureFlags": {
+            "title": "Feature flags",
+            "description": "Enable or disable experimental features for this user. Each change is recorded in the audit log.",
+            "flags": {
+                "pastoral_fidelity_flow": {
+                    "description": "Activates the reformed pastoral fidelity flow (six-step spine, three witnesses). Requires the user to have declared a confession."
+                }
+            }
         },
         "grantCreditsDialog": {
             "title": "Grant pages to {{name}}",

@@ -2,6 +2,8 @@ import { jsPDF } from 'jspdf';
 import {
     IExportService,
     SermonEntity,
+    aggregateRequiredAttributions,
+    type AttributionBlock,
     type CitationManifest,
     type RAGSource,
 } from '@dosfilos/domain';
@@ -132,6 +134,19 @@ export class PdfExportService implements IExportService {
             bibliography: sermon.bibliography,
         });
 
+        // PR 0.3 (ADR-006): mandatory attribution footer for sources
+        // under licences that require explicit attribution (CC BY 4.0,
+        // CC BY-SA, etc.). Aggregates blocks from the manifest +
+        // injects SBLGNT compliance when any Greek text from
+        // `SBLGNTBibleProvider` made it into the manifest.
+        renderAttributions(doc, {
+            margin,
+            pageWidth,
+            pageHeight,
+            contentWidth,
+            blocks: aggregateRequiredAttributions(sermon.citationManifest),
+        });
+
         // Footer with page numbers
         const pageCount = doc.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
@@ -170,9 +185,9 @@ interface BibliographyRenderArgs {
  * Silently returns when neither source has anything to render so
  * non-RAG sermons don't get an empty section appended.
  */
-function renderBibliography(doc: jsPDF, args: BibliographyRenderArgs): void {
+function renderBibliography(doc: jsPDF, args: BibliographyRenderArgs): number {
     const entries = buildBibliographyEntries(args.manifest, args.bibliography);
-    if (entries.length === 0) return;
+    if (entries.length === 0) return args.yPosition;
 
     let yPosition = args.yPosition;
     const { margin, pageWidth, pageHeight, contentWidth } = args;
@@ -242,6 +257,77 @@ function renderBibliography(doc: jsPDF, args: BibliographyRenderArgs): void {
         }
         yPosition += 3;
     });
+
+    return yPosition;
+}
+
+interface AttributionRenderArgs {
+    margin: number;
+    pageWidth: number;
+    pageHeight: number;
+    contentWidth: number;
+    blocks: AttributionBlock[];
+}
+
+/**
+ * Render the "Atribuciones" section for licences that require it
+ * (CC BY 4.0 for SBLGNT, CC BY-SA, etc.). Always starts on its own page
+ * so the legal block reads cleanly without competing with bibliography
+ * entries — the legal compliance benefit outweighs the extra page.
+ *
+ * Returns nothing — mutates the jsPDF doc in place. Silently no-ops
+ * when there are no attribution blocks to render.
+ */
+function renderAttributions(doc: jsPDF, args: AttributionRenderArgs): void {
+    if (args.blocks.length === 0) return;
+
+    const { margin, pageWidth, pageHeight, contentWidth } = args;
+    doc.addPage();
+    let yPosition = margin;
+
+    const checkPageBreak = (height: number) => {
+        if (yPosition + height > pageHeight - margin) {
+            doc.addPage();
+            yPosition = margin;
+        }
+    };
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(0);
+    doc.text('Atribuciones', margin, yPosition);
+    yPosition += 9;
+
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(9);
+    doc.setTextColor(110);
+    const introLines = doc.splitTextToSize(
+        'Atribuciones obligatorias por licencia para las fuentes citadas en este documento.',
+        contentWidth,
+    );
+    doc.text(introLines, margin, yPosition);
+    yPosition += introLines.length * 5 + 6;
+
+    for (const block of args.blocks) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(20);
+        const titleLines = doc.splitTextToSize(block.title, contentWidth);
+        checkPageBreak(titleLines.length * 6 + 4);
+        doc.text(titleLines, margin, yPosition);
+        yPosition += titleLines.length * 6 + 2;
+
+        doc.setFont('times', 'roman');
+        doc.setFontSize(10);
+        doc.setTextColor(50);
+        for (const line of block.lines) {
+            const wrapped = doc.splitTextToSize(line, contentWidth);
+            checkPageBreak(wrapped.length * 5 + 2);
+            doc.text(wrapped, margin, yPosition);
+            yPosition += wrapped.length * 5 + 1;
+        }
+        yPosition += 5;
+    }
 }
 
 interface BibliographyEntry {

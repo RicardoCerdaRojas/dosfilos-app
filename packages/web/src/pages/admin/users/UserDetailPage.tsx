@@ -9,7 +9,7 @@ import { PlanBadge } from '@/components/admin/PlanBadge';
 import { EngagementBadge } from '@/components/admin/EngagementBadge';
 import {
     ArrowLeft, Loader2, User as UserIcon, Mail, Calendar,
-    LayoutDashboard, Clock, Gauge, CreditCard, ScrollText,
+    LayoutDashboard, Clock, Gauge, CreditCard, ScrollText, Flag,
 } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { formatDistanceToNow } from 'date-fns';
@@ -19,8 +19,9 @@ import { TimelineTab } from './tabs/TimelineTab';
 import { UsageTab } from './tabs/UsageTab';
 import { SubscriptionTab } from './tabs/SubscriptionTab';
 import { AuditTab } from './tabs/AuditTab';
+import { FeatureFlagsTab } from './tabs/FeatureFlagsTab';
 
-const VALID_TABS = ['overview', 'timeline', 'usage', 'subscription', 'audit'] as const;
+const VALID_TABS = ['overview', 'timeline', 'usage', 'subscription', 'audit', 'flags'] as const;
 type TabKey = typeof VALID_TABS[number];
 
 export function UserDetailPage() {
@@ -159,6 +160,10 @@ export function UserDetailPage() {
                         <ScrollText className="h-4 w-4" />
                         {t('users.detail.tabs.audit')}
                     </TabsTrigger>
+                    <TabsTrigger value="flags" className="gap-1.5">
+                        <Flag className="h-4 w-4" />
+                        {t('users.detail.tabs.flags')}
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview">
@@ -185,6 +190,10 @@ export function UserDetailPage() {
 
                 <TabsContent value="audit">
                     <AuditTab userId={user.id} />
+                </TabsContent>
+
+                <TabsContent value="flags">
+                    <FeatureFlagsTab user={user} />
                 </TabsContent>
             </Tabs>
         </div>

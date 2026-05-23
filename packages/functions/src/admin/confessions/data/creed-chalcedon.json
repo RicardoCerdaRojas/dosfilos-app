@@ -1,0 +1,25 @@
+{
+  "confessionId": "definition-of-chalcedon",
+  "language": "en",
+  "edition": "Council of Chalcedon, 451 AD (NPNF Second Series, Vol. XIV)",
+  "sections": [
+    {
+      "sectionReference": "1",
+      "title": "Affirmation of the One Christ in Two Natures",
+      "text": "Following, then, the holy Fathers, we all with one voice teach that it should be confessed that our Lord Jesus Christ is one and the same Son, the same perfect in Godhead and the same perfect in manhood, truly God and truly man, the same of a reasonable soul and body; consubstantial with the Father in Godhead, and the same consubstantial with us in manhood; like us in all things except sin; begotten before the ages from the Father in Godhead, the same in the last days for us; and for our salvation born from the Virgin Mary, the Theotokos, in manhood.",
+      "order": 1
+    },
+    {
+      "sectionReference": "2",
+      "title": "Two Natures, One Person",
+      "text": "One and the same Christ, Son, Lord, Only-begotten, made known in two natures without confusion, without change, without division, without separation, the difference of the natures being by no means taken away because of the union, but rather the property of each nature being preserved, and concurring in one Person and one Subsistence, not parted or divided into two persons, but one and the same Son and Only-begotten God, Word, Lord, Jesus Christ.",
+      "order": 2
+    },
+    {
+      "sectionReference": "3",
+      "title": "Conformity with the Prophets and the Fathers",
+      "text": "Even as the prophets from the beginning spoke concerning him, and our Lord Jesus Christ himself taught us, and the Creed of the Fathers has handed down to us.",
+      "order": 3
+    }
+  ]
+}

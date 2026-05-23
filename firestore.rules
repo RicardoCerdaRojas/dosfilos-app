@@ -154,8 +154,8 @@ service cloud.firestore {
       allow write: if isOwner(userId);
       
       // Allow Cloud Functions to update subscription fields
-      allow update: if isFunction() && 
-                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subscription', 'stripeCustomerId', 'updatedAt', 'analytics', 'role', 'metadata']));
+      allow update: if isFunction() &&
+                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subscription', 'stripeCustomerId', 'updatedAt', 'analytics', 'role', 'metadata', 'featureFlags']));
       
       // User settings subcollection (library categories, etc.)
       match /settings/{settingId} {
@@ -225,6 +225,44 @@ service cloud.firestore {
     match /tags/{tagId} {
       allow read: if isAuthenticated();
       allow write: if false; // Only created by cloud functions
+    }
+
+    // Pastoral Fidelity — CORE Library confession catalog (ADR-006, PR 0.2).
+    // Read is open to authenticated users so the wizard, citation engine and
+    // admin viewer can resolve references without per-user proxies. Writes go
+    // exclusively through the `ingestCoreLibraryConfessions` callable
+    // (super-admin gated) via the Admin SDK, which bypasses these rules.
+    match /confessions/{confessionId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+
+      match /sections/{sectionId} {
+        allow read: if isAuthenticated();
+        allow write: if false;
+      }
+    }
+
+    // Pastoral Fidelity — Bible cross-references engine (ADR-008, PR 0.5).
+    // Testigo 2 in Phase 2 consumes this from regular user sessions, so reads
+    // stay open. Writes flow exclusively through the
+    // `ingestBibleCrossReferences` Cloud Function (super-admin gated).
+    match /bibleCrossReferences/{verseRef} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // Pastoral Fidelity — confession change audit log (ADR-007, PR 0.7).
+    // Each row records a single declaredConfession transition (onboarding
+    // declaration + later edits in /settings/confession). Owners may
+    // append rows for their own user id; updates + deletes are blocked
+    // so the trail is append-only. Reads are restricted to super_admins
+    // and the row owner.
+    match /confessionChangeAudit/{auditId} {
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid;
+      allow read: if isAuthenticated()
+                  && (resource.data.userId == request.auth.uid || isSuperAdmin());
+      allow update, delete: if false;
     }
 
     // Hebrew Tutor - Contextual Hints Catalog
