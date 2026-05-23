@@ -1,6 +1,12 @@
 import { User } from '../entities/User';
 import { Subscription } from '../entities/Subscription';
 import type { SupportedLanguage } from '../types/i18n';
+import type { ConfessionVisibility, DeclaredConfessionId } from '../entities/User';
+
+export interface UpdateDeclaredConfessionInput {
+    declaredConfession: DeclaredConfessionId;
+    confessionVisibility?: ConfessionVisibility;
+}
 
 export interface IUserProfileRepository {
     getProfile(userId: string): Promise<User | null>;
@@ -22,4 +28,10 @@ export interface IUserProfileRepository {
      * with the value derived from the request `Accept-Language` header.
      */
     updatePreferredLanguage(userId: string, language: SupportedLanguage): Promise<void>;
+    /**
+     * Persist the pastor's declared confessional identity (ADR-007). Called
+     * from the onboarding wizard's confession step + the dedicated
+     * `/settings/confession` page. Stamps `confessionAffirmedAt` server-side.
+     */
+    updateDeclaredConfession(userId: string, input: UpdateDeclaredConfessionInput): Promise<void>;
 }

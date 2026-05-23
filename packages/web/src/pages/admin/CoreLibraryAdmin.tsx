@@ -1652,15 +1652,44 @@ export default function CoreLibraryAdmin() {
                                                                     )}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    {file.publiclyCitable === true ? (
-                                                                        <Badge variant="secondary" className="bg-success/15 text-success border-transparent text-xs" title="Las citas de este documento son visibles para usuarios regulares (dominio público / licencia firmada)">
-                                                                            Pública
-                                                                        </Badge>
-                                                                    ) : (
-                                                                        <Badge variant="secondary" className="bg-warning/15 text-warning border-transparent text-xs" title="Solo admin ve las citas de este documento (licencia pendiente)">
-                                                                            Restringida
-                                                                        </Badge>
-                                                                    )}
+                                                                    <div className="flex flex-col items-start gap-1">
+                                                                        {file.publiclyCitable === true ? (
+                                                                            <Badge variant="secondary" className="bg-success/15 text-success border-transparent text-xs" title="Las citas de este documento son visibles para usuarios regulares (dominio público / licencia firmada)">
+                                                                                Pública
+                                                                            </Badge>
+                                                                        ) : (
+                                                                            <Badge variant="secondary" className="bg-warning/15 text-warning border-transparent text-xs" title="Solo admin ve las citas de este documento (licencia pendiente)">
+                                                                                Restringida
+                                                                            </Badge>
+                                                                        )}
+                                                                        {(file as any).license && (file as any).license !== 'unknown' && (
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className="text-[10px] px-1.5 py-0 font-mono"
+                                                                                title={`Licencia: ${(file as any).license}${(file as any).licenseUrl ? ` — ${(file as any).licenseUrl}` : ''}`}
+                                                                            >
+                                                                                {(file as any).license}
+                                                                            </Badge>
+                                                                        )}
+                                                                        {(file as any).ingestionStatus === 'requires_manual_review' && (
+                                                                            <Badge
+                                                                                variant="secondary"
+                                                                                className="bg-warning/15 text-warning border-transparent text-[10px] px-1.5 py-0"
+                                                                                title="Sin clasificar — admin debe revisar licencia + ingestion status"
+                                                                            >
+                                                                                Sin clasificar
+                                                                            </Badge>
+                                                                        )}
+                                                                        {(file as any).ingestionStatus === 'approved_metadata_only' && (
+                                                                            <Badge
+                                                                                variant="secondary"
+                                                                                className="bg-destructive/15 text-destructive border-transparent text-[10px] px-1.5 py-0"
+                                                                                title="Solo metadata + summary interno. No indexar texto completo."
+                                                                            >
+                                                                                Solo metadata
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
                                                                 </TableCell>
                                                                 {advancedMode && (
                                                                     <TableCell>

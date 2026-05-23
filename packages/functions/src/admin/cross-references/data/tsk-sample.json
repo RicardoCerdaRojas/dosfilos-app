@@ -1,0 +1,147 @@
+{
+  "source": "tsk-sample-v1",
+  "description": "Hand-curated sample of well-known TSK cross-references for smoke testing the cross-reference engine. Full TSK dataset (~340k links) ingestion ships as a follow-up via the openbible.info CSV importer.",
+  "entries": [
+    {
+      "sourceBook": "JHN",
+      "sourceChapter": 1,
+      "sourceVerse": 1,
+      "parallels": [
+        { "targetBook": "GEN", "targetChapter": 1, "targetVerse": 1, "type": "allusion", "strength": 1.0, "note": "Beginning echo" },
+        { "targetBook": "1JN", "targetChapter": 1, "targetVerse": 1, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "COL", "targetChapter": 1, "targetVerse": 16, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "HEB", "targetChapter": 1, "targetVerse": 2, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "REV", "targetChapter": 19, "targetVerse": 13, "type": "parallel", "strength": 0.9 },
+        { "targetBook": "PRO", "targetChapter": 8, "targetVerse": 22, "type": "echo", "strength": 0.7 }
+      ]
+    },
+    {
+      "sourceBook": "JHN",
+      "sourceChapter": 1,
+      "sourceVerse": 14,
+      "parallels": [
+        { "targetBook": "PHP", "targetChapter": 2, "targetVerse": 7, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "ROM", "targetChapter": 8, "targetVerse": 3, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "1TI", "targetChapter": 3, "targetVerse": 16, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "HEB", "targetChapter": 2, "targetVerse": 14, "type": "parallel", "strength": 0.9 },
+        { "targetBook": "GAL", "targetChapter": 4, "targetVerse": 4, "type": "parallel", "strength": 0.9 }
+      ]
+    },
+    {
+      "sourceBook": "JHN",
+      "sourceChapter": 3,
+      "sourceVerse": 16,
+      "parallels": [
+        { "targetBook": "ROM", "targetChapter": 5, "targetVerse": 8, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "1JN", "targetChapter": 4, "targetVerse": 9, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "1JN", "targetChapter": 4, "targetVerse": 10, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "EPH", "targetChapter": 2, "targetVerse": 4, "type": "parallel", "strength": 0.9 },
+        { "targetBook": "ROM", "targetChapter": 8, "targetVerse": 32, "type": "parallel", "strength": 0.9 }
+      ]
+    },
+    {
+      "sourceBook": "GEN",
+      "sourceChapter": 1,
+      "sourceVerse": 1,
+      "parallels": [
+        { "targetBook": "JHN", "targetChapter": 1, "targetVerse": 1, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "HEB", "targetChapter": 11, "targetVerse": 3, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "COL", "targetChapter": 1, "targetVerse": 16, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "PSA", "targetChapter": 33, "targetVerse": 6, "type": "parallel", "strength": 0.9 },
+        { "targetBook": "ISA", "targetChapter": 42, "targetVerse": 5, "type": "parallel", "strength": 0.8 },
+        { "targetBook": "REV", "targetChapter": 4, "targetVerse": 11, "type": "parallel", "strength": 0.9 }
+      ]
+    },
+    {
+      "sourceBook": "ROM",
+      "sourceChapter": 3,
+      "sourceVerse": 23,
+      "parallels": [
+        { "targetBook": "ROM", "targetChapter": 5, "targetVerse": 12, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "GAL", "targetChapter": 3, "targetVerse": 22, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "ECC", "targetChapter": 7, "targetVerse": 20, "type": "parallel", "strength": 0.9 },
+        { "targetBook": "PSA", "targetChapter": 14, "targetVerse": 3, "type": "parallel", "strength": 0.9 },
+        { "targetBook": "1JN", "targetChapter": 1, "targetVerse": 8, "type": "parallel", "strength": 0.9 }
+      ]
+    },
+    {
+      "sourceBook": "ROM",
+      "sourceChapter": 8,
+      "sourceVerse": 28,
+      "parallels": [
+        { "targetBook": "GEN", "targetChapter": 50, "targetVerse": 20, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "ROM", "targetChapter": 8, "targetVerse": 29, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "EPH", "targetChapter": 1, "targetVerse": 11, "type": "parallel", "strength": 0.9 },
+        { "targetBook": "JAS", "targetChapter": 1, "targetVerse": 2, "type": "parallel", "strength": 0.8 },
+        { "targetBook": "PSA", "targetChapter": 145, "targetVerse": 9, "type": "echo", "strength": 0.7 }
+      ]
+    },
+    {
+      "sourceBook": "EPH",
+      "sourceChapter": 2,
+      "sourceVerse": 8,
+      "parallels": [
+        { "targetBook": "EPH", "targetChapter": 2, "targetVerse": 9, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "ROM", "targetChapter": 3, "targetVerse": 24, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "ROM", "targetChapter": 4, "targetVerse": 4, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "TIT", "targetChapter": 3, "targetVerse": 5, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "GAL", "targetChapter": 2, "targetVerse": 16, "type": "parallel", "strength": 0.9 }
+      ]
+    },
+    {
+      "sourceBook": "PHP",
+      "sourceChapter": 2,
+      "sourceVerse": 6,
+      "parallels": [
+        { "targetBook": "JHN", "targetChapter": 1, "targetVerse": 1, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "JHN", "targetChapter": 17, "targetVerse": 5, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "COL", "targetChapter": 1, "targetVerse": 15, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "HEB", "targetChapter": 1, "targetVerse": 3, "type": "parallel", "strength": 1.0 }
+      ]
+    },
+    {
+      "sourceBook": "PHP",
+      "sourceChapter": 2,
+      "sourceVerse": 7,
+      "parallels": [
+        { "targetBook": "JHN", "targetChapter": 1, "targetVerse": 14, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "ROM", "targetChapter": 8, "targetVerse": 3, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "2CO", "targetChapter": 8, "targetVerse": 9, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "HEB", "targetChapter": 2, "targetVerse": 14, "type": "parallel", "strength": 0.9 }
+      ]
+    },
+    {
+      "sourceBook": "PHP",
+      "sourceChapter": 2,
+      "sourceVerse": 8,
+      "parallels": [
+        { "targetBook": "HEB", "targetChapter": 12, "targetVerse": 2, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "HEB", "targetChapter": 5, "targetVerse": 8, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "MAT", "targetChapter": 26, "targetVerse": 39, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "1PE", "targetChapter": 2, "targetVerse": 24, "type": "parallel", "strength": 1.0 }
+      ]
+    },
+    {
+      "sourceBook": "ISA",
+      "sourceChapter": 53,
+      "sourceVerse": 5,
+      "parallels": [
+        { "targetBook": "1PE", "targetChapter": 2, "targetVerse": 24, "type": "quotation", "strength": 1.0 },
+        { "targetBook": "ROM", "targetChapter": 4, "targetVerse": 25, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "MAT", "targetChapter": 8, "targetVerse": 17, "type": "parallel", "strength": 0.9 },
+        { "targetBook": "2CO", "targetChapter": 5, "targetVerse": 21, "type": "parallel", "strength": 1.0 }
+      ]
+    },
+    {
+      "sourceBook": "MAT",
+      "sourceChapter": 28,
+      "sourceVerse": 19,
+      "parallels": [
+        { "targetBook": "MRK", "targetChapter": 16, "targetVerse": 15, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "ACT", "targetChapter": 1, "targetVerse": 8, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "LUK", "targetChapter": 24, "targetVerse": 47, "type": "parallel", "strength": 1.0 },
+        { "targetBook": "JHN", "targetChapter": 20, "targetVerse": 21, "type": "parallel", "strength": 0.9 }
+      ]
+    }
+  ]
+}

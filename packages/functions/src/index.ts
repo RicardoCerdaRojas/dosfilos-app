@@ -112,6 +112,12 @@ export { bulkUserAction } from './admin/bulkUserAction';
 export { grantUserCredits } from './admin/grantUserCredits';
 export { resetUserPlanQuota } from './admin/resetUserPlanQuota';
 export { extendUserTrialAdmin } from './admin/extendUserTrialAdmin';
+export { setUserFeatureFlags } from './admin/setUserFeatureFlags';
+export { ingestCoreLibraryConfessions } from './admin/confessions/ingestCoreLibrary';
+export { tagConfessionDoctrineLevels } from './admin/confessions/tagDoctrineLevels';
+export { updateSectionDoctrineLevel } from './admin/confessions/updateSectionDoctrineLevel';
+export { ingestBibleCrossReferences } from './admin/cross-references/ingestCrossReferences';
+export { lookupCrossReferences } from './admin/cross-references/lookupCrossReferences';
 
 
 

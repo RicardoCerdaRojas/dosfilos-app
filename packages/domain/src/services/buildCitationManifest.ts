@@ -1,11 +1,26 @@
 import type { DocumentChunkData } from '../entities/DocumentChunk';
 import type { CitationManifest, CitationManifestEntry } from '../entities/SermonGenerator';
 
+export interface CitationRightsSnapshot {
+    license?: string;
+    licenseUrl?: string;
+    copyright?: string;
+    requiredAttribution?: string[];
+}
+
 export interface BuildCitationManifestOptions {
     /** Cap on the manifest size. Defaults to 10 — keeps the Firestore doc small. */
     maxEntries?: number;
     /** Cap on each entry's excerpt length. Defaults to 280 chars. */
     maxExcerptLength?: number;
+    /**
+     * Optional resolver that maps a chunk's `resourceId` to a rights
+     * snapshot (license + attribution). The orchestrator passes this
+     * after looking up the source library resources for the retrieved
+     * chunks; the manifest stamps each entry so the export pipeline can
+     * aggregate mandatory attributions without re-fetching resources.
+     */
+    resolveRights?: (resourceId: string) => CitationRightsSnapshot | undefined;
 }
 
 /**
@@ -30,17 +45,24 @@ export function buildCitationManifest(
 
     const entries: CitationManifestEntry[] = chunks
         .slice(0, maxEntries)
-        .map((chunk, idx) => ({
-            sourceId: `S${idx + 1}`,
-            resourceId: chunk.resourceId,
-            chunkId: chunk.id,
-            title: chunk.resourceTitle,
-            author: chunk.resourceAuthor && chunk.resourceAuthor.trim().length > 0
-                ? chunk.resourceAuthor
-                : undefined,
-            page: chunk.metadata?.page !== undefined ? String(chunk.metadata.page) : undefined,
-            excerpt: truncateExcerpt(chunk.text ?? '', maxExcerptLength),
-        }));
+        .map((chunk, idx) => {
+            const rights = options.resolveRights?.(chunk.resourceId);
+            return {
+                sourceId: `S${idx + 1}`,
+                resourceId: chunk.resourceId,
+                chunkId: chunk.id,
+                title: chunk.resourceTitle,
+                author: chunk.resourceAuthor && chunk.resourceAuthor.trim().length > 0
+                    ? chunk.resourceAuthor
+                    : undefined,
+                page: chunk.metadata?.page !== undefined ? String(chunk.metadata.page) : undefined,
+                excerpt: truncateExcerpt(chunk.text ?? '', maxExcerptLength),
+                license: rights?.license,
+                licenseUrl: rights?.licenseUrl,
+                copyright: rights?.copyright,
+                requiredAttribution: rights?.requiredAttribution,
+            };
+        });
 
     return { version: '1', entries };
 }

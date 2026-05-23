@@ -61,6 +61,28 @@ export interface CitationManifestEntry {
      * citation matches what the prose claims.
      */
     excerpt: string;
+
+    // ── Rights-aware fields (ADR-006, PR 0.3) ─────────────────────────
+    //
+    // Snapshot of the source's rights metadata at generation time. The
+    // export pipeline (`aggregateRequiredAttributions`) reads these to
+    // decide whether the artefact needs a mandatory attribution footer
+    // (e.g. SBLGNT under CC BY 4.0) and to compose it without re-fetching
+    // the source doc.
+
+    /** Effective license (e.g. 'Public Domain', 'CC BY 4.0'). */
+    license?: string;
+    /** Canonical license URL (e.g. https://creativecommons.org/licenses/by/4.0/). */
+    licenseUrl?: string;
+    /** Verbatim copyright notice line attached by the source publisher. */
+    copyright?: string;
+    /**
+     * Mandatory attribution lines that must appear in the rendered
+     * artefact. Aggregated by the export pipeline across all manifest
+     * entries; deduplicated so a single SBLGNT attribution renders once
+     * per artefact regardless of how many Greek words are cited.
+     */
+    requiredAttribution?: string[];
 }
 
 export interface ExegeticalStudy {

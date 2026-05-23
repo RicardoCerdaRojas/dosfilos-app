@@ -1,6 +1,6 @@
 import { IUserProfileRepository, User, Subscription } from '@dosfilos/domain';
-import type { SupportedLanguage } from '@dosfilos/domain';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import type { SupportedLanguage, UpdateDeclaredConfessionInput } from '@dosfilos/domain';
+import { addDoc, collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 export class FirebaseUserProfileRepository implements IUserProfileRepository {
@@ -50,9 +50,57 @@ export class FirebaseUserProfileRepository implements IUserProfileRepository {
             stripeCustomerId: data.stripeCustomerId,
             subscription: data.subscription ? this.mapSubscription(data.subscription) : undefined,
             preferredLanguage: data.preferredLanguage,
+            featureFlags: data.featureFlags ?? undefined,
+            declaredConfession: data.declaredConfession ?? undefined,
+            confessionAffirmedAt: data.confessionAffirmedAt?.toDate?.() ?? undefined,
+            confessionVisibility: data.confessionVisibility ?? undefined,
             createdAt: data.createdAt?.toDate() ?? new Date(),
             updatedAt: data.updatedAt?.toDate() ?? new Date(),
         };
+    }
+
+    async updateDeclaredConfession(
+        userId: string,
+        input: UpdateDeclaredConfessionInput,
+    ): Promise<void> {
+        const docRef = doc(db, this.collection, userId);
+        // Read previous values so the audit row captures the transition.
+        // Best-effort; if it fails we still proceed with the write.
+        let previousConfession: string | null = null;
+        let previousVisibility: string | null = null;
+        try {
+            const prevSnap = await getDoc(docRef);
+            if (prevSnap.exists()) {
+                const data = prevSnap.data();
+                previousConfession = data.declaredConfession ?? null;
+                previousVisibility = data.confessionVisibility ?? null;
+            }
+        } catch {
+            // ignore — audit metadata is best-effort
+        }
+
+        await setDoc(docRef, {
+            declaredConfession: input.declaredConfession,
+            confessionVisibility: input.confessionVisibility ?? 'private',
+            confessionAffirmedAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        }, { merge: true });
+
+        // Write an audit row so the trail keeps every confession change. The
+        // collection is flat (not a user subcollection) so the admin audit
+        // dashboard can aggregate across users without per-user reads.
+        try {
+            await addDoc(collection(db, 'confessionChangeAudit'), {
+                userId,
+                previousConfession,
+                previousVisibility,
+                newConfession: input.declaredConfession,
+                newVisibility: input.confessionVisibility ?? 'private',
+                changedAt: serverTimestamp(),
+            });
+        } catch (err) {
+            console.error('[confession-audit] failed to write audit row:', err);
+        }
     }
 
     async updatePreferredLanguage(userId: string, language: SupportedLanguage): Promise<void> {
