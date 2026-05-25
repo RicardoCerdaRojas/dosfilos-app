@@ -1,0 +1,754 @@
+{
+  "schema_version": "1.0.0",
+  "project": "Doctrinal and Historical Sources for RAG",
+  "default_language_policy": {
+    "preferred_ingestion_language": "English",
+    "spanish_usage_note": "Use Spanish translations only if the translation is public domain, openly licensed, created internally, or used with explicit permission.",
+    "generated_translation_policy": "If the system generates a Spanish translation from a public-domain English source, mark it as an internal/generated translation and cite the original source."
+  },
+  "authority_policy": {
+    "final_authority": "Scripture",
+    "confessional_documents": "Historical and doctrinal witnesses subordinate to Scripture.",
+    "modern_statements": "Useful as modern evangelical doctrinal references, but not equivalent to historic creeds or confessions.",
+    "citation_rule": "Never cite a confession, creed, catechism, or modern statement as the final authority over a biblical passage. Use it as historical, theological, or confessional support."
+  },
+  "global_rag_rules": {
+    "allowed_ingestion_statuses": [
+      "approved_full_ingestion",
+      "approved_metadata_only",
+      "requires_manual_review"
+    ],
+    "copyright_warning": "Do not ingest modern copyrighted works in full unless explicit permission or a compatible open license exists.",
+    "chunk_metadata_required": [
+      "source_id",
+      "title",
+      "short_title",
+      "source_type",
+      "tradition",
+      "year",
+      "rights_status",
+      "license",
+      "source_url",
+      "section_reference",
+      "citation_label"
+    ],
+    "citation_display_required": true,
+    "recommended_chunking": {
+      "creeds": "Chunk by article, paragraph, or doctrinal section.",
+      "catechisms": "Chunk by question and answer.",
+      "confessions": "Chunk by chapter and paragraph.",
+      "biblical_texts": "Chunk by book, chapter, and verse.",
+      "modern_statements": "Do not ingest full text unless permission exists. Use metadata, summary, and brief quotations only."
+    }
+  },
+  "sources": [
+    {
+      "source_id": "schaff-creeds-vol-1",
+      "title": "Creeds of Christendom, Volume I: The History of Creeds",
+      "short_title": "Schaff, Creeds Vol. I",
+      "author_or_editor": "Philip Schaff",
+      "year": 1877,
+      "source_type": "Historical collection",
+      "tradition": "Cross-denominational",
+      "language": "English",
+      "rights_status": "Public domain historical work; verify edition-specific metadata before ingestion.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://archive.org/details/creedsofchristen01scha",
+      "download_url": "https://archive.org/details/creedsofchristen01scha",
+      "rag_use": [
+        "Historical background on creeds and confessions",
+        "Contextual reference for doctrinal development",
+        "Secondary historical support in essays and articles"
+      ],
+      "do_not_use_for": [
+        "Final biblical authority",
+        "Replacing direct exegesis of Scripture"
+      ],
+      "citation": {
+        "short": "Schaff, Creeds of Christendom, Vol. I",
+        "footnote": "Philip Schaff, Creeds of Christendom, vol. 1, The History of Creeds (New York: Harper & Brothers, 1877), section {section_reference}.",
+        "bibliography": "Schaff, Philip. Creeds of Christendom. Vol. 1, The History of Creeds. New York: Harper & Brothers, 1877.",
+        "rag_display": "Source: Philip Schaff, Creeds of Christendom, Vol. I, {section_reference}."
+      }
+    },
+    {
+      "source_id": "schaff-creeds-vol-2",
+      "title": "Creeds of Christendom, Volume II: The Greek and Latin Creeds",
+      "short_title": "Schaff, Creeds Vol. II",
+      "author_or_editor": "Philip Schaff",
+      "year": 1877,
+      "source_type": "Historical collection",
+      "tradition": "Early church / ecumenical creeds",
+      "language": "English, Greek, Latin",
+      "rights_status": "Public domain historical work; verify edition-specific metadata before ingestion.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://www.ccel.org/ccel/schaff/creeds2.html",
+      "download_url": "https://www.ccel.org/ccel/schaff/creeds2.html",
+      "rag_use": [
+        "Ecumenical creeds",
+        "Trinitarian doctrine",
+        "Christology",
+        "Historical theological comparison"
+      ],
+      "recommended_documents_inside": [
+        "Apostles' Creed",
+        "Nicene Creed",
+        "Athanasian Creed",
+        "Definition of Chalcedon"
+      ],
+      "citation": {
+        "short": "Schaff, Creeds of Christendom, Vol. II",
+        "footnote": "Philip Schaff, Creeds of Christendom, vol. 2, The Greek and Latin Creeds (New York: Harper & Brothers, 1877), {section_reference}.",
+        "bibliography": "Schaff, Philip. Creeds of Christendom. Vol. 2, The Greek and Latin Creeds. New York: Harper & Brothers, 1877.",
+        "rag_display": "Source: Philip Schaff, Creeds of Christendom, Vol. II, {section_reference}."
+      }
+    },
+    {
+      "source_id": "schaff-creeds-vol-3",
+      "title": "Creeds of Christendom, Volume III: The Evangelical Protestant Creeds",
+      "short_title": "Schaff, Creeds Vol. III",
+      "author_or_editor": "Philip Schaff",
+      "year": 1877,
+      "source_type": "Historical collection",
+      "tradition": "Protestant",
+      "language": "English",
+      "rights_status": "Public domain historical work; verify edition-specific metadata before ingestion.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://www.ccel.org/ccel/schaff/creeds3.html",
+      "download_url": "https://www.ccel.org/ccel/schaff/creeds3.html",
+      "rag_use": [
+        "Comparative Protestant confessions",
+        "Reformation theology",
+        "Confessional comparison in essays and studies"
+      ],
+      "recommended_documents_inside": [
+        "Augsburg Confession",
+        "Thirty-Nine Articles",
+        "Heidelberg Catechism",
+        "Belgic Confession",
+        "Canons of Dort",
+        "Westminster Confession",
+        "Savoy Declaration"
+      ],
+      "citation": {
+        "short": "Schaff, Creeds of Christendom, Vol. III",
+        "footnote": "Philip Schaff, Creeds of Christendom, vol. 3, The Evangelical Protestant Creeds (New York: Harper & Brothers, 1877), {section_reference}.",
+        "bibliography": "Schaff, Philip. Creeds of Christendom. Vol. 3, The Evangelical Protestant Creeds. New York: Harper & Brothers, 1877.",
+        "rag_display": "Source: Philip Schaff, Creeds of Christendom, Vol. III, {section_reference}."
+      }
+    },
+    {
+      "source_id": "apostles-creed",
+      "title": "The Apostles' Creed",
+      "short_title": "Apostles' Creed",
+      "year": "Early church; received Western form developed over time",
+      "source_type": "Ecumenical creed",
+      "tradition": "Ancient Christian",
+      "language": "Latin / English",
+      "rights_status": "Public domain historical text; use a public-domain edition.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://www.ccel.org/ccel/schaff/creeds2.html",
+      "download_url": "https://www.ccel.org/ccel/schaff/creeds2.html",
+      "rag_use": [
+        "Basic Christian doctrine",
+        "Trinity",
+        "Incarnation",
+        "Death and resurrection of Christ",
+        "Judgment",
+        "Church and resurrection"
+      ],
+      "citation": {
+        "short": "Apostles' Creed",
+        "footnote": "The Apostles' Creed, in Philip Schaff, Creeds of Christendom, vol. 2, The Greek and Latin Creeds (New York: Harper & Brothers, 1877), {section_reference}.",
+        "bibliography": "The Apostles' Creed. In Philip Schaff, Creeds of Christendom, Vol. 2, The Greek and Latin Creeds. New York: Harper & Brothers, 1877.",
+        "rag_display": "Source: The Apostles' Creed, {section_reference}."
+      }
+    },
+    {
+      "source_id": "nicene-creed",
+      "title": "The Nicene-Constantinopolitan Creed",
+      "short_title": "Nicene Creed",
+      "year": "325 / 381",
+      "source_type": "Ecumenical creed",
+      "tradition": "Ancient Christian",
+      "language": "Greek / Latin / English",
+      "rights_status": "Public domain historical text; use a public-domain edition.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://www.ccel.org/ccel/schaff/creeds2.html",
+      "download_url": "https://www.ccel.org/ccel/schaff/creeds2.html",
+      "rag_use": [
+        "Doctrine of God",
+        "Trinity",
+        "Deity of Christ",
+        "Doctrine of the Holy Spirit",
+        "Christological orthodoxy"
+      ],
+      "citation": {
+        "short": "Nicene Creed",
+        "footnote": "The Nicene-Constantinopolitan Creed, in Philip Schaff, Creeds of Christendom, vol. 2, The Greek and Latin Creeds (New York: Harper & Brothers, 1877), {section_reference}.",
+        "bibliography": "The Nicene-Constantinopolitan Creed. In Philip Schaff, Creeds of Christendom, Vol. 2, The Greek and Latin Creeds. New York: Harper & Brothers, 1877.",
+        "rag_display": "Source: Nicene-Constantinopolitan Creed, {section_reference}."
+      }
+    },
+    {
+      "source_id": "definition-of-chalcedon",
+      "title": "Definition of Chalcedon",
+      "short_title": "Chalcedonian Definition",
+      "year": 451,
+      "source_type": "Ecumenical creed / conciliar definition",
+      "tradition": "Ancient Christian",
+      "language": "Greek / Latin / English",
+      "rights_status": "Public domain historical text; use a public-domain edition.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://www.ccel.org/ccel/schaff/npnf214.xi.xiii.html",
+      "download_url": "https://www.ccel.org/ccel/schaff/npnf214.xi.xiii.html",
+      "rag_use": [
+        "Christology",
+        "Hypostatic union",
+        "One person and two natures of Christ",
+        "Guardrails against Christological error"
+      ],
+      "citation": {
+        "short": "Chalcedonian Definition",
+        "footnote": "The Definition of Chalcedon, in Philip Schaff and Henry Wace, eds., Nicene and Post-Nicene Fathers, Second Series, vol. 14, The Seven Ecumenical Councils (New York: Christian Literature Publishing, 1900), {section_reference}.",
+        "bibliography": "The Definition of Chalcedon. In Nicene and Post-Nicene Fathers, Second Series, Vol. 14, The Seven Ecumenical Councils. Edited by Philip Schaff and Henry Wace. New York: Christian Literature Publishing, 1900.",
+        "rag_display": "Source: Definition of Chalcedon, {section_reference}."
+      }
+    },
+    {
+      "source_id": "athanasian-creed",
+      "title": "The Athanasian Creed",
+      "short_title": "Athanasian Creed",
+      "year": "Probably 5th–6th century",
+      "source_type": "Western creed",
+      "tradition": "Ancient Western Christian",
+      "language": "Latin / English",
+      "rights_status": "Public domain historical text; use a public-domain edition.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://www.ccel.org/ccel/schaff/creeds2.html",
+      "download_url": "https://www.ccel.org/ccel/schaff/creeds2.html",
+      "rag_use": [
+        "Trinity",
+        "Classical theism",
+        "Christology",
+        "Doctrinal boundaries"
+      ],
+      "citation": {
+        "short": "Athanasian Creed",
+        "footnote": "The Athanasian Creed, in Philip Schaff, Creeds of Christendom, vol. 2, The Greek and Latin Creeds (New York: Harper & Brothers, 1877), {section_reference}.",
+        "bibliography": "The Athanasian Creed. In Philip Schaff, Creeds of Christendom, Vol. 2, The Greek and Latin Creeds. New York: Harper & Brothers, 1877.",
+        "rag_display": "Source: The Athanasian Creed, {section_reference}."
+      }
+    },
+    {
+      "source_id": "westminster-confession",
+      "title": "The Westminster Confession of Faith",
+      "short_title": "WCF",
+      "year": 1646,
+      "source_type": "Confession",
+      "tradition": "Reformed / Presbyterian",
+      "language": "English",
+      "rights_status": "Public domain historical text; use a public-domain edition.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://www.ccel.org/creeds/westminster-confession.txt",
+      "download_url": "https://www.ccel.org/creeds/westminster-confession.txt",
+      "rag_use": [
+        "Systematic doctrine",
+        "Doctrine of Scripture",
+        "God's decree",
+        "Covenant theology",
+        "Christology",
+        "Soteriology",
+        "Church",
+        "Sacraments",
+        "Christian life"
+      ],
+      "citation": {
+        "short": "WCF {section_reference}",
+        "footnote": "The Westminster Confession of Faith, {section_reference}.",
+        "bibliography": "The Westminster Confession of Faith. 1646.",
+        "rag_display": "Source: Westminster Confession of Faith, {section_reference}."
+      },
+      "example_section_reference": "1.1"
+    },
+    {
+      "source_id": "westminster-shorter-catechism",
+      "title": "The Westminster Shorter Catechism",
+      "short_title": "WSC",
+      "year": 1647,
+      "source_type": "Catechism",
+      "tradition": "Reformed / Presbyterian",
+      "language": "English",
+      "rights_status": "Public domain historical text; use a public-domain edition.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://www.ccel.org/creeds/westminster-shorter-cat.html",
+      "download_url": "https://www.ccel.org/creeds/westminster-shorter-cat.html",
+      "rag_use": [
+        "Basic doctrine",
+        "Discipleship",
+        "Catechesis",
+        "Concise doctrinal definitions"
+      ],
+      "citation": {
+        "short": "WSC Q&A {section_reference}",
+        "footnote": "The Westminster Shorter Catechism, Q&A {section_reference}.",
+        "bibliography": "The Westminster Shorter Catechism. 1647.",
+        "rag_display": "Source: Westminster Shorter Catechism, Q&A {section_reference}."
+      },
+      "example_section_reference": "1"
+    },
+    {
+      "source_id": "westminster-larger-catechism",
+      "title": "The Westminster Larger Catechism",
+      "short_title": "WLC",
+      "year": 1647,
+      "source_type": "Catechism",
+      "tradition": "Reformed / Presbyterian",
+      "language": "English",
+      "rights_status": "Public domain historical text; use a public-domain edition.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://www.ccel.org/ccel/anonymous/westminster2.html",
+      "download_url": "https://www.ccel.org/ccel/anonymous/westminster2.html",
+      "rag_use": [
+        "Detailed doctrinal instruction",
+        "Ethics",
+        "Ten Commandments",
+        "Lord's Prayer",
+        "Sacraments",
+        "Pastoral teaching"
+      ],
+      "citation": {
+        "short": "WLC Q&A {section_reference}",
+        "footnote": "The Westminster Larger Catechism, Q&A {section_reference}.",
+        "bibliography": "The Westminster Larger Catechism. 1647.",
+        "rag_display": "Source: Westminster Larger Catechism, Q&A {section_reference}."
+      },
+      "example_section_reference": "4"
+    },
+    {
+      "source_id": "london-baptist-confession-1689",
+      "title": "The London Baptist Confession of Faith of 1689",
+      "short_title": "2LBCF / 1689 LBCF",
+      "year": 1689,
+      "source_type": "Confession",
+      "tradition": "Reformed Baptist",
+      "language": "English",
+      "rights_status": "Historical text is public domain; verify the specific digital edition and added editorial material.",
+      "license": "Public Domain for historical text; edition may include additional permissions or restrictions.",
+      "ingestion_status": "approved_full_ingestion_for_historical_text_only",
+      "risk_level": "low_to_medium",
+      "source_url": "https://www.chapellibrary.org/pdf/books/lbcw.pdf",
+      "download_url": "https://www.chapellibrary.org/pdf/books/lbcw.pdf",
+      "rag_use": [
+        "Reformed Baptist doctrine",
+        "Doctrine of Scripture",
+        "Covenant theology",
+        "Soteriology",
+        "Church",
+        "Baptism",
+        "Lord's Supper"
+      ],
+      "special_handling": [
+        "Index the historical confession text.",
+        "Review whether appendices, introductions, and editorial notes are public domain or separately licensed before ingestion."
+      ],
+      "citation": {
+        "short": "1689 LBCF {section_reference}",
+        "footnote": "The London Baptist Confession of Faith of 1689, {section_reference}.",
+        "bibliography": "The London Baptist Confession of Faith of 1689.",
+        "rag_display": "Source: London Baptist Confession of Faith of 1689, {section_reference}."
+      },
+      "example_section_reference": "1.1"
+    },
+    {
+      "source_id": "baptist-catechism-1693",
+      "title": "The Baptist Catechism",
+      "short_title": "Baptist Catechism",
+      "year": 1693,
+      "source_type": "Catechism",
+      "tradition": "Reformed Baptist",
+      "language": "English",
+      "rights_status": "Historical text is public domain; verify the specific digital edition and added editorial material.",
+      "license": "Public Domain for historical text; edition may include additional permissions or restrictions.",
+      "ingestion_status": "approved_full_ingestion_for_historical_text_only",
+      "risk_level": "low_to_medium",
+      "source_url": "https://www.chapellibrary.org/pdf/books/lbcw.pdf",
+      "download_url": "https://www.chapellibrary.org/pdf/books/lbcw.pdf",
+      "rag_use": [
+        "Catechesis",
+        "Reformed Baptist discipleship",
+        "Basic doctrinal instruction"
+      ],
+      "citation": {
+        "short": "Baptist Catechism Q&A {section_reference}",
+        "footnote": "The Baptist Catechism, Q&A {section_reference}.",
+        "bibliography": "The Baptist Catechism. 1693.",
+        "rag_display": "Source: Baptist Catechism, Q&A {section_reference}."
+      },
+      "example_section_reference": "1"
+    },
+    {
+      "source_id": "belgic-confession",
+      "title": "The Belgic Confession",
+      "short_title": "Belgic Confession",
+      "year": 1561,
+      "source_type": "Confession",
+      "tradition": "Continental Reformed",
+      "language": "English",
+      "rights_status": "Public domain historical text; use a public-domain edition.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://en.wikisource.org/wiki/The_Constitution_of_the_Reformed_Dutch_Church_of_North_America/The_Confession_of_Faith",
+      "download_url": "https://en.wikisource.org/wiki/The_Constitution_of_the_Reformed_Dutch_Church_of_North_America/The_Confession_of_Faith",
+      "rag_use": [
+        "Continental Reformed doctrine",
+        "Doctrine of Scripture",
+        "Trinity",
+        "Christology",
+        "Church",
+        "Sacraments"
+      ],
+      "citation": {
+        "short": "Belgic Confession, Art. {section_reference}",
+        "footnote": "The Belgic Confession, Article {section_reference}.",
+        "bibliography": "The Belgic Confession. 1561.",
+        "rag_display": "Source: Belgic Confession, Article {section_reference}."
+      },
+      "example_section_reference": "7"
+    },
+    {
+      "source_id": "heidelberg-catechism",
+      "title": "The Heidelberg Catechism",
+      "short_title": "Heidelberg Catechism",
+      "year": 1563,
+      "source_type": "Catechism",
+      "tradition": "Continental Reformed",
+      "language": "English",
+      "rights_status": "Public domain historical text; use a public-domain edition.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://en.wikisource.org/wiki/The_Heidelberg_Catechism",
+      "download_url": "https://en.wikisource.org/wiki/The_Heidelberg_Catechism",
+      "rag_use": [
+        "Pastoral theology",
+        "Comfort in Christ",
+        "Sin, salvation, gratitude",
+        "Catechesis",
+        "Devotional teaching"
+      ],
+      "citation": {
+        "short": "Heidelberg Catechism Q&A {section_reference}",
+        "footnote": "The Heidelberg Catechism, Q&A {section_reference}.",
+        "bibliography": "The Heidelberg Catechism. 1563.",
+        "rag_display": "Source: Heidelberg Catechism, Q&A {section_reference}."
+      },
+      "example_section_reference": "1"
+    },
+    {
+      "source_id": "canons-of-dort",
+      "title": "The Canons of Dort",
+      "short_title": "Canons of Dort",
+      "year": 1619,
+      "source_type": "Canons / doctrinal judgment",
+      "tradition": "Continental Reformed",
+      "language": "English",
+      "rights_status": "Public domain historical text; use a public-domain edition.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://en.wikisource.org/wiki/The_Constitution_of_the_Reformed_Dutch_Church_of_North_America/Canons_of_the_Synod_of_Dordrecht",
+      "download_url": "https://en.wikisource.org/wiki/The_Constitution_of_the_Reformed_Dutch_Church_of_North_America/Canons_of_the_Synod_of_Dordrecht",
+      "rag_use": [
+        "Soteriology",
+        "Election",
+        "Atonement",
+        "Total depravity",
+        "Irresistible grace",
+        "Perseverance of the saints",
+        "Reformed response to Arminianism"
+      ],
+      "citation": {
+        "short": "Canons of Dort {section_reference}",
+        "footnote": "The Canons of Dort, {section_reference}.",
+        "bibliography": "The Canons of Dort. 1619.",
+        "rag_display": "Source: Canons of Dort, {section_reference}."
+      },
+      "example_section_reference": "I.7"
+    },
+    {
+      "source_id": "augsburg-confession",
+      "title": "The Augsburg Confession",
+      "short_title": "Augsburg Confession",
+      "year": 1530,
+      "source_type": "Confession",
+      "tradition": "Lutheran",
+      "language": "English",
+      "rights_status": "Public domain historical text; use a public-domain edition.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://www.gutenberg.org/ebooks/275",
+      "download_url": "https://www.gutenberg.org/ebooks/275",
+      "rag_use": [
+        "Reformation theology",
+        "Justification",
+        "Sacraments",
+        "Comparative Protestant doctrine"
+      ],
+      "citation": {
+        "short": "Augsburg Confession, Art. {section_reference}",
+        "footnote": "The Augsburg Confession, Article {section_reference}.",
+        "bibliography": "The Augsburg Confession. 1530.",
+        "rag_display": "Source: Augsburg Confession, Article {section_reference}."
+      },
+      "example_section_reference": "IV"
+    },
+    {
+      "source_id": "thirty-nine-articles",
+      "title": "The Thirty-Nine Articles of Religion",
+      "short_title": "Thirty-Nine Articles",
+      "year": 1571,
+      "source_type": "Articles of religion",
+      "tradition": "Anglican / Reformed Anglican",
+      "language": "English",
+      "rights_status": "Public domain according to CCEL metadata for this edition.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://ccel.org/ccel/cofe/39articles/index.html",
+      "download_url": "https://ccel.org/ccel/cofe/39articles/index.html",
+      "rag_use": [
+        "Anglican Protestant doctrine",
+        "Reformation comparison",
+        "Scripture",
+        "Justification",
+        "Church",
+        "Sacraments"
+      ],
+      "citation": {
+        "short": "Thirty-Nine Articles, Art. {section_reference}",
+        "footnote": "The Thirty-Nine Articles of Religion, Article {section_reference}.",
+        "bibliography": "The Thirty-Nine Articles of Religion. 1571.",
+        "rag_display": "Source: Thirty-Nine Articles of Religion, Article {section_reference}."
+      },
+      "example_section_reference": "VI"
+    },
+    {
+      "source_id": "savoy-declaration",
+      "title": "The Savoy Declaration of Faith and Order",
+      "short_title": "Savoy Declaration",
+      "year": 1658,
+      "source_type": "Confession",
+      "tradition": "Congregational Reformed",
+      "language": "English",
+      "rights_status": "Public domain historical text; use a public-domain edition.",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://www.ccel.org/ccel/schaff/creeds3.v.i.i.html",
+      "download_url": "https://www.ccel.org/ccel/schaff/creeds3.v.i.i.html",
+      "rag_use": [
+        "Congregational polity",
+        "Reformed doctrine",
+        "Comparison with Westminster",
+        "Church order"
+      ],
+      "citation": {
+        "short": "Savoy Declaration {section_reference}",
+        "footnote": "The Savoy Declaration of Faith and Order, {section_reference}.",
+        "bibliography": "The Savoy Declaration of Faith and Order. 1658.",
+        "rag_display": "Source: Savoy Declaration of Faith and Order, {section_reference}."
+      },
+      "example_section_reference": "Chapter 1.1"
+    },
+    {
+      "source_id": "sblgnt",
+      "title": "The Greek New Testament: SBL Edition",
+      "short_title": "SBLGNT",
+      "author_or_editor": "Michael W. Holmes, editor",
+      "year": 2010,
+      "source_type": "Biblical text",
+      "tradition": "Greek New Testament critical text",
+      "language": "Greek",
+      "rights_status": "Openly licensed under Creative Commons Attribution 4.0 International.",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "copyright_notice": "Copyright 2010 Logos Bible Software and the Society of Biblical Literature",
+      "ingestion_status": "approved_full_ingestion_with_attribution",
+      "risk_level": "low",
+      "source_url": "https://sblgnt.com/",
+      "download_url": "https://sblgnt.com/download/",
+      "rag_use": [
+        "Greek New Testament citation",
+        "Original-language study",
+        "Lexical and syntactical analysis",
+        "Exegetical comparison"
+      ],
+      "required_attribution": [
+        "Identify title: The Greek New Testament: SBL Edition",
+        "Identify editor: Michael W. Holmes",
+        "Include copyright notice",
+        "Include license name and URL",
+        "Indicate changes such as segmentation, normalization, tokenization, or embedding generation"
+      ],
+      "citation": {
+        "short": "SBLGNT {section_reference}",
+        "footnote": "The Greek New Testament: SBL Edition, ed. Michael W. Holmes, {section_reference}. Copyright 2010 Logos Bible Software and the Society of Biblical Literature. Licensed under CC BY 4.0.",
+        "bibliography": "Holmes, Michael W., ed. The Greek New Testament: SBL Edition. Logos Bible Software and the Society of Biblical Literature, 2010. Licensed under Creative Commons Attribution 4.0 International.",
+        "rag_display": "Greek text: SBLGNT, {section_reference}. Licensed under CC BY 4.0."
+      },
+      "example_section_reference": "John 1:1"
+    },
+    {
+      "source_id": "chicago-statement-inerrancy-1978",
+      "title": "The Chicago Statement on Biblical Inerrancy",
+      "short_title": "CSBI",
+      "year": 1978,
+      "source_type": "Modern evangelical doctrinal statement",
+      "tradition": "Conservative evangelical",
+      "language": "English",
+      "rights_status": "Copyrighted modern document. Do not ingest full text without permission.",
+      "license": "All rights reserved / permission required",
+      "ingestion_status": "approved_metadata_only",
+      "risk_level": "high_for_full_ingestion",
+      "source_url": "https://library.dts.edu/Pages/TL/Special/ICBI.shtml",
+      "download_url": null,
+      "rag_use": [
+        "Modern reference for inerrancy",
+        "Doctrine of Scripture",
+        "Evangelical doctrinal comparison",
+        "Brief quotation with citation where legally appropriate",
+        "Summary generated by your system from permitted notes"
+      ],
+      "do_not_use_for": [
+        "Full-text ingestion without permission",
+        "Large-scale reproduction",
+        "Treating it as an ecclesiastical confession equal to historic confessions"
+      ],
+      "special_handling": [
+        "Store metadata only.",
+        "Store a short internally written summary.",
+        "Store external URL.",
+        "Allow only brief quotations if legally appropriate.",
+        "Seek written permission before full-text indexing."
+      ],
+      "citation": {
+        "short": "Chicago Statement on Biblical Inerrancy, Art. {section_reference}",
+        "footnote": "International Council on Biblical Inerrancy, The Chicago Statement on Biblical Inerrancy (1978), Article {section_reference}.",
+        "bibliography": "International Council on Biblical Inerrancy. The Chicago Statement on Biblical Inerrancy. 1978.",
+        "rag_display": "Reference: Chicago Statement on Biblical Inerrancy, Article {section_reference}. Full text not indexed; cited as a modern evangelical doctrinal statement."
+      },
+      "example_section_reference": "XVIII"
+    },
+    {
+      "source_id": "chicago-statement-hermeneutics-1982",
+      "title": "The Chicago Statement on Biblical Hermeneutics",
+      "short_title": "CSBH",
+      "year": 1982,
+      "source_type": "Modern evangelical doctrinal statement",
+      "tradition": "Conservative evangelical",
+      "language": "English",
+      "rights_status": "Copyrighted modern document. Do not ingest full text without permission.",
+      "license": "All rights reserved / permission required",
+      "ingestion_status": "approved_metadata_only",
+      "risk_level": "high_for_full_ingestion",
+      "source_url": "https://library.dts.edu/Pages/TL/Special/ICBI.shtml",
+      "download_url": null,
+      "rag_use": [
+        "Modern reference for biblical hermeneutics",
+        "Historical-grammatical interpretation",
+        "Evangelical hermeneutical boundaries",
+        "Brief quotation with citation where legally appropriate"
+      ],
+      "special_handling": [
+        "Store metadata only.",
+        "Store a short internally written summary.",
+        "Seek permission before full-text indexing."
+      ],
+      "citation": {
+        "short": "Chicago Statement on Biblical Hermeneutics, Art. {section_reference}",
+        "footnote": "International Council on Biblical Inerrancy, The Chicago Statement on Biblical Hermeneutics (1982), Article {section_reference}.",
+        "bibliography": "International Council on Biblical Inerrancy. The Chicago Statement on Biblical Hermeneutics. 1982.",
+        "rag_display": "Reference: Chicago Statement on Biblical Hermeneutics, Article {section_reference}. Full text not indexed; cited as a modern evangelical doctrinal statement."
+      },
+      "example_section_reference": "XV"
+    },
+    {
+      "source_id": "chicago-statement-application-1986",
+      "title": "The Chicago Statement on Biblical Application",
+      "short_title": "CSBA",
+      "year": 1986,
+      "source_type": "Modern evangelical doctrinal statement",
+      "tradition": "Conservative evangelical",
+      "language": "English",
+      "rights_status": "Copyrighted modern document. Do not ingest full text without permission.",
+      "license": "All rights reserved / permission required",
+      "ingestion_status": "approved_metadata_only",
+      "risk_level": "high_for_full_ingestion",
+      "source_url": "https://library.dts.edu/Pages/TL/Special/ICBI.shtml",
+      "download_url": null,
+      "rag_use": [
+        "Modern reference for applying Scripture",
+        "Ethics",
+        "Church and society",
+        "Evangelical doctrinal comparison"
+      ],
+      "special_handling": [
+        "Store metadata only.",
+        "Store a short internally written summary.",
+        "Seek permission before full-text indexing."
+      ],
+      "citation": {
+        "short": "Chicago Statement on Biblical Application, Art. {section_reference}",
+        "footnote": "International Council on Biblical Inerrancy, The Chicago Statement on Biblical Application (1986), Article {section_reference}.",
+        "bibliography": "International Council on Biblical Inerrancy. The Chicago Statement on Biblical Application. 1986.",
+        "rag_display": "Reference: Chicago Statement on Biblical Application, Article {section_reference}. Full text not indexed; cited as a modern evangelical doctrinal statement."
+      },
+      "example_section_reference": "1"
+    }
+  ],
+  "citation_output_rules": {
+    "sermon": {
+      "style": "Readable pastoral citation",
+      "example": "Como resume la Confesión de Westminster 1.1, Dios quiso dejar su revelación por escrito para preservar y propagar la verdad."
+    },
+    "bible_study": {
+      "style": "Document + section",
+      "example": "Véase Westminster Confession of Faith 1.1; Heidelberg Catechism Q&A 1."
+    },
+    "essay_or_article": {
+      "style": "Footnote or bibliography-ready citation",
+      "example": "The Westminster Confession of Faith, 1.1."
+    },
+    "rag_answer": {
+      "style": "Transparent source label",
+      "example": "Source: Westminster Confession of Faith, 1.1. Historical confessional reference subordinate to Scripture."
+    },
+    "modern_statement_warning": {
+      "style": "Rights-aware citation",
+      "example": "Reference: Chicago Statement on Biblical Inerrancy, Article XVIII. Full text not indexed; cited as a modern evangelical doctrinal statement."
+    }
+  }
+}

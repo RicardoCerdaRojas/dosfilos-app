@@ -18,6 +18,7 @@ export type AdminAuditAction =
     | 'user.extend_trial'
     | 'user.set_feature_flags'
     | 'core_library.ingest'
+    | 'core_library.seed_ingest'
     | 'core_library.tag_doctrine_levels'
     | 'core_library.update_doctrine_level'
     | 'cross_references.ingest';

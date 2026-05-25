@@ -92,6 +92,49 @@ export default function CoreLibraryAdmin() {
     // Audit dialog state
     const [isAuditOpen, setIsAuditOpen] = useState(false);
 
+    // CORE seed ingest + system-source resources surfacing (Phase 0 deuda).
+    // Loaded separately from the per-store tabs because system sources are
+    // not bound to user-assigned `coreStores` keys.
+    const [isIngestingSeed, setIsIngestingSeed] = useState(false);
+    const [systemSources, setSystemSources] = useState<any[]>([]);
+    const [systemSourcesLoading, setSystemSourcesLoading] = useState(false);
+
+    const loadSystemSources = async () => {
+        try {
+            setSystemSourcesLoading(true);
+            const docs = await coreLibraryAdminService.getSystemSourceResources();
+            setSystemSources(docs);
+        } catch (err: any) {
+            console.error('[CoreLibraryAdmin] failed to load system sources:', err);
+        } finally {
+            setSystemSourcesLoading(false);
+        }
+    };
+
+    const handleIngestSeed = async () => {
+        const ok = await askConfirm({
+            title: 'Ingestar seed CORE Library',
+            description:
+                'Escribe los 8 recursos no-confesionales del JSON canónico (SBLGNT, Schaff x3, Chicago x3) en library_resources. Idempotente — re-ejecutar es seguro. Las 14 confesiones ya viven en /confessions/ y se omiten aquí.',
+            confirmLabel: 'Ingestar seed',
+        });
+        if (!ok) return;
+        try {
+            setIsIngestingSeed(true);
+            const result = await coreLibraryAdminService.ingestLibrarySeedSources();
+            toast.success(
+                `Seed ingest completo — ${result.written} recursos escritos, ${result.skipped} omitidos (ya en /confessions/)`,
+            );
+            await loadSystemSources();
+            await loadConfig();
+        } catch (err: any) {
+            console.error('[ingestLibrarySeed] error:', err);
+            toast.error(`Error: ${err.message}`);
+        } finally {
+            setIsIngestingSeed(false);
+        }
+    };
+
     // Legacy Gemini File Search controls have been retired. Kept as a const false so
     // all `{advancedMode && ...}` branches compile out to nothing without requiring
     // invasive edits (Fase B/C will delete those branches entirely).
@@ -271,6 +314,8 @@ export default function CoreLibraryAdmin() {
             .getAgents()
             .then(setAgents)
             .catch(err => console.error('Failed to load agents:', err));
+        loadSystemSources();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const tutorsForStoreId = (storeId: string | null | undefined) =>
@@ -1163,6 +1208,18 @@ export default function CoreLibraryAdmin() {
                             Migrar Quotas
                         </Button>
                     )}
+                    <Button
+                        onClick={handleIngestSeed}
+                        variant="outline"
+                        size="sm"
+                        disabled={isIngestingSeed || !!batchOperation.type}
+                        title="Ingesta los recursos no-confesionales del JSON canónico de CORE Library (SBLGNT, Schaff, Chicago) en /library_resources. Idempotente."
+                    >
+                        {isIngestingSeed
+                            ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            : <Sparkles className="h-4 w-4 mr-2" />}
+                        Ingestar seed CORE
+                    </Button>
                     <Button onClick={loadConfig} variant="outline" size="sm" disabled={!!batchOperation.type}>
                         <RefreshCw className="h-4 w-4 mr-2" />
                         Actualizar
@@ -1689,6 +1746,42 @@ export default function CoreLibraryAdmin() {
                                                                                 Solo metadata
                                                                             </Badge>
                                                                         )}
+                                                                        {(file as any).riskLevel && (file as any).riskLevel !== 'low' && (
+                                                                            <Badge
+                                                                                variant="secondary"
+                                                                                className={cn(
+                                                                                    'text-[10px] px-1.5 py-0 border-transparent',
+                                                                                    (file as any).riskLevel === 'high_for_full_ingestion'
+                                                                                        ? 'bg-destructive/15 text-destructive'
+                                                                                        : 'bg-warning/15 text-warning'
+                                                                                )}
+                                                                                title={`Risk level: ${(file as any).riskLevel}`}
+                                                                            >
+                                                                                {(file as any).riskLevel === 'high_for_full_ingestion'
+                                                                                    ? 'Riesgo alto'
+                                                                                    : (file as any).riskLevel === 'low_to_medium'
+                                                                                        ? 'Riesgo medio'
+                                                                                        : (file as any).riskLevel}
+                                                                            </Badge>
+                                                                        )}
+                                                                        {(file as any).doctrineLevel && (
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className="text-[10px] px-1.5 py-0"
+                                                                                title={`Doctrine level: ${(file as any).doctrineLevel}`}
+                                                                            >
+                                                                                {(file as any).doctrineLevel}
+                                                                            </Badge>
+                                                                        )}
+                                                                        {Array.isArray((file as any).requiredAttribution) && (file as any).requiredAttribution.length > 0 && (
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className="text-[10px] px-1.5 py-0"
+                                                                                title={`Attribution requerida: ${(file as any).requiredAttribution.length} requisitos`}
+                                                                            >
+                                                                                Attrib ({(file as any).requiredAttribution.length})
+                                                                            </Badge>
+                                                                        )}
                                                                     </div>
                                                                 </TableCell>
                                                                 {advancedMode && (
@@ -1799,6 +1892,98 @@ export default function CoreLibraryAdmin() {
                 </div>
             )}
             </div>
+
+            {/* CORE Seed (sistema) — recursos canónicos del JSON seed
+                que viven en library_resources con isSystemSource=true.
+                Independiente de los stores (un mismo recurso puede no estar
+                asignado a ningún store y aún así formar parte del catálogo
+                canónico).  */}
+            <Card className="mt-6">
+                <CardHeader>
+                    <div className="flex items-center justify-between gap-4">
+                        <div>
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <Sparkles className="h-4 w-4 text-primary" />
+                                CORE Seed (sistema)
+                            </CardTitle>
+                            <CardDescription>
+                                Recursos del JSON canónico de CORE Library ingestados con metadata rights-aware completa.
+                                Las 14 confesiones viven en /confessions/ y se omiten aquí.
+                            </CardDescription>
+                        </div>
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={loadSystemSources}
+                            disabled={systemSourcesLoading}
+                            title="Recargar recursos sistema"
+                        >
+                            {systemSourcesLoading
+                                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                : <RefreshCw className="h-3.5 w-3.5" />}
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    {systemSources.length === 0 ? (
+                        <div className="text-sm text-muted-foreground py-6 text-center">
+                            {systemSourcesLoading ? 'Cargando…' : 'Ningún recurso sistema ingestado todavía. Click "Ingestar seed CORE" para poblar.'}
+                        </div>
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Recurso</TableHead>
+                                    <TableHead>Tradición</TableHead>
+                                    <TableHead className="w-[140px]">Licencia</TableHead>
+                                    <TableHead className="w-[180px]">Ingestion status</TableHead>
+                                    <TableHead className="w-[110px]">Riesgo</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {systemSources.map((doc: any) => (
+                                    <TableRow key={doc.id}>
+                                        <TableCell>
+                                            <div className="font-medium text-sm">{doc.title}</div>
+                                            <div className="text-xs text-muted-foreground">
+                                                {doc.author ?? '—'} · {doc.year ?? '—'}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-xs text-muted-foreground">
+                                            {doc.tradition ?? '—'}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className="text-[10px] font-mono">
+                                                {doc.license ?? 'unknown'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge
+                                                variant="secondary"
+                                                className={cn(
+                                                    'text-[10px]',
+                                                    doc.ingestionStatus === 'approved_metadata_only'
+                                                        ? 'bg-destructive/15 text-destructive border-transparent'
+                                                        : doc.ingestionStatus === 'requires_manual_review'
+                                                            ? 'bg-warning/15 text-warning border-transparent'
+                                                            : 'bg-success/15 text-success border-transparent'
+                                                )}
+                                            >
+                                                {doc.ingestionStatus ?? '—'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className="text-[10px]">
+                                                {doc.riskLevel ?? '—'}
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                </CardContent>
+            </Card>
             </div>
 
             {/* Reusable confirmation dialog */}

@@ -369,6 +369,60 @@ export class CoreLibraryAdminService {
         return result.data;
     }
 
+    /**
+     * Triggers the CORE Library seed ingest — writes the non-confession
+     * sources from [docs/pastoral-fidelity/data/core-library-seed.json]
+     * into `/library_resources` with full rights-aware metadata. Idempotent
+     * (uses `source_id` as the Firestore doc id, `merge: true`).
+     *
+     * Confession sources are skipped here because they already live in
+     * `/confessions/` via PR 0.2 (`ingestCoreLibraryConfessions`).
+     */
+    async ingestLibrarySeedSources(): Promise<{
+        success: boolean;
+        written: number;
+        skipped: number;
+        report: Array<{
+            sourceId: string;
+            status: 'written' | 'skipped-confession';
+            license: string;
+            ingestionStatus: string;
+        }>;
+    }> {
+        const fn = httpsCallable<
+            Record<string, never>,
+            {
+                success: boolean;
+                written: number;
+                skipped: number;
+                report: Array<{
+                    sourceId: string;
+                    status: 'written' | 'skipped-confession';
+                    license: string;
+                    ingestionStatus: string;
+                }>;
+            }
+        >(getFunctions(), 'ingestLibrarySeedSources');
+        const result = await fn({});
+        return result.data;
+    }
+
+    /**
+     * Returns every doc in `/library_resources` flagged
+     * `isSystemSource === true` — used by the "CORE Seed" tab in
+     * `CoreLibraryAdmin` so admins can see the canonical seed entries
+     * regardless of `coreStores` assignment.
+     */
+    async getSystemSourceResources(): Promise<AdminLibraryResource[]> {
+        const db = getFirestore();
+        const q = query(
+            collection(db, this.RESOURCES),
+            where('isSystemSource', '==', true),
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(d => applyRightsDefaults({ id: d.id, ...(d.data() as any) }));
+    }
+
     // ── LlamaParse multi-account monitoring (Hito 6) ──────────────────────
 
     /**
