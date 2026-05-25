@@ -10,7 +10,6 @@ import { useSmartTriggers } from '@/hooks/useSmartTriggers';
 import { useLibrarySync } from '@/hooks/library';
 import { FloatingHelpButton } from '@/components/onboarding';
 import { DashboardTour, useDashboardTourTrigger } from '@/components/onboarding/DashboardTour';
-import { ConfessionBanner } from '@/components/onboarding/ConfessionBanner';
 
 export function DashboardLayout() {
   const location = useLocation();
@@ -65,7 +64,6 @@ export function DashboardLayout() {
           // Apps that need full height control (no parent scroll, no parent padding)
           isFullScreen ? "overflow-hidden h-full" : "overflow-y-auto bg-muted/40 p-4 md:p-2"
         )}>
-          {!isFullScreen && <ConfessionBanner />}
           <Outlet />
         </main>
       </SidebarInset>
