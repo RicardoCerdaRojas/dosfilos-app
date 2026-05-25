@@ -360,7 +360,8 @@ export class LibraryResourceEntity implements LibraryResource {
         preferredForPhases?: WorkflowPhase[],
         metadata?: Record<string, any>,
         public pageCount?: number,
-        coreStores?: ('exegesis' | 'homiletics' | 'generic')[]
+        coreStores?: ('exegesis' | 'homiletics' | 'generic')[],
+        isSystemSource?: boolean
     ) {
         if (preferredForPhases) {
             this.preferredForPhases = preferredForPhases;
@@ -371,6 +372,9 @@ export class LibraryResourceEntity implements LibraryResource {
         if (coreStores) {
             this.coreStores = coreStores;
         }
+        if (isSystemSource) {
+            this.isSystemSource = isSystemSource;
+        }
         this.validate();
     }
 
@@ -378,9 +382,18 @@ export class LibraryResourceEntity implements LibraryResource {
         if (!this.title || this.title.trim().length < 3) {
             throw new Error('El título del recurso debe tener al menos 3 caracteres');
         }
-        // System sources and text-only seeds carry their content
-        // inline via `textContent` and don't need a Cloud Storage
-        // object. Either is sufficient — require at least one.
+        // System sources (seed catalog ingested from
+        // `core-library-seed.json`) are metadata-only: they describe a
+        // canonical source whose full text either lives elsewhere
+        // (`/confessions/`, public URL) or is intentionally not indexed
+        // (modern statements under `approved_metadata_only`). They
+        // legitimately have neither `storageUrl` nor `textContent`.
+        if (this.isSystemSource) {
+            return;
+        }
+        // User-uploaded resources MUST carry either a Cloud Storage
+        // object or inline text — otherwise extraction/indexing has
+        // nothing to chew on.
         if (!this.storageUrl && !this.textContent) {
             throw new Error('El recurso debe tener una URL de almacenamiento o contenido de texto');
         }

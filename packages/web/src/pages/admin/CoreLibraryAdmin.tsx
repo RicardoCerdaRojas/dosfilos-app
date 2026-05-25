@@ -35,6 +35,45 @@ import { cn } from '@/lib/utils';
 import { MetricCard } from './core-library/MetricCard';
 import { annotateDocumentText, uploadAnnotatedTextToGemini } from './core-library/annotateDocument';
 
+// Spanish display labels for the rights-aware enum vocab that the
+// `core-library-seed.json` brings in. Kept local to this admin page
+// because the source-of-truth lives in `@dosfilos/domain` as raw enum
+// strings — adding i18n keys per value would over-couple the catalog.
+const INGESTION_STATUS_LABELS_ES: Record<string, string> = {
+    approved_full_ingestion: 'Ingesta completa',
+    approved_full_ingestion_with_attribution: 'Ingesta completa con atribución',
+    approved_full_ingestion_for_historical_text_only: 'Ingesta solo texto histórico',
+    approved_metadata_only: 'Solo metadata',
+    requires_manual_review: 'Requiere revisión manual',
+};
+
+const RISK_LEVEL_LABELS_ES: Record<string, string> = {
+    low: 'Bajo',
+    low_to_medium: 'Medio bajo',
+    medium: 'Medio',
+    high_for_full_ingestion: 'Alto (ingesta completa)',
+};
+
+/**
+ * Renders a long license string in a compact form. The seed JSON ships
+ * sentence-style license clauses for `_for_historical_text_only`
+ * sources (e.g. "Public Domain for historical text; edition may
+ * include additional permissions or restrictions."). The admin table
+ * gets unreadable when those expand a column, so we surface a short
+ * label + the full string as a tooltip.
+ */
+function compactLicenseLabel(license: string | undefined | null): string {
+    if (!license) return 'Sin clasificar';
+    if (license === 'unknown') return 'Sin clasificar';
+    if (license.startsWith('Public Domain for historical text')) {
+        return 'Public Domain (histórico)';
+    }
+    if (license.startsWith('All rights reserved')) {
+        return 'Reservados';
+    }
+    return license;
+}
+
 interface StoreConfig {
     stores: Record<string, string | null>;
     files: Record<string, any[]>;
@@ -1995,8 +2034,12 @@ export default function CoreLibraryAdmin() {
                                             {doc.tradition ?? '—'}
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant="outline" className="text-[10px] font-mono">
-                                                {doc.license ?? 'unknown'}
+                                            <Badge
+                                                variant="outline"
+                                                className="text-[10px] font-mono"
+                                                title={doc.license ?? 'unknown'}
+                                            >
+                                                {compactLicenseLabel(doc.license)}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
@@ -2010,13 +2053,18 @@ export default function CoreLibraryAdmin() {
                                                             ? 'bg-warning/15 text-warning border-transparent'
                                                             : 'bg-success/15 text-success border-transparent'
                                                 )}
+                                                title={doc.ingestionStatus ?? '—'}
                                             >
-                                                {doc.ingestionStatus ?? '—'}
+                                                {INGESTION_STATUS_LABELS_ES[doc.ingestionStatus] ?? doc.ingestionStatus ?? '—'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant="outline" className="text-[10px]">
-                                                {doc.riskLevel ?? '—'}
+                                            <Badge
+                                                variant="outline"
+                                                className="text-[10px]"
+                                                title={doc.riskLevel ?? '—'}
+                                            >
+                                                {RISK_LEVEL_LABELS_ES[doc.riskLevel] ?? doc.riskLevel ?? '—'}
                                             </Badge>
                                         </TableCell>
                                     </TableRow>
