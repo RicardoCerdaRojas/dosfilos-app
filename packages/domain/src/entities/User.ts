@@ -145,25 +145,24 @@ export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];
 export type FeatureFlags = Partial<Record<FeatureFlagName, boolean>>;
 
 /**
- * Declared confessional identity (ADR-007). Free-form string so we can
- * accept any `Confession.id` from the catalog plus the synthetic
- * `'non-confessional'` option for pastors who don't subscribe to a
- * historic confession.
+ * @deprecated Per [ADR-010](docs/pastoral-fidelity/decisions/ADR-010-confessional-witnesses-default-on.md)
+ * the single-anchor model is replaced by multi-witness default-on. The
+ * field stays on `User` for historical data preservation but is NOT
+ * consumed by Phase 2 Testigo 3 anymore. New code should use
+ * `useConfessionalWitnesses` instead.
  */
 export type DeclaredConfessionId = string;
 
 /**
- * `'non-confessional'` is the only non-catalog value Phase 0 ships. The
- * three-witness mechanism treats it as "no Testigo 3" — no doctrinal
- * gate, only the cross-reference + claim/source witnesses fire.
+ * @deprecated Same lifecycle as `DeclaredConfessionId` — kept for data
+ * preservation, no longer consumed. New "non-confessional" flow uses
+ * `useConfessionalWitnesses: false`.
  */
 export const NON_CONFESSIONAL: DeclaredConfessionId = 'non-confessional';
 
 /**
- * Visibility of a pastor's declared confession. Default `'private'`
- * per ADR-007 § Q3. `'public-in-profile'` becomes available once a
- * public pastoral profile feature lands; until then the toggle is
- * dormant.
+ * Visibility of a pastor's declared confession. Default `'private'`.
+ * Kept for backwards compat with users who declared under ADR-007/009.
  */
 export type ConfessionVisibility = 'private' | 'public-in-profile';
 
@@ -209,13 +208,27 @@ export interface User {
     featureFlags?: FeatureFlags;
 
     /**
-     * Pastoral Fidelity (ADR-007) — declared confessional identity.
-     * Persisted from the onboarding wizard or `/settings/confession`.
-     * Powers Testigo 3 in the three-witness mechanism (Phase 2).
+     * @deprecated Per ADR-010, single-anchor model retired. Field
+     * preserved for historical data only. Multi-witness mode is now
+     * controlled by `useConfessionalWitnesses`.
      */
     declaredConfession?: DeclaredConfessionId;
     confessionAffirmedAt?: Date;
     confessionVisibility?: ConfessionVisibility;
+
+    /**
+     * Pastoral Fidelity (ADR-010) — whether the three-witness mechanism
+     * uses **all** confessional traditions in the catalog as historical
+     * witnesses (Testigo 3).
+     *
+     * Default `true` because historical theology is constitutive of the
+     * method per the manifesto, not opt-in. Pastor can flip OFF in
+     * `/settings/confession` with a written justification recorded in
+     * `confessionChangeAudit/`. When OFF, only `core` ecumenical
+     * doctrines still fire (universal, non-negotiable); `distinctive`
+     * and `open-evangelical` checks are silenced.
+     */
+    useConfessionalWitnesses?: boolean;
 
     createdAt: Date;
     updatedAt: Date;

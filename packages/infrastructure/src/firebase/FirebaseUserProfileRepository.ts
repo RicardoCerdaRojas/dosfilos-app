@@ -1,5 +1,9 @@
 import { IUserProfileRepository, User, Subscription } from '@dosfilos/domain';
-import type { SupportedLanguage, UpdateDeclaredConfessionInput } from '@dosfilos/domain';
+import type {
+    SupportedLanguage,
+    UpdateDeclaredConfessionInput,
+    UpdateConfessionalWitnessesInput,
+} from '@dosfilos/domain';
 import { addDoc, collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
@@ -54,6 +58,9 @@ export class FirebaseUserProfileRepository implements IUserProfileRepository {
             declaredConfession: data.declaredConfession ?? undefined,
             confessionAffirmedAt: data.confessionAffirmedAt?.toDate?.() ?? undefined,
             confessionVisibility: data.confessionVisibility ?? undefined,
+            // ADR-010 default: multi-witness mode is ON unless the pastor
+            // has explicitly opted out. Absent field = enabled.
+            useConfessionalWitnesses: data.useConfessionalWitnesses !== false,
             createdAt: data.createdAt?.toDate() ?? new Date(),
             updatedAt: data.updatedAt?.toDate() ?? new Date(),
         };
@@ -100,6 +107,53 @@ export class FirebaseUserProfileRepository implements IUserProfileRepository {
             });
         } catch (err) {
             console.error('[confession-audit] failed to write audit row:', err);
+        }
+    }
+
+    async updateConfessionalWitnesses(
+        userId: string,
+        input: UpdateConfessionalWitnessesInput,
+    ): Promise<void> {
+        if (!input.useConfessionalWitnesses) {
+            const justification = (input.justification ?? '').trim();
+            if (justification.length < 50) {
+                throw new Error(
+                    'Opting out of confessional witnesses requires a written justification of at least 50 characters.',
+                );
+            }
+        }
+
+        const docRef = doc(db, this.collection, userId);
+        let previousValue: boolean | null = null;
+        try {
+            const prevSnap = await getDoc(docRef);
+            if (prevSnap.exists()) {
+                const data = prevSnap.data();
+                previousValue =
+                    typeof data.useConfessionalWitnesses === 'boolean'
+                        ? data.useConfessionalWitnesses
+                        : true; // ADR-010 absent field = enabled
+            }
+        } catch {
+            // best-effort
+        }
+
+        await setDoc(docRef, {
+            useConfessionalWitnesses: input.useConfessionalWitnesses,
+            updatedAt: serverTimestamp(),
+        }, { merge: true });
+
+        try {
+            await addDoc(collection(db, 'confessionChangeAudit'), {
+                userId,
+                kind: 'witnesses-toggle',
+                previousValue,
+                newValue: input.useConfessionalWitnesses,
+                justification: input.justification ?? null,
+                changedAt: serverTimestamp(),
+            });
+        } catch (err) {
+            console.error('[confession-audit] failed to write witnesses audit row:', err);
         }
     }
 

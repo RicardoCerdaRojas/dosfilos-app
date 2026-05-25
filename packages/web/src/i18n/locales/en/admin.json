@@ -191,6 +191,7 @@
         "rowActions": {
             "activity": "View activity",
             "view": "View",
+            "openDetail": "Full detail",
             "viewActivity": "View detailed activity",
             "changePlan": "Change plan",
             "resetQuota": "Reset monthly quotas",

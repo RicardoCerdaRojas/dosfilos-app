@@ -39,6 +39,18 @@
             "devotional-content": {
                 "title": "Crea tu primer devocional con la facultad",
                 "cta": "Abrir Facultad"
+            },
+            "expository-series": {
+                "title": "Planifica tu primera serie expositiva",
+                "cta": "Abrir Planificador"
+            },
+            "counseling-course": {
+                "title": "Estructura tu curso de consejería",
+                "cta": "Abrir Facultad"
+            },
+            "explore": {
+                "title": "Explora la plataforma a tu ritmo",
+                "cta": "Abrir Dashboard"
             }
         }
     },
@@ -385,30 +397,30 @@
         }
     },
     "confession": {
-        "banner": {
-            "title": "Declara tu confesión teológica",
-            "description": "Para activar el flujo de fidelidad pastoral necesitamos saber bajo qué tradición trabajas. Privada por defecto.",
-            "cta": "Declarar"
-        },
         "settings": {
-            "title": "Confesión declarada",
+            "title": "Testigos confesionales",
             "back": "Volver",
-            "explainer": "Esta declaración orienta el contraste doctrinal del asistente. Privada por defecto. Cada cambio queda registrado en audit log.",
-            "lastAffirmed": "Última afirmación",
-            "pickLabel": "Selecciona tu confesión",
-            "visibilityLabel": "Visibilidad",
-            "visibilityHelp": "Privada solo se usa internamente. Pública aparece en tu perfil pastoral (cuando exista esa feature).",
-            "visibility": {
-                "private": "Privada",
-                "public-in-profile": "Pública"
-            },
+            "explainer": "El asistente compara tus convicciones con las tradiciones confesionales históricas (Westminster, Heidelberg, Augsburgo, etc.) como testigos del trabajo exegético que la iglesia fiel ha hecho. El texto bíblico sigue siendo la autoridad — las tradiciones solo confirman tu lectura o señalan bordes donde tensiona doctrinas distintivas. Activado por defecto como parte del método. Cada cambio queda registrado en audit log.",
+            "toggleLabel": "Comparación con tradiciones históricas",
+            "toggleHelp": "Cuando está activo, las 14 tradiciones confesionales actúan como testigos en doctrinas distintivas. Las doctrinas core (Trinidad, Calcedonia, etc.) siempre se verifican, independiente de este toggle.",
+            "statusOn": "Activo",
+            "statusOff": "Desactivado",
+            "optOutWarning": "Desactivar este toggle silencia parte del método pastoral. Las doctrinas core (ecuménicas universales) siguen verificándose, pero las distintivas y los disensos legítimos no. Si tienes una razón específica para hacerlo, regístrala abajo.",
+            "justificationLabel": "Justificación (mínimo 50 caracteres)",
+            "justificationPlaceholder": "Explica por qué quieres operar sin testigos confesionales. Por ejemplo: \"Estoy preparando material exclusivamente exegético sin contraste doctrinal explícito\" o \"Sesión académica de análisis textual puro\".",
+            "charsMin": "caracteres mínimo",
+            "rosterLabel": "Tradiciones activas como testigos",
+            "rosterHelp": "Las 14 tradiciones del catálogo CORE Library. Cuando el toggle está activo, todas actúan como testigos pluraless — no se selecciona una sola tradición rectora.",
             "cancel": "Cancelar",
-            "save": "Guardar"
+            "save": "Guardar",
+            "toasts": {
+                "enabled": "Testigos confesionales activados",
+                "disabled": "Testigos confesionales desactivados — registrado en audit log",
+                "error": "Error al guardar la configuración"
+            }
         },
         "gate": {
-            "flagDisabled": "El flujo de fidelidad pastoral está deshabilitado para tu cuenta. Contacta al administrador para activarlo.",
-            "confessionRequired": "Para acceder al flujo de fidelidad pastoral declara tu confesión primero.",
-            "declareCta": "Declarar confesión"
+            "flagDisabled": "El flujo de fidelidad pastoral está deshabilitado para tu cuenta. Contacta al administrador para activarlo."
         }
     }
 }

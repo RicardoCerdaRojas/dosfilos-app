@@ -1,7 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Activity, CreditCard, Eye, Loader2, Mail, Trash2, User as UserIcon,
-    UserCheck, UserX, MoreHorizontal, RotateCcw,
+    UserCheck, UserX, MoreHorizontal, RotateCcw, ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -63,6 +64,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
     onDelete,
 }) => {
     const { t, i18n } = useTranslation('admin');
+    const navigate = useNavigate();
     const dateLocale = i18n.language.startsWith('es') ? esLocale : enLocale;
     const rawStatus = user.subscription?.status;
     const isDisabled = user.status === 'disabled';
@@ -178,6 +180,10 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem onSelect={() => navigate(`/dashboard/admin/users/${user.id}`)}>
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                {t('users.rowActions.openDetail')}
+                            </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => onViewActivity(user.id)}>
                                 <Activity className="h-4 w-4 mr-2" />
                                 {t('users.rowActions.activity')}

@@ -39,6 +39,18 @@
             "devotional-content": {
                 "title": "Create your first devotional with the faculty",
                 "cta": "Open Faculty"
+            },
+            "expository-series": {
+                "title": "Plan your first expository series",
+                "cta": "Open Planner"
+            },
+            "counseling-course": {
+                "title": "Structure your counseling course",
+                "cta": "Open Faculty"
+            },
+            "explore": {
+                "title": "Explore the platform at your own pace",
+                "cta": "Open Dashboard"
             }
         }
     },
@@ -385,30 +397,30 @@
         }
     },
     "confession": {
-        "banner": {
-            "title": "Declare your theological confession",
-            "description": "To activate the pastoral fidelity flow we need to know which tradition you work under. Private by default.",
-            "cta": "Declare"
-        },
         "settings": {
-            "title": "Declared confession",
+            "title": "Confessional witnesses",
             "back": "Back",
-            "explainer": "Your declaration anchors the assistant's doctrinal contrast. Private by default. Each change is recorded in the audit log.",
-            "lastAffirmed": "Last affirmed",
-            "pickLabel": "Pick your confession",
-            "visibilityLabel": "Visibility",
-            "visibilityHelp": "Private stays internal. Public appears on your pastoral profile (once that feature ships).",
-            "visibility": {
-                "private": "Private",
-                "public-in-profile": "Public"
-            },
+            "explainer": "The assistant compares your convictions against the historical confessional traditions (Westminster, Heidelberg, Augsburg, etc.) as witnesses to the exegetical work the faithful church has done. The biblical text remains the authority — traditions only confirm your reading or signal edges where it tensions distinctive doctrines. Enabled by default as part of the method. Each change is recorded in the audit log.",
+            "toggleLabel": "Comparison with historical traditions",
+            "toggleHelp": "When active, the 14 confessional traditions act as witnesses on distinctive doctrines. Core doctrines (Trinity, Chalcedon, etc.) are always verified, independent of this toggle.",
+            "statusOn": "Active",
+            "statusOff": "Disabled",
+            "optOutWarning": "Disabling this toggle silences part of the pastoral method. Core doctrines (universal ecumenical) still fire, but distinctives and legitimate disagreements do not. If you have a specific reason, record it below.",
+            "justificationLabel": "Justification (minimum 50 characters)",
+            "justificationPlaceholder": "Explain why you want to operate without confessional witnesses. For example: \"Preparing exclusively exegetical material without explicit doctrinal contrast\" or \"Academic session of pure textual analysis\".",
+            "charsMin": "characters min",
+            "rosterLabel": "Active witness traditions",
+            "rosterHelp": "The 14 traditions from the CORE Library catalog. When the toggle is on, all act as plural witnesses — you do not pick a single anchor tradition.",
             "cancel": "Cancel",
-            "save": "Save"
+            "save": "Save",
+            "toasts": {
+                "enabled": "Confessional witnesses enabled",
+                "disabled": "Confessional witnesses disabled — recorded in audit log",
+                "error": "Failed to save configuration"
+            }
         },
         "gate": {
-            "flagDisabled": "The pastoral fidelity flow is disabled for your account. Contact your administrator to enable it.",
-            "confessionRequired": "Declare your confession first to access the pastoral fidelity flow.",
-            "declareCta": "Declare confession"
+            "flagDisabled": "The pastoral fidelity flow is disabled for your account. Contact your administrator to enable it."
         }
     }
 }

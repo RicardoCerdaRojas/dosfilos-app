@@ -4,7 +4,6 @@ import { useUserProfile } from './useUserProfile';
 export type PastoralFidelityGateReason =
     | 'loading'
     | 'flag-disabled'
-    | 'confession-required'
     | 'allowed';
 
 export interface PastoralFidelityGateResult {
@@ -14,35 +13,56 @@ export interface PastoralFidelityGateResult {
     loading: boolean;
     /** Why the gate decided what it decided — drives the CTA the UI surfaces. */
     reason: PastoralFidelityGateReason;
+    /**
+     * Whether the user has confessional witnesses enabled (ADR-010).
+     * Default `true` unless the pastor explicitly opted out via
+     * `/settings/confession` with a justification. Phase 2 Testigo 3
+     * consumers read this to decide whether `distinctive` and
+     * `open-evangelical` checks fire. `core` ecumenical doctrines fire
+     * regardless of this flag — they are universal.
+     */
+    confessionalWitnessesEnabled: boolean;
 }
 
 /**
- * Gate hook for the Pastoral Fidelity flow ([ADR-007 § Q2](docs/pastoral-fidelity/decisions/ADR-007-phase-0-policy-resolutions.md)).
+ * Gate hook for the Pastoral Fidelity flow.
  *
- * Two requirements:
- *   1. Feature flag `pastoral_fidelity_flow` enabled for the user. Admins
- *      flip this per-user from the Feature Flags tab (PR 0.1).
- *   2. The user has declared a confessional identity (any catalog id or
- *      the synthetic `'non-confessional'`). Without this, Testigo 3 of
- *      the three-witness mechanism cannot anchor — so the flow refuses
- *      to start and pushes the user to `/settings/confession`.
+ * Single hard requirement: feature flag `pastoral_fidelity_flow`
+ * enabled for the user. Admins flip this per-user from the Feature
+ * Flags tab (PR 0.1).
  *
- * Returns a discriminated state so the UI can render exactly the right
- * CTA: loading spinner, "Activar flag" link, "Declarar confesión", or
- * unlocked entry.
+ * Confessional witnesses (ADR-010) is independent of the gate — it's a
+ * pastoral configuration that shapes Phase 2 Testigo 3 behaviour but
+ * never blocks entry. Default ON because the manifesto treats
+ * historical theology as constitutive of the method.
  */
 export function usePastoralFidelityGate(): PastoralFidelityGateResult {
     const { enabled, loading: flagLoading } = useFeatureFlag('pastoral_fidelity_flow');
     const { profile, loading: profileLoading } = useUserProfile();
 
     if (flagLoading || profileLoading) {
-        return { allowed: false, loading: true, reason: 'loading' };
+        return {
+            allowed: false,
+            loading: true,
+            reason: 'loading',
+            confessionalWitnessesEnabled: false,
+        };
     }
     if (!enabled) {
-        return { allowed: false, loading: false, reason: 'flag-disabled' };
+        return {
+            allowed: false,
+            loading: false,
+            reason: 'flag-disabled',
+            confessionalWitnessesEnabled: false,
+        };
     }
-    if (!profile?.declaredConfession) {
-        return { allowed: false, loading: false, reason: 'confession-required' };
-    }
-    return { allowed: true, loading: false, reason: 'allowed' };
+    return {
+        allowed: true,
+        loading: false,
+        reason: 'allowed',
+        // ADR-010 default: absent field = enabled. Only an explicit `false`
+        // (opt-out by the pastor with audit-logged justification) silences
+        // distinctive + open-evangelical witnesses.
+        confessionalWitnessesEnabled: profile?.useConfessionalWitnesses !== false,
+    };
 }

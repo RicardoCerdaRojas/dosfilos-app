@@ -5,64 +5,63 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, BookOpen, Check, Info, Loader2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeft, BookOpen, Info, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useConfessionList } from '@/hooks/useConfessionList';
-import { useDeclaredConfession } from '@/hooks/useDeclaredConfession';
-import {
-    NON_CONFESSIONAL,
-    type ConfessionVisibility,
-    type DeclaredConfessionId,
-} from '@dosfilos/domain';
-import { format } from 'date-fns';
-import { es as esLocale, enUS as enLocale } from 'date-fns/locale';
+import { useUpdateConfessionalWitnesses } from '@/hooks/useUpdateConfessionalWitnesses';
+import { confessionDisplayName, traditionDisplay, yearDisplay } from '@/lib/confessions/displayNames';
 
 /**
- * Page where the pastor edits their declared confession (ADR-007).
+ * `/settings/confession` (ADR-010).
  *
- * Surface for two flows:
- *   1. Backfill — existing users who never went through the new
- *      onboarding wizard reach this page via the persistent
- *      `ConfessionBanner` on the dashboard.
- *   2. Maintenance — any user can revise the declaration later (rare,
- *      but supported with an audit trail).
+ * Single toggle: do you want all confessional traditions in the catalog
+ * to act as Testigo 3 historical witnesses? Default ON because the
+ * manifesto declares historical theology as constitutive of the method,
+ * not opt-in.
  *
- * The page shows when the declaration was last affirmed so the pastor
- * knows the system has it on record. Visibility defaults to `private`;
- * the `public-in-profile` toggle is wired but will only have a
- * downstream consumer once the public pastoral profile feature lands.
+ * Opt-out requires a written justification (≥50 chars) recorded in the
+ * audit log so a future reviewer can see why the pastor chose to silence
+ * a component of the three-witness mechanism.
+ *
+ * The 14 catalog confessions are shown as a read-only roster so the
+ * pastor can see exactly which traditions are speaking when the toggle
+ * is ON. They are not selectable — the model is "all or none", not
+ * single anchor (ADR-001 retired).
  */
 export function ConfessionSettings() {
     const navigate = useNavigate();
     const { user } = useFirebase();
     const { profile, loading: profileLoading } = useUserProfile();
     const { confessions, loading: catalogLoading } = useConfessionList();
-    const { declare, isLoading: saving } = useDeclaredConfession();
+    const { update, isLoading: saving } = useUpdateConfessionalWitnesses();
     const { t, i18n } = useTranslation('dashboard');
-    const dateLocale = i18n.language.startsWith('es') ? esLocale : enLocale;
 
-    const [selected, setSelected] = useState<DeclaredConfessionId | null>(null);
-    const [visibility, setVisibility] = useState<ConfessionVisibility>('private');
+    const currentValue = profile?.useConfessionalWitnesses !== false;
+    const [enabled, setEnabled] = useState<boolean>(currentValue);
+    const [justification, setJustification] = useState('');
 
     useEffect(() => {
-        if (profile?.declaredConfession) {
-            setSelected(profile.declaredConfession);
-            setVisibility(profile.confessionVisibility ?? 'private');
-        }
-    }, [profile?.declaredConfession, profile?.confessionVisibility]);
+        setEnabled(profile?.useConfessionalWitnesses !== false);
+    }, [profile?.useConfessionalWitnesses]);
 
-    const loading = profileLoading || catalogLoading;
-    const dirty =
-        selected != null &&
-        (selected !== profile?.declaredConfession ||
-            visibility !== (profile?.confessionVisibility ?? 'private'));
+    const dirty = enabled !== currentValue;
+    const optingOut = !enabled && dirty;
+    const justificationValid = justification.trim().length >= 50;
+    const canSave = dirty && (!optingOut || justificationValid) && !saving;
 
     const handleSave = async () => {
-        if (!user || !selected) return;
-        await declare(user.uid, selected, visibility);
+        if (!user || !dirty) return;
+        const ok = await update(user.uid, {
+            useConfessionalWitnesses: enabled,
+            justification: optingOut ? justification.trim() : undefined,
+        });
+        if (ok) setJustification('');
     };
+
+    const loading = profileLoading || catalogLoading;
 
     return (
         <div className="p-6 max-w-3xl mx-auto">
@@ -84,102 +83,92 @@ export function ConfessionSettings() {
                 </p>
             </Card>
 
-            {profile?.confessionAffirmedAt && (
-                <Card className="p-4 mb-6">
-                    <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">
-                        {t('confession.settings.lastAffirmed')}
-                    </div>
-                    <div className="text-sm">
-                        {format(new Date(profile.confessionAffirmedAt), 'PPP', { locale: dateLocale })}
-                    </div>
-                </Card>
-            )}
-
-            {loading ? (
-                <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-            ) : (
-                <Card className="p-5 mb-6">
-                    <Label className="text-sm font-semibold mb-3 block">
-                        {t('confession.settings.pickLabel')}
-                    </Label>
-                    <div className="grid sm:grid-cols-2 gap-2 mb-3">
-                        {confessions.map((c) => (
-                            <button
-                                key={c.id}
-                                type="button"
-                                onClick={() => setSelected(c.id)}
-                                className={`
-                                    text-left p-3 rounded-lg border-2 bg-card transition-colors
-                                    ${selected === c.id
-                                        ? 'border-primary bg-primary/5 shadow-sm'
-                                        : 'border-border hover:border-foreground/20'}
-                                `}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-semibold truncate">{c.shortTitle}</div>
-                                        <div className="text-xs text-muted-foreground">
-                                            {c.tradition} · {String(c.year)}
-                                        </div>
-                                    </div>
-                                    {selected === c.id && <Check className="h-4 w-4 text-primary shrink-0" />}
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => setSelected(NON_CONFESSIONAL)}
-                        className={`
-                            w-full text-left p-3 rounded-lg border-2 bg-card transition-colors
-                            ${selected === NON_CONFESSIONAL
-                                ? 'border-primary bg-primary/5 shadow-sm'
-                                : 'border-border hover:border-foreground/20'}
-                        `}
-                    >
-                        <div className="flex items-center gap-2">
-                            <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <div className="text-sm font-semibold">
-                                    {t('onboarding.confession.nonConfessional.title')}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                    {t('onboarding.confession.nonConfessional.description')}
-                                </div>
-                            </div>
-                            {selected === NON_CONFESSIONAL && (
-                                <Check className="h-4 w-4 text-primary shrink-0" />
-                            )}
-                        </div>
-                    </button>
-                </Card>
-            )}
-
             <Card className="p-5 mb-6">
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center justify-between gap-4 mb-4">
                     <div className="flex-1 min-w-0">
-                        <Label className="text-sm font-semibold">
-                            {t('confession.settings.visibilityLabel')}
+                        <Label className="text-sm font-semibold flex items-center gap-2">
+                            {t('confession.settings.toggleLabel')}
+                            {currentValue ? (
+                                <Badge variant="outline" className="text-xs bg-success/15 text-success border-success/30">
+                                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                                    {t('confession.settings.statusOn')}
+                                </Badge>
+                            ) : (
+                                <Badge variant="outline" className="text-xs bg-warning/15 text-warning border-warning/30">
+                                    <AlertTriangle className="h-3 w-3 mr-1" />
+                                    {t('confession.settings.statusOff')}
+                                </Badge>
+                            )}
                         </Label>
                         <p className="text-xs text-muted-foreground mt-1">
-                            {t('confession.settings.visibilityHelp')}
+                            {t('confession.settings.toggleHelp')}
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <Badge variant="outline" className="text-xs">
-                            {t(`confession.settings.visibility.${visibility}`)}
-                        </Badge>
-                        <Switch
-                            checked={visibility === 'public-in-profile'}
-                            onCheckedChange={(next) =>
-                                setVisibility(next ? 'public-in-profile' : 'private')
-                            }
-                        />
-                    </div>
+                    <Switch
+                        checked={enabled}
+                        onCheckedChange={setEnabled}
+                        disabled={saving}
+                    />
                 </div>
+
+                {optingOut && (
+                    <div className="mt-4 p-4 rounded-lg border border-warning/30 bg-warning/5">
+                        <div className="flex items-start gap-2 mb-3">
+                            <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                            <p className="text-xs text-foreground leading-relaxed">
+                                {t('confession.settings.optOutWarning')}
+                            </p>
+                        </div>
+                        <Label className="text-xs font-semibold mb-2 block">
+                            {t('confession.settings.justificationLabel')}
+                        </Label>
+                        <Textarea
+                            value={justification}
+                            onChange={(e) => setJustification(e.target.value)}
+                            placeholder={t('confession.settings.justificationPlaceholder')}
+                            rows={4}
+                            className="text-sm"
+                        />
+                        <p className="text-[11px] text-muted-foreground mt-1.5 tabular-nums">
+                            {justification.trim().length} / 50 {t('confession.settings.charsMin')}
+                        </p>
+                    </div>
+                )}
+            </Card>
+
+            <Card className="p-5 mb-6">
+                <Label className="text-sm font-semibold mb-2 block">
+                    {t('confession.settings.rosterLabel')}
+                </Label>
+                <p className="text-xs text-muted-foreground mb-4">
+                    {t('confession.settings.rosterHelp')}
+                </p>
+                {loading ? (
+                    <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    </div>
+                ) : (
+                    <div className="grid sm:grid-cols-2 gap-2">
+                        {confessions.map((c) => (
+                            <div
+                                key={c.id}
+                                className={`flex items-center gap-2 p-3 rounded-lg border text-sm bg-card ${
+                                    currentValue ? '' : 'opacity-50'
+                                }`}
+                            >
+                                <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-semibold truncate">
+                                        {confessionDisplayName(c.id, c.shortTitle, i18n.language)}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                        {traditionDisplay(c.tradition, i18n.language)} · {yearDisplay(c.year, i18n.language)}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </Card>
 
             <div className="flex items-center justify-end gap-3">
@@ -190,7 +179,7 @@ export function ConfessionSettings() {
                 >
                     {t('confession.settings.cancel')}
                 </Button>
-                <Button onClick={handleSave} disabled={!dirty || saving}>
+                <Button onClick={handleSave} disabled={!canSave}>
                     {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                     {t('confession.settings.save')}
                 </Button>

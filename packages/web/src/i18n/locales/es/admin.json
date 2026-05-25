@@ -15,7 +15,7 @@
         "ingestDescription": "Carga el seed bundled (~12 versos ancla) al colección Firestore. El dataset TSK completo (~340k links) llega en PR follow-up.",
         "ingestSample": "Ingest sample",
         "lookupTitle": "Lookup interactivo",
-        "lookupDescription": "Resolvé paralelos por verso exacto o por pericope (rango startVerse..endVerse).",
+        "lookupDescription": "Resuelve paralelos por verso exacto o por pericope (rango startVerse..endVerse).",
         "book": "Libro",
         "chapter": "Capítulo",
         "verse": "Verso",
@@ -191,6 +191,7 @@
         "rowActions": {
             "activity": "Ver actividad",
             "view": "Ver",
+            "openDetail": "Detalle completo",
             "viewActivity": "Ver actividad detallada",
             "changePlan": "Cambiar plan",
             "resetQuota": "Resetear cuotas mensuales",

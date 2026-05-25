@@ -213,6 +213,11 @@ export class AdminUserQueryService {
                 updatedAt: data.processingBalance.updatedAt?.toDate(),
             } : undefined,
             metadata: data.metadata,
+            featureFlags: data.featureFlags ?? undefined,
+            declaredConfession: data.declaredConfession ?? undefined,
+            confessionAffirmedAt: data.confessionAffirmedAt?.toDate?.() ?? undefined,
+            confessionVisibility: data.confessionVisibility ?? undefined,
+            useConfessionalWitnesses: data.useConfessionalWitnesses !== false,
             createdAt: data.createdAt?.toDate() || new Date(),
             updatedAt: data.updatedAt?.toDate() || new Date(),
         };

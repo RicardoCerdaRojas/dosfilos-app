@@ -291,8 +291,20 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.userId);
     }
 
-    // Sermon Series collection
+    // Sermon Series collection (legacy collection name kept for backward compat)
     match /series/{seriesId} {
+      allow get: if isOwner(resource.data.userId) || isSuperAdmin();
+      allow list: if isAuthenticated() || isSuperAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // Sermon Series collection — canonical collection name used by
+    // FirebaseUserActivityRepository (seriesCollection = 'sermon_series')
+    // and the admin user-detail activity widget. Same access semantics as
+    // /series/.
+    match /sermon_series/{seriesId} {
       allow get: if isOwner(resource.data.userId) || isSuperAdmin();
       allow list: if isAuthenticated() || isSuperAdmin();
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
