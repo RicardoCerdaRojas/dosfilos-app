@@ -135,6 +135,36 @@ export default function CoreLibraryAdmin() {
         }
     };
 
+    // Backfill state — client-side classification of legacy library_resources
+    // docs that pre-date PR 0.3 (no callable; admin owns the docs and writes
+    // directly via Firestore rules).
+    const [isBackfilling, setIsBackfilling] = useState(false);
+
+    const handleBackfillRights = async () => {
+        if (!firebase?.user) return;
+        const ok = await askConfirm({
+            title: 'Backfill licencias de docs legacy',
+            description:
+                'Clasifica heurísticamente los library_resources con license=unknown asignando Public Domain a autores conocidos (Hodge, Spurgeon, Calvin, etc.). Solo toca docs sin clasificar previa. Idempotente.',
+            confirmLabel: 'Ejecutar backfill',
+        });
+        if (!ok) return;
+        try {
+            setIsBackfilling(true);
+            const result = await coreLibraryAdminService.backfillLegacyRightsByAuthor(firebase.user.uid);
+            console.log('[backfill]', result);
+            toast.success(
+                `Backfill completo — ${result.classified} clasificados, ${result.skipped} ya tenían licencia, ${result.unknown} sin match heurístico`,
+            );
+            await loadConfig();
+        } catch (err: any) {
+            console.error('[backfill] error:', err);
+            toast.error(`Error: ${err.message}`);
+        } finally {
+            setIsBackfilling(false);
+        }
+    };
+
     // Legacy Gemini File Search controls have been retired. Kept as a const false so
     // all `{advancedMode && ...}` branches compile out to nothing without requiring
     // invasive edits (Fase B/C will delete those branches entirely).
@@ -1219,6 +1249,18 @@ export default function CoreLibraryAdmin() {
                             ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             : <Sparkles className="h-4 w-4 mr-2" />}
                         Ingestar seed CORE
+                    </Button>
+                    <Button
+                        onClick={handleBackfillRights}
+                        variant="outline"
+                        size="sm"
+                        disabled={isBackfilling || !!batchOperation.type}
+                        title="Clasifica heurísticamente library_resources con license=unknown asignando Public Domain a autores conocidos. Solo afecta docs sin clasificar."
+                    >
+                        {isBackfilling
+                            ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            : <Wand2 className="h-4 w-4 mr-2" />}
+                        Backfill licencias
                     </Button>
                     <Button onClick={loadConfig} variant="outline" size="sm" disabled={!!batchOperation.type}>
                         <RefreshCw className="h-4 w-4 mr-2" />
