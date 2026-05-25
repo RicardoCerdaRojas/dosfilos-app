@@ -33,12 +33,39 @@ export interface AdminLibraryResource {
     textContent?: string;
     textContentUrl?: string;
     coreStores?: string[];
+    // ADR-006 / PR 0.3 — rights-aware citation metadata. Defaults applied
+    // in the service mapping so the admin UI renders "Sin clasificar"
+    // badges on legacy docs without requiring a Firestore backfill.
+    license?: string;
+    licenseUrl?: string;
+    copyrightNotice?: string;
+    ingestionStatus?: string;
+    riskLevel?: string;
+    requiredAttribution?: string[];
+    specialHandling?: string[];
+    doctrineLevel?: string;
     metadata?: {
         geminiUri?: string;
         annotatedGeminiUri?: string;
         annotatedGeminiName?: string;
     };
     [key: string]: any;
+}
+
+/**
+ * Apply conservative rights-aware defaults to legacy `library_resources`
+ * docs that pre-date PR 0.3. Mirrors [FirebaseLibraryRepository.mapResource]
+ * so the admin UI shows the same classification status as runtime citation
+ * resolution. Pre-migration docs land as `unknown` license +
+ * `requires_manual_review` ingestion, which surfaces the "Sin clasificar"
+ * badge in [CoreLibraryAdmin].
+ */
+function applyRightsDefaults(raw: AdminLibraryResource): AdminLibraryResource {
+    return {
+        ...raw,
+        license: raw.license ?? 'unknown',
+        ingestionStatus: raw.ingestionStatus ?? 'requires_manual_review',
+    };
 }
 
 export interface CoreLibraryStoresConfigData {
@@ -146,7 +173,7 @@ export class CoreLibraryAdminService {
         const db = getFirestore();
         const q = query(collection(db, this.RESOURCES), where('userId', '==', userId));
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+        return snapshot.docs.map(d => applyRightsDefaults({ id: d.id, ...(d.data() as any) }));
     }
 
     async getResourcesInStore(userId: string, storeKey: string): Promise<AdminLibraryResource[]> {
@@ -157,7 +184,7 @@ export class CoreLibraryAdminService {
             where('coreStores', 'array-contains', storeKey),
         );
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+        return snapshot.docs.map(d => applyRightsDefaults({ id: d.id, ...(d.data() as any) }));
     }
 
     async findResourceByTitleInStore(
@@ -174,7 +201,7 @@ export class CoreLibraryAdminService {
         );
         const snapshot = await getDocs(q);
         const first = snapshot.docs[0];
-        return first ? ({ id: first.id, ...(first.data() as any) }) : null;
+        return first ? applyRightsDefaults({ id: first.id, ...(first.data() as any) }) : null;
     }
 
     async addResourceToStore(resourceId: string, storeKey: string): Promise<void> {

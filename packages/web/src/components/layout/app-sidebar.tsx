@@ -155,6 +155,7 @@ export function AppSidebar() {
       label: t('groups.account'),
       items: [
         { name: t('menu.settings'), href: '/dashboard/settings', icon: Settings },
+        { name: t('menu.confessionalWitnesses'), href: '/dashboard/settings/confession', icon: BookOpen },
       ],
     },
   ];

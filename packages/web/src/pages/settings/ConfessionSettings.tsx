@@ -39,14 +39,24 @@ export function ConfessionSettings() {
     const { update, isLoading: saving } = useUpdateConfessionalWitnesses();
     const { t, i18n } = useTranslation('dashboard');
 
-    const currentValue = profile?.useConfessionalWitnesses !== false;
-    const [enabled, setEnabled] = useState<boolean>(currentValue);
+    // `useUserProfile` reads once on mount and doesn't reactively refresh
+    // after writes (memoria: tech_debt — single-shot fetch by design). We
+    // shadow the persisted value locally so post-save state is the source
+    // of truth for `currentValue`, otherwise opt-in after opt-out leaves
+    // the page stuck (`dirty === false`, Save button disabled).
+    const [persistedValue, setPersistedValue] = useState<boolean>(
+        profile?.useConfessionalWitnesses !== false,
+    );
+    const [enabled, setEnabled] = useState<boolean>(persistedValue);
     const [justification, setJustification] = useState('');
 
     useEffect(() => {
-        setEnabled(profile?.useConfessionalWitnesses !== false);
+        const next = profile?.useConfessionalWitnesses !== false;
+        setPersistedValue(next);
+        setEnabled(next);
     }, [profile?.useConfessionalWitnesses]);
 
+    const currentValue = persistedValue;
     const dirty = enabled !== currentValue;
     const optingOut = !enabled && dirty;
     const justificationValid = justification.trim().length >= 50;
@@ -58,7 +68,10 @@ export function ConfessionSettings() {
             useConfessionalWitnesses: enabled,
             justification: optingOut ? justification.trim() : undefined,
         });
-        if (ok) setJustification('');
+        if (ok) {
+            setPersistedValue(enabled);
+            setJustification('');
+        }
     };
 
     const loading = profileLoading || catalogLoading;

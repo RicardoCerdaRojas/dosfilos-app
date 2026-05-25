@@ -206,6 +206,10 @@ export class AdminUserQueryService {
                 lastContentCreatedAt: data.analytics.lastContentCreatedAt?.toDate(),
             } : undefined,
             processingBalance: data.processingBalance ? {
+                planStandardPages: data.processingBalance.planStandardPages ?? 0,
+                planPremiumPages: data.processingBalance.planPremiumPages ?? 0,
+                packStandardPages: data.processingBalance.packStandardPages ?? 0,
+                packPremiumPages: data.processingBalance.packPremiumPages ?? 0,
                 standardPagesAvailable: data.processingBalance.standardPagesAvailable ?? 0,
                 premiumPagesAvailable: data.processingBalance.premiumPagesAvailable ?? 0,
                 standardSpentTotal: data.processingBalance.standardSpentTotal ?? 0,

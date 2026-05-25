@@ -19,13 +19,14 @@ Análisis fundacional: ver [00-vision.md](./00-vision.md).
 | 0 | Foundations (onboarding confesional + arquitectura) | `completed` | [phase-0-foundations.md](./phases/phase-0-foundations.md) |
 | 1 | Six-step spine como Step 1 del wizard | `planning` | [phase-1-six-step-spine.md](./phases/phase-1-six-step-spine.md) |
 | 2 | Tres testigos para validar semilla pastoral | `planning` | [phase-2-three-witnesses.md](./phases/phase-2-three-witnesses.md) |
+| 2.5 | Study Depth Copilot (gate Faculty + medición multidimensional) | `planning` | [phase-2-5-study-depth-copilot.md](./phases/phase-2-5-study-depth-copilot.md) |
 | 3 | Pass de fidelidad claim↔source en borrador | `planning` | [phase-3-claim-source-fidelity.md](./phases/phase-3-claim-source-fidelity.md) |
 | 4 | Indicador de autoría + contra-scan + voice fingerprint | `planning` | [phase-4-authorship-contrascan-voice.md](./phases/phase-4-authorship-contrascan-voice.md) |
 | 5 | Proyecto como contenedor + artefactos derivados | `planning` | [phase-5-project-as-container.md](./phases/phase-5-project-as-container.md) |
 | 6 | Planner como runway de formación | `planning` | [phase-6-planner-runway.md](./phases/phase-6-planner-runway.md) |
 | 7 | Exégesis reform (mismo marco aplicado al paper académico) | `planning` | [phase-7-exegesis-reform.md](./phases/phase-7-exegesis-reform.md) |
 
-**Última actualización**: 2026-05-23 — Phase 0 **cerrada**. 8 PRs shippeados: feature flag infra, confession catalog (14 fuentes + 4 creeds full + 7 stubs), rights-aware schema con SBLGNT attribution (CC BY-SA 4.0), doctrineLevel tagging LLM-curated, TSK cross-reference engine (sample seed), onboarding confesional obligatorio, banner + /settings/confession + flag gating, UI audit con 12 hallazgos. Fase 1 (six-step spine) lista para arranque.
+**Última actualización**: 2026-05-25 — Phase 0 **cerrada**. 8 PRs shippeados + ADR-009 + ADR-010 (smoke test refinements: opt-in confesional → multi-witness default-on; banner eliminado; pre-generation gate framework conceptual). Nueva **Fase 2.5 Study Depth Copilot** insertada entre Fase 2 y 3 — engine de medición multidimensional + confrontación soft para path Faculty (cierra gap PR #214 donde 1 Q&A permite generar sermón). Fase 1 (six-step spine) sigue lista para arranque. **Deudas identificadas durante smoke test** documentadas en [proposals/faculty-sermon-rag-enrichment.md](./proposals/faculty-sermon-rag-enrichment.md) (techo citacional Faculty path) — PR follow-up.
 
 ## Protocolo de sesión
 
