@@ -217,7 +217,9 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
             data.updatedAt?.toDate() || new Date(),
             data.preferredForPhases || undefined,
             data.metadata || undefined,
-            data.pageCount || undefined
+            data.pageCount || undefined,
+            data.coreStores || undefined,
+            data.isSystemSource === true,
         );
         // Add new fields directly
         (resource as any).textContentUrl = data.textContentUrl || undefined;

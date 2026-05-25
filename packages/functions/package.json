@@ -5,7 +5,7 @@
     "main": "./dist/index.js",
     "scripts": {
         "build": "tsc && npm run copy-assets",
-        "copy-assets": "mkdir -p dist/admin/confessions/data dist/admin/cross-references/data && cp -R src/admin/confessions/data/. dist/admin/confessions/data/ && cp -R src/admin/cross-references/data/. dist/admin/cross-references/data/",
+        "copy-assets": "mkdir -p dist/admin/confessions/data dist/admin/cross-references/data dist/admin/coreLibrary/data && cp -R src/admin/confessions/data/. dist/admin/confessions/data/ && cp -R src/admin/cross-references/data/. dist/admin/cross-references/data/ && cp -R src/admin/coreLibrary/data/. dist/admin/coreLibrary/data/",
         "serve": "npm run build && firebase emulators:start --only functions",
         "shell": "npm run build && firebase functions:shell",
         "deploy": "npm run build && firebase deploy --only functions",

@@ -118,6 +118,7 @@ export { tagConfessionDoctrineLevels } from './admin/confessions/tagDoctrineLeve
 export { updateSectionDoctrineLevel } from './admin/confessions/updateSectionDoctrineLevel';
 export { ingestBibleCrossReferences } from './admin/cross-references/ingestCrossReferences';
 export { lookupCrossReferences } from './admin/cross-references/lookupCrossReferences';
+export { ingestLibrarySeedSources } from './admin/coreLibrary/ingestLibrarySeed';
 
 
 

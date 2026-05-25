@@ -68,6 +68,79 @@ function applyRightsDefaults(raw: AdminLibraryResource): AdminLibraryResource {
     };
 }
 
+/**
+ * Heuristic classification used by `backfillLegacyRightsByAuthor`.
+ * Conservative on purpose: only authors whose works are unambiguously
+ * public domain (died > 95 years ago / pre-1929 originals) get the
+ * `Public Domain` + `approved_full_ingestion` combination. Modern
+ * commentary writers and unknown authors stay in `requires_manual_review`
+ * so the admin still has to triage them. The function returns `null`
+ * when nothing definitive can be inferred — the caller leaves those docs
+ * as `unknown` so the "Sin clasificar" badge stays visible.
+ */
+interface RightsClassification {
+    license: string;
+    ingestionStatus: string;
+    riskLevel: string;
+}
+
+const PUBLIC_DOMAIN_AUTHORS = new Set<string>([
+    'Charles Hodge',
+    'Hodge, Charles',
+    'Charles Spurgeon',
+    'Charles H. Spurgeon',
+    'C.H. Spurgeon',
+    'C. H. Spurgeon',
+    'Spurgeon',
+    'John Calvin',
+    'Calvin, John',
+    'Calvino',
+    'Juan Calvino',
+    'Martin Luther',
+    'Lutero',
+    'Augustine',
+    'Augustine of Hippo',
+    'Agustín',
+    'San Agustín',
+    'Jonathan Edwards',
+    'Matthew Henry',
+    'John Owen',
+    'John Bunyan',
+    'B.B. Warfield',
+    'Benjamin B. Warfield',
+    'Warfield',
+    'A.A. Hodge',
+    'Archibald Alexander Hodge',
+    'J. Gresham Machen',
+    'Machen',
+    'Geerhardus Vos',
+    'Philip Schaff',
+    'Schaff',
+    'Henrique Farfan',
+    'Henríque Farfan',
+    'Enrique Farfán',
+    'Henrique Fárfán',
+]);
+
+function classifyByAuthor(
+    author: string | undefined | null,
+    _title: string | undefined | null,
+): RightsClassification | null {
+    if (!author) return null;
+    const normalized = author.trim();
+    if (!normalized) return null;
+
+    if (PUBLIC_DOMAIN_AUTHORS.has(normalized)) {
+        return {
+            license: 'Public Domain',
+            ingestionStatus: 'approved_full_ingestion',
+            riskLevel: 'low',
+        };
+    }
+
+    return null;
+}
+
 export interface CoreLibraryStoresConfigData {
     stores: Record<string, string | null>;
     files: Record<string, any[]>;
@@ -367,6 +440,160 @@ export class CoreLibraryAdminService {
         const fn = httpsCallable(getFunctions(), name);
         const result = await fn({});
         return result.data;
+    }
+
+    /**
+     * Triggers the CORE Library seed ingest — writes the non-confession
+     * sources from [docs/pastoral-fidelity/data/core-library-seed.json]
+     * into `/library_resources` with full rights-aware metadata. Idempotent
+     * (uses `source_id` as the Firestore doc id, `merge: true`).
+     *
+     * Confession sources are skipped here because they already live in
+     * `/confessions/` via PR 0.2 (`ingestCoreLibraryConfessions`).
+     */
+    async ingestLibrarySeedSources(): Promise<{
+        success: boolean;
+        written: number;
+        skipped: number;
+        report: Array<{
+            sourceId: string;
+            status: 'written' | 'skipped-confession';
+            license: string;
+            ingestionStatus: string;
+        }>;
+    }> {
+        const fn = httpsCallable<
+            Record<string, never>,
+            {
+                success: boolean;
+                written: number;
+                skipped: number;
+                report: Array<{
+                    sourceId: string;
+                    status: 'written' | 'skipped-confession';
+                    license: string;
+                    ingestionStatus: string;
+                }>;
+            }
+        >(getFunctions(), 'ingestLibrarySeedSources');
+        const result = await fn({});
+        return result.data;
+    }
+
+    /**
+     * Returns every doc in `/library_resources` flagged
+     * `isSystemSource === true` — used by the "CORE Seed" tab in
+     * `CoreLibraryAdmin` so admins can see the canonical seed entries
+     * regardless of `coreStores` assignment.
+     */
+    async getSystemSourceResources(): Promise<AdminLibraryResource[]> {
+        const db = getFirestore();
+        const q = query(
+            collection(db, this.RESOURCES),
+            where('isSystemSource', '==', true),
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(d => applyRightsDefaults({ id: d.id, ...(d.data() as any) }));
+    }
+
+    /**
+     * Classify legacy `library_resources` docs that pre-date PR 0.3 — sets
+     * `license` + `ingestionStatus` + `riskLevel` per a small heuristic
+     * table keyed off `author`. Touches only docs where `license` is
+     * absent or `'unknown'`; the rest are skipped so a previous manual
+     * classification is never overwritten.
+     *
+     * Runs entirely in the browser using the admin's normal Firestore
+     * credentials. No Cloud Function required — the rules already allow
+     * the owner of a resource to write to its doc.
+     */
+    async backfillLegacyRightsByAuthor(
+        userId: string,
+    ): Promise<{
+        scanned: number;
+        classified: number;
+        skipped: number;
+        unknown: number;
+        report: Array<{
+            id: string;
+            title: string | undefined;
+            author: string | undefined;
+            license: string;
+            action: 'classified' | 'skipped-already-set' | 'left-unknown';
+        }>;
+    }> {
+        const db = getFirestore();
+        const q = query(collection(db, this.RESOURCES), where('userId', '==', userId));
+        const snapshot = await getDocs(q);
+
+        const report: Array<{
+            id: string;
+            title: string | undefined;
+            author: string | undefined;
+            license: string;
+            action: 'classified' | 'skipped-already-set' | 'left-unknown';
+        }> = [];
+
+        let classified = 0;
+        let skipped = 0;
+        let unknown = 0;
+
+        for (const d of snapshot.docs) {
+            const data = d.data() as any;
+            const existingLicense = data.license;
+            const hasRealClassification =
+                typeof existingLicense === 'string' &&
+                existingLicense.length > 0 &&
+                existingLicense !== 'unknown';
+
+            if (hasRealClassification) {
+                report.push({
+                    id: d.id,
+                    title: data.title,
+                    author: data.author,
+                    license: existingLicense,
+                    action: 'skipped-already-set',
+                });
+                skipped++;
+                continue;
+            }
+
+            const classification = classifyByAuthor(data.author, data.title);
+            if (!classification) {
+                report.push({
+                    id: d.id,
+                    title: data.title,
+                    author: data.author,
+                    license: 'unknown',
+                    action: 'left-unknown',
+                });
+                unknown++;
+                continue;
+            }
+
+            await updateDoc(doc(db, this.RESOURCES, d.id), {
+                license: classification.license,
+                ingestionStatus: classification.ingestionStatus,
+                riskLevel: classification.riskLevel,
+                updatedAt: new Date(),
+            });
+            report.push({
+                id: d.id,
+                title: data.title,
+                author: data.author,
+                license: classification.license,
+                action: 'classified',
+            });
+            classified++;
+        }
+
+        return {
+            scanned: snapshot.size,
+            classified,
+            skipped,
+            unknown,
+            report,
+        };
     }
 
     // ── LlamaParse multi-account monitoring (Hito 6) ──────────────────────

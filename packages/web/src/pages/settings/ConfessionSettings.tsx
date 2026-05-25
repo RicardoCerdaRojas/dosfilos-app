@@ -34,29 +34,19 @@ import { confessionDisplayName, traditionDisplay, yearDisplay } from '@/lib/conf
 export function ConfessionSettings() {
     const navigate = useNavigate();
     const { user } = useFirebase();
-    const { profile, loading: profileLoading } = useUserProfile();
+    const { profile, loading: profileLoading, refetch } = useUserProfile();
     const { confessions, loading: catalogLoading } = useConfessionList();
     const { update, isLoading: saving } = useUpdateConfessionalWitnesses();
     const { t, i18n } = useTranslation('dashboard');
 
-    // `useUserProfile` reads once on mount and doesn't reactively refresh
-    // after writes (memoria: tech_debt — single-shot fetch by design). We
-    // shadow the persisted value locally so post-save state is the source
-    // of truth for `currentValue`, otherwise opt-in after opt-out leaves
-    // the page stuck (`dirty === false`, Save button disabled).
-    const [persistedValue, setPersistedValue] = useState<boolean>(
-        profile?.useConfessionalWitnesses !== false,
-    );
-    const [enabled, setEnabled] = useState<boolean>(persistedValue);
+    const currentValue = profile?.useConfessionalWitnesses !== false;
+    const [enabled, setEnabled] = useState<boolean>(currentValue);
     const [justification, setJustification] = useState('');
 
     useEffect(() => {
-        const next = profile?.useConfessionalWitnesses !== false;
-        setPersistedValue(next);
-        setEnabled(next);
+        setEnabled(profile?.useConfessionalWitnesses !== false);
     }, [profile?.useConfessionalWitnesses]);
 
-    const currentValue = persistedValue;
     const dirty = enabled !== currentValue;
     const optingOut = !enabled && dirty;
     const justificationValid = justification.trim().length >= 50;
@@ -69,8 +59,11 @@ export function ConfessionSettings() {
             justification: optingOut ? justification.trim() : undefined,
         });
         if (ok) {
-            setPersistedValue(enabled);
             setJustification('');
+            // Pull the fresh profile so `currentValue` reflects what we
+            // just wrote — otherwise the next toggle leaves the page
+            // stuck (`dirty === false`, Save button disabled).
+            await refetch();
         }
     };
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FirebaseUserProfileRepository } from '@dosfilos/infrastructure';
 import type { User } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
@@ -10,14 +10,29 @@ const userProfileRepository = new FirebaseUserProfileRepository();
  * etc.) — distinct from the Firebase Auth user which only carries
  * uid + email + displayName.
  *
- * Used across the dashboard to surface plan + billing context. Single
- * fetch on mount; reactive consumers (the BalanceBanner, etc.)
- * subscribe via React Query separately when they need real-time data.
+ * Used across the dashboard to surface plan + billing context. Initial
+ * fetch on mount; the returned `refetch()` lets consumers invalidate
+ * after writes (e.g. `/settings/confession` toggle save) so the UI
+ * doesn't keep reading stale state. Reactive consumers (the
+ * BalanceBanner, etc.) subscribe via React Query separately when they
+ * need real-time data.
  */
 export function useUserProfile() {
     const { user } = useFirebase();
     const [profile, setProfile] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const refetch = useCallback(async () => {
+        if (!user?.uid) return null;
+        try {
+            const p = await userProfileRepository.getProfile(user.uid);
+            setProfile(p);
+            return p;
+        } catch (err) {
+            console.error('[useUserProfile.refetch]', err);
+            return null;
+        }
+    }, [user?.uid]);
 
     useEffect(() => {
         if (!user?.uid) {
@@ -34,5 +49,5 @@ export function useUserProfile() {
         return () => { cancelled = true; };
     }, [user?.uid]);
 
-    return { profile, loading };
+    return { profile, loading, refetch };
 }
