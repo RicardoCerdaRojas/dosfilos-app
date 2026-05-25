@@ -162,10 +162,11 @@ Basándote en la conversación teológica anterior, extrae y redacta un BOSQUEJO
 [Explicación exegética accesible del texto, integrando terminología griega/hebrea si fue discutida]
 
 **Referencias Cruzadas:**
-> "[Texto del versículo]" (Referencia)
+> "[Texto del versículo]" ([Referencia bíblica, p.ej. Colosenses 1:17])
+> _(SIN línea de autor — los versículos bíblicos jamás se atribuyen a un autor humano)_
 
-**Cita de Autoridad:**
-> "[Cita de teólogo o comentarista relevante]"
+**Cita de Autoridad (OPCIONAL — omite el bloque entero si la conversación no contiene texto de un autor):**
+> "[Cita textual de teólogo o comentarista presente literalmente en la conversación]"
 > — *Autor, Fuente*
 
 **Ilustración:** [Título de la ilustración]
@@ -203,7 +204,8 @@ Basándote en la conversación teológica anterior, extrae y redacta un BOSQUEJO
 
 REGLAS IMPORTANTES:
 - Usa únicamente lo discutido en la conversación. No inventes datos no cubiertos.
-- PROHIBIDO inventar citas atribuidas a teólogos, puritanos, reformadores u otros autores. Solo cita autores cuyos nombres Y texto exacto aparezcan en la conversación. Si la "Cita de Autoridad" no tiene fuente en la conversación, omite ese bloque o reemplázalo por una cita bíblica adicional. NO uses fórmulas como "Como dijo Owen" / "Spurgeon enseñó" / "Según Calvino" salvo que la conversación contenga el texto exacto.
+- PROHIBIDO inventar citas atribuidas a teólogos, puritanos, reformadores u otros autores. Solo cita autores cuyos nombres Y texto exacto aparezcan literalmente en la conversación. Si la "Cita de Autoridad" no tiene fuente en la conversación, **ELIMINA el bloque "Cita de Autoridad" completo de ese punto** — incluida la línea de autor (la línea que empieza con "— *Autor, Fuente*"). NO sustituyas el bloque por una cita bíblica manteniendo la atribución a un autor humano. NO uses fórmulas como "Como dijo Owen" / "Spurgeon enseñó" / "Según Calvino" salvo que la conversación contenga el texto exacto.
+- PROHIBIDO atribuir texto bíblico a un autor humano. Las citas de la Escritura van SIEMPRE en el bloque "Referencias Cruzadas" con el formato '> "[texto]" ([Referencia bíblica])' SIN línea de autor humano debajo. Si dudas si una cita viene de un autor o de la Biblia, va en "Referencias Cruzadas". Nunca pongas un versículo bíblico bajo "Cita de Autoridad".
 - Diversidad de ilustraciones: NO repitas la misma imagen o categoría (viaje/deporte/familia/cocina) en dos puntos consecutivos. Cada punto debe usar una categoría distinta de ilustración.
 - El "Llamado a la Acción" es OBLIGATORIO al cierre y debe contener 2-4 acciones concretas y específicas (no genéricas) que el oyente pueda comenzar esta semana.
 - Si en la conversación se discutió griego/hebreo, inclúyelo en la Exposición Bíblica.

@@ -3,6 +3,10 @@ import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { stripe } from '../config/stripe';
 import { writeAuditLog } from './auditLog';
+import {
+    setPlanQuotaAdmin,
+    setExegesisPlanQuotaAdmin,
+} from '../library/processingBalance';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 type BillingCycle = 'monthly' | 'yearly';
@@ -134,6 +138,23 @@ export const changePlanForUser = onCall<ChangePlanForUserRequest>(
                 updatedAt: FieldValue.serverTimestamp(),
             });
 
+            // Seed `processingBalance` plan buckets from the new plan's
+            // monthly limits. Stripe webhook normally does this on
+            // subscription.created/updated, but the admin path bypasses
+            // Stripe (comp accounts, no Stripe customer, etc.), so without
+            // this seeding the user has a Pro `planId` but zero exegesis
+            // quota → modules gate as "upgrade required" even though the
+            // plan badge says Pro. Same `setPlanQuotaAdmin` helpers used
+            // by `resetUserPlanQuota` to keep the seeding semantics
+            // consistent across admin paths.
+            const newPlanLimits = (planData.limits ?? {}) as Record<string, number | undefined>;
+            const standardPages = Math.max(0, newPlanLimits.standardPagesPerMonth ?? 0);
+            const premiumPages = Math.max(0, newPlanLimits.premiumPagesPerMonth ?? 0);
+            const exegesisUsd = Math.max(0, newPlanLimits.exegesisUsdPerMonth ?? 0);
+            await setPlanQuotaAdmin(userId, 'standard', standardPages);
+            await setPlanQuotaAdmin(userId, 'premium', premiumPages);
+            await setExegesisPlanQuotaAdmin(userId, exegesisUsd);
+
             writeAuditLog({
                 actorUid: callerUid,
                 actorEmail: callerDoc.data()?.email,
@@ -146,6 +167,7 @@ export const changePlanForUser = onCall<ChangePlanForUserRequest>(
                     billing,
                     priceId: newPriceId ?? null,
                     cancelAtPeriodEnd: goingToFree,
+                    seededQuotas: { standardPages, premiumPages, exegesisUsd },
                 },
             });
 
