@@ -2,7 +2,7 @@
 
 ## Estado
 
-`planning` — **destrabada 2026-05-26**, lista para arranque post-Phase 1 merge. Mini-fase insertada entre Fase 1 y Fase 2 por **ADR-016**.
+`in-progress` — **arrancada 2026-05-27**. Decisiones pendientes cerradas vía ADRs 017-021. PR0 (este commit) abre la fase. Mini-fase insertada entre Fase 1 y Fase 2 por **ADR-016**.
 
 ## Objetivo
 
@@ -27,16 +27,22 @@ Decisión: separar arquitectónicamente. Ver [ADR-016](../decisions/ADR-016-past
 - ✅ Cross-reference engine (Phase 0)
 - ✅ Gemini service patterns
 
-### Decisiones pendientes (a cerrar al arrancar la fase)
+### Decisiones cerradas (2026-05-27)
 
-- [ ] **Catálogo de palabras clave**: ¿LLM-extracted con ranking heurístico, catálogo curado pre-canonicalizado por pericope, o híbrido?
-- [ ] **Lexicon source**: BDAG es copyright. Opciones: LSJ (open), Strong's (open, conservador), Thayer (open, NT), o gloss curated manualmente. Decisión bloquea calidad del análisis.
-- [ ] **Cross-ref ranking**: cuántas resonancias canónicas surface, ¿2-3 fijo o variable por peso teológico?
-- [ ] **Análisis hebreo paralelo**: ¿mismo modal con prompt diferente, o subcomponentes separados?
-- [ ] **AI suggestion en "descubrimiento pastoral"**: ¿es pre-fill editable (Opción B Phase 1) o solo prompt + sin pre-fill?
-- [ ] **Lexicon attribution**: si usamos LSJ/Strong/Thayer, citation engine debe rendir attribution correcta en export.
+- [x] **Catálogo de palabras clave** → ADR-018: híbrido (LLM-extracted + boost de catálogo curado).
+- [x] **Lexicon source** → ADR-017: gloss curated v1 (~350 entradas) + LSJ (griego fallback) + BDB (hebreo fallback).
+- [x] **Cross-ref ranking** → ADR-019: reuse `lookupCrossReferences`, n=2-3 variable por strength threshold + LLM filtra word-relevance.
+- [x] **Análisis hebreo paralelo** → ADR-020: mismo modal con prop `language`, prompt + lexicon adapter branched.
+- [x] **AI suggestion en "descubrimiento pastoral"** → ADR-021: sin pre-fill; prompt visual estático; copy sin exposure de "IA/asistente/LLM".
+- [x] **Lexicon attribution** → ADR-017 + `07-citation-policy.md` §5: citation engine rinde attribution por `LexiconEntry.source` (curated|lsj|bdb).
 
-Cerrar cada una con ADR específico (ADR-017+).
+### Decisiones operacionales
+
+- **Branch**: `feat/pastoral-fidelity-phase-1-5` desde `main`.
+- **Feature flag**: sub-flag `pastoral_word_study` AND parent `pastoral_fidelity_flow`. Cuando ambos `on`, modal nuevo. Cuando solo parent `on`, embed actual (Phase 1 interim degradado).
+- **Cache**: `PastoralWordAnalysis` cache transversal en colección `pastoralWordAnalyses/` por `(language, lemma, passageHash, curatedVersion)`.
+- **Schema**: `WordStudy.wordAnalysisId?` agregado en paralelo a `tutorInteractionId?` (back-compat).
+- **Tool enum**: `PastoralSeedTool` extiende con `'pastoral-word-study'`; `'greek-tutor'` y `'hebrew-tutor'` retenidos para histórico.
 
 ## Diseño técnico
 
@@ -173,3 +179,4 @@ Tests manuales:
 ## Bitácora
 
 - **2026-05-26** — Phase doc creado. ADR-016 aceptado. Decisión tomada durante smoke test de Phase 1 (issue: GreekTutorOverlay académico violando manifesto pedagógico).
+- **2026-05-27** — Fase arrancada vía `/iniciar-fase 1.5`. Decisiones pendientes cerradas: ADR-017 (lexicon source), ADR-018 (key-word identification), ADR-019 (cross-ref reuse), ADR-020 (hebrew same modal), ADR-021 (no pre-fill + no AI exposure). Branch `feat/pastoral-fidelity-phase-1-5` abierto desde `main`. Sub-flag `pastoral_word_study` definido.
