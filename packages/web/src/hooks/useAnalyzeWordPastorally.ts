@@ -15,6 +15,7 @@ interface AnalyzeArgs {
 interface UseAnalyzeWordPastorallyResult {
     analysis: PastoralWordAnalysis | null;
     cacheHit: boolean | null;
+    cacheId: string | null;
     loading: boolean;
     error: string | null;
     analyze: (args: AnalyzeArgs) => Promise<void>;
@@ -30,6 +31,7 @@ interface UseAnalyzeWordPastorallyResult {
 export function useAnalyzeWordPastorally(): UseAnalyzeWordPastorallyResult {
     const [analysis, setAnalysis] = useState<PastoralWordAnalysis | null>(null);
     const [cacheHit, setCacheHit] = useState<boolean | null>(null);
+    const [cacheId, setCacheId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -51,16 +53,18 @@ export function useAnalyzeWordPastorally(): UseAnalyzeWordPastorallyResult {
                 verseChapter: parsedVerse?.chapter,
                 verseNumber: parsedVerse?.verse,
             });
-            const data = result.data as { analysis?: PastoralWordAnalysis; cacheHit?: boolean };
+            const data = result.data as { analysis?: PastoralWordAnalysis; cacheHit?: boolean; cacheId?: string };
             if (!data.analysis) throw new Error('Respuesta sin análisis.');
             setAnalysis(data.analysis);
             setCacheHit(data.cacheHit ?? false);
+            setCacheId(data.cacheId ?? null);
         } catch (err: unknown) {
             console.error('[useAnalyzeWordPastorally]', err);
             const message = err instanceof Error ? err.message : 'No pudimos generar el análisis.';
             setError(message);
             setAnalysis(null);
             setCacheHit(null);
+            setCacheId(null);
         } finally {
             setLoading(false);
         }
@@ -70,9 +74,10 @@ export function useAnalyzeWordPastorally(): UseAnalyzeWordPastorallyResult {
         setAnalysis(null);
         setError(null);
         setCacheHit(null);
+        setCacheId(null);
     }, []);
 
-    return { analysis, cacheHit, loading, error, analyze, reset };
+    return { analysis, cacheHit, cacheId, loading, error, analyze, reset };
 }
 
 /**

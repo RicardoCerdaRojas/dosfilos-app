@@ -195,7 +195,7 @@ export const analyzeWordPastorally = onCall(
         const cached = await cacheRef.get();
         if (cached.exists) {
             const data = cached.data();
-            return { analysis: data?.analysis, cacheHit: true };
+            return { analysis: data?.analysis, cacheHit: true, cacheId };
         }
 
         // 2. Lexicon lookup (curated first, sentinel fallback)
@@ -291,6 +291,6 @@ export const analyzeWordPastorally = onCall(
             console.warn('[analyzeWordPastorally] cache save failed', err);
         }
 
-        return { analysis, cacheHit: false };
+        return { analysis, cacheHit: false, cacheId };
     },
 );

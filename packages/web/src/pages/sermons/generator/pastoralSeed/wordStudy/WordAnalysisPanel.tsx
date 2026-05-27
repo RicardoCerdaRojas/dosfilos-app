@@ -1,43 +1,36 @@
-import { useEffect } from 'react';
 import { useTranslation } from '@/i18n';
 import { Loader2, AlertTriangle, RefreshCw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { KeyWordCandidate, WordStudyLanguage } from '@dosfilos/domain';
-import { useAnalyzeWordPastorally } from '@/hooks/useAnalyzeWordPastorally';
+import type { KeyWordCandidate, PastoralWordAnalysis, WordStudyLanguage } from '@dosfilos/domain';
 import { ResonanceCard } from './ResonanceCard';
 
 interface Props {
     selected: KeyWordCandidate | null;
-    passage: string;
     language: WordStudyLanguage;
+    analysis: PastoralWordAnalysis | null;
+    cacheHit: boolean | null;
+    loading: boolean;
+    error: string | null;
+    onRetry: () => void;
 }
 
 /**
- * Pastoral Fidelity Phase 1.5 — renders the LLM-driven pastoral
- * analysis of the selected key word. Fires `analyzeWord` on selection
- * change. The callable handles cache lookup transparently; we display a
- * subtle indicator when the result came from cache so devs/admins can
- * verify behaviour in QA.
+ * Pastoral Fidelity Phase 1.5 — pane 2 of the modal. Pure render
+ * component: receives analysis state from the parent modal (which owns
+ * the `useAnalyzeWordPastorally` hook so the cache id can be threaded
+ * down to `DiscoveryEditor`).
  */
-export function WordAnalysisPanel({ selected, passage, language }: Props) {
+export function WordAnalysisPanel({
+    selected,
+    language,
+    analysis,
+    cacheHit,
+    loading,
+    error,
+    onRetry,
+}: Props) {
     const { t } = useTranslation('wordStudy');
-    const { analysis, cacheHit, loading, error, analyze, reset } = useAnalyzeWordPastorally();
     const isRtl = language === 'hebrew';
-
-    useEffect(() => {
-        if (!selected) {
-            reset();
-            return;
-        }
-        void analyze({
-            word: selected.word,
-            lemma: selected.lemma,
-            transliteration: selected.transliteration,
-            verseRef: selected.verseRef,
-            passage,
-            language,
-        });
-    }, [selected, passage, language, analyze, reset]);
 
     if (!selected) {
         return <p className="text-xs text-muted-foreground">{t('analysis.placeholder')}</p>;
@@ -60,18 +53,7 @@ export function WordAnalysisPanel({ selected, passage, language }: Props) {
                     <p className="font-medium">{t('analysis.errorTitle')}</p>
                 </div>
                 <p className="text-xs text-muted-foreground">{error}</p>
-                <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => selected && void analyze({
-                        word: selected.word,
-                        lemma: selected.lemma,
-                        transliteration: selected.transliteration,
-                        verseRef: selected.verseRef,
-                        passage,
-                        language,
-                    })}
-                >
+                <Button size="sm" variant="outline" onClick={onRetry}>
                     <RefreshCw className="h-4 w-4 mr-1" />
                     {t('analysis.retry')}
                 </Button>
@@ -86,7 +68,7 @@ export function WordAnalysisPanel({ selected, passage, language }: Props) {
     return (
         <div className="space-y-4">
             <header className="space-y-1">
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-baseline gap-2 flex-wrap">
                     <span
                         dir={isRtl ? 'rtl' : 'ltr'}
                         className="font-serif text-lg font-medium"

@@ -33,6 +33,11 @@
     "discovery": {
         "title": "Your pastoral discovery",
         "hint": "What does this word carry for you? How is it used elsewhere in the text?",
-        "comingSoon": "Soon you'll be able to write your discovery here and save it to your study."
+        "comingSoon": "Soon you'll be able to write your discovery here and save it to your study.",
+        "placeholder": "Write in your own words what you discovered as you studied this word (minimum 30 characters).",
+        "save": "Save study",
+        "saving": "Saving…",
+        "saved": "Saved",
+        "charsRemaining": "{{count}} more to save"
     }
 }

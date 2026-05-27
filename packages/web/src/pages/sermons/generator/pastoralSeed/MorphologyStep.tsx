@@ -256,6 +256,7 @@ export function MorphologyStep({
                     onClose={() => setWordStudyOpen(false)}
                     passage={passage}
                     existingStudies={studies}
+                    onAddWordStudy={onAddWordStudy}
                 />
             )}
         </StepShell>

@@ -33,6 +33,11 @@
     "discovery": {
         "title": "Tu descubrimiento pastoral",
         "hint": "¿Qué carga lleva esta palabra para ti? ¿Cómo se usa en otros lugares del texto?",
-        "comingSoon": "Pronto podrás escribir aquí tu descubrimiento y guardarlo en tu estudio."
+        "comingSoon": "Pronto podrás escribir aquí tu descubrimiento y guardarlo en tu estudio.",
+        "placeholder": "Escribe en tus propias palabras qué descubriste al estudiar esta palabra (mínimo 30 caracteres).",
+        "save": "Guardar estudio",
+        "saving": "Guardando…",
+        "saved": "Guardado",
+        "charsRemaining": "{{count}} más para guardar"
     }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '@/i18n';
 import {
     Dialog,
@@ -17,8 +17,10 @@ import {
 } from '@dosfilos/domain';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import { useIdentifyKeyWords } from '@/hooks/useIdentifyKeyWords';
+import { useAnalyzeWordPastorally } from '@/hooks/useAnalyzeWordPastorally';
 import { KeyWordsPicker } from './KeyWordsPicker';
 import { WordAnalysisPanel } from './WordAnalysisPanel';
+import { DiscoveryEditor } from './DiscoveryEditor';
 
 interface Props {
     isOpen: boolean;
@@ -26,27 +28,29 @@ interface Props {
     passage: string;
     /** Forced language override. When omitted the modal infers from the passage book. */
     languageOverride?: WordStudyLanguage;
-    /** Existing studies — used to mark already-studied lemmas (future PR3). */
+    /** Existing studies — used to mark already-studied lemmas (future iteration). */
     existingStudies?: WordStudy[];
+    /** Save handler. Wires up to `usePastoralSeed.addWordStudy` from MorphologyStep. */
+    onAddWordStudy: (study: WordStudy) => Promise<void>;
 }
 
 /**
- * Phase 1.5 — top-level surface that replaces the `GreekTutorOverlay`
- * embed in `MorphologyStep`. Three internal panes:
+ * Pastoral Fidelity Phase 1.5 — top-level surface that replaces the
+ * `GreekTutorOverlay` embed in `MorphologyStep`. Three internal panes:
  *
- *   1. `KeyWordsPicker` — 5-8 LLM-ranked candidates (this PR).
+ *   1. `KeyWordsPicker` — 5-8 LLM-ranked candidates (PR1).
  *   2. `WordAnalysisPanel` — selected word's detailed analysis (PR2).
  *   3. `DiscoveryEditor` — pastor's "descubrimiento pastoral" (PR3).
  *
- * Only Pane 1 ships in PR1. Panes 2/3 render placeholders gated by the
- * same modal so the integration point is clear even before the data
- * arrives.
+ * The modal owns the analysis hook so the cache id can be threaded
+ * down to `DiscoveryEditor.onSave` as `wordAnalysisId`.
  */
 export function PastoralWordStudyModal({
     isOpen,
     onClose,
     passage,
     languageOverride,
+    onAddWordStudy,
 }: Props) {
     const { t } = useTranslation('wordStudy');
 
@@ -59,7 +63,6 @@ export function PastoralWordStudyModal({
 
     const [selected, setSelected] = useState<KeyWordCandidate | null>(null);
     useEffect(() => {
-        // Reset selection when the modal is reopened or the passage shifts.
         if (!isOpen) setSelected(null);
     }, [isOpen, passage, language]);
 
@@ -68,6 +71,35 @@ export function PastoralWordStudyModal({
         language,
         enabled: isOpen,
     });
+
+    const {
+        analysis,
+        cacheHit,
+        cacheId,
+        loading: analysisLoading,
+        error: analysisError,
+        analyze,
+        reset: resetAnalysis,
+    } = useAnalyzeWordPastorally();
+
+    const triggerAnalyze = useCallback((candidate: KeyWordCandidate) => {
+        void analyze({
+            word: candidate.word,
+            lemma: candidate.lemma,
+            transliteration: candidate.transliteration,
+            verseRef: candidate.verseRef,
+            passage,
+            language,
+        });
+    }, [analyze, passage, language]);
+
+    useEffect(() => {
+        if (selected) {
+            triggerAnalyze(selected);
+        } else {
+            resetAnalysis();
+        }
+    }, [selected, triggerAnalyze, resetAnalysis]);
 
     return (
         <Dialog open={isOpen} onOpenChange={(next) => !next && onClose()}>
@@ -119,16 +151,24 @@ export function PastoralWordStudyModal({
                     <section aria-label="Análisis y descubrimiento" className="space-y-5">
                         <WordAnalysisPanel
                             selected={selected}
-                            passage={passage}
                             language={language}
+                            analysis={analysis}
+                            cacheHit={cacheHit}
+                            loading={analysisLoading}
+                            error={analysisError}
+                            onRetry={() => selected && triggerAnalyze(selected)}
                         />
-                        <div className="space-y-2 border-t border-border pt-4">
-                            <h4 className="text-sm font-semibold">{t('discovery.title')}</h4>
-                            <p className="text-xs text-muted-foreground">{t('discovery.hint')}</p>
-                            <p className="text-xs italic text-muted-foreground">
-                                {t('discovery.comingSoon')}
-                            </p>
-                        </div>
+                        {selected && analysis && !analysisLoading && !analysisError && (
+                            <div className="border-t border-border pt-4">
+                                <DiscoveryEditor
+                                    selected={selected}
+                                    language={language}
+                                    wordAnalysisId={cacheId}
+                                    onSave={onAddWordStudy}
+                                    onSaved={() => {/* MorphologyStep refreshes via seed hook */}}
+                                />
+                            </div>
+                        )}
                     </section>
                 </div>
 

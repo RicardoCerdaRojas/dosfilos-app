@@ -55,8 +55,21 @@ export interface WordStudy {
     reference: string;
     /** Pastor's own discovery — ≥30 chars validator. */
     pastorDiscovery: string;
-    /** Link back to the greek/hebrew tutor session that produced this. */
+    /**
+     * Phase 1 legacy: link back to the greek/hebrew tutor session that
+     * produced this. Retained for back-compat with seeds created before
+     * Phase 1.5; new studies populate `wordAnalysisId` instead.
+     */
     tutorInteractionId?: string;
+    /**
+     * Phase 1.5: id of the cached `PastoralWordAnalysis` doc that
+     * sourced this study. Format matches
+     * `buildPastoralWordAnalysisCacheKey`. Optional — pastor may also
+     * add studies manually without consulting the modal.
+     */
+    wordAnalysisId?: string;
+    /** Lemma in dictionary form (added Phase 1.5 for analytics). */
+    lemma?: string;
     /** Original-language family this study came from. */
     language?: 'greek' | 'hebrew';
 }
