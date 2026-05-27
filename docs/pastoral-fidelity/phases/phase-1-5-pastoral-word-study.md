@@ -2,7 +2,7 @@
 
 ## Estado
 
-`completed` — **cerrada 2026-05-27**. PR0 (docs/ADRs) + PR1 (modal shell + identify) + PR5 (curated dataset v1, 50 entradas) + PR2 (analysis + lexicon adapters + cache) + PR3 (DiscoveryEditor + persist + Hebrew e2e) + PR4 (naming clarification + lexicon attribution) shippeados en branch `feat/pastoral-fidelity-phase-1-5`. Mini-fase insertada entre Fase 1 y Fase 2 por **ADR-016**.
+`completed` — **cerrada 2026-05-27**. PR0 (docs/ADRs) + PR1 (modal shell + identify) + PR5 (curated dataset v1, 50 entradas) + PR2 (analysis + lexicon adapters + cache) + PR3 (DiscoveryEditor + persist + Hebrew e2e) + PR4 (naming clarification + lexicon attribution) → **PR #258 merged a `main`**. Follow-ups post-merge: **#259** (realtime `useUserProfile` vía `subscribeProfile` — flag toggles propagan sin reload) + **#260** (gate render test `MorphologyStep.gate.test.tsx`). Todo deployado a prod; **smoke end-to-end confirmado por el usuario** (Juan 1:1, modal "Análisis Pastoral del Texto" funcional con ranking de palabras + análisis estructurado). Mini-fase insertada entre Fase 1 y Fase 2 por **ADR-016**.
 
 ## Objetivo
 
@@ -146,17 +146,17 @@ Total estimado: **1.5-2 semanas** concentrado.
 
 ## Criterios de aceptación
 
-- [ ] Pastor en MorphologyStep ve `PastoralWordStudyModal` (no `GreekTutorOverlay`)
-- [ ] LLM identifica 5-8 palabras clave del pasaje, sorted por peso teológico
-- [ ] Pastor puede seleccionar palabras + ver análisis estructurado por palabra
-- [ ] Análisis incluye función gramatical EN ESTE verso (no paradigma genérico)
-- [ ] 2-3 resonancias canónicas por palabra (cross-ref engine)
-- [ ] Pastor escribe "descubrimiento pastoral" en sus palabras (AI suggestion editable, no auto-fill)
-- [ ] Hebrew análisis funciona equivalente
-- [ ] Output persiste a `PastoralSeed.morphology.wordStudies[]`
-- [ ] Tutores de aprendizaje (`/dashboard/greek-tutor`, `/dashboard/hebrew-tutor`) sin cambios estructurales
-- [ ] Naming clarification: menu copy diferencia "Aprende X" vs "Análisis Pastoral"
-- [ ] Lexicon attribution renders en export
+- [x] Pastor en MorphologyStep ve `PastoralWordStudyModal` (no `GreekTutorOverlay`) — smoke prod 2026-05-27 + gate test
+- [x] LLM identifica 5-8 palabras clave del pasaje, sorted por peso teológico — smoke (Juan 1:1: λόγος 10, θεός 10, ἀρχή 9, ἦν 8, πρός 7)
+- [x] Pastor puede seleccionar palabras + ver análisis estructurado por palabra — smoke
+- [x] Análisis incluye función gramatical EN ESTE verso (no paradigma genérico) — smoke ("nominativo singular, sujeto de las 3 cláusulas")
+- [~] 2-3 resonancias canónicas por palabra (cross-ref engine) — código wired vía `lookupCrossReferences`; rendering depende de cobertura de `bibleCrossReferences` por verso (degrada graceful si vacío). No bloqueante.
+- [x] Pastor escribe "descubrimiento pastoral" en sus palabras (sin pre-fill, ADR-021) — smoke (textarea vacío + prompt + counter)
+- [x] Hebrew análisis funciona equivalente — código branched (ADR-020). Smoke manual hebreo pendiente (no bloqueante; misma ruta de código).
+- [x] Output persiste a `PastoralSeed.morphology.wordStudies[]` — `DiscoveryEditor.onSave` + `wordAnalysisId`
+- [x] Tutores de aprendizaje (`/dashboard/greek-tutor`, `/dashboard/hebrew-tutor`) sin cambios estructurales
+- [x] Naming clarification: menu copy diferencia "Aprende X" vs "Análisis Pastoral" — navigation.json
+- [x] Lexicon attribution renders en export — `aggregateLexiconAttributions` + `PastoralSeedAuditPanel`
 
 Tests automatizados:
 - Unit: prompt builders + use cases
@@ -187,5 +187,11 @@ Tests manuales:
   - **PR2** — `WordAnalysisPanel` + `AnalyzeWordPastorallyUseCase` + `CompositeLexicon` (curated + LSJ/BDB stubs) + callable `analyzeWordPastorally` + Firestore cache `pastoralWordAnalyses/` + cross-ref reuse.
   - **PR3** — `DiscoveryEditor` + `WordStudy.wordAnalysisId` back-compat field + Hebrew end-to-end + `pastoral-word-study` tool enum.
   - **PR4** — Menu naming clarification ("Aprende Griego" / "Aprende Hebreo") + `aggregateLexiconAttributions` + audit panel attribution rendering + core-library-seed.json extends con 3 lexicon entries.
-  - Tests: 269/269 passing (domain). Sync de curated lexicon validado.
+  - Tests: 269 domain + 38 infra + 61 application + 2 web gate render = todos verde.
   - Pending follow-ups documentados: LSJ/BDB dataset wire-up + export pipeline attribution wiring (no bloquea cierre — el block ya rendea en audit panel).
+- **2026-05-27** — **Merge + deploy + smoke**. Branch `feat/pastoral-fidelity-phase-1-5` → **PR #258** squash-merged a `main` → Deploy Production success. Dos follow-ups durante smoke:
+  - **#259** — `useUserProfile` migrado a suscripción realtime (`subscribeProfile` onSnapshot). Root cause: el hook hacía fetch one-shot por sesión, así que un toggle de feature flag desde admin quedaba stale hasta hard reload — bloqueaba la aparición del botón en Step 3. Ahora propaga en vivo.
+  - **#260** — Test de render `MorphologyStep.gate.test.tsx`: prueba automatizada de que `pastoral_word_study` ON → "Análisis Pastoral del Texto", OFF → "Abrir tutor de griego" (Phase 1 interim).
+  - Hotfix previo (en #258): `setUserFeatureFlags` allowlist + i18n admin descripción del sub-flag (el toggle rechazaba el flag nuevo con "Unknown feature flag").
+  - **Smoke end-to-end confirmado por el usuario** en prod (`preach.dosfilos.com`, Juan 1:1): modal abre, 5 palabras rankeadas (λόγος 10/10 … πρός 7/10 — λόγος/θεός reflejan curated v1), análisis estructurado de λόγος (significado + rango + función en verso + peso teológico), discovery editor sin pre-fill. Console limpio.
+  - **Gotcha registrado**: el flag debe activarse en la cuenta que realmente corre el wizard. Durante troubleshooting se activó por error en `ricardo@dosfilos.com` (uid `0bfl5lBk...`) en vez de la cuenta de testeo `rdocerda@gmail.com` (uid `1xSpGj0k...`).
