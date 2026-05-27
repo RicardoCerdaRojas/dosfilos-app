@@ -7,15 +7,20 @@ const userProfileRepository = new FirebaseUserProfileRepository();
 
 /**
  * Reads the user profile from Firestore (subscription, metadata,
- * etc.) — distinct from the Firebase Auth user which only carries
- * uid + email + displayName.
+ * featureFlags, etc.) — distinct from the Firebase Auth user which only
+ * carries uid + email + displayName.
  *
- * Used across the dashboard to surface plan + billing context. Initial
- * fetch on mount; the returned `refetch()` lets consumers invalidate
- * after writes (e.g. `/settings/confession` toggle save) so the UI
- * doesn't keep reading stale state. Reactive consumers (the
- * BalanceBanner, etc.) subscribe via React Query separately when they
- * need real-time data.
+ * Realtime: subscribes via `subscribeProfile` (onSnapshot) so changes
+ * made elsewhere — admin feature-flag toggles, Stripe webhook plan
+ * updates, `/settings/confession` saves — propagate live without a
+ * manual page reload. This matters for feature gating: an admin flipping
+ * `pastoral_word_study` now reflects in the open session immediately,
+ * instead of staying stale until the next hard refresh.
+ *
+ * `refetch()` is retained for API compatibility with existing callers
+ * (e.g. the confession settings save flow). With the live subscription
+ * it's effectively a no-op success, but it still resolves the current
+ * profile so callers awaiting it don't break.
  */
 export function useUserProfile() {
     const { user } = useFirebase();
@@ -40,13 +45,19 @@ export function useUserProfile() {
             setLoading(false);
             return;
         }
-        let cancelled = false;
-        userProfileRepository
-            .getProfile(user.uid)
-            .then((p) => { if (!cancelled) setProfile(p); })
-            .catch((err) => console.error('[useUserProfile]', err))
-            .finally(() => { if (!cancelled) setLoading(false); });
-        return () => { cancelled = true; };
+        setLoading(true);
+        const unsubscribe = userProfileRepository.subscribeProfile(
+            user.uid,
+            (p) => {
+                setProfile(p);
+                setLoading(false);
+            },
+            (err) => {
+                console.error('[useUserProfile.subscribe]', err);
+                setLoading(false);
+            },
+        );
+        return () => unsubscribe();
     }, [user?.uid]);
 
     return { profile, loading, refetch };
