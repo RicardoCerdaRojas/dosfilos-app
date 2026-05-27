@@ -39,23 +39,33 @@ Plataformas referencia que aplican estos marcos:
 |---|---|---|
 | Cross-reference engine TSK lookup | Fase 0 (PR 0.5) | ✅ Sample dataset shippeable; full dataset PR follow-up |
 | Confession catalog + multi-witness mode | Fase 0 + ADR-010 | ✅ |
-| Six-step spine como Step 1 (pastoralSeed schema) | Fase 1 | ⏳ Planning |
-| Three-witness orchestrator | Fase 2 | ⏳ Planning |
+| Six-step spine como Step 1 (pastoralSeed schema) | Fase 1 | ✅ PR #257 (`pastoralSeeds/{seedId}`, ADR-015) |
+| Three-witness orchestrator | Fase 2 | ✅ PR #262 (`validateSeedWitnesses` + `WitnessResult` domain, ADR-011) |
 | Faculty chat session persistence | Existing | ✅ |
 | Greek/Hebrew tutor session linkage to passage | Existing | ✅ |
 | LLM classifier infrastructure (Gemini Flash for dim tagging) | Build durante esta fase | — |
 
-Sin Phase 1 + Phase 2, esta fase NO puede arrancar — los dimension trackers leen artifacts producidos por six-step y three-witness.
+Sin Phase 1 + Phase 2, esta fase NO puede arrancar — los dimension trackers leen artifacts producidos por six-step y three-witness. **Ambos prereqs duros satisfechos al 2026-05-27** (Fase 1 PR #257, Fase 2 PR #262). Fase 2.5 destrabada.
+
+**Insumos concretos que Fase 2.5 consume de Fase 2**:
+- `WitnessResult` / `WitnessedClaim` (domain `WitnessValidation.ts`) → evidence directa para D4 (canon) + D6 (historia). El `detectedLevel` + verdicts por claim ya están computados.
+- `pastoralSeed.witnessReview` (respuestas del pastor a soft/hard blocks) → señal de engagement con confrontación (D7).
+- Callable `validateSeedWitnesses` + cache `witnessResults/` → patrón de classifier batcheado reusable para `DimensionClassifier`.
+- Sub-flag pattern `three_witnesses` (requiere `pastoral_fidelity_flow`) → mismo patrón para el sub-flag de Study Depth.
+
+**Gotcha heredado**: cualquier flag nuevo debe agregarse también a la allowlist de `setUserFeatureFlags` (functions), no solo a `FEATURE_FLAG_NAMES` (domain).
 
 ## Decisiones tomadas
 
-- (Pendientes — pre-fase requiere ADR-011)
+- (Pendientes — los ADRs de esta fase se escriben al arrancar `/iniciar-fase 2.5`)
 
 ## Decisiones pendientes — ADRs futuros
 
-- **ADR-011** — Study Depth Copilot dimensiones canónicas + mecánica de confrontación
-- **ADR-012** — Override policy: justification length, audit retention, "expert mode" para pastors experimentados (umbral N sermones con SDS≥80)
-- **ADR-013** — Dimension classifier prompt + thresholds (cost / accuracy tradeoff)
+> **Renumeración 2026-05-27**: los números ADR-011/012/013 que este doc reservaba originalmente fueron consumidos por otras fases (ADR-011 = orchestrator de tres testigos de Fase 2). Los ADRs de Study Depth se renumeran a 022/023/024 (siguientes libres tras el 021).
+
+- **ADR-022** — Study Depth Copilot dimensiones canónicas + mecánica de confrontación
+- **ADR-023** — Override policy: justification length, audit retention, "expert mode" para pastors experimentados (umbral N sermones con SDS≥80)
+- **ADR-024** — Dimension classifier prompt + thresholds (cost / accuracy tradeoff)
 
 ## Diseño técnico
 
@@ -375,4 +385,5 @@ Tracking interno (no pastor-facing):
 
 ## Bitácora
 
+- **2026-05-27** — **Prereqs actualizados al cerrar Fase 2**. Fase 1 (PR #257) + Fase 2 (PR #262, ADR-011) ✅ completas + deployadas. `WitnessResult`/`pastoralSeed.witnessReview` disponibles como evidence para D4/D6/D7. ADRs de esta fase **renumerados a 022/023/024** (011-013 originales ya consumidos; 011 = tres testigos). Sub-flag pattern + gotcha de `setUserFeatureFlags` allowlist documentados. Fase 2.5 destrabada — lista para `/iniciar-fase 2.5`.
 - **2026-05-25** — Phase doc creado. Gap arquitectónico identificado durante smoke test post-Fase 0: Faculty path (PR #214, `derivedContext: 'faculty'`) permite generar sermón sin gate de profundidad — viola P1 del manifesto. Fundador solicita engine que mide multidimensional + confronta soft sin bloquear. Diseño absorbe pedagogía profesional (Bloom, CLT, Productive Struggle, Mastery Learning, Scaffolding ZPD, Deliberate Practice, Andragogy). 7 dimensiones canónicas derivadas del 9-step exegético + método del fundador. Espera Phase 1 + Phase 2 para arrancar — schema `pastoralSeed` + `WitnessResult` son prereqs duros.
