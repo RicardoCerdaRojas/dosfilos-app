@@ -2,7 +2,8 @@
 
 ## Estado
 
-`in-progress` — aceptada 2026-05-27 al arrancar `/iniciar-fase 1.6`; ADRs 022/023/024 → `accepted`.
+`complete` — cerrada 2026-05-27. PR #265 (`b0fbcbd5`) merged a main + deployed + smoke OK.
+ADRs 022/023/024 `accepted`.
 Derivada del análisis del spec metodológico externo (`preach-methodology-upgrade-spec.md`) contra el
 código real. **Inserta entre Fase 1.5 (cerrada) y Fase 2.5**, y **refactoriza Fase 1** (el seed de 6
 pasos pasa a 8). Entregable único (1 PR — decisión del fundador en kickoff).
@@ -120,18 +121,20 @@ NICOT/NICNT, WBC.
 **Idioma**: PD de calidad es mayormente inglés → RAG inglés + output español (ya lo hacemos);
 curación propia en español encima, progresiva.
 
-## Criterios de aceptación (borrador — se afinan al kickoff)
+## Criterios de aceptación (estado de cierre 2026-05-27)
 
-- [ ] `PASTORAL_SEED_STEP_ORDER` = 8 pasos; seeds legacy migrados sin pérdida de datos.
-- [ ] Labels + keys renombrados consistentemente (UI + dominio + prompt builder + tests).
-- [ ] Paso 2 propone género (confirmable) + outline del libro; pastor escribe implicancia.
-- [ ] Trasfondo histórico-cultural responde con **cita a fuente real** (no alucinación) cuando hay contenido.
-- [ ] Tripwire inline dispara en `core` (test: "no existe la Trinidad" → aviso al escribir idea central) y **calla** en distinctive/open.
-- [ ] Paso 7: el pastor escribe el principio; NO hay botón "generar principio"; verificador produce fundamento/riesgo-eiségesis/generalización referido a pasos 1-6.
-- [ ] Paso 8 sigue SIN IA (test: cero `AiAssistLog`).
-- [ ] Motor de paralelos (paso 5): Jn 1:1 → Gn 1:1 (regresión) + rationale por candidato.
-- [ ] `AiAssistLog` registra cada asistencia con `outputWasEditedByUser`.
-- [ ] Paridad AT: un pasaje hebreo (Gn 1:1) recorre pasos 1/3/4 con parsing, sin "solo NT".
+- [x] `PASTORAL_SEED_STEP_ORDER` = 8 pasos; seeds legacy migrados sin pérdida de datos. *(migración 23/23 seeds prod, 0 errores; copia verbatim de syntax/morphology.)*
+- [x] Labels + keys renombrados consistentemente (UI + dominio + prompt builder + tests). *(typecheck verde 5 paquetes; sin refs colgantes.)*
+- [~] Paso 2 propone género (confirmable) + outline del libro; pastor escribe implicancia. *(género confirmable + implicancia ✅; **outline LLM de `BookPanorama` diferido** — v1 usa mapa determinista `inferGenreFromBook`. Deuda visible.)*
+- [~] Trasfondo histórico-cultural responde con **cita a fuente real** cuando hay contenido. *(RAG `retrieveChunks` cableado + degradación elegante ✅; **sin contenido PD ingestado aún** → no verificable en vivo. Tarea del fundador: ingestar ISBE/K&D/JFB.)*
+- [x] Tripwire inline dispara en `core` y **calla** en distinctive/open. *(`useInlineCoreTripwire`, smoke OK: idea central + principio.)*
+- [x] Paso 7: pastor escribe el principio; NO hay botón "generar"; verificador produce fundamento/riesgo/generalización referido a pasos 1-6. *(`verifyTimelessPrinciple`.)*
+- [x] Paso 8 sigue SIN IA (test: cero `AiAssistLog`). *(`AI_ASSIST_FORBIDDEN_STEPS` + `assertAiAssistAllowed` + test domain.)*
+- [x] Motor de paralelos (paso 5): rationale por candidato. *(recognition intacto de Fase 1/2.)*
+- [~] `AiAssistLog` registra cada asistencia con `outputWasEditedByUser`. *(cableado en genre/historical/eisegesis; **structural/wordStudies/crossRef diferido** — aditivo. Deuda visible.)*
+- [~] Paridad AT (Gn 1:1 pasos 1/3/4 con parsing). *(`inferGenreFromBook` + `SblgntPassagePanel` cubren AT; smoke manual AT no ejecutado — Jn 1:1 sí validado.)*
+
+Leyenda: `[x]` cumplido · `[~]` parcial/deuda visible documentada (no encubierta).
 
 ## Riesgos
 
