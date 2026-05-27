@@ -64,7 +64,7 @@ export function KeyWordsPicker({ candidates, selectedLemma, language, onSelect }
                                     {c.curatedBoostApplied && (
                                         <>
                                             <span aria-hidden>·</span>
-                                            <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
+                                            <span className="inline-flex items-center gap-0.5 text-warning">
                                                 <Sparkles className="h-2.5 w-2.5" />
                                                 {t('picker.curatedBadge')}
                                             </span>

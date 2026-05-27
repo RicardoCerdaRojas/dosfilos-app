@@ -2,7 +2,7 @@
 
 ## Estado
 
-`in-progress` — **arrancada 2026-05-27**. Decisiones pendientes cerradas vía ADRs 017-021. PR0 (este commit) abre la fase. Mini-fase insertada entre Fase 1 y Fase 2 por **ADR-016**.
+`completed` — **cerrada 2026-05-27**. PR0 (docs/ADRs) + PR1 (modal shell + identify) + PR5 (curated dataset v1, 50 entradas) + PR2 (analysis + lexicon adapters + cache) + PR3 (DiscoveryEditor + persist + Hebrew e2e) + PR4 (naming clarification + lexicon attribution) shippeados en branch `feat/pastoral-fidelity-phase-1-5`. Mini-fase insertada entre Fase 1 y Fase 2 por **ADR-016**.
 
 ## Objetivo
 
@@ -180,3 +180,12 @@ Tests manuales:
 
 - **2026-05-26** — Phase doc creado. ADR-016 aceptado. Decisión tomada durante smoke test de Phase 1 (issue: GreekTutorOverlay académico violando manifesto pedagógico).
 - **2026-05-27** — Fase arrancada vía `/iniciar-fase 1.5`. Decisiones pendientes cerradas: ADR-017 (lexicon source), ADR-018 (key-word identification), ADR-019 (cross-ref reuse), ADR-020 (hebrew same modal), ADR-021 (no pre-fill + no AI exposure). Branch `feat/pastoral-fidelity-phase-1-5` abierto desde `main`. Sub-flag `pastoral_word_study` definido.
+- **2026-05-27** — **Fase cerrada**. PRs shippeados:
+  - **PR0** — ADRs 017-021 + phase doc kickoff.
+  - **PR1** — `PastoralWordStudyModal` shell + `KeyWordsPicker` + `IdentifyKeyWordsUseCase` + callable `identifyKeyWords` + sub-flag `pastoral_word_study` + `MorphologyStep` integration.
+  - **PR5** — Curated lexicon v1 dataset (50 entradas: 30 griego + 20 hebreo) + `lexicon-curation-guidelines.md` + validator script.
+  - **PR2** — `WordAnalysisPanel` + `AnalyzeWordPastorallyUseCase` + `CompositeLexicon` (curated + LSJ/BDB stubs) + callable `analyzeWordPastorally` + Firestore cache `pastoralWordAnalyses/` + cross-ref reuse.
+  - **PR3** — `DiscoveryEditor` + `WordStudy.wordAnalysisId` back-compat field + Hebrew end-to-end + `pastoral-word-study` tool enum.
+  - **PR4** — Menu naming clarification ("Aprende Griego" / "Aprende Hebreo") + `aggregateLexiconAttributions` + audit panel attribution rendering + core-library-seed.json extends con 3 lexicon entries.
+  - Tests: 269/269 passing (domain). Sync de curated lexicon validado.
+  - Pending follow-ups documentados: LSJ/BDB dataset wire-up + export pipeline attribution wiring (no bloquea cierre — el block ya rendea en audit panel).
