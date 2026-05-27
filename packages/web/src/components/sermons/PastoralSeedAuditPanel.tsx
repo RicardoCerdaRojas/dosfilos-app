@@ -62,8 +62,8 @@ export function PastoralSeedAuditPanel({ sermonId, compact = false }: Props) {
     const pasteCount = seed.insight.pasteEvents?.length ?? 0;
     const totalMinutes = Math.round((seed.totalTimeSeconds ?? 0) / 60);
     const lexiconAttributions = useMemo(
-        () => aggregateLexiconAttributions(seed.morphology.wordStudies ?? []),
-        [seed.morphology.wordStudies],
+        () => aggregateLexiconAttributions(seed.wordStudies?.studies ?? []),
+        [seed.wordStudies?.studies],
     );
 
     return (

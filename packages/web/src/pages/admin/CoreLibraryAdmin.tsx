@@ -1249,6 +1249,43 @@ export default function CoreLibraryAdmin() {
                         <Database className="h-4 w-4 mr-2" />
                         Migrar sermones
                     </Button>
+                    <Button
+                        onClick={async () => {
+                            const ok = await askConfirm({
+                                title: 'Migrar semillas pastorales a 8 pasos',
+                                description:
+                                    'Renombra syntax→structuralAnalysis y morphology→wordStudies, crea los pasos Contexto/Género y Principio Atemporal vacíos, y marca las semillas legacy como incompletas (el pastor completa los 2 pasos nuevos al retomar). Idempotente — seguro re-ejecutar.',
+                                confirmLabel: 'Ejecutar migración',
+                            });
+                            if (!ok) return;
+                            try {
+                                toast.info('Migrando semillas pastorales a 8 pasos...');
+                                const data = (await coreLibraryAdminService.runMigration(
+                                    'migratePastoralSeedsEightStep',
+                                )) as any;
+                                console.log('[migratePastoralSeedsEightStep]', data);
+                                if (data?.success) {
+                                    toast.success(
+                                        `Migración completa — ${data.seedsScanned} escaneadas, ${data.seedsMigrated} migradas, ${data.seedsSkipped} ya estaban`,
+                                    );
+                                } else {
+                                    toast.warning(
+                                        `Completada con ${data.errors?.length ?? 0} errores — ver consola`,
+                                    );
+                                }
+                            } catch (err: any) {
+                                console.error('[migratePastoralSeedsEightStep] error:', err);
+                                toast.error(`Error: ${err.message}`);
+                            }
+                        }}
+                        variant="outline"
+                        size="sm"
+                        disabled={!!batchOperation.type}
+                        title="One-shot: migra pastoralSeeds del six-step al eight-step (ADR-022). Idempotente."
+                    >
+                        <Database className="h-4 w-4 mr-2" />
+                        Migrar semillas (8 pasos)
+                    </Button>
                     {advancedMode && (
                         <Button
                             onClick={async () => {

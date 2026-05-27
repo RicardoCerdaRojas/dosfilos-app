@@ -258,6 +258,21 @@ export interface GenerationRules {
         wordStudies: { word: string; reference: string; discovery: string }[];
         parallels: { reference: string; relevance: string }[];
         originalAudienceFunction: string;
+        /**
+         * Phase 1.6 (ADR-022/024) — genre governs the rules of reading
+         * (paso 2). The pastor's own interpretive implication of the
+         * genre anchors the draft's reading conventions.
+         */
+        genre?: string;
+        genreImplication?: string;
+        bookLocationNote?: string;
+        /**
+         * Phase 1.6 — the timeless theological principle (paso 7, the
+         * Kaiser/Robinson bridge). Distinct from `centralIdea` (the
+         * homiletical idea in the preacher's voice): the principle is the
+         * transcultural truth the draft must remain faithful to.
+         */
+        timelessPrinciple?: string;
     };
 }
 

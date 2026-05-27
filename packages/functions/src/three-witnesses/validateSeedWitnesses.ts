@@ -116,6 +116,7 @@ function buildCacheId(args: {
     sermonId: string;
     claims: PromptClaim[];
     confessionalWitnessesEnabled: boolean;
+    mode: 'inline-core' | 'full-gate';
 }): string {
     const claimDigest = createHash('sha256')
         .update(args.claims.map((c) => `${c.key}::${c.text}`).join(''))
@@ -123,6 +124,7 @@ function buildCacheId(args: {
         .slice(0, 16);
     return [
         args.sermonId,
+        args.mode,
         claimDigest,
         args.confessionalWitnessesEnabled ? 'wON' : 'wOFF',
         WITNESS_PROMPT_VERSION,
@@ -185,7 +187,15 @@ export const validateSeedWitnesses = onCall(
         const sermonId = String(data.sermonId ?? '').trim();
         const seedId = String(data.seedId ?? '').trim();
         const passage = String(data.passage ?? '').trim();
-        const confessionalWitnessesEnabled = data.confessionalWitnessesEnabled !== false;
+        // Phase 1.6 (ADR-023) — two-tier verification. `inline-core` runs
+        // ONLY Testigo 3 at core level (the productive-struggle tripwire);
+        // `full-gate` runs all three witnesses (the Phase 2 default).
+        const mode: 'inline-core' | 'full-gate' =
+            data.mode === 'inline-core' ? 'inline-core' : 'full-gate';
+        // In inline-core we force confessional witnesses OFF so only `core`
+        // dissent fires (silence on distinctive/open — manifesto P1).
+        const confessionalWitnessesEnabled =
+            mode === 'inline-core' ? false : data.confessionalWitnessesEnabled !== false;
         const claims: PromptClaim[] = Array.isArray(data.claims)
             ? data.claims
                   .map((c: any) => ({
@@ -220,7 +230,7 @@ export const validateSeedWitnesses = onCall(
             ? data.seedParallels.map((p: any) => ({ reference: String(p?.reference ?? ''), note: String(p?.note ?? '') }))
             : [];
 
-        const cacheId = buildCacheId({ sermonId, claims, confessionalWitnessesEnabled });
+        const cacheId = buildCacheId({ sermonId, claims, confessionalWitnessesEnabled, mode });
         const db = admin.firestore();
         const cacheRef = db.collection('witnessResults').doc(cacheId);
 
@@ -250,17 +260,30 @@ export const validateSeedWitnesses = onCall(
         let parallels: RawVerdict[];
         let confession: RawConfessionVerdict[];
         try {
-            const [ctxParsed, parParsed, confParsed] = await Promise.all([
-                callWitness(WITNESS_CONTEXT_SYSTEM, buildContextPrompt(claims, ctx)),
-                callWitness(WITNESS_PARALLELS_SYSTEM, buildParallelsPrompt(claims, ctx, crossRefs, seedParallels)),
-                callWitness(
+            if (mode === 'inline-core') {
+                // Tier 1: only Testigo 3 (core-only). Context + parallels are
+                // skipped (the inline tripwire acts on `detectedLevel==='core'`
+                // alone), keeping the call to a single Flash request.
+                const confParsed = await callWitness(
                     WITNESS_CONFESSION_SYSTEM,
-                    buildConfessionPrompt(claims, CORE_DOCTRINES, sections, confessionalWitnessesEnabled),
-                ),
-            ]);
-            context = normalizeVerdicts(ctxParsed, claims.length);
-            parallels = normalizeVerdicts(parParsed, claims.length);
-            confession = normalizeConfessionVerdicts(confParsed, claims.length);
+                    buildConfessionPrompt(claims, CORE_DOCTRINES, sections, false),
+                );
+                context = claims.map((_, i) => ({ index: i, dissents: false, confidence: 0, reasoning: '', evidence: [] }));
+                parallels = context.map((v) => ({ ...v }));
+                confession = normalizeConfessionVerdicts(confParsed, claims.length);
+            } else {
+                const [ctxParsed, parParsed, confParsed] = await Promise.all([
+                    callWitness(WITNESS_CONTEXT_SYSTEM, buildContextPrompt(claims, ctx)),
+                    callWitness(WITNESS_PARALLELS_SYSTEM, buildParallelsPrompt(claims, ctx, crossRefs, seedParallels)),
+                    callWitness(
+                        WITNESS_CONFESSION_SYSTEM,
+                        buildConfessionPrompt(claims, CORE_DOCTRINES, sections, confessionalWitnessesEnabled),
+                    ),
+                ]);
+                context = normalizeVerdicts(ctxParsed, claims.length);
+                parallels = normalizeVerdicts(parParsed, claims.length);
+                confession = normalizeConfessionVerdicts(confParsed, claims.length);
+            }
         } catch (err) {
             console.error('[validateSeedWitnesses] gemini failed', err);
             throw new HttpsError('internal', err instanceof Error ? err.message : 'Witness validation failed');

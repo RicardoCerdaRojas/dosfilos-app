@@ -23,11 +23,13 @@ export * from './entities/LibraryResource';
 export * from './entities/LibraryCategory';
 export * from './entities/extractionEstimate';
 export * from './entities/SermonGenerator';
-export * from './entities/PastoralSeed'; // 🌱 Pastoral Fidelity Phase 1 — six-step spine seed
+export * from './entities/PastoralSeed'; // 🌱 Pastoral Fidelity Phase 1/1.6 — eight-step spine seed
+export * from './entities/AiAssistLog'; // 🌱 Pastoral Fidelity Phase 1.6 — first-class assist audit (ADR-024)
 export * from './repositories/IPastoralSeedRepository';
 export * from './entities/PastoralWordAnalysis'; // 🌱 Pastoral Fidelity Phase 1.5 — Pastoral Word Study types
 export * from './entities/WitnessValidation'; // 🌱 Pastoral Fidelity Phase 2 — three-witnesses validation
 export * from './bible/inferLanguageFromBook'; // 🌱 Phase 1.5 — book → original language heuristic
+export * from './bible/inferGenreFromBook'; // 🌱 Phase 1.6 — book → literary genre proposal (ADR-024)
 export * from './services/IPastoralWordStudyService'; // 🌱 Phase 1.5 — service port
 export * from './repositories/IPastoralWordAnalysisCacheRepository'; // 🌱 Phase 1.5 — analysis cache
 export * from './entities/HomileticalApproach';  // 🎯 NEW

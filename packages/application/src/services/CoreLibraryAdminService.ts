@@ -436,7 +436,9 @@ export class CoreLibraryAdminService {
      * panel. Returned as `unknown` because each callable has a different result
      * shape; the caller narrows it.
      */
-    async runMigration(name: 'migrateLegacySermons' | 'migratePlanQuotas'): Promise<unknown> {
+    async runMigration(
+        name: 'migrateLegacySermons' | 'migratePlanQuotas' | 'migratePastoralSeedsEightStep',
+    ): Promise<unknown> {
         const fn = httpsCallable(getFunctions(), name);
         const result = await fn({});
         return result.data;

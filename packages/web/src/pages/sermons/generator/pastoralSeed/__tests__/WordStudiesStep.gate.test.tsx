@@ -1,18 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
-import { MorphologyStep } from '../MorphologyStep';
-import type { MorphologyStepData } from '@dosfilos/domain';
+import { WordStudiesStep } from '../WordStudiesStep';
+import type { WordStudiesStepData } from '@dosfilos/domain';
 
 /**
- * Pastoral Fidelity Phase 1.5 — gate render test.
+ * Pastoral Fidelity Phase 1.5/1.6 — gate render test.
  *
  * Proves end-to-end (at the render level, independent of any browser
  * session) that the `pastoral_word_study` sub-flag drives which surface
- * MorphologyStep shows:
+ * WordStudiesStep (formerly MorphologyStep, ADR-022) shows:
  *   - flag ON  → "Análisis Pastoral del Texto" (new modal entry point)
  *   - flag OFF → "Abrir tutor de griego" (Phase 1 interim, ADR-016)
  *
- * This is the automated counterpart to the manual smoke test "Step 3
+ * This is the automated counterpart to the manual smoke test "word-study
  * button flips when the sub-flag is enabled".
  */
 
@@ -50,14 +50,14 @@ vi.mock('../StepHelp', () => ({
     StepHelp: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-const baseData: MorphologyStepData = {
-    wordStudies: [],
+const baseData: WordStudiesStepData = {
+    studies: [],
     timeSpentSeconds: 0,
 };
 
 function renderStep() {
     return render(
-        <MorphologyStep
+        <WordStudiesStep
             passage="Juan 1:1"
             sermonId="s1"
             data={baseData}
@@ -68,7 +68,7 @@ function renderStep() {
     );
 }
 
-describe('MorphologyStep — pastoral_word_study gate', () => {
+describe('WordStudiesStep — pastoral_word_study gate', () => {
     beforeEach(() => {
         cleanup();
         gateMock.mockReset();

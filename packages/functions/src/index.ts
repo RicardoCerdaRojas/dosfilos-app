@@ -119,6 +119,8 @@ export { updateSectionDoctrineLevel } from './admin/confessions/updateSectionDoc
 export { ingestBibleCrossReferences } from './admin/cross-references/ingestCrossReferences';
 export { lookupCrossReferences } from './admin/cross-references/lookupCrossReferences';
 export { ingestLibrarySeedSources } from './admin/coreLibrary/ingestLibrarySeed';
+// 🌱 Pastoral Fidelity Phase 1.6 — eight-step spine migration (ADR-022)
+export { migratePastoralSeedsEightStep } from './admin/migratePastoralSeedsEightStep';
 
 // 🌱 Pastoral Fidelity Phase 1.5 — Pastoral Word Study callables
 export { identifyKeyWords } from './pastoral-word-study/identifyKeyWords';
@@ -126,6 +128,8 @@ export { analyzeWordPastorally } from './pastoral-word-study/analyzeWordPastoral
 
 // 🌱 Pastoral Fidelity Phase 2 — three-witnesses validation (ADR-011)
 export { validateSeedWitnesses } from './three-witnesses/validateSeedWitnesses';
+// 🌱 Pastoral Fidelity Phase 1.6 — timeless-principle verifier (ADR-023)
+export { verifyTimelessPrinciple } from './three-witnesses/verifyTimelessPrinciple';
 
 
 

@@ -733,9 +733,9 @@ async function augmentRulesWithPastoralSeed(
                 openQuestion: seed.insight.openQuestion,
                 pastoralAnecdote: seed.insight.pastoralAnecdote,
                 doxologicalApplication: seed.insight.doxologicalApplication,
-                mainClauseReference: seed.syntax.mainClause.reference,
-                mainClauseNote: seed.syntax.mainClause.pastorNote,
-                wordStudies: seed.morphology.wordStudies.map((w) => ({
+                mainClauseReference: seed.structuralAnalysis.mainClause.reference,
+                mainClauseNote: seed.structuralAnalysis.mainClause.pastorNote,
+                wordStudies: seed.wordStudies.studies.map((w) => ({
                     word: w.word,
                     reference: w.reference,
                     discovery: w.pastorDiscovery,
@@ -745,6 +745,10 @@ async function augmentRulesWithPastoralSeed(
                     relevance: p.relevanceNote,
                 })),
                 originalAudienceFunction: seed.function.originalAudienceFunction,
+                genre: seed.contextGenre.genre || undefined,
+                genreImplication: seed.contextGenre.genreImplication || undefined,
+                bookLocationNote: seed.contextGenre.bookLocationNote || undefined,
+                timelessPrinciple: seed.timelessPrinciple.principle || undefined,
             },
         };
     } catch (error) {

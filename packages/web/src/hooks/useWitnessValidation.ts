@@ -89,9 +89,9 @@ export function useWitnessValidation(): UseWitnessValidationResult {
                 confessionalWitnessesEnabled,
                 claims: claims.map((c) => ({ key: c.key, kind: c.kind, text: c.text })),
                 context: {
-                    mainClauseRef: seed.syntax?.mainClause?.reference ?? '',
-                    mainClauseNote: seed.syntax?.mainClause?.pastorNote ?? '',
-                    wordStudies: (seed.morphology?.wordStudies ?? []).map((w) => ({
+                    mainClauseRef: seed.structuralAnalysis?.mainClause?.reference ?? '',
+                    mainClauseNote: seed.structuralAnalysis?.mainClause?.pastorNote ?? '',
+                    wordStudies: (seed.wordStudies?.studies ?? []).map((w) => ({
                         word: w.word,
                         reference: w.reference,
                         discovery: w.pastorDiscovery,

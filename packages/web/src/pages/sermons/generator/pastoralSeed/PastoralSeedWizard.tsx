@@ -9,22 +9,28 @@ import { PASTORAL_SEED_STEP_ORDER, PastoralSeedStepKey } from '@dosfilos/domain'
 import { WitnessGate } from './witnesses/WitnessGate';
 import { PastoralSeedBreadcrumb, BreadcrumbStep } from './PastoralSeedBreadcrumb';
 import { ReadingStep } from './ReadingStep';
-import { SyntaxStep } from './SyntaxStep';
-import { MorphologyStep } from './MorphologyStep';
+import { ContextGenreStep } from './ContextGenreStep';
+import { StructuralAnalysisStep } from './StructuralAnalysisStep';
+import { WordStudiesStep } from './WordStudiesStep';
 import { RecognitionStep } from './RecognitionStep';
 import { FunctionStep } from './FunctionStep';
+import { TimelessPrincipleStep } from './TimelessPrincipleStep';
 import { InsightStep } from './InsightStep';
 import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
 import { cn } from '@/lib/utils';
 
 const STEP_TITLES: Record<PastoralSeedStepKey, string> = {
     reading: 'Lectura',
-    syntax: 'Sintaxis',
-    morphology: 'Morfología',
+    contextGenre: 'Contexto y Género',
+    structuralAnalysis: 'Análisis Estructural',
+    wordStudies: 'Estudio de Palabras',
     recognition: 'Reconocimiento',
     function: 'Función',
+    timelessPrinciple: 'Principio Atemporal',
     insight: 'Insight',
 };
+
+const TOTAL_STEPS = PASTORAL_SEED_STEP_ORDER.length;
 
 interface Props {
     sermonId: string | null;
@@ -90,6 +96,7 @@ export function PastoralSeedWizard({
         appendPasteEvent,
         addWordStudy,
         saveWitnessReview,
+        logAiAssist,
         flush,
     } = usePastoralSeed({
         sermonId,
@@ -158,7 +165,7 @@ export function PastoralSeedWizard({
                 <header className="space-y-2">
                     <div className="flex items-center gap-2">
                         <Scale className="h-4 w-4 text-emerald-600" />
-                        <h1 className="text-base font-semibold">Paso 7 · Validación</h1>
+                        <h1 className="text-base font-semibold">Validación final</h1>
                         <span className="text-xs text-muted-foreground hidden md:inline">
                             · Tres testigos antes del borrador.
                         </span>
@@ -197,37 +204,49 @@ export function PastoralSeedWizard({
                         onChange={(patch) => updateStep('reading', patch)}
                     />
                 );
-            case 'syntax':
+            case 'contextGenre':
                 return (
-                    <SyntaxStep
+                    <ContextGenreStep
                         {...common}
-                        data={seed.syntax}
+                        data={seed.contextGenre}
+                        validation={stepValidation}
+                        onChange={(patch) => updateStep('contextGenre', patch)}
+                        onLogAiAssist={(assistType, edited) =>
+                            logAiAssist({ stepKey: 'contextGenre', assistType, outputWasEditedByUser: edited })
+                        }
+                    />
+                );
+            case 'structuralAnalysis':
+                return (
+                    <StructuralAnalysisStep
+                        {...common}
+                        data={seed.structuralAnalysis}
                         suggestion={derivedSuggestions?.mainClauseNote}
                         validation={stepValidation}
-                        onChange={(patch) => updateStep('syntax', patch)}
+                        onChange={(patch) => updateStep('structuralAnalysis', patch)}
                         onLogToolUsage={(tool) =>
                             appendToolUsage({
                                 tool,
-                                step: 'syntax',
+                                step: 'structuralAnalysis',
                                 invokedAt: new Date(),
                                 durationSeconds: 0,
                             })
                         }
                     />
                 );
-            case 'morphology':
+            case 'wordStudies':
                 return (
-                    <MorphologyStep
+                    <WordStudiesStep
                         {...common}
                         sermonId={sermonId}
-                        data={seed.morphology}
+                        data={seed.wordStudies}
                         validation={stepValidation}
                         onAddWordStudy={addWordStudy}
-                        onChange={(patch) => updateStep('morphology', patch)}
+                        onChange={(patch) => updateStep('wordStudies', patch)}
                         onLogToolUsage={(tool) =>
                             appendToolUsage({
                                 tool,
-                                step: 'morphology',
+                                step: 'wordStudies',
                                 invokedAt: new Date(),
                                 durationSeconds: 0,
                             })
@@ -269,10 +288,32 @@ export function PastoralSeedWizard({
                         }
                     />
                 );
+            case 'timelessPrinciple':
+                return (
+                    <TimelessPrincipleStep
+                        {...common}
+                        seed={seed}
+                        data={seed.timelessPrinciple}
+                        validation={stepValidation}
+                        onChange={(patch) => updateStep('timelessPrinciple', patch)}
+                        onPasteEvent={(charsCount) =>
+                            appendPasteEvent({
+                                step: 'timelessPrinciple',
+                                field: 'principle',
+                                charsCount,
+                                at: new Date(),
+                            })
+                        }
+                        onLogAiAssist={(assistType, edited) =>
+                            logAiAssist({ stepKey: 'timelessPrinciple', assistType, outputWasEditedByUser: edited })
+                        }
+                    />
+                );
             case 'insight':
                 return (
                     <InsightStep
                         {...common}
+                        seed={seed}
                         data={seed.insight}
                         validation={stepValidation}
                         onChange={(patch) => updateStep('insight', patch)}
@@ -289,9 +330,21 @@ export function PastoralSeedWizard({
         <div className="max-w-7xl mx-auto py-3 px-2">
             <header className="space-y-2 mb-3">
                 <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                        <Sprout className="h-4 w-4 text-emerald-600" />
-                        <h1 className="text-base font-semibold">Estudio personal</h1>
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <div className="flex items-center gap-2">
+                            <Sprout className="h-4 w-4 text-emerald-600" />
+                            <h1 className="text-base font-semibold">Estudio personal</h1>
+                        </div>
+                        {passage && (
+                            <div className="flex items-baseline gap-1.5 border-l pl-3">
+                                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                    Pasaje
+                                </span>
+                                <span className="font-serif text-lg font-semibold text-foreground leading-none">
+                                    {passage}
+                                </span>
+                            </div>
+                        )}
                         <span className="text-xs text-muted-foreground hidden md:inline">
                             · Tú estudias; el sistema desarrolla.
                         </span>
@@ -370,7 +423,7 @@ export function PastoralSeedWizard({
                                         ? threeWitnesses.enabled
                                             ? 'Continuar a validación →'
                                             : 'Continuar al borrador →'
-                                        : 'Completa los 6 pasos para continuar'}
+                                        : `Completa los ${TOTAL_STEPS} pasos para continuar`}
                                 </Button>
                             )}
                         </div>

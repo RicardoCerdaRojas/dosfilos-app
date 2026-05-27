@@ -2,7 +2,7 @@
 
 ## Estado
 
-`proposed` — se acepta al arrancar `/iniciar-fase 1.6`.
+`accepted` — aceptado 2026-05-27 al arrancar `/iniciar-fase 1.6`.
 
 ## Fecha
 
