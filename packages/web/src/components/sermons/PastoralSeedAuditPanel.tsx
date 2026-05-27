@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Sprout, Clock, Wrench, ClipboardPaste, CheckCircle2, Circle } from 'lucide-react';
+import { Sprout, Clock, Wrench, ClipboardPaste, CheckCircle2, Circle, BookOpen } from 'lucide-react';
 import { pastoralSeedService } from '@dosfilos/application';
 import {
+    aggregateLexiconAttributions,
     evaluatePastoralSeed,
     PASTORAL_SEED_STEP_ORDER,
     PastoralSeed,
@@ -60,6 +61,10 @@ export function PastoralSeedAuditPanel({ sermonId, compact = false }: Props) {
     const evaluation = evaluatePastoralSeed(seed);
     const pasteCount = seed.insight.pasteEvents?.length ?? 0;
     const totalMinutes = Math.round((seed.totalTimeSeconds ?? 0) / 60);
+    const lexiconAttributions = useMemo(
+        () => aggregateLexiconAttributions(seed.morphology.wordStudies ?? []),
+        [seed.morphology.wordStudies],
+    );
 
     return (
         <Card className={`${compact ? 'p-3' : 'p-4'} space-y-3 border-emerald-500/30`}>
@@ -130,6 +135,25 @@ export function PastoralSeedAuditPanel({ sermonId, compact = false }: Props) {
                         <ClipboardPaste className="h-3 w-3" />
                         {pasteCount} evento{pasteCount === 1 ? '' : 's'} de pegado
                     </span>
+                </div>
+            )}
+
+            {!compact && lexiconAttributions.length > 0 && (
+                <div className="border-t pt-2 space-y-2">
+                    <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <BookOpen className="h-3 w-3" />
+                        Atribuciones léxicas
+                    </p>
+                    <ul className="space-y-2">
+                        {lexiconAttributions.map((block) => (
+                            <li key={block.sourceId} className="text-[11px] leading-snug text-muted-foreground">
+                                <p className="font-medium text-foreground">{block.title}</p>
+                                {block.lines.map((line, i) => (
+                                    <p key={i}>{line}</p>
+                                ))}
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             )}
         </Card>

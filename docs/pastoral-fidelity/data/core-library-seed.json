@@ -727,6 +727,112 @@
         "rag_display": "Reference: Chicago Statement on Biblical Application, Article {section_reference}. Full text not indexed; cited as a modern evangelical doctrinal statement."
       },
       "example_section_reference": "1"
+    },
+    {
+      "source_id": "lexicon-curated-v1",
+      "title": "Preach Curated Pastoral Lexicon v1.0",
+      "short_title": "Preach Lexicon v1",
+      "author_or_editor": "Preach team",
+      "year": 2026,
+      "source_type": "Internally created lexicon",
+      "tradition": "Cross-denominational pastoral",
+      "language": "Spanish + Greek/Hebrew",
+      "rights_status": "Internally created for the Pastoral Fidelity initiative. License: Internally created (Preach owns).",
+      "license": "Internally created",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "internal://packages/infrastructure/src/data/lexicon-curated-v1.json",
+      "download_url": null,
+      "rag_use": [
+        "Pastoral word analysis (Phase 1.5)",
+        "Sermon prep lexical glosses with theological weight",
+        "Bridge between Greek/Hebrew lemma and pastoral discovery"
+      ],
+      "special_handling": [
+        "Glosses are pastoral, not academic.",
+        "Expansion guided by telemetry (`lexicon_gap_*`)."
+      ],
+      "required_attribution": [
+        "Pastoral glosses + theological notes: Preach Curated Pastoral Lexicon v1.0 (internally created).",
+        "Glosses are pastoral, not academic; they intentionally distill weight rather than reproduce a critical lexicon."
+      ],
+      "citation": {
+        "short": "Preach Pastoral Lexicon, s.v. {section_reference}",
+        "footnote": "Preach Curated Pastoral Lexicon v1.0 (Preach team, 2026), s.v. {section_reference}.",
+        "bibliography": "Preach team. Preach Curated Pastoral Lexicon v1.0. 2026.",
+        "rag_display": "Source: Preach Pastoral Lexicon, s.v. {section_reference}. Internal pastoral gloss."
+      },
+      "example_section_reference": "δικαιοσύνη"
+    },
+    {
+      "source_id": "lexicon-lsj",
+      "title": "Liddell-Scott-Jones Greek-English Lexicon",
+      "short_title": "LSJ",
+      "author_or_editor": "Henry George Liddell, Robert Scott, Henry Stuart Jones",
+      "year": 1940,
+      "source_type": "Critical lexicon",
+      "tradition": "Academic / classical",
+      "language": "Greek + English",
+      "rights_status": "Public domain (Perseus Digital Library digitization).",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "http://www.perseus.tufts.edu/hopper/text?doc=Perseus:text:1999.04.0057",
+      "download_url": null,
+      "rag_use": [
+        "Greek lexical fallback when curated lexicon doesn't cover the lemma",
+        "Pastor-facing pastoral word study (Phase 1.5)"
+      ],
+      "special_handling": [
+        "Dataset wire-up is follow-up (currently stubbed in `LsjLexiconAdapter`).",
+        "Lemma index required before activation."
+      ],
+      "required_attribution": [
+        "Greek lexical glosses: Liddell-Scott-Jones Greek-English Lexicon",
+        "(Perseus Digital Library, public domain)."
+      ],
+      "citation": {
+        "short": "LSJ, s.v. {section_reference}",
+        "footnote": "Henry George Liddell, Robert Scott, A Greek-English Lexicon, rev. Henry Stuart Jones (Oxford: Clarendon, 1940), s.v. {section_reference}.",
+        "bibliography": "Liddell, Henry George, Robert Scott, and Henry Stuart Jones. A Greek-English Lexicon. Oxford: Clarendon, 1940.",
+        "rag_display": "Source: LSJ, s.v. {section_reference}."
+      },
+      "example_section_reference": "λόγος"
+    },
+    {
+      "source_id": "lexicon-bdb",
+      "title": "Brown-Driver-Briggs Hebrew-English Lexicon",
+      "short_title": "BDB",
+      "author_or_editor": "Francis Brown, Samuel R. Driver, Charles A. Briggs",
+      "year": 1906,
+      "source_type": "Critical lexicon",
+      "tradition": "Academic / Hebrew Bible",
+      "language": "Hebrew + English",
+      "rights_status": "Public domain (1906 edition).",
+      "license": "Public Domain",
+      "ingestion_status": "approved_full_ingestion",
+      "risk_level": "low",
+      "source_url": "https://archive.org/details/hebrewenglishlex00browuoft",
+      "download_url": null,
+      "rag_use": [
+        "Hebrew lexical fallback when curated lexicon doesn't cover the lemma",
+        "Pastor-facing pastoral word study (Phase 1.5)"
+      ],
+      "special_handling": [
+        "Dataset wire-up is follow-up (currently stubbed in `BdbLexiconAdapter`).",
+        "Lemma index required before activation."
+      ],
+      "required_attribution": [
+        "Hebrew lexical glosses: Brown-Driver-Briggs Hebrew-English Lexicon",
+        "(public domain)."
+      ],
+      "citation": {
+        "short": "BDB, s.v. {section_reference}",
+        "footnote": "Francis Brown, S. R. Driver, and C. A. Briggs, A Hebrew and English Lexicon of the Old Testament (Oxford: Clarendon, 1906), s.v. {section_reference}.",
+        "bibliography": "Brown, Francis, Samuel R. Driver, and Charles A. Briggs. A Hebrew and English Lexicon of the Old Testament. Oxford: Clarendon, 1906.",
+        "rag_display": "Source: BDB, s.v. {section_reference}."
+      },
+      "example_section_reference": "חֶסֶד"
     }
   ],
   "citation_output_rules": {
