@@ -2,7 +2,7 @@
 
 ## Estado
 
-`completed` — **shippeada 2026-05-25**. Single PR `feat(pastoral-fidelity): Phase 1 — six-step spine` bundleó schema + repo + service + hook + orquestador + 6 sub-step components + gate + PRIMARY VOICE prompt + verbatim check + audit panel + UI audit kill-list. Feature-flagged (`pastoral_fidelity_flow` off por default).
+`completed` — **shippeada 2026-05-27 vía PR #257**. Single PR `feat(pastoral-fidelity): Phase 1 — six-step spine` bundleó schema + repo + service + hook + orquestador + 6 sub-step components + gate + PRIMARY VOICE prompt + verbatim check + audit panel + UI audit kill-list. Feature-flagged (`pastoral_fidelity_flow` off por default). Prereqs revalidados al recierre de Fase 0 (2026-05-25, deuda 0, PRs #252/#253/#254/#255 en main).
 
 ## Objetivo
 
@@ -12,14 +12,16 @@ Esta fase es el **punto de inversión** del producto: aquí cambia el flow de "A
 
 ## Prerequisitos
 
-- Fase 0 completa (✅ cerrada 2026-05-23, commit `132a3db1`):
-  - [x] **Catálogo de confesiones live** — 14 catalog entries Firestore (`/confessions/{id}`). 4 creeds con sections full (17 sections taggeables), 7 confesiones grandes con stubs `ingestStatus: pending` (content fill follow-up). PR 0.2.
-  - [x] **`declaredConfession` persistido por usuario** — `User.declaredConfession` + `confessionAffirmedAt` + `confessionVisibility`. Onboarding obligatorio para users nuevos (PR 0.6) + banner backfill + `/settings/confession` para existentes (PR 0.7).
-  - [x] **Feature flag `pastoral_fidelity_flow` operativo** — `User.featureFlags` + callable `setUserFeatureFlags` super_admin-only + admin Flags tab + hook `useFeatureFlag('pastoral_fidelity_flow')`. PR 0.1.
-  - [x] **Hook combinado** `usePastoralFidelityGate()` con 4 reasons (loading / flag-disabled / confession-required / allowed) — listo para gate del flow reformado. PR 0.7.
+- Fase 0 completa (✅ cerrada 2026-05-25 con deuda 0):
+  - [x] **Catálogo de confesiones live** — 14 catalog entries Firestore (`/confessions/{id}`). 4 creeds con sections full (17 sections taggeables), 7 confesiones grandes con stubs `ingestStatus: pending` (content fill follow-up). [PR #252](https://github.com/RicardoCerdaRojas/dosfilos-app/pull/252).
+  - [x] **CORE Library system seed sources** — 8 docs no-confesionales en `/library_resources` con `isSystemSource: true` + rights-aware completos. SBLGNT (CC BY 4.0 + 5 attribution requirements) disponible para citation manifest. Schaff Vols I/II/III, Chicago Statements x3, Savoy, 39 Articles, 1689 LBCF, Baptist Cat 1693. Callable `ingestLibrarySeedSources` deployed. [PR #255](https://github.com/RicardoCerdaRojas/dosfilos-app/pull/255).
+  - [x] **Multi-witness default-on** ([ADR-010](../decisions/ADR-010-confessional-witnesses-default-on.md)) — `User.useConfessionalWitnesses: boolean` default `true`. NO onboarding step, NO banner. Toggle único en `/settings/confession` con justificación ≥50 chars cuando opt-out + audit log `confessionChangeAudit/`. Legacy `declaredConfession*` fields preserved sin consumir. [PR #253](https://github.com/RicardoCerdaRojas/dosfilos-app/pull/253) + [PR #254](https://github.com/RicardoCerdaRojas/dosfilos-app/pull/254) refetch fix.
+  - [x] **Feature flag `pastoral_fidelity_flow` operativo** — `User.featureFlags` + callable `setUserFeatureFlags` super_admin-only + admin Flags tab + hook `useFeatureFlag('pastoral_fidelity_flow')`. PR 0.1 (parte de [#252](https://github.com/RicardoCerdaRojas/dosfilos-app/pull/252)).
+  - [x] **Hook combinado** `usePastoralFidelityGate()` con 3 reasons (loading / flag-disabled / allowed) + `confessionalWitnessesEnabled` flag (post ADR-010) — listo para gate del flow reformado. Phase 2 Testigo 3 lee `confessionalWitnessesEnabled` para decidir si `distinctive`/`open-evangelical` fire.
   - [x] **Cross-reference engine sample** — `lookupCrossReferences` callable (auth users) + sample dataset (~12 anchor verses) para Step 4 (Reconocimiento). PR 0.5.
   - [x] **doctrineLevel tagging operacional** — `ConfessionSection.doctrineLevel` taggeado vía Gemini 2.5 Flash + `reviewStatus` workflow. PR 0.4.
-  - [x] **Rights-aware citation schema** — `LibraryResource` + `Confession` con license/citation templates. SBLGNT attribution PDF + Word export. PR 0.3.
+  - [x] **Rights-aware citation schema** — `LibraryResource` + `Confession` con license/citation templates. SBLGNT attribution PDF + Word export. Legacy docs reciben defaults conservadores (`license: 'unknown'` + `ingestionStatus: 'requires_manual_review'`) read-time. Admin backfill tool clasifica heurísticamente por autor PD conocido. PR 0.3 + [PR #255](https://github.com/RicardoCerdaRojas/dosfilos-app/pull/255).
+  - [x] **`useUserProfile.refetch()` expuesto** — hook reactivo post-mutation. Consumers que mutan profile (settings pages, gate-aware flows) pueden invalidar cache sin recargar página. [PR #255](https://github.com/RicardoCerdaRojas/dosfilos-app/pull/255).
   - [ ] **Schema de `Project`** — **diferido a Fase 5** (sin consumer aún). Phase 1 puede operar contra wizard standalone existente; refactor a `Project` será unbox de Fase 5. **Decisión registrada en bitácora Phase 0**.
 
 ### Prereqs NO satisfechos (asumir o accionar)
@@ -27,6 +29,9 @@ Esta fase es el **punto de inversión** del producto: aquí cambia el flow de "A
 - **Content fill 7 confesiones largas** (WCF/WSC/WLC/Belgic/Heidelberg/Dort/Augsburg): puede iniciar Phase 1 sin ellas. Si Step 4 (Reconocimiento) o Step 6 (Insight) requiere referencia confesional, solo 4 creeds responden hoy. Phase 2 Testigo 3 será limitado hasta parsers CCEL aterricen.
 - **TSK full dataset (~340k links)**: Step 4 trabaja con sample (~12 versos). Para producción real ingest CSV de openbible.info debe correr antes de release a usuarios.
 - **Pastoral review doctrineLevel**: secciones taggeadas viven con `reviewStatus: 'pending-pastoral-review'`. Phase 1 no consume `doctrineLevel` directamente (es input de Phase 2 override policy). No bloquea.
+- **Faculty sermon RAG enrichment**: propuesta tracked en [proposals/faculty-sermon-rag-enrichment.md](../proposals/faculty-sermon-rag-enrichment.md). NO bloquea Phase 1 (que reforma path standalone, no Faculty). Path Faculty mantiene techo citacional limitado hasta este PR follow-up aterrice (post-Fase 0, antes de Fase 2.5).
+- **PDF export rewrite**: propuesta tracked en [proposals/pdf-export-rewrite.md](../proposals/pdf-export-rewrite.md). NO bloquea Phase 1 (export funcional, calidad de render mejorable). Migración a Puppeteer es follow-up no-bloqueante.
+- **Backfill manual de docs sin match heurístico**: 43 docs en `library_resources` quedan `Sin clasificar` post-backfill heurístico de Phase 0. Admin debe clasificarlos manualmente en Phase 1+ cuando los consume Step 4/6. No bloquea arranque.
 
 ## Decisiones tomadas
 
@@ -334,6 +339,8 @@ Tests manuales:
     - `es/greekTutor.json`: agregado `wordPreview.alreadyInUnits` (faltaba traducción ES).
   - **Bug pendiente identificado**: tooltip de palabras en `PassageVersionRow` muestra greek+transliteration+RV60+lema pero NO gloss/significado del lema. Schema `PassageWord` no tiene campo `gloss`. Fix requiere extender schema + extraction pipeline. Resolved en Fase 1.5 (nuevo modal usa schema propio).
   - **Fase 1.5 docs**: `phases/phase-1-5-pastoral-word-study.md` + `decisions/ADR-016-pastoral-word-study-vs-language-tutor.md` aterrizados. Fase 1.5 destrabada post-Phase 1 merge.
+- **2026-05-25 (recierre Fase 0 — incorporado desde main)** — Prereqs revalidados. ADR-009 + ADR-010 cambian asunción de Phase 1: NO hay `declaredConfession` obligatorio, NO hay banner, hook `usePastoralFidelityGate` retorna `confessionalWitnessesEnabled` (default `true`) en vez de `confession-required` gate. Phase 2 Testigo 3 ajustado: `core` fire siempre + `distinctive`/`open-evangelical` fire si toggle ON. CORE Library seed con 8 system sources adicionales en `library_resources` (SBLGNT + Schaff + Chicago + minor confessions) disponibles para citation manifest desde Step 6. `useUserProfile.refetch()` disponible para flows que muten profile (settings, gate-aware). Faculty sermon RAG enrichment + PDF export rewrite tracked como proposals no-bloqueantes. Phase 1 absorbió estos cambios sin deuda invisible heredada.
+- **2026-05-27** — **PR #257 mergeable**. Conflicts en `README.md` + `phase-1-six-step-spine.md` (overlap docs Phase 0 recierre + Phase 1 closeout) resueltos preservando ambas líneas históricas.
 
 ## Cross-references desde Fase 0 (handoff)
 
