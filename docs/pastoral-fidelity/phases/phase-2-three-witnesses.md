@@ -2,7 +2,29 @@
 
 ## Estado
 
-`in-progress` — implementación funcional en curso (2026-05-27). Engine + 3 testigos + escalado + gate UI + cache shippeados detrás del sub-flag `three_witnesses`. Ver bitácora + ADR-011.
+`completed` — **shippeada + mergeada + deployada + smoke OK 2026-05-27 vía PR #262** (commit `cde288db`). Engine + 3 testigos + escalado + gate UI + cache detrás del sub-flag `three_witnesses` (default off). Callable `validateSeedWitnesses` live en prod. Ver criterios de aceptación + bitácora + ADR-011.
+
+## Criterios de aceptación (cierre 2026-05-27)
+
+- [x] Usuario con `pastoral_fidelity_flow` + `three_witnesses` que completa el seed es enviado al 7º paso "Validación" antes del borrador.
+- [x] Flag-off (solo parent) → "Continuar al borrador" mantiene comportamiento Phase 1 (sin validación), no regression.
+- [x] Los tres testigos rinden verdict por claim (idea central + observaciones + aplicación doxológica) con razonamiento + evidencia.
+- [x] Claim que niega un `core` ecuménico → `absolute-block`, sin override, manda a revisar (smoke: "no hay un Dios trino" en Juan 1:1).
+- [x] Claim `distinctive` con disenso 2/3 → `soft-block`, exige respuesta ≥50 chars (smoke confirmado).
+- [x] Observación ortodoxa → `pass`, no bloquea (smoke confirmado).
+- [x] Disenso cuenta solo con `confidence ≥ 0.6` (threshold domain).
+- [x] T3 multi-witness: `core` siempre; `distinctive`/`open` solo si `useConfessionalWitnesses` on (ADR-010).
+- [x] Respuestas del pastor persisten en `pastoralSeed.witnessReview` (audit P3).
+- [x] Cache `witnessResults/` por key determinística (claims + toggle + prompt version).
+- [x] Tests: 11 domain (escalación/collect/proceed) + 3 web gate. 5 paquetes tsc 0 errores.
+- [x] PR #262 mergeado a main + callable deployado a prod.
+
+### Deuda explícita (no bloquea cierre, documentada)
+
+- **D1** — T3 `distinctive` delgado: solo 4 credos tienen `sections` con `doctrineLevel`. `core` funciona full. Content-fill de las 7 confesiones grandes es follow-up (parsers CCEL, ya pendiente desde Fase 0).
+- **D3** — Faculty launcher fold-simple: link a `/dashboard/faculty` sin pre-seed de prompt. Pre-seed del prompt doctrinal = follow-up si la métrica de uso lo justifica.
+- **Smoke `hard-block` (3/3)** — no ejecutado explícitamente; el escalado está cubierto por test domain. Validar de paso si Fase 3 toca el flujo.
+- **Soft warnings compliance**: color literals + file-size en `WitnessGate`/`PastoralSeedWizard` (consistente con patrón Fase 1/1.5). `useWitnessValidation` usa `httpsCallable` directo (precedente `useCrossReferences`). Long-tail Boy-Scout.
 
 ## Objetivo
 
@@ -88,6 +110,7 @@ Cuando esta fase active, completar:
 ## Bitácora
 
 - **2026-05-22** — Placeholder creado.
+- **2026-05-27 (cierre)** — **Fase 2 CERRADA**. PR #262 squash-merged a main (`cde288db`). Callable `validateSeedWitnesses` + rules `witnessResults/` + index `sections.doctrineLevel` deployados a prod. Flag `three_witnesses` agregado a allowlist server-side (`setUserFeatureFlags`) — gotcha: la función tiene su propia lista, no importa la del domain. Smoke prod confirmado por el fundador: core→absolute-block, distinctive 2/3→soft-block, observación→pass. Fix Boy-Scout incluido: ref muerto `BibleReaderPanel`→`ScrollArea`. Handoff a Fase 2.5 (Study Depth Copilot) actualizado. Deuda D1 (T3 distinctive parcial) + D3 (Faculty fold-simple) heredadas explícitas.
 - **2026-05-27 (kickoff + implementación funcional)** — `/iniciar-fase 2`. Decisiones del fundador: (1) T3 lanza con **cobertura parcial** ahora; (2) gate como **7º paso "Validación"** del wizard; (3) claims validados = `centralIdea` + `observations` + `doxologicalApplication`; (4) Faculty **fold-simple**; (5) **single PR/merge**; (6) override per-claim por recomendación.
   - **ADR-011 emitido** (orchestrator multi-witness + escalado formal). Supersede tabla por-conteo de ADR-001.
   - **Discrepancias codebase detectadas (drift)**: **D1** solo 4 credos tienen sections con `doctrineLevel` → T3 distinctive delgado hasta content-fill (deuda explícita); **D2** sin embeddings → matching por `doctrineLevel` + LLM; **D3** no existe "Faculty doctrinal mode" → launcher pre-sembrado; **D4** escalado por nivel, no por conteo → ADR-011 lo formaliza; **D5** firma sin confesión única → `{ confessionalWitnessesEnabled }`.
