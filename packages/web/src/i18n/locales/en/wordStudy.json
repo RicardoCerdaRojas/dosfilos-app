@@ -20,7 +20,15 @@
     },
     "analysis": {
         "placeholder": "Pick a word to see its pastoral analysis.",
-        "comingSoon": "Detailed word analysis arrives in the next update."
+        "comingSoon": "Detailed word analysis arrives in the next update.",
+        "loading": "Generating pastoral analysis…",
+        "errorTitle": "We couldn't generate the analysis.",
+        "retry": "Retry",
+        "cacheHit": "Loaded from shared cache.",
+        "glossLabel": "Meaning",
+        "functionLabel": "Function in this verse",
+        "resonancesLabel": "Canonical resonances",
+        "weightLabel": "Theological weight"
     },
     "discovery": {
         "title": "Your pastoral discovery",

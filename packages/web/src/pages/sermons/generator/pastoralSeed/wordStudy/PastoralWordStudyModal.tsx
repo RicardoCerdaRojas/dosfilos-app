@@ -18,6 +18,7 @@ import {
 import { LocalBibleService } from '@/services/LocalBibleService';
 import { useIdentifyKeyWords } from '@/hooks/useIdentifyKeyWords';
 import { KeyWordsPicker } from './KeyWordsPicker';
+import { WordAnalysisPanel } from './WordAnalysisPanel';
 
 interface Props {
     isOpen: boolean;
@@ -115,18 +116,13 @@ export function PastoralWordStudyModal({
                         )}
                     </section>
 
-                    <section aria-label="Análisis y descubrimiento" className="space-y-4">
-                        <div className="space-y-2">
-                            <h4 className="text-sm font-semibold">
-                                {selected ? selected.word : t('analysis.placeholder')}
-                            </h4>
-                            {!selected ? (
-                                <p className="text-xs text-muted-foreground">{t('analysis.placeholder')}</p>
-                            ) : (
-                                <p className="text-xs text-muted-foreground">{t('analysis.comingSoon')}</p>
-                            )}
-                        </div>
-                        <div className="space-y-2">
+                    <section aria-label="Análisis y descubrimiento" className="space-y-5">
+                        <WordAnalysisPanel
+                            selected={selected}
+                            passage={passage}
+                            language={language}
+                        />
+                        <div className="space-y-2 border-t border-border pt-4">
                             <h4 className="text-sm font-semibold">{t('discovery.title')}</h4>
                             <p className="text-xs text-muted-foreground">{t('discovery.hint')}</p>
                             <p className="text-xs italic text-muted-foreground">

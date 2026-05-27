@@ -27,6 +27,7 @@ export * from './repositories/IPastoralSeedRepository';
 export * from './entities/PastoralWordAnalysis'; // 🌱 Pastoral Fidelity Phase 1.5 — Pastoral Word Study types
 export * from './bible/inferLanguageFromBook'; // 🌱 Phase 1.5 — book → original language heuristic
 export * from './services/IPastoralWordStudyService'; // 🌱 Phase 1.5 — service port
+export * from './repositories/IPastoralWordAnalysisCacheRepository'; // 🌱 Phase 1.5 — analysis cache
 export * from './entities/HomileticalApproach';  // 🎯 NEW
 export * from './entities/DocumentChunk';
 export * from './entities/FileSearchStoreEntity'; // 🎯 File Search Stores

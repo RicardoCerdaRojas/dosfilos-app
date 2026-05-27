@@ -17,6 +17,7 @@
         "noFallthroughCasesInSwitch": true,
         "noUncheckedIndexedAccess": true,
         "skipLibCheck": true,
+        "resolveJsonModule": true,
         "baseUrl": ".",
         "paths": {
             "@dosfilos/domain": [

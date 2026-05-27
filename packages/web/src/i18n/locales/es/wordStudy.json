@@ -20,7 +20,15 @@
     },
     "analysis": {
         "placeholder": "Selecciona una palabra para ver su análisis pastoral.",
-        "comingSoon": "El análisis detallado de la palabra estará disponible en la próxima actualización."
+        "comingSoon": "El análisis detallado de la palabra estará disponible en la próxima actualización.",
+        "loading": "Generando análisis pastoral…",
+        "errorTitle": "No pudimos generar el análisis.",
+        "retry": "Reintentar",
+        "cacheHit": "Cargado desde caché compartido.",
+        "glossLabel": "Significado",
+        "functionLabel": "Función en este verso",
+        "resonancesLabel": "Resonancias canónicas",
+        "weightLabel": "Peso teológico"
     },
     "discovery": {
         "title": "Tu descubrimiento pastoral",

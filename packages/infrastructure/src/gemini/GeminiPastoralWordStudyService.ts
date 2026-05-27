@@ -6,6 +6,7 @@ import {
     WordStudyLanguage,
 } from '@dosfilos/domain';
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { CuratedGlossLexiconAdapter } from '../lexicon/CuratedGlossLexiconAdapter';
 import {
     IDENTIFY_KEY_WORDS_SYSTEM_PROMPT,
     PASTORAL_WORD_ANALYSIS_SYSTEM_PROMPT,
@@ -56,7 +57,14 @@ export class GeminiPastoralWordStudyService implements IPastoralWordStudyService
             },
         });
         this.curatedBoost = options.curatedBoost ?? 2;
-        this.getCuratedLemmaIndex = options.curatedLemmaIndex ?? (() => new Set<string>());
+        // Default: load curated v1 dataset and infer the lemma set lazily
+        // from the caller-provided language. ADR-018 boost.
+        const defaultCurated = new CuratedGlossLexiconAdapter();
+        this.getCuratedLemmaIndex = options.curatedLemmaIndex
+            ?? (() => new Set<string>([
+                ...defaultCurated.lemmaSet('greek'),
+                ...defaultCurated.lemmaSet('hebrew'),
+            ]));
     }
 
     async identifyKeyWords(args: {

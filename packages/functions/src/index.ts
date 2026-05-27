@@ -122,6 +122,7 @@ export { ingestLibrarySeedSources } from './admin/coreLibrary/ingestLibrarySeed'
 
 // 🌱 Pastoral Fidelity Phase 1.5 — Pastoral Word Study callables
 export { identifyKeyWords } from './pastoral-word-study/identifyKeyWords';
+export { analyzeWordPastorally } from './pastoral-word-study/analyzeWordPastorally';
 
 
 

@@ -12,6 +12,7 @@ export * from './firebase/FirebaseUserProfileRepository';
 export * from './firebase/FirebaseConfessionRepository';
 export * from './firebase/FirebaseCrossReferenceRepository';
 export * from './firebase/FirestorePastoralSeedRepository'; // 🌱 Pastoral Fidelity Phase 1 — top-level seed repo
+export * from './firebase/FirestorePastoralWordAnalysisCacheRepository'; // 🌱 Phase 1.5 — pastoral word analysis cache
 export * from './firebase/FirebasePlanRepository';
 export * from './firebase/FirebaseAnalyticsRepository'; // 📊 Analytics Repository
 export * from './firebase/FirebaseUserRepository'; // 📊 Admin User Repository
@@ -39,6 +40,7 @@ export * from './firebase/FirestoreAIAgentRepository'; // 🎓 Live DB of AI fac
 export * from './greek-tutor/gemini/GeminiGreekTutorService'; // 🏛️ Greek Tutor Service
 export * from './gemini/GeminiPastoralWordStudyService'; // 🌱 Pastoral Fidelity Phase 1.5 — Pastoral Word Study Service
 export * from './gemini/pastoralWordStudyPrompts'; // 🌱 Phase 1.5 prompt builders
+export * from './lexicon'; // 🌱 Phase 1.5 Composite Lexicon (curated + LSJ + BDB)
 export * from './greek-tutor/repositories/FirestoreGreekSessionRepository';
 export * from './services/DocumentProcessingService';
 export * from './services/AnalyticsService'; // 📊 Analytics Tracking Service

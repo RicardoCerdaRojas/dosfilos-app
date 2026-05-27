@@ -269,6 +269,17 @@ service cloud.firestore {
       allow delete: if isOwner(resource.data.userId);
     }
 
+    // Pastoral Fidelity Phase 1.5 — pastoral word analysis cache (ADR-017/019).
+    // Transversal cache: any authenticated user reads cached analyses; only the
+    // `analyzeWordPastorally` Cloud Function writes (admin SDK bypasses these
+    // rules). Doc id is deterministic
+    // (`${language}__${lemma}__${passageHash}__${curatedVersion}`) so curated
+    // dataset bumps invalidate cache by changing the version segment.
+    match /pastoralWordAnalyses/{analysisId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
     // Pastoral Fidelity — confession change audit log (ADR-007, PR 0.7).
     // Each row records a single declaredConfession transition (onboarding
     // declaration + later edits in /settings/confession). Owners may
