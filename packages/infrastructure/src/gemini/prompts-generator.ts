@@ -356,6 +356,71 @@ ${paperContext.assembledMarkdown}
 `;
 }
 
+/**
+ * Pastoral Fidelity Phase 1 — PRIMARY VOICE block.
+ *
+ * Prepended ahead of every other context block so the LLM treats the
+ * pastor's seed as the authoritative spine. `centralIdea` is required
+ * verbatim in the final draft (post-gen check enforces it). Word
+ * studies, parallels, anecdote, and doxological application are inputs
+ * the LLM develops on top of — never replaces.
+ *
+ * Returns '' when no seed is supplied so legacy flows stay clean.
+ */
+function buildPastoralSeedBlock(seed?: GenerationRules['pastoralSeed']): string {
+  if (!seed) return '';
+  const observations = seed.observations.map((o, i) => `${i + 1}. "${o}"`).join('\n');
+  const wordStudies = seed.wordStudies
+    .map((w) => `  - ${w.word} (${w.reference}): ${w.discovery}`)
+    .join('\n');
+  const parallels = seed.parallels
+    .map((p) => `  - ${p.reference} — ${p.relevance}`)
+    .join('\n');
+  return `
+═══ PRIMARY VOICE (LA VOZ DEL PASTOR — NO ANULAR) ═══
+
+El pastor ha producido la siguiente semilla a través de 6 pasos de estudio
+personal. Esta semilla ES la voz pastoral del sermón. Tu rol es DESARROLLAR,
+no ORIGINAR. AI desarrolla, AI no origina.
+
+## Idea central (palabras EXACTAS del pastor):
+"${seed.centralIdea}"
+
+## Observaciones del pastor (desarrolla cada una, no las reemplaces):
+${observations}
+
+## Pregunta abierta que el sermón debe responder:
+"${seed.openQuestion}"
+
+## Anécdota pastoral que el pastor quiere integrar:
+"${seed.pastoralAnecdote}"
+
+## Aplicación doxológica (manifiesto Paso 8 — lleva el sermón aquí):
+"${seed.doxologicalApplication}"
+
+## Hallazgos exegéticos del pastor (úsalos como fundamento):
+- Cláusula principal: ${seed.mainClauseReference} — ${seed.mainClauseNote}
+- Estudios de palabras:
+${wordStudies}
+- Paralelos canónicos marcados como relevantes (PRIMARIOS — puedes agregar otros, pero estos llevan precedencia):
+${parallels}
+- Función para la audiencia original: ${seed.originalAudienceFunction}
+
+═══ INSTRUCCIONES DE DESARROLLO (OBLIGATORIAS) ═══
+
+1. **No eres el autor**. Eres un asistente que desarrolla la semilla del pastor en un sermón estructurado.
+2. **La idea central de arriba es el espine del sermón**. No introduzcas otra idea central.
+3. **Cada sección mayor** del sermón debe conectar explícitamente con UNA de las observaciones del pastor o con la pregunta abierta.
+4. **La frase exacta de la idea central debe aparecer VERBATIM al menos una vez** en el cuerpo del sermón. El servidor verifica esto y advierte al pastor si la omites.
+5. **La anécdota pastoral debe integrarse** donde la lógica del pastor lo sostenga, no inventes una nueva.
+6. **Paralelos del pastor son PRIMARIOS**. Puedes agregar otros, pero los del pastor van citados primero.
+7. **La aplicación doxológica del pastor cierra el sermón**. No la sustituyas por aplicaciones generales.
+
+═══════════════════════════════════════════════════════════════════
+
+`;
+}
+
 function buildSermonDraftPromptBody(analysis: HomileticalAnalysis, rules: GenerationRules, manifest?: CitationManifest): string {
   // Format exegetical study for context
   const exegesisContext = analysis.exegeticalStudy ? `
@@ -381,9 +446,14 @@ ${analysis.exegeticalStudy.pastoralInsights.map(insight => `  • ${insight}`).j
   const facultyContextBlock = buildFacultyContextBlock(rules.facultyContext);
   const projectContextBlock = buildProjectContextBlock(rules.projectContext);
   const citationContractBlock = buildCitationContractBlock(manifest);
+  // Pastoral Fidelity Phase 1: PRIMARY VOICE is the highest-priority
+  // context. It precedes every other block (including base system
+  // prompt instructions about tone/length) so the LLM's anchor is
+  // the pastor's seed, not the homiletical analysis derived later.
+  const pastoralSeedBlock = buildPastoralSeedBlock(rules.pastoralSeed);
 
   return `
-${BASE_SYSTEM_PROMPT}
+${pastoralSeedBlock}${BASE_SYSTEM_PROMPT}
 ${projectContextBlock}${paperContextBlock}${facultyContextBlock}${personalizationBlock}${citationContractBlock}
 FASE 3: REDACCIÓN DEL SERMÓN
 Objetivo: Redactar el contenido completo del sermón basado en el análisis previo.

@@ -24,13 +24,23 @@ import { ConceptsLibraryModal } from './components/ConceptsLibraryModal';
 import { InsightsViewer } from './components/InsightsViewer';
 import { GreekTutorIntroView } from './components/GreekTutorIntroView';
 import { useTranslation, Trans } from 'react-i18next';
+import { toast } from 'sonner';
 
 interface GreekTutorSessionViewProps {
     initialPassage?: string;
     onPassageChange?: (passage: string) => void;
+    /**
+     * When true, the session view will NOT navigate away on session
+     * start — required when the view lives inside a modal overlay
+     * (e.g. PastoralSeedWizard's MorphologyStep), because the
+     * default `navigate('/dashboard/greek-tutor/session?sessionId=...')`
+     * destroys the surrounding wizard context. Default false to keep
+     * the standalone `/dashboard/greek-tutor` flow unchanged.
+     */
+    embeddedInWizard?: boolean;
 }
 
-export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ initialPassage, onPassageChange }) => {
+export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ initialPassage, onPassageChange, embeddedInWizard = false }) => {
     
     const { generateTrainingUnits, evaluateUserResponse, explainMorphology, askFreeQuestion, sessionRepository } = useGreekTutor();
     const { user } = useFirebase();
@@ -264,8 +274,14 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             
             // Navigate to immersive session view if we have a sessionId
             // This moves us from /dashboard/greek-tutor (with sidebar) to /dashboard/greek-tutor/session (immersive)
+            //
+            // When the view is embedded in the sermon wizard's modal
+            // overlay (`embeddedInWizard`), this navigation would
+            // destroy the wizard context and strand the pastor on the
+            // standalone tutor page. Skip the navigation in that case —
+            // the modal already provides the right shell.
             const firstUnit = generatedUnits[0];
-            if (firstUnit?.sessionId) {
+            if (firstUnit?.sessionId && !embeddedInWizard) {
                 navigate(`/dashboard/greek-tutor/session?sessionId=${firstUnit.sessionId}`, { replace: true });
                 return; // Exit early since we're navigating away
             }
@@ -327,8 +343,17 @@ export const GreekTutorSessionView: React.FC<GreekTutorSessionViewProps> = ({ in
             );
             
             setMorphologyBreakdowns(prev => ({ ...prev, [unitId]: breakdown }));
-        } catch (error) {
+        } catch (error: any) {
             console.error('[GreekTutorSessionView] Error loading morphology:', error);
+            // Surface the failure so the pastor knows the model didn't
+            // return data. Falls back to the generic message if the
+            // upstream error didn't carry a usable string.
+            toast.error(
+                typeof error?.message === 'string'
+                    ? error.message
+                    : `No pudimos cargar la morfología de "${word}". Intenta de nuevo.`,
+                { duration: 6000 },
+            );
         } finally {
             setLoadingMorphology(null);
         }

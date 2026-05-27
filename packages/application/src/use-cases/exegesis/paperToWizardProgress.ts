@@ -35,6 +35,26 @@ import {
  * a "Pre-cargado desde paper {X}" banner. That's how the user
  * distinguishes "this state was synthesized from a paper" from "this
  * state was hand-generated step by step".
+ *
+ * Pastoral Fidelity (Phase 1 UI-audit Categoría 4 — AI-forbidden
+ * fields): when adapting paper output into `PastoralSeed`-adjacent
+ * shapes in future iterations, the following fields MUST NEVER be
+ * pre-populated from the paper or any LLM source. They are reserved
+ * for the pastor's own voice (`PASTORAL_SEED_AI_FORBIDDEN_FIELDS` in
+ * the domain layer):
+ *
+ *   - `insight.centralIdea`
+ *   - `insight.observations`
+ *   - `insight.openQuestion`
+ *   - `insight.pastoralAnecdote`
+ *   - `insight.doxologicalApplication`
+ *
+ * Hint surfaces (e.g. the `derivedSuggestions` banner in
+ * `PastoralSeedWizard`) may show paper-derived text as editable
+ * suggestions, but the seed itself is only persisted when the pastor
+ * types or actively accepts the suggestion as their own voice. Silent
+ * autofill of any of the above five fields violates P1 (labor antes
+ * que output) and P2 (AI desarrolla, no origina).
  */
 
 export interface BuildWizardProgressInput {

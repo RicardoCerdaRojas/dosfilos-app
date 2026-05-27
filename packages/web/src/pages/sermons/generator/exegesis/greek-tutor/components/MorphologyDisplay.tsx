@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { MorphologyBreakdown } from '@dosfilos/domain';
 import { ComponentBadge } from './ComponentBadge';
 import { InsightCard } from './InsightCard';
-import { ArrowRight, GraduationCap, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, GraduationCap, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useTranslation } from '@/i18n';
@@ -27,6 +27,37 @@ export const MorphologyDisplay: React.FC<MorphologyDisplayProps> = ({ breakdown 
         if (typeof window === 'undefined') return false;
         return localStorage.getItem(TIP_DISMISSED_KEY) === 'true';
     });
+
+    // Defensive empty-state: when the upstream LLM call returns a
+    // breakdown with no components (the parser silently swallows
+    // malformed responses), render an actionable message instead of
+    // empty Structure + Components shells. Pre-existing infra bug
+    // tracked separately — this guard keeps the wizard usable.
+    const hasComponents = Array.isArray(breakdown?.components) && breakdown.components.length > 0;
+    if (!hasComponents) {
+        return (
+            <Card className="p-6 border-2 border-amber-300 bg-amber-50/40 dark:bg-amber-950/20 dark:border-amber-700">
+                <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 shrink-0 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                        <AlertTriangle className="w-5 h-5 text-amber-700 dark:text-amber-400" />
+                    </div>
+                    <div className="space-y-2">
+                        <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                            Sin componentes morfológicos para esta palabra
+                        </h4>
+                        <p className="text-sm text-foreground/80">
+                            El análisis morfológico llegó vacío. Esto puede ocurrir cuando la palabra es muy corta, indeclinable, o cuando el modelo no logró descomponerla.
+                        </p>
+                        <ul className="text-xs text-muted-foreground list-disc list-inside space-y-1">
+                            <li>Intenta nuevamente desde la lista de unidades.</li>
+                            <li>Cambia a otra palabra de la perícopa.</li>
+                            <li>Si persiste, usa "Preguntas al Tutor" para pedir el análisis manualmente.</li>
+                        </ul>
+                    </div>
+                </div>
+            </Card>
+        );
+    }
 
     const dismissTip = () => {
         localStorage.setItem(TIP_DISMISSED_KEY, 'true');

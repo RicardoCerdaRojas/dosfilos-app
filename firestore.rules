@@ -251,6 +251,24 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Pastoral Fidelity — Phase 1 six-step spine seeds (ADR-015).
+    // Top-level collection keyed by sermon. Owner-only: pastor reads + writes
+    // their own seeds. Super admins read for the audit inspector.
+    // No writes from anyone other than the owner — the seed is the pastor's
+    // own voice and cannot be authored on their behalf.
+    match /pastoralSeeds/{seedId} {
+      allow get: if isOwner(resource.data.userId) || isSuperAdmin();
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated()
+                    && request.auth.uid == request.resource.data.userId
+                    && request.resource.data.sermonId is string
+                    && request.resource.data.passage is string;
+      allow update: if isOwner(resource.data.userId)
+                    && request.auth.uid == request.resource.data.userId
+                    && resource.data.sermonId == request.resource.data.sermonId;
+      allow delete: if isOwner(resource.data.userId);
+    }
+
     // Pastoral Fidelity — confession change audit log (ADR-007, PR 0.7).
     // Each row records a single declaredConfession transition (onboarding
     // declaration + later edits in /settings/confession). Owners may

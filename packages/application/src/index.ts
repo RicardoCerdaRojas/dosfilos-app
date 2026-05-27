@@ -1,4 +1,5 @@
 export * from './services/SermonService';
+export * from './services/PastoralSeedService'; // 🌱 Pastoral Fidelity Phase 1 — six-step spine
 export * from './services/AuthService';
 export * from './services/FacultyService';
 export * from './services/SeriesService';

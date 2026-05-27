@@ -14,6 +14,7 @@ import {
     generatorChatService,
     exegesisService,
     facultyService,
+    pastoralSeedService,
     type VerifySermonCitationsOutput,
 } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
@@ -118,7 +119,13 @@ export function StepDraft() {
             // falls back to the un-augmented rules.
             const withPaper = await augmentRulesWithPaperContext(rules, derivedContext, user?.uid);
             const withFaculty = augmentRulesWithFacultyContext(withPaper, derivedContext);
-            const rulesWithContext = await augmentRulesWithProjectContext(withFaculty, sermonId, user?.uid);
+            const withProject = await augmentRulesWithProjectContext(withFaculty, sermonId, user?.uid);
+            // Pastoral Fidelity Phase 1 — when the sermon was seeded
+            // through the six-step spine, the seed becomes PRIMARY VOICE
+            // of the prompt. Seed has higher priority than paper/Faculty
+            // context (those merely fed pre-fill suggestions; the seed
+            // is the pastor's confirmed output).
+            const rulesWithContext = await augmentRulesWithPastoralSeed(withProject, sermonId);
 
             const { draft: result } = await sermonGeneratorService.generateSermonDraft(
                 homiletics,
@@ -127,6 +134,18 @@ export function StepDraft() {
                 user?.uid,
                 activeLanguage,
             );
+
+            // Post-generation verbatim check: the prompt instructs the
+            // LLM to include the pastor's centralIdea verbatim. If it
+            // didn't, surface a warning so the pastor can decide whether
+            // to re-generate or edit by hand. NO auto-regen (violates P2).
+            const centralIdea = rulesWithContext.pastoralSeed?.centralIdea?.trim();
+            if (centralIdea && !draftIncludesCentralIdea(result, centralIdea)) {
+                toast.warning(
+                    'El borrador NO incluye tu idea central palabra-por-palabra. Revisa, re-genera o edítalo a mano.',
+                    { duration: 8000 },
+                );
+            }
 
             setDraft(result);
             toast.success(t('drafting.success.generated'));
@@ -269,7 +288,11 @@ export function StepDraft() {
     }
 
     const leftPanel = !draft ? (
-        <div className="h-full flex flex-col">
+        // overflow-y-auto so the "Generar Borrador" CTA stays reachable
+        // when SermonPersonalizationPanel is expanded — without scroll
+        // the panel's accordion body pushes the button below the
+        // viewport with no way to reach it short of collapsing the panel.
+        <div className="h-full flex flex-col overflow-y-auto">
             <div className="space-y-4 mb-6">
                 <div className="flex items-center gap-2">
                     <FileText className="h-6 w-6 text-primary" />
@@ -686,4 +709,69 @@ async function augmentRulesWithProjectContext(
         console.warn('[StepDraft] Could not fetch project context — generating without it', error);
         return rules;
     }
+}
+
+/**
+ * Pastoral Fidelity Phase 1 — fetches the `PastoralSeed` for the
+ * current sermon and attaches it to `rules.pastoralSeed` so the prompt
+ * builder can prepend the PRIMARY VOICE block. Best-effort: a missing
+ * seed (legacy / flag-off sermon) just leaves rules untouched.
+ */
+async function augmentRulesWithPastoralSeed(
+    rules: GenerationRules,
+    sermonId: string | null,
+): Promise<GenerationRules> {
+    if (!sermonId) return rules;
+    try {
+        const seed = await pastoralSeedService.getBySermonId(sermonId);
+        if (!seed?.completed) return rules;
+        return {
+            ...rules,
+            pastoralSeed: {
+                centralIdea: seed.insight.centralIdea,
+                observations: seed.insight.observations,
+                openQuestion: seed.insight.openQuestion,
+                pastoralAnecdote: seed.insight.pastoralAnecdote,
+                doxologicalApplication: seed.insight.doxologicalApplication,
+                mainClauseReference: seed.syntax.mainClause.reference,
+                mainClauseNote: seed.syntax.mainClause.pastorNote,
+                wordStudies: seed.morphology.wordStudies.map((w) => ({
+                    word: w.word,
+                    reference: w.reference,
+                    discovery: w.pastorDiscovery,
+                })),
+                parallels: seed.recognition.parallels.map((p) => ({
+                    reference: p.reference,
+                    relevance: p.relevanceNote,
+                })),
+                originalAudienceFunction: seed.function.originalAudienceFunction,
+            },
+        };
+    } catch (error) {
+        console.warn('[StepDraft] Could not fetch pastoral seed — generating without PRIMARY VOICE block', error);
+        return rules;
+    }
+}
+
+/**
+ * Verbatim check: does the generated draft contain the pastor's
+ * centralIdea as a substring? Whitespace is normalised so trivial
+ * differences (multiple spaces, line breaks) don't trigger a false
+ * negative. Case-insensitive because the LLM may capitalise the first
+ * letter when wrapping it into a sentence.
+ */
+function draftIncludesCentralIdea(draft: any, centralIdea: string): boolean {
+    const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
+    const target = normalize(centralIdea);
+    if (!target) return true;
+    const haystack = [
+        draft?.title ?? '',
+        draft?.introduction ?? '',
+        draft?.conclusion ?? '',
+        draft?.callToAction ?? '',
+        ...(Array.isArray(draft?.body) ? draft.body.map((b: any) => b?.content ?? '') : []),
+    ]
+        .map(normalize)
+        .join(' \n ');
+    return haystack.includes(target);
 }

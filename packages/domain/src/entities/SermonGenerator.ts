@@ -238,6 +238,27 @@ export interface GenerationRules {
         /** Free-form project description / context note. */
         contextNote: string;
     };
+    /**
+     * Pastoral Fidelity seed (Phase 1). When the pastor produced a
+     * `PastoralSeed` via the six-step spine, the prompt builder
+     * prepends a `PRIMARY VOICE` block + `DEVELOPMENT INSTRUCTIONS`
+     * that anchor the draft on the pastor's own central idea,
+     * observations, parallels, anecdote, and doxological application.
+     * The LLM develops, never originates. Idea central must appear
+     * verbatim; the post-gen verbatim check warns if it doesn't.
+     */
+    pastoralSeed?: {
+        centralIdea: string;
+        observations: string[];
+        openQuestion: string;
+        pastoralAnecdote: string;
+        doxologicalApplication: string;
+        mainClauseReference: string;
+        mainClauseNote: string;
+        wordStudies: { word: string; reference: string; discovery: string }[];
+        parallels: { reference: string; relevance: string }[];
+        originalAudienceFunction: string;
+    };
 }
 
 export interface SermonContent {

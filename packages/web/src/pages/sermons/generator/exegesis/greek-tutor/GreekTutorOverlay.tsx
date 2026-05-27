@@ -28,7 +28,11 @@ export const GreekTutorOverlay: React.FC<GreekTutorOverlayProps> = ({ isOpen, on
                 </DialogHeader>
 
                 <div className="flex-1 overflow-hidden p-0">
-                    <GreekTutorSessionView initialPassage={passage} />
+                    {/* `embeddedInWizard` suppresses the session view's default
+                        navigate to '/dashboard/greek-tutor/session?...' which
+                        would destroy the wizard context. Module deprecated +
+                        replaced by PastoralWordStudyModal in Fase 1.5. */}
+                    <GreekTutorSessionView initialPassage={passage} embeddedInWizard />
                 </div>
             </DialogContent>
         </Dialog>

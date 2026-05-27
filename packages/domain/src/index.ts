@@ -22,6 +22,8 @@ export * from './entities/LibraryResource';
 export * from './entities/LibraryCategory';
 export * from './entities/extractionEstimate';
 export * from './entities/SermonGenerator';
+export * from './entities/PastoralSeed'; // 🌱 Pastoral Fidelity Phase 1 — six-step spine seed
+export * from './repositories/IPastoralSeedRepository';
 export * from './entities/HomileticalApproach';  // 🎯 NEW
 export * from './entities/DocumentChunk';
 export * from './entities/FileSearchStoreEntity'; // 🎯 File Search Stores

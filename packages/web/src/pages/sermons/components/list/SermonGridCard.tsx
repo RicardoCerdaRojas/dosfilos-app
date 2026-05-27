@@ -73,14 +73,24 @@ export const SermonGridCard: React.FC<SermonGridCardProps> = ({ sermon, seriesNa
                 </div>
 
                 {sermon.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-2">
+                    <div className="flex flex-wrap gap-1.5 pt-2 min-w-0">
                         {sermon.tags.slice(0, 3).map((tag) => (
-                            <Badge key={tag} variant="secondary" className="text-xs font-normal bg-secondary/50">
+                            <Badge
+                                key={tag}
+                                variant="secondary"
+                                // Long tags (some legacy sermons store full
+                                // objective sentences in the tags array)
+                                // overflow the card without max-w + truncate.
+                                // Title attr exposes the full text on hover
+                                // so we don't hide information.
+                                className="text-xs font-normal bg-secondary/50 max-w-full truncate inline-block"
+                                title={tag}
+                            >
                                 {tag}
                             </Badge>
                         ))}
                         {sermon.tags.length > 3 && (
-                            <span className="text-xs text-muted-foreground self-center">
+                            <span className="text-xs text-muted-foreground self-center shrink-0">
                                 +{sermon.tags.length - 3}
                             </span>
                         )}

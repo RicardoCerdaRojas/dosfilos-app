@@ -43,6 +43,7 @@ import { toast } from 'sonner';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
 import { SermonRepurposeSection } from '@/components/sermons/SermonRepurposeSection';
 import { SermonBibliographySection } from '@/components/sermons/SermonBibliographySection';
+import { PastoralSeedAuditPanel } from '@/components/sermons/PastoralSeedAuditPanel';
 import { useTranslation } from 'react-i18next';
 import { ShareSermonDialog } from './components/detail/ShareSermonDialog';
 import { LogPreachingDialog } from './components/detail/LogPreachingDialog';
@@ -510,6 +511,7 @@ export function SermonDetailPage() {
                 fontSize={fontSize}
                 citationManifest={sermon.citationManifest}
               />
+              <PastoralSeedAuditPanel sermonId={sermon.id} />
               <SermonBibliographySection
                 bibliography={sermon.bibliography}
                 manifest={sermon.citationManifest}
