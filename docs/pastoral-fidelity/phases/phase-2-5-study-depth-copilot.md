@@ -39,13 +39,21 @@ Plataformas referencia que aplican estos marcos:
 |---|---|---|
 | Cross-reference engine TSK lookup | Fase 0 (PR 0.5) | ✅ Sample dataset shippeable; full dataset PR follow-up |
 | Confession catalog + multi-witness mode | Fase 0 + ADR-010 | ✅ |
-| Six-step spine como Step 1 (pastoralSeed schema) | Fase 1 | ✅ PR #257 (`pastoralSeeds/{seedId}`, ADR-015) |
-| Three-witness orchestrator | Fase 2 | ✅ PR #262 (`validateSeedWitnesses` + `WitnessResult` domain, ADR-011) |
+| **Eight-step spine** como Step 1 (pastoralSeed schema 8 pasos) | **Fase 1.6** | ✅ **PR #265** (`b0fbcbd5`, ADR-022). Las 7 dimensiones se re-derivan de estos 8 pasos. |
+| Three-witness orchestrator + two-tier verification | Fase 2 + **Fase 1.6** | ✅ PR #262 (ADR-011) + **PR #265** (`validateSeedWitnesses` modo `inline-core`/`full-gate`, ADR-023). El pre-gen gate de 2.5 se unifica con el two-tier. |
+| `AiAssistLog` (alimenta "% tuyo" + audit de assists) | **Fase 1.6** | ✅ **PR #265** (subcolección `pastoralSeeds/{id}/aiAssistLogs/`, ADR-024). Cobertura parcial: assists nuevos cableados, resto follow-up. |
+| `verifyTimelessPrinciple` (verificador no-generador, patrón a reusar) | **Fase 1.6** | ✅ **PR #265** — patrón base para el tutor socrático de 2.5. |
 | Faculty chat session persistence | Existing | ✅ |
 | Greek/Hebrew tutor session linkage to passage | Existing | ✅ |
 | LLM classifier infrastructure (Gemini Flash for dim tagging) | Build durante esta fase | — |
+| **Contenido PD para trasfondo histórico (RAG ruta C)** | Fase 1.6 dejó la infra; **contenido pendiente** | ❌ **NO satisfecho** — tarea del fundador (ISBE/K&D/JFB). El tutor de 2.5 que use trasfondo dependerá de esto; degrada elegante mientras tanto. |
 
-Sin Phase 1 + Phase 2, esta fase NO puede arrancar — los dimension trackers leen artifacts producidos por six-step y three-witness. **Ambos prereqs duros satisfechos al 2026-05-27** (Fase 1 PR #257, Fase 2 PR #262). Fase 2.5 destrabada.
+Sin Phase 1.6 + Phase 2, esta fase NO puede arrancar — los dimension trackers leen artifacts producidos por el **eight-step spine** + three-witness. **Prereqs duros satisfechos al 2026-05-27** (Fase 1.6 PR #265, Fase 2 PR #262). Fase 2.5 destrabada.
+
+**Prereqs NO satisfechos (deuda heredada de 1.6, a considerar en el diseño de 2.5):**
+- **Contenido PD de trasfondo histórico** — la infra RAG existe (`retrieveChunks` + `PastoralSeedService.retrieveHistoricalContext`), pero sin fuentes ingestadas. Si 2.5 quiere que el tutor cite trasfondo real, el fundador debe ingestar primero.
+- **`AiAssistLog` cobertura parcial** — solo genre/historical/eisegesis loggean hoy; structural/wordStudies/crossRef NO. Si la métrica "% tuyo" de 2.5/Fase 4 necesita cobertura total, completar el cableado.
+- **Outline LLM de `BookPanorama`** — diferido en 1.6 (género usa mapa determinista). Si 2.5 quiere outline rico del libro como insumo del tutor, reactivar la reutilización de `BookPanorama`.
 
 **Insumos concretos que Fase 2.5 consume de Fase 2**:
 - `WitnessResult` / `WitnessedClaim` (domain `WitnessValidation.ts`) → evidence directa para D4 (canon) + D6 (historia). El `detectedLevel` + verdicts por claim ya están computados.
@@ -390,6 +398,11 @@ Tracking interno (no pastor-facing):
 
 ## Bitácora
 
+- **2026-05-27 (prereqs actualizados al cerrar Fase 1.6)** — Fase 1.6 (8-step spine) cerrada +
+  merged + deployed (PR #265). Prereqs duros de 2.5 ahora apuntan al **eight-step spine** (no
+  six-step): las 7 dimensiones se re-derivan de los 8 pasos; el pre-gen gate se unifica con el
+  two-tier de ADR-023; `AiAssistLog` + `verifyTimelessPrinciple` disponibles como insumos/patrón.
+  Deuda heredada documentada en § Prerequisitos (contenido PD, AiAssistLog parcial, outline LLM).
 - **2026-05-27 (directiva del fundador, sesión 1.6)** — Durante el smoke de Fase 1.6 el fundador
   identificó que el silencio de la IA fuera de lo doctrinal (ADR-023 tripwire `core`-only)
   **subutiliza** al asistente: un pastor escribió en el paso 2 (Contexto/Género de Juan 1:1)
