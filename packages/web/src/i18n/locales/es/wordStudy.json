@@ -1,0 +1,30 @@
+{
+    "modal": {
+        "title": "Análisis Pastoral del Texto",
+        "subtitle": "Palabras del original con peso teológico para tu sermón.",
+        "close": "Cerrar",
+        "loading": "Identificando palabras clave del pasaje…",
+        "errorTitle": "No pudimos cargar las palabras.",
+        "retry": "Volver a sugerir",
+        "noCandidates": "No encontramos palabras clave. Reintenta o agrega tu palabra manualmente.",
+        "buttonOpen": "Análisis Pastoral del Texto",
+        "languageGreek": "Griego (NT)",
+        "languageHebrew": "Hebreo (AT)"
+    },
+    "picker": {
+        "title": "Palabras sugeridas",
+        "hint": "Selecciona una para profundizar. La sugerencia se basa en el peso teológico del término en este pasaje.",
+        "weightLabel": "Peso teológico",
+        "curatedBadge": "Reforzada por catálogo",
+        "selected": "Seleccionada"
+    },
+    "analysis": {
+        "placeholder": "Selecciona una palabra para ver su análisis pastoral.",
+        "comingSoon": "El análisis detallado de la palabra estará disponible en la próxima actualización."
+    },
+    "discovery": {
+        "title": "Tu descubrimiento pastoral",
+        "hint": "¿Qué carga lleva esta palabra para ti? ¿Cómo se usa en otros lugares del texto?",
+        "comingSoon": "Pronto podrás escribir aquí tu descubrimiento y guardarlo en tu estudio."
+    }
+}

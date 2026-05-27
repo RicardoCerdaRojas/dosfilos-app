@@ -1,0 +1,30 @@
+{
+    "modal": {
+        "title": "Pastoral Word Study",
+        "subtitle": "Original-language words with theological weight for your sermon.",
+        "close": "Close",
+        "loading": "Identifying key words in the passage…",
+        "errorTitle": "We couldn't load the words.",
+        "retry": "Suggest again",
+        "noCandidates": "No key words found. Retry or add a word manually.",
+        "buttonOpen": "Pastoral Word Study",
+        "languageGreek": "Greek (NT)",
+        "languageHebrew": "Hebrew (OT)"
+    },
+    "picker": {
+        "title": "Suggested words",
+        "hint": "Pick one to go deeper. Suggestions are ranked by the term's theological weight in this passage.",
+        "weightLabel": "Theological weight",
+        "curatedBadge": "Boosted by catalog",
+        "selected": "Selected"
+    },
+    "analysis": {
+        "placeholder": "Pick a word to see its pastoral analysis.",
+        "comingSoon": "Detailed word analysis arrives in the next update."
+    },
+    "discovery": {
+        "title": "Your pastoral discovery",
+        "hint": "What does this word carry for you? How is it used elsewhere in the text?",
+        "comingSoon": "Soon you'll be able to write your discovery here and save it to your study."
+    }
+}

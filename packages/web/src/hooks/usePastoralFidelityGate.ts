@@ -1,6 +1,22 @@
 import { useFeatureFlag } from './useFeatureFlag';
 import { useUserProfile } from './useUserProfile';
 
+/**
+ * Phase 1.5 sub-gate: pastor must have BOTH `pastoral_fidelity_flow`
+ * (parent) AND `pastoral_word_study` (sub-flag) enabled to see the new
+ * `PastoralWordStudyModal`. When only the parent is enabled, the
+ * MorphologyStep stays on the Phase 1 interim degraded surface
+ * (greek tutor embed) per ADR-016.
+ */
+export function usePastoralWordStudyGate(): { enabled: boolean; loading: boolean } {
+    const parent = useFeatureFlag('pastoral_fidelity_flow');
+    const sub = useFeatureFlag('pastoral_word_study');
+    return {
+        enabled: parent.enabled && sub.enabled,
+        loading: parent.loading || sub.loading,
+    };
+}
+
 export type PastoralFidelityGateReason =
     | 'loading'
     | 'flag-disabled'

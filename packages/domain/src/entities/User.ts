@@ -138,6 +138,15 @@ export const FEATURE_FLAG_NAMES = [
      * this flag; subsequent phases consume it.
      */
     'pastoral_fidelity_flow',
+    /**
+     * Phase 1.5 sub-flag — gates the new `PastoralWordStudyModal` that
+     * replaces the `GreekTutorOverlay` embed inside `MorphologyStep`.
+     * Requires `pastoral_fidelity_flow` to also be on; otherwise the
+     * step component shows nothing at all. When this flag is off and the
+     * parent is on, MorphologyStep keeps the Phase 1 interim degraded
+     * surface (greek tutor embed) per ADR-016.
+     */
+    'pastoral_word_study',
 ] as const;
 
 export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];

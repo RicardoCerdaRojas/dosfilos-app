@@ -33,7 +33,13 @@ export type PastoralSeedTool =
     | 'hebrew-tutor'
     | 'canonical-analyzer'
     | 'cross-ref'
-    | 'faculty-historical';
+    | 'faculty-historical'
+    /**
+     * Phase 1.5 — pastor opened `PastoralWordStudyModal`. Replaces the
+     * `'greek-tutor' | 'hebrew-tutor'` log when the sub-flag is on. The
+     * legacy values stay in the union for histórica tool-consult logs.
+     */
+    | 'pastoral-word-study';
 
 export interface ToolUsage {
     tool: PastoralSeedTool;

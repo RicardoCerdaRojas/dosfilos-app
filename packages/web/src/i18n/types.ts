@@ -56,5 +56,6 @@ export type TranslationNamespace =
     | 'faculty'
     | 'exegesis'
     | 'projects'
-    | 'admin';
+    | 'admin'
+    | 'wordStudy';
 

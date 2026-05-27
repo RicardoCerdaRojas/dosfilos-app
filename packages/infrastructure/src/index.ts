@@ -37,6 +37,8 @@ export * from './gemini/GeminiMultiAgentService'; // 🎓 Multi-Agent AI Service
 export * from './firebase/MockAIAgentRepository'; // 🎓 Catalog of AI faculty agents
 export * from './firebase/FirestoreAIAgentRepository'; // 🎓 Live DB of AI faculty agents
 export * from './greek-tutor/gemini/GeminiGreekTutorService'; // 🏛️ Greek Tutor Service
+export * from './gemini/GeminiPastoralWordStudyService'; // 🌱 Pastoral Fidelity Phase 1.5 — Pastoral Word Study Service
+export * from './gemini/pastoralWordStudyPrompts'; // 🌱 Phase 1.5 prompt builders
 export * from './greek-tutor/repositories/FirestoreGreekSessionRepository';
 export * from './services/DocumentProcessingService';
 export * from './services/AnalyticsService'; // 📊 Analytics Tracking Service
