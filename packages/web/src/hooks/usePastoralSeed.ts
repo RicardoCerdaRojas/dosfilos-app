@@ -10,6 +10,7 @@ import {
     PastoralSeedStepKey,
     PasteEvent,
     ToolUsage,
+    WitnessReview,
     WordStudy,
 } from '@dosfilos/domain';
 
@@ -50,6 +51,11 @@ interface UsePastoralSeedResult {
     appendToolUsage: (usage: ToolUsage) => Promise<void>;
     appendPasteEvent: (event: PasteEvent) => Promise<void>;
     addWordStudy: (study: WordStudy) => Promise<void>;
+    /**
+     * Persists the Phase 2 three-witnesses review (ADR-011) on the seed.
+     * Additive — does not affect `completed` (six-step validators only).
+     */
+    saveWitnessReview: (review: WitnessReview) => Promise<void>;
     /**
      * Forces a save flush — used by step components on "Marcar paso
      * completo" CTAs so the breadcrumb advances immediately rather
@@ -220,6 +226,23 @@ export function usePastoralSeed(args: UsePastoralSeedArgs): UsePastoralSeedResul
         [seed],
     );
 
+    const saveWitnessReview = useCallback(
+        async (review: WitnessReview) => {
+            if (!seed) return;
+            try {
+                await pastoralSeedService.savePatch({ seed, patch: { witnessReview: review } });
+                setSeed((prev) => (prev ? { ...prev, witnessReview: review } : prev));
+            } catch (err) {
+                console.error('[usePastoralSeed] saveWitnessReview failed', err);
+                // Non-fatal: the gate already cleared in-memory; the review
+                // is an audit artifact. Surface softly and let the pastor
+                // proceed to the draft.
+                toast.error('No pudimos guardar el registro de validación, pero puedes continuar.');
+            }
+        },
+        [seed],
+    );
+
     const flush = useCallback(async () => {
         if (debounceRef.current) {
             clearTimeout(debounceRef.current);
@@ -249,6 +272,7 @@ export function usePastoralSeed(args: UsePastoralSeedArgs): UsePastoralSeedResul
         appendToolUsage,
         appendPasteEvent,
         addWordStudy,
+        saveWitnessReview,
         flush,
     };
 }

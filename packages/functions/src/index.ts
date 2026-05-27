@@ -124,5 +124,8 @@ export { ingestLibrarySeedSources } from './admin/coreLibrary/ingestLibrarySeed'
 export { identifyKeyWords } from './pastoral-word-study/identifyKeyWords';
 export { analyzeWordPastorally } from './pastoral-word-study/analyzeWordPastorally';
 
+// 🌱 Pastoral Fidelity Phase 2 — three-witnesses validation (ADR-011)
+export { validateSeedWitnesses } from './three-witnesses/validateSeedWitnesses';
+
 
 

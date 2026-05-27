@@ -17,6 +17,21 @@ export function usePastoralWordStudyGate(): { enabled: boolean; loading: boolean
     };
 }
 
+/**
+ * Phase 2 sub-gate: pastor needs BOTH `pastoral_fidelity_flow` (parent)
+ * AND `three_witnesses` (sub-flag) for the witness validation gate to run
+ * after the six-step seed completes (ADR-011). When only the parent is on,
+ * "Continuar al borrador" behaves as in Phase 1 (no validation).
+ */
+export function useThreeWitnessesGate(): { enabled: boolean; loading: boolean } {
+    const parent = useFeatureFlag('pastoral_fidelity_flow');
+    const sub = useFeatureFlag('three_witnesses');
+    return {
+        enabled: parent.enabled && sub.enabled,
+        loading: parent.loading || sub.loading,
+    };
+}
+
 export type PastoralFidelityGateReason =
     | 'loading'
     | 'flag-disabled'

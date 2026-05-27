@@ -147,6 +147,15 @@ export const FEATURE_FLAG_NAMES = [
      * surface (greek tutor embed) per ADR-016.
      */
     'pastoral_word_study',
+    /**
+     * Phase 2 sub-flag — gates the three-witnesses validation gate
+     * (`WitnessGate`) that runs after the six-step seed completes and
+     * before the draft (ADR-011). Requires `pastoral_fidelity_flow` to
+     * also be on. When this flag is off and the parent is on, the seed
+     * wizard's "Continuar al borrador" behaves as in Phase 1 (no
+     * witness validation). Default off → blast radius 0 until toggled.
+     */
+    'three_witnesses',
 ] as const;
 
 export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];
