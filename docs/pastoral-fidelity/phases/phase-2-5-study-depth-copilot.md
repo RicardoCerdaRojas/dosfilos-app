@@ -61,11 +61,16 @@ Sin Phase 1 + Phase 2, esta fase NO puede arrancar — los dimension trackers le
 
 ## Decisiones pendientes — ADRs futuros
 
-> **Renumeración 2026-05-27**: los números ADR-011/012/013 que este doc reservaba originalmente fueron consumidos por otras fases (ADR-011 = orchestrator de tres testigos de Fase 2). Los ADRs de Study Depth se renumeran a 022/023/024 (siguientes libres tras el 021).
+> **Política de numeración (corregida 2026-05-27)**: NO se pre-reservan números ADR (lección del
+> retrospective de Fase 2 — pre-reservar causa colisiones). Los números 022/023/024 que este doc
+> reservó brevemente fueron tomados por **Fase 1.6** al escribirse (ADR-022 8-step spine, ADR-023
+> two-tier verification, ADR-024 género/RAG). Los ADRs de Study Depth se numeran **al escribirlos**
+> (siguientes libres en su momento). **Además, Fase 2.5 debe re-derivar sus 7 dimensiones desde los
+> 8 pasos de Fase 1.6** — no arrancar 2.5 hasta cerrar 1.6.
 
-- **ADR-022** — Study Depth Copilot dimensiones canónicas + mecánica de confrontación
-- **ADR-023** — Override policy: justification length, audit retention, "expert mode" para pastors experimentados (umbral N sermones con SDS≥80)
-- **ADR-024** — Dimension classifier prompt + thresholds (cost / accuracy tradeoff)
+- **ADR (TBD)** — Study Depth Copilot dimensiones canónicas + mecánica de confrontación (alinear con los 8 pasos de Fase 1.6 + el two-tier de ADR-023)
+- **ADR (TBD)** — Override policy: justification length, audit retention, "expert mode" para pastors experimentados (umbral N sermones con SDS≥80)
+- **ADR (TBD)** — Dimension classifier prompt + thresholds (cost / accuracy tradeoff)
 
 ## Diseño técnico
 
