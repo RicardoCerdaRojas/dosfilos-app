@@ -435,6 +435,9 @@
             "flags": {
                 "pastoral_fidelity_flow": {
                     "description": "Activa el flujo reformado de fidelidad pastoral (six-step spine, tres testigos). Requiere que el usuario haya declarado confesión."
+                },
+                "pastoral_word_study": {
+                    "description": "Reemplaza el tutor de griego embebido en Morfología por el Análisis Pastoral del Texto (Fase 1.5). Requiere que pastoral_fidelity_flow también esté activo."
                 }
             }
         },

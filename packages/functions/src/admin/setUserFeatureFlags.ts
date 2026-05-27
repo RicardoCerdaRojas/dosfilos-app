@@ -6,6 +6,7 @@ import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 const ALLOWED_FLAGS = new Set<string>([
     'pastoral_fidelity_flow',
+    'pastoral_word_study',
 ]);
 
 /**
