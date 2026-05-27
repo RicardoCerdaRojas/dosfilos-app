@@ -70,20 +70,28 @@ export function BibleReaderPanel({ passage, onClose }: BibleReaderPanelProps) {
 
     const verseRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
+    // Resolve a parsed `ref.book` to the Select's book id. `parseReference`
+    // returns the BOOK_MAPPING *key* (display name, e.g. "Juan"), while the
+    // Select uses the JSON book id — so matching only on `id` silently
+    // failed and fell back to the wrong book. Match on id OR name.
+    const resolveBookId = (bookKey: string): string | null => {
+        const k = bookKey.trim().toLowerCase();
+        const all = LocalBibleService.getBooks();
+        const hit = all.find((b) => b.id.toLowerCase() === k || b.name.toLowerCase() === k);
+        return hit?.id ?? null;
+    };
+
     // Resolve the passage prop into book/chapter/verse range on mount
     // + whenever the upstream passage string changes.
     useEffect(() => {
         if (!passage) return;
         const ref = LocalBibleService.parseReference(passage);
         if (!ref) return;
-        const books = LocalBibleService.getBooks();
-        const normalized = ref.book.toLowerCase();
-        const matched = books.find((b) => b.id.toLowerCase() === normalized);
-        if (matched) {
-            setCurrentBook(matched.id);
-        } else if (books.length > 0) {
-            setCurrentBook(books[0].id);
-        }
+        const matched = resolveBookId(ref.book);
+        // Only set when resolved — never fall back to an arbitrary book
+        // (the old `books[0]` fallback showed a passage the pastor never
+        // chose, e.g. "1 Corintios" while studying "Juan 1:1").
+        if (matched) setCurrentBook(matched);
         setCurrentChapter(ref.chapter || 1);
         setHighlightVerseInternal({
             start: ref.verseStart || 1,
@@ -158,13 +166,11 @@ export function BibleReaderPanel({ passage, onClose }: BibleReaderPanelProps) {
     const handleNavigateResult = (refString: string) => {
         const ref = LocalBibleService.parseReference(refString);
         if (!ref) return;
-        const bookList = LocalBibleService.getBooks();
-        // Honour the parser's RVR-key output by matching against `id`
-        // (lowercased) — the previous implementation matched against
-        // `name` which never aligned with the parser's return shape.
-        const matched = bookList.find((b) => b.id.toLowerCase() === ref.book.toLowerCase());
+        // `parseReference` returns the BOOK_MAPPING key (display name); match
+        // on id OR name so navigation lands on the right book.
+        const matched = resolveBookId(ref.book);
         if (!matched) return;
-        setCurrentBook(matched.id);
+        setCurrentBook(matched);
         setCurrentChapter(ref.chapter);
         setHighlightVerseInternal({
             start: ref.verseStart || 1,

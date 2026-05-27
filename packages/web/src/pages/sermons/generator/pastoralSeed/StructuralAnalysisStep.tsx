@@ -7,7 +7,7 @@ import {
     PASTORAL_SEED_THRESHOLDS,
     PastoralSeedTool,
     StepValidationResult,
-    SyntaxStepData,
+    StructuralAnalysisStepData,
 } from '@dosfilos/domain';
 import { StepShell } from './StepShell';
 import { StepHelp } from './StepHelp';
@@ -16,25 +16,25 @@ import { SblgntPassagePanel } from './SblgntPassagePanel';
 
 interface Props {
     passage: string;
-    data: SyntaxStepData;
+    data: StructuralAnalysisStepData;
     suggestion?: string;
     validation?: StepValidationResult;
-    onChange: (patch: Partial<SyntaxStepData>) => void;
+    onChange: (patch: Partial<StructuralAnalysisStepData>) => void;
     onLogToolUsage: (tool: PastoralSeedTool) => void;
 }
 
-const MIN_CHARS = PASTORAL_SEED_THRESHOLDS.syntax.pastorNoteMinChars;
+const MIN_CHARS = PASTORAL_SEED_THRESHOLDS.structuralAnalysis.pastorNoteMinChars;
 
 /**
- * Paso 2 — Sintaxis.
+ * Paso 3 — Análisis Estructural (antes "Sintaxis", ADR-022).
  *
- * Pastor identifies the main clause of the pericope. The SBLGNT panel
- * surfaces the original Greek (read-only v1 per ADR decision); no
- * interactive clause analyzer in this phase. Pastor types the clause
- * reference + a personal note explaining what the clause does for the
- * passage's argument.
+ * Pastor identifies the main clause of the pericope (Kaiser *syntactical
+ * display* / Schreiner *tracing the argument*). The SBLGNT panel surfaces
+ * the original Greek (read-only v1); no interactive clause analyzer in
+ * this phase. Pastor types the clause reference + a personal note
+ * explaining what the clause does for the passage's argument.
  */
-export function SyntaxStep({ passage, data, suggestion, validation, onChange, onLogToolUsage }: Props) {
+export function StructuralAnalysisStep({ passage, data, suggestion, validation, onChange, onLogToolUsage }: Props) {
     const [originalLanguageOpen, setOriginalLanguageOpen] = useState(false);
 
     const accumulate = useCallback(
@@ -48,7 +48,7 @@ export function SyntaxStep({ passage, data, suggestion, validation, onChange, on
 
     const len = (data.mainClause?.pastorNote ?? '').trim().length;
 
-    const updateClause = (patch: Partial<SyntaxStepData['mainClause']>) => {
+    const updateClause = (patch: Partial<StructuralAnalysisStepData['mainClause']>) => {
         onChange({
             mainClause: {
                 reference: data.mainClause?.reference ?? '',
@@ -65,8 +65,8 @@ export function SyntaxStep({ passage, data, suggestion, validation, onChange, on
 
     return (
         <StepShell
-            stepNumber={2}
-            title="Sintaxis"
+            stepNumber={3}
+            title="Análisis Estructural"
             subtitle="Identifica la oración principal de la perícopa. Anota qué hace estructuralmente."
             passage={passage}
             validation={validation}

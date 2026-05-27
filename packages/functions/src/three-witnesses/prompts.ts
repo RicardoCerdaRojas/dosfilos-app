@@ -20,7 +20,7 @@ export const WITNESS_PROMPT_VERSION = 'v1';
 export interface PromptClaim {
     /** Stable key from `collectSeedClaims`. */
     key: string;
-    kind: 'centralIdea' | 'observation' | 'doxologicalApplication';
+    kind: 'centralIdea' | 'observation' | 'doxologicalApplication' | 'principle';
     text: string;
 }
 
@@ -36,6 +36,7 @@ const CLAIM_KIND_LABEL: Record<PromptClaim['kind'], string> = {
     centralIdea: 'idea central',
     observation: 'observación',
     doxologicalApplication: 'aplicación doxológica',
+    principle: 'principio teológico atemporal',
 };
 
 function renderClaims(claims: PromptClaim[]): string {

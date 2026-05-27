@@ -6,7 +6,7 @@ import type { AttributionBlock } from './aggregateRequiredAttributions';
  * Pastoral Fidelity Phase 1.5 — aggregates the attribution blocks
  * required by the lexicon sources used in a sermon's word studies.
  * Mirrors the `aggregateRequiredAttributions` pattern (ADR-006) but
- * operates on `PastoralSeed.morphology.wordStudies[]` rather than the
+ * operates on `PastoralSeed.wordStudies.studies[]` rather than the
  * `CitationManifest`, because lexicon entries reach the artefact via the
  * seed, not via the per-resource library.
  *

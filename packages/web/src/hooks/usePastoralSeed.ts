@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { pastoralSeedService } from '@dosfilos/application';
 import {
+    AiAssistType,
     evaluatePastoralSeed,
     InsightField,
+    isAiAssistAllowed,
     PASTORAL_SEED_STEP_ORDER,
     PastoralSeed,
     PastoralSeedEvaluation,
@@ -56,6 +58,16 @@ interface UsePastoralSeedResult {
      * Additive — does not affect `completed` (six-step validators only).
      */
     saveWitnessReview: (review: WitnessReview) => Promise<void>;
+    /**
+     * Phase 1.6 (ADR-024) — record a first-class assist log on the seed.
+     * No-ops on AI-forbidden steps (reading / insight) so callers can
+     * fire it unconditionally without risking a thrown write.
+     */
+    logAiAssist: (args: {
+        stepKey: PastoralSeedStepKey;
+        assistType: AiAssistType;
+        outputWasEditedByUser: boolean;
+    }) => Promise<void>;
     /**
      * Forces a save flush — used by step components on "Marcar paso
      * completo" CTAs so the breadcrumb advances immediately rather
@@ -213,9 +225,9 @@ export function usePastoralSeed(args: UsePastoralSeedArgs): UsePastoralSeedResul
                     if (!prev) return prev;
                     return {
                         ...prev,
-                        morphology: {
-                            ...prev.morphology,
-                            wordStudies: [...(prev.morphology.wordStudies ?? []), study],
+                        wordStudies: {
+                            ...prev.wordStudies,
+                            studies: [...(prev.wordStudies?.studies ?? []), study],
                         },
                     };
                 });
@@ -241,6 +253,33 @@ export function usePastoralSeed(args: UsePastoralSeedArgs): UsePastoralSeedResul
             }
         },
         [seed],
+    );
+
+    const logAiAssist = useCallback(
+        async (args: {
+            stepKey: PastoralSeedStepKey;
+            assistType: AiAssistType;
+            outputWasEditedByUser: boolean;
+        }) => {
+            if (!seed || !userId) return;
+            // Guard client-side too so a forbidden step never hits Firestore.
+            if (!isAiAssistAllowed(args.stepKey)) return;
+            try {
+                await pastoralSeedService.appendAiAssistLog({
+                    seedId: seed.id,
+                    log: {
+                        userId,
+                        stepKey: args.stepKey,
+                        assistType: args.assistType,
+                        outputWasEditedByUser: args.outputWasEditedByUser,
+                    },
+                });
+            } catch (err) {
+                // Non-fatal: the assist already happened; the audit is best-effort.
+                console.error('[usePastoralSeed] logAiAssist failed', err);
+            }
+        },
+        [seed, userId],
     );
 
     const flush = useCallback(async () => {
@@ -273,6 +312,7 @@ export function usePastoralSeed(args: UsePastoralSeedArgs): UsePastoralSeedResul
         appendPasteEvent,
         addWordStudy,
         saveWitnessReview,
+        logAiAssist,
         flush,
     };
 }

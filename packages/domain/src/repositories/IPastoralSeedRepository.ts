@@ -1,3 +1,4 @@
+import type { AiAssistLog } from '../entities/AiAssistLog';
 import type { PastoralSeed } from '../entities/PastoralSeed';
 
 /**
@@ -36,4 +37,19 @@ export interface IPastoralSeedRepository {
      * surfaces first.
      */
     listByUserId(userId: string, opts?: { limit?: number }): Promise<PastoralSeed[]>;
+    /**
+     * Phase 1.6 (ADR-024) — append a first-class assist log to the seed's
+     * `aiAssistLogs/{id}` subcollection. The caller has already validated
+     * the step is allowed (`assertAiAssistAllowed`); `id` + `createdAt` are
+     * assigned by the implementation.
+     */
+    appendAiAssistLog(
+        seedId: string,
+        log: Omit<AiAssistLog, 'id' | 'seedId' | 'createdAt'>,
+    ): Promise<void>;
+    /**
+     * Audit read — lists assist logs for a seed, ordered by `createdAt`.
+     * Used by the audit panel + the "% tuyo" rollup.
+     */
+    listAiAssistLogs(seedId: string): Promise<AiAssistLog[]>;
 }

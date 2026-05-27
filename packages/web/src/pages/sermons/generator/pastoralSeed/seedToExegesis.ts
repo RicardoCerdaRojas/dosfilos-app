@@ -19,7 +19,7 @@ import type { ExegeticalStudy, KeyWord, PastoralSeed } from '@dosfilos/domain';
  * homiletics phase contract.
  */
 export function seedToExegesis(seed: PastoralSeed): ExegeticalStudy {
-    const keyWords: KeyWord[] = (seed.morphology?.wordStudies ?? []).map((w) => ({
+    const keyWords: KeyWord[] = (seed.wordStudies?.studies ?? []).map((w) => ({
         original: w.word,
         transliteration: '',
         lemma: w.word,
@@ -40,7 +40,7 @@ export function seedToExegesis(seed: PastoralSeed): ExegeticalStudy {
         passage: seed.passage,
         context: {
             historical: seed.function?.originalAudienceFunction ?? '',
-            literary: seed.syntax?.mainClause?.pastorNote ?? '',
+            literary: seed.structuralAnalysis?.mainClause?.pastorNote ?? '',
             audience: seed.function?.originalAudienceFunction ?? '',
         },
         keyWords,

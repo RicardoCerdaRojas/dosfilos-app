@@ -10,7 +10,7 @@ import {
     type WordStudyLanguage,
 } from '@dosfilos/domain';
 
-const T = PASTORAL_SEED_THRESHOLDS.morphology;
+const T = PASTORAL_SEED_THRESHOLDS.wordStudies;
 
 interface Props {
     selected: KeyWordCandidate | null;

@@ -35,8 +35,13 @@ export type WitnessId = 'context' | 'parallels' | 'confession';
 
 export const WITNESS_IDS: WitnessId[] = ['context', 'parallels', 'confession'];
 
-/** Which insight field a validated claim came from. */
-export type ClaimKind = 'centralIdea' | 'observation' | 'doxologicalApplication';
+/** Which seed field a validated claim came from. */
+export type ClaimKind =
+    | 'centralIdea'
+    | 'observation'
+    | 'doxologicalApplication'
+    /** Phase 1.6 (ADR-023) — the timeless principle (Step 7). */
+    | 'principle';
 
 /**
  * Escalation outcome for a claim, ordered by severity. `absolute-block`
@@ -164,6 +169,48 @@ export function collectSeedClaims(seed: PastoralSeed): Array<{
             kind: 'doxologicalApplication',
             text: insight.doxologicalApplication.trim(),
         });
+    }
+    // Phase 1.6 (ADR-023): the timeless principle is a doctrinal claim too;
+    // the full gate validates it alongside the insight claims.
+    const principle = seed.timelessPrinciple?.principle?.trim();
+    if (principle) {
+        claims.push({ key: 'principle', kind: 'principle', text: principle });
+    }
+    return claims;
+}
+
+/**
+ * Phase 1.6 (ADR-023) — the doctrinally-loaded claims eligible for the
+ * inline `core`-only tripwire (Tier 1). These are the fields where an
+ * eisegesis at the source contaminates everything downstream: the central
+ * idea, each observation, and the timeless principle. The inline hook runs
+ * Testigo 3 (`core` level only) on the *just-edited* field; this helper
+ * enumerates the candidates so the caller can match the edited field.
+ *
+ * Deliberately EXCLUDES `doxologicalApplication` and earlier exegetical
+ * steps — the tripwire fires on synthesis fields, not on observation of
+ * the text. `core`-only by design (productive struggle: silence on
+ * distinctive / open-evangelical until the full gate).
+ */
+export function collectCoreTripwireClaims(seed: PastoralSeed): Array<{
+    key: string;
+    kind: ClaimKind;
+    index?: number;
+    text: string;
+}> {
+    const claims: Array<{ key: string; kind: ClaimKind; index?: number; text: string }> = [];
+    const insight = seed.insight;
+    if (insight?.centralIdea?.trim()) {
+        claims.push({ key: 'centralIdea', kind: 'centralIdea', text: insight.centralIdea.trim() });
+    }
+    (insight?.observations ?? []).forEach((o, i) => {
+        if (o?.trim()) {
+            claims.push({ key: `observation:${i}`, kind: 'observation', index: i, text: o.trim() });
+        }
+    });
+    const principle = seed.timelessPrinciple?.principle?.trim();
+    if (principle) {
+        claims.push({ key: 'principle', kind: 'principle', text: principle });
     }
     return claims;
 }

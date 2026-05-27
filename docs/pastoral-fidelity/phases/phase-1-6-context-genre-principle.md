@@ -2,10 +2,10 @@
 
 ## Estado
 
-`proposed` — propuesta formal 2026-05-27, derivada del análisis del spec metodológico externo
-(`preach-methodology-upgrade-spec.md`) contra el código real. Se acepta (y sus ADRs pasan a
-`accepted`) al arrancar `/iniciar-fase 1.6`. **Inserta entre Fase 1.5 (cerrada) y Fase 2.5**, y
-**refactoriza Fase 1** (el seed de 6 pasos pasa a 8).
+`in-progress` — aceptada 2026-05-27 al arrancar `/iniciar-fase 1.6`; ADRs 022/023/024 → `accepted`.
+Derivada del análisis del spec metodológico externo (`preach-methodology-upgrade-spec.md`) contra el
+código real. **Inserta entre Fase 1.5 (cerrada) y Fase 2.5**, y **refactoriza Fase 1** (el seed de 6
+pasos pasa a 8). Entregable único (1 PR — decisión del fundador en kickoff).
 
 ## Por qué existe (origen)
 
@@ -154,6 +154,56 @@ curación propia en español encima, progresiva.
 
 ## Bitácora
 
+- **2026-05-27 (kickoff `/iniciar-fase 1.6`)** — Fase aceptada; ADRs 022/023/024 → `accepted`.
+  Resoluciones de discrepancias detectadas en el kickoff (verificadas contra código real):
+  - **Migración**: se corre backfill idempotente ya; seeds legacy quedan incompletos y el pastor
+    llena los 2 pasos nuevos al retomar (confirmado fundador).
+  - **Flag**: se reusa `pastoral_fidelity_flow` (sin sub-flag nuevo; el flow entero está off por default).
+  - **RAG trasfondo (ADR-024)**: degradación-primero. El retrieval (`retrieveChunks`) queda wired pero
+    el paso 2 surfacea solo género+outline+Faculty hasta que el fundador ingese contenido PD
+    (ISBE/K&D/JFB en sourcing). Activación del trasfondo sourced = post-ingesta.
+  - **D1 (ExpositoryAssistant no es callable)**: `BookPanorama`/`GeminiExpositoryAssistant` se invoca
+    client-side vía `useExpositoryAssistant` + `RunExpositoryPassesUseCase` (application/infra), no hay
+    callable en `functions/`. Reuse desde web; sin construir callable nuevo.
+  - **D2 (colisión naming `wordStudies`)**: key del paso = `wordStudies` (label UI "Estudio de
+    Palabras"); el array interno `MorphologyStepData.wordStudies[]` se renombra a `.studies[]` para
+    evitar `seed.wordStudies.wordStudies`. `syntax`→`structuralAnalysis` (label "Análisis Estructural").
+  - **D3 (parsing al paso 1)**: se incluye en 1.6 (es el paso 1 del spec). Panel de parsing/texto
+    original on-demand en `ReadingStep` como **insumo data-driven** (no LLM) → NO genera `AiAssistLog`;
+    la impresión sigue humana. Schema de `reading` se extiende sólo si hace falta persistir parsing usage.
+  - **D4 (`AiAssistLog` reemplaza audit disperso)**: se hace **aditivo** — `AiAssistLog` coexiste con
+    `toolsConsulted`/`pasteEvents`; deprecación del audit disperso se difiere a fase posterior.
+    Ubicación: subcolección `pastoralSeeds/{seedId}/aiAssistLogs/`. Copy UI sin exponer "IA"
+    (memoria `feedback_copy_no_ai_exposure`).
+  - **Entregable**: 1 solo PR (decisión del fundador) — toda la fase es una unidad funcional.
+- **2026-05-27 (implementación)** — 8-step spine implementado end-to-end. Domain/app/infra/web/functions
+  typecheck verde; 289 domain + 38 infra + 61 app + 42 web tests passing. Entregado:
+  - Domain: `PastoralSeed` reescrito a 8 pasos (keys `structuralAnalysis`/`wordStudies`, sub-steps
+    `contextGenre`+`timelessPrinciple`, `PrincipleVerification`); validators + thresholds + STEP_ORDER(8)
+    + AI-forbidden (`timelessPrinciple.principle`); `AiAssistLog.ts` (tipo + `assertAiAssistAllowed`,
+    forbidden steps reading/insight); `collectCoreTripwireClaims` + principle en `collectSeedClaims`;
+    `inferGenreFromBook` (book→género determinista) + `LITERARY_GENRE_LABELS_ES`.
+  - Infra: `buildPastoralSeedBlock` refleja género+principio; repo lee/escribe 8 pasos con back-compat
+    legacy (`syntax`/`morphology`→nuevas keys) + subcolección `aiAssistLogs/`.
+  - Web: `StructuralAnalysisStep`/`WordStudiesStep` (git mv de Syntax/Morphology) + `ContextGenreStep`
+    + `TimelessPrincipleStep` nuevos; `ReadingStep` con panel de texto original (insumo, sin AiAssistLog);
+    breadcrumb/wizard a 8; `useInlineCoreTripwire` (Tier 1) cableado en Insight (idea central) +
+    TimelessPrinciple; `usePastoralSeed.logAiAssist`.
+  - Functions: `validateSeedWitnesses` parametrizado `inline-core`|`full-gate` (cache key con modo;
+    inline = sólo T3 core, 1 Flash); `verifyTimelessPrinciple` (verificador, no generador);
+    `migratePastoralSeedsEightStep` (admin, idempotente).
+  - **Desviaciones de ADR-024 (documentadas, funcionales)**:
+    - **Género**: la propuesta usa `inferGenreFromBook` (mapa determinista, cero LLM/alucinación) en
+      lugar de la reutilización LLM completa de `BookPanorama` (que exige cargar versos + pipeline
+      multi-pase por libro, desproporcionado para una perícopa). El outline LLM completo de
+      `BookPanorama` queda como follow-up; el pastor confirma/override el género igual.
+    - **Trasfondo histórico (RAG)**: cableado vía `retrieveChunks` con **degradación elegante** — sin
+      contenido PD ingestado aún (tarea del fundador), el paso muestra "aún no hay material" sin
+      inventar cita. Se activa al ingestar ISBE/K&D/JFB.
+    - **AiAssistLog**: cableado en los assists nuevos (genreProposal/historicalContext/eisegesisCheck);
+      logging de structural/wordStudies/crossRef queda como follow-up (aditivo).
+    - **Migración**: la idempotencia se garantiza por guard `alreadyMigrated`; test de integración con
+      admin SDK queda diferido (mocks pesados) — lógica simple y guardada.
 - **2026-05-27** — Phase doc creado como propuesta. Análisis del spec metodológico externo vs.
   código real. Hallazgos: género+outline ya existen (`BookPanorama`, reuse); trasfondo
   histórico-cultural = gap total de contenido (CORE library solo tiene confesiones/texto/lexicons);

@@ -1,5 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Languages } from 'lucide-react';
 import {
     PASTORAL_SEED_THRESHOLDS,
     ReadingStepData,
@@ -8,6 +10,7 @@ import {
 import { StepShell } from './StepShell';
 import { StepHelp } from './StepHelp';
 import { useStepTimer } from './stepTimer';
+import { SblgntPassagePanel } from './SblgntPassagePanel';
 
 interface Props {
     passage: string;
@@ -30,6 +33,7 @@ const MIN_CHARS = PASTORAL_SEED_THRESHOLDS.reading.firstImpressionMinChars;
  * silent autocomplete).
  */
 export function ReadingStep({ passage, data, suggestion, validation, onChange }: Props) {
+    const [originalOpen, setOriginalOpen] = useState(false);
     const accumulate = useCallback(
         (delta: number) => {
             if (delta <= 0) return;
@@ -40,6 +44,16 @@ export function ReadingStep({ passage, data, suggestion, validation, onChange }:
     useStepTimer({ enabled: true, onFlush: accumulate });
 
     const len = (data.firstImpression ?? '').trim().length;
+
+    const handleToggleOriginal = () => {
+        // Parsing/original-text is a data-driven insumo (SBLGNT/MorphHB),
+        // not an LLM generation — it never produces an `AiAssistLog`. We
+        // only flag that the pastor consulted it (audit-only).
+        if (!originalOpen && !data.originalTextConsulted) {
+            onChange({ originalTextConsulted: true });
+        }
+        setOriginalOpen((open) => !open);
+    };
 
     return (
         <StepShell
@@ -102,6 +116,17 @@ export function ReadingStep({ passage, data, suggestion, validation, onChange }:
                     <span>Mínimo {MIN_CHARS} caracteres para continuar.</span>
                     <span>{len} / {MIN_CHARS}</span>
                 </div>
+
+                <div>
+                    <Button variant="outline" size="sm" onClick={handleToggleOriginal} type="button">
+                        <Languages className="h-4 w-4 mr-2" />
+                        {originalOpen ? 'Ocultar texto original' : 'Ver texto original (SBLGNT / MorphHB)'}
+                    </Button>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                        El texto original y su parsing son insumo de lectura. Tu primera impresión es tuya.
+                    </p>
+                </div>
+                {originalOpen && <SblgntPassagePanel passage={passage} />}
             </div>
         </StepShell>
     );

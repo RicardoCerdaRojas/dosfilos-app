@@ -376,14 +376,27 @@ function buildPastoralSeedBlock(seed?: GenerationRules['pastoralSeed']): string 
   const parallels = seed.parallels
     .map((p) => `  - ${p.reference} — ${p.relevance}`)
     .join('\n');
+  const genreBlock = seed.genre
+    ? `## Género literario (gobierna las reglas de lectura):
+${seed.genre}${seed.genreImplication ? ` — ${seed.genreImplication}` : ''}
+${seed.bookLocationNote ? `Ubicación en el libro: ${seed.bookLocationNote}\n` : ''}`
+    : '';
+  const principleBlock = seed.timelessPrinciple
+    ? `## Principio teológico atemporal (la verdad transcultural — el puente exégesis→homilética):
+"${seed.timelessPrinciple}"
+El sermón debe permanecer fiel a este principio. La idea central de abajo es la
+voz homilética del pastor para SU congregación; el principio es la verdad que la
+sostiene. No los confundas ni reemplaces el principio por una generalización propia.
+`
+    : '';
   return `
 ═══ PRIMARY VOICE (LA VOZ DEL PASTOR — NO ANULAR) ═══
 
-El pastor ha producido la siguiente semilla a través de 6 pasos de estudio
+El pastor ha producido la siguiente semilla a través de 8 pasos de estudio
 personal. Esta semilla ES la voz pastoral del sermón. Tu rol es DESARROLLAR,
-no ORIGINAR. AI desarrolla, AI no origina.
+no ORIGINAR. El asistente desarrolla, el asistente no origina.
 
-## Idea central (palabras EXACTAS del pastor):
+${genreBlock}${principleBlock}## Idea central (palabras EXACTAS del pastor):
 "${seed.centralIdea}"
 
 ## Observaciones del pastor (desarrolla cada una, no las reemplaces):

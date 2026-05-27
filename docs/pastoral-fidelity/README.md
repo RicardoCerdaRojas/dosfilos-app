@@ -19,7 +19,7 @@ Análisis fundacional: ver [00-vision.md](./00-vision.md).
 | 0 | Foundations (onboarding confesional + arquitectura) | `completed` | [phase-0-foundations.md](./phases/phase-0-foundations.md) |
 | 1 | Six-step spine como Step 1 del wizard | `completed` | [phase-1-six-step-spine.md](./phases/phase-1-six-step-spine.md) |
 | 1.5 | Pastoral Word Study (módulo separado de language tutors) | `completed` | [phase-1-5-pastoral-word-study.md](./phases/phase-1-5-pastoral-word-study.md) |
-| 1.6 | Contexto/Género + Principio atemporal + verificación proactiva (8-step spine) | `proposed` | [phase-1-6-context-genre-principle.md](./phases/phase-1-6-context-genre-principle.md) |
+| 1.6 | Contexto/Género + Principio atemporal + verificación proactiva (8-step spine) | `in-progress` | [phase-1-6-context-genre-principle.md](./phases/phase-1-6-context-genre-principle.md) |
 | 2 | Tres testigos para validar semilla pastoral | `completed` | [phase-2-three-witnesses.md](./phases/phase-2-three-witnesses.md) |
 | 2.5 | Study Depth Copilot (gate Faculty + medición multidimensional) | `planning` | [phase-2-5-study-depth-copilot.md](./phases/phase-2-5-study-depth-copilot.md) |
 | 3 | Pass de fidelidad claim↔source en borrador | `planning` | [phase-3-claim-source-fidelity.md](./phases/phase-3-claim-source-fidelity.md) |

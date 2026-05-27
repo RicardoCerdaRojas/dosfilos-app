@@ -4,11 +4,18 @@ import {
     evaluatePastoralSeed,
     PASTORAL_SEED_AI_FORBIDDEN_FIELDS,
     PASTORAL_SEED_STEP_ORDER,
+    validateContextGenre,
     validateInsight,
-    validateMorphology,
+    validateTimelessPrinciple,
+    validateWordStudies,
     validateReading,
     validateRecognition,
 } from '../PastoralSeed';
+import {
+    AI_ASSIST_FORBIDDEN_STEPS,
+    assertAiAssistAllowed,
+    isAiAssistAllowed,
+} from '../AiAssistLog';
 
 function buildCompleteSeed() {
     const seed = createEmptyPastoralSeed({
@@ -18,9 +25,12 @@ function buildCompleteSeed() {
         passage: 'Romanos 8:1-4',
     });
     seed.reading.firstImpression = 'A'.repeat(60);
-    seed.syntax.mainClause.reference = 'Romanos 8:1';
-    seed.syntax.mainClause.pastorNote = 'A'.repeat(40);
-    seed.morphology.wordStudies = [
+    seed.contextGenre.genre = 'epistle';
+    seed.contextGenre.genreConfirmed = true;
+    seed.contextGenre.genreImplication = 'A'.repeat(70);
+    seed.structuralAnalysis.mainClause.reference = 'Romanos 8:1';
+    seed.structuralAnalysis.mainClause.pastorNote = 'A'.repeat(40);
+    seed.wordStudies.studies = [
         { word: 'δικαιοσύνη', reference: 'Rom 8:4', pastorDiscovery: 'A'.repeat(35) },
         { word: 'σάρξ', reference: 'Rom 8:3', pastorDiscovery: 'A'.repeat(35) },
     ];
@@ -28,6 +38,7 @@ function buildCompleteSeed() {
         { reference: 'Galatas 5:1', relevanceNote: 'A'.repeat(35), source: 'pastor-suggested' },
     ];
     seed.function.originalAudienceFunction = 'A'.repeat(120);
+    seed.timelessPrinciple.principle = 'A'.repeat(70);
     seed.insight.centralIdea = 'A'.repeat(40);
     seed.insight.observations = ['A'.repeat(50), 'A'.repeat(50), 'A'.repeat(50)];
     seed.insight.openQuestion = 'A'.repeat(40);
@@ -36,7 +47,7 @@ function buildCompleteSeed() {
     return seed;
 }
 
-describe('PastoralSeed validators', () => {
+describe('PastoralSeed validators (eight-step spine)', () => {
     it('createEmptyPastoralSeed returns an incomplete seed', () => {
         const seed = createEmptyPastoralSeed({
             id: 'x',
@@ -46,7 +57,22 @@ describe('PastoralSeed validators', () => {
         });
         expect(seed.completed).toBe(false);
         expect(seed.insight.observations).toEqual([]);
-        expect(seed.morphology.wordStudies).toEqual([]);
+        expect(seed.wordStudies.studies).toEqual([]);
+        expect(seed.contextGenre.genre).toBe('');
+        expect(seed.timelessPrinciple.principle).toBe('');
+    });
+
+    it('PASTORAL_SEED_STEP_ORDER has the 8 steps in hermeneutical order', () => {
+        expect(PASTORAL_SEED_STEP_ORDER).toEqual([
+            'reading',
+            'contextGenre',
+            'structuralAnalysis',
+            'wordStudies',
+            'recognition',
+            'function',
+            'timelessPrinciple',
+            'insight',
+        ]);
     });
 
     it('validateReading enforces ≥50 chars on firstImpression', () => {
@@ -54,15 +80,57 @@ describe('PastoralSeed validators', () => {
         expect(validateReading({ firstImpression: 'A'.repeat(60), timeSpentSeconds: 0 }).valid).toBe(true);
     });
 
-    it('validateMorphology requires ≥2 word studies with discovery ≥30 chars each', () => {
-        const tooFew = validateMorphology({
-            wordStudies: [{ word: 'X', reference: 'Y', pastorDiscovery: 'A'.repeat(50) }],
+    it('validateContextGenre requires a confirmed genre + ≥60-char implication', () => {
+        const noGenre = validateContextGenre({
+            genre: '',
+            genreConfirmed: false,
+            genreImplication: 'A'.repeat(70),
+            bookLocationNote: '',
+            historicalContextConsulted: false,
+            timeSpentSeconds: 0,
+        });
+        expect(noGenre.valid).toBe(false);
+
+        const unconfirmed = validateContextGenre({
+            genre: 'epistle',
+            genreConfirmed: false,
+            genreImplication: 'A'.repeat(70),
+            bookLocationNote: '',
+            historicalContextConsulted: false,
+            timeSpentSeconds: 0,
+        });
+        expect(unconfirmed.valid).toBe(false);
+
+        const shortImpl = validateContextGenre({
+            genre: 'epistle',
+            genreConfirmed: true,
+            genreImplication: 'short',
+            bookLocationNote: '',
+            historicalContextConsulted: false,
+            timeSpentSeconds: 0,
+        });
+        expect(shortImpl.valid).toBe(false);
+
+        const ok = validateContextGenre({
+            genre: 'epistle',
+            genreConfirmed: true,
+            genreImplication: 'A'.repeat(70),
+            bookLocationNote: '',
+            historicalContextConsulted: false,
+            timeSpentSeconds: 0,
+        });
+        expect(ok.valid).toBe(true);
+    });
+
+    it('validateWordStudies requires ≥2 word studies with discovery ≥30 chars each', () => {
+        const tooFew = validateWordStudies({
+            studies: [{ word: 'X', reference: 'Y', pastorDiscovery: 'A'.repeat(50) }],
             timeSpentSeconds: 0,
         });
         expect(tooFew.valid).toBe(false);
 
-        const tooShort = validateMorphology({
-            wordStudies: [
+        const tooShort = validateWordStudies({
+            studies: [
                 { word: 'X', reference: 'Y', pastorDiscovery: 'short' },
                 { word: 'Z', reference: 'W', pastorDiscovery: 'A'.repeat(50) },
             ],
@@ -70,14 +138,19 @@ describe('PastoralSeed validators', () => {
         });
         expect(tooShort.valid).toBe(false);
 
-        const ok = validateMorphology({
-            wordStudies: [
+        const ok = validateWordStudies({
+            studies: [
                 { word: 'X', reference: 'Y', pastorDiscovery: 'A'.repeat(35) },
                 { word: 'Z', reference: 'W', pastorDiscovery: 'A'.repeat(35) },
             ],
             timeSpentSeconds: 0,
         });
         expect(ok.valid).toBe(true);
+    });
+
+    it('validateTimelessPrinciple enforces ≥60 chars on the principle', () => {
+        expect(validateTimelessPrinciple({ principle: 'short', timeSpentSeconds: 0 }).valid).toBe(false);
+        expect(validateTimelessPrinciple({ principle: 'A'.repeat(70), timeSpentSeconds: 0 }).valid).toBe(true);
     });
 
     it('validateRecognition rejects parallels with short relevance notes', () => {
@@ -115,6 +188,8 @@ describe('PastoralSeed validators', () => {
         const evaluation = evaluatePastoralSeed(seed);
         expect(evaluation.completed).toBe(false);
         expect(evaluation.perStep.reading.valid).toBe(false);
+        expect(evaluation.perStep.contextGenre.valid).toBe(false);
+        expect(evaluation.perStep.timelessPrinciple.valid).toBe(false);
         expect(evaluation.perStep.insight.valid).toBe(false);
         expect(evaluation.perStep.reading.reasons[0]).toMatch(/Primera impresión/);
     });
@@ -122,5 +197,24 @@ describe('PastoralSeed validators', () => {
     it('exposes the AI-forbidden field list for downstream guards', () => {
         expect(PASTORAL_SEED_AI_FORBIDDEN_FIELDS).toContain('insight.centralIdea');
         expect(PASTORAL_SEED_AI_FORBIDDEN_FIELDS).toContain('insight.doxologicalApplication');
+        expect(PASTORAL_SEED_AI_FORBIDDEN_FIELDS).toContain('timelessPrinciple.principle');
+    });
+});
+
+describe('AiAssistLog step guard (ADR-024)', () => {
+    it('forbids assist logs on the pastor-voice steps (reading + insight)', () => {
+        expect(AI_ASSIST_FORBIDDEN_STEPS).toEqual(['reading', 'insight']);
+        expect(isAiAssistAllowed('reading')).toBe(false);
+        expect(isAiAssistAllowed('insight')).toBe(false);
+        expect(() => assertAiAssistAllowed('reading')).toThrow();
+        expect(() => assertAiAssistAllowed('insight')).toThrow();
+    });
+
+    it('allows assist logs on the assistant-supported steps', () => {
+        expect(isAiAssistAllowed('contextGenre')).toBe(true);
+        expect(isAiAssistAllowed('structuralAnalysis')).toBe(true);
+        expect(isAiAssistAllowed('wordStudies')).toBe(true);
+        expect(isAiAssistAllowed('timelessPrinciple')).toBe(true);
+        expect(() => assertAiAssistAllowed('wordStudies')).not.toThrow();
     });
 });

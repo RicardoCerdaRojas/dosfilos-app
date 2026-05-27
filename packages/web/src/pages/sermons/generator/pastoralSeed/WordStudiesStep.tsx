@@ -5,10 +5,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { GraduationCap, Plus, Trash2, ExternalLink, BookOpen } from 'lucide-react';
 import {
-    MorphologyStepData,
     PASTORAL_SEED_THRESHOLDS,
     PastoralSeedTool,
     StepValidationResult,
+    WordStudiesStepData,
     WordStudy,
 } from '@dosfilos/domain';
 import { StepShell } from './StepShell';
@@ -22,29 +22,28 @@ import { usePastoralWordStudyGate } from '@/hooks/usePastoralFidelityGate';
 interface Props {
     passage: string;
     sermonId: string | null;
-    data: MorphologyStepData;
+    data: WordStudiesStepData;
     validation?: StepValidationResult;
     onAddWordStudy: (study: WordStudy) => Promise<void>;
-    onChange: (patch: Partial<MorphologyStepData>) => void;
+    onChange: (patch: Partial<WordStudiesStepData>) => void;
     onLogToolUsage: (tool: PastoralSeedTool) => void;
 }
 
-const T = PASTORAL_SEED_THRESHOLDS.morphology;
+const T = PASTORAL_SEED_THRESHOLDS.wordStudies;
 
 /**
- * Paso 3 — Morfología.
+ * Paso 4 — Estudio de Palabras (antes "Morfología", ADR-022).
  *
- * Pastor records `≥2` word studies. Greek tutor opens in the existing
- * `GreekTutorOverlay` (extended with sermonId-aware context). Hebrew
- * tutor is linked out — overlay embed deferred per ADR-decision in
- * Phase 1 kickoff (2026-05-25 bitácora).
+ * Semántica léxica, no parsing (la morfología real es prerrequisito, no
+ * un paso). Pastor records `≥2` word studies. Under the
+ * `pastoral_word_study` sub-flag the `PastoralWordStudyModal` is the
+ * entry point (ADR-016); otherwise the Phase 1 interim greek/hebrew
+ * tutors.
  *
  * Each word study captures the original-language form, where it
- * appears, and the pastor's own discovery (≥30 chars). The tutor's
- * `tutorInteractionId` is stamped onto the study when the pastor
- * accepts the tutor output as their study source.
+ * appears, and the pastor's own discovery (≥30 chars).
  */
-export function MorphologyStep({
+export function WordStudiesStep({
     passage,
     sermonId,
     data,
@@ -71,7 +70,7 @@ export function MorphologyStep({
         },
     });
 
-    const studies = data.wordStudies ?? [];
+    const studies = data.studies ?? [];
 
     const handleAddDraft = async () => {
         if (!draft.word.trim() || !draft.reference.trim()) return;
@@ -83,7 +82,7 @@ export function MorphologyStep({
     const removeStudy = (index: number) => {
         const next = [...studies];
         next.splice(index, 1);
-        onChange({ wordStudies: next });
+        onChange({ studies: next });
     };
 
     const openGreek = () => {
@@ -106,9 +105,9 @@ export function MorphologyStep({
 
     return (
         <StepShell
-            stepNumber={3}
-            title="Morfología"
-            subtitle={`Estudia ${T.minWordStudies}+ palabras clave del pasaje. Consulta el tutor cuando necesites.`}
+            stepNumber={4}
+            title="Estudio de Palabras"
+            subtitle={`Estudia ${T.minWordStudies}+ palabras clave del pasaje. Consulta el asistente cuando necesites.`}
             passage={passage}
             validation={validation}
         >

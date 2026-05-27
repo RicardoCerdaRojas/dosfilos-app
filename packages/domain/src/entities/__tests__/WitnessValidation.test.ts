@@ -3,6 +3,7 @@ import { createEmptyPastoralSeed } from '../PastoralSeed';
 import {
     aggregateWitnessResult,
     canProceedFromWitnesses,
+    collectCoreTripwireClaims,
     collectSeedClaims,
     countDissents,
     escalateClaim,
@@ -42,6 +43,28 @@ describe('collectSeedClaims', () => {
         ]);
         // Empty observation index 1 is skipped but indices stay stable.
         expect(claims[2].index).toBe(2);
+    });
+
+    it('includes the timeless principle as a claim when present (ADR-023)', () => {
+        const seed = createEmptyPastoralSeed({ id: 's', sermonId: 'sm', userId: 'u', passage: 'Juan 1:1' });
+        seed.insight.centralIdea = 'El Verbo es Dios.';
+        seed.timelessPrinciple.principle = 'El Logos eterno comparte la esencia divina del Padre.';
+        const keys = collectSeedClaims(seed).map((c) => c.key);
+        expect(keys).toContain('principle');
+    });
+});
+
+describe('collectCoreTripwireClaims (Tier 1, ADR-023)', () => {
+    it('collects central idea, observations and principle — excludes doxology', () => {
+        const seed = createEmptyPastoralSeed({ id: 's', sermonId: 'sm', userId: 'u', passage: 'Juan 1:1' });
+        seed.insight.centralIdea = 'El Verbo es Dios.';
+        seed.insight.observations = ['Obs A', 'Obs B'];
+        seed.insight.doxologicalApplication = 'Adoramos al Verbo.';
+        seed.timelessPrinciple.principle = 'El Logos eterno es Dios verdadero.';
+
+        const keys = collectCoreTripwireClaims(seed).map((c) => c.key);
+        expect(keys).toEqual(['centralIdea', 'observation:0', 'observation:1', 'principle']);
+        expect(keys).not.toContain('doxologicalApplication');
     });
 });
 

@@ -14,16 +14,19 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import type {
+    AiAssistLog,
+    ContextGenreStepData,
     InsightStepData,
     IPastoralSeedRepository,
-    MorphologyStepData,
     ParallelRef,
     PasteEvent,
     PastoralSeed,
     ReadingStepData,
     RecognitionStepData,
-    SyntaxStepData,
+    StructuralAnalysisStepData,
+    TimelessPrincipleStepData,
     ToolUsage,
+    WordStudiesStepData,
     WordStudy,
     FunctionStepData,
 } from '@dosfilos/domain';
@@ -107,6 +110,40 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
         return snap.docs.map((d) => this.toSeed(d.id, d.data()));
     }
 
+    async appendAiAssistLog(
+        seedId: string,
+        log: Omit<AiAssistLog, 'id' | 'seedId' | 'createdAt'>,
+    ): Promise<void> {
+        const ref = collection(db, this.collectionName, seedId, 'aiAssistLogs');
+        await addDoc(ref, {
+            userId: log.userId,
+            stepKey: log.stepKey,
+            assistType: log.assistType,
+            outputWasEditedByUser: Boolean(log.outputWasEditedByUser),
+            createdAt: serverTimestamp(),
+        });
+    }
+
+    async listAiAssistLogs(seedId: string): Promise<AiAssistLog[]> {
+        const q = query(
+            collection(db, this.collectionName, seedId, 'aiAssistLogs'),
+            orderBy('createdAt', 'asc'),
+        );
+        const snap = await getDocs(q);
+        return snap.docs.map((d) => {
+            const data = d.data() as any;
+            return {
+                id: d.id,
+                seedId,
+                userId: data.userId ?? '',
+                stepKey: data.stepKey,
+                assistType: data.assistType,
+                outputWasEditedByUser: Boolean(data.outputWasEditedByUser),
+                createdAt: this.toDate(data.createdAt),
+            } satisfies AiAssistLog;
+        });
+    }
+
     private toFirestore(seed: PastoralSeed, opts?: { partial?: boolean }): Record<string, unknown> {
         const isPartial = opts?.partial ?? false;
         const out: Record<string, unknown> = {};
@@ -124,10 +161,12 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
         assign('userId', seed.userId);
         assign('passage', seed.passage);
         assign('reading', seed.reading ? this.dateOptionalStepToFirestore(seed.reading) : seed.reading);
-        assign('syntax', seed.syntax ? this.dateOptionalStepToFirestore(seed.syntax) : seed.syntax);
-        assign('morphology', seed.morphology ? this.dateOptionalStepToFirestore(seed.morphology) : seed.morphology);
+        assign('contextGenre', seed.contextGenre ? this.dateOptionalStepToFirestore(seed.contextGenre) : seed.contextGenre);
+        assign('structuralAnalysis', seed.structuralAnalysis ? this.dateOptionalStepToFirestore(seed.structuralAnalysis) : seed.structuralAnalysis);
+        assign('wordStudies', seed.wordStudies ? this.dateOptionalStepToFirestore(seed.wordStudies) : seed.wordStudies);
         assign('recognition', seed.recognition ? this.dateOptionalStepToFirestore(seed.recognition) : seed.recognition);
         assign('function', seed.function ? this.dateOptionalStepToFirestore(seed.function) : seed.function);
+        assign('timelessPrinciple', seed.timelessPrinciple ? this.timelessPrincipleToFirestore(seed.timelessPrinciple) : seed.timelessPrinciple);
         assign('insight', this.insightToFirestore(seed.insight));
         assign('totalTimeSeconds', seed.totalTimeSeconds);
         assign('toolsConsulted', (seed.toolsConsulted ?? []).map(this.toolToFirestore));
@@ -168,6 +207,31 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
         };
     }
 
+    /**
+     * Phase 1.6 — the timeless principle carries an optional verifier
+     * report whose `verifiedAt` is a nested Date that needs Timestamp
+     * conversion (the generic `dateOptionalStepToFirestore` only handles
+     * the top-level `completedAt`).
+     */
+    private timelessPrincipleToFirestore(
+        step: TimelessPrincipleStepData,
+    ): Record<string, unknown> {
+        const { completedAt, verificationReport, ...rest } = step;
+        return {
+            ...rest,
+            verificationReport: verificationReport
+                ? {
+                      ...verificationReport,
+                      verifiedAt:
+                          verificationReport.verifiedAt instanceof Date
+                              ? Timestamp.fromDate(verificationReport.verifiedAt)
+                              : verificationReport.verifiedAt,
+                  }
+                : null,
+            completedAt: completedAt ? Timestamp.fromDate(completedAt) : null,
+        };
+    }
+
     private toolToFirestore(tool: ToolUsage): ToolUsage {
         return {
             ...tool,
@@ -187,10 +251,15 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
             updatedAt: this.toDate(data.updatedAt),
             passage: data.passage ?? '',
             reading: this.toReading(data.reading),
-            syntax: this.toSyntax(data.syntax),
-            morphology: this.toMorphology(data.morphology),
+            contextGenre: this.toContextGenre(data.contextGenre),
+            // Back-compat: legacy seeds stored these under `syntax` / `morphology`
+            // before the ADR-022 rename. The migration callable rewrites them,
+            // but reading falls back so docs load even pre-migration.
+            structuralAnalysis: this.toStructuralAnalysis(data.structuralAnalysis ?? data.syntax),
+            wordStudies: this.toWordStudies(data.wordStudies ?? data.morphology),
             recognition: this.toRecognition(data.recognition),
             function: this.toFunction(data.function),
+            timelessPrinciple: this.toTimelessPrinciple(data.timelessPrinciple),
             insight: this.toInsight(data.insight),
             totalTimeSeconds: data.totalTimeSeconds ?? 0,
             toolsConsulted: Array.isArray(data.toolsConsulted)
@@ -210,12 +279,35 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
         if (!data) return { firstImpression: '', timeSpentSeconds: 0 };
         return {
             firstImpression: data.firstImpression ?? '',
+            originalTextConsulted: data.originalTextConsulted ?? undefined,
             timeSpentSeconds: data.timeSpentSeconds ?? 0,
             completedAt: data.completedAt ? this.toDate(data.completedAt) : undefined,
         };
     }
 
-    private toSyntax(data: any): SyntaxStepData {
+    private toContextGenre(data: any): ContextGenreStepData {
+        if (!data) {
+            return {
+                genre: '',
+                genreConfirmed: false,
+                genreImplication: '',
+                bookLocationNote: '',
+                historicalContextConsulted: false,
+                timeSpentSeconds: 0,
+            };
+        }
+        return {
+            genre: data.genre ?? '',
+            genreConfirmed: Boolean(data.genreConfirmed),
+            genreImplication: data.genreImplication ?? '',
+            bookLocationNote: data.bookLocationNote ?? '',
+            historicalContextConsulted: Boolean(data.historicalContextConsulted),
+            timeSpentSeconds: data.timeSpentSeconds ?? 0,
+            completedAt: data.completedAt ? this.toDate(data.completedAt) : undefined,
+        };
+    }
+
+    private toStructuralAnalysis(data: any): StructuralAnalysisStepData {
         if (!data) return { mainClause: { reference: '', pastorNote: '' }, timeSpentSeconds: 0 };
         return {
             mainClause: {
@@ -227,18 +319,44 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
         };
     }
 
-    private toMorphology(data: any): MorphologyStepData {
-        if (!data) return { wordStudies: [], timeSpentSeconds: 0 };
+    private toWordStudies(data: any): WordStudiesStepData {
+        if (!data) return { studies: [], timeSpentSeconds: 0 };
+        // Back-compat: legacy `morphology` docs nested the array under
+        // `wordStudies`; the renamed shape uses `studies`.
+        const rawStudies = Array.isArray(data.studies)
+            ? data.studies
+            : Array.isArray(data.wordStudies)
+              ? data.wordStudies
+              : [];
         return {
-            wordStudies: Array.isArray(data.wordStudies)
-                ? data.wordStudies.map((w: any) => ({
-                    word: w.word ?? '',
-                    reference: w.reference ?? '',
-                    pastorDiscovery: w.pastorDiscovery ?? '',
-                    tutorInteractionId: w.tutorInteractionId ?? undefined,
-                    language: w.language ?? undefined,
-                } satisfies WordStudy))
-                : [],
+            studies: rawStudies.map((w: any) => ({
+                word: w.word ?? '',
+                reference: w.reference ?? '',
+                pastorDiscovery: w.pastorDiscovery ?? '',
+                tutorInteractionId: w.tutorInteractionId ?? undefined,
+                wordAnalysisId: w.wordAnalysisId ?? undefined,
+                lemma: w.lemma ?? undefined,
+                language: w.language ?? undefined,
+            } satisfies WordStudy)),
+            timeSpentSeconds: data.timeSpentSeconds ?? 0,
+            completedAt: data.completedAt ? this.toDate(data.completedAt) : undefined,
+        };
+    }
+
+    private toTimelessPrinciple(data: any): TimelessPrincipleStepData {
+        if (!data) return { principle: '', timeSpentSeconds: 0 };
+        const report = data.verificationReport;
+        return {
+            principle: data.principle ?? '',
+            verificationReport: report
+                ? {
+                      grounding: report.grounding ?? '',
+                      eisegesisRisk: report.eisegesisRisk ?? 'low',
+                      generalization: report.generalization ?? 'unknown',
+                      notes: report.notes ?? '',
+                      verifiedAt: report.verifiedAt ? this.toDate(report.verifiedAt) : new Date(),
+                  }
+                : undefined,
             timeSpentSeconds: data.timeSpentSeconds ?? 0,
             completedAt: data.completedAt ? this.toDate(data.completedAt) : undefined,
         };
@@ -288,7 +406,7 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
             doxologicalApplication: data.doxologicalApplication ?? '',
             pasteEvents: Array.isArray(data.pasteEvents)
                 ? data.pasteEvents.map((p: any) => ({
-                    step: 'insight',
+                    step: p.step === 'timelessPrinciple' ? 'timelessPrinciple' : 'insight',
                     field: p.field,
                     charsCount: p.charsCount ?? 0,
                     at: this.toDate(p.at),

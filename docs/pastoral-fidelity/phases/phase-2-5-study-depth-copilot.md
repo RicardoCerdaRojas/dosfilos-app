@@ -390,5 +390,20 @@ Tracking interno (no pastor-facing):
 
 ## Bitácora
 
+- **2026-05-27 (directiva del fundador, sesión 1.6)** — Durante el smoke de Fase 1.6 el fundador
+  identificó que el silencio de la IA fuera de lo doctrinal (ADR-023 tripwire `core`-only)
+  **subutiliza** al asistente: un pastor escribió en el paso 2 (Contexto/Género de Juan 1:1)
+  "como es una profecía entiendo que todo lo que dice se cumplirá" — doble error (género equivocado
+  + regla de lectura equivocada) que el sistema dejó pasar sin guía. **Directiva**: Faculty como
+  **tutor silencioso/socrático contextual por paso**, que conoce el pasaje + el paso del flujo y
+  da guía en CADA pregunta (no sólo doctrinal). **Restricción (la clave, para no violar P1/P2)**:
+  aporta **datos + preguntas socráticas, nunca escribe la respuesta del pastor**; es *confrontativo*
+  (manifiesto §7 aplicado a pedagogía: "Juan es Evangelio, no profecía apocalíptica — ¿cómo cambia
+  eso tu lectura?"), **pull-first** (botón "Pedir orientación") o nudge suave no-bloqueante, no
+  autocompletado intrusivo. Esto **reabre la política de silencio de ADR-023** → al arrancar 2.5,
+  emitir ADR que extienda/supersede esa política para los niveles no-core (verificador-orientador,
+  no generador). Encaja directo con `NudgeDispatcher` + `DimensionPromptLibrary` + el gate Faculty
+  ya diseñados aquí. Decisión 1.6: **NO implementar en 1.6** (se cerró 1.6 con 8-step + fixes);
+  el copilot per-step es 2.5. (Número de ADR se asigna al escribirlo — no pre-reservar.)
 - **2026-05-27** — **Prereqs actualizados al cerrar Fase 2**. Fase 1 (PR #257) + Fase 2 (PR #262, ADR-011) ✅ completas + deployadas. `WitnessResult`/`pastoralSeed.witnessReview` disponibles como evidence para D4/D6/D7. ADRs de esta fase **renumerados a 022/023/024** (011-013 originales ya consumidos; 011 = tres testigos). Sub-flag pattern + gotcha de `setUserFeatureFlags` allowlist documentados. Fase 2.5 destrabada — lista para `/iniciar-fase 2.5`.
 - **2026-05-25** — Phase doc creado. Gap arquitectónico identificado durante smoke test post-Fase 0: Faculty path (PR #214, `derivedContext: 'faculty'`) permite generar sermón sin gate de profundidad — viola P1 del manifesto. Fundador solicita engine que mide multidimensional + confronta soft sin bloquear. Diseño absorbe pedagogía profesional (Bloom, CLT, Productive Struggle, Mastery Learning, Scaffolding ZPD, Deliberate Practice, Andragogy). 7 dimensiones canónicas derivadas del 9-step exegético + método del fundador. Espera Phase 1 + Phase 2 para arrancar — schema `pastoralSeed` + `WitnessResult` son prereqs duros.

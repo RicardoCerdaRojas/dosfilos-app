@@ -1,4 +1,6 @@
 import {
+    AiAssistLog,
+    assertAiAssistAllowed,
     createEmptyPastoralSeed,
     evaluatePastoralSeed,
     IPastoralSeedRepository,
@@ -7,10 +9,29 @@ import {
     PastoralSeedEvaluation,
     PastoralSeedStepKey,
     PasteEvent,
+    PrincipleVerification,
     ToolUsage,
     WordStudy,
 } from '@dosfilos/domain';
 import { FirestorePastoralSeedRepository } from '@dosfilos/infrastructure';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+
+/** Input for the timeless-principle verifier callable (Phase 1.6, ADR-023). */
+export interface VerifyPrincipleInput {
+    passage: string;
+    principle: string;
+    centralIdea: string;
+    mainClauseNote: string;
+    wordStudies: Array<{ word: string; discovery: string }>;
+    parallels: Array<{ reference: string; note: string }>;
+    originalAudienceFunction: string;
+}
+
+/** A historical-cultural background chunk retrieved via RAG (ruta C). */
+export interface HistoricalContextChunk {
+    text: string;
+    source: string;
+}
 
 /**
  * Orchestrates pastoralSeeds reads + writes used by the wizard.
@@ -112,15 +133,77 @@ export class PastoralSeedService {
     }
 
     /**
-     * Helper for the morphology step — pushes a word study into the
-     * existing array without forcing the UI to handle merge logic.
+     * Helper for the word-studies step (formerly "morphology") — pushes a
+     * word study into the existing array without forcing the UI to handle
+     * merge logic.
      */
     async addWordStudy(args: { seed: PastoralSeed; study: WordStudy }): Promise<void> {
         const next = {
-            ...args.seed.morphology,
-            wordStudies: [...(args.seed.morphology?.wordStudies ?? []), args.study],
+            ...args.seed.wordStudies,
+            studies: [...(args.seed.wordStudies?.studies ?? []), args.study],
         };
-        await this.repo.update(args.seed.id, { morphology: next });
+        await this.repo.update(args.seed.id, { wordStudies: next });
+    }
+
+    /**
+     * Phase 1.6 (ADR-024) — append a first-class assist log to the seed's
+     * `aiAssistLogs/` subcollection. Throws on AI-forbidden steps (reading
+     * / insight) so a contaminating write fails loud rather than silently
+     * polluting the "% tuyo" metric.
+     */
+    async appendAiAssistLog(args: {
+        seedId: string;
+        log: Omit<AiAssistLog, 'id' | 'seedId' | 'createdAt'>;
+    }): Promise<void> {
+        assertAiAssistAllowed(args.log.stepKey);
+        await this.repo.appendAiAssistLog(args.seedId, args.log);
+    }
+
+    /**
+     * Phase 1.6 (ADR-023) — runs the `verifyTimelessPrinciple` callable.
+     * Lives here (not in the step component) so web pages stay free of
+     * direct Firebase imports (architecture compliance gate).
+     */
+    async verifyTimelessPrinciple(input: VerifyPrincipleInput): Promise<PrincipleVerification> {
+        const callable = httpsCallable(getFunctions(), 'verifyTimelessPrinciple');
+        const response = await callable(input);
+        const r = (response.data ?? {}) as Partial<PrincipleVerification>;
+        return {
+            grounding: String(r.grounding ?? ''),
+            eisegesisRisk:
+                r.eisegesisRisk === 'high' || r.eisegesisRisk === 'medium' ? r.eisegesisRisk : 'low',
+            generalization:
+                r.generalization === 'too-abstract' ||
+                r.generalization === 'too-specific' ||
+                r.generalization === 'well-calibrated'
+                    ? r.generalization
+                    : 'unknown',
+            notes: String(r.notes ?? ''),
+            verifiedAt: new Date(),
+        };
+    }
+
+    /**
+     * Phase 1.6 (ADR-024) — retrieves historical-cultural background via
+     * RAG over CORE sources (ruta C). Degrades to `[]` when no content is
+     * ingested yet; never invents a citation.
+     */
+    async retrieveHistoricalContext(passage: string): Promise<HistoricalContextChunk[]> {
+        const callable = httpsCallable(getFunctions(), 'retrieveChunks');
+        const response = await callable({
+            query: `Trasfondo histórico-cultural de ${passage}`,
+            stores: ['core'],
+            topK: 4,
+        });
+        const data = (response.data ?? {}) as {
+            chunks?: Array<{ text?: string; source?: string; resourceTitle?: string }>;
+        };
+        return (data.chunks ?? [])
+            .map((c) => ({
+                text: String(c.text ?? ''),
+                source: String(c.source ?? c.resourceTitle ?? 'Fuente'),
+            }))
+            .filter((c) => c.text.trim().length > 0);
     }
 
     /**

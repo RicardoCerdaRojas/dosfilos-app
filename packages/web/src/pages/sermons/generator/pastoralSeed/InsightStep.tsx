@@ -1,4 +1,4 @@
-import { ClipboardPaste, Lock, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, ClipboardPaste, Lock, Plus, Trash2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -7,14 +7,17 @@ import {
     InsightStepData,
     PASTORAL_SEED_THRESHOLDS,
     PasteEvent,
+    type PastoralSeed,
     StepValidationResult,
 } from '@dosfilos/domain';
 import { StepShell } from './StepShell';
 import { StepHelp } from './StepHelp';
 import { useStepTimer } from './stepTimer';
+import { useInlineCoreTripwire } from '@/hooks/useInlineCoreTripwire';
 
 interface Props {
     passage: string;
+    seed: PastoralSeed;
     data: InsightStepData;
     validation?: StepValidationResult;
     onChange: (patch: Partial<InsightStepData>) => void;
@@ -38,12 +41,23 @@ const T = PASTORAL_SEED_THRESHOLDS.insight;
  * `onPasteEvent`. We never block paste (intrusive + frustrating for
  * normal flows like copying their own outline) — we audit it.
  */
-export function InsightStep({ passage, data, validation, onChange, onPasteEvent }: Props) {
+export function InsightStep({ passage, seed, data, validation, onChange, onPasteEvent }: Props) {
+    const tripwire = useInlineCoreTripwire();
     useStepTimer({
         enabled: true,
         onFlush: (delta) =>
             delta > 0 && onChange({ timeSpentSeconds: (data.timeSpentSeconds ?? 0) + delta }),
     });
+
+    const handleCentralIdeaChange = (value: string) => {
+        onChange({ centralIdea: value });
+        // Tier-1 inline tripwire (core-only, non-blocking) — ADR-023.
+        tripwire.check({
+            seed: { ...seed, insight: { ...data, centralIdea: value } },
+            claimKey: 'centralIdea',
+            text: value,
+        });
+    };
 
     const handlePaste = (field: InsightField) => (e: React.ClipboardEvent) => {
         const text = e.clipboardData?.getData('text') ?? '';
@@ -77,7 +91,7 @@ export function InsightStep({ passage, data, validation, onChange, onPasteEvent 
 
     return (
         <StepShell
-            stepNumber={6}
+            stepNumber={8}
             title="Insight"
             subtitle="Tu voz pastoral. Sin asistencia generativa. Esto es lo que el sistema desarrollará."
             passage={passage}
@@ -141,9 +155,26 @@ export function InsightStep({ passage, data, validation, onChange, onPasteEvent 
                     value={data.centralIdea}
                     min={T.centralIdeaMinChars}
                     rows={2}
-                    onChange={(v) => onChange({ centralIdea: v })}
+                    onChange={handleCentralIdeaChange}
                     onPaste={handlePaste('centralIdea')}
                 />
+                {tripwire.warning?.claimKey === 'centralIdea' && (
+                    <div className="rounded-md border border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 text-sm">
+                        <p className="font-medium text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                            <AlertTriangle className="h-4 w-4" /> Revisa esta afirmación antes de seguir
+                        </p>
+                        <p className="text-amber-900/80 dark:text-amber-200/80 text-xs mt-1">
+                            {tripwire.warning.reasoning}
+                        </p>
+                        <button
+                            type="button"
+                            onClick={tripwire.dismiss}
+                            className="text-xs underline text-amber-700 dark:text-amber-400 mt-1"
+                        >
+                            Entendido
+                        </button>
+                    </div>
+                )}
 
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
