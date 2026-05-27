@@ -26,6 +26,7 @@ export * from './entities/SermonGenerator';
 export * from './entities/PastoralSeed'; // 🌱 Pastoral Fidelity Phase 1 — six-step spine seed
 export * from './repositories/IPastoralSeedRepository';
 export * from './entities/PastoralWordAnalysis'; // 🌱 Pastoral Fidelity Phase 1.5 — Pastoral Word Study types
+export * from './entities/WitnessValidation'; // 🌱 Pastoral Fidelity Phase 2 — three-witnesses validation
 export * from './bible/inferLanguageFromBook'; // 🌱 Phase 1.5 — book → original language heuristic
 export * from './services/IPastoralWordStudyService'; // 🌱 Phase 1.5 — service port
 export * from './repositories/IPastoralWordAnalysisCacheRepository'; // 🌱 Phase 1.5 — analysis cache

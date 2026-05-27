@@ -2,7 +2,7 @@
 
 ## Estado
 
-`planning` — placeholder. Detalle se completa al cierre de Fase 1.
+`in-progress` — implementación funcional en curso (2026-05-27). Engine + 3 testigos + escalado + gate UI + cache shippeados detrás del sub-flag `three_witnesses`. Ver bitácora + ADR-011.
 
 ## Objetivo
 
@@ -32,16 +32,19 @@ Implementar el mecanismo de tres testigos (Testigo 1 contexto, Testigo 2 paralel
 
 ## Decisiones tomadas
 
-- [ADR-001](../decisions/ADR-001-confession-anchored-correction.md) — Confesión como Testigo 3 + escalado de disenso
+- [ADR-011](../decisions/ADR-011-three-witnesses-multi-witness-orchestrator.md) — **orchestrator multi-witness + escalado formal nivel×conteo** (cierra todas las pendientes de abajo). Supersede la tabla por-conteo de ADR-001.
+- [ADR-010](../decisions/ADR-010-confessional-witnesses-default-on.md) — Testigo 3 = testimonio plural default-on (superó el anchor único de ADR-001).
+- [ADR-001](../decisions/ADR-001-confession-anchored-correction.md) — origen del mecanismo de tres testigos (modelo de escalado superado por ADR-011).
 
-## Decisiones pendientes (TBD al iniciar fase)
+## Decisiones cerradas en ADR-011 (antes pendientes)
 
-- Lista exacta de claims con "bloqueo absoluto" (credos ecuménicos)
-- Modelo LLM a usar por testigo (costo vs calidad) — precedente: Fase 1.5 usa `gemini-2.5-flash` con JSON output para identify/analyze
-- Threshold de confianza por testigo
-- UX del Faculty doctrinal invocado en 3/3
-- Caching de resultados (mismo seed no se re-valida) — precedente arquitectónico: cache transversal `pastoralWordAnalyses/` por key determinística (Fase 1.5)
-- ADR de escalado formal sobre el sistema de tres niveles (core/distinctive/open) — `06-pedagogy-applied.md` §4 lo especifica; falta ADR que lo formalice como gate
+- ✅ Claims con bloqueo absoluto → `CORE_DOCTRINE_CLAIMS` (lista curada ecuménica, inyectada en prompt T3).
+- ✅ Modelo LLM → `gemini-2.5-flash` JSON, 1 llamada por testigo (T3 batchea tradiciones).
+- ✅ Threshold de confianza → disenso cuenta solo si `confidence ≥ 0.6`.
+- ✅ UX Faculty en hard-block → launcher pre-sembrado (fold-simple), `facultyConsulted` audit.
+- ✅ Caching → `witnessResults/{cacheId}` admin-written (patrón `pastoralWordAnalyses/`).
+- ✅ Escalado formal → función pura `escalateClaim(level, dissentCount)`.
+- ✅ Override `distinctive` → ≥100 chars (hard) / ≥50 (soft), per-claim (mantiene ADR-007 Q4).
 
 ## Arquitectura propuesta (alto nivel)
 
@@ -85,4 +88,14 @@ Cuando esta fase active, completar:
 ## Bitácora
 
 - **2026-05-22** — Placeholder creado.
+- **2026-05-27 (kickoff + implementación funcional)** — `/iniciar-fase 2`. Decisiones del fundador: (1) T3 lanza con **cobertura parcial** ahora; (2) gate como **7º paso "Validación"** del wizard; (3) claims validados = `centralIdea` + `observations` + `doxologicalApplication`; (4) Faculty **fold-simple**; (5) **single PR/merge**; (6) override per-claim por recomendación.
+  - **ADR-011 emitido** (orchestrator multi-witness + escalado formal). Supersede tabla por-conteo de ADR-001.
+  - **Discrepancias codebase detectadas (drift)**: **D1** solo 4 credos tienen sections con `doctrineLevel` → T3 distinctive delgado hasta content-fill (deuda explícita); **D2** sin embeddings → matching por `doctrineLevel` + LLM; **D3** no existe "Faculty doctrinal mode" → launcher pre-sembrado; **D4** escalado por nivel, no por conteo → ADR-011 lo formaliza; **D5** firma sin confesión única → `{ confessionalWitnessesEnabled }`.
+  - **Entregables (funcional, type-check + tests verdes)**:
+    - **Domain**: `WitnessValidation.ts` — tipos (`WitnessVerdict`/`WitnessedClaim`/`WitnessResult`/`WitnessReview`), escalado puro (`escalateClaim`, `escalateWitnessedClaim`, `aggregateWitnessResult`, `canProceedFromWitnesses`), `collectSeedClaims`, `CORE_DOCTRINE_CLAIMS`, `WITNESS_THRESHOLDS`. `PastoralSeed.witnessReview?` aditivo. 11 tests nuevos (280 domain total).
+    - **Functions**: `validateSeedWitnesses` callable (thin — 3 llamadas Flash, devuelve verdicts crudos) + `prompts.ts` (T1/T2/T3, T3 batchea tradiciones vía `collectionGroup('sections')`) + cache `witnessResults/`. Escalado corre client-side (decoupling functions↔domain, patrón Fase 1.5).
+    - **Web**: `useWitnessValidation` (mapea verdicts crudos → `WitnessResult` vía domain) + `WitnessGate` (7º paso, verdicts por claim + escalado + respuestas + Faculty launcher + absolute-block revise) + sub-flag `useThreeWitnessesGate` + intercept en `PastoralSeedWizard.handleAdvance` (flag-on → fase witnesses; flag-off → Phase 1 directo) + `saveWitnessReview` persiste en seed. 3 gate tests.
+    - **Infra**: `firestore.rules` `witnessResults/` (read-auth/write-false) + `firestore.indexes.json` fieldOverride collectionGroup `sections.doctrineLevel`.
+    - **Flag**: `three_witnesses` agregado a `FEATURE_FLAG_NAMES` (default off, requiere `pastoral_fidelity_flow`).
+  - **Pendiente para cierre**: deploy callable + rules + index; toggle `three_witnesses` en cuenta de prueba; smoke end-to-end (claim core → absolute-block; distinctive 2/3 → soft-block; pass). Faculty launcher es link simple a `/dashboard/faculty` (no pre-seed de prompt v1).
 - **2026-05-27** — Prereqs actualizados al cerrar Fase 1.5. Fase 0/1/1.5 completas + deployadas. `lookupCrossReferences` (Testigo 2), confession catalog + doctrineLevel (Testigo 3), `pastoralSeed` schema (input) y cache pattern (`pastoralWordAnalyses/`) disponibles. Testigo 1 ahora puede consumir el análisis pastoral estructurado de `morphology.wordStudies[]` (Fase 1.5) como evidencia de contexto. Pendiente: ADR de escalado formal sobre niveles core/distinctive/open antes de codear el orchestrator.

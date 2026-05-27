@@ -280,6 +280,17 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Pastoral Fidelity Phase 2 — three-witnesses validation cache (ADR-011).
+    // Transversal cache: any authenticated user reads cached witness verdicts;
+    // only the `validateSeedWitnesses` Cloud Function writes (admin SDK bypasses
+    // these rules). Doc id is deterministic over the claim texts + confessional
+    // witnesses toggle + prompt version, so editing a claim or bumping the
+    // prompts invalidates the cache by changing the id.
+    match /witnessResults/{resultId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
     // Pastoral Fidelity — confession change audit log (ADR-007, PR 0.7).
     // Each row records a single declaredConfession transition (onboarding
     // declaration + later edits in /settings/confession). Owners may

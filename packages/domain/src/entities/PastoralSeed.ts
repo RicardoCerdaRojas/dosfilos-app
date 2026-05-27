@@ -184,6 +184,15 @@ export interface PastoralSeed {
     /** True iff every step's validator passes. Set by `evaluatePastoralSeed`. */
     completed: boolean;
     completedAt?: Date;
+
+    /**
+     * Phase 2 (ADR-011) — the pastor's review of the three-witnesses gate:
+     * which claims were blocked and how they responded. Optional + additive;
+     * does NOT participate in `evaluatePastoralSeed` (`completed` is purely
+     * the six-step validators). Imported lazily as a type to avoid a runtime
+     * cycle between the seed and witness modules.
+     */
+    witnessReview?: import('./WitnessValidation').WitnessReview;
 }
 
 /**

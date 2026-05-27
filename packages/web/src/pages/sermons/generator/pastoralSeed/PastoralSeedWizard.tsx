@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Sprout, Save, Loader2, BookOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { Sprout, Save, Loader2, BookOpen, PanelRightOpen, Scale } from 'lucide-react';
 import { usePastoralSeed } from '@/hooks/usePastoralSeed';
+import { useThreeWitnessesGate, usePastoralFidelityGate } from '@/hooks/usePastoralFidelityGate';
 import { useWizard } from '../WizardContext';
 import { PASTORAL_SEED_STEP_ORDER, PastoralSeedStepKey } from '@dosfilos/domain';
+import { WitnessGate } from './witnesses/WitnessGate';
 import { PastoralSeedBreadcrumb, BreadcrumbStep } from './PastoralSeedBreadcrumb';
 import { ReadingStep } from './ReadingStep';
 import { SyntaxStep } from './SyntaxStep';
@@ -64,6 +66,13 @@ export function PastoralSeedWizard({
     headerBanner,
 }: Props) {
     const [currentIndex, setCurrentIndex] = useState(0);
+    // Phase 2 (ADR-011): after the six-step seed completes, the wizard
+    // can route through a three-witnesses validation gate before the
+    // draft. Only when the `three_witnesses` sub-flag is on; otherwise
+    // "Continuar al borrador" calls `onSeedCompleted` as in Phase 1.
+    const [phase, setPhase] = useState<'seed' | 'witnesses'>('seed');
+    const threeWitnesses = useThreeWitnessesGate();
+    const { confessionalWitnessesEnabled } = usePastoralFidelityGate();
     // Bible reader sticky to the right by default — pastor needs the
     // text visible while doing every step. Toggleable so power users
     // can reclaim horizontal real estate when working on Insight (the
@@ -80,6 +89,7 @@ export function PastoralSeedWizard({
         appendToolUsage,
         appendPasteEvent,
         addWordStudy,
+        saveWitnessReview,
         flush,
     } = usePastoralSeed({
         sermonId,
@@ -116,7 +126,14 @@ export function PastoralSeedWizard({
             setCurrentIndex((i) => i + 1);
             return;
         }
-        if (evaluation?.completed && seed) onSeedCompleted(seed);
+        if (!evaluation?.completed || !seed) return;
+        // Last seed step done. Route through the witness gate when the
+        // sub-flag is on; otherwise advance straight to the draft.
+        if (threeWitnesses.enabled) {
+            setPhase('witnesses');
+            return;
+        }
+        onSeedCompleted(seed);
     };
 
     const handleJumpTo = (key: PastoralSeedStepKey) => {
@@ -130,6 +147,36 @@ export function PastoralSeedWizard({
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin" />
                 <p className="text-sm">Cargando tu estudio…</p>
+            </div>
+        );
+    }
+
+    // Phase 2 — three-witnesses validation gate (7th "Validación" phase).
+    if (phase === 'witnesses') {
+        return (
+            <div className="max-w-7xl mx-auto py-3 px-2 space-y-4">
+                <header className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <Scale className="h-4 w-4 text-emerald-600" />
+                        <h1 className="text-base font-semibold">Paso 7 · Validación</h1>
+                        <span className="text-xs text-muted-foreground hidden md:inline">
+                            · Tres testigos antes del borrador.
+                        </span>
+                    </div>
+                </header>
+                <WitnessGate
+                    seed={seed}
+                    confessionalWitnessesEnabled={confessionalWitnessesEnabled}
+                    onProceed={async (review) => {
+                        await saveWitnessReview(review);
+                        onSeedCompleted(seed);
+                    }}
+                    onReviseClaim={() => {
+                        setPhase('seed');
+                        setCurrentIndex(PASTORAL_SEED_STEP_ORDER.indexOf('insight'));
+                    }}
+                    onBack={() => setPhase('seed')}
+                />
             </div>
         );
     }
@@ -320,7 +367,9 @@ export function PastoralSeedWizard({
                                     className="bg-emerald-600 hover:bg-emerald-700"
                                 >
                                     {seedCompleted
-                                        ? 'Continuar al borrador →'
+                                        ? threeWitnesses.enabled
+                                            ? 'Continuar a validación →'
+                                            : 'Continuar al borrador →'
                                         : 'Completa los 6 pasos para continuar'}
                                 </Button>
                             )}

@@ -68,7 +68,6 @@ export function BibleReaderPanel({ passage, onClose }: BibleReaderPanelProps) {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
 
-    const scrollAreaRef = useRef<HTMLDivElement | null>(null);
     const verseRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
     // Resolve the passage prop into book/chapter/verse range on mount
@@ -340,7 +339,7 @@ export function BibleReaderPanel({ passage, onClose }: BibleReaderPanelProps) {
             </div>
 
             {/* Content */}
-            <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
+            <ScrollArea className="flex-1 min-h-0">
                 <div className="px-5 py-5 max-w-3xl mx-auto">
                     <div className="mb-5 text-center space-y-1">
                         <h2 className="text-2xl font-bold text-foreground font-serif tracking-tight">
