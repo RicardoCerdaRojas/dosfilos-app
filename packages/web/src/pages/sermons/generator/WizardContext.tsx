@@ -41,6 +41,15 @@ interface WizardContextType extends WizardState {
     saving: boolean;
     lastSaved: Date | null;
     sermonId: string | null; // 🎯 Expose to allow publishing
+    /**
+     * Live counter of completed PastoralSeed sub-steps. Lifted to
+     * context so the global `WizardHeader` pipeline (which lives
+     * outside the seed wizard's render tree) can show the `n/6`
+     * badge updating in real time as the pastor types. PastoralSeedWizard
+     * is the producer; WizardHeader is the consumer.
+     */
+    seedCompletedSteps: number;
+    setSeedCompletedSteps: (n: number) => void;
 }
 
 const WizardContext = createContext<WizardContextType | undefined>(undefined);
@@ -64,6 +73,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     const [config, setConfig] = useState<WorkflowConfiguration | null>(null);
     const [sermonId, setSermonId] = useState<string | null>(null);
     const [derivedContext, setDerivedContext] = useState<DerivedContext | null>(null);
+    const [seedCompletedSteps, setSeedCompletedSteps] = useState<number>(0);
 
     // Ephemeral local persistence for Step 1 — the sermon doc only gets
     // created after exegesis is generated, so without this the passage
@@ -170,6 +180,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setDraft(null);
         setSermonId(null);
         setDerivedContext(null);
+        setSeedCompletedSteps(0);
     };
 
     // 🎯 NEW: Select homiletical approach and update derived fields
@@ -224,8 +235,10 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         selectHomileticalApproach,  // 🎯 NEW
         reset,
         saving,
-        lastSaved
-    }), [step, passage, rules, exegesis, homiletics, draft, config, derivedContext, saving, lastSaved, sermonId]);
+        lastSaved,
+        seedCompletedSteps,
+        setSeedCompletedSteps,
+    }), [step, passage, rules, exegesis, homiletics, draft, config, derivedContext, saving, lastSaved, sermonId, seedCompletedSteps]);
 
     return (
         <WizardContext.Provider value={contextValue}>

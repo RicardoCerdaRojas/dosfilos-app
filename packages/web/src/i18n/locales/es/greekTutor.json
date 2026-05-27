@@ -395,6 +395,7 @@
         "error": "Error al identificar la palabra. Por favor intenta de nuevo.",
         "cancel": "Cancelar",
         "addUnit": "Agregar Unidad",
+        "alreadyInUnits": "Ya está en tus unidades de estudio",
         "clickToStudy": "Click para estudiar"
     },
     "studyUnit": {

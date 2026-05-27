@@ -81,6 +81,7 @@ const TutorManagement = lazy(() => import('@/pages/admin/TutorManagement'));
 const TutorEditor = lazy(() => import('@/pages/admin/TutorEditor'));
 const HintCatalogPage = lazy(() => import('@/pages/admin/HintCatalogPage'));
 const LexiconCatalogPage = lazy(() => import('@/pages/admin/LexiconCatalogPage'));
+const PastoralSeedInspector = lazy(() => import('@/pages/admin/PastoralSeedInspector').then(m => ({ default: m.PastoralSeedInspector })));
 
 // Tutors + bible + faculty + exegesis + projects
 const GreekTutorPage = lazy(() => import('@/pages/greek-tutor/GreekTutorPage').then(m => ({ default: m.GreekTutorPage })));
@@ -370,6 +371,7 @@ function App() {
             <Route path="admin/tutors/:id" element={<TutorEditor />} />
             <Route path="admin/hebrew-tutor-hints" element={<HintCatalogPage />} />
             <Route path="admin/hebrew-lexicon" element={<LexiconCatalogPage />} />
+            <Route path="admin/pastoral-seed/:sermonId" element={<PastoralSeedInspector />} />
           </Route>
         </Routes>
         </Suspense>

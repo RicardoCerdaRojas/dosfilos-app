@@ -1,0 +1,331 @@
+import {
+    addDoc,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    limit as fsLimit,
+    orderBy,
+    query,
+    serverTimestamp,
+    Timestamp,
+    updateDoc,
+    where,
+} from 'firebase/firestore';
+import { db } from '../config/firebase';
+import type {
+    InsightStepData,
+    IPastoralSeedRepository,
+    MorphologyStepData,
+    ParallelRef,
+    PasteEvent,
+    PastoralSeed,
+    ReadingStepData,
+    RecognitionStepData,
+    SyntaxStepData,
+    ToolUsage,
+    WordStudy,
+    FunctionStepData,
+} from '@dosfilos/domain';
+
+/**
+ * Firestore implementation of `IPastoralSeedRepository` (ADR-015).
+ *
+ * Collection: `pastoralSeeds/{seedId}` with `sermonId` as the natural
+ * lookup key. Writes happen client-side under the wizard's autosave
+ * loop; rules guard `request.auth.uid == resource.data.userId`.
+ *
+ * Server-side `createdAt`/`updatedAt` use `serverTimestamp()` so audit
+ * timestamps remain authoritative even if the client clock drifts.
+ */
+export class FirestorePastoralSeedRepository implements IPastoralSeedRepository {
+    private readonly collectionName = 'pastoralSeeds';
+
+    async findBySermonId(sermonId: string): Promise<PastoralSeed | null> {
+        const q = query(
+            collection(db, this.collectionName),
+            where('sermonId', '==', sermonId),
+            orderBy('updatedAt', 'desc'),
+            fsLimit(1),
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) return null;
+        const first = snap.docs[0];
+        return this.toSeed(first.id, first.data());
+    }
+
+    async getById(seedId: string): Promise<PastoralSeed | null> {
+        const ref = doc(db, this.collectionName, seedId);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) return null;
+        return this.toSeed(snap.id, snap.data());
+    }
+
+    async create(seed: PastoralSeed): Promise<PastoralSeed> {
+        const payload = {
+            ...this.toFirestore(seed),
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        };
+        // The caller may pass an id but we let Firestore allocate one so
+        // top-level audit queries stay simple — the doc id is opaque and
+        // sermonId is the natural key.
+        delete (payload as any).id;
+        const ref = await addDoc(collection(db, this.collectionName), payload);
+        return { ...seed, id: ref.id };
+    }
+
+    async update(seedId: string, patch: Partial<PastoralSeed>): Promise<void> {
+        const ref = doc(db, this.collectionName, seedId);
+        const sanitized = this.toFirestore(patch as PastoralSeed, { partial: true });
+        // Never let callers overwrite the immutable identity fields nor
+        // forge timestamps — `updatedAt` always comes from the server.
+        delete (sanitized as any).id;
+        delete (sanitized as any).createdAt;
+        delete (sanitized as any).sermonId;
+        delete (sanitized as any).userId;
+        await updateDoc(ref, { ...sanitized, updatedAt: serverTimestamp() });
+    }
+
+    async listByUserId(
+        userId: string,
+        opts?: { limit?: number },
+    ): Promise<PastoralSeed[]> {
+        const q = opts?.limit
+            ? query(
+                  collection(db, this.collectionName),
+                  where('userId', '==', userId),
+                  orderBy('updatedAt', 'desc'),
+                  fsLimit(opts.limit),
+              )
+            : query(
+                  collection(db, this.collectionName),
+                  where('userId', '==', userId),
+                  orderBy('updatedAt', 'desc'),
+              );
+        const snap = await getDocs(q);
+        return snap.docs.map((d) => this.toSeed(d.id, d.data()));
+    }
+
+    private toFirestore(seed: PastoralSeed, opts?: { partial?: boolean }): Record<string, unknown> {
+        const isPartial = opts?.partial ?? false;
+        const out: Record<string, unknown> = {};
+        const assign = (key: string, value: unknown) => {
+            if (isPartial && value === undefined) return;
+            // Firestore rejects `undefined` at any nesting level.
+            // Convert undefined / null fields to `null`, and scrub
+            // nested undefineds recursively for the structured step
+            // payloads. Dates → Timestamps handled by the per-step
+            // serialisers below.
+            out[key] = scrubUndefined(value ?? null);
+        };
+        assign('sermonId', seed.sermonId);
+        assign('projectId', seed.projectId);
+        assign('userId', seed.userId);
+        assign('passage', seed.passage);
+        assign('reading', seed.reading ? this.dateOptionalStepToFirestore(seed.reading) : seed.reading);
+        assign('syntax', seed.syntax ? this.dateOptionalStepToFirestore(seed.syntax) : seed.syntax);
+        assign('morphology', seed.morphology ? this.dateOptionalStepToFirestore(seed.morphology) : seed.morphology);
+        assign('recognition', seed.recognition ? this.dateOptionalStepToFirestore(seed.recognition) : seed.recognition);
+        assign('function', seed.function ? this.dateOptionalStepToFirestore(seed.function) : seed.function);
+        assign('insight', this.insightToFirestore(seed.insight));
+        assign('totalTimeSeconds', seed.totalTimeSeconds);
+        assign('toolsConsulted', (seed.toolsConsulted ?? []).map(this.toolToFirestore));
+        assign('completed', seed.completed);
+        assign('completedAt', seed.completedAt ? Timestamp.fromDate(seed.completedAt) : null);
+        return out;
+    }
+
+    /**
+     * Shared serialiser for every step type that carries an optional
+     * `completedAt` Date. Converts Date → Timestamp and forces missing
+     * value to `null` (Firestore rejects `undefined`).
+     */
+    private dateOptionalStepToFirestore<T extends { completedAt?: Date }>(step: T): Record<string, unknown> {
+        const { completedAt, ...rest } = step;
+        return {
+            ...rest,
+            completedAt: completedAt ? Timestamp.fromDate(completedAt) : null,
+        };
+    }
+
+    private insightToFirestore(insight: InsightStepData | undefined): Record<string, unknown> | null {
+        if (!insight) return null;
+        return {
+            centralIdea: insight.centralIdea,
+            observations: insight.observations,
+            openQuestion: insight.openQuestion,
+            pastoralAnecdote: insight.pastoralAnecdote,
+            doxologicalApplication: insight.doxologicalApplication,
+            timeSpentSeconds: insight.timeSpentSeconds,
+            pasteEvents: (insight.pasteEvents ?? []).map((p) => ({
+                step: p.step,
+                field: p.field,
+                charsCount: p.charsCount,
+                at: p.at instanceof Date ? Timestamp.fromDate(p.at) : p.at,
+            })),
+            completedAt: insight.completedAt ? Timestamp.fromDate(insight.completedAt) : null,
+        };
+    }
+
+    private toolToFirestore(tool: ToolUsage): ToolUsage {
+        return {
+            ...tool,
+            invokedAt: tool.invokedAt instanceof Date
+                ? (Timestamp.fromDate(tool.invokedAt) as unknown as Date)
+                : tool.invokedAt,
+        };
+    }
+
+    private toSeed(id: string, data: any): PastoralSeed {
+        return {
+            id,
+            sermonId: data.sermonId,
+            projectId: data.projectId ?? undefined,
+            userId: data.userId,
+            createdAt: this.toDate(data.createdAt),
+            updatedAt: this.toDate(data.updatedAt),
+            passage: data.passage ?? '',
+            reading: this.toReading(data.reading),
+            syntax: this.toSyntax(data.syntax),
+            morphology: this.toMorphology(data.morphology),
+            recognition: this.toRecognition(data.recognition),
+            function: this.toFunction(data.function),
+            insight: this.toInsight(data.insight),
+            totalTimeSeconds: data.totalTimeSeconds ?? 0,
+            toolsConsulted: Array.isArray(data.toolsConsulted)
+                ? data.toolsConsulted.map((t: any) => ({
+                    tool: t.tool,
+                    step: t.step,
+                    invokedAt: this.toDate(t.invokedAt),
+                    durationSeconds: t.durationSeconds ?? 0,
+                } satisfies ToolUsage))
+                : [],
+            completed: Boolean(data.completed),
+            completedAt: data.completedAt ? this.toDate(data.completedAt) : undefined,
+        };
+    }
+
+    private toReading(data: any): ReadingStepData {
+        if (!data) return { firstImpression: '', timeSpentSeconds: 0 };
+        return {
+            firstImpression: data.firstImpression ?? '',
+            timeSpentSeconds: data.timeSpentSeconds ?? 0,
+            completedAt: data.completedAt ? this.toDate(data.completedAt) : undefined,
+        };
+    }
+
+    private toSyntax(data: any): SyntaxStepData {
+        if (!data) return { mainClause: { reference: '', pastorNote: '' }, timeSpentSeconds: 0 };
+        return {
+            mainClause: {
+                reference: data.mainClause?.reference ?? '',
+                pastorNote: data.mainClause?.pastorNote ?? '',
+            },
+            timeSpentSeconds: data.timeSpentSeconds ?? 0,
+            completedAt: data.completedAt ? this.toDate(data.completedAt) : undefined,
+        };
+    }
+
+    private toMorphology(data: any): MorphologyStepData {
+        if (!data) return { wordStudies: [], timeSpentSeconds: 0 };
+        return {
+            wordStudies: Array.isArray(data.wordStudies)
+                ? data.wordStudies.map((w: any) => ({
+                    word: w.word ?? '',
+                    reference: w.reference ?? '',
+                    pastorDiscovery: w.pastorDiscovery ?? '',
+                    tutorInteractionId: w.tutorInteractionId ?? undefined,
+                    language: w.language ?? undefined,
+                } satisfies WordStudy))
+                : [],
+            timeSpentSeconds: data.timeSpentSeconds ?? 0,
+            completedAt: data.completedAt ? this.toDate(data.completedAt) : undefined,
+        };
+    }
+
+    private toRecognition(data: any): RecognitionStepData {
+        if (!data) return { parallels: [], timeSpentSeconds: 0 };
+        return {
+            parallels: Array.isArray(data.parallels)
+                ? data.parallels.map((p: any) => ({
+                    reference: p.reference ?? '',
+                    relevanceNote: p.relevanceNote ?? '',
+                    source: p.source ?? 'pastor-suggested',
+                } satisfies ParallelRef))
+                : [],
+            timeSpentSeconds: data.timeSpentSeconds ?? 0,
+            completedAt: data.completedAt ? this.toDate(data.completedAt) : undefined,
+        };
+    }
+
+    private toFunction(data: any): FunctionStepData {
+        if (!data) return { originalAudienceFunction: '', timeSpentSeconds: 0 };
+        return {
+            originalAudienceFunction: data.originalAudienceFunction ?? '',
+            timeSpentSeconds: data.timeSpentSeconds ?? 0,
+            completedAt: data.completedAt ? this.toDate(data.completedAt) : undefined,
+        };
+    }
+
+    private toInsight(data: any): InsightStepData {
+        if (!data) {
+            return {
+                centralIdea: '',
+                observations: [],
+                openQuestion: '',
+                pastoralAnecdote: '',
+                doxologicalApplication: '',
+                pasteEvents: [],
+                timeSpentSeconds: 0,
+            };
+        }
+        return {
+            centralIdea: data.centralIdea ?? '',
+            observations: Array.isArray(data.observations) ? data.observations : [],
+            openQuestion: data.openQuestion ?? '',
+            pastoralAnecdote: data.pastoralAnecdote ?? '',
+            doxologicalApplication: data.doxologicalApplication ?? '',
+            pasteEvents: Array.isArray(data.pasteEvents)
+                ? data.pasteEvents.map((p: any) => ({
+                    step: 'insight',
+                    field: p.field,
+                    charsCount: p.charsCount ?? 0,
+                    at: this.toDate(p.at),
+                } satisfies PasteEvent))
+                : [],
+            timeSpentSeconds: data.timeSpentSeconds ?? 0,
+            completedAt: data.completedAt ? this.toDate(data.completedAt) : undefined,
+        };
+    }
+
+    private toDate(value: any): Date {
+        if (!value) return new Date();
+        if (value instanceof Timestamp) return value.toDate();
+        if (value instanceof Date) return value;
+        if (typeof value?.toDate === 'function') return value.toDate();
+        return new Date(value);
+    }
+}
+
+/**
+ * Firestore rejects `undefined` at any nesting level. Walks plain
+ * objects + arrays and replaces undefined leaves with null. Preserves
+ * Date / Timestamp instances unchanged so the calling serialisers can
+ * keep converting them. Cheap — the seed payload is small (KB range).
+ */
+function scrubUndefined(value: unknown): unknown {
+    if (value === undefined) return null;
+    if (value === null) return null;
+    if (value instanceof Date) return value;
+    if (value instanceof Timestamp) return value;
+    if (Array.isArray(value)) return value.map(scrubUndefined);
+    if (typeof value === 'object') {
+        const out: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+            out[k] = scrubUndefined(v);
+        }
+        return out;
+    }
+    return value;
+}

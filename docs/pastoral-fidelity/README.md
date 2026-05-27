@@ -17,7 +17,8 @@ Análisis fundacional: ver [00-vision.md](./00-vision.md).
 | Fase | Nombre | Estado | Doc |
 |------|--------|--------|-----|
 | 0 | Foundations (onboarding confesional + arquitectura) | `completed` | [phase-0-foundations.md](./phases/phase-0-foundations.md) |
-| 1 | Six-step spine como Step 1 del wizard | `planning` | [phase-1-six-step-spine.md](./phases/phase-1-six-step-spine.md) |
+| 1 | Six-step spine como Step 1 del wizard | `completed` | [phase-1-six-step-spine.md](./phases/phase-1-six-step-spine.md) |
+| 1.5 | Pastoral Word Study (módulo separado de language tutors) | `planning` | [phase-1-5-pastoral-word-study.md](./phases/phase-1-5-pastoral-word-study.md) |
 | 2 | Tres testigos para validar semilla pastoral | `planning` | [phase-2-three-witnesses.md](./phases/phase-2-three-witnesses.md) |
 | 2.5 | Study Depth Copilot (gate Faculty + medición multidimensional) | `planning` | [phase-2-5-study-depth-copilot.md](./phases/phase-2-5-study-depth-copilot.md) |
 | 3 | Pass de fidelidad claim↔source en borrador | `planning` | [phase-3-claim-source-fidelity.md](./phases/phase-3-claim-source-fidelity.md) |
@@ -26,7 +27,7 @@ Análisis fundacional: ver [00-vision.md](./00-vision.md).
 | 6 | Planner como runway de formación | `planning` | [phase-6-planner-runway.md](./phases/phase-6-planner-runway.md) |
 | 7 | Exégesis reform (mismo marco aplicado al paper académico) | `planning` | [phase-7-exegesis-reform.md](./phases/phase-7-exegesis-reform.md) |
 
-**Última actualización**: 2026-05-25 — Phase 0 **cerrada**. 8 PRs shippeados + ADR-009 + ADR-010 (smoke test refinements: opt-in confesional → multi-witness default-on; banner eliminado; pre-generation gate framework conceptual). Nueva **Fase 2.5 Study Depth Copilot** insertada entre Fase 2 y 3 — engine de medición multidimensional + confrontación soft para path Faculty (cierra gap PR #214 donde 1 Q&A permite generar sermón). Fase 1 (six-step spine) sigue lista para arranque. **Deudas identificadas durante smoke test** documentadas en [proposals/faculty-sermon-rag-enrichment.md](./proposals/faculty-sermon-rag-enrichment.md) (techo citacional Faculty path) — PR follow-up.
+**Última actualización**: 2026-05-26 — **Phase 1 CERRADA con deuda interim explícita**. Single PR `feat(pastoral-fidelity): Phase 1 — six-step spine`. Entrega: schema top-level `pastoralSeeds/{seedId}` (ADR-015) + `PastoralSeedWizard` orquestador + 6 step components (Lectura/Sintaxis/Morfología/Reconocimiento/Función/Insight) + Greek tutor embed (interim) + Hebrew link-out + cross-ref engine integration + Faculty histórico link + AI-forbidden Step 6 con paste audit + gate hard en SermonWizard + `PRIMARY VOICE` prompt block + verbatim post-gen check + `PastoralSeedAuditPanel` inline en sermón detail + admin `PastoralSeedInspector` + UI audit kill-list Cat 1+4. Feature-flagged (`pastoral_fidelity_flow` off por default). 363 tests passing total (264+38+61). **Nueva Fase 1.5 Pastoral Word Study** insertada (ADR-016) — MorphologyStep actualmente embed `GreekTutorOverlay` (módulo académico) viola manifesto "sin convertir la clase en lección de idiomas"; Fase 1.5 reemplazará con `PastoralWordStudyModal` enfocado en uso pastoral. Anterior: Phase 0 cerrada 8 PRs + ADR-009 + ADR-010. **Fase 2.5 Study Depth Copilot** sigue planificada entre Fase 2 y 3.
 
 ## Protocolo de sesión
 

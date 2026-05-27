@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useWizard, WizardProvider } from './WizardContext';
 import { WizardHeader } from './WizardHeader';
@@ -11,17 +11,24 @@ import { sermonService, exegesisService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { SermonEntity, type Sermon } from '@dosfilos/domain';
 import { migrateLegacyWizardProgress } from './migrateLegacyWizardProgress';
+import { usePastoralFidelityGate } from '@/hooks/usePastoralFidelityGate';
+import { PastoralSeedWizard } from './pastoralSeed/PastoralSeedWizard';
+import { seedToExegesis } from './pastoralSeed/seedToExegesis';
+import { pastoralSeedService } from '@dosfilos/application';
+import { toast } from 'sonner';
 
 function WizardContent() {
-    const { step, setStep, setPassage, setExegesis, setHomiletics, setDraft, setSermonId, setDerivedContext, rules, setRules, reset } = useWizard();
+    const { step, setStep, passage, setPassage, setExegesis, setHomiletics, setDraft, sermonId, setSermonId, derivedContext, setDerivedContext, rules, setRules, reset } = useWizard();
     const { user } = useFirebase();
     const [searchParams] = useSearchParams();
     const [inProgressSermons, setInProgressSermons] = useState<SermonEntity[]>([]);
     const [showResumePrompt, setShowResumePrompt] = useState(false);
     const [loading, setLoading] = useState(true);
     const [autoPopulating, setAutoPopulating] = useState(false);
+    const [mintingSermon, setMintingSermon] = useState(false);
     const [publishingSermonId, setPublishingSermonId] = useState<string | null>(null);
     const location = useLocation();
+    const pastoralGate = usePastoralFidelityGate();
 
     // Check for in-progress sermons on mount or when location key changes (navigation)
     useEffect(() => {
@@ -37,7 +44,13 @@ function WizardContent() {
             // Debugging intentionally left in for URL routing diagnosis
 
             // If 'new=true', skip resume prompt and start fresh wizard
+            // at Step 0 (passage entry). Default WizardContext step is 1
+            // (legacy assumed passage was captured upstream); fresh sessions
+            // need StepPassage first so the pastoral seed has a passage
+            // to anchor on.
             if (newSermonParam === 'true') {
+                reset();
+                setStep(0);
                 setLoading(false);
                 setShowResumePrompt(false);
                 return;
@@ -340,6 +353,80 @@ function WizardContent() {
         }
     };
 
+    // Pastoral Fidelity gate: when the flag is on we replace Step 1
+    // (free-text exegesis) with the six-step spine + block Step 2 and
+    // Step 3 until the seed completes. When the flag is off we stay on
+    // the legacy flow untouched.
+    //
+    // IMPORTANT: this block of hooks MUST live above the early returns
+    // below (loading / showResumePrompt). React tracks hook order and a
+    // conditional skip would change the count between renders and crash
+    // the component.
+    const usePastoralFlow = pastoralGate.allowed;
+
+    // Hard gate: when the flag is on, the pastor cannot reach Step 2
+    // (homiletics) or Step 3 (draft) without a completed seed. We
+    // check on every step change + redirect back with a toast so the
+    // gate is visible (not silent).
+    useEffect(() => {
+        if (!usePastoralFlow) return;
+        if (step < 2) return;
+        if (!sermonId) {
+            setStep(1);
+            return;
+        }
+        let cancelled = false;
+        pastoralSeedService
+            .getBySermonId(sermonId)
+            .then((seed) => {
+                if (cancelled) return;
+                if (!seed?.completed) {
+                    toast.warning('Completa los 6 pasos de estudio antes de continuar al borrador.');
+                    setStep(1);
+                }
+            })
+            .catch((err) => console.error('[SermonWizard] gate check failed', err));
+        return () => {
+            cancelled = true;
+        };
+    }, [usePastoralFlow, step, sermonId, setStep]);
+
+    // Mint the sermon doc eagerly when entering the seed wizard so the
+    // seed has a `sermonId` to anchor to. Legacy flow defers creation
+    // until exegesis runs; pastoral flow needs it earlier because the
+    // seed persists from Reading (Paso 1) onward.
+    useEffect(() => {
+        const shouldMint =
+            usePastoralFlow
+            && step === 1
+            && passage
+            && !sermonId
+            && user
+            && !mintingSermon;
+        if (!shouldMint) return;
+        setMintingSermon(true);
+        sermonService
+            .createDraft({ userId: user!.uid, passage })
+            .then((id) => setSermonId(id))
+            .catch((err) => console.error('[SermonWizard] eager createDraft failed', err))
+            .finally(() => setMintingSermon(false));
+    }, [usePastoralFlow, step, passage, sermonId, user, mintingSermon, setSermonId]);
+
+    // Build the pre-fill hint when a paper/Faculty origin is known.
+    // Option B (decision 2026-05-25): pre-poblar como sugerencias
+    // editables, no autocompletar. Pastor confirma o reescribe.
+    const derivedSuggestions = useMemo(() => {
+        if (!derivedContext) return undefined;
+        if (derivedContext.kind === 'paper') {
+            return {
+                note: `El paper "${derivedContext.paperTitle}" alimentó este sermón. Sus secciones aparecen como sugerencias en los pasos, pero la idea central, observaciones, anécdota y aplicación doxológica del Paso 6 las escribes tú.`,
+            };
+        }
+        return {
+            note: `Esta semilla derivó de tu conversación con Faculty ("${derivedContext.sessionTitle}"). Revísala y reescríbela en tu voz — el sistema construye sobre tus palabras, no sobre las del asistente.`,
+        };
+    }, [derivedContext]);
+
     if (loading || autoPopulating) {
         // `autoPopulating` is the longer wait — we're running the
         // paper→sermon transformer (~30-45s) to fill a previously
@@ -384,13 +471,38 @@ function WizardContent() {
 
     return (
         <div className="h-full flex flex-col overflow-hidden">
-            {/* Compact Header */}
             <WizardHeader currentStep={step} onExit={handleExit} />
 
-            {/* Step Content - Full height with fixed layout */}
-            <div className="flex-1 overflow-hidden px-4 py-2">
+            <div className="flex-1 overflow-y-auto px-4 py-2">
                 {step === 0 && <StepPassage />}
-                {step === 1 && <StepExegesis />}
+                {step === 1 && usePastoralFlow && !passage && (
+                    // Guard against entering the seed wizard without a
+                    // passage (e.g. legacy resume that defaulted to
+                    // step 1 with empty wizardProgress). Send the
+                    // pastor back to passage entry first.
+                    <StepPassage />
+                )}
+                {step === 1 && usePastoralFlow && passage && (
+                    <PastoralSeedWizard
+                        sermonId={sermonId}
+                        userId={user?.uid ?? ''}
+                        passage={passage}
+                        onSeedCompleted={(seed) => {
+                            // Synthesize ExegeticalStudy from the seed
+                            // so the legacy homiletics + draft phases
+                            // (which still consume `exegesis`) have a
+                            // payload to work with. PRIMARY VOICE
+                            // prompt block at draft time remains the
+                            // authoritative pastor input; this synth
+                            // payload only satisfies the homiletics
+                            // contract.
+                            setExegesis(seedToExegesis(seed));
+                            setStep(2);
+                        }}
+                        derivedSuggestions={derivedSuggestions}
+                    />
+                )}
+                {step === 1 && !usePastoralFlow && <StepExegesis />}
                 {step === 2 && <StepHomiletics />}
                 {step === 3 && <StepDraft />}
             </div>

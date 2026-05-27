@@ -2,7 +2,7 @@
 
 ## Estado
 
-`planning` — **destrabada 2026-05-23**. Fase 0 cerrada, prereqs satisfechos (ver tabla abajo). Lista para arranque vía `/iniciar-fase 1`.
+`completed` — **shippeada 2026-05-25**. Single PR `feat(pastoral-fidelity): Phase 1 — six-step spine` bundleó schema + repo + service + hook + orquestador + 6 sub-step components + gate + PRIMARY VOICE prompt + verbatim check + audit panel + UI audit kill-list. Feature-flagged (`pastoral_fidelity_flow` off por default).
 
 ## Objetivo
 
@@ -48,8 +48,15 @@ Cerrar cada uno con ADR específico (ADR-010 al ADR-014).
 ### Schema `PastoralSeed`
 
 ```typescript
-// Subdoc de Project: projects/{projectId}.study.pastoralSeed
+// Top-level collection: pastoralSeeds/{seedId} — ver ADR-015
 interface PastoralSeed {
+  id: string;
+  sermonId: string;                    // 1:1 v1
+  projectId?: string;                  // populated en Fase 5
+  userId: string;
+  createdAt: timestamp;
+  updatedAt: timestamp;
+
   passageRef: PassageRef;
 
   // Paso 1: Lectura
@@ -287,6 +294,46 @@ Tests manuales:
 
 - **2026-05-22** — Phase doc creado. Esperando completar Fase 0 antes de codear.
 - **2026-05-23** — **Prereqs actualizados al cerrar Fase 0**. Phase 0 entrega: feature flag operacional + confession catalog (14 fuentes) + declaredConfession persistido + cross-ref engine sample + doctrineLevel tagging + rights-aware schema + `usePastoralFidelityGate()` hook. Schema `Project` diferido a Fase 5. UI audit ([phase-0-ui-audit.md](../phase-0-ui-audit.md)) entrega kill-list directa: Categoría 1 (StepHomiletics auto-generate) + Categoría 4 (paperToWizardProgress prefill risk) son scope Phase 1. Phase 1 destrabada, lista para arranque.
+- **2026-05-25** — **Kickoff Fase 1 + decisiones lockeadas vía `/iniciar-fase 1`**:
+  - **Schema location**: top-level collection `pastoralSeeds/{seedId}` con `sermonId` + futuro `projectId` ref. ADR-015 emitido. Decisión: migración a Fase 5 (Project subcollection) = field update, no reshape.
+  - **`derivedContext` (paper/Faculty pre-fill, PR #213/#214)**: bajo flag-on bloquea igual + pre-pobla seed como sugerencias editables del paper/Faculty. Pastor confirma o reescribe. NO bypass.
+  - **Hebrew tutor**: link-out v1 a `/hebrew-tutor?passage=X&returnTo=...`. NO overlay embed v1 (defer si métrica uso justifica).
+  - **Canonical analyzer**: SBLGNT read-only inline en SyntaxStep. Pastor escribe cláusula principal manual (no analyzer interactivo v1).
+  - **Confesión proactiva en prompt**: diferida a Fase 2 (Testigo 3). Phase 1 NO toca prompt confesional.
+  - **Verbatim check post-gen**: 2 capas — (a) instrucción en prompt "MUST include centralIdea verbatim"; (b) post-gen check + inline-banner "tu idea central no aparece verbatim — re-generar / editar". NO auto-regen silencioso. Telemetría miss-rate para tuning.
+  - **Paste detection**: DOM `paste` event sólo, suficiente v1.
+  - **Audit dashboard**: `PastoralSeedAuditPanel` inline en sermón detail. Preview, sin tab dedicada.
+  - **GreekTutorOverlay**: recibe `sermonId` + callback `onWordStudyComplete` para registrar `tutorInteractionId` en `WordStudy`.
+  - **D1 numeración**: seed = nuevo Step 1. `StepExegesis` ML deprecated bajo flag-on (no se renderiza). Flag-off mantiene legacy intacto. Fase 7 revisita exégesis reform.
+  - **Granularidad ejecución**: 1 PR mega `feat(pastoral-fidelity): Phase 1 — six-step spine` por memoria `feedback_pr_complete_units` (unidad funcional completa testeable). 9 sub-tasks plan inicial bundled. Feature-flagged (`pastoral_fidelity_flow` off por default) → blast radius 0 hasta toggle.
+  - **ADRs deferred decisions**: UX micro-design lineal con breadcrumb visible (commit-time decision sin ADR). Autosave por keystroke debounced 1s + por sub-step completed. Word studies min = 2. Skip griego = NO, tutor modo principiante.
+  - Arranque inmediato — single conversation owns Fase 1 hasta cierre.
+- **2026-05-25 (cierre)** — **Fase 1 shippeada en single PR**. Entregables:
+  - **Schema + persistencia**: domain entity `PastoralSeed` con 6 sub-step interfaces + per-step validators (`evaluatePastoralSeed`) + `PASTORAL_SEED_THRESHOLDS` + `PASTORAL_SEED_AI_FORBIDDEN_FIELDS` constant. Port `IPastoralSeedRepository`. `FirestorePastoralSeedRepository` top-level (ADR-015). Service `PastoralSeedService` singleton con autosave-friendly `savePatch`/`appendToolUsage`/`appendPasteEvent`/`addWordStudy`. Firestore rules owner-only + indexes (sermonId + userId).
+  - **Web wizard**: `PastoralSeedWizard` orquestador con state machine 6 sub-steps + `PastoralSeedBreadcrumb` lineal. Hook `usePastoralSeed` con autosave debounced 1s + recompute completion inline. 6 step components: `ReadingStep` (≥50 chars) · `SyntaxStep` (cláusula + nota + `SblgntPassagePanel` read-only inline) · `MorphologyStep` (≥2 word studies + `GreekTutorOverlay` embed + Hebrew link-out) · `RecognitionStep` (`useCrossReferences` hook → `lookupCrossReferences` callable + manual editor) · `FunctionStep` (≥100 chars + Faculty histórico link) · `InsightStep` (5 AI-forbidden fields + DOM `paste` event audit + `Lock` banner). `StepShell` shared frame surface reasons del validator. `useStepTimer` hook acumula `timeSpentSeconds` por step.
+  - **Gate**: `SermonWizard` consume `usePastoralFidelityGate` + bajo flag-on render `PastoralSeedWizard` en lugar de `StepExegesis`. Hard gate efecto que redirige a Step 1 si pastor intenta Step 2/3 sin seed completa. Eagerly mint sermón cuando entra al seed wizard para anchor del seed.
+  - **Prompt builder**: nuevo `buildPastoralSeedBlock` en `prompts-generator.ts` prepende bloque `PRIMARY VOICE (LA VOZ DEL PASTOR — NO ANULAR)` + `DEVELOPMENT INSTRUCTIONS` antes de `BASE_SYSTEM_PROMPT`. Bloque incluye idea central verbatim, observaciones, pregunta, anécdota, doxológica, cláusula principal, word studies, paralelos, función. `GenerationRules.pastoralSeed` field nuevo. Snapshot test verifica precedencia sobre paper context.
+  - **Verbatim check**: `draftIncludesCentralIdea` post-gen en `StepDraft.handleGenerate` (whitespace normalised + case-insensitive). Si ausente: warning toast con guidance "re-genera o edita". NO auto-regen (P2). Telemetría miss-rate via console.warn.
+  - **Audit panel**: `PastoralSeedAuditPanel` inline en sermón detail (`detail.tsx`) — pastor-facing. Muestra per-step completion, tiempo, herramientas consultadas, paste events count. Compact mode para sidebars.
+  - **Admin inspector**: `/dashboard/admin/pastoral-seed/:sermonId` debug page con raw seed, validators, audit log, tool usage history.
+  - **Kill-list UI audit**: Categoría 1 — `StepHomiletics` auto-fire gateado por `pastoralGate.allowed` (no se dispara bajo flag-on). Categoría 4 — `paperToWizardProgress` docstring documenta `PASTORAL_SEED_AI_FORBIDDEN_FIELDS` enforcement future contract.
+  - **Tests**: 8 domain tests (`PastoralSeed.test.ts` cubre validators per-step + `evaluatePastoralSeed` + `createEmptyPastoralSeed` + AI-forbidden constant). 5 infra prompt tests (`pastoralSeedPrompt.test.ts` cubre block omission/inclusion/verbatim instruction/lists/precedencia sobre paper). Total 264 domain + 38 infra + 61 app tests passing.
+  - **Type-check verde** en domain/infra/app + web (errores pre-existentes en GeneratorSettings/IntegrationsSettings/preach/StepDraft son legacy, no introducidos por Fase 1).
+  - **Migration ramp pendiente**: feature flag `pastoral_fidelity_flow` per-user via admin UI. Default-on plan a definir post-smoke-test (~2-4 semanas de internal dogfooding antes de ramp 5% → 25% → 100%).
+  - **Decisiones deferred a ADRs intra-fase NO escritas** (cerradas sin ADR formal porque resultaron triviales en implementación): UX micro-design (lineal con breadcrumb), autosave granularity (debounced 1s + flush en advance), word studies min (2 hardcoded en `PASTORAL_SEED_THRESHOLDS`), skip griego (no skip — tutor en modo principiante reusa GreekTutorOverlay existente).
+- **2026-05-26 (smoke test issue + arquitectónica)** — **ADR-016 emitido + Fase 1.5 abierta**:
+  - **Issue detectado durante smoke test**: `MorphologyStep` integró `GreekTutorOverlay` existente como herramienta de análisis de palabras. Smoke test reveló que el tutor está construido como **módulo de aprendizaje de idiomas** (training units, quizzes, refuerzo paradigmático, conceptos library) — no como **herramienta de extracción exegética pastoral**. UI académica genera carga cognitiva inapropiada para el caso de uso del pastor preparando sermón. Viola manifesto explícito: "sin convertir la clase en lección de idiomas".
+  - **Decisión arquitectónica (ADR-016)**: separar `PastoralWordStudy` (nuevo) de tutores de aprendizaje (existentes). Tutores siguen en `/dashboard/greek-tutor` y `/dashboard/hebrew-tutor` para usuarios que quieren formación lingüística; Pastoral Fidelity flow consume nuevo módulo focalizado.
+  - **Fase 1 ships con embed actual como interim degradado** documentado. Pastor puede usar el tutor pero la UX es sub-óptima. Reemplazo en Fase 1.5.
+  - **Fixes pre-existentes Greek Tutor shipped en este commit** (descubiertos durante smoke test):
+    - `GeminiGreekTutorService.cleanJsonResponse`: returns `''` (deterministic SyntaxError) en lugar de `'[]'` (silent empty) cuando response no tiene JSON shape.
+    - `GeminiGreekTutorService.explainMorphology`: shape validation + throw si components empty.
+    - `ExplainMorphologyUseCase`: defense-in-depth guard + throw si empty.
+    - `GreekTutorSessionView.handleRequestMorphology`: toast.error surface al user.
+    - `MorphologyDisplay`: defensive empty-state amber card con guía cuando components missing.
+    - `es/greekTutor.json`: agregado `wordPreview.alreadyInUnits` (faltaba traducción ES).
+  - **Bug pendiente identificado**: tooltip de palabras en `PassageVersionRow` muestra greek+transliteration+RV60+lema pero NO gloss/significado del lema. Schema `PassageWord` no tiene campo `gloss`. Fix requiere extender schema + extraction pipeline. Resolved en Fase 1.5 (nuevo modal usa schema propio).
+  - **Fase 1.5 docs**: `phases/phase-1-5-pastoral-word-study.md` + `decisions/ADR-016-pastoral-word-study-vs-language-tutor.md` aterrizados. Fase 1.5 destrabada post-Phase 1 merge.
 
 ## Cross-references desde Fase 0 (handoff)
 

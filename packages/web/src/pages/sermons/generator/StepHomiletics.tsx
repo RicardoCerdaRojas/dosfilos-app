@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { usePastoralFidelityGate } from '@/hooks/usePastoralFidelityGate';
 import { useTranslation } from '@/i18n';
 import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
@@ -85,6 +86,13 @@ export function StepHomiletics() {
     const [modifiedSections, setModifiedSections] = useState<Set<string>>(new Set());
 
     // Auto-generation: trigger once if exegesis exists but homiletics doesn't.
+    //
+    // Pastoral Fidelity (Phase 1 UI-audit Categoría 1): under the
+    // `pastoral_fidelity_flow` flag this auto-fire violates P1 (labor
+    // antes que output) — the pastor lands on Step 2 and previews
+    // appear before they decide. Gate disables auto-fire whenever the
+    // flag is on; the pastor clicks "Generar enfoques" explicitly.
+    const pastoralGate = usePastoralFidelityGate();
     const [hasAttempted, setHasAttempted] = useState(false);
 
     const passage = useMemo(() => {
@@ -166,12 +174,13 @@ export function StepHomiletics() {
     };
 
     useEffect(() => {
+        if (pastoralGate.allowed) return; // Phase 1 UI-audit Cat 1 — explicit user action required.
         if (exegesis && !homiletics && !loading && !approachPreviews.length && !hasAttempted) {
             setHasAttempted(true);
             handleGenerate();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [exegesis, homiletics, hasAttempted]);
+    }, [exegesis, homiletics, hasAttempted, pastoralGate.allowed]);
 
     /**
      * Phase 2: Develop selected approach (DETAILED — 5-8 seconds).

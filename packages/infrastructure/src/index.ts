@@ -11,6 +11,7 @@ export * from './firebase/FirestoreVectorRepository';
 export * from './firebase/FirebaseUserProfileRepository';
 export * from './firebase/FirebaseConfessionRepository';
 export * from './firebase/FirebaseCrossReferenceRepository';
+export * from './firebase/FirestorePastoralSeedRepository'; // 🌱 Pastoral Fidelity Phase 1 — top-level seed repo
 export * from './firebase/FirebasePlanRepository';
 export * from './firebase/FirebaseAnalyticsRepository'; // 📊 Analytics Repository
 export * from './firebase/FirebaseUserRepository'; // 📊 Admin User Repository

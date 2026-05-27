@@ -149,15 +149,47 @@ export class GeminiGreekTutorService implements IGreekTutorService {
 
             const rawText = result.response.text();
             const cleanedJson = this.cleanJsonResponse(rawText);
-            const data = JSON.parse(cleanedJson);
+            let data: unknown;
+            try {
+                data = JSON.parse(cleanedJson);
+            } catch (parseErr) {
+                console.error('[GeminiGreekTutorService] explainMorphology: JSON.parse failed', {
+                    word,
+                    rawTextPreview: rawText.slice(0, 300),
+                    cleanedPreview: cleanedJson.slice(0, 300),
+                    parseErr,
+                });
+                throw new Error(
+                    `Morphology breakdown for "${word}" returned malformed JSON from the model. Retry the request.`,
+                );
+            }
 
-            const morphology = {
-                word: data.word || word,
-                components: data.components || [],
-                summary: data.summary || ''
+            // Defensive shape validation. Pre-existing code returned
+            // `{ components: data.components || [] }` which silently
+            // accepted any non-object payload (including the literal
+            // `[]` fallback emitted by `cleanJsonResponse`) and shipped
+            // an empty breakdown to the UI. Now we reject anything
+            // that doesn't carry a non-empty `components` array so the
+            // caller can surface a real error message instead of a
+            // blank "Estructura / Componentes" panel.
+            const isObject = data !== null && typeof data === 'object' && !Array.isArray(data);
+            const components = isObject ? (data as any).components : undefined;
+            if (!Array.isArray(components) || components.length === 0) {
+                console.warn('[GeminiGreekTutorService] explainMorphology: model returned no components', {
+                    word,
+                    rawTextPreview: rawText.slice(0, 300),
+                    parsedPreview: JSON.stringify(data).slice(0, 300),
+                });
+                throw new Error(
+                    `El modelo no produjo descomposición morfológica para "${word}". Intenta nuevamente.`,
+                );
+            }
+
+            return {
+                word: (isObject && (data as any).word) || word,
+                components,
+                summary: (isObject && (data as any).summary) || '',
             };
-
-            return morphology;
         } catch (error) {
             console.error('[GeminiGreekTutorService] Error in explainMorphology:', error);
             throw error;
@@ -221,23 +253,34 @@ export class GeminiGreekTutorService implements IGreekTutorService {
     }
 
     private cleanJsonResponse(text: string): string {
-        // Remove markdown code blocks
+        // Strip markdown fences. Some prompts make Gemini wrap JSON
+        // in ```json ... ``` even when responseMimeType is JSON.
         let cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '');
 
-        // Attempt to find the first generic JSON start
+        // Locate the first JSON-shaped character. Falls back to '[]'
+        // when nothing is found so other tutor methods (training units,
+        // free questions, etc.) keep degrading silently instead of
+        // crashing the standalone tutor render — full hardening lives
+        // in the Pastoral Word Study refactor (Fase 1.5, ADR-016).
+        // The morphology-specific shape validator in `explainMorphology`
+        // converts that silent fallback into a proper user-facing
+        // error toast on the pastoral path.
         const firstPunctuation = cleaned.search(/[{\[]/);
         if (firstPunctuation === -1) {
-            console.warn('[GeminiGreekTutorService] No JSON start character found in response.');
-            return '[]'; // Return empty array as fallback if really no JSON
+            console.warn('[GeminiGreekTutorService] No JSON start character found in response.', {
+                preview: cleaned.slice(0, 300),
+            });
+            return '[]';
         }
 
-        // Find the last actual JSON end
         const lastBrace = cleaned.lastIndexOf('}');
         const lastBracket = cleaned.lastIndexOf(']');
         const lastPunctuation = Math.max(lastBrace, lastBracket);
 
         if (lastPunctuation === -1 || lastPunctuation < firstPunctuation) {
-            console.warn('[GeminiGreekTutorService] No JSON end character found in response.');
+            console.warn('[GeminiGreekTutorService] No JSON end character found in response.', {
+                preview: cleaned.slice(0, 300),
+            });
             return '[]';
         }
 
