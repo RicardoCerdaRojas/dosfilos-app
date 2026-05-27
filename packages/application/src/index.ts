@@ -59,3 +59,6 @@ export * from './use-cases/exegesis';
 
 // Hebrew Tutor
 export * from './hebrew-tutor/index.js';
+
+// 🌱 Pastoral Fidelity Phase 1.5 — Pastoral Word Study use cases
+export * from './use-cases/pastoral-word-study';

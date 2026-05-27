@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { useTranslation } from '@/i18n';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { GraduationCap, Plus, Trash2, ExternalLink } from 'lucide-react';
+import { GraduationCap, Plus, Trash2, ExternalLink, BookOpen } from 'lucide-react';
 import {
     MorphologyStepData,
     PASTORAL_SEED_THRESHOLDS,
@@ -15,6 +16,8 @@ import { StepHelp } from './StepHelp';
 import { useStepTimer } from './stepTimer';
 import { GreekTutorOverlay } from '../exegesis/greek-tutor/GreekTutorOverlay';
 import { GreekTutorProvider } from '../exegesis/greek-tutor/GreekTutorProvider';
+import { PastoralWordStudyModal } from './wordStudy/PastoralWordStudyModal';
+import { usePastoralWordStudyGate } from '@/hooks/usePastoralFidelityGate';
 
 interface Props {
     passage: string;
@@ -50,7 +53,10 @@ export function MorphologyStep({
     onChange,
     onLogToolUsage,
 }: Props) {
+    const { t } = useTranslation('wordStudy');
+    const wordStudyGate = usePastoralWordStudyGate();
     const [greekOpen, setGreekOpen] = useState(false);
+    const [wordStudyOpen, setWordStudyOpen] = useState(false);
     const [draft, setDraft] = useState<WordStudy>({
         word: '',
         reference: '',
@@ -93,6 +99,11 @@ export function MorphologyStep({
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
+    const openWordStudy = () => {
+        if (!wordStudyOpen) onLogToolUsage('pastoral-word-study');
+        setWordStudyOpen(true);
+    };
+
     return (
         <StepShell
             stepNumber={3}
@@ -133,14 +144,23 @@ export function MorphologyStep({
                 </StepHelp>
 
                 <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" onClick={openGreek} type="button">
-                        <GraduationCap className="h-4 w-4 mr-2" />
-                        Abrir tutor de griego
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={openHebrew} type="button">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Abrir tutor de hebreo (nueva pestaña)
-                    </Button>
+                    {wordStudyGate.enabled ? (
+                        <Button variant="outline" size="sm" onClick={openWordStudy} type="button">
+                            <BookOpen className="h-4 w-4 mr-2" />
+                            {t('modal.buttonOpen')}
+                        </Button>
+                    ) : (
+                        <>
+                            <Button variant="outline" size="sm" onClick={openGreek} type="button">
+                                <GraduationCap className="h-4 w-4 mr-2" />
+                                Abrir tutor de griego
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={openHebrew} type="button">
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Abrir tutor de hebreo (nueva pestaña)
+                            </Button>
+                        </>
+                    )}
                 </div>
 
                 <div className="border rounded-md p-4 space-y-3 bg-muted/20">
@@ -221,7 +241,7 @@ export function MorphologyStep({
                 </p>
             </div>
 
-            {greekOpen && (
+            {!wordStudyGate.enabled && greekOpen && (
                 <GreekTutorProvider>
                     <GreekTutorOverlay
                         isOpen={greekOpen}
@@ -229,6 +249,15 @@ export function MorphologyStep({
                         passage={passage}
                     />
                 </GreekTutorProvider>
+            )}
+            {wordStudyGate.enabled && (
+                <PastoralWordStudyModal
+                    isOpen={wordStudyOpen}
+                    onClose={() => setWordStudyOpen(false)}
+                    passage={passage}
+                    existingStudies={studies}
+                    onAddWordStudy={onAddWordStudy}
+                />
             )}
         </StepShell>
     );

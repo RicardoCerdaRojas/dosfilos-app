@@ -435,6 +435,9 @@
             "flags": {
                 "pastoral_fidelity_flow": {
                     "description": "Activates the reformed pastoral fidelity flow (six-step spine, three witnesses). Requires the user to have declared a confession."
+                },
+                "pastoral_word_study": {
+                    "description": "Replaces the embedded Greek tutor in Morphology with the Pastoral Word Study modal (Phase 1.5). Requires pastoral_fidelity_flow to also be on."
                 }
             }
         },

@@ -1,0 +1,608 @@
+{
+    "version": "1.0.0",
+    "license": "Internally created",
+    "attribution": "Preach Curated Pastoral Lexicon v1.0 — internally created for the Pastoral Fidelity initiative. Glosses are pastoral, not academic; they intentionally distill weight rather than reproduce a critical lexicon.",
+    "guidelines": "See docs/pastoral-fidelity/lexicon-curation-guidelines.md",
+    "entries": [
+        {
+            "lemma": "δικαιοσύνη",
+            "language": "greek",
+            "transliteration": "dikaiosynē",
+            "primaryGloss": "justicia que viene de Dios; estar en relación correcta con Dios",
+            "semanticRange": [
+                "justicia divina otorgada al creyente",
+                "rectitud práctica que el Espíritu produce",
+                "norma justa de Dios sobre su pueblo"
+            ],
+            "theologicalNote": "Pablo la usa en Romanos no como cumplimiento legal romano sino como estatus pactual concedido por gracia y vivido por el Espíritu."
+        },
+        {
+            "lemma": "ἀγάπη",
+            "language": "greek",
+            "transliteration": "agapē",
+            "primaryGloss": "amor de pacto, dedicación que entrega",
+            "semanticRange": [
+                "amor de Dios hacia los suyos",
+                "respuesta amorosa entre creyentes",
+                "amor sacrificial que se da por el otro"
+            ],
+            "theologicalNote": "No es afecto emocional; es entrega activa modelada en Cristo (Juan 13, 1 Juan 4)."
+        },
+        {
+            "lemma": "πίστις",
+            "language": "greek",
+            "transliteration": "pistis",
+            "primaryGloss": "fe; confianza activa en Dios",
+            "semanticRange": [
+                "fe que justifica",
+                "fidelidad del creyente",
+                "fidelidad de Cristo (subjective genitive en Pablo)"
+            ],
+            "theologicalNote": "Lleva ambos sentidos (confianza + fidelidad). El contexto decide cuál pesa más; algunos pasajes intencionalmente solapan los dos."
+        },
+        {
+            "lemma": "χάρις",
+            "language": "greek",
+            "transliteration": "charis",
+            "primaryGloss": "gracia; favor inmerecido",
+            "semanticRange": [
+                "favor de Dios derramado en Cristo",
+                "don no merecido",
+                "agradecimiento como respuesta"
+            ],
+            "theologicalNote": "Núcleo de la teología paulina. Excluye toda contribución meritoria del receptor."
+        },
+        {
+            "lemma": "λόγος",
+            "language": "greek",
+            "transliteration": "logos",
+            "primaryGloss": "palabra, mensaje, Verbo",
+            "semanticRange": [
+                "Verbo eterno (Juan 1)",
+                "palabra predicada / mensaje del evangelio",
+                "discurso, argumento, razón"
+            ],
+            "theologicalNote": "En Juan 1 es título cristológico que afirma preexistencia y deidad."
+        },
+        {
+            "lemma": "σάρξ",
+            "language": "greek",
+            "transliteration": "sarx",
+            "primaryGloss": "carne; condición humana caída cuando opera sin el Espíritu",
+            "semanticRange": [
+                "cuerpo humano (sin connotación moral)",
+                "humanidad débil sujeta a muerte",
+                "naturaleza caída que se rebela contra Dios"
+            ],
+            "theologicalNote": "Pablo la opone al πνεῦμα. El contexto decide si es neutral (encarnación) o moral (condición rebelde)."
+        },
+        {
+            "lemma": "πνεῦμα",
+            "language": "greek",
+            "transliteration": "pneuma",
+            "primaryGloss": "espíritu; Espíritu Santo cuando contexto lo determina",
+            "semanticRange": [
+                "Espíritu Santo (tercera persona)",
+                "espíritu humano interno",
+                "viento, soplo, aliento"
+            ],
+            "theologicalNote": "La mayúscula en español depende de la decisión interpretativa; el griego no la marca."
+        },
+        {
+            "lemma": "σωτηρία",
+            "language": "greek",
+            "transliteration": "sōtēria",
+            "primaryGloss": "salvación; liberación integral",
+            "semanticRange": [
+                "rescate del juicio escatológico",
+                "liberación presente del poder del pecado",
+                "preservación física en algunos contextos"
+            ],
+            "theologicalNote": "Triple tiempo: hemos sido, estamos siendo, seremos salvados. El contexto suele apuntar a uno."
+        },
+        {
+            "lemma": "βασιλεία",
+            "language": "greek",
+            "transliteration": "basileia",
+            "primaryGloss": "reino; reinado activo de Dios",
+            "semanticRange": [
+                "reinado / soberanía activa",
+                "esfera donde Dios gobierna",
+                "esperanza escatológica consumada"
+            ],
+            "theologicalNote": "Inaugurado en Cristo, presente en la iglesia, consumado en su regreso. El énfasis 'reinado' supera al de 'territorio'."
+        },
+        {
+            "lemma": "ἁμαρτία",
+            "language": "greek",
+            "transliteration": "hamartia",
+            "primaryGloss": "pecado; errar el blanco que Dios pone",
+            "semanticRange": [
+                "acto específico de transgresión",
+                "poder esclavizante (Romanos 6)",
+                "naturaleza pecaminosa heredada"
+            ],
+            "theologicalNote": "En Romanos 5-8 Pablo lo personifica como amo. Esa lectura cambia toda la sección."
+        },
+        {
+            "lemma": "νόμος",
+            "language": "greek",
+            "transliteration": "nomos",
+            "primaryGloss": "ley; instrucción torá",
+            "semanticRange": [
+                "ley mosaica completa",
+                "principio o regla operante",
+                "Pentateuco como corpus"
+            ],
+            "theologicalNote": "Pablo usa el mismo término con sentidos distintos en frases vecinas (Romanos 7); leer despacio."
+        },
+        {
+            "lemma": "ἐκκλησία",
+            "language": "greek",
+            "transliteration": "ekklēsia",
+            "primaryGloss": "asamblea convocada; iglesia",
+            "semanticRange": [
+                "iglesia local reunida",
+                "pueblo de Dios universal",
+                "asamblea cívica griega (uso secular)"
+            ],
+            "theologicalNote": "Lleva el peso del 'qahal' del AT — pueblo convocado por Dios para escucharlo y adorarlo."
+        },
+        {
+            "lemma": "εἰρήνη",
+            "language": "greek",
+            "transliteration": "eirēnē",
+            "primaryGloss": "paz; integridad restaurada (shalom)",
+            "semanticRange": [
+                "reconciliación con Dios",
+                "armonía interior y entre creyentes",
+                "ausencia de conflicto"
+            ],
+            "theologicalNote": "Hereda el peso del 'shalom' hebreo: no solo ausencia de guerra sino plenitud restaurada."
+        },
+        {
+            "lemma": "ἐλπίς",
+            "language": "greek",
+            "transliteration": "elpis",
+            "primaryGloss": "esperanza segura, no anhelo incierto",
+            "semanticRange": [
+                "expectativa firme basada en la fidelidad de Dios",
+                "objeto esperado (lo prometido)",
+                "actitud de paciencia activa"
+            ],
+            "theologicalNote": "Diferente del griego clásico (donde es incierta). En el NT está anclada en promesas cumplidas."
+        },
+        {
+            "lemma": "ἀλήθεια",
+            "language": "greek",
+            "transliteration": "alētheia",
+            "primaryGloss": "verdad; realidad revelada por Dios",
+            "semanticRange": [
+                "veracidad de afirmaciones",
+                "realidad escondida ahora revelada",
+                "fidelidad personal (correspondencia entre palabra y acto)"
+            ],
+            "theologicalNote": "En Juan se acerca al concepto hebreo 'emet' — realidad estable que se puede pisar."
+        },
+        {
+            "lemma": "δόξα",
+            "language": "greek",
+            "transliteration": "doxa",
+            "primaryGloss": "gloria; peso manifiesto de Dios",
+            "semanticRange": [
+                "esplendor visible de la presencia divina",
+                "honra otorgada a alguien",
+                "fama / reputación"
+            ],
+            "theologicalNote": "Hereda el peso del 'kavod' hebreo. No es brillo decorativo; es la realidad densa de Dios manifestándose."
+        },
+        {
+            "lemma": "καρδία",
+            "language": "greek",
+            "transliteration": "kardia",
+            "primaryGloss": "corazón; centro de pensamiento, voluntad y emoción",
+            "semanticRange": [
+                "núcleo interior de la persona",
+                "voluntad orientada",
+                "lugar donde Dios escudriña"
+            ],
+            "theologicalNote": "Más amplio que la connotación moderna emocional. Incluye intelecto y voluntad."
+        },
+        {
+            "lemma": "δοῦλος",
+            "language": "greek",
+            "transliteration": "doulos",
+            "primaryGloss": "siervo, esclavo bajo señor",
+            "semanticRange": [
+                "esclavo legal del mundo antiguo",
+                "siervo voluntario de Cristo",
+                "metáfora del estatus pre-conversión bajo el pecado"
+            ],
+            "theologicalNote": "Pablo lo aplica a sí mismo como título de honor (Romanos 1:1)."
+        },
+        {
+            "lemma": "κύριος",
+            "language": "greek",
+            "transliteration": "kyrios",
+            "primaryGloss": "señor; Señor (cuando se refiere a Cristo o YHWH)",
+            "semanticRange": [
+                "Yahvé (LXX uso)",
+                "Jesucristo como soberano",
+                "señor humano / amo / dueño"
+            ],
+            "theologicalNote": "Confesar 'Jesús es Señor' (Rom 10:9) carga el peso del nombre divino del AT."
+        },
+        {
+            "lemma": "ἀνάστασις",
+            "language": "greek",
+            "transliteration": "anastasis",
+            "primaryGloss": "resurrección",
+            "semanticRange": [
+                "resurrección corporal de Cristo",
+                "resurrección futura de los creyentes",
+                "vida nueva inaugurada ya"
+            ],
+            "theologicalNote": "Es siempre corporal en el NT, no metáfora espiritual. Pablo lo defiende contra distorsiones (1 Cor 15)."
+        },
+        {
+            "lemma": "παράκλητος",
+            "language": "greek",
+            "transliteration": "paraklētos",
+            "primaryGloss": "consolador, abogado, ayudador",
+            "semanticRange": [
+                "Espíritu Santo en Juan 14-16",
+                "Cristo como abogado (1 Juan 2:1)",
+                "uno llamado al lado"
+            ],
+            "theologicalNote": "Tres sentidos solapados — quien aboga por nosotros, nos consuela y nos enseña."
+        },
+        {
+            "lemma": "αἰώνιος",
+            "language": "greek",
+            "transliteration": "aiōnios",
+            "primaryGloss": "eterno; perteneciente a la era venidera",
+            "semanticRange": [
+                "duración sin fin",
+                "calidad de la era de Dios",
+                "vida eterna como participación en su vida"
+            ],
+            "theologicalNote": "Vida eterna no es solo duración; es la vida propia del 'aiōn' venidero ya inaugurado."
+        },
+        {
+            "lemma": "ἁγιάζω",
+            "language": "greek",
+            "transliteration": "hagiazō",
+            "primaryGloss": "santificar; apartar para Dios",
+            "semanticRange": [
+                "ser declarado santo en Cristo",
+                "ser progresivamente conformado",
+                "consagrar algo para uso sagrado"
+            ],
+            "theologicalNote": "Indicativo y imperativo: ya somos santos en Cristo y a la vez somos llamados a serlo."
+        },
+        {
+            "lemma": "δικαιόω",
+            "language": "greek",
+            "transliteration": "dikaioō",
+            "primaryGloss": "justificar; declarar justo",
+            "semanticRange": [
+                "veredicto forense de justicia",
+                "absolución gratuita por gracia",
+                "vindicación pública"
+            ],
+            "theologicalNote": "Declarativo, no transformativo. Pablo lo distingue de la santificación que sí transforma."
+        },
+        {
+            "lemma": "παρρησία",
+            "language": "greek",
+            "transliteration": "parrēsia",
+            "primaryGloss": "confianza para hablar; franqueza",
+            "semanticRange": [
+                "acceso confiado a Dios",
+                "valentía pública del testigo",
+                "claridad en el discurso"
+            ],
+            "theologicalNote": "Hebreos lo usa para describir el nuevo acceso al santuario celestial. Acceso ganado por Cristo."
+        },
+        {
+            "lemma": "διαθήκη",
+            "language": "greek",
+            "transliteration": "diathēkē",
+            "primaryGloss": "pacto; testamento",
+            "semanticRange": [
+                "pacto que Dios establece con su pueblo",
+                "testamento legal (Hebreos 9)",
+                "disposición unilateral"
+            ],
+            "theologicalNote": "Lleva el peso del 'berit' hebreo. No es contrato simétrico sino disposición soberana de Dios."
+        },
+        {
+            "lemma": "θεός",
+            "language": "greek",
+            "transliteration": "theos",
+            "primaryGloss": "Dios; el Dios verdadero del pacto",
+            "semanticRange": [
+                "Dios trino del NT",
+                "Padre cuando contexto lo aclara",
+                "deidades paganas (uso negativo)"
+            ],
+            "theologicalNote": "En Juan 1:1 se aplica al Logos sin artículo — afirmando deidad sin colapsar las personas."
+        },
+        {
+            "lemma": "πατήρ",
+            "language": "greek",
+            "transliteration": "patēr",
+            "primaryGloss": "padre; Padre (del Hijo eterno o del creyente adoptado)",
+            "semanticRange": [
+                "primera persona de la Trinidad",
+                "padre humano",
+                "ancestro / patriarca"
+            ],
+            "theologicalNote": "El uso filial de Jesús (Abba) fue distintivo y revolucionario en su contexto."
+        },
+        {
+            "lemma": "μετάνοια",
+            "language": "greek",
+            "transliteration": "metanoia",
+            "primaryGloss": "arrepentimiento; cambio de mente con frutos",
+            "semanticRange": [
+                "giro completo hacia Dios",
+                "cambio profundo de orientación",
+                "lamento por el pecado pasado"
+            ],
+            "theologicalNote": "No es solo emoción de tristeza; es reorientación completa de la persona. Inseparable de la fe (Hch 20:21)."
+        },
+        {
+            "lemma": "εὐαγγέλιον",
+            "language": "greek",
+            "transliteration": "euangelion",
+            "primaryGloss": "evangelio; buena noticia del reino",
+            "semanticRange": [
+                "anuncio de la victoria de Cristo",
+                "contenido del mensaje apostólico",
+                "género literario (los cuatro Evangelios)"
+            ],
+            "theologicalNote": "Pablo lo define en 1 Cor 15:3-5 — Cristo murió, fue sepultado, resucitó y se apareció."
+        },
+        {
+            "lemma": "חֶסֶד",
+            "language": "hebrew",
+            "transliteration": "ḥesed",
+            "primaryGloss": "lealtad pactual; misericordia fiel",
+            "semanticRange": [
+                "fidelidad inquebrantable de Yahvé al pacto",
+                "bondad activa hacia el necesitado",
+                "compromiso leal entre personas"
+            ],
+            "theologicalNote": "Núcleo del pacto. No es simplemente 'amor' — es lealtad activa que persiste cuando la otra parte falla."
+        },
+        {
+            "lemma": "אֱמוּנָה",
+            "language": "hebrew",
+            "transliteration": "ʾĕmûnāh",
+            "primaryGloss": "fidelidad; firmeza confiable",
+            "semanticRange": [
+                "fidelidad de Yahvé a sus promesas",
+                "firmeza de carácter en una persona",
+                "confianza activa del justo (Hab 2:4)"
+            ],
+            "theologicalNote": "Pablo cita Hab 2:4 con énfasis en la confianza del creyente; el contexto hebreo enfatiza la firmeza del justo."
+        },
+        {
+            "lemma": "צֶדֶק",
+            "language": "hebrew",
+            "transliteration": "tsedeq",
+            "primaryGloss": "justicia; rectitud que se ajusta al pacto",
+            "semanticRange": [
+                "justicia de Dios manifestada",
+                "norma justa del juicio divino",
+                "conducta recta del pueblo"
+            ],
+            "theologicalNote": "No es justicia abstracta sino relacional — encajar correctamente en la realidad que Dios establece."
+        },
+        {
+            "lemma": "שָׁלוֹם",
+            "language": "hebrew",
+            "transliteration": "šālôm",
+            "primaryGloss": "paz; integridad plena",
+            "semanticRange": [
+                "ausencia de guerra",
+                "bienestar integral",
+                "armonía restaurada entre Dios, persona, comunidad y tierra"
+            ],
+            "theologicalNote": "Mucho más que ausencia de conflicto. Es la plenitud que Dios diseñó y restaurará."
+        },
+        {
+            "lemma": "תּוֹרָה",
+            "language": "hebrew",
+            "transliteration": "tôrāh",
+            "primaryGloss": "instrucción de Dios; ley del pacto",
+            "semanticRange": [
+                "Pentateuco como corpus",
+                "instrucción específica de Dios",
+                "enseñanza paternal"
+            ],
+            "theologicalNote": "Traducir 'ley' acorta el sentido — es enseñanza viva del Dios del pacto, no código legal frío."
+        },
+        {
+            "lemma": "כָּבוֹד",
+            "language": "hebrew",
+            "transliteration": "kāvôd",
+            "primaryGloss": "gloria; peso manifiesto de la presencia",
+            "semanticRange": [
+                "esplendor visible de Yahvé",
+                "honra/peso atribuido a una persona",
+                "riqueza/abundancia"
+            ],
+            "theologicalNote": "Raíz 'pesado' — la gloria es densidad de presencia real, no luz decorativa. Llena el templo (Ex 40, 1 Re 8)."
+        },
+        {
+            "lemma": "רוּחַ",
+            "language": "hebrew",
+            "transliteration": "rûaḥ",
+            "primaryGloss": "espíritu, viento, aliento",
+            "semanticRange": [
+                "Espíritu de Yahvé",
+                "viento físico",
+                "aliento vital del ser humano"
+            ],
+            "theologicalNote": "Los tres sentidos se superponen intencionalmente (Génesis 1:2, Ezequiel 37). El contexto lo decide."
+        },
+        {
+            "lemma": "נֶפֶשׁ",
+            "language": "hebrew",
+            "transliteration": "nepeš",
+            "primaryGloss": "vida; persona viva entera",
+            "semanticRange": [
+                "ser viviente (animal o humano)",
+                "deseo / apetito",
+                "garganta / aliento (sentido físico)"
+            ],
+            "theologicalNote": "No es 'alma' platónica separable del cuerpo. Es la persona viva entera; cuando muere, la nepeš muere."
+        },
+        {
+            "lemma": "קָדוֹשׁ",
+            "language": "hebrew",
+            "transliteration": "qādôš",
+            "primaryGloss": "santo; apartado, otro",
+            "semanticRange": [
+                "santidad de Yahvé (su otredad absoluta)",
+                "consagración de objetos/personas para Dios",
+                "pueblo separado"
+            ],
+            "theologicalNote": "Raíz 'cortar/separar'. La santidad de Dios es primero su otredad; la nuestra es derivada y participativa."
+        },
+        {
+            "lemma": "בְּרִית",
+            "language": "hebrew",
+            "transliteration": "bᵉrît",
+            "primaryGloss": "pacto; alianza vinculante",
+            "semanticRange": [
+                "pacto unilateral que Dios establece",
+                "pacto bilateral entre humanos",
+                "pacto matrimonial / amistad"
+            ],
+            "theologicalNote": "Marco narrativo del AT entero. Dios se ata a su pueblo por palabra y juramento; nosotros respondemos en fe."
+        },
+        {
+            "lemma": "יְהוָה",
+            "language": "hebrew",
+            "transliteration": "YHWH (Yahvé)",
+            "primaryGloss": "nombre personal del Dios del pacto",
+            "semanticRange": [
+                "nombre revelado en Éxodo 3",
+                "el Yo Soy presente con su pueblo",
+                "tetragrammaton sustituido por Adonai en lectura judía"
+            ],
+            "theologicalNote": "Pablo aplica el nombre a Jesús cuando cita 'Jesús es Señor' usando textos donde el AT decía YHWH (Joel 2:32 → Rom 10:13)."
+        },
+        {
+            "lemma": "מָשִׁיחַ",
+            "language": "hebrew",
+            "transliteration": "māšîaḥ",
+            "primaryGloss": "ungido; mesías",
+            "semanticRange": [
+                "rey ungido de la línea davídica",
+                "sumo sacerdote ungido",
+                "ungido escatológico que cumple ambas funciones"
+            ],
+            "theologicalNote": "Daniel 9 y Salmo 2 apuntan al Ungido definitivo. El NT lo identifica con Jesús."
+        },
+        {
+            "lemma": "צֶבָאוֹת",
+            "language": "hebrew",
+            "transliteration": "tsᵉvāʾôt",
+            "primaryGloss": "ejércitos; huestes celestiales",
+            "semanticRange": [
+                "ejércitos celestes que Yahvé comanda",
+                "ejército humano de Israel",
+                "cuerpos celestes como hueste cósmica"
+            ],
+            "theologicalNote": "Título 'YHWH de los ejércitos' afirma soberanía cósmica de Yahvé sobre toda potestad visible e invisible."
+        },
+        {
+            "lemma": "גָּאַל",
+            "language": "hebrew",
+            "transliteration": "gāʾal",
+            "primaryGloss": "redimir; rescatar como pariente cercano",
+            "semanticRange": [
+                "redimir a Israel de la esclavitud",
+                "rescatar propiedad familiar (go'el)",
+                "vindicar al oprimido"
+            ],
+            "theologicalNote": "Trasfondo de Rut + Levítico 25. Cristo redime como pariente cercano que paga el precio para liberar."
+        },
+        {
+            "lemma": "אַהֲבָה",
+            "language": "hebrew",
+            "transliteration": "ʾahăvāh",
+            "primaryGloss": "amor leal",
+            "semanticRange": [
+                "amor pactual de Yahvé hacia Israel",
+                "amor entre esposos",
+                "afecto profundo"
+            ],
+            "theologicalNote": "Cerca de ḥesed pero más afectivo. Deuteronomio combina ambos: 'amó porque amó' (Dt 7:7-8)."
+        },
+        {
+            "lemma": "יִרְאָה",
+            "language": "hebrew",
+            "transliteration": "yirʾāh",
+            "primaryGloss": "temor reverente; respeto santo",
+            "semanticRange": [
+                "temor de Yahvé como sabiduría inicial",
+                "miedo ordinario",
+                "respeto y maravilla"
+            ],
+            "theologicalNote": "Pro 1:7 — 'principio de la sabiduría'. No es terror servil; es asombro postrado ante el Dios vivo."
+        },
+        {
+            "lemma": "כִּפֶּר",
+            "language": "hebrew",
+            "transliteration": "kipper",
+            "primaryGloss": "expiar; cubrir el pecado para reconciliar",
+            "semanticRange": [
+                "expiación cultual mediante sacrificio",
+                "limpieza ritual del santuario",
+                "propiciación que aparta la ira"
+            ],
+            "theologicalNote": "Núcleo de Levítico 16. Hebreos muestra que Cristo cumple el día de la expiación de modo definitivo."
+        },
+        {
+            "lemma": "עֹלָם",
+            "language": "hebrew",
+            "transliteration": "ʿōlām",
+            "primaryGloss": "eternidad; tiempo lejano sin horizonte visible",
+            "semanticRange": [
+                "antigüedad lejana (pasado)",
+                "duración perpetua (futuro)",
+                "mundo / era cósmica"
+            ],
+            "theologicalNote": "No siempre es 'sin fin' filosófico; el contexto decide. Cuando se aplica a Yahvé sí abarca eternidad sin límite."
+        },
+        {
+            "lemma": "מִשְׁפָּט",
+            "language": "hebrew",
+            "transliteration": "mišpāṭ",
+            "primaryGloss": "juicio justo; decisión judicial",
+            "semanticRange": [
+                "veredicto de Yahvé",
+                "norma de justicia",
+                "derecho del oprimido a ser vindicado"
+            ],
+            "theologicalNote": "Inseparable de tsedeq en los profetas. Juicio aquí no es condena sino vindicación del débil."
+        },
+        {
+            "lemma": "תְּשׁוּבָה",
+            "language": "hebrew",
+            "transliteration": "tᵉšûvāh",
+            "primaryGloss": "retorno; arrepentimiento como volver a Dios",
+            "semanticRange": [
+                "regreso físico del exilio",
+                "regreso moral del pueblo a Yahvé",
+                "respuesta que vuelve"
+            ],
+            "theologicalNote": "El profeta no llama a 'sentir culpa' sino a 'volver' — orientarse de nuevo hacia Yahvé en obediencia."
+        }
+    ]
+}

@@ -52,6 +52,8 @@ import adminEn from '../locales/en/admin.json';
 import adminEs from '../locales/es/admin.json';
 import settingsEn from '../locales/en/settings.json';
 import settingsEs from '../locales/es/settings.json';
+import wordStudyEn from '../locales/en/wordStudy.json';
+import wordStudyEs from '../locales/es/wordStudy.json';
 
 /**
  * Initialize i18next with best practices:
@@ -91,6 +93,7 @@ export const initI18n = () => {
                     projects: projectsEn,
                     admin: adminEn,
                     settings: settingsEn,
+                    wordStudy: wordStudyEn,
                 },
                 es: {
                     common: commonEs,
@@ -113,6 +116,7 @@ export const initI18n = () => {
                     projects: projectsEs,
                     admin: adminEs,
                     settings: settingsEs,
+                    wordStudy: wordStudyEs,
                 },
             },
 
