@@ -40,6 +40,24 @@ Mapeo paso-por-paso del patrón central del manifiesto a la implementación.
 - Paso 8 manifiesto → **campo nuevo del seed `doxologicalApplication`** (Fase 1)
 - Paso 9 manifiesto → planner inverso (Fase 6)
 
+**Refinamiento Fase 1.6 (8-step spine, ADR-022/024)**: el análisis externo del flujo expuso dos
+omisiones del mapeo original:
+
+- **Género literario como paso explícito antes de la estructura.** El manifiesto lo daba por
+  supuesto dentro del Paso 3 ("observaciones exegéticas… contexto"), pero en hermenéutica
+  histórico-gramatical el género *gobierna las reglas de lectura* y debe determinarse **antes** del
+  análisis estructural. Fase 1.6 lo instancia como `contextGenre` (paso 2), reusando `BookPanorama`
+  del módulo de exégesis. Ver [ADR-024](./decisions/ADR-024-genre-context-rag-ruta-c.md).
+- **Distinción principio atemporal vs. idea central (Robinson).** El Paso 5 del manifiesto
+  ("síntesis doctrinal") se colapsaba en `insight.centralIdea`. Robinson distingue la *idea
+  exegética* (verdad teológica transcultural — "qué significa") de la *idea homilética* (lo que el
+  sermón proclama, en la voz del predicador para su congregación). Fase 1.6 separa el **principio
+  teológico atemporal** (`timelessPrinciple`, paso 7 — el puente Kaiser *principlizing bridge*) de
+  la **idea central** (`insight.centralIdea`, paso 8). El verificador del principio reusa el
+  mecanismo de tres testigos (verificador, no generador). Ver
+  [ADR-022](./decisions/ADR-022-eight-step-spine-rename-migration.md) +
+  [ADR-023](./decisions/ADR-023-two-tier-proactive-verification.md).
+
 ---
 
 ## 2. Los 4 patrones → tipos de artefacto derivado
@@ -341,6 +359,12 @@ Sin cambio. Manifiesto no altera esta decisión.
 ---
 
 ## 7. Lo que el manifiesto sugiere agregar (nuevos componentes/ADRs)
+
+> **Nota de numeración (2026-05-27)**: los números ADR-010…014 listados abajo eran *ilustrativos*
+> al redactar este bridge; los ADRs reales se numeran **al escribirlos** (lección del retrospective
+> de Fase 2). Mapeo real a la fecha: el sistema de tres niveles vive en ADR-007/ADR-005 + este §4;
+> el orchestrator de tres testigos es ADR-011; el 8-step spine + género + principio son
+> ADR-022/023/024. No tratar los números de abajo como definitivos.
 
 ### Nuevo ADR-010 propuesto — "Three doctrine levels (core/distinctive/open) como base del escalado"
 
