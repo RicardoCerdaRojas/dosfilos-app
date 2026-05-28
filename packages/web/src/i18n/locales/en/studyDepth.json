@@ -86,6 +86,7 @@
     "hintTitle": "A hint (without the answer)",
     "defaultHint": "Look again: what does this clause do grammatically?",
     "completeCta": "Structure reconstructed! Now write your note →",
-    "close": "Close"
+    "close": "Close",
+    "retry": "Retry"
   }
 }

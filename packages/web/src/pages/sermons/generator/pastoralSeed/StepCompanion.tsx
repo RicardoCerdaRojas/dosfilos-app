@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Sparkles, Loader2, X, AlertTriangle, Info, BookOpen, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
@@ -43,6 +43,15 @@ export function StepCompanion({ passage, stepKey, pastorInput, genre, orient, on
     const [result, setResult] = useState<StepOrientation | null>(null);
     /** True once the user has requested the second-level (simplified) help. */
     const [isSimplified, setIsSimplified] = useState(false);
+
+    // Step-scoped state must reset when the parent advances to a new step,
+    // otherwise the popover surfaces the previous step's orientation
+    // (smoke 2026-05-28: reading→contextGenre showed reading's data).
+    useEffect(() => {
+        setResult(null);
+        setIsSimplified(false);
+        setOpen(false);
+    }, [stepKey]);
 
     const handleAsk = async (e: React.MouseEvent) => {
         // Drive open state manually so the popover only opens after the result lands.

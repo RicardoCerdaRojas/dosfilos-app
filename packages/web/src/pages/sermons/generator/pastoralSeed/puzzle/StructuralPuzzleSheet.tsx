@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2, Sparkles, X, Lightbulb, Check, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
@@ -32,17 +32,30 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
     const { t } = useTranslation('studyDepth');
     const [puzzle, setPuzzle] = useState<StructuralPuzzle | null>(null);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [placements, setPlacements] = useState<Record<string, StructuralPuzzleRole | null>>({});
     const [verifiedCorrect, setVerifiedCorrect] = useState<Set<string>>(new Set());
     const [hint, setHint] = useState<{ clauseId: string; text: string } | null>(null);
     const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
     const [completedOnce, setCompletedOnce] = useState(false);
+    const [retryNonce, setRetryNonce] = useState(0);
+    /**
+     * In-flight guard — replaces the previous `loading`/`puzzle` deps that
+     * caused an infinite "Preparando…". When `setLoading(true)` fired inside
+     * the effect, the deps changed, cleanup set the closure's `cancelled` to
+     * true, and the resolved promise then no-op'd both `setPuzzle` and
+     * `setLoading(false)`. A ref keeps the guard out of the dep list.
+     */
+    const fetchInFlightRef = useRef(false);
 
-    // Load the puzzle when the sheet opens.
+    // Load the puzzle when the sheet opens. `retryNonce` lets the error UI
+    // re-trigger this effect without re-mounting the sheet.
     useEffect(() => {
-        if (!open || puzzle || loading) return;
+        if (!open || fetchInFlightRef.current) return;
         let cancelled = false;
+        fetchInFlightRef.current = true;
         setLoading(true);
+        setError(null);
         pastoralSeedService
             .buildStructuralPuzzle({ passage })
             .then((p) => {
@@ -58,11 +71,17 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
             })
             .catch((err) => {
                 console.error('[StructuralPuzzleSheet] build failed', err);
-                if (!cancelled) toast.error(t('puzzle.error'));
+                if (cancelled) return;
+                const msg = err instanceof Error ? err.message : String(err);
+                setError(msg || t('puzzle.error'));
+                toast.error(t('puzzle.error'));
             })
-            .finally(() => { if (!cancelled) setLoading(false); });
+            .finally(() => {
+                fetchInFlightRef.current = false;
+                if (!cancelled) setLoading(false);
+            });
         return () => { cancelled = true; };
-    }, [open, passage, puzzle, loading, t]);
+    }, [open, passage, retryNonce, t]);
 
     // Reset state when the sheet closes so a re-open re-fetches fresh.
     useEffect(() => {
@@ -72,6 +91,7 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
             setVerifiedCorrect(new Set());
             setHint(null);
             setSelectedPiece(null);
+            setError(null);
         }
     }, [open]);
 
@@ -159,6 +179,23 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
                 {loading && (
                     <div className="flex items-center justify-center py-10 text-muted-foreground">
                         <Loader2 className="h-5 w-5 animate-spin" /> <span className="ml-2 text-sm">{t('puzzle.loading')}</span>
+                    </div>
+                )}
+
+                {!loading && error && (
+                    <div className="px-4 py-6 space-y-3">
+                        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                            <p className="text-sm font-semibold text-destructive">{t('puzzle.error')}</p>
+                            <p className="mt-1 text-xs text-muted-foreground break-words">{error}</p>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" onClick={onClose}>
+                                <X className="h-4 w-4" /> {t('puzzle.close')}
+                            </Button>
+                            <Button size="sm" onClick={() => setRetryNonce((n) => n + 1)}>
+                                <RotateCcw className="h-4 w-4" /> {t('puzzle.retry')}
+                            </Button>
+                        </div>
                     </div>
                 )}
 
