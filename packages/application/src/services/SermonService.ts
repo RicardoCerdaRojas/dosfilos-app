@@ -70,6 +70,8 @@ export class SermonService {
             scheduledDate: Date;
             wizardProgress: any;
             preachingHistory: any[];
+            /** Phase 2.5 PR C (ADR-027) — gate snapshot embedded at generation time. */
+            studyDepthSnapshot: import('@dosfilos/domain').StudyDepthSnapshot;
         }>
     ): Promise<SermonEntity> {
         try {

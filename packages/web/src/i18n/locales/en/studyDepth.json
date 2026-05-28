@@ -42,5 +42,29 @@
     "simplifyHint": "No jargon + a concrete example of the method.",
     "exampleTitle": "Example of the method in another passage",
     "simplifiedBadge": "Simplified version"
+  },
+  "gate": {
+    "title": "Before generating your sermon",
+    "intro": "Here's what we tracked of your work on this passage. Not a score: it's the actual coverage of your study.",
+    "expertBadge": "Expert mode",
+    "weakDimsTitle": "Some dimensions are not yet covered",
+    "weakDimsHint": "I recommend going deeper before preaching. Concrete starting points:",
+    "promptFor": {
+      "D1_lectura": "Did you re-read the full passage and record your first impression?",
+      "D2_contextoGenero": "Confirm the literary genre and write how it changes your reading rules.",
+      "D3_estructura": "Identify the climactic clause and how the rest of the passage supports it.",
+      "D4_palabras": "Add at least 2 key-word studies with your own discovery.",
+      "D5_reconocimiento": "Find 1-3 canonical parallels with clear theological weight (no proof-texting).",
+      "D6_funcion": "Articulate what the text did to its original audience before applying it today.",
+      "D7_confrontacion": "Consider at least one significant contrary position and dismantle it from the text."
+    },
+    "justificationLabel": "Explain why you consider this study sufficient or why you want to proceed with partial coverage",
+    "justificationPlaceholder": "E.g. I already covered the parallels in a prior series on this book; accumulated depth supports this sermon…",
+    "justificationCounter": "{{current}}/{{min}} minimum characters",
+    "backToStudy": "Back to study",
+    "proceedConfident": "Proceed with confidence →",
+    "overrideStart": "Generate with note",
+    "overrideConfirm": "Confirm and generate",
+    "generating": "Generating…"
   }
 }
