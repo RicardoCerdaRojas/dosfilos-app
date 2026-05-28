@@ -41,7 +41,9 @@
     "simplifyLoading": "Looking for a simpler explanation…",
     "simplifyHint": "No jargon + a concrete example of the method.",
     "exampleTitle": "Example of the method in another passage",
-    "simplifiedBadge": "Simplified version"
+    "simplifiedBadge": "Simplified version",
+    "openPuzzle": "Reconstruct the structure yourself",
+    "openPuzzleHint": "Tier 3 — place the clauses where they belong."
   },
   "gate": {
     "title": "Before generating your sermon",
@@ -66,5 +68,24 @@
     "overrideStart": "Generate with note",
     "overrideConfirm": "Confirm and generate",
     "generating": "Generating…"
+  },
+  "puzzle": {
+    "title": "Reconstruct the structure",
+    "description": "Place each clause in its zone. If you miss, I give you a hint — but never the answer. You find it.",
+    "loading": "Preparing the puzzle…",
+    "error": "Could not build the puzzle. Please try again.",
+    "pile": "Clauses to place",
+    "pileEmpty": "All placed. Verify your work.",
+    "zone": {
+      "preparatory": "Preparatory",
+      "climactic": "Climactic",
+      "development": "Development"
+    },
+    "zoneEmpty": "Click a clause and then click here.",
+    "verify": "Verify placements",
+    "hintTitle": "A hint (without the answer)",
+    "defaultHint": "Look again: what does this clause do grammatically?",
+    "completeCta": "Structure reconstructed! Now write your note →",
+    "close": "Close"
   }
 }

@@ -16,6 +16,7 @@ import { computeExpertModeStatus } from '@dosfilos/domain';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { sermonService } from '@dosfilos/application';
 import { toast } from 'sonner';
+import { StructuralPuzzleSheet } from './puzzle/StructuralPuzzleSheet';
 import { WitnessGate } from './witnesses/WitnessGate';
 import { PastoralSeedBreadcrumb, BreadcrumbStep } from './PastoralSeedBreadcrumb';
 import { ReadingStep } from './ReadingStep';
@@ -148,6 +149,9 @@ export function PastoralSeedWizard({
             if (seed) onSeedCompleted(seed);
         }
     };
+
+    // Phase 2.5 Tier 3 — structural puzzle (proposal `structural-puzzle-tier3.md`).
+    const [puzzleOpen, setPuzzleOpen] = useState(false);
 
     // Publish live completed-steps counter to the wizard context so
     // the global header pipeline can show `n/6` updating in real time
@@ -471,6 +475,11 @@ export function PastoralSeedWizard({
                                     outputWasEditedByUser: false,
                                 })
                             }
+                            onOpenTier3={
+                                currentKey === 'structuralAnalysis'
+                                    ? () => setPuzzleOpen(true)
+                                    : undefined
+                            }
                         />
                     )}
 
@@ -534,6 +543,20 @@ export function PastoralSeedWizard({
                     expertMode={expertMode}
                     onProceed={handleGateProceed}
                     onCancel={() => setGateOpen(false)}
+                />
+            )}
+            {studyDepthGate.enabled && currentKey === 'structuralAnalysis' && (
+                <StructuralPuzzleSheet
+                    open={puzzleOpen}
+                    passage={passage}
+                    onClose={() => setPuzzleOpen(false)}
+                    onComplete={() =>
+                        logAiAssist({
+                            stepKey: 'structuralAnalysis',
+                            assistType: 'structuralPuzzle',
+                            outputWasEditedByUser: false,
+                        })
+                    }
                 />
             )}
         </div>
