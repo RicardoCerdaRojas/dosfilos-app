@@ -156,6 +156,14 @@ export const FEATURE_FLAG_NAMES = [
      * witness validation). Default off → blast radius 0 until toggled.
      */
     'three_witnesses',
+    /**
+     * Phase 2.5 sub-flag — gates the Study Companion: the coverage badge in
+     * the wizard + per-step orientation ("Pedir orientación", ADR-026) +
+     * (PR B/C) Faculty evidence and the pre-generation gate. Requires
+     * `pastoral_fidelity_flow` to also be on. Default off → blast radius 0
+     * until toggled.
+     */
+    'study_depth',
 ] as const;
 
 export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];

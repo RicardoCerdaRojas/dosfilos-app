@@ -1,0 +1,46 @@
+{
+  "badge": {
+    "title": "Study depth",
+    "hint": "Coverage of your work on this passage. Not a score: it reflects what you have explored.",
+    "show": "Show depth",
+    "hide": "Hide"
+  },
+  "states": {
+    "untouched": "Untouched",
+    "started": "Started",
+    "covered": "Covered",
+    "deep": "Deep"
+  },
+  "dimensions": {
+    "D1_lectura": "Anchor reading",
+    "D2_contextoGenero": "Context & genre",
+    "D3_estructura": "Structure",
+    "D4_palabras": "Key words",
+    "D5_reconocimiento": "Canonical recognition",
+    "D6_funcion": "Function & theology",
+    "D7_confrontacion": "Confrontation"
+  },
+  "override": {
+    "mark": "Mark as covered",
+    "unmark": "Remove mark",
+    "markedHint": "You marked this as covered manually.",
+    "ariaMark": "Mark dimension as covered",
+    "ariaUnmark": "Remove covered mark from dimension"
+  },
+  "companion": {
+    "ask": "Ask for orientation",
+    "loading": "Gathering data and questions…",
+    "dataTitle": "Data to consider",
+    "questionsTitle": "Questions to ponder",
+    "confrontationTitle": "Check your method",
+    "cautionTitle": "Note",
+    "disclaimer": "The companion gives data and questions; it never writes your answer for you.",
+    "error": "Could not get orientation. Please try again.",
+    "close": "Close orientation",
+    "simplifyAsk": "Explain it more simply",
+    "simplifyLoading": "Looking for a simpler explanation…",
+    "simplifyHint": "No jargon + a concrete example of the method.",
+    "exampleTitle": "Example of the method in another passage",
+    "simplifiedBadge": "Simplified version"
+  }
+}

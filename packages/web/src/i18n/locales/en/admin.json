@@ -438,6 +438,10 @@
                 },
                 "pastoral_word_study": {
                     "description": "Replaces the embedded Greek tutor in Morphology with the Pastoral Word Study modal (Phase 1.5). Requires pastoral_fidelity_flow to also be on."
+                },
+                "study_depth": {
+                    "label": "Study Companion",
+                    "description": "Study-depth badge + per-step orientation in the wizard (Phase 2.5). Requires pastoral fidelity flow."
                 }
             }
         },

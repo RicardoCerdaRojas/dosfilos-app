@@ -32,6 +32,21 @@ export function useThreeWitnessesGate(): { enabled: boolean; loading: boolean } 
     };
 }
 
+/**
+ * Phase 2.5 sub-gate: pastor needs BOTH `pastoral_fidelity_flow` (parent)
+ * AND `study_depth` (sub-flag) for the Study Companion (coverage badge +
+ * per-step orientation, ADR-025/026). Default off → blast radius 0 until
+ * toggled. When only the parent is on, the wizard behaves as in Phase 1.6.
+ */
+export function useStudyDepthGate(): { enabled: boolean; loading: boolean } {
+    const parent = useFeatureFlag('pastoral_fidelity_flow');
+    const sub = useFeatureFlag('study_depth');
+    return {
+        enabled: parent.enabled && sub.enabled,
+        loading: parent.loading || sub.loading,
+    };
+}
+
 export type PastoralFidelityGateReason =
     | 'loading'
     | 'flag-disabled'

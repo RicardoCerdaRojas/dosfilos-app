@@ -438,6 +438,10 @@
                 },
                 "pastoral_word_study": {
                     "description": "Reemplaza el tutor de griego embebido en Morfología por el Análisis Pastoral del Texto (Fase 1.5). Requiere que pastoral_fidelity_flow también esté activo."
+                },
+                "study_depth": {
+                    "label": "Acompañante de estudio",
+                    "description": "Insignia de profundidad de estudio + orientación por paso en el wizard (Fase 2.5). Requiere flujo de fidelidad pastoral."
                 }
             }
         },

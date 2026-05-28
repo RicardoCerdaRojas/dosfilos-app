@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Plus, RefreshCw, Trash2 } from 'lucide-react';
 import {
+    AiAssistType,
     ParallelRef,
     PASTORAL_SEED_THRESHOLDS,
     PastoralSeedTool,
@@ -21,6 +22,8 @@ interface Props {
     validation?: StepValidationResult;
     onChange: (patch: Partial<RecognitionStepData>) => void;
     onLogToolUsage: (tool: PastoralSeedTool) => void;
+    /** Phase 2.5 (ADR-024 completion) — first-class assist audit. */
+    onLogAiAssist?: (assistType: AiAssistType, outputWasEditedByUser: boolean) => void;
 }
 
 const T = PASTORAL_SEED_THRESHOLDS.recognition;
@@ -35,7 +38,7 @@ const T = PASTORAL_SEED_THRESHOLDS.recognition;
  * `cross-ref-engine-suggested` so audit + Phase 2 Testigo 2 can
  * distinguish "engine surfaced + pastor confirmed" from pastor-original.
  */
-export function RecognitionStep({ passage, data, validation, onChange, onLogToolUsage }: Props) {
+export function RecognitionStep({ passage, data, validation, onChange, onLogToolUsage, onLogAiAssist }: Props) {
     const { parallels: engineParallels, loading, error, refresh } = useCrossReferences(passage);
     const [draftRef, setDraftRef] = useState('');
     const [draftNote, setDraftNote] = useState('');
@@ -73,6 +76,10 @@ export function RecognitionStep({ passage, data, validation, onChange, onLogTool
             relevanceNote: '',
             source: 'cross-ref-engine-suggested',
         });
+        // ADR-024 completion (Phase 2.5): accepting a cross-ref engine
+        // suggestion is a first-class assist. The pastor still writes the
+        // relevanceNote themselves → output is edited, not verbatim.
+        onLogAiAssist?.('crossRefEngine', true);
     };
 
     const handleRefresh = () => {

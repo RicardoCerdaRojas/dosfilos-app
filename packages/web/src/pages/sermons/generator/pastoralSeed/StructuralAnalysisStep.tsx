@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Languages } from 'lucide-react';
 import {
+    AiAssistType,
     PASTORAL_SEED_THRESHOLDS,
     PastoralSeedTool,
     StepValidationResult,
@@ -21,6 +22,8 @@ interface Props {
     validation?: StepValidationResult;
     onChange: (patch: Partial<StructuralAnalysisStepData>) => void;
     onLogToolUsage: (tool: PastoralSeedTool) => void;
+    /** Phase 2.5 (ADR-024 completion) — first-class assist audit. */
+    onLogAiAssist?: (assistType: AiAssistType, outputWasEditedByUser: boolean) => void;
 }
 
 const MIN_CHARS = PASTORAL_SEED_THRESHOLDS.structuralAnalysis.pastorNoteMinChars;
@@ -34,7 +37,7 @@ const MIN_CHARS = PASTORAL_SEED_THRESHOLDS.structuralAnalysis.pastorNoteMinChars
  * this phase. Pastor types the clause reference + a personal note
  * explaining what the clause does for the passage's argument.
  */
-export function StructuralAnalysisStep({ passage, data, suggestion, validation, onChange, onLogToolUsage }: Props) {
+export function StructuralAnalysisStep({ passage, data, suggestion, validation, onChange, onLogToolUsage, onLogAiAssist }: Props) {
     const [originalLanguageOpen, setOriginalLanguageOpen] = useState(false);
 
     const accumulate = useCallback(
@@ -59,7 +62,12 @@ export function StructuralAnalysisStep({ passage, data, suggestion, validation, 
     };
 
     const handleOpenOriginal = () => {
-        if (!originalLanguageOpen) onLogToolUsage('canonical-analyzer');
+        if (!originalLanguageOpen) {
+            onLogToolUsage('canonical-analyzer');
+            // ADR-024 completion (Phase 2.5): the original-language structural
+            // display is a first-class assist. Read-only display → not edited.
+            onLogAiAssist?.('structuralDisplay', false);
+        }
         setOriginalLanguageOpen((open) => !open);
     };
 
@@ -106,7 +114,7 @@ export function StructuralAnalysisStep({ passage, data, suggestion, validation, 
                                 <>
                                     <p><span className="text-foreground">Referencia:</span> Juan 1:1c</p>
                                     <p>
-                                        <span className="text-foreground">Nota:</span> "y el Verbo era Dios" — predicado nominal sin artículo, afirma la divinidad esencial del Logos. Las dos cláusulas previas (eternidad + relación con Dios) preparan esta afirmación climática.
+                                        <span className="text-foreground">Nota:</span> "y el Verbo era Dios" es la cláusula climática del versículo: la afirmación central que el resto del prólogo desarrolla. Las dos cláusulas previas ("en el principio era el Verbo", "el Verbo era con Dios") la preparan, sosteniéndola en eternidad + relación intratrinitaria. (El detalle léxico-morfológico va en el paso de Palabras clave.)
                                     </p>
                                 </>
                             ),
@@ -145,7 +153,7 @@ export function StructuralAnalysisStep({ passage, data, suggestion, validation, 
                         Describe lo que el texto declara, qué peso teológico tiene, qué tipo de verbo es (indicativo / imperativo) y cómo el resto de la perícopa se ordena bajo esta oración.
                     </p>
                     <Textarea
-                        placeholder="Ej: 'El Verbo era Dios' — predicado nominal sin artículo griego, afirma la divinidad esencial del Logos. Las cláusulas previas (eternidad, relación con Dios) preparan esta declaración climática."
+                        placeholder="Ej: la cláusula 'el Verbo era Dios' es la afirmación central — declarativa, en posición climática. Las dos cláusulas previas ('en el principio era el Verbo', 'el Verbo era con Dios') la preparan y la sostienen. Todo lo que sigue en el prólogo desarrolla esta declaración. (El análisis léxico/morfológico va en el paso de Palabras clave.)"
                         value={data.mainClause?.pastorNote ?? ''}
                         onChange={(e) => updateClause({ pastorNote: e.target.value })}
                         rows={5}

@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { GraduationCap, Plus, Trash2, ExternalLink, BookOpen } from 'lucide-react';
 import {
+    AiAssistType,
     PASTORAL_SEED_THRESHOLDS,
     PastoralSeedTool,
     StepValidationResult,
@@ -27,6 +28,8 @@ interface Props {
     onAddWordStudy: (study: WordStudy) => Promise<void>;
     onChange: (patch: Partial<WordStudiesStepData>) => void;
     onLogToolUsage: (tool: PastoralSeedTool) => void;
+    /** Phase 2.5 (ADR-024 completion) — first-class assist audit. */
+    onLogAiAssist?: (assistType: AiAssistType, outputWasEditedByUser: boolean) => void;
 }
 
 const T = PASTORAL_SEED_THRESHOLDS.wordStudies;
@@ -51,6 +54,7 @@ export function WordStudiesStep({
     onAddWordStudy,
     onChange,
     onLogToolUsage,
+    onLogAiAssist,
 }: Props) {
     const { t } = useTranslation('wordStudy');
     const wordStudyGate = usePastoralWordStudyGate();
@@ -85,13 +89,19 @@ export function WordStudiesStep({
         onChange({ studies: next });
     };
 
+    // ADR-024 completion (Phase 2.5): opening a lexical tutor/modal is a
+    // first-class assist. Display/tutor surfaces → output not edited.
     const openGreek = () => {
-        if (!greekOpen) onLogToolUsage('greek-tutor');
+        if (!greekOpen) {
+            onLogToolUsage('greek-tutor');
+            onLogAiAssist?.('lexicalTutor', false);
+        }
         setGreekOpen(true);
     };
 
     const openHebrew = () => {
         onLogToolUsage('hebrew-tutor');
+        onLogAiAssist?.('lexicalTutor', false);
         const url = `/hebrew-tutor?passage=${encodeURIComponent(passage)}&returnTo=${encodeURIComponent(
             sermonId ? `/dashboard/sermons?id=${sermonId}` : '/dashboard/sermons',
         )}`;
@@ -99,7 +109,10 @@ export function WordStudiesStep({
     };
 
     const openWordStudy = () => {
-        if (!wordStudyOpen) onLogToolUsage('pastoral-word-study');
+        if (!wordStudyOpen) {
+            onLogToolUsage('pastoral-word-study');
+            onLogAiAssist?.('lexicalTutor', false);
+        }
         setWordStudyOpen(true);
     };
 

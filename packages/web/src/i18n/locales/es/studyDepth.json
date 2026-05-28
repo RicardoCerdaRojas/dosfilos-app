@@ -1,0 +1,46 @@
+{
+  "badge": {
+    "title": "Profundidad de estudio",
+    "hint": "Cobertura de tu trabajo en este pasaje. No es un puntaje: refleja lo que has explorado.",
+    "show": "Mostrar profundidad",
+    "hide": "Ocultar"
+  },
+  "states": {
+    "untouched": "Sin tocar",
+    "started": "Iniciado",
+    "covered": "Cubierto",
+    "deep": "Profundo"
+  },
+  "dimensions": {
+    "D1_lectura": "Lectura ancla",
+    "D2_contextoGenero": "Contexto y género",
+    "D3_estructura": "Estructura",
+    "D4_palabras": "Palabras clave",
+    "D5_reconocimiento": "Reconocimiento canónico",
+    "D6_funcion": "Función y teología",
+    "D7_confrontacion": "Confrontación"
+  },
+  "override": {
+    "mark": "Marcar como cubierto",
+    "unmark": "Quitar marca",
+    "markedHint": "Lo marcaste como cubierto manualmente.",
+    "ariaMark": "Marcar dimensión como cubierta",
+    "ariaUnmark": "Quitar marca de dimensión cubierta"
+  },
+  "companion": {
+    "ask": "Pedir orientación",
+    "loading": "Buscando datos y preguntas…",
+    "dataTitle": "Datos para considerar",
+    "questionsTitle": "Preguntas para pensar",
+    "confrontationTitle": "Revisa tu método",
+    "cautionTitle": "Nota",
+    "disclaimer": "El acompañante da datos y preguntas; nunca escribe tu respuesta por ti.",
+    "error": "No se pudo obtener orientación. Inténtalo de nuevo.",
+    "close": "Cerrar orientación",
+    "simplifyAsk": "Explícamelo más sencillo",
+    "simplifyLoading": "Buscando una explicación más simple…",
+    "simplifyHint": "Sin jerga + un ejemplo concreto del método.",
+    "exampleTitle": "Ejemplo del método en otro pasaje",
+    "simplifiedBadge": "Versión simplificada"
+  }
+}

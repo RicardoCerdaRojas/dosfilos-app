@@ -1,5 +1,6 @@
 import type { AiAssistLog } from '../entities/AiAssistLog';
 import type { PastoralSeed } from '../entities/PastoralSeed';
+import type { DimensionOverrides } from '../entities/StudyDepthAssessment';
 
 /**
  * Reads + mutates pastoralSeeds documents. ADR-015 defines the storage
@@ -52,4 +53,22 @@ export interface IPastoralSeedRepository {
      * Used by the audit panel + the "% tuyo" rollup.
      */
     listAiAssistLogs(seedId: string): Promise<AiAssistLog[]>;
+    /**
+     * Phase 2.5 (ADR-025/027) — read the pastor's per-dimension manual
+     * overrides ("marked complete"). Persisted at
+     * `pastoralSeeds/{seedId}/studyDepth/current`. The displayed coverage is
+     * `computeStudyDepthFromSeed(seed, overrides)` — overrides are the only
+     * piece that is not recomputable from the seed in PR A. Returns `{}`
+     * when no overrides have been set.
+     */
+    getStudyDepthOverrides(seedId: string): Promise<DimensionOverrides>;
+    /**
+     * Phase 2.5 (ADR-027) — set/clear a single dimension's manual override.
+     * Audited upstream (the service writes the `AiAssistLog`-adjacent trail).
+     */
+    setStudyDepthOverride(
+        seedId: string,
+        dimensionId: string,
+        pastorMarkedComplete: boolean,
+    ): Promise<void>;
 }

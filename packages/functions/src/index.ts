@@ -130,6 +130,8 @@ export { analyzeWordPastorally } from './pastoral-word-study/analyzeWordPastoral
 export { validateSeedWitnesses } from './three-witnesses/validateSeedWitnesses';
 // 🌱 Pastoral Fidelity Phase 1.6 — timeless-principle verifier (ADR-023)
 export { verifyTimelessPrinciple } from './three-witnesses/verifyTimelessPrinciple';
+// 🌱 Pastoral Fidelity Phase 2.5 — Study Companion step orientation (ADR-026)
+export { orientStudy } from './study-companion/orientStudy';
 
 
 
