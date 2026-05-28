@@ -86,6 +86,7 @@
     "hintTitle": "Una pista (sin la respuesta)",
     "defaultHint": "Revisa de nuevo: ¿qué hace gramaticalmente esta cláusula?",
     "completeCta": "¡Estructura reconstruida! Ahora escribe tu nota →",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "retry": "Reintentar"
   }
 }

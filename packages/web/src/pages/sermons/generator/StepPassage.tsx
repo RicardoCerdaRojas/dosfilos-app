@@ -7,6 +7,8 @@ import {
     Book,
     BookOpen,
     Check,
+    Compass,
+    GitBranch,
     GraduationCap,
     HelpCircle,
     History,
@@ -14,6 +16,7 @@ import {
     Search,
     Sparkles,
     Sprout,
+    Target,
     X,
 } from 'lucide-react';
 import { sermonService } from '@dosfilos/application';
@@ -23,60 +26,73 @@ import { DerivedContextBanner } from './DerivedContextBanner';
 import { usePastoralFidelityGate } from '@/hooks/usePastoralFidelityGate';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import { cn } from '@/lib/utils';
+import { PASTORAL_SEED_STEP_ORDER, type PastoralSeedStepKey } from '@dosfilos/domain';
 
-const STEP_PREVIEW = [
-    {
-        n: 1,
+// Mirror of canonical 8-step spine (`PASTORAL_SEED_STEP_ORDER` /
+// `STEP_TITLES` in PastoralSeedWizard). Order + labels must stay in
+// lockstep — change here only when the spine itself changes.
+const STEP_PREVIEW: Record<PastoralSeedStepKey, { icon: typeof BookOpen; title: string; time: string; hint: string; starred?: boolean }> = {
+    reading: {
         icon: BookOpen,
         title: 'Lectura',
         time: '2-3 min',
         hint: 'Primera impresión del pasaje.',
     },
-    {
-        n: 2,
-        icon: Book,
-        title: 'Sintaxis',
+    contextGenre: {
+        icon: Compass,
+        title: 'Contexto y Género',
+        time: '3-5 min',
+        hint: 'Tipo de literatura + lente que dispara.',
+    },
+    structuralAnalysis: {
+        icon: GitBranch,
+        title: 'Análisis Estructural',
         time: '5 min',
         hint: 'Identifica la oración principal. SBLGNT disponible.',
     },
-    {
-        n: 3,
+    wordStudies: {
         icon: GraduationCap,
-        title: 'Morfología',
+        title: 'Estudio de Palabras',
         time: '10 min',
-        hint: '2+ estudios de palabras. Tutor griego/hebreo on-demand.',
+        hint: '2+ estudios. Tutor griego/hebreo on-demand.',
     },
-    {
-        n: 4,
+    recognition: {
         icon: Search,
         title: 'Reconocimiento',
         time: '5 min',
         hint: 'Paralelos canónicos + motor de cross-ref.',
     },
-    {
-        n: 5,
+    function: {
         icon: History,
         title: 'Función',
         time: '5 min',
         hint: '¿Qué hizo el texto a su audiencia original?',
     },
-    {
-        n: 6,
+    timelessPrinciple: {
+        icon: Target,
+        title: 'Principio Atemporal',
+        time: '5 min',
+        hint: 'Verdad que cruza culturas. Verificado, no generado.',
+    },
+    insight: {
         icon: Sprout,
         title: 'Insight',
         time: '10 min',
         hint: 'Tu voz pastoral. Sin asistencia AI.',
         starred: true,
     },
-] as const;
+};
+
+const TOTAL_PASTORAL_STEPS = PASTORAL_SEED_STEP_ORDER.length;
 
 /**
  * StepPassage — entry point of the sermon wizard.
  *
  * Two-column layout on desktop (Bundle 2): LEFT holds the actual
  * passage entry + suggestion chips + recent passages; RIGHT renders
- * a static preview of the upcoming six-step spine so the pastor knows
- * what they're about to do. Single column on mobile.
+ * a static preview of the canonical 8-step spine
+ * (`PASTORAL_SEED_STEP_ORDER`) so the pastor knows what they're about
+ * to do. Single column on mobile.
  *
  * Compact header + inline chips (Bundle 1) + keyboard-first focus +
  * inline passage validation via `LocalBibleService.parseReference`
@@ -275,7 +291,7 @@ export function StepPassage() {
                             {isLoading
                                 ? t('passage.loading')
                                 : pastoralGate.allowed
-                                    ? 'Continuar al estudio en 6 pasos'
+                                    ? `Continuar al estudio en ${TOTAL_PASTORAL_STEPS} pasos`
                                     : t('passage.continueBtn')}
                             <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
@@ -320,17 +336,19 @@ export function StepPassage() {
                             <div className="flex items-center gap-2 mb-3">
                                 <Sparkles className="h-4 w-4 text-emerald-600" />
                                 <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-                                    Tu camino — 6 pasos
+                                    Tu camino — {TOTAL_PASTORAL_STEPS} pasos
                                 </p>
                             </div>
                             <p className="text-xs text-muted-foreground mb-4">
                                 Después del pasaje harás el estudio personal. Tú estudias; el sistema desarrolla.
                             </p>
                             <ol className="space-y-2.5">
-                                {STEP_PREVIEW.map((s) => {
+                                {PASTORAL_SEED_STEP_ORDER.map((key, idx) => {
+                                    const s = STEP_PREVIEW[key];
                                     const Icon = s.icon;
+                                    const n = idx + 1;
                                     return (
-                                        <li key={s.n} className="flex items-start gap-2.5">
+                                        <li key={key} className="flex items-start gap-2.5">
                                             <div
                                                 className={cn(
                                                     'shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold',
@@ -339,7 +357,7 @@ export function StepPassage() {
                                                         : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
                                                 )}
                                             >
-                                                {s.n}
+                                                {n}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium flex items-center gap-1.5">
