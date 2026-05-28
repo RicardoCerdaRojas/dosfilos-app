@@ -190,7 +190,7 @@ export class PastoralSeedService {
         seedId: string;
         log: Omit<AiAssistLog, 'id' | 'seedId' | 'createdAt'>;
     }): Promise<void> {
-        assertAiAssistAllowed(args.log.stepKey);
+        assertAiAssistAllowed(args.log.stepKey, args.log.assistType);
         await this.repo.appendAiAssistLog(args.seedId, args.log);
     }
 

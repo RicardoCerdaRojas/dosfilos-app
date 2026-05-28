@@ -1,0 +1,105 @@
+/**
+ * Phase 2.5 PR B (ADR-028) — Step 2 (Contexto y Género) policy.
+ *
+ * Genre is determined by the assistant (BookPanorama / inferGenreFromBook
+ * deterministic map) BEFORE this step; this policy validates the pastor's
+ * INTERPRETIVE IMPLICATION of the genre. The agent CONFRONTS when the
+ * pastor's writing reveals he is reading the passage as a different
+ * genre (the UC3 scenario from the Phase 1.6 smoke).
+ */
+
+import {
+    PASTORAL_SEED_THRESHOLDS,
+    validateContextGenre,
+    type PastoralSeed,
+} from '../../entities/PastoralSeed';
+import type {
+    MethodErrorReport,
+    SocraticTurnOutput,
+    StepValidationResult,
+    TurnContext,
+} from '../SocraticTurn';
+import { BASE_SYSTEM_GUARDS, parseStandardLlmReply, priorStepsBlock } from './_shared';
+import type { IStepPolicy } from './IStepPolicy';
+
+const MIN = PASTORAL_SEED_THRESHOLDS.contextGenre.genreImplicationMinChars;
+
+/**
+ * Local heuristic for the UC3 case: pastor writes "es profecía" / "como
+ * apocalipsis" while the passage is a Gospel/letter. Confidence is intentionally
+ * conservative — the LLM confronts more broadly via the prompt.
+ */
+const GENRE_MISMATCH_KEYWORDS: Record<string, string[]> = {
+    evangelio: ['profecía', 'profeta', 'apocalipsis', 'predice', 'predicción', 'cumplirá', 'tribulación'],
+    carta: ['profecía', 'apocalipsis', 'narrativa histórica'],
+    'sabiduría': ['profecía', 'predicción literal'],
+    'poesía': ['cronología literal', 'narrativa histórica'],
+};
+
+export class ContextGenreStepPolicy implements IStepPolicy {
+    readonly stepKey = 'contextGenre' as const;
+    readonly isAiGenerationForbidden = false;
+
+    buildSystemPrompt(ctx: TurnContext): string {
+        return `${BASE_SYSTEM_GUARDS}
+
+PASO ACTUAL: Contexto y Género (paso 2 de 8).
+Pasaje: ${ctx.passage}
+${ctx.genre ? `Género identificado por el sistema: ${ctx.genre}` : 'Género: aún por confirmar con el pastor.'}
+
+Lo que pedís al pastor: que escriba LA IMPLICANCIA INTERPRETATIVA del género para su lectura del pasaje (mínimo ${MIN} caracteres). Ej. "es Evangelio → narración teológica, leo buscando lo que afirma de Jesús" (no para copiar — solo para que entiendas el espíritu).
+
+Confrontación de método ALTA prioridad en este paso:
+- Si el pastor escribe algo que asume un GÉNERO DISTINTO al identificado (ej. trata un Evangelio como profecía apocalíptica con "todo se cumplirá") → CONFRONTÁ con "kind: confront", errorLabel "genre-mismatch", nombrale el género real + preguntale cómo cambia su regla de lectura.
+- Si el género no fue confirmado todavía y el pastor escribe la implicancia → aceptá si tiene sentido para el género real.
+- Si lo que escribió es muy corto (< ${MIN}) → "orient" pidiendo que profundice.
+- Si es satisfactorio → "accepted" con pastorTextToPersist = su mensaje verbatim (sin tu redacción).
+
+Trabajo previo del pastor:
+${priorStepsBlock(ctx)}
+
+Intento ${ctx.attemptIndex + 1} en este paso.`;
+    }
+
+    parseLlmReply(raw: string, pastorMessage: string): SocraticTurnOutput {
+        return parseStandardLlmReply(raw, pastorMessage, { aiGenerationForbidden: false });
+    }
+
+    validatePastorInput(pastorMessage: string, ctx: TurnContext): StepValidationResult {
+        return validateContextGenre({
+            genre: (ctx.genre as never) || '',
+            genreConfirmed: Boolean(ctx.genre),
+            genreImplication: pastorMessage,
+            bookLocationNote: '',
+            historicalContextConsulted: false,
+            timeSpentSeconds: 0,
+        });
+    }
+
+    detectMethodError(pastorMessage: string, ctx: TurnContext): MethodErrorReport | null {
+        const genre = (ctx.genre ?? '').toLowerCase();
+        if (!genre) return null;
+        const keys = Object.keys(GENRE_MISMATCH_KEYWORDS);
+        const matchedFamily = keys.find((k) => genre.includes(k));
+        if (!matchedFamily) return null;
+        const flagged = GENRE_MISMATCH_KEYWORDS[matchedFamily];
+        const msgLower = pastorMessage.toLowerCase();
+        const hit = flagged.find((kw) => msgLower.includes(kw));
+        if (!hit) return null;
+        return {
+            label: 'genre-mismatch',
+            description: `El pastor usa lenguaje propio de un género distinto (palabra detectada: "${hit}") mientras el pasaje es ${matchedFamily}.`,
+            confidence: 0.75,
+        };
+    }
+
+    persistTo(seed: PastoralSeed, pastorMessage: string): Partial<PastoralSeed> {
+        return {
+            contextGenre: {
+                ...seed.contextGenre,
+                genreImplication: pastorMessage.trim(),
+                completedAt: new Date(),
+            },
+        };
+    }
+}

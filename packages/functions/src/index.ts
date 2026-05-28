@@ -132,6 +132,8 @@ export { validateSeedWitnesses } from './three-witnesses/validateSeedWitnesses';
 export { verifyTimelessPrinciple } from './three-witnesses/verifyTimelessPrinciple';
 // 🌱 Pastoral Fidelity Phase 2.5 — Study Companion step orientation (ADR-026)
 export { orientStudy } from './study-companion/orientStudy';
+// 🌱 Pastoral Fidelity Phase 2.5 PR B — Faculty Socratic Sermon Agent LLM proxy (ADR-028)
+export { runSocraticTurnLlm } from './guided-sermon/runSocraticTurnLlm';
 
 
 

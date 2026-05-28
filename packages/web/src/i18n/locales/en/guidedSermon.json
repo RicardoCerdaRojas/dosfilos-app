@@ -1,0 +1,37 @@
+{
+  "header": {
+    "title": "Sermon guide",
+    "completed": "Ready",
+    "openWizard": "Open sermon",
+    "pause": "Pause",
+    "resume": "Resume"
+  },
+  "steps": {
+    "reading": "Reading",
+    "contextGenre": "Context & genre",
+    "structuralAnalysis": "Structural analysis",
+    "wordStudies": "Word studies",
+    "recognition": "Canonical recognition",
+    "function": "Function",
+    "timelessPrinciple": "Timeless principle",
+    "insight": "Insight"
+  },
+  "activation": {
+    "title": "Build your sermon step by step",
+    "description": "I will guide you through the 8 steps of study. You write each step in your own words; I provide data and questions, and confront when I detect a method error. I never write your answer.",
+    "passageLabel": "Passage to study",
+    "passagePlaceholder": "e.g. John 1:1",
+    "passageHint": "Full passage (book + chapter + verse). The rest of the study builds on it.",
+    "activate": "Start guide",
+    "activating": "Activating…",
+    "cancel": "Cancel"
+  },
+  "cta": {
+    "startGuided": "Build guided sermon",
+    "startGuidedDescription": "Build your sermon step by step with a Socratic agent that guides and confronts."
+  },
+  "error": {
+    "activate": "Could not activate the guide. Please try again.",
+    "runTurn": "Could not process your reply. Please try again."
+  }
+}

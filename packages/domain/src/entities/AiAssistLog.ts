@@ -49,7 +49,21 @@ export type AiAssistType =
      * Socratic questions on a method step (genre, structure, words,
      * parallels, function). Verifier-orienter, never writes the answer.
      */
-    | 'stepOrientation';
+    | 'stepOrientation'
+    /**
+     * Phase 2.5 PR B (ADR-028): one accepted turn of the Faculty Socratic
+     * Sermon Agent. Indicates the pastor's message satisfied the current
+     * step's validator and was persisted to the seed. The agent asked +
+     * validated; the pastor wrote the content.
+     */
+    | 'socraticGuidance'
+    /**
+     * Phase 2.5 PR B (ADR-028): the Socratic Sermon Agent confronted a
+     * method error (wrong genre, lexical leakage in the structural step,
+     * proof-texting, modern-application leap). The pastor's input was not
+     * persisted; the seed remained unchanged for the step.
+     */
+    | 'socraticConfrontation';
 
 export interface AiAssistLog {
     id: string;
@@ -67,25 +81,43 @@ export interface AiAssistLog {
 }
 
 /**
- * Steps where an `AiAssistLog` must never be written — the pastor's own
- * voice lives there. Enforced by `assertAiAssistAllowed` + tested.
+ * Steps where AI-GENERATED CONTENT must never enter the seed — the pastor's
+ * own voice lives there. Enforced by `assertAiAssistAllowed` + tested.
  */
 export const AI_ASSIST_FORBIDDEN_STEPS: PastoralSeedStepKey[] = ['reading', 'insight'];
 
-/** True when `stepKey` is allowed to record an `AiAssistLog`. */
-export function isAiAssistAllowed(stepKey: PastoralSeedStepKey): boolean {
-    return !AI_ASSIST_FORBIDDEN_STEPS.includes(stepKey);
+/**
+ * Assist types that are VALIDATION/observation-tier — they do NOT inject
+ * content into the seed. Safe to log on any step (including the forbidden
+ * ones) because the audit still reflects the pastor's verbatim voice.
+ * Phase 2.5 (ADR-026/028) added these tiers: orientation, socratic guidance
+ * (accepted turn = pastor's content + agent's validation), socratic
+ * confrontation (no persist), eisegesis verifier.
+ */
+const VALIDATION_TIER_ASSISTS = new Set<AiAssistType>([
+    'stepOrientation',
+    'socraticGuidance',
+    'socraticConfrontation',
+    'eisegesisCheck',
+]);
+
+/** True when this step+assistType combination is allowed to record a log. */
+export function isAiAssistAllowed(stepKey: PastoralSeedStepKey, assistType?: AiAssistType): boolean {
+    if (!AI_ASSIST_FORBIDDEN_STEPS.includes(stepKey)) return true;
+    // Forbidden step → only validation-tier assists may log.
+    return assistType !== undefined && VALIDATION_TIER_ASSISTS.has(assistType);
 }
 
 /**
- * Guard used by the write path. Throws if a caller tries to log an assist
- * on an AI-forbidden step — fail loud rather than silently contaminating
- * the audit that feeds "% tuyo".
+ * Guard used by the write path. Throws if a caller tries to log a
+ * content-tier assist on an AI-forbidden step — fail loud rather than
+ * silently contaminating the audit that feeds "% tuyo". Validation-tier
+ * assists pass through on any step.
  */
-export function assertAiAssistAllowed(stepKey: PastoralSeedStepKey): void {
-    if (!isAiAssistAllowed(stepKey)) {
+export function assertAiAssistAllowed(stepKey: PastoralSeedStepKey, assistType?: AiAssistType): void {
+    if (!isAiAssistAllowed(stepKey, assistType)) {
         throw new Error(
-            `AiAssistLog is forbidden on step "${stepKey}" — that step is the pastor's own voice.`,
+            `AiAssistLog is forbidden on step "${stepKey}" with content-tier assistType "${assistType ?? '<unspecified>'}" — that step is the pastor's own voice.`,
         );
     }
 }
