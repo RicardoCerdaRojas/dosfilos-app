@@ -42,5 +42,29 @@
     "simplifyHint": "Sin jerga + un ejemplo concreto del método.",
     "exampleTitle": "Ejemplo del método en otro pasaje",
     "simplifiedBadge": "Versión simplificada"
+  },
+  "gate": {
+    "title": "Antes de generar tu sermón",
+    "intro": "Esto es lo que rastreamos de tu estudio en este pasaje. No es un puntaje: es la cobertura real de tu trabajo.",
+    "expertBadge": "Modo experto",
+    "weakDimsTitle": "Hay dimensiones que no quedaron cubiertas",
+    "weakDimsHint": "Te recomiendo profundizar antes de predicar. Acá hay puntos concretos por dónde empezar:",
+    "promptFor": {
+      "D1_lectura": "¿Volviste a leer el pasaje completo y registraste tu primera impresión?",
+      "D2_contextoGenero": "Confirma el género literario y escribe cómo cambia tu regla de lectura.",
+      "D3_estructura": "Identifica la cláusula climática y cómo el resto del pasaje la sostiene.",
+      "D4_palabras": "Agrega al menos 2 estudios de palabras clave con descubrimiento propio.",
+      "D5_reconocimiento": "Encuentra 1-3 paralelos canónicos con peso teológico (no proof-texting).",
+      "D6_funcion": "Articula qué hacía el texto para su audiencia original antes de aplicar hoy.",
+      "D7_confrontacion": "Considera al menos una postura contraria significativa y desmantélala con el texto."
+    },
+    "justificationLabel": "Explica por qué consideras suficiente este estudio o por qué quieres proceder con cobertura parcial",
+    "justificationPlaceholder": "Ej. ya cubrí los paralelos en una serie previa sobre el mismo libro; la profundidad acumulada respalda este sermón…",
+    "justificationCounter": "{{current}}/{{min}} caracteres mínimos",
+    "backToStudy": "Volver a estudiar",
+    "proceedConfident": "Adelante con confianza →",
+    "overrideStart": "Generar con nota",
+    "overrideConfirm": "Confirmar y generar",
+    "generating": "Generando…"
   }
 }

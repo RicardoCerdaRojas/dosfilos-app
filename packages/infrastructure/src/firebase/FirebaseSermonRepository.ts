@@ -211,6 +211,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
             sourcePaperId: sermon.sourcePaperId ?? null,
             bibliography: sermon.bibliography ?? null,
             citationManifest: sermon.citationManifest ?? null,
+            studyDepthSnapshot: sermon.studyDepthSnapshot ?? null,
         };
     }
 
@@ -273,6 +274,15 @@ export class FirebaseSermonRepository implements ISermonRepository {
             bibliography: Array.isArray(d.bibliography) ? d.bibliography : undefined,
             citationManifest: d.citationManifest && Array.isArray(d.citationManifest.entries)
                 ? d.citationManifest
+                : undefined,
+            studyDepthSnapshot: d.studyDepthSnapshot && typeof d.studyDepthSnapshot === 'object'
+                ? {
+                    ...d.studyDepthSnapshot,
+                    capturedAt:
+                        d.studyDepthSnapshot.capturedAt?.toDate?.()
+                        ?? d.studyDepthSnapshot.capturedAt
+                        ?? new Date(),
+                }
                 : undefined,
         });
     }

@@ -256,6 +256,21 @@ export interface User {
      */
     useConfessionalWitnesses?: boolean;
 
+    /**
+     * Phase 2.5 PR C (ADR-027) — Pastor's preference for the Study Companion
+     * "expert mode" at the pre-generation gate. Self-service-once-earned:
+     * the toggle visible to the pastor only unlocks after they accumulate
+     * `EXPERT_MODE_UNLOCK_THRESHOLD` sermons with `studyDepthSnapshot.
+     * overallScore >= EXPERT_MODE_GOOD_SCORE` AND
+     * `bypassedConfrontation === false`. Expert mode SOFTENS (collapses
+     * the gate modal to a quiet card) but NEVER silences confrontation
+     * on red dims — P3 stays intact. Super-admins may force-set this
+     * field regardless of the threshold (audit-logged).
+     */
+    expertModeOn?: boolean;
+    /** Set when the pastor (or admin) flips `expertModeOn` to true. */
+    expertModeUnlockedAt?: Date;
+
     createdAt: Date;
     updatedAt: Date;
 }

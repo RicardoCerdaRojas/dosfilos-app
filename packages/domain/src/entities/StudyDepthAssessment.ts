@@ -85,6 +85,117 @@ export interface StudyDepthAssessment {
     updatedAt: Date;
 }
 
+/**
+ * Phase 2.5 PR C (ADR-027) — Audit snapshot captured at the moment the
+ * pastor turns study into sermon. Embedded into `Sermon.studyDepthSnapshot`.
+ * Read by Fase 4's "Sello propio" badge + override-rate metrics. Pure
+ * record — never recomputed (the seed may evolve after generation).
+ */
+export interface StudyDepthSnapshot {
+    capturedAt: Date;
+    /** Overall coverage score 0-100 at gate time. */
+    overallScore: number;
+    /** Per-dimension score 0-100 at gate time. */
+    dimensionScores: Record<DimensionId, number>;
+    /** Dimensions below `WEAK_DIMENSION_THRESHOLD` at gate time. */
+    weakDimensions: DimensionId[];
+    /** True when the pastor proceeded despite red/weak dims. */
+    bypassedConfrontation: boolean;
+    /** Pastor's justification when bypassing. ≥100 chars enforced upstream. */
+    justification?: string;
+    /** Whether expert mode was active at gate time (softer ceremony, never silenced). */
+    expertMode: boolean;
+}
+
+/** Build a snapshot from a live assessment + the gate decision. */
+export function buildStudyDepthSnapshot(
+    assessment: StudyDepthAssessment,
+    options: {
+        bypassedConfrontation: boolean;
+        justification?: string;
+        expertMode: boolean;
+        capturedAt?: Date;
+    },
+): StudyDepthSnapshot {
+    const dimensionScores = {} as Record<DimensionId, number>;
+    for (const id of DIMENSION_ORDER) {
+        dimensionScores[id] = assessment.dimensions[id]?.score ?? 0;
+    }
+    return {
+        capturedAt: options.capturedAt ?? new Date(),
+        overallScore: assessment.overallScore,
+        dimensionScores,
+        weakDimensions: [...assessment.weakDimensions],
+        bypassedConfrontation: options.bypassedConfrontation,
+        justification: options.justification?.trim() || undefined,
+        expertMode: options.expertMode,
+    };
+}
+
+/** Minimum chars for an override justification (ADR-027). */
+export const STUDY_DEPTH_OVERRIDE_MIN_CHARS = 100;
+
+/**
+ * Per-sermon high-score threshold that counts toward expert-mode self-unlock.
+ * A sermon with `studyDepthSnapshot.overallScore >= EXPERT_MODE_GOOD_SCORE`
+ * and `bypassedConfrontation === false` adds to the pastor's "earned" tally.
+ */
+export const EXPERT_MODE_GOOD_SCORE = 70;
+
+/** Sermons needed at >= `EXPERT_MODE_GOOD_SCORE` for the toggle to unlock. */
+export const EXPERT_MODE_UNLOCK_THRESHOLD = 3;
+
+/**
+ * Count how many sermons in the list qualify the pastor for expert-mode
+ * self-unlock. Qualifies = snapshot present + `overallScore >=
+ * EXPERT_MODE_GOOD_SCORE` + did NOT bypass confrontation. Pure.
+ */
+export function countExpertModeQualifyingSermons(
+    sermons: Array<{ studyDepthSnapshot?: StudyDepthSnapshot }>,
+): number {
+    let n = 0;
+    for (const s of sermons) {
+        const snap = s.studyDepthSnapshot;
+        if (!snap) continue;
+        if (snap.bypassedConfrontation) continue;
+        if (snap.overallScore >= EXPERT_MODE_GOOD_SCORE) n++;
+    }
+    return n;
+}
+
+/**
+ * Whether the pastor may CURRENTLY have expert mode active. Three paths:
+ *  - super-admin force-set `expertModeOn === true` regardless of threshold.
+ *  - pastor self-toggled after the threshold was met (toggle stays true).
+ *  - threshold met but pastor has not toggled yet → still "unlockable" only.
+ */
+export interface ExpertModeStatus {
+    /** True iff pastor's preference says expert mode is on. */
+    isOn: boolean;
+    /** True iff the toggle is available for the pastor to flip on. */
+    isUnlocked: boolean;
+    /** Reason for current state (debug + UI copy). */
+    reason: 'on' | 'unlocked-not-toggled' | 'locked-below-threshold';
+    /** Sermons the pastor has at or above the qualifying score. */
+    qualifyingCount: number;
+}
+
+export function computeExpertModeStatus(
+    profile: { expertModeOn?: boolean },
+    qualifyingCount: number,
+): ExpertModeStatus {
+    const isOn = profile.expertModeOn === true;
+    const meetsThreshold = qualifyingCount >= EXPERT_MODE_UNLOCK_THRESHOLD;
+    // `isOn` always implies the gate softens (the toggle was set somehow —
+    // either earned + flipped or super-admin force-on). We never auto-revoke.
+    const isUnlocked = isOn || meetsThreshold;
+    let reason: ExpertModeStatus['reason'];
+    if (isOn) reason = 'on';
+    else if (meetsThreshold) reason = 'unlocked-not-toggled';
+    else reason = 'locked-below-threshold';
+    return { isOn, isUnlocked, reason, qualifyingCount };
+}
+
 /** Per-dim manual overrides persisted on the assessment doc (ADR-027). */
 export type DimensionOverrides = Partial<Record<DimensionId, { pastorMarkedComplete: boolean }>>;
 

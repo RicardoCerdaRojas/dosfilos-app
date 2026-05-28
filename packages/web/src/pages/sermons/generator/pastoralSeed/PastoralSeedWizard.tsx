@@ -10,6 +10,12 @@ import { PASTORAL_SEED_STEP_ORDER, PastoralSeedStepKey } from '@dosfilos/domain'
 import { StudyDepthBadge } from './StudyDepthBadge';
 import { StepCompanion } from './StepCompanion';
 import { ORIENTABLE_STEPS, pastorInputForStep } from './stepCompanionWiring';
+import { StudyDepthPreGenerationGate } from './StudyDepthPreGenerationGate';
+import type { StudyDepthSnapshot } from '@dosfilos/domain';
+import { computeExpertModeStatus } from '@dosfilos/domain';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { sermonService } from '@dosfilos/application';
+import { toast } from 'sonner';
 import { WitnessGate } from './witnesses/WitnessGate';
 import { PastoralSeedBreadcrumb, BreadcrumbStep } from './PastoralSeedBreadcrumb';
 import { ReadingStep } from './ReadingStep';
@@ -118,6 +124,31 @@ export function PastoralSeedWizard({
         enabled: studyDepthGate.enabled,
     });
 
+    // Phase 2.5 PR C (ADR-027) — Pre-generation gate state + expert-mode
+    // status. The gate fires once the seed completes (or witnesses pass)
+    // BEFORE handing the pastor to homiletics. Expert mode softens the
+    // ceremony but never silences the confrontation on red dims (P3).
+    const { profile } = useUserProfile();
+    const [gateOpen, setGateOpen] = useState(false);
+    const expertMode = useMemo(
+        () => computeExpertModeStatus({ expertModeOn: profile?.expertModeOn }, 0).isOn,
+        [profile?.expertModeOn],
+    );
+
+    const handleGateProceed = async (snapshot: StudyDepthSnapshot) => {
+        try {
+            if (sermonId) {
+                await sermonService.updateSermon(sermonId, { studyDepthSnapshot: snapshot });
+            }
+        } catch (err) {
+            console.error('[PastoralSeedWizard] failed to persist snapshot', err);
+            toast.error('No se pudo guardar la nota del estudio, pero podés seguir.');
+        } finally {
+            setGateOpen(false);
+            if (seed) onSeedCompleted(seed);
+        }
+    };
+
     // Publish live completed-steps counter to the wizard context so
     // the global header pipeline can show `n/6` updating in real time
     // as the pastor types. Without this lift, the header relied on a
@@ -148,9 +179,14 @@ export function PastoralSeedWizard({
         }
         if (!evaluation?.completed || !seed) return;
         // Last seed step done. Route through the witness gate when the
-        // sub-flag is on; otherwise advance straight to the draft.
+        // sub-flag is on; otherwise check the study-depth gate (Phase 2.5
+        // PR C) before advancing.
         if (threeWitnesses.enabled) {
             setPhase('witnesses');
+            return;
+        }
+        if (studyDepthGate.enabled && assessment) {
+            setGateOpen(true);
             return;
         }
         onSeedCompleted(seed);
@@ -189,6 +225,13 @@ export function PastoralSeedWizard({
                     confessionalWitnessesEnabled={confessionalWitnessesEnabled}
                     onProceed={async (review) => {
                         await saveWitnessReview(review);
+                        // Phase 2.5 PR C — chain into the study-depth gate
+                        // when active; otherwise proceed directly.
+                        if (studyDepthGate.enabled && assessment) {
+                            setPhase('seed');
+                            setGateOpen(true);
+                            return;
+                        }
                         onSeedCompleted(seed);
                     }}
                     onReviseClaim={() => {
@@ -484,6 +527,15 @@ export function PastoralSeedWizard({
                     </aside>
                 )}
             </div>
+            {studyDepthGate.enabled && assessment && (
+                <StudyDepthPreGenerationGate
+                    open={gateOpen}
+                    assessment={assessment}
+                    expertMode={expertMode}
+                    onProceed={handleGateProceed}
+                    onCancel={() => setGateOpen(false)}
+                />
+            )}
         </div>
     );
 }

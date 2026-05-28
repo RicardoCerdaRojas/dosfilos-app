@@ -161,6 +161,15 @@ export interface Sermon {
      * to bibliography-only mode in that case.
      */
     citationManifest?: CitationManifest;
+
+    /**
+     * Phase 2.5 PR C (ADR-027) — Snapshot of the pastor's study coverage
+     * (7 dimensions of the `pastoralSeed`) captured at the moment this
+     * sermon was generated from the seed. Immutable record used by Fase 4
+     * ("Sello propio" badge) + override-rate metrics. Pre-Phase-2.5
+     * sermons have this `undefined`; the badge falls back to "no data".
+     */
+    studyDepthSnapshot?: import('./StudyDepthAssessment').StudyDepthSnapshot;
 }
 
 export class SermonEntity implements Sermon {
@@ -188,7 +197,8 @@ export class SermonEntity implements Sermon {
         public projectId?: string,
         public sourcePaperId?: string,
         public bibliography?: RAGSource[],
-        public citationManifest?: CitationManifest
+        public citationManifest?: CitationManifest,
+        public studyDepthSnapshot?: Sermon['studyDepthSnapshot']
     ) {
         this.validate();
     }
@@ -244,7 +254,8 @@ export class SermonEntity implements Sermon {
             data.projectId,
             data.sourcePaperId,
             data.bibliography ?? (data as any).bibliography,
-            data.citationManifest
+            data.citationManifest,
+            data.studyDepthSnapshot
         );
     }
 
@@ -274,7 +285,8 @@ export class SermonEntity implements Sermon {
             d.projectId ?? this.projectId,
             d.sourcePaperId ?? this.sourcePaperId,
             data.bibliography ?? this.bibliography,
-            data.citationManifest ?? this.citationManifest
+            data.citationManifest ?? this.citationManifest,
+            data.studyDepthSnapshot ?? this.studyDepthSnapshot
         );
     }
 
@@ -307,7 +319,8 @@ export class SermonEntity implements Sermon {
                 homileticsSources: this.wizardProgress?.homiletics?.ragSources,
                 draftSources: this.wizardProgress?.draft?.ragSources,
             }),
-            this.citationManifest ?? this.wizardProgress?.draft?.citationManifest
+            this.citationManifest ?? this.wizardProgress?.draft?.citationManifest,
+            this.studyDepthSnapshot
         );
     }
 
@@ -358,7 +371,8 @@ export class SermonEntity implements Sermon {
                 homileticsSources: this.wizardProgress?.homiletics?.ragSources,
                 draftSources: this.wizardProgress?.draft?.ragSources,
             }),
-            this.citationManifest ?? this.wizardProgress?.draft?.citationManifest
+            this.citationManifest ?? this.wizardProgress?.draft?.citationManifest,
+            this.studyDepthSnapshot
         );
     }
 
@@ -387,7 +401,8 @@ export class SermonEntity implements Sermon {
             this.projectId,
             this.sourcePaperId,
             this.bibliography,
-            this.citationManifest
+            this.citationManifest,
+            this.studyDepthSnapshot
         );
     }
 
@@ -416,7 +431,8 @@ export class SermonEntity implements Sermon {
             this.projectId,
             this.sourcePaperId,
             this.bibliography,
-            this.citationManifest
+            this.citationManifest,
+            this.studyDepthSnapshot
         );
     }
 
@@ -445,7 +461,8 @@ export class SermonEntity implements Sermon {
             this.projectId,
             this.sourcePaperId,
             this.bibliography,
-            this.citationManifest
+            this.citationManifest,
+            this.studyDepthSnapshot
         );
     }
 
