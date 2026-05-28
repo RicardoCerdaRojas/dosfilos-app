@@ -83,10 +83,22 @@
     },
     "zoneEmpty": "Click una cláusula y luego aquí.",
     "verify": "Verificar colocaciones",
+    "verifyAgain": "Verificar de nuevo",
+    "placeAll": "Coloca todas las cláusulas",
+    "placeBounced": "Coloca la cláusula resaltada",
     "hintTitle": "Una pista (sin la respuesta)",
+    "hintTitleWithRef": "Una pista sobre {{reference}} (sin la respuesta)",
     "defaultHint": "Revisa de nuevo: ¿qué hace gramaticalmente esta cláusula?",
     "completeCta": "¡Estructura reconstruida! Ahora escribe tu nota →",
     "close": "Cerrar",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "progress": "{{correct}}/{{total}} correctas",
+    "progressTitle": "Cláusulas validadas correctamente",
+    "lockedTooltip": "Colocación correcta — bloqueada.",
+    "tooLongTitle": "Pasaje muy largo para el puzzle",
+    "tooLongBody": "El puzzle estructural funciona sobre perícopas de hasta ~{{maxWords}} palabras (este pasaje tiene {{wordCount}}). Acota tu enfoque a 1-5 versículos clave del pasaje.",
+    "tooLongInputLabel": "Pasaje acotado",
+    "tooLongInputHint": "Ej.: si trabajas en Filemón, acota a Filemón 8-21.",
+    "tooLongRetry": "Construir puzzle"
   }
 }

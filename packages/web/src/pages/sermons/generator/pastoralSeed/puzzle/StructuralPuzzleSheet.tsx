@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Sparkles, X, Lightbulb, Check, RotateCcw } from 'lucide-react';
+import { Loader2, Sparkles, X, Lightbulb, Check, RotateCcw, AlertTriangle, Scissors } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { pastoralSeedService, type StructuralPuzzle, type StructuralPuzzleRole } from '@dosfilos/application';
 
@@ -15,6 +16,29 @@ interface Props {
 }
 
 const ZONES: StructuralPuzzleRole[] = ['preparatory', 'climactic', 'development'];
+
+/**
+ * Structured error payload from the `buildStructuralPuzzle` callable when the
+ * passage is too long for a structural puzzle (must be cut down to a
+ * perícope). The callable returns this via `HttpsError.details` so the client
+ * can render an "acota tu pasaje" UI instead of a generic failure.
+ */
+interface PuzzleLengthErrorDetails {
+    code: 'passage_too_long';
+    wordCount: number;
+    maxWords: number;
+}
+
+function extractLengthError(err: unknown): PuzzleLengthErrorDetails | null {
+    if (!err || typeof err !== 'object') return null;
+    const details = (err as { details?: unknown }).details;
+    if (!details || typeof details !== 'object') return null;
+    const code = (details as { code?: unknown }).code;
+    if (code !== 'passage_too_long') return null;
+    const wordCount = Number((details as { wordCount?: unknown }).wordCount ?? 0);
+    const maxWords = Number((details as { maxWords?: unknown }).maxWords ?? 0);
+    return { code: 'passage_too_long', wordCount, maxWords };
+}
 
 /**
  * Phase 2.5 Tier 3 (proposal `structural-puzzle-tier3.md`) — Reconstruct
@@ -33,12 +57,19 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
     const [puzzle, setPuzzle] = useState<StructuralPuzzle | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [lengthError, setLengthError] = useState<PuzzleLengthErrorDetails | null>(null);
     const [placements, setPlacements] = useState<Record<string, StructuralPuzzleRole | null>>({});
     const [verifiedCorrect, setVerifiedCorrect] = useState<Set<string>>(new Set());
     const [hint, setHint] = useState<{ clauseId: string; text: string } | null>(null);
     const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
     const [completedOnce, setCompletedOnce] = useState(false);
     const [retryNonce, setRetryNonce] = useState(0);
+    /**
+     * Override passage typed by the pastor in the length-error UI. Lets him
+     * acotar (e.g. from "Filemón" to "Filemón 8-21") without leaving the
+     * sheet. Falls back to the prop `passage` when empty.
+     */
+    const [overridePassage, setOverridePassage] = useState('');
     /**
      * In-flight guard — replaces the previous `loading`/`puzzle` deps that
      * caused an infinite "Preparando…". When `setLoading(true)` fired inside
@@ -48,6 +79,10 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
      */
     const fetchInFlightRef = useRef(false);
 
+    // Effective passage = pastor's override (if any) or the prop. The
+    // override only matters when the prop passage hit the length guard.
+    const effectivePassage = (overridePassage.trim() || passage).trim();
+
     // Load the puzzle when the sheet opens. `retryNonce` lets the error UI
     // re-trigger this effect without re-mounting the sheet.
     useEffect(() => {
@@ -56,8 +91,9 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
         fetchInFlightRef.current = true;
         setLoading(true);
         setError(null);
+        setLengthError(null);
         pastoralSeedService
-            .buildStructuralPuzzle({ passage })
+            .buildStructuralPuzzle({ passage: effectivePassage })
             .then((p) => {
                 if (cancelled) return;
                 setPuzzle(p);
@@ -72,6 +108,11 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
             .catch((err) => {
                 console.error('[StructuralPuzzleSheet] build failed', err);
                 if (cancelled) return;
+                const lenErr = extractLengthError(err);
+                if (lenErr) {
+                    setLengthError(lenErr);
+                    return;
+                }
                 const msg = err instanceof Error ? err.message : String(err);
                 setError(msg || t('puzzle.error'));
                 toast.error(t('puzzle.error'));
@@ -81,7 +122,7 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
                 if (!cancelled) setLoading(false);
             });
         return () => { cancelled = true; };
-    }, [open, passage, retryNonce, t]);
+    }, [open, effectivePassage, retryNonce, t]);
 
     // Reset state when the sheet closes so a re-open re-fetches fresh.
     useEffect(() => {
@@ -92,6 +133,8 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
             setHint(null);
             setSelectedPiece(null);
             setError(null);
+            setLengthError(null);
+            setOverridePassage('');
         }
     }, [open]);
 
@@ -114,6 +157,13 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
 
     const allPlaced = puzzle ? puzzle.clauses.every((c) => placements[c.id] != null) : false;
     const allCorrect = puzzle ? puzzle.clauses.every((c) => verifiedCorrect.has(c.id)) : false;
+    const totalClauses = puzzle?.clauses.length ?? 0;
+    const correctCount = verifiedCorrect.size;
+    const hasVerifiedOnce = correctCount > 0 || hint !== null;
+    /** Did the previous verify pass leave at least one piece bounced back? */
+    const hadPartialMiss = hint !== null;
+    /** Clause referenced by the hint, for the in-pile ring + inline reference. */
+    const hintClause = hint && puzzle ? puzzle.clauses.find((c) => c.id === hint.clauseId) ?? null : null;
 
     const handleSelectPiece = (id: string) => {
         if (verifiedCorrect.has(id)) return;
@@ -182,7 +232,52 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
                     </div>
                 )}
 
-                {!loading && error && (
+                {!loading && lengthError && (
+                    <div className="px-4 py-6 space-y-3">
+                        <div className="rounded-md border border-warning/40 bg-warning-subtle p-3">
+                            <p className="flex items-center gap-1.5 text-sm font-semibold text-warning-subtle-foreground">
+                                <Scissors className="h-4 w-4" /> {t('puzzle.tooLongTitle')}
+                            </p>
+                            <p className="mt-1 text-xs text-warning-subtle-foreground">
+                                {t('puzzle.tooLongBody', {
+                                    wordCount: lengthError.wordCount,
+                                    maxWords: lengthError.maxWords,
+                                })}
+                            </p>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-foreground" htmlFor="puzzle-acotar-input">
+                                {t('puzzle.tooLongInputLabel')}
+                            </label>
+                            <Input
+                                id="puzzle-acotar-input"
+                                value={overridePassage}
+                                onChange={(e) => setOverridePassage(e.target.value)}
+                                placeholder={passage}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && overridePassage.trim()) {
+                                        setRetryNonce((n) => n + 1);
+                                    }
+                                }}
+                            />
+                            <p className="text-[11px] text-muted-foreground">{t('puzzle.tooLongInputHint')}</p>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" onClick={onClose}>
+                                <X className="h-4 w-4" /> {t('puzzle.close')}
+                            </Button>
+                            <Button
+                                size="sm"
+                                disabled={!overridePassage.trim()}
+                                onClick={() => setRetryNonce((n) => n + 1)}
+                            >
+                                <RotateCcw className="h-4 w-4" /> {t('puzzle.tooLongRetry')}
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {!loading && error && !lengthError && (
                     <div className="px-4 py-6 space-y-3">
                         <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
                             <p className="text-sm font-semibold text-destructive">{t('puzzle.error')}</p>
@@ -201,8 +296,27 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
 
                 {puzzle && !loading && (
                     <div className="px-4 pb-6 space-y-4">
+                        {/* Progress badge — surfaces N/M momentum so the pastor
+                            sees the correct pieces are locked, not just colored. */}
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-semibold text-foreground">{t('puzzle.pile')}</p>
+                            <span
+                                className={cn(
+                                    'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                                    allCorrect
+                                        ? 'bg-success-subtle text-success-subtle-foreground'
+                                        : correctCount > 0
+                                        ? 'bg-info-subtle text-info-subtle-foreground'
+                                        : 'bg-muted text-muted-foreground',
+                                )}
+                                title={t('puzzle.progressTitle')}
+                            >
+                                <Check className="h-3 w-3" />
+                                {t('puzzle.progress', { correct: correctCount, total: totalClauses })}
+                            </span>
+                        </div>
+
                         <section>
-                            <p className="text-xs font-semibold text-foreground mb-1.5">{t('puzzle.pile')}</p>
                             <div className="flex flex-wrap gap-2 min-h-[60px] rounded-lg border border-dashed border-border bg-muted/40 p-2">
                                 {pile.length === 0 && (
                                     <span className="text-xs text-muted-foreground italic px-1">{t('puzzle.pileEmpty')}</span>
@@ -213,6 +327,7 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
                                         text={c.text}
                                         reference={c.reference}
                                         selected={selectedPiece === c.id}
+                                        bounced={hint?.clauseId === c.id}
                                         onClick={() => handleSelectPiece(c.id)}
                                     />
                                 ))}
@@ -235,12 +350,15 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
                             ))}
                         </section>
 
-                        {hint && (
+                        {hint && hintClause && (
                             <div className="rounded-md border border-warning/30 bg-warning-subtle p-3">
                                 <p className="flex items-center gap-1.5 text-xs font-semibold text-warning-subtle-foreground">
-                                    <Lightbulb className="h-3.5 w-3.5" /> {t('puzzle.hintTitle')}
+                                    <Lightbulb className="h-3.5 w-3.5" /> {t('puzzle.hintTitleWithRef', { reference: hintClause.reference })}
                                 </p>
-                                <p className="mt-1 text-warning-subtle-foreground text-sm">{hint.text}</p>
+                                <p className="mt-1 text-[11px] italic text-warning-subtle-foreground/80 break-words">
+                                    «{hintClause.text}»
+                                </p>
+                                <p className="mt-2 text-warning-subtle-foreground text-sm">{hint.text}</p>
                             </div>
                         )}
 
@@ -253,9 +371,22 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
                                     <Button size="sm" onClick={onClose}>
                                         <Check className="h-4 w-4" /> {t('puzzle.completeCta')}
                                     </Button>
+                                ) : !allPlaced ? (
+                                    <Button size="sm" disabled>
+                                        {hadPartialMiss ? (
+                                            <>
+                                                <AlertTriangle className="h-4 w-4" /> {t('puzzle.placeBounced')}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Lightbulb className="h-4 w-4" /> {t('puzzle.placeAll')}
+                                            </>
+                                        )}
+                                    </Button>
                                 ) : (
-                                    <Button size="sm" onClick={handleVerify} disabled={!allPlaced}>
-                                        <RotateCcw className="h-4 w-4" /> {t('puzzle.verify')}
+                                    <Button size="sm" onClick={handleVerify}>
+                                        <RotateCcw className="h-4 w-4" />{' '}
+                                        {hasVerifiedOnce ? t('puzzle.verifyAgain') : t('puzzle.verify')}
                                     </Button>
                                 )}
                             </div>
@@ -272,25 +403,34 @@ interface PieceProps {
     reference: string;
     selected?: boolean;
     correct?: boolean;
+    /** Visual link to the active hint: this is the piece that just bounced. */
+    bounced?: boolean;
     onClick?: () => void;
 }
 
-function PuzzlePiece({ text, reference, selected, correct, onClick }: PieceProps) {
+function PuzzlePiece({ text, reference, selected, correct, bounced, onClick }: PieceProps) {
+    const { t } = useTranslation('studyDepth');
     return (
         <button
             type="button"
             onClick={onClick}
             disabled={correct}
+            title={correct ? t('puzzle.lockedTooltip') : undefined}
             className={cn(
                 'inline-flex flex-col items-start gap-0.5 max-w-[260px] rounded-md border px-2.5 py-1.5 text-left text-xs transition-all',
                 correct
                     ? 'border-success bg-success-subtle text-success-subtle-foreground cursor-default'
+                    : bounced
+                    ? 'border-warning bg-warning-subtle text-warning-subtle-foreground shadow ring-2 ring-warning/40 animate-pulse'
                     : selected
                     ? 'border-info bg-info-subtle text-info-subtle-foreground shadow ring-2 ring-info/30'
                     : 'border-border bg-card text-foreground hover:border-info/50 hover:bg-info-subtle/30',
             )}
         >
-            <span className="text-[10px] font-mono text-muted-foreground">{reference}</span>
+            <span className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground">
+                {correct && <Check className="h-2.5 w-2.5 text-success" />}
+                {reference}
+            </span>
             <span className="leading-snug">{text}</span>
         </button>
     );
