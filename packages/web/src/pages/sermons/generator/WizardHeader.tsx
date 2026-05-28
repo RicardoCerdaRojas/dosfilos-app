@@ -30,7 +30,7 @@ const LEGACY_PHASES: Phase[] = [
 
 const PASTORAL_PHASES: Phase[] = [
     { step: 0, label: 'Pasaje', icon: BookOpen },
-    { step: 1, label: 'Estudio (6 pasos)', icon: Sprout, pastoralLabel: 'Estudio' },
+    { step: 1, label: `Estudio (${PASTORAL_SEED_STEP_ORDER.length} pasos)`, icon: Sprout, pastoralLabel: 'Estudio' },
     { step: 2, label: 'Homilética', icon: Mic2 },
     { step: 3, label: 'Redacción', icon: FileText },
 ];
@@ -43,8 +43,9 @@ const PASTORAL_PHASES: Phase[] = [
  *   - Adds Step 0 (Pasaje) as a first-class phase under flag-on, so
  *     the pastor doesn't see a misleading "Preparando…" label while
  *     entering the passage.
- *   - Step 1 becomes "Estudio (6 pasos)" with a `n/6` sub-counter
- *     computed live from the persisted `PastoralSeed`.
+ *   - Step 1 becomes "Estudio (N pasos)" with a `n/N` sub-counter
+ *     computed live from the persisted `PastoralSeed`. `N` derives from
+ *     `PASTORAL_SEED_STEP_ORDER.length` (8 since Phase 1.6, ADR-022).
  *   - Quota + exit widgets are hidden on Step 0 — nothing to save
  *     yet and surfacing quota at that point reads as friction.
  */
