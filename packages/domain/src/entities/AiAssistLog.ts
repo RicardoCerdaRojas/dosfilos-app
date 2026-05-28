@@ -43,7 +43,13 @@ export type AiAssistType =
     /** Step 5: cross-reference engine retrieval. */
     | 'crossRefEngine'
     /** Step 7 / inline: eisegesis verification (verifier, never generator). */
-    | 'eisegesisCheck';
+    | 'eisegesisCheck'
+    /**
+     * Phase 2.5 (ADR-026): step orientation by the Study Companion — data +
+     * Socratic questions on a method step (genre, structure, words,
+     * parallels, function). Verifier-orienter, never writes the answer.
+     */
+    | 'stepOrientation';
 
 export interface AiAssistLog {
     id: string;

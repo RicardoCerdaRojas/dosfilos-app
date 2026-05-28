@@ -21,7 +21,7 @@ Análisis fundacional: ver [00-vision.md](./00-vision.md).
 | 1.5 | Pastoral Word Study (módulo separado de language tutors) | `completed` | [phase-1-5-pastoral-word-study.md](./phases/phase-1-5-pastoral-word-study.md) |
 | 1.6 | Contexto/Género + Principio atemporal + verificación proactiva (8-step spine) | `completed` | [phase-1-6-context-genre-principle.md](./phases/phase-1-6-context-genre-principle.md) |
 | 2 | Tres testigos para validar semilla pastoral | `completed` | [phase-2-three-witnesses.md](./phases/phase-2-three-witnesses.md) |
-| 2.5 | Study Depth Copilot (gate Faculty + medición multidimensional) | `planning` | [phase-2-5-study-depth-copilot.md](./phases/phase-2-5-study-depth-copilot.md) |
+| 2.5 | Study Depth Copilot — Acompañante de Estudio (un motor, 3 momentos) | `in-progress` | [phase-2-5-study-depth-copilot.md](./phases/phase-2-5-study-depth-copilot.md) |
 | 3 | Pass de fidelidad claim↔source en borrador | `planning` | [phase-3-claim-source-fidelity.md](./phases/phase-3-claim-source-fidelity.md) |
 | 4 | Indicador de autoría + contra-scan + voice fingerprint | `planning` | [phase-4-authorship-contrascan-voice.md](./phases/phase-4-authorship-contrascan-voice.md) |
 | 5 | Proyecto como contenedor + artefactos derivados | `planning` | [phase-5-project-as-container.md](./phases/phase-5-project-as-container.md) |

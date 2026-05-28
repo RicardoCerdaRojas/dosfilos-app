@@ -2,7 +2,9 @@
 
 ## Estado
 
-`planning` — bloqueada por completion de Fase 1 (six-step spine) + Fase 2 (tres testigos). Inserta entre Fase 2 y Fase 3 en el roadmap. Numeración decimal preserva trazabilidad de referencias existentes a Fases 3-7.
+`in-progress` — destrabada al cerrar Fase 1.6 + Fase 2. Kickoff 2026-05-27 (ADR-025/026/027). PR A
+en curso. Inserta entre Fase 2 y Fase 3 en el roadmap. Numeración decimal preserva trazabilidad de
+referencias existentes a Fases 3-7.
 
 ## Objetivo
 
@@ -65,7 +67,23 @@ Sin Phase 1.6 + Phase 2, esta fase NO puede arrancar — los dimension trackers 
 
 ## Decisiones tomadas
 
-- (Pendientes — los ADRs de esta fase se escriben al arrancar `/iniciar-fase 2.5`)
+Al arrancar `/iniciar-fase 2.5` (2026-05-27), modelando casos de uso del flujo completo con el
+fundador, se reformuló la fase: **NO dos motores, sino un Acompañante de Estudio unificado**. ADRs:
+
+- **[ADR-025](../decisions/ADR-025-study-companion-unified-model.md)** — Modelo unificado: un
+  acompañante, un modelo de cobertura (`StudyDepthAssessment` **1:1 con el `pastoralSeed`**, no con
+  el proyecto → cero dependencia de Fase 5), tres momentos (orientación / cobertura / gate). 7 dims
+  **re-derivadas de los 8 pasos** (1.6). **Opción B**: Faculty es exploración que alimenta el seed;
+  el sermón nace **solo** del seed (pipeline único); el path Faculty→sermón de PR #214 se re-rutea.
+- **[ADR-026](../decisions/ADR-026-step-orientation-supersede-silence.md)** — Orientación por paso:
+  **extiende** (no revierte) el silencio no-core de ADR-023 sobre un eje ortogonal — **corrección de
+  método** (género, regla de lectura, estructura, salto exegético) vs interpretación legítima.
+  Verificador-orientador (nunca generador), pull-first ("Pedir orientación"), nudge suave opcional.
+  Cierra el escenario del smoke 1.6 (género equivocado sin guía).
+- **[ADR-027](../decisions/ADR-027-override-and-expert-mode-policy.md)** — Override (justificación
+  ≥100 chars, audit, no bloquea) + modo experto **self-service ganado** (toggle en config usuario,
+  bloqueado hasta umbral N sermones → resuelve chicken-egg) **+ override super-admin** (escape hatch)
+  + **suaviza no silencia** (P3: confronta gaps reales igual).
 
 ## Decisiones pendientes — ADRs futuros
 
@@ -398,6 +416,29 @@ Tracking interno (no pastor-facing):
 
 ## Bitácora
 
+- **2026-05-28 (smoke PR A — iteración del acompañante)** — Validado en local. Aparecieron dos
+  mejoras durante el smoke: (1) Tier 2 "Explícamelo más sencillo" agregado a `StepCompanion` +
+  `orientStudy` (parámetro `simplify` + campo `example` con ejemplo del método en otro pasaje;
+  redeployado). (2) Tier 3 "Reconstruye la estructura tú mismo" (puzzle interactivo de cláusulas
+  para paso 3) propuesto y **diferido post-PR A** — documentado en
+  [proposals/structural-puzzle-tier3.md](../proposals/structural-puzzle-tier3.md). Otros ajustes:
+  re-rutado popover anclado (Radix) + placeholder de Análisis Estructural corregido (separación
+  léxico ↔ estructura). Smoke continúa.
+- **2026-05-27 (`/iniciar-fase 2.5` — kickoff + decisiones)** — Modelados los casos de uso del flujo
+  completo (entrada → 8 pasos → tres testigos → homilética → redacción) con el fundador. Rechazada la
+  lectura "dos motores" (medición Faculty + tutor wizard) → **un Acompañante de Estudio unificado**
+  (ADR-025/026/027). Decisiones del fundador: (1) ambos threads en 2.5; (2) **Opción B** — Faculty =
+  exploración, sermón = pipeline único vía seed (re-ruteo de PR #214 confirmado, "decisión basada en
+  visión"); (3) modelo de cobertura cuelga del `pastoralSeed`, no del proyecto (proyectos existen hoy
+  como etiqueta floja; project-as-container es Fase 5, no construida); (4) modo experto self-service
+  ganado + override super-admin, suaviza no silencia; (5) Q7 **abstracción de proveedor LLM** →
+  deuda técnica separada (memoria `tech_debt_llm_provider_abstraction`); callables nuevos de 2.5
+  contra interfaz `LlmClient` fina; (6) cableado completo `AiAssistLog` (structural/wordStudies/
+  crossRef) entra en 2.5; (7) trasfondo PD sigue sin ingestar (degradación elegante, OK). **Plan: 3
+  PRs** — PR A (acompañante en wizard: cimiento + cobertura estructurada + orientación Momento 1 +
+  AiAssistLog completo), PR B (Faculty alimenta seed + clasificador + nudges), PR C (gate
+  pre-generación + snapshot + modo experto). Estim ~4.5 sem. **PR A en curso** (branch
+  `feat/pastoral-fidelity-phase-2-5-study-companion`). Estado fase: `planning` → `in-progress`.
 - **2026-05-27 (prereqs actualizados al cerrar Fase 1.6)** — Fase 1.6 (8-step spine) cerrada +
   merged + deployed (PR #265). Prereqs duros de 2.5 ahora apuntan al **eight-step spine** (no
   six-step): las 7 dimensiones se re-derivan de los 8 pasos; el pre-gen gate se unifica con el

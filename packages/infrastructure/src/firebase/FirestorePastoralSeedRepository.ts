@@ -8,6 +8,7 @@ import {
     orderBy,
     query,
     serverTimestamp,
+    setDoc,
     Timestamp,
     updateDoc,
     where,
@@ -15,6 +16,7 @@ import {
 import { db } from '../config/firebase';
 import type {
     AiAssistLog,
+    DimensionOverrides,
     ContextGenreStepData,
     InsightStepData,
     IPastoralSeedRepository,
@@ -142,6 +144,32 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
                 createdAt: this.toDate(data.createdAt),
             } satisfies AiAssistLog;
         });
+    }
+
+    async getStudyDepthOverrides(seedId: string): Promise<DimensionOverrides> {
+        const ref = doc(db, this.collectionName, seedId, 'studyDepth', 'current');
+        const snap = await getDoc(ref);
+        if (!snap.exists()) return {};
+        const data = snap.data() as { overrides?: DimensionOverrides };
+        return data.overrides ?? {};
+    }
+
+    async setStudyDepthOverride(
+        seedId: string,
+        dimensionId: string,
+        pastorMarkedComplete: boolean,
+    ): Promise<void> {
+        const ref = doc(db, this.collectionName, seedId, 'studyDepth', 'current');
+        // merge:true deep-merges the nested `overrides` map, so per-dim writes
+        // never clobber sibling dimensions.
+        await setDoc(
+            ref,
+            {
+                overrides: { [dimensionId]: { pastorMarkedComplete } },
+                updatedAt: serverTimestamp(),
+            },
+            { merge: true },
+        );
     }
 
     private toFirestore(seed: PastoralSeed, opts?: { partial?: boolean }): Record<string, unknown> {

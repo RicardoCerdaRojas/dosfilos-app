@@ -1,7 +1,9 @@
 import {
     AiAssistLog,
     assertAiAssistAllowed,
+    computeStudyDepthFromSeed,
     createEmptyPastoralSeed,
+    DimensionOverrides,
     evaluatePastoralSeed,
     IPastoralSeedRepository,
     PASTORAL_SEED_STEP_ORDER,
@@ -10,6 +12,7 @@ import {
     PastoralSeedStepKey,
     PasteEvent,
     PrincipleVerification,
+    StudyDepthAssessment,
     ToolUsage,
     WordStudy,
 } from '@dosfilos/domain';
@@ -31,6 +34,38 @@ export interface VerifyPrincipleInput {
 export interface HistoricalContextChunk {
     text: string;
     source: string;
+}
+
+/** Input for the `orientStudy` callable (Phase 2.5, ADR-026). */
+export interface OrientStudyInput {
+    passage: string;
+    /** One of the orientable method steps (genre/structure/words/parallels/function). */
+    stepKey: 'contextGenre' | 'structuralAnalysis' | 'wordStudies' | 'recognition' | 'function';
+    /** The pastor's current draft for the step (may be empty or hold a method error). */
+    pastorInput: string;
+    /** Genre, if already confirmed — sharpens the orientation. */
+    genre?: string;
+    /**
+     * Second-level help (ZPD scaffolding): drop jargon + include a concrete
+     * example of the METHOD applied to a different passage. The companion
+     * still never writes the pastor's answer.
+     */
+    simplify?: boolean;
+}
+
+/**
+ * Output of the Study Companion's step orientation (Moment 1, ADR-026).
+ * Verifier-orienter: data + Socratic questions, never the pastor's answer.
+ */
+export interface StepOrientation {
+    data: string[];
+    questions: string[];
+    /** Present only when a method error was detected (phrased as confrontation). */
+    confrontation?: string;
+    /** e.g. no real background source available for this book. */
+    caution?: string;
+    /** Simplified mode only — concrete example of the METHOD in another passage. */
+    example?: string;
 }
 
 /**
@@ -204,6 +239,49 @@ export class PastoralSeedService {
                 source: String(c.source ?? c.resourceTitle ?? 'Fuente'),
             }))
             .filter((c) => c.text.trim().length > 0);
+    }
+
+    /**
+     * Phase 2.5 (ADR-025) — compute the Study Companion coverage model from
+     * the pastor's seed (structured evidence) + persisted manual overrides.
+     * Pure; re-exported so the hook doesn't import domain + service both.
+     */
+    computeStudyDepth(seed: PastoralSeed, overrides: DimensionOverrides = {}): StudyDepthAssessment {
+        return computeStudyDepthFromSeed(seed, overrides);
+    }
+
+    /** Phase 2.5 (ADR-027) — read persisted per-dim manual overrides. */
+    async getStudyDepthOverrides(seedId: string): Promise<DimensionOverrides> {
+        return this.repo.getStudyDepthOverrides(seedId);
+    }
+
+    /** Phase 2.5 (ADR-027) — set/clear one dimension's manual override. */
+    async setStudyDepthOverride(
+        seedId: string,
+        dimensionId: string,
+        pastorMarkedComplete: boolean,
+    ): Promise<void> {
+        await this.repo.setStudyDepthOverride(seedId, dimensionId, pastorMarkedComplete);
+    }
+
+    /**
+     * Phase 2.5 (ADR-026) — runs the `orientStudy` callable (Study Companion,
+     * Moment 1). Lives here so web pages stay free of `firebase/functions`
+     * imports (compliance gate). Verifier-orienter — the callable never
+     * writes the pastor's answer.
+     */
+    async orientStudy(input: OrientStudyInput): Promise<StepOrientation> {
+        const callable = httpsCallable(getFunctions(), 'orientStudy');
+        const response = await callable(input);
+        const r = (response.data ?? {}) as Partial<StepOrientation>;
+        const out: StepOrientation = {
+            data: Array.isArray(r.data) ? r.data.map(String) : [],
+            questions: Array.isArray(r.questions) ? r.questions.map(String) : [],
+        };
+        if (r.confrontation) out.confrontation = String(r.confrontation);
+        if (r.caution) out.caution = String(r.caution);
+        if (r.example) out.example = String(r.example);
+        return out;
     }
 
     /**

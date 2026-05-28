@@ -54,6 +54,8 @@ import settingsEn from '../locales/en/settings.json';
 import settingsEs from '../locales/es/settings.json';
 import wordStudyEn from '../locales/en/wordStudy.json';
 import wordStudyEs from '../locales/es/wordStudy.json';
+import studyDepthEn from '../locales/en/studyDepth.json';
+import studyDepthEs from '../locales/es/studyDepth.json';
 
 /**
  * Initialize i18next with best practices:
@@ -94,6 +96,7 @@ export const initI18n = () => {
                     admin: adminEn,
                     settings: settingsEn,
                     wordStudy: wordStudyEn,
+                    studyDepth: studyDepthEn,
                 },
                 es: {
                     common: commonEs,
@@ -117,6 +120,7 @@ export const initI18n = () => {
                     admin: adminEs,
                     settings: settingsEs,
                     wordStudy: wordStudyEs,
+                    studyDepth: studyDepthEs,
                 },
             },
 

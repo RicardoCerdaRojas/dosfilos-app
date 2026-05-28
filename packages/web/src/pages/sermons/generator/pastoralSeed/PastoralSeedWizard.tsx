@@ -3,9 +3,13 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Sprout, Save, Loader2, BookOpen, PanelRightOpen, Scale } from 'lucide-react';
 import { usePastoralSeed } from '@/hooks/usePastoralSeed';
-import { useThreeWitnessesGate, usePastoralFidelityGate } from '@/hooks/usePastoralFidelityGate';
+import { useThreeWitnessesGate, usePastoralFidelityGate, useStudyDepthGate } from '@/hooks/usePastoralFidelityGate';
+import { useStudyDepth } from '@/hooks/useStudyDepth';
 import { useWizard } from '../WizardContext';
 import { PASTORAL_SEED_STEP_ORDER, PastoralSeedStepKey } from '@dosfilos/domain';
+import { StudyDepthBadge } from './StudyDepthBadge';
+import { StepCompanion } from './StepCompanion';
+import { ORIENTABLE_STEPS, pastorInputForStep } from './stepCompanionWiring';
 import { WitnessGate } from './witnesses/WitnessGate';
 import { PastoralSeedBreadcrumb, BreadcrumbStep } from './PastoralSeedBreadcrumb';
 import { ReadingStep } from './ReadingStep';
@@ -103,6 +107,15 @@ export function PastoralSeedWizard({
         userId,
         passage,
         enabled: true,
+    });
+
+    // Phase 2.5 (ADR-025/026) — Study Companion: coverage badge + per-step
+    // orientation. Behind the `study_depth` sub-flag; flag-off pastors get
+    // the Phase 1.6 wizard unchanged.
+    const studyDepthGate = useStudyDepthGate();
+    const { assessment, setOverride, orient } = useStudyDepth({
+        seed,
+        enabled: studyDepthGate.enabled,
     });
 
     // Publish live completed-steps counter to the wizard context so
@@ -232,6 +245,9 @@ export function PastoralSeedWizard({
                                 durationSeconds: 0,
                             })
                         }
+                        onLogAiAssist={(assistType, edited) =>
+                            logAiAssist({ stepKey: 'structuralAnalysis', assistType, outputWasEditedByUser: edited })
+                        }
                     />
                 );
             case 'wordStudies':
@@ -251,6 +267,9 @@ export function PastoralSeedWizard({
                                 durationSeconds: 0,
                             })
                         }
+                        onLogAiAssist={(assistType, edited) =>
+                            logAiAssist({ stepKey: 'wordStudies', assistType, outputWasEditedByUser: edited })
+                        }
                     />
                 );
             case 'recognition':
@@ -267,6 +286,9 @@ export function PastoralSeedWizard({
                                 invokedAt: new Date(),
                                 durationSeconds: 0,
                             })
+                        }
+                        onLogAiAssist={(assistType, edited) =>
+                            logAiAssist({ stepKey: 'recognition', assistType, outputWasEditedByUser: edited })
                         }
                     />
                 );
@@ -386,7 +408,28 @@ export function PastoralSeedWizard({
                 )}
             >
                 <div className="space-y-4">
+                    {studyDepthGate.enabled && assessment && (
+                        <StudyDepthBadge assessment={assessment} onToggleOverride={setOverride} />
+                    )}
+
                     <Card className="p-6">{renderStep()}</Card>
+
+                    {studyDepthGate.enabled && ORIENTABLE_STEPS[currentKey] && (
+                        <StepCompanion
+                            passage={passage}
+                            stepKey={ORIENTABLE_STEPS[currentKey]}
+                            pastorInput={pastorInputForStep(seed, currentKey)}
+                            genre={seed.contextGenre?.genreConfirmed ? seed.contextGenre.genre || undefined : undefined}
+                            orient={orient}
+                            onLogOrientation={() =>
+                                logAiAssist({
+                                    stepKey: currentKey,
+                                    assistType: 'stepOrientation',
+                                    outputWasEditedByUser: false,
+                                })
+                            }
+                        />
+                    )}
 
                     <footer className="flex flex-wrap items-center justify-between gap-3 px-1">
                         <div className="text-xs text-muted-foreground flex items-center gap-2">

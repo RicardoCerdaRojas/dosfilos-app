@@ -280,6 +280,15 @@ service cloud.firestore {
                       && request.auth.uid == request.resource.data.userId;
         allow update, delete: if false;
       }
+
+      // Pastoral Fidelity Phase 2.5 — Study Companion coverage state
+      // (ADR-025/027). Single doc `studyDepth/current` holding the pastor's
+      // per-dimension manual overrides. Ownership derives from the parent
+      // seed (the subdoc itself stores no userId). Cloud Functions bypass.
+      match /studyDepth/{docId} {
+        allow read, write: if isAuthenticated()
+          && get(/databases/$(database)/documents/pastoralSeeds/$(seedId)).data.userId == request.auth.uid;
+      }
     }
 
     // Pastoral Fidelity Phase 1.5 — pastoral word analysis cache (ADR-017/019).
