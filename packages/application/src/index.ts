@@ -1,5 +1,10 @@
 export * from './services/SermonService';
 export * from './services/PastoralSeedService'; // 🌱 Pastoral Fidelity Phase 1 — six-step spine
+export * from './services/GuidedSermonService'; // 🌱 Pastoral Fidelity Phase 2.5 PR B — Faculty Socratic Sermon Agent (ADR-028)
+export * from './use-cases/guided-sermon/ActivateGuidedSermonUseCase';
+export * from './use-cases/guided-sermon/RunSocraticTurnUseCase';
+export * from './use-cases/guided-sermon/PauseGuidedSermonUseCase';
+export * from './use-cases/guided-sermon/ResumeGuidedSermonUseCase';
 export * from './services/AuthService';
 export * from './services/FacultyService';
 export * from './services/SeriesService';

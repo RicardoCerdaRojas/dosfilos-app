@@ -1,0 +1,37 @@
+{
+  "header": {
+    "title": "Guía de sermón",
+    "completed": "Listo",
+    "openWizard": "Pasar al sermón",
+    "pause": "Pausar",
+    "resume": "Reanudar"
+  },
+  "steps": {
+    "reading": "Lectura",
+    "contextGenre": "Contexto y género",
+    "structuralAnalysis": "Análisis estructural",
+    "wordStudies": "Estudio de palabras",
+    "recognition": "Reconocimiento canónico",
+    "function": "Función",
+    "timelessPrinciple": "Principio atemporal",
+    "insight": "Insight"
+  },
+  "activation": {
+    "title": "Construye tu sermón paso a paso",
+    "description": "Te voy a guiar por los 8 pasos del estudio. Vos escribís cada paso con tus palabras; yo aporto datos y preguntas, y confronto si detecto error de método. Nunca escribo tu respuesta.",
+    "passageLabel": "Pasaje a estudiar",
+    "passagePlaceholder": "Ej. Juan 1:1",
+    "passageHint": "Pasaje completo (libro + capítulo + verso). El resto del estudio se construye sobre este.",
+    "activate": "Empezar guía",
+    "activating": "Activando…",
+    "cancel": "Cancelar"
+  },
+  "cta": {
+    "startGuided": "Construir sermón guiado",
+    "startGuidedDescription": "Construí tu sermón paso a paso con un agente socrático que orienta y confronta."
+  },
+  "error": {
+    "activate": "No se pudo activar la guía. Intentá de nuevo.",
+    "runTurn": "No se pudo procesar tu respuesta. Intentá de nuevo."
+  }
+}

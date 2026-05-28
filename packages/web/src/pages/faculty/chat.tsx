@@ -16,6 +16,11 @@ import { FacultyExtractionPanel } from '@/components/faculty/FacultyExtractionPa
 import { RailDivider } from '@/components/faculty/RailDivider';
 import { FacultyChatMessages } from '@/components/faculty/FacultyChatMessages';
 import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
+import { GuidedSermonHeader } from '@/components/faculty/GuidedSermonHeader';
+import { GuidedSermonActivationPrompt } from '@/components/faculty/GuidedSermonActivationPrompt';
+import { useGuidedSermonIntegration } from './hooks/useGuidedSermonIntegration';
+import { Sprout } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
 import { EmailExtractionDialog } from '@/components/faculty/EmailExtractionDialog';
 import { PublishToWordpressDialog } from '@/components/faculty/PublishToWordpressDialog';
@@ -222,6 +227,23 @@ export function FacultyChatPage() {
         sendOrchestratedMessage,
     });
 
+    // Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent integration.
+    // Owns: guided-mode detection, activation prompt state, send fork.
+    const tGuided = useTranslation('guidedSermon').t;
+    const guidedIntegration = useGuidedSermonIntegration({
+        session,
+        effectiveSessionId,
+        setInput,
+    });
+
+    // Wrap the submit so guided turns route through the Socratic agent.
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const handled = await guidedIntegration.trySocraticSubmit(input);
+        if (handled) return;
+        await handleSendMessage(e);
+    };
+
     const {
         deleteMessageConfirmId,
         deletingMessageId,
@@ -405,8 +427,40 @@ export function FacultyChatPage() {
                                                     </span>
                                                 )}
                                             </div>
+                                            {session?.guidedSermonSession && (
+                                                <GuidedSermonHeader
+                                                    session={session.guidedSermonSession}
+                                                    onPause={guidedIntegration.pause}
+                                                    onResume={guidedIntegration.resume}
+                                                    onOpenWizard={() => navigate(`/dashboard/sermons?id=${session.guidedSermonSession?.seedId ?? ''}`)}
+                                                />
+                                            )}
                                             <div ref={chatScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-8 space-y-6 scroll-smooth pb-40">
                                                 <div className="max-w-3xl mx-auto space-y-6 w-full">
+                                                    {guidedIntegration.isFlagEnabled
+                                                        && !guidedIntegration.hasGuidedSession
+                                                        && !!effectiveSessionId
+                                                        && !guidedIntegration.activationPromptOpen && (
+                                                        <div className="rounded-lg border border-info/30 bg-info-subtle/30 p-3 flex items-center justify-between gap-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <Sprout className="h-4 w-4 text-success" />
+                                                                <div>
+                                                                    <p className="text-sm font-medium text-foreground">{tGuided('cta.startGuided')}</p>
+                                                                    <p className="text-xs text-muted-foreground">{tGuided('cta.startGuidedDescription')}</p>
+                                                                </div>
+                                                            </div>
+                                                            <Button size="sm" onClick={guidedIntegration.openActivationPrompt}>
+                                                                <Sprout className="h-4 w-4" /> {tGuided('cta.startGuided')}
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                    {guidedIntegration.activationPromptOpen && (
+                                                        <GuidedSermonActivationPrompt
+                                                            onActivate={guidedIntegration.activate}
+                                                            onCancel={guidedIntegration.closeActivationPrompt}
+                                                            isProcessing={guidedIntegration.isProcessing}
+                                                        />
+                                                    )}
                                                     <FacultyChatMessages
                                                         messages={session?.messages || []}
                                                         isNewSession={isNewSession}
@@ -431,7 +485,7 @@ export function FacultyChatPage() {
                                                 streamingMessage={streamingMessage}
                                                 isHidden={isHomeState}
                                                 onInputChange={setInput}
-                                                onSubmit={handleSendMessage}
+                                                onSubmit={handleSubmit}
                                                 attachment={pendingAttachment}
                                                 onAttach={setPendingAttachment}
                                                 lengthPreference={lengthPreference}

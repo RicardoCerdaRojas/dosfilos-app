@@ -14,5 +14,16 @@ export interface IAIChatRepository {
     clearProjectFromSessions(userId: string, projectId: string): Promise<void>;
     /** Renames a session. */
     renameSession(userId: string, sessionId: string, title: string): Promise<void>;
+    /**
+     * Phase 2.5 PR B (ADR-028) — set or clear the guided-sermon agent state
+     * on a session. Atomic write so it does not race with
+     * `addMessageToSession`. Pass `null` to clear (pastor exits guided mode
+     * or seed graduates to a sermon).
+     */
+    updateGuidedSermonSession(
+        userId: string,
+        sessionId: string,
+        guidedSermonSession: AIChatSession['guidedSermonSession'] | null,
+    ): Promise<void>;
 }
 

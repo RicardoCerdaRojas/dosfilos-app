@@ -27,6 +27,20 @@ export * from './entities/PastoralSeed'; // 🌱 Pastoral Fidelity Phase 1/1.6 �
 export * from './entities/AiAssistLog'; // 🌱 Pastoral Fidelity Phase 1.6 — first-class assist audit (ADR-024)
 export * from './entities/StudyDepthAssessment'; // 🌱 Pastoral Fidelity Phase 2.5 — Study Companion coverage model (ADR-025)
 export * from './ports/ILlmClient'; // 🌱 Pastoral Fidelity Phase 2.5 — thin LLM provider port (Q7/ADR-025)
+// 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent
+export * from './guided-sermon/SocraticTurn';
+export * from './guided-sermon/GuidedSermonSession';
+export * from './guided-sermon/GuidedSermonStateMachine';
+export * from './guided-sermon/policies/IStepPolicy';
+export * from './guided-sermon/policies/ReadingStepPolicy';
+export * from './guided-sermon/policies/ContextGenreStepPolicy';
+export * from './guided-sermon/policies/StructuralAnalysisStepPolicy';
+export * from './guided-sermon/policies/WordStudiesStepPolicy';
+export * from './guided-sermon/policies/RecognitionStepPolicy';
+export * from './guided-sermon/policies/FunctionStepPolicy';
+export * from './guided-sermon/policies/TimelessPrincipleStepPolicy';
+export * from './guided-sermon/policies/InsightStepPolicy';
+export * from './guided-sermon/StepPolicyRegistry';
 export * from './repositories/IPastoralSeedRepository';
 export * from './entities/PastoralWordAnalysis'; // 🌱 Pastoral Fidelity Phase 1.5 — Pastoral Word Study types
 export * from './entities/WitnessValidation'; // 🌱 Pastoral Fidelity Phase 2 — three-witnesses validation

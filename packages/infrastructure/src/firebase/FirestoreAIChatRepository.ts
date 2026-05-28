@@ -108,6 +108,19 @@ export class FirestoreAIChatRepository implements IAIChatRepository {
         await updateDoc(docRef, { title: title.trim(), updatedAt: new Date() });
     }
 
+    async updateGuidedSermonSession(
+        userId: string,
+        sessionId: string,
+        guidedSermonSession: AIChatSession['guidedSermonSession'] | null,
+    ): Promise<void> {
+        const docRef = this.getDocRef(userId, sessionId);
+        // Firestore rejects `undefined`; passing null clears the field.
+        await updateDoc(docRef, {
+            guidedSermonSession: guidedSermonSession ?? null,
+            updatedAt: new Date(),
+        });
+    }
+
     async clearProjectFromSessions(userId: string, projectId: string): Promise<void> {
         const q = query(
             this.getCollectionRef(userId),

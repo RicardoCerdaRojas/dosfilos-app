@@ -72,6 +72,16 @@ export interface AIChatSession {
      * without polluting the entity surface.
      */
     context?: AIChatSessionContext;
+    /**
+     * Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent state.
+     * Optional + additive: when present and `status === 'active'`, the
+     * chat client routes messages through `runSocraticTurn` instead of
+     * the normal orchestrated send. When `paused`, dormant + resumable.
+     * When `completed`, the bound `pastoralSeed` is ready to feed the
+     * wizard at homiletics. Imported lazily to avoid a cycle between
+     * the chat session and the guided-sermon module.
+     */
+    guidedSermonSession?: import('../guided-sermon/GuidedSermonSession').GuidedSermonSession;
 }
 
 /**
