@@ -18,6 +18,15 @@ interface UseExtractionActionParams {
     generateAndSaveExtraction: (input: { type: ExtractionType; fallbackTitle: string }) => Promise<Extraction>;
     setSermonOutline: (outline: SermonOutline | null) => void;
     openExtractionInEditor: (extraction: Extraction) => void;
+    /**
+     * Phase 2.5 PR B reroute (ADR-028) — when set, called BEFORE the normal
+     * SERMON-outline preview flow. If it returns `true`, the normal flow
+     * short-circuits (the caller handled the extract — typically by opening
+     * the Faculty Socratic Sermon Agent activation prompt under the
+     * `study_depth` flag). When `false` or undefined, the legacy
+     * `SermonOutlinePreviewModal` flow runs unchanged.
+     */
+    sermonGuidedOverride?: () => boolean | Promise<boolean>;
 }
 
 /**
@@ -44,6 +53,7 @@ export function useExtractionAction(params: UseExtractionActionParams) {
         generateAndSaveExtraction,
         setSermonOutline,
         openExtractionInEditor,
+        sermonGuidedOverride,
     } = params;
     const { t } = useTranslation('faculty');
     const [extractingType, setExtractingType] = useState<string | null>(null);
@@ -57,6 +67,14 @@ export function useExtractionAction(params: UseExtractionActionParams) {
             // persisted — only the final approved sermon is, via the
             // modal's onSuccess path which calls generateAndSaveExtraction.
             if (type === 'SERMON') {
+                // Phase 2.5 PR B reroute (ADR-028): the guided-sermon
+                // agent supersedes the outline-preview flow under the
+                // `study_depth` flag. Caller decides via the override
+                // callback; if it returns true, we short-circuit.
+                if (sermonGuidedOverride) {
+                    const handled = await sermonGuidedOverride();
+                    if (handled) return;
+                }
                 const raw = await extractContent({ type: 'SERMON_OUTLINE' });
                 const json = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
                 const outline: SermonOutline = JSON.parse(json);

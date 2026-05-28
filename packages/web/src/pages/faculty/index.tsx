@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useFacultyAgents, useFacultySessions } from '../../hooks/faculty';
 import { useFirebase } from '@/context/firebase-context';
+import { useStudyDepthGate } from '@/hooks/usePastoralFidelityGate';
 import { AIAgent, resolveLocalized } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 import { useTranslation } from 'react-i18next';
@@ -77,7 +78,7 @@ export function FacultyDirectoryPage() {
 
     const { data: agents = [], isLoading: isLoadingAgents } = useFacultyAgents();
     const { user } = useFirebase();
-    const { sessions, isLoading: isLoadingSessions } = useFacultySessions();
+    const { sessions, isLoading: isLoadingSessions, createSession } = useFacultySessions();
     const { t, i18n } = useTranslation('faculty');
     const activeLanguage: SupportedLanguage = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
 
@@ -222,6 +223,24 @@ export function FacultyDirectoryPage() {
         navigate(`/dashboard/faculty/new${newSessionQuery(`q=${encodeURIComponent(q)}`)}`);
     };
 
+    // Phase 2.5 PR B reroute (ADR-028): under the `study_depth` flag the
+    // "Bosquejo de Sermón" chip mints a fresh session + lands the pastor
+    // on it with the guided-sermon agent activation prompt already open.
+    // Falls back to the existing orchestrated prompt when the flag is off.
+    const studyDepthGate = useStudyDepthGate();
+    const handleStartGuided = async () => {
+        if (agents.length === 0 || isBusy) return;
+        try {
+            const created = await createSession.mutateAsync({
+                agentId: agents[0].id,
+            });
+            navigate(`/dashboard/faculty/${created.id}?guided=1`);
+        } catch (err) {
+            console.error('[FacultyDirectory] failed to start guided session', err);
+            toast.error(t('directory.attachment.encodeFailed'));
+        }
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -349,10 +368,15 @@ export function FacultyDirectoryPage() {
                         {QUICK_PROMPT_KEYS.map(({ key, icon: Icon }) => {
                             const label = t(`directory.quickPrompts.${key}.label`);
                             const prompt = t(`directory.quickPrompts.${key}.prompt`);
+                            const rerouteToGuided = key === 'outline' && studyDepthGate.enabled;
                             return (
                                 <button
                                     key={key}
-                                    onClick={() => handleStartOrchestrated(prompt)}
+                                    onClick={() =>
+                                        rerouteToGuided
+                                            ? handleStartGuided()
+                                            : handleStartOrchestrated(prompt)
+                                    }
                                     disabled={isBusy || agents.length === 0}
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted hover:bg-secondary border border-border text-foreground text-xs font-medium transition-colors disabled:opacity-40"
                                 >
