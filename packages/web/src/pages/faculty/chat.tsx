@@ -6,26 +6,21 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import { track } from '@/lib/analytics/track';
-import { facultyService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { useFacultyChat, useFacultySessions, useFacultyAgents, useSessionExtractions, useExtractionMutations } from '../../hooks/faculty';
 import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
-import { SermonOutlinePreviewModal, type SermonOutline } from '@/components/faculty/SermonOutlinePreviewModal';
+import { type SermonOutline } from '@/components/faculty/SermonOutlinePreviewModal';
 import { FacultySessionSidebar } from '@/components/faculty/FacultySessionSidebar';
 import { FacultyExtractionPanel } from '@/components/faculty/FacultyExtractionPanel';
 import { RailDivider } from '@/components/faculty/RailDivider';
 import { FacultyChatMessages } from '@/components/faculty/FacultyChatMessages';
 import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
 import { GuidedSermonHeader } from '@/components/faculty/GuidedSermonHeader';
-import { GuidedSermonActivationPrompt } from '@/components/faculty/GuidedSermonActivationPrompt';
 import { useGuidedSermonIntegration } from './hooks/useGuidedSermonIntegration';
-import { Sprout } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { FacultyChatGuidedZone } from './components/FacultyChatGuidedZone';
+import { FacultyChatModals } from './components/FacultyChatModals';
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
-import { EmailExtractionDialog } from '@/components/faculty/EmailExtractionDialog';
-import { PublishToWordpressDialog } from '@/components/faculty/PublishToWordpressDialog';
-import { ProjectEditDialog } from './ProjectEditDialog';
-import { type AIProject, type Extraction, type ExtractionType } from '@dosfilos/domain';
+import { type Extraction, type ExtractionType } from '@dosfilos/domain';
 import { FacultyHomeContent } from './index';
 import { copyMessageToClipboard } from './utils/copyMessageToClipboard';
 import { useAutoscrollChat } from './hooks/useAutoscrollChat';
@@ -36,7 +31,6 @@ import { useDocumentEditor } from './hooks/useDocumentEditor';
 import { useSendMessage } from './hooks/useSendMessage';
 import { useDeleteMessage } from './hooks/useDeleteMessage';
 import { useResponseModePref } from './hooks/useResponseModePref';
-import { FacultyConfirmDialogs } from './components/FacultyConfirmDialogs';
 
 export function FacultyChatPage() {
     const { t } = useTranslation('faculty');
@@ -229,7 +223,6 @@ export function FacultyChatPage() {
 
     // Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent integration.
     // Owns: guided-mode detection, activation prompt state, send fork.
-    const tGuided = useTranslation('guidedSermon').t;
     const guidedIntegration = useGuidedSermonIntegration({
         session,
         effectiveSessionId,
@@ -448,30 +441,16 @@ export function FacultyChatPage() {
                                             )}
                                             <div ref={chatScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-8 space-y-6 scroll-smooth pb-40">
                                                 <div className="max-w-3xl mx-auto space-y-6 w-full">
-                                                    {guidedIntegration.isFlagEnabled
-                                                        && !guidedIntegration.hasGuidedSession
-                                                        && !!effectiveSessionId
-                                                        && !guidedIntegration.activationPromptOpen && (
-                                                        <div className="rounded-lg border border-info/30 bg-info-subtle/30 p-3 flex items-center justify-between gap-3">
-                                                            <div className="flex items-center gap-2">
-                                                                <Sprout className="h-4 w-4 text-success" />
-                                                                <div>
-                                                                    <p className="text-sm font-medium text-foreground">{tGuided('cta.startGuided')}</p>
-                                                                    <p className="text-xs text-muted-foreground">{tGuided('cta.startGuidedDescription')}</p>
-                                                                </div>
-                                                            </div>
-                                                            <Button size="sm" onClick={guidedIntegration.openActivationPrompt}>
-                                                                <Sprout className="h-4 w-4" /> {tGuided('cta.startGuided')}
-                                                            </Button>
-                                                        </div>
-                                                    )}
-                                                    {guidedIntegration.activationPromptOpen && (
-                                                        <GuidedSermonActivationPrompt
-                                                            onActivate={guidedIntegration.activate}
-                                                            onCancel={guidedIntegration.closeActivationPrompt}
-                                                            isProcessing={guidedIntegration.isProcessing}
-                                                        />
-                                                    )}
+                                                    <FacultyChatGuidedZone
+                                                        effectiveSessionId={effectiveSessionId}
+                                                        isFlagEnabled={guidedIntegration.isFlagEnabled}
+                                                        hasGuidedSession={guidedIntegration.hasGuidedSession}
+                                                        activationPromptOpen={guidedIntegration.activationPromptOpen}
+                                                        isProcessing={guidedIntegration.isProcessing}
+                                                        openActivationPrompt={guidedIntegration.openActivationPrompt}
+                                                        closeActivationPrompt={guidedIntegration.closeActivationPrompt}
+                                                        activate={guidedIntegration.activate}
+                                                    />
                                                     <FacultyChatMessages
                                                         messages={session?.messages || []}
                                                         isNewSession={isNewSession}
@@ -603,61 +582,20 @@ export function FacultyChatPage() {
                 />
             </div>
 
-            {/* Sermon Outline Preview Modal — post-convergence flow:
-                approved outline + personalization → buildSermonFromFacultyOutline
-                → wizard-ready Sermon → navigate to /dashboard/sermons/generate.
-                The legacy createSermon + saveSermonExtraction + inline preview
-                path collapsed into the Application use case. */}
-            <SermonOutlinePreviewModal
-                outline={sermonOutline}
-                sessionId={effectiveSessionId || undefined}
-                onClose={() => setSermonOutline(null)}
-                onGenerateFullSermon={async (outline, personalization) => {
-                    if (!user?.uid || !effectiveSessionId) {
-                        throw new Error('Faculty session missing for sermon generation');
-                    }
-                    const messageIds = session?.messages?.map(m => m.id) ?? [];
-                    const result = await facultyService.buildSermonFromFacultyOutline.execute({
-                        ownerId: user.uid,
-                        sessionId: effectiveSessionId,
-                        sessionTitle: session?.title || outline.title,
-                        approvedOutline: outline,
-                        personalization,
-                        derivedFromMessageIds: messageIds,
-                    });
-                    return { sermonId: result.sermonId };
-                }}
-                onSuccess={(sermonId) => {
-                    // Land in the sermon wizard at Step 3 with paper-
-                    // derived content pre-loaded. Wizard reads
-                    // wizardProgress.derivedContext.kind === 'faculty'
-                    // and renders the provenance banner.
-                    navigate(`/dashboard/sermons/generate?id=${sermonId}`);
-                }}
-            />
-
-            {/* Project create/edit dialog */}
-            {projectDialog && (
-                <ProjectEditDialog
-                    project={'project' in projectDialog ? (projectDialog as { mode: 'edit'; project: AIProject }).project : undefined}
-                    onClose={() => setProjectDialog(null)}
-                />
-            )}
-
-            {/* Email-share dialog */}
-            <EmailExtractionDialog
-                extraction={emailDialogExtraction}
-                onClose={() => setEmailDialogExtraction(null)}
-            />
-
-            {/* WordPress publish dialog */}
-            <PublishToWordpressDialog
-                extraction={wpDialogExtraction}
-                onClose={() => setWpDialogExtraction(null)}
-            />
-
-            <FacultyConfirmDialogs
-                deleteSessionId={deleteConfirmId}
+            <FacultyChatModals
+                sermonOutline={sermonOutline}
+                onSetSermonOutline={setSermonOutline}
+                session={session}
+                effectiveSessionId={effectiveSessionId}
+                userId={user?.uid}
+                onSermonGenerated={(sermonId) => navigate(`/dashboard/sermons/generate?id=${sermonId}`)}
+                projectDialog={projectDialog}
+                onCloseProjectDialog={() => setProjectDialog(null)}
+                emailDialogExtraction={emailDialogExtraction}
+                onCloseEmailDialog={() => setEmailDialogExtraction(null)}
+                wpDialogExtraction={wpDialogExtraction}
+                onCloseWpDialog={() => setWpDialogExtraction(null)}
+                deleteConfirmId={deleteConfirmId}
                 onCloseDeleteSession={() => setDeleteConfirmId(null)}
                 onConfirmDeleteSession={() => {
                     if (deleteConfirmId) {
@@ -665,7 +603,7 @@ export function FacultyChatPage() {
                         setDeleteConfirmId(null);
                     }
                 }}
-                deleteMessageId={deleteMessageConfirmId}
+                deleteMessageConfirmId={deleteMessageConfirmId}
                 onCloseDeleteMessage={cancelDeleteMessage}
                 onConfirmDeleteMessage={handleConfirmDeleteMessage}
             />
