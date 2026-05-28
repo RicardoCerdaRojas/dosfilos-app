@@ -296,6 +296,17 @@ export function FacultyChatPage() {
         generateAndSaveExtraction,
         setSermonOutline,
         openExtractionInEditor,
+        // Phase 2.5 PR B reroute (ADR-028): under the `study_depth` flag the
+        // SERMON-outline preview flow is replaced by the guided-sermon
+        // agent activation. Returns `true` to short-circuit the legacy
+        // preview path.
+        sermonGuidedOverride: () => {
+            if (guidedIntegration.isFlagEnabled && !guidedIntegration.hasGuidedSession) {
+                guidedIntegration.openActivationPrompt();
+                return true;
+            }
+            return false;
+        },
     });
 
     // ── Extraction list handlers (panel "Generados" tab) ─────────────────────

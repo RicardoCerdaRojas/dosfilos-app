@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { AIChatSession } from '@dosfilos/domain';
 import { useGuidedSermon } from '@/hooks/useGuidedSermon';
 import { useStudyDepthGate } from '@/hooks/usePastoralFidelityGate';
@@ -50,6 +51,24 @@ export function useGuidedSermonIntegration({
     const { enabled: isFlagEnabled } = useStudyDepthGate();
     const guidedSermon = useGuidedSermon();
     const [activationPromptOpen, setActivationPromptOpen] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const autoOpenedRef = useRef(false);
+
+    // Phase 2.5 PR B reroute: `?guided=1` from the Faculty home "Bosquejo
+    // de Sermón" chip auto-opens the activation prompt on landing. Strip
+    // the param once consumed so reloads don't re-trigger.
+    useEffect(() => {
+        if (autoOpenedRef.current) return;
+        if (!isFlagEnabled) return;
+        if (searchParams.get('guided') !== '1') return;
+        if (!effectiveSessionId) return;
+        if (session?.guidedSermonSession) return;
+        autoOpenedRef.current = true;
+        setActivationPromptOpen(true);
+        const next = new URLSearchParams(searchParams);
+        next.delete('guided');
+        setSearchParams(next, { replace: true });
+    }, [isFlagEnabled, searchParams, effectiveSessionId, session?.guidedSermonSession, setSearchParams]);
 
     const guidedSermonSession = session?.guidedSermonSession;
     const hasGuidedSession = Boolean(guidedSermonSession);
