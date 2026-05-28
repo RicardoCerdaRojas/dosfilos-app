@@ -4,7 +4,7 @@ import {
     Plus, FileText, LayoutGrid, List, Filter, Sparkles, Sprout, Trash2,
 } from 'lucide-react';
 import { usePastoralFidelityGate } from '@/hooks/usePastoralFidelityGate';
-import { SermonSeriesEntity } from '@dosfilos/domain';
+import { PASTORAL_SEED_STEP_ORDER, SermonSeriesEntity } from '@dosfilos/domain';
 import { seriesService } from '@dosfilos/application';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -278,7 +278,7 @@ export function SermonsPage() {
                             >
                                 <Sprout className="mr-2 h-4 w-4 text-emerald-600" />
                                 <div className="flex flex-col">
-                                    <span>Estudio guiado (6 pasos)</span>
+                                    <span>Estudio guiado ({PASTORAL_SEED_STEP_ORDER.length} pasos)</span>
                                     <span className="text-[10px] text-muted-foreground">Pastor estudia primero, sistema desarrolla.</span>
                                 </div>
                             </DropdownMenuItem>
