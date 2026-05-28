@@ -36,6 +36,23 @@ export interface HistoricalContextChunk {
     source: string;
 }
 
+/** Input/output for the `buildStructuralPuzzle` callable (Phase 2.5 Tier 3). */
+export interface BuildStructuralPuzzleInput {
+    passage: string;
+}
+export type StructuralPuzzleRole = 'climactic' | 'preparatory' | 'development';
+export interface StructuralPuzzleClause {
+    id: string;
+    text: string;
+    reference: string;
+}
+export interface StructuralPuzzle {
+    clauses: StructuralPuzzleClause[];
+    mainClauseId: string;
+    roles: Record<string, StructuralPuzzleRole>;
+    hints: Record<string, string>;
+}
+
 /** Input for the `orientStudy` callable (Phase 2.5, ADR-026). */
 export interface OrientStudyInput {
     passage: string;
@@ -262,6 +279,27 @@ export class PastoralSeedService {
         pastorMarkedComplete: boolean,
     ): Promise<void> {
         await this.repo.setStudyDepthOverride(seedId, dimensionId, pastorMarkedComplete);
+    }
+
+    /**
+     * Phase 2.5 Tier 3 (proposal `structural-puzzle-tier3.md`) — runs the
+     * `buildStructuralPuzzle` callable. Returns clauses + canonical roles +
+     * Socratic hints. Lives here so web pages stay free of
+     * `firebase/functions` imports (compliance gate).
+     */
+    async buildStructuralPuzzle(input: BuildStructuralPuzzleInput): Promise<StructuralPuzzle> {
+        const callable = httpsCallable(getFunctions(), 'buildStructuralPuzzle');
+        const response = await callable(input);
+        const data = (response.data ?? {}) as Partial<StructuralPuzzle>;
+        if (!Array.isArray(data.clauses) || data.clauses.length === 0) {
+            throw new Error('El puzzle no devolvió cláusulas.');
+        }
+        return {
+            clauses: data.clauses,
+            mainClauseId: String(data.mainClauseId ?? data.clauses[0]?.id ?? ''),
+            roles: (data.roles ?? {}) as Record<string, StructuralPuzzleRole>,
+            hints: (data.hints ?? {}) as Record<string, string>,
+        };
     }
 
     /**

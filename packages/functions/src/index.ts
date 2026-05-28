@@ -134,6 +134,8 @@ export { verifyTimelessPrinciple } from './three-witnesses/verifyTimelessPrincip
 export { orientStudy } from './study-companion/orientStudy';
 // 🌱 Pastoral Fidelity Phase 2.5 PR B — Faculty Socratic Sermon Agent LLM proxy (ADR-028)
 export { runSocraticTurnLlm } from './guided-sermon/runSocraticTurnLlm';
+// 🌱 Pastoral Fidelity Phase 2.5 Tier 3 — Structural puzzle builder (proposal `structural-puzzle-tier3.md`)
+export { buildStructuralPuzzle } from './study-companion/buildStructuralPuzzle';
 
 
 

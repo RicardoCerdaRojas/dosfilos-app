@@ -41,7 +41,9 @@
     "simplifyLoading": "Buscando una explicación más simple…",
     "simplifyHint": "Sin jerga + un ejemplo concreto del método.",
     "exampleTitle": "Ejemplo del método en otro pasaje",
-    "simplifiedBadge": "Versión simplificada"
+    "simplifiedBadge": "Versión simplificada",
+    "openPuzzle": "Reconstruye la estructura tú mismo",
+    "openPuzzleHint": "Tier 3 — pon las cláusulas en su lugar."
   },
   "gate": {
     "title": "Antes de generar tu sermón",
@@ -66,5 +68,24 @@
     "overrideStart": "Generar con nota",
     "overrideConfirm": "Confirmar y generar",
     "generating": "Generando…"
+  },
+  "puzzle": {
+    "title": "Reconstruye la estructura",
+    "description": "Coloca cada cláusula en su zona. Si te equivocas, te doy una pista — pero no te digo la respuesta. La encuentras tú.",
+    "loading": "Preparando el puzzle…",
+    "error": "No se pudo construir el puzzle. Intenta de nuevo.",
+    "pile": "Cláusulas por colocar",
+    "pileEmpty": "Todas colocadas. Verifica tu trabajo.",
+    "zone": {
+      "preparatory": "Preparatorias",
+      "climactic": "Climática",
+      "development": "Desarrollo"
+    },
+    "zoneEmpty": "Click una cláusula y luego aquí.",
+    "verify": "Verificar colocaciones",
+    "hintTitle": "Una pista (sin la respuesta)",
+    "defaultHint": "Revisa de nuevo: ¿qué hace gramaticalmente esta cláusula?",
+    "completeCta": "¡Estructura reconstruida! Ahora escribe tu nota →",
+    "close": "Cerrar"
   }
 }

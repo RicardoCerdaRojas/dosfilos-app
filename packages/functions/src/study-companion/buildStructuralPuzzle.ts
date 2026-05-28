@@ -1,0 +1,140 @@
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { appCheckCallableOptions } from '../config/appCheckOptions';
+import { GeminiLlmClient } from '../llm/GeminiLlmClient';
+import type { ILlmClient } from '../llm/LlmClient';
+
+/**
+ * Phase 2.5 Tier 3 (proposal `structural-puzzle-tier3.md`) — build a
+ * structural-puzzle dataset for the given passage.
+ *
+ * The pastor reconstructs the clause hierarchy interactively: pieces
+ * (clauses) get placed into zones (climactic | preparatory | development).
+ * This callable produces the canonical answer + Socratic hints, but
+ * NEVER shows the answer to the pastor before he tries — the client
+ * reveals the role only after correct placement; on a wrong placement
+ * it surfaces the hint without naming the right zone.
+ *
+ * Verifier-orienter: like all Phase 2.5 callables, this hands scholarship
+ * (clause splits, structural roles) — never theological interpretation.
+ */
+
+const MAX_CLAUSES = 8;
+
+const SYSTEM = `Eres un experto en exégesis estructural. Tu tarea: dividir un pasaje bíblico en sus cláusulas constitutivas y clasificarlas estructuralmente.
+
+Reglas:
+- Divide el pasaje en cláusulas distinguibles por conectores y verbos finitos. Máximo ${MAX_CLAUSES} cláusulas.
+- Para cada cláusula identifica su rol estructural:
+  * "climactic": la afirmación central que el resto del pasaje sostiene.
+  * "preparatory": cláusulas que preceden y preparan la climática.
+  * "development": cláusulas que siguen y desarrollan o aplican la climática.
+- Para cada cláusula NO climática, escribe UNA pista socrática (1 frase breve) que ayude al pastor a reconsiderar si la coloca en la zona equivocada. La pista NUNCA debe revelar el rol correcto — solo apunta a algo en la cláusula misma (conjunción coordinante, verbo subordinado, posición, etc.) que dé un indicio.
+- Para la cláusula climática, escribe una pista que ayude a verla si el pastor la coloca mal.
+- Estilo: español neutral latinoamericano, "tú", pastoral.
+
+Devuelve SIEMPRE JSON válido (sin Markdown):
+{
+  "clauses": [
+    { "id": "c1", "text": "fragmento textual de la cláusula tal como aparece en el pasaje", "reference": "ej. Juan 1:1a" }
+  ],
+  "mainClauseId": "c1",
+  "roles": { "c1": "climactic", "c2": "preparatory", "c3": "development" },
+  "hints": { "c1": "pista socrática", "c2": "pista socrática", "c3": "pista socrática" }
+}`;
+
+interface PuzzleClause {
+    id: string;
+    text: string;
+    reference: string;
+}
+type PuzzleRole = 'climactic' | 'preparatory' | 'development';
+
+interface PuzzleResult {
+    clauses: PuzzleClause[];
+    mainClauseId: string;
+    roles: Record<string, PuzzleRole>;
+    hints: Record<string, string>;
+}
+
+function safeParseJson(text: string): Record<string, unknown> {
+    const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const first = cleaned.search(/[{[]/);
+    const last = Math.max(cleaned.lastIndexOf('}'), cleaned.lastIndexOf(']'));
+    if (first === -1 || last === -1) throw new Error('Respuesta sin JSON detectable.');
+    return JSON.parse(cleaned.substring(first, last + 1));
+}
+
+function normalizeRole(value: unknown): PuzzleRole | null {
+    if (value === 'climactic' || value === 'preparatory' || value === 'development') return value;
+    return null;
+}
+
+export const buildStructuralPuzzle = onCall(
+    { ...appCheckCallableOptions(), secrets: ['GEMINI_API_KEY'], timeoutSeconds: 60 },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError('unauthenticated', 'User must be authenticated');
+        }
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            throw new HttpsError('failed-precondition', 'GEMINI_API_KEY secret not configured');
+        }
+        const data = request.data ?? {};
+        const passage = String(data.passage ?? '').trim();
+        if (!passage) throw new HttpsError('invalid-argument', 'passage es requerido.');
+
+        try {
+            const llm: ILlmClient = new GeminiLlmClient(apiKey);
+            const raw = await llm.generate({
+                system: SYSTEM,
+                prompt: `Construye el puzzle estructural para: ${passage}`,
+                temperature: 0.2,
+                responseMimeType: 'application/json',
+            });
+            const parsed = safeParseJson(raw);
+
+            const rawClauses = Array.isArray(parsed.clauses) ? parsed.clauses : [];
+            const clauses: PuzzleClause[] = rawClauses
+                .slice(0, MAX_CLAUSES)
+                .map((c: any, i: number) => ({
+                    id: String(c?.id ?? `c${i + 1}`),
+                    text: String(c?.text ?? '').trim(),
+                    reference: String(c?.reference ?? '').trim(),
+                }))
+                .filter((c) => c.text.length > 0);
+
+            if (clauses.length === 0) {
+                throw new HttpsError('internal', 'El modelo no pudo dividir el pasaje en cláusulas.');
+            }
+
+            const rawRoles = (parsed.roles ?? {}) as Record<string, unknown>;
+            const rawHints = (parsed.hints ?? {}) as Record<string, unknown>;
+            const roles: Record<string, PuzzleRole> = {};
+            const hints: Record<string, string> = {};
+            for (const c of clauses) {
+                const r = normalizeRole(rawRoles[c.id]);
+                if (r) roles[c.id] = r;
+                const h = String(rawHints[c.id] ?? '').trim();
+                if (h) hints[c.id] = h;
+            }
+            const mainClauseId = String(parsed.mainClauseId ?? '');
+            const finalMainId = clauses.some((c) => c.id === mainClauseId)
+                ? mainClauseId
+                : clauses.find((c) => roles[c.id] === 'climactic')?.id ?? clauses[0].id;
+            // Ensure the climactic role is set on the main clause.
+            roles[finalMainId] = 'climactic';
+
+            const result: PuzzleResult = {
+                clauses,
+                mainClauseId: finalMainId,
+                roles,
+                hints,
+            };
+            return result;
+        } catch (err) {
+            console.error('[buildStructuralPuzzle] llm failed', err);
+            if (err instanceof HttpsError) throw err;
+            throw new HttpsError('internal', err instanceof Error ? err.message : 'Puzzle build failed');
+        }
+    },
+);

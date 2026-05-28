@@ -16,6 +16,12 @@ interface Props {
     orient: (input: OrientStudyInput) => Promise<StepOrientation>;
     /** Logs the assist as `stepOrientation` (ADR-026 / AiAssistLog). */
     onLogOrientation: () => void;
+    /**
+     * Phase 2.5 Tier 3 — when present, the popover surfaces an additional
+     * tier-3 button below the simplify button. Only the structural step
+     * passes this (proposal `structural-puzzle-tier3.md`).
+     */
+    onOpenTier3?: () => void;
 }
 
 /**
@@ -29,7 +35,7 @@ interface Props {
  * with a soft animation, portal-rendered, click-outside to dismiss. Keeps
  * the step's writing surface clean (no inline card pushing content down).
  */
-export function StepCompanion({ passage, stepKey, pastorInput, genre, orient, onLogOrientation }: Props) {
+export function StepCompanion({ passage, stepKey, pastorInput, genre, orient, onLogOrientation, onOpenTier3 }: Props) {
     const { t } = useTranslation('studyDepth');
     const [loading, setLoading] = useState(false);
     const [simplifying, setSimplifying] = useState(false);
@@ -191,6 +197,23 @@ export function StepCompanion({ passage, stepKey, pastorInput, genre, orient, on
                                                 </span>
                                             </>
                                         )}
+                                    </Button>
+                                </div>
+                            )}
+                            {onOpenTier3 && (
+                                <div className="border-t border-border/60 pt-2.5">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => { setOpen(false); onOpenTier3(); }}
+                                        className="h-auto w-full justify-start gap-1.5 px-2 py-1.5 text-xs"
+                                    >
+                                        <Sparkles className="h-3.5 w-3.5 text-success" />
+                                        <span className="text-foreground">{t('companion.openPuzzle')}</span>
+                                        <span className="ml-auto text-[10px] text-muted-foreground">
+                                            {t('companion.openPuzzleHint')}
+                                        </span>
                                     </Button>
                                 </div>
                             )}

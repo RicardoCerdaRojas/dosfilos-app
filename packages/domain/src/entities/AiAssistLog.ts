@@ -63,7 +63,15 @@ export type AiAssistType =
      * proof-texting, modern-application leap). The pastor's input was not
      * persisted; the seed remained unchanged for the step.
      */
-    | 'socraticConfrontation';
+    | 'socraticConfrontation'
+    /**
+     * Phase 2.5 Tier 3 (proposal `structural-puzzle-tier3.md`): one
+     * completed structural puzzle session. The pastor reconstructed the
+     * passage's clause hierarchy by placing pieces into zones; the system
+     * gave Socratic hints on wrong placements without revealing the answer.
+     * Logged once per completed puzzle (not per piece).
+     */
+    | 'structuralPuzzle';
 
 export interface AiAssistLog {
     id: string;
