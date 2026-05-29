@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useWizard, WizardProvider } from './WizardContext';
 import { WizardHeader } from './WizardHeader';
 import { StepPassage } from './StepPassage';
@@ -28,6 +28,7 @@ function WizardContent() {
     const [mintingSermon, setMintingSermon] = useState(false);
     const [publishingSermonId, setPublishingSermonId] = useState<string | null>(null);
     const location = useLocation();
+    const navigate = useNavigate();
     const pastoralGate = usePastoralFidelityGate();
 
     // Check for in-progress sermons on mount or when location key changes (navigation)
@@ -333,24 +334,16 @@ function WizardContent() {
         setShowResumePrompt(false);
     };
 
-    const handleExit = async () => {
-        setLoading(true);
+    /**
+     * "Guardar y Salir": persist any pending state via the wizard's
+     * autosaves (already done step-by-step) + navigate the pastor back
+     * to the canonical sermons listing (`/dashboard/sermons`). Previously
+     * this re-rendered an in-wizard "resume drafts" view that the
+     * pastor mistook for a legacy listing — smoke 2026-05-29.
+     */
+    const handleExit = () => {
         reset();
-        if (user) {
-            try {
-                const sermons = await sermonService.getInProgressSermons(user.uid);
-                setInProgressSermons(sermons);
-                if (sermons.length > 0) {
-                    setShowResumePrompt(true);
-                }
-            } catch (error) {
-                console.error('Error refreshing sermons on exit:', error);
-            } finally {
-                setLoading(false);
-            }
-        } else {
-            setLoading(false);
-        }
+        navigate('/dashboard/sermons');
     };
 
     // Pastoral Fidelity gate: when the flag is on we replace Step 1

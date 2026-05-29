@@ -3,6 +3,7 @@ import { useWizard } from './WizardContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+    ArrowLeft,
     ArrowRight,
     Book,
     BookOpen,
@@ -20,7 +21,7 @@ import {
     X,
 } from 'lucide-react';
 import { sermonService } from '@dosfilos/application';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
 import { DerivedContextBanner } from './DerivedContextBanner';
 import { usePastoralFidelityGate } from '@/hooks/usePastoralFidelityGate';
@@ -100,12 +101,24 @@ const TOTAL_PASTORAL_STEPS = PASTORAL_SEED_STEP_ORDER.length;
  */
 export function StepPassage() {
     const { t } = useTranslation('generator');
-    const { passage, setPassage, setStep } = useWizard();
+    const { passage, setPassage, setStep, reset } = useWizard();
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const [localPassage, setLocalPassage] = useState(passage);
     const [isLoading, setIsLoading] = useState(false);
     const pastoralGate = usePastoralFidelityGate();
     const inputRef = useRef<HTMLInputElement>(null);
+
+    /**
+     * Bail out of the wizard before any save has happened. Step 0 is the
+     * one place where the pastor's "no quiero avanzar" should NOT
+     * persist anything — there's no sermon doc yet, no seed, no draft.
+     * Steps 1+ keep "Guardar y Salir" via the header.
+     */
+    const handleCancel = () => {
+        reset();
+        navigate('/dashboard/sermons');
+    };
 
     const sermonId = searchParams.get('id');
     const [sermonTitle, setSermonTitle] = useState<string | null>(null);
@@ -196,9 +209,25 @@ export function StepPassage() {
                         <h1 className="text-xl font-semibold font-serif">
                             Pasaje del sermón
                         </h1>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                            {pastoralGate.allowed ? 'Paso 0 de 3' : 'Inicio'}
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                {pastoralGate.allowed ? 'Paso 0 de 3' : 'Inicio'}
+                            </span>
+                            {/* Cancel affordance for Step 0 — no save has
+                                happened yet, so "no quiero avanzar"
+                                should bail out cleanly without leaving
+                                an empty draft behind. */}
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleCancel}
+                                className="text-muted-foreground hover:text-foreground gap-1.5"
+                                title="Volver a Sermones sin guardar"
+                            >
+                                <ArrowLeft className="h-4 w-4" />
+                                <span className="hidden sm:inline">Volver a Sermones</span>
+                            </Button>
+                        </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
                         {sermonTitle
