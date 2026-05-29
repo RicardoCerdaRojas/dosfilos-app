@@ -117,29 +117,82 @@ export class ASVRepository implements IBibleVersionRepository {
         return 'en';
     }
 
+    /**
+     * Single-chapter book numbers (ASV uses numeric ids — see infra RVR
+     * repo for rationale).
+     */
+    private static readonly SINGLE_CHAPTER_BOOK_IDS = new Set<number>([
+        31, // Obadiah
+        57, // Philemon
+        63, // 2 John
+        64, // 3 John
+        65, // Jude
+    ]);
+
+    /**
+     * Parse a reference. Mirrors `infra/RVR1960Repository.parseReference`
+     * — see that file for the accepted shape truth table and the `0`
+     * sentinel convention. Returns `book` as the BOOK MAPPING KEY (e.g.
+     * "Philemon"), matching the existing contract of this implementation.
+     */
     parseReference(ref: string): BibleReference | null {
         const normalized = ref.trim();
-        // English pattern: "John 3:16" or "1 John 3:16-17"
-        const match = normalized.match(/^((?:[1-3]\s?)?[A-Za-z]+(?:\s+[A-Za-z]+)*)\s*(\d+)[:.](\d+)(?:[-–](\d+))?$/i);
+        const match = normalized.match(
+            /^((?:[1-3]\s?)?[A-Za-z]+(?:\s+[A-Za-z]+)*)(?:\s+(\d+)(?:[-–](\d+))?(?:[:.](\d+)(?:[-–](\d+))?)?)?$/i,
+        );
 
         if (!match) return null;
 
         const bookName = match[1]?.trim() || '';
-        let resolvedBook = '';
-        for (const [key] of Object.entries(this.BOOK_MAPPING)) {
+        let resolvedKey = '';
+        let resolvedId = 0;
+        for (const [key, value] of Object.entries(this.BOOK_MAPPING)) {
             if (key.toLowerCase() === bookName.toLowerCase()) {
-                resolvedBook = key;
+                resolvedKey = key;
+                resolvedId = value;
                 break;
             }
         }
+        if (!resolvedKey) return null;
 
-        if (!resolvedBook) return null;
+        const num1 = match[2] ? parseInt(match[2]) : undefined;
+        const num1End = match[3] ? parseInt(match[3]) : undefined;
+        const num2 = match[4] ? parseInt(match[4]) : undefined;
+        const num2End = match[5] ? parseInt(match[5]) : undefined;
+
+        const isSingleChapter = ASVRepository.SINGLE_CHAPTER_BOOK_IDS.has(resolvedId);
+
+        let chapter: number;
+        let verseStart: number;
+        let verseEnd: number | undefined;
+
+        if (num1 === undefined) {
+            chapter = 1;
+            verseStart = 0;
+            verseEnd = undefined;
+        } else if (num2 === undefined) {
+            if (isSingleChapter) {
+                chapter = 1;
+                verseStart = num1;
+                verseEnd = num1End;
+            } else {
+                if (num1End !== undefined) return null;
+                chapter = num1;
+                verseStart = 0;
+                verseEnd = undefined;
+            }
+        } else {
+            if (num1End !== undefined) return null;
+            chapter = num1;
+            verseStart = num2;
+            verseEnd = num2End;
+        }
 
         return {
-            book: resolvedBook,
-            chapter: parseInt(match[2] || '0'),
-            verseStart: parseInt(match[3] || '0'),
-            verseEnd: match[4] ? parseInt(match[4]) : undefined
+            book: resolvedKey,
+            chapter,
+            verseStart,
+            verseEnd,
         };
     }
 
