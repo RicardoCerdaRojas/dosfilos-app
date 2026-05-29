@@ -91,28 +91,94 @@ export class RVR1960Repository implements IBibleVersionRepository {
         return 'es';
     }
 
+    /**
+     * Single-chapter book IDs (RVR numbering). For these books a
+     * chapter-less verse-only reference is canonical (e.g. "Filemón 8-21"
+     * omits the chapter since Phlm only has one).
+     */
+    private static readonly SINGLE_CHAPTER_BOOK_IDS = new Set([
+        'ob',  // Abdías
+        'phm', // Filemón
+        '2jo', // 2 Juan
+        '3jo', // 3 Juan
+        'jd',  // Judas
+    ]);
+
+    /**
+     * Parse a reference string into a structured `BibleReference`. Returns
+     * `book` as the BOOK MAPPING KEY (display name like "Filemón"), which
+     * is what downstream consumers in this package expect.
+     *
+     * Accepted shapes (sentinel `0` means "no specific value"):
+     *   Book only            "Filemón"        → { chapter: 1, verseStart: 0 }
+     *   Book + chapter       "Romanos 1"      → { chapter: 1, verseStart: 0 }
+     *   Book + ch:verse      "Juan 3:16"      → { chapter: 3, verseStart: 16 }
+     *   Book + ch:verseRange "Juan 3:16-17"   → { chapter: 3, verseStart: 16, verseEnd: 17 }
+     *   Single-chap + verse  "Filemón 8"      → { chapter: 1, verseStart: 8 }
+     *   Single-chap + range  "Filemón 8-21"   → { chapter: 1, verseStart: 8, verseEnd: 21 }
+     */
     parseReference(ref: string): BibleReference | null {
         const normalized = ref.trim();
-        const match = normalized.match(/^((?:[1-3]\s?)?[A-ZÁÉÍÓÚÑa-záéíóúñ]+(?:\s+de\s+los\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+)?)\s*(\d+)[:.](\d+)(?:[-–](\d+))?$/i);
+        const match = normalized.match(
+            /^((?:[1-3]\s?)?[A-ZÁÉÍÓÚÑa-záéíóúñ]+(?:\s+de\s+los\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+)?)(?:\s+(\d+)(?:[-–](\d+))?(?:[:.](\d+)(?:[-–](\d+))?)?)?$/i,
+        );
 
         if (!match) return null;
 
         const bookName = match[1]?.trim() || '';
-        let resolvedBook = '';
-        for (const [key] of Object.entries(this.BOOK_MAPPING)) {
+        let resolvedKey = '';
+        let resolvedId = '';
+        for (const [key, value] of Object.entries(this.BOOK_MAPPING)) {
             if (key.toLowerCase() === bookName.toLowerCase()) {
-                resolvedBook = key;
+                resolvedKey = key;
+                resolvedId = value;
                 break;
             }
         }
+        if (!resolvedKey) return null;
 
-        if (!resolvedBook) return null;
+        const num1 = match[2] ? parseInt(match[2]) : undefined;
+        const num1End = match[3] ? parseInt(match[3]) : undefined;
+        const num2 = match[4] ? parseInt(match[4]) : undefined;
+        const num2End = match[5] ? parseInt(match[5]) : undefined;
+
+        const isSingleChapter = RVR1960Repository.SINGLE_CHAPTER_BOOK_IDS.has(resolvedId);
+
+        let chapter: number;
+        let verseStart: number;
+        let verseEnd: number | undefined;
+
+        if (num1 === undefined) {
+            // Book only.
+            chapter = 1;
+            verseStart = 0;
+            verseEnd = undefined;
+        } else if (num2 === undefined) {
+            if (isSingleChapter) {
+                // "Filemón 8" or "Filemón 8-21" — num1 is the verse.
+                chapter = 1;
+                verseStart = num1;
+                verseEnd = num1End;
+            } else {
+                // "Romanos 1" — whole chapter. Reject chapter ranges.
+                if (num1End !== undefined) return null;
+                chapter = num1;
+                verseStart = 0;
+                verseEnd = undefined;
+            }
+        } else {
+            // Standard chapter:verse(range).
+            if (num1End !== undefined) return null;
+            chapter = num1;
+            verseStart = num2;
+            verseEnd = num2End;
+        }
 
         return {
-            book: resolvedBook,
-            chapter: parseInt(match[2] || '0'),
-            verseStart: parseInt(match[3] || '0'),
-            verseEnd: match[4] ? parseInt(match[4]) : undefined
+            book: resolvedKey,
+            chapter,
+            verseStart,
+            verseEnd,
         };
     }
 
