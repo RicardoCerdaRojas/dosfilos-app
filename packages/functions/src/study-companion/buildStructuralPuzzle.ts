@@ -25,11 +25,51 @@ const MAX_CLAUSES = 8;
  * passage and the canonical answer drifts. Forcing the pastor to acotar a
  * pericope keeps the structural exercise honest. Tuned to ~5-6 verses of
  * narrative prose.
+ *
+ * Caveat: this counts words of the input STRING, not the expanded biblical
+ * text. A bare-book reference like "Filemón" passes (1 word) and the LLM
+ * then receives the whole letter — bypassing the spirit of the guard. The
+ * chapter-verse guard below catches that.
  */
 const MAX_INPUT_WORDS = 150;
 
 function countPassageWords(passage: string): number {
     return passage.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/**
+ * Short biblical books where a chapter-less reference is a legitimate
+ * perícopa for the puzzle: the entire letter / chapter is short enough
+ * that the LLM can render its macro-rhetorical structure in <= 8 slots
+ * without truncation. Includes Spanish + English forms + common
+ * abbreviations.
+ *
+ * Prefix-matched on word boundary so all of these pass:
+ *   "Filemón" / "Filemón 8-21" / "Filemón 1:8-21" / "Phlm 8-21"
+ * (single-chapter books are routinely cited without `:`).
+ */
+const ALLOWED_WHOLE_BOOK_PATTERNS = [
+    /^(filem[oó]n|philemon|phlm)(\s|$)/i,
+    /^(judas|jude|jud)(\s|$)/i,
+    /^(2\s*(juan|john|jn)|ii\s*(juan|john|jn))(\s|$)/i,
+    /^(3\s*(juan|john|jn)|iii\s*(juan|john|jn))(\s|$)/i,
+    /^(abd[ií]as|obadiah|obad|abd)(\s|$)/i,
+];
+
+function isAllowedWholeBook(ref: string): boolean {
+    const normalized = ref.trim();
+    return ALLOWED_WHOLE_BOOK_PATTERNS.some((p) => p.test(normalized));
+}
+
+/**
+ * Heuristic for "does the reference include a verse range?". We accept a
+ * colon `:` (e.g. "Juan 3:16", "Romanos 8:28-30") as the canonical
+ * marker. Chapter-only references like "Génesis 1" pass `/\d/.test` but
+ * still expand to ~30 verses, so the colon — not just any digit — is the
+ * right discriminator.
+ */
+function hasVerseRange(ref: string): boolean {
+    return ref.includes(':');
 }
 
 const SYSTEM = `Eres un experto en exégesis estructural. Tu tarea: dividir un pasaje bíblico en sus cláusulas constitutivas y clasificarlas estructuralmente.
@@ -97,6 +137,21 @@ export const buildStructuralPuzzle = onCall(
         const data = request.data ?? {};
         const passage = String(data.passage ?? '').trim();
         if (!passage) throw new HttpsError('invalid-argument', 'passage es requerido.');
+
+        // Reference-shape guard. The string word-count guard below can't
+        // catch bare-book references (e.g. "Filemón" = 1 word) — the LLM
+        // expands the whole book and silently shifts the analysis level
+        // from clause-structural to epistle-rhetorical without telling
+        // the pastor. We enforce chapter:verse explicitly, with a tight
+        // whitelist of short books whose entire content IS a valid
+        // perícopa (Filemón / Judas / 2-3 Juan / Abdías).
+        if (!hasVerseRange(passage) && !isAllowedWholeBook(passage)) {
+            throw new HttpsError(
+                'failed-precondition',
+                `Especifica capítulo y versículos del pasaje (ej. "Juan 3:16" o "Romanos 8:28-30"). El puzzle estructural requiere una perícopa concreta.`,
+                { code: 'passage_needs_chapter_verse' },
+            );
+        }
 
         // Length guard. The puzzle is a perícope exercise; whole chapters /
         // letters overflow the clause cap and produce a silently-truncated
