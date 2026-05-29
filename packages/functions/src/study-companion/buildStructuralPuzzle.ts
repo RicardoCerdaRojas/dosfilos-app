@@ -19,6 +19,18 @@ import type { ILlmClient } from '../llm/LlmClient';
  */
 
 const MAX_CLAUSES = 8;
+/**
+ * Word-count ceiling for puzzle build. Beyond this the LLM has to drop
+ * clauses to honor MAX_CLAUSES, so the puzzle silently loses parts of the
+ * passage and the canonical answer drifts. Forcing the pastor to acotar a
+ * pericope keeps the structural exercise honest. Tuned to ~5-6 verses of
+ * narrative prose.
+ */
+const MAX_INPUT_WORDS = 150;
+
+function countPassageWords(passage: string): number {
+    return passage.trim().split(/\s+/).filter(Boolean).length;
+}
 
 const SYSTEM = `Eres un experto en exégesis estructural. Tu tarea: dividir un pasaje bíblico en sus cláusulas constitutivas y clasificarlas estructuralmente.
 
@@ -28,9 +40,12 @@ Reglas:
   * "climactic": la afirmación central que el resto del pasaje sostiene.
   * "preparatory": cláusulas que preceden y preparan la climática.
   * "development": cláusulas que siguen y desarrollan o aplican la climática.
-- Para cada cláusula NO climática, escribe UNA pista socrática (1 frase breve) que ayude al pastor a reconsiderar si la coloca en la zona equivocada. La pista NUNCA debe revelar el rol correcto — solo apunta a algo en la cláusula misma (conjunción coordinante, verbo subordinado, posición, etc.) que dé un indicio.
-- Para la cláusula climática, escribe una pista que ayude a verla si el pastor la coloca mal.
-- Estilo: español neutral latinoamericano, "tú", pastoral.
+- Para cada cláusula escribe UNA pista socrática accionable, estructurada en DOS partes en UNA sola frase:
+  (a) qué observar en la cláusula misma (conjunción coordinante, verbo subordinado, posición, paralelo, etc.) — referenciá un rasgo CONCRETO del texto de esa cláusula, no algo genérico que aplique a varias.
+  (b) una pregunta que el pastor pueda hacerse para reclasificarla, SIN nombrar el rol correcto.
+  Ejemplo de forma: "Fijate en X (rasgo concreto): ¿qué te indica eso sobre Y?"
+- La pista NUNCA debe revelar el rol correcto. NUNCA debe ser genérica al punto que sirva para varias cláusulas del mismo pasaje. Si dos cláusulas comparten un rasgo (p. ej. ambas empiezan con "y"), la pista debe distinguirlas por otro rasgo.
+- Estilo: español neutral latinoamericano, "tú", pastoral. Una frase, máximo dos.
 
 Devuelve SIEMPRE JSON válido (sin Markdown):
 {
@@ -82,6 +97,19 @@ export const buildStructuralPuzzle = onCall(
         const data = request.data ?? {};
         const passage = String(data.passage ?? '').trim();
         if (!passage) throw new HttpsError('invalid-argument', 'passage es requerido.');
+
+        // Length guard. The puzzle is a perícope exercise; whole chapters /
+        // letters overflow the clause cap and produce a silently-truncated
+        // canonical answer. Refuse explicitly and let the client surface an
+        // "acota tu pasaje" UI with the actual word count.
+        const wordCount = countPassageWords(passage);
+        if (wordCount > MAX_INPUT_WORDS) {
+            throw new HttpsError(
+                'failed-precondition',
+                `El puzzle estructural funciona sobre perícopas de hasta ~${MAX_INPUT_WORDS} palabras (este pasaje tiene ${wordCount}). Acota tu enfoque a 1-5 versículos clave.`,
+                { code: 'passage_too_long', wordCount, maxWords: MAX_INPUT_WORDS },
+            );
+        }
 
         try {
             const llm: ILlmClient = new GeminiLlmClient(apiKey);

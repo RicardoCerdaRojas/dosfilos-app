@@ -83,10 +83,22 @@
     },
     "zoneEmpty": "Click a clause and then click here.",
     "verify": "Verify placements",
+    "verifyAgain": "Verify again",
+    "placeAll": "Place all clauses",
+    "placeBounced": "Place the highlighted clause",
     "hintTitle": "A hint (without the answer)",
+    "hintTitleWithRef": "A hint about {{reference}} (without the answer)",
     "defaultHint": "Look again: what does this clause do grammatically?",
     "completeCta": "Structure reconstructed! Now write your note →",
     "close": "Close",
-    "retry": "Retry"
+    "retry": "Retry",
+    "progress": "{{correct}}/{{total}} correct",
+    "progressTitle": "Clauses validated correctly",
+    "lockedTooltip": "Correct placement — locked.",
+    "tooLongTitle": "Passage too long for the puzzle",
+    "tooLongBody": "The structural puzzle works on pericopes of up to ~{{maxWords}} words (this passage has {{wordCount}}). Narrow your focus to 1-5 key verses.",
+    "tooLongInputLabel": "Narrowed passage",
+    "tooLongInputHint": "E.g. if you work on Philemon, narrow to Philemon 8-21.",
+    "tooLongRetry": "Build puzzle"
   }
 }
