@@ -162,13 +162,17 @@ export function StepPassage() {
         try {
             const ref = LocalBibleService.parseReference(trimmed);
             if (ref) {
-                const verseRange = ref.verseEnd && ref.verseEnd !== ref.verseStart
-                    ? `${ref.verseStart}-${ref.verseEnd}`
-                    : `${ref.verseStart}`;
-                return {
-                    ok: true,
-                    label: `${ref.book} ${ref.chapter}:${verseRange}`,
-                } as const;
+                // verseStart === 0 is the parser's sentinel for "no specific
+                // verse" — covers book-only refs ("Filemón") and
+                // chapter-only refs ("Romanos 1"). Render those without the
+                // trailing `:0` that would look like a bug.
+                const label =
+                    ref.verseStart === 0
+                        ? `${ref.book} ${ref.chapter}`
+                        : ref.verseEnd && ref.verseEnd !== ref.verseStart
+                          ? `${ref.book} ${ref.chapter}:${ref.verseStart}-${ref.verseEnd}`
+                          : `${ref.book} ${ref.chapter}:${ref.verseStart}`;
+                return { ok: true, label } as const;
             }
         } catch {
             // Fall through to "no reconocido" feedback below.
