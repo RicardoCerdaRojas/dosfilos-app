@@ -38,18 +38,22 @@ function countPassageWords(passage: string): number {
 }
 
 /**
- * Short biblical books where a whole-book reference is a legitimate
+ * Short biblical books where a chapter-less reference is a legitimate
  * perícopa for the puzzle: the entire letter / chapter is short enough
  * that the LLM can render its macro-rhetorical structure in <= 8 slots
  * without truncation. Includes Spanish + English forms + common
  * abbreviations.
+ *
+ * Prefix-matched on word boundary so all of these pass:
+ *   "Filemón" / "Filemón 8-21" / "Filemón 1:8-21" / "Phlm 8-21"
+ * (single-chapter books are routinely cited without `:`).
  */
 const ALLOWED_WHOLE_BOOK_PATTERNS = [
-    /^(filem[oó]n|philemon|phlm)$/i,
-    /^(judas|jude|jud)$/i,
-    /^(2\s*(juan|john|jn)|ii\s*(juan|john|jn))$/i,
-    /^(3\s*(juan|john|jn)|iii\s*(juan|john|jn))$/i,
-    /^(abd[ií]as|obadiah|obad|abd)$/i,
+    /^(filem[oó]n|philemon|phlm)(\s|$)/i,
+    /^(judas|jude|jud)(\s|$)/i,
+    /^(2\s*(juan|john|jn)|ii\s*(juan|john|jn))(\s|$)/i,
+    /^(3\s*(juan|john|jn)|iii\s*(juan|john|jn))(\s|$)/i,
+    /^(abd[ií]as|obadiah|obad|abd)(\s|$)/i,
 ];
 
 function isAllowedWholeBook(ref: string): boolean {
