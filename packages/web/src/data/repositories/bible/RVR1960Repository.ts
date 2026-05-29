@@ -3,7 +3,33 @@ import { BibleReference } from '@/domain/bible/entities/BibleEntities';
 import rvrBible from '../../../assets/bible/rvr1960.json';
 
 /**
- * RVR1960 Repository - Adapter for Spanish Reina-Valera 1960 Bible
+ * RVR1960 Repository — Adapter for Spanish Reina-Valera 1960 Bible.
+ *
+ * ⚠️ DUPLICATION WARNING (PR #281, 2026-05-29) ⚠️
+ *
+ * A FUNCTIONALLY DISTINCT copy of this class also lives at
+ * `packages/infrastructure/src/bible/repositories/RVR1960Repository.ts`.
+ *
+ * Different surfaces use different copies:
+ *   - THIS file (web copy) → wired into the `/dashboard/bible` page
+ *     (BibleContext + BibleReader + VerseSelector + ChapterSelector +
+ *     QuickVerseFinder + VersionSelector + BiblePage).
+ *   - Infra copy → wired into `LocalBibleService`, which the SERMON
+ *     WIZARD's Pasaje step + Faculty markdown citation linker call.
+ *
+ * Contracts differ subtly:
+ *   - This (web) copy returns `book` as the abbreviation (`'phm'`).
+ *   - The infra copy returns `book` as the BOOK_MAPPING KEY
+ *     (`'Filemón'`), because its `getVerses()` relies on that.
+ *
+ * Any parser change here MUST be mirrored in the infra copy (and vice
+ * versa) or surfaces will silently disagree on what "filemon",
+ * "Romanos 1", "Filemón 8-21", etc. parse to. PR #280 only edited THIS
+ * file and ALL the wizard's surfaces stayed broken — confirmed by
+ * grepping the deployed bundle. PR #281 was the actual fix.
+ *
+ * Tech debt: `tech_debt_bible_parser_duplication` memory tracks
+ * eventual consolidation.
  */
 export class RVR1960Repository extends BaseJSONRepository {
     protected readonly versionId = 'RVR1960';
