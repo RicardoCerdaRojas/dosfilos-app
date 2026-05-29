@@ -265,13 +265,15 @@ export function SermonsPage() {
                         <DropdownMenuSeparator />
                         {/*
                           Pastoral Fidelity Phase 1 entry: when the flag is
-                          on, surface the six-step spine flow as the primary
-                          "blank start" option. Flag-off users keep the
-                          legacy blank editor — keeps repositioning intact
-                          while making the seed wizard discoverable for
-                          flag-on dogfooders.
+                          on, surface the canonical eight-step spine flow as
+                          the primary guided path. The blank editor stays
+                          ALWAYS visible as a tertiary, honest option —
+                          "ya estudié, solo quiero escribir". P1/P2 are
+                          reinforced by blank (pure pastor labor, zero AI
+                          origination); we just don't promote it as the
+                          easy default.
                         */}
-                        {pastoralGate.allowed ? (
+                        {pastoralGate.allowed && (
                             <DropdownMenuItem
                                 onClick={() => navigate('/dashboard/sermons/generate?new=true')}
                                 className="cursor-pointer"
@@ -282,12 +284,14 @@ export function SermonsPage() {
                                     <span className="text-[10px] text-muted-foreground">Pastor estudia primero, sistema desarrolla.</span>
                                 </div>
                             </DropdownMenuItem>
-                        ) : (
-                            <DropdownMenuItem onClick={() => navigate('/dashboard/sermons/new')} className="cursor-pointer">
-                                <FileText className="mr-2 h-4 w-4" />
-                                {t('header.createBlank')}
-                            </DropdownMenuItem>
                         )}
+                        <DropdownMenuItem onClick={() => navigate('/dashboard/sermons/new')} className="cursor-pointer">
+                            <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <div className="flex flex-col">
+                                <span>{t('header.createBlank')}</span>
+                                <span className="text-[10px] text-muted-foreground">{t('header.createBlankHint')}</span>
+                            </div>
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>

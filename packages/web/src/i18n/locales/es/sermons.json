@@ -4,7 +4,8 @@
         "subtitle": "Gestiona tus sermones y contenido pastoral",
         "newButton": "Nuevo Sermón",
         "generateWithTutor": "Generar con el tutor",
-        "createBlank": "Sermón en blanco"
+        "createBlank": "Sermón en blanco",
+        "createBlankHint": "Ya estudié, solo quiero escribir."
     },
     "sermonCreatedSuccess": "Sermón creado exitosamente",
     "sermonCreatedError": "Error al crear el sermón",
