@@ -81,9 +81,36 @@ export class RVR1960Repository extends BaseJSONRepository {
         'Apocalipsis': 're', 'Apoc': 're', 'Ap': 're'
     };
 
+    /**
+     * Single-chapter book IDs. For these, a chapter-less verse-only
+     * reference like `Filemón 8-21` is canonical (the chapter is always 1
+     * and is omitted in citation). The parser must treat the first number
+     * as a verse, not a chapter, in these cases.
+     */
+    private static readonly SINGLE_CHAPTER_BOOK_IDS = new Set([
+        'ob',  // Abdías
+        'phm', // Filemón
+        '2jo', // 2 Juan
+        '3jo', // 3 Juan
+        'jd',  // Judas
+    ]);
+
+    /**
+     * Parse a reference string into a structured `BibleReference`.
+     *
+     * Accepted shapes (sentinel `0` means "no specific value"):
+     *   Book only            "Filemón"        → { chapter: 1, verseStart: 0 }
+     *   Book + chapter       "Romanos 1"      → { chapter: 1, verseStart: 0 }
+     *   Book + ch:verse      "Juan 3:16"      → { chapter: 3, verseStart: 16 }
+     *   Book + ch:verseRange "Juan 3:16-17"   → { chapter: 3, verseStart: 16, verseEnd: 17 }
+     *   Single-chap + verse  "Filemón 8"      → { chapter: 1, verseStart: 8 }
+     *   Single-chap + range  "Filemón 8-21"   → { chapter: 1, verseStart: 8, verseEnd: 21 }
+     */
     parseReference(ref: string): BibleReference | null {
         const normalized = ref.trim();
-        const match = normalized.match(/^((?:[1-3]\s?)?[A-ZÁÉÍÓÚÑa-záéíóúñ]+(?:\s+de\s+los\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+)?)\s*(\d+)[:.](\d+)(?:[-–](\d+))?$/i);
+        const match = normalized.match(
+            /^((?:[1-3]\s?)?[A-ZÁÉÍÓÚÑa-záéíóúñ]+(?:\s+de\s+los\s+[A-ZÁÉÍÓÚÑa-záéíóúñ]+)?)(?:\s+(\d+)(?:[-–](\d+))?(?:[:.](\d+)(?:[-–](\d+))?)?)?$/i,
+        );
 
         if (!match) return null;
 
@@ -95,14 +122,49 @@ export class RVR1960Repository extends BaseJSONRepository {
                 break;
             }
         }
-
         if (!resolvedBook) return null;
 
-        return {
-            book: resolvedBook,
-            chapter: parseInt(match[2] || '0'),
-            verseStart: parseInt(match[3] || '0'),
-            verseEnd: match[4] ? parseInt(match[4]) : undefined
-        };
+        const num1 = match[2] ? parseInt(match[2]) : undefined;
+        const num1End = match[3] ? parseInt(match[3]) : undefined;
+        const num2 = match[4] ? parseInt(match[4]) : undefined;
+        const num2End = match[5] ? parseInt(match[5]) : undefined;
+
+        const isSingleChapter = RVR1960Repository.SINGLE_CHAPTER_BOOK_IDS.has(resolvedBook);
+
+        // Disambiguate `num1` — chapter or verse — by the book's chapter
+        // count. See doc comment for the truth table.
+        let chapter: number;
+        let verseStart: number;
+        let verseEnd: number | undefined;
+
+        if (num1 === undefined) {
+            // Book only.
+            chapter = 1;
+            verseStart = 0;
+            verseEnd = undefined;
+        } else if (num2 === undefined) {
+            // One number after the book.
+            if (isSingleChapter) {
+                chapter = 1;
+                verseStart = num1;
+                verseEnd = num1End;
+            } else {
+                // "Romanos 1" — whole chapter. Reject chapter ranges
+                // ("Romanos 1-3"): the semantic of a chapter range
+                // doesn't fit `BibleReference` cleanly.
+                if (num1End !== undefined) return null;
+                chapter = num1;
+                verseStart = 0;
+                verseEnd = undefined;
+            }
+        } else {
+            // Standard chapter:verse(range).
+            if (num1End !== undefined) return null; // "Juan 3-4:1" is nonsense.
+            chapter = num1;
+            verseStart = num2;
+            verseEnd = num2End;
+        }
+
+        return { book: resolvedBook, chapter, verseStart, verseEnd };
     }
 }

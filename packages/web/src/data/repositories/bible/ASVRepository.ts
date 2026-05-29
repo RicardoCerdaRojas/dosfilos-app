@@ -128,9 +128,30 @@ export class ASVRepository extends BaseJSONRepository {
         return result;
     }
 
+    /**
+     * Single-chapter book IDs (ASV numbering). See RVR1960Repository for
+     * rationale: chapter-less verse-only references are canonical for
+     * these books (e.g. `Philemon 8-21`).
+     */
+    private static readonly SINGLE_CHAPTER_BOOK_IDS = new Set([
+        '31', // Obadiah
+        '57', // Philemon
+        '63', // 2 John
+        '64', // 3 John
+        '65', // Jude
+    ]);
+
+    /**
+     * Parse a reference string into a structured `BibleReference`. Mirrors
+     * `RVR1960Repository.parseReference`; see that file for the truth
+     * table of accepted shapes and the `0` sentinel for "no specific
+     * verse".
+     */
     parseReference(ref: string): BibleReference | null {
         const normalized = ref.trim();
-        const match = normalized.match(/^((?:[1-3]\s?)?[A-Za-z]+(?:\s+[A-Za-z]+)*)\s*(\d+)[:.](\d+)(?:[-–](\d+))?$/i);
+        const match = normalized.match(
+            /^((?:[1-3]\s?)?[A-Za-z]+(?:\s+[A-Za-z]+)*)(?:\s+(\d+)(?:[-–](\d+))?(?:[:.](\d+)(?:[-–](\d+))?)?)?$/i,
+        );
 
         if (!match) return null;
 
@@ -144,14 +165,41 @@ export class ASVRepository extends BaseJSONRepository {
                 break;
             }
         }
-
         if (!resolvedBookId) return null;
 
-        return {
-            book: resolvedBookId,
-            chapter: parseInt(match[2] || '0'),
-            verseStart: parseInt(match[3] || '0'),
-            verseEnd: match[4] ? parseInt(match[4]) : undefined,
-        };
+        const num1 = match[2] ? parseInt(match[2]) : undefined;
+        const num1End = match[3] ? parseInt(match[3]) : undefined;
+        const num2 = match[4] ? parseInt(match[4]) : undefined;
+        const num2End = match[5] ? parseInt(match[5]) : undefined;
+
+        const isSingleChapter = ASVRepository.SINGLE_CHAPTER_BOOK_IDS.has(resolvedBookId);
+
+        let chapter: number;
+        let verseStart: number;
+        let verseEnd: number | undefined;
+
+        if (num1 === undefined) {
+            chapter = 1;
+            verseStart = 0;
+            verseEnd = undefined;
+        } else if (num2 === undefined) {
+            if (isSingleChapter) {
+                chapter = 1;
+                verseStart = num1;
+                verseEnd = num1End;
+            } else {
+                if (num1End !== undefined) return null;
+                chapter = num1;
+                verseStart = 0;
+                verseEnd = undefined;
+            }
+        } else {
+            if (num1End !== undefined) return null;
+            chapter = num1;
+            verseStart = num2;
+            verseEnd = num2End;
+        }
+
+        return { book: resolvedBookId, chapter, verseStart, verseEnd };
     }
 }
