@@ -38,9 +38,21 @@ describe('infra RVR1960Repository.parseReference', () => {
                 verseEnd: undefined,
             });
         });
-        it('parses lowercase filemon', () => {
+        it('parses lowercase filemon → canonical accented key', () => {
+            // Diacritic-insensitive match returns the FIRST matching key,
+            // which is the accented canonical form. This lets
+            // `BibleReaderPanel.resolveBookId` find the book in
+            // `getBooks()` (which exposes the accented name).
             expect(repo.parseReference('filemon')).toEqual({
-                book: 'Filemon',
+                book: 'Filemón',
+                chapter: 1,
+                verseStart: 0,
+                verseEnd: undefined,
+            });
+        });
+        it('parses Filemón (already accented) → same canonical key', () => {
+            expect(repo.parseReference('Filemón')).toEqual({
+                book: 'Filemón',
                 chapter: 1,
                 verseStart: 0,
                 verseEnd: undefined,
@@ -86,6 +98,24 @@ describe('infra RVR1960Repository.parseReference', () => {
                 verseStart: 4,
                 verseEnd: 7,
             });
+        });
+    });
+
+    describe('getBooks canonical ordering', () => {
+        it('returns books in Protestant Bible order, not alphabetical', () => {
+            const books = repo.getBooks();
+            // Spot check the seams that the alphabetical default breaks:
+            //   Génesis → Éxodo (not 1 Corintios → 1 Crónicas)
+            //   Génesis precedes Apocalipsis
+            //   Mateo precedes Romanos precedes Filemón precedes Apocalipsis
+            const idx = (name: string) => books.findIndex((b) => b.name === name);
+            expect(idx('Génesis')).toBe(0);
+            expect(books[books.length - 1].name).toBe('Apocalipsis');
+            expect(idx('Mateo')).toBeLessThan(idx('Romanos'));
+            expect(idx('Romanos')).toBeLessThan(idx('Filemón'));
+            expect(idx('Filemón')).toBeLessThan(idx('Apocalipsis'));
+            // 1 Crónicas (OT) precedes 1 Corintios (NT) — would be reversed alphabetically.
+            expect(idx('1 Crónicas')).toBeLessThan(idx('1 Corintios'));
         });
     });
 

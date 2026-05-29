@@ -141,9 +141,12 @@ export class RVR1960Repository extends BaseJSONRepository {
         if (!match) return null;
 
         const bookName = match[1]?.trim() || '';
+        const normalize = (s: string) =>
+            s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        const normalizedInput = normalize(bookName);
         let resolvedBook = '';
         for (const [key, value] of Object.entries(this.bookMapping)) {
-            if (key.toLowerCase() === bookName.toLowerCase()) {
+            if (normalize(key) === normalizedInput) {
                 resolvedBook = value;
                 break;
             }
