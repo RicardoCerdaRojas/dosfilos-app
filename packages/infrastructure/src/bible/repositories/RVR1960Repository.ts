@@ -126,10 +126,19 @@ export class RVR1960Repository implements IBibleVersionRepository {
         if (!match) return null;
 
         const bookName = match[1]?.trim() || '';
+        const normalize = (s: string) =>
+            s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        const normalizedInput = normalize(bookName);
+        // Diacritic-insensitive lookup. Returning the FIRST matching key
+        // (Object.entries preserves insertion order) is intentional —
+        // BOOK_MAPPING lists the canonical accented form before its
+        // unaccented aliases, so a user typing "filemon" still resolves
+        // to `book: "Filemón"` (the form `getBooks()` exposes to the UI).
+        // Fix for Filemón Bible-panel-empty bug, smoke 2026-05-29.
         let resolvedKey = '';
         let resolvedId = '';
         for (const [key, value] of Object.entries(this.BOOK_MAPPING)) {
-            if (key.toLowerCase() === bookName.toLowerCase()) {
+            if (normalize(key) === normalizedInput) {
                 resolvedKey = key;
                 resolvedId = value;
                 break;
@@ -226,8 +235,27 @@ export class RVR1960Repository implements IBibleVersionRepository {
         return Object.keys(this.BOOK_MAPPING).some(key => key.toLowerCase() === normalized);
     }
 
+    /**
+     * Canonical Protestant Bible order. The source `rvr1960.json` ships
+     * books sorted alphabetically by id (`1ch, 1co, 1jo, …`) which makes
+     * any UI dropdown sourced from it surface a non-canonical list.
+     * Returning them in this fixed order is the simplest way to honour
+     * the reader expectation. Fix for smoke 2026-05-29.
+     */
+    private static readonly CANONICAL_ORDER: readonly string[] = [
+        'gn', 'ex', 'lv', 'nm', 'dt', 'js', 'jud', 'rt',
+        '1sm', '2sm', '1kgs', '2kgs', '1ch', '2ch',
+        'ezr', 'ne', 'et', 'job', 'ps', 'prv', 'ec', 'so',
+        'is', 'jr', 'lm', 'ez', 'dn',
+        'ho', 'jl', 'am', 'ob', 'jn', 'mi', 'na', 'hk', 'zp', 'hg', 'zc', 'ml',
+        'mt', 'mk', 'lk', 'jo', 'act', 'rm',
+        '1co', '2co', 'gl', 'eph', 'ph', 'col',
+        '1ts', '2ts', '1ti', '2ti', 'tit', 'phm', 'hb', 'jm',
+        '1pe', '2pe', '1jo', '2jo', '3jo', 'jd', 're',
+    ];
+
     getBooks(): { id: string; name: string }[] {
-        return (rvrBible as any[]).map(b => {
+        const books = (rvrBible as any[]).map(b => {
             let name = b.id.toUpperCase();
             for (const [key, val] of Object.entries(this.BOOK_MAPPING)) {
                 if (val === b.id && key.length > 3 && key[0] === key[0].toUpperCase()) {
@@ -235,7 +263,17 @@ export class RVR1960Repository implements IBibleVersionRepository {
                     break;
                 }
             }
-            return { id: b.id, name };
+            return { id: b.id as string, name };
+        });
+        const order = RVR1960Repository.CANONICAL_ORDER;
+        // Unknown ids (shouldn't happen, but defensive) fall to the end
+        // in their existing relative order via `indexOf` returning -1.
+        return books.sort((a, b) => {
+            const ai = order.indexOf(a.id);
+            const bi = order.indexOf(b.id);
+            const aa = ai === -1 ? Number.MAX_SAFE_INTEGER : ai;
+            const bb = bi === -1 ? Number.MAX_SAFE_INTEGER : bi;
+            return aa - bb;
         });
     }
 
