@@ -83,8 +83,17 @@ export function SblgntPassagePanel({ passage }: Props) {
                     setError('No pudimos cargar el capítulo en idioma original.');
                     return;
                 }
-                const start = parsed.verseStart;
-                const end = parsed.verseEnd ?? parsed.verseStart;
+                // `verseStart === 0` is the parser's sentinel for "no
+                // specific verse" — covers book-only ("Filemón") and
+                // chapter-only ("Romanos 1") references. Render the
+                // whole chapter in that case instead of slicing
+                // `verses.slice(-1, 0)` (empty), which previously
+                // showed the SBLGNT/MorphHB header with no content.
+                const wholeChapter = parsed.verseStart === 0;
+                const start = wholeChapter ? 1 : parsed.verseStart;
+                const end = wholeChapter
+                    ? verses.length
+                    : (parsed.verseEnd ?? parsed.verseStart);
                 const sliced = verses.slice(start - 1, end).map((text, i) => ({
                     num: start + i,
                     text,
