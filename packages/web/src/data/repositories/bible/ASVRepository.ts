@@ -21,6 +21,13 @@ interface ASVData {
  * expects. Book ids are stored as numeric strings ('1' = Genesis,
  * '40' = Matthew); cross-version navigation goes through the
  * canonical 3-letter id helper in BibleMetadata.
+ *
+ * ⚠️ DUPLICATION WARNING — see RVR1960Repository.ts in this folder for
+ * the full breakdown. TL;DR: this web copy powers `/dashboard/bible`,
+ * but the SERMON WIZARD uses the infra copy at
+ * `packages/infrastructure/src/bible/repositories/ASVRepository.ts`.
+ * Mirror parser changes in both. Tech debt:
+ * `tech_debt_bible_parser_duplication`.
  */
 export class ASVRepository extends BaseJSONRepository {
     protected readonly versionId = 'ASV';

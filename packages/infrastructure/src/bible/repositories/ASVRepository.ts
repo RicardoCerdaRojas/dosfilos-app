@@ -23,13 +23,21 @@ interface ASVData {
 }
 
 /**
- * ASV (American Standard Version) Repository - Adapter for English Bible
- * 
- * Implements IBibleVersionRepository (Dependency Inversion Principle)
- * Follows Adapter Pattern to convert ASV flat-array structure to domain interface
- * 
+ * ASV (American Standard Version) Repository — Adapter for English Bible.
+ *
+ * Implements IBibleVersionRepository (Dependency Inversion Principle).
+ * Follows Adapter Pattern to convert ASV flat-array structure to domain
+ * interface.
+ *
  * Data structure: Flat array of ~31,000 verses
  * { verses: [{ book_name: "Genesis", book: 1, chapter: 1, verse: 1, text: "..." }, ...] }
+ *
+ * ⚠️ DUPLICATION WARNING — see RVR1960Repository.ts in this folder for
+ * the full breakdown. TL;DR: this infra copy powers the SERMON WIZARD
+ * + Faculty citation linker via `LocalBibleService`. The web copy at
+ * `packages/web/src/data/repositories/bible/ASVRepository.ts` powers
+ * `/dashboard/bible`. Mirror parser changes in both. Tech debt:
+ * `tech_debt_bible_parser_duplication`.
  */
 export class ASVRepository implements IBibleVersionRepository {
     private readonly data: ASVData;

@@ -2,13 +2,36 @@ import { IBibleVersionRepository, BibleReference } from '@dosfilos/domain';
 import rvrBible from '../data/rvr1960.json';
 
 /**
- * RVR1960 Repository - Adapter for Spanish Reina-Valera 1960 Bible
- * 
- * Implements IBibleVersionRepository (Dependency Inversion Principle)
- * Follows Adapter Pattern to convert RVR1960 JSON structure to domain interface
- * 
+ * RVR1960 Repository — Adapter for Spanish Reina-Valera 1960 Bible.
+ *
+ * Implements IBibleVersionRepository (Dependency Inversion Principle).
+ * Follows Adapter Pattern to convert RVR1960 JSON structure to domain
+ * interface.
+ *
  * Data structure: Array of books, each with nested chapters array
  * [{ id: "gen", chapters: [["verse1", "verse2", ...], ...] }]
+ *
+ * ⚠️ DUPLICATION WARNING (PR #281, 2026-05-29) ⚠️
+ *
+ * A FUNCTIONALLY DISTINCT copy of this class lives at
+ * `packages/web/src/data/repositories/bible/RVR1960Repository.ts`. THIS
+ * (infra) copy is the one wired into `LocalBibleService.parseReference()`,
+ * which the SERMON WIZARD's Pasaje step + Faculty markdown citation
+ * linker call. The web copy is wired into `/dashboard/bible` page
+ * components (BibleContext + BibleReader + selectors).
+ *
+ * Contracts differ subtly:
+ *   - This (infra) copy returns `book` as the BOOK_MAPPING KEY
+ *     (`'Filemón'`), because `getVerses()` here keys back into
+ *     BOOK_MAPPING to resolve the JSON id.
+ *   - The web copy returns `book` as the abbreviation (`'phm'`).
+ *
+ * Any parser change here MUST be mirrored in the web copy or surfaces
+ * will silently disagree on the same input. PR #280 only edited the web
+ * copy and the wizard's parser kept rejecting "filemon" in production;
+ * PR #281 (this) was the actual fix.
+ *
+ * Tech debt: `tech_debt_bible_parser_duplication` tracks consolidation.
  */
 export class RVR1960Repository implements IBibleVersionRepository {
     private readonly BOOK_MAPPING: Record<string, string> = {
