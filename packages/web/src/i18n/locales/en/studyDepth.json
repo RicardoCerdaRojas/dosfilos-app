@@ -99,6 +99,9 @@
     "tooLongBody": "The structural puzzle works on pericopes of up to ~{{maxWords}} words (this passage has {{wordCount}}). Narrow your focus to 1-5 key verses.",
     "tooLongInputLabel": "Narrowed passage",
     "tooLongInputHint": "E.g. if you work on Philemon, narrow to Philemon 8-21.",
-    "tooLongRetry": "Build puzzle"
+    "tooLongRetry": "Build puzzle",
+    "needsChapterVerseTitle": "I need chapter and verse",
+    "needsChapterVerseBody": "The structural puzzle works on a concrete pericope. Specify chapter and verses (e.g. \"John 3:16\" or \"Romans 8:28-30\"). For short books (Philemon, Jude, 2 John, 3 John, Obadiah) the book name alone is enough.",
+    "needsChapterVerseInputHint": "Type the pericope with chapter and verses."
   }
 }

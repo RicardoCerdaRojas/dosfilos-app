@@ -18,26 +18,37 @@ interface Props {
 const ZONES: StructuralPuzzleRole[] = ['preparatory', 'climactic', 'development'];
 
 /**
- * Structured error payload from the `buildStructuralPuzzle` callable when the
- * passage is too long for a structural puzzle (must be cut down to a
- * perícope). The callable returns this via `HttpsError.details` so the client
- * can render an "acota tu pasaje" UI instead of a generic failure.
+ * Structured error payloads from the `buildStructuralPuzzle` callable when
+ * the passage shape disqualifies the puzzle and the pastor must acotar.
+ * Surfaced via `HttpsError.details` so the client can render a tailored
+ * "acota tu pasaje" UI instead of a generic failure.
+ *
+ * - `passage_too_long`: word count of the input string exceeds the limit
+ *   (rare in practice; covers passages typed in extenso).
+ * - `passage_needs_chapter_verse`: bare-book or chapter-only reference
+ *   (e.g. "Filemón", "Génesis 1") that would otherwise let the LLM
+ *   silently shift the analysis from clause-structural to macro-rhetorical
+ *   without informing the pastor. Allowed exception: short books on the
+ *   server whitelist (Filemón / Judas / 2-3 Juan / Abdías).
  */
-interface PuzzleLengthErrorDetails {
-    code: 'passage_too_long';
-    wordCount: number;
-    maxWords: number;
-}
+type PuzzleRefuseError =
+    | { code: 'passage_too_long'; wordCount: number; maxWords: number }
+    | { code: 'passage_needs_chapter_verse' };
 
-function extractLengthError(err: unknown): PuzzleLengthErrorDetails | null {
+function extractRefuseError(err: unknown): PuzzleRefuseError | null {
     if (!err || typeof err !== 'object') return null;
     const details = (err as { details?: unknown }).details;
     if (!details || typeof details !== 'object') return null;
     const code = (details as { code?: unknown }).code;
-    if (code !== 'passage_too_long') return null;
-    const wordCount = Number((details as { wordCount?: unknown }).wordCount ?? 0);
-    const maxWords = Number((details as { maxWords?: unknown }).maxWords ?? 0);
-    return { code: 'passage_too_long', wordCount, maxWords };
+    if (code === 'passage_too_long') {
+        const wordCount = Number((details as { wordCount?: unknown }).wordCount ?? 0);
+        const maxWords = Number((details as { maxWords?: unknown }).maxWords ?? 0);
+        return { code: 'passage_too_long', wordCount, maxWords };
+    }
+    if (code === 'passage_needs_chapter_verse') {
+        return { code: 'passage_needs_chapter_verse' };
+    }
+    return null;
 }
 
 /**
@@ -57,7 +68,7 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
     const [puzzle, setPuzzle] = useState<StructuralPuzzle | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [lengthError, setLengthError] = useState<PuzzleLengthErrorDetails | null>(null);
+    const [refuseError, setRefuseError] = useState<PuzzleRefuseError | null>(null);
     const [placements, setPlacements] = useState<Record<string, StructuralPuzzleRole | null>>({});
     const [verifiedCorrect, setVerifiedCorrect] = useState<Set<string>>(new Set());
     const [hint, setHint] = useState<{ clauseId: string; text: string } | null>(null);
@@ -91,7 +102,7 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
         fetchInFlightRef.current = true;
         setLoading(true);
         setError(null);
-        setLengthError(null);
+        setRefuseError(null);
         pastoralSeedService
             .buildStructuralPuzzle({ passage: effectivePassage })
             .then((p) => {
@@ -108,9 +119,9 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
             .catch((err) => {
                 console.error('[StructuralPuzzleSheet] build failed', err);
                 if (cancelled) return;
-                const lenErr = extractLengthError(err);
-                if (lenErr) {
-                    setLengthError(lenErr);
+                const refuse = extractRefuseError(err);
+                if (refuse) {
+                    setRefuseError(refuse);
                     return;
                 }
                 const msg = err instanceof Error ? err.message : String(err);
@@ -133,7 +144,7 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
             setHint(null);
             setSelectedPiece(null);
             setError(null);
-            setLengthError(null);
+            setRefuseError(null);
             setOverridePassage('');
         }
     }, [open]);
@@ -232,17 +243,22 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
                     </div>
                 )}
 
-                {!loading && lengthError && (
+                {!loading && refuseError && (
                     <div className="px-4 py-6 space-y-3">
                         <div className="rounded-md border border-warning/40 bg-warning-subtle p-3">
                             <p className="flex items-center gap-1.5 text-sm font-semibold text-warning-subtle-foreground">
-                                <Scissors className="h-4 w-4" /> {t('puzzle.tooLongTitle')}
+                                <Scissors className="h-4 w-4" />
+                                {refuseError.code === 'passage_too_long'
+                                    ? t('puzzle.tooLongTitle')
+                                    : t('puzzle.needsChapterVerseTitle')}
                             </p>
                             <p className="mt-1 text-xs text-warning-subtle-foreground">
-                                {t('puzzle.tooLongBody', {
-                                    wordCount: lengthError.wordCount,
-                                    maxWords: lengthError.maxWords,
-                                })}
+                                {refuseError.code === 'passage_too_long'
+                                    ? t('puzzle.tooLongBody', {
+                                          wordCount: refuseError.wordCount,
+                                          maxWords: refuseError.maxWords,
+                                      })
+                                    : t('puzzle.needsChapterVerseBody')}
                             </p>
                         </div>
                         <div className="space-y-1.5">
@@ -260,7 +276,11 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
                                     }
                                 }}
                             />
-                            <p className="text-[11px] text-muted-foreground">{t('puzzle.tooLongInputHint')}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                                {refuseError.code === 'passage_too_long'
+                                    ? t('puzzle.tooLongInputHint')
+                                    : t('puzzle.needsChapterVerseInputHint')}
+                            </p>
                         </div>
                         <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="sm" onClick={onClose}>
@@ -277,7 +297,7 @@ export function StructuralPuzzleSheet({ open, passage, onClose, onComplete }: Pr
                     </div>
                 )}
 
-                {!loading && error && !lengthError && (
+                {!loading && error && !refuseError && (
                     <div className="px-4 py-6 space-y-3">
                         <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
                             <p className="text-sm font-semibold text-destructive">{t('puzzle.error')}</p>
