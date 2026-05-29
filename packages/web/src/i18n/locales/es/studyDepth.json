@@ -71,7 +71,7 @@
   },
   "puzzle": {
     "title": "Reconstruye la estructura",
-    "description": "Coloca cada cláusula en su zona. Si te equivocas, te doy una pista — pero no te digo la respuesta. La encuentras tú.",
+    "description": "Coloca cada cláusula en su zona. Una zona puede tener varias cláusulas o ninguna — no es una por zona. Si te equivocas, te doy una pista, nunca la respuesta. La encuentras tú.",
     "loading": "Preparando el puzzle…",
     "error": "No se pudo construir el puzzle. Intenta de nuevo.",
     "pile": "Cláusulas por colocar",
@@ -81,7 +81,7 @@
       "climactic": "Climática",
       "development": "Desarrollo"
     },
-    "zoneEmpty": "Click una cláusula y luego aquí.",
+    "zoneEmpty": "Click una cláusula y luego aquí. Puede quedar vacía si así lo decides.",
     "verify": "Verificar colocaciones",
     "verifyAgain": "Verificar de nuevo",
     "placeAll": "Coloca todas las cláusulas",

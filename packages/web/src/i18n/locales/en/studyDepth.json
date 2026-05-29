@@ -71,7 +71,7 @@
   },
   "puzzle": {
     "title": "Reconstruct the structure",
-    "description": "Place each clause in its zone. If you miss, I give you a hint — but never the answer. You find it.",
+    "description": "Place each clause in its zone. A zone may hold several clauses or none — it's not one per zone. If you miss, I give you a hint, never the answer. You find it.",
     "loading": "Preparing the puzzle…",
     "error": "Could not build the puzzle. Please try again.",
     "pile": "Clauses to place",
@@ -81,7 +81,7 @@
       "climactic": "Climactic",
       "development": "Development"
     },
-    "zoneEmpty": "Click a clause and then click here.",
+    "zoneEmpty": "Click a clause and then click here. It can stay empty if you decide so.",
     "verify": "Verify placements",
     "verifyAgain": "Verify again",
     "placeAll": "Place all clauses",
