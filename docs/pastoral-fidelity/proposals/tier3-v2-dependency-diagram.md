@@ -203,7 +203,80 @@ Total estimado: **~10-13h de trabajo**, en Sprint 2.
 1. ¿Aprobás el reemplazo v1 → v2 con plan de A/B telemétrico de 2 semanas?
 2. ¿Aprobás invertir ~10-13h en Sprint 2 para esto, o priorizamos otro item del backlog?
 3. ¿Querés que la implementación incluya conectores SVG (PR 4) o el MVP sin conectores ya da el insight pedagógico?
+4. **NUEVA — caso "epistle-rhetorical"**: ¿incluímos un sexto `shape: 'epistle-rhetorical'` para libros breves (Filemón, Judas, 2-3 Juan, Abdías) que el v1 silenciosamente trataba como macro? Detalle abajo.
+
+## Adenda — caso macro-epistolar (Filemón, 2026-05-28)
+
+### Hallazgo del smoke
+
+Tier 3 v1 deployed en prod aceptó "Filemón" (sin chapter:verse) y devolvió un puzzle de 8 bloques que NO eran cláusulas gramaticales sino **secciones retóricas de la carta completa**:
+
+| Slot | Versículos | Función macro |
+|------|-----------|---------------|
+| PREP × 6 | 1:1-3 / 1:4-5 / 1:6-7 / 1:8-9 / 1:10-12 / 1:13-16 | Saludo + acción de gracias + preparación retórica |
+| CLIM × 1 | 1:17-20 | El ASK: "recíbelo como a mí mismo" |
+| DESARROLLO × 1 | 1:21-25 | Confianza + saludos finales |
+
+El pastor pudo solverlo 8/8 (la macro-estructura epistolar es intuitiva) pero:
+- El word-count guard NO disparó porque cuenta palabras del STRING ("Filemón" = 1 palabra), no del texto bíblico.
+- Cero signal al pastor de que el análisis cambió de **micro** (cláusulas) a **macro** (secciones retóricas).
+- Para libros más largos (Romanos, Hebreos, 1 Corintios) el mismo path explota: LLM trunca arbitrariamente contra `MAX_CLAUSES = 8`.
+
+### Mitigación inmediata (PR #279 — guard tibio)
+
+PR #279 añade un guard upstream del word-count:
+- Refuse explícito si la referencia no tiene `:` Y no está en whitelist de libros cortos (`Filemón / Judas / 2-3 Juan / Abdías`).
+- UI nueva "Necesito capítulo y versículo" con input para acotar.
+- Libros cortos en whitelist siguen permitiendo `Filemón` solo → preserva la experiencia macro descubierta accidentalmente, pero solo donde no destruye la pedagogía.
+
+### Implicación para v2
+
+Pedagógicamente, el modo macro es **valioso para epístolas breves** — identificar el ASK retórico de Filemón es exactamente lo que enseñan los manuales de retórica grecorromana. NO es algo a descartar; es algo a **modelar explícitamente**.
+
+Propuesta de absorción en v2:
+
+```
+shape: 'epistle-rhetorical'
+```
+
+Esqueleto sample para Filemón (skeleton-as-rhetorical-form):
+
+```
+┌─────────────────────────────────────┐   ← slot α (saludo / address)
+└─────────────────────────────────────┘
+┌─────────────────────────────────────┐   ← slot β (acción de gracias)
+└─────────────────────────────────────┘
+┌─────────────────────────────────────┐   ← slot γ (apelación preliminar)
+└─────────────────────────────────────┘
+   ┌──────────────────────────────────┐
+   │                                  │   ← slot δ (ASK central / propositio)
+   │                                  │
+   └──────────────────────────────────┘
+┌─────────────────────────────────────┐   ← slot ε (confianza / probatio)
+└─────────────────────────────────────┘
+┌─────────────────────────────────────┐   ← slot ζ (cierre / saludos)
+└─────────────────────────────────────┘
+```
+
+- `roleLabel` post-solve transfiere vocabulario retórico real: `prescript`, `proemio`, `propositio`, `confirmatio`, `peroratio`, `cláusula epistolar`.
+- Esqueleto centra visualmente el slot del ASK (más grande, indent 1) → comunica el clímax retórico sin nombrarlo.
+
+### Decisión de diseño abierta (para fundador)
+
+**Opción A — incluir epistle-rhetorical en v2 MVP**:
+- Pro: cubre el caso Filemón pedagógicamente bien.
+- Pro: extensible a 2-3 Juan, Judas, Abdías sin esfuerzo extra.
+- Contra: prompt del agente más complejo (debe detectar género retórico + diagrammar como epistle).
+- Costo extra: +2-3h sobre el MVP base (~10-13h → ~13-16h total).
+
+**Opción B — diferir epistle-rhetorical a v2.1**:
+- Pro: v2 MVP más rápido al usuario.
+- Pro: aprendemos de telemetría v2 antes de comprometernos a una nueva shape.
+- Contra: durante v2 MVP, Filemón sigue con v1 + guard de PR #279 (que ya cubre el caso, simplemente sin diagrama de dependencias).
+
+**Recomendación**: Opción B. PR #279 ya cubre la situación crítica (refuse de pasajes largos no-whitelisted). Filemón completo sigue accesible vía whitelist en v1. v2 MVP cubre los 4 shapes principales (linear/cascade/chiasm/parallelism). epistle-rhetorical se evalúa en v2.1 con datos reales del uso.
 
 ## Bitácora
 
 - 2026-05-28 — Doc inicial escrito post-smoke fundador sobre PR #275. Tier 3 v1 funciona pero la mecánica de 3-buckets no enseña dependencias.
+- 2026-05-28 — Adenda macro-epistolar después de que Filemón completo solveable surfaceó el caso. Decisión recomendada: diferir `epistle-rhetorical` a v2.1; PR #279 mitiga el bypass de length guard.
