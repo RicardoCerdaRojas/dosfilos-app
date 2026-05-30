@@ -442,6 +442,10 @@
                 "study_depth": {
                     "label": "Study Companion",
                     "description": "Study-depth badge + per-step orientation in the wizard (Phase 2.5). Requires pastoral fidelity flow."
+                },
+                "fidelity_pass": {
+                    "label": "Fidelity pass",
+                    "description": "Claim/source fidelity pass — second-pass LLM that scores every `[N]` marker in a generated sermon and surfaces a review panel in the editor (Phase 3, ADR-029). Requires pastoral_fidelity_flow."
                 }
             }
         },
