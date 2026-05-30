@@ -2,6 +2,7 @@ import {
     collection,
     doc,
     setDoc,
+    updateDoc,
     getDoc,
     getDocs,
     deleteDoc,
@@ -15,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { ISermonRepository, FindOptions } from '@dosfilos/domain';
 import { SermonEntity } from '@dosfilos/domain';
+import type { FidelityReport, FidelityVerdict, GateOverride } from '@dosfilos/domain';
 import { db } from '../config/firebase';
 
 export class FirebaseSermonRepository implements ISermonRepository {
@@ -212,6 +214,90 @@ export class FirebaseSermonRepository implements ISermonRepository {
             bibliography: sermon.bibliography ?? null,
             citationManifest: sermon.citationManifest ?? null,
             studyDepthSnapshot: sermon.studyDepthSnapshot ?? null,
+            fidelityReport: sermon.fidelityReport ? this.fidelityReportToFirestore(sermon.fidelityReport) : null,
+        };
+    }
+
+    async updateFidelityReport(sermonId: string, report: FidelityReport): Promise<void> {
+        const sermonRef = doc(db, this.collectionName, sermonId);
+        await updateDoc(sermonRef, {
+            fidelityReport: this.fidelityReportToFirestore(report),
+            updatedAt: serverTimestamp(),
+        });
+    }
+
+    private fidelityReportToFirestore(report: FidelityReport): any {
+        return {
+            version: report.version,
+            reportId: report.reportId,
+            sermonId: report.sermonId,
+            generatedAt: Timestamp.fromDate(report.generatedAt),
+            modelTier: report.modelTier,
+            verdicts: report.verdicts.map((v) => ({
+                marker: v.marker,
+                claim: v.claim,
+                citedSource: v.citedSource,
+                verdict: v.verdict,
+                reasoning: v.reasoning,
+                confidence: v.confidence,
+                modelUsed: v.modelUsed,
+                evaluatedAt: Timestamp.fromDate(v.evaluatedAt),
+                ...(v.stale !== undefined ? { stale: v.stale } : {}),
+            })),
+            summary: report.summary,
+            gateStatus: report.gateStatus,
+            ...(report.gateOverride
+                ? {
+                    gateOverride: {
+                        reason: report.gateOverride.reason,
+                        overriddenAt: Timestamp.fromDate(report.gateOverride.overriddenAt),
+                        overriddenBy: report.gateOverride.overriddenBy,
+                        bypassedKind: report.gateOverride.bypassedKind,
+                    },
+                }
+                : {}),
+            ...(report.pluralityReport ? { pluralityReport: report.pluralityReport } : {}),
+            ...(report.authorityReport ? { authorityReport: report.authorityReport } : {}),
+            ...(report.attributionReport ? { attributionReport: report.attributionReport } : {}),
+        };
+    }
+
+    private fidelityReportFromFirestore(raw: any): FidelityReport | undefined {
+        if (!raw || typeof raw !== 'object') return undefined;
+        const verdicts: FidelityVerdict[] = Array.isArray(raw.verdicts)
+            ? raw.verdicts.map((v: any) => ({
+                marker: Number(v.marker),
+                claim: String(v.claim ?? ''),
+                citedSource: v.citedSource,
+                verdict: v.verdict,
+                reasoning: String(v.reasoning ?? ''),
+                confidence: Number(v.confidence ?? 0),
+                modelUsed: v.modelUsed,
+                evaluatedAt: v.evaluatedAt?.toDate?.() ?? v.evaluatedAt ?? new Date(),
+                ...(v.stale !== undefined ? { stale: Boolean(v.stale) } : {}),
+            }))
+            : [];
+        const gateOverride: GateOverride | undefined = raw.gateOverride
+            ? {
+                reason: String(raw.gateOverride.reason ?? ''),
+                overriddenAt: raw.gateOverride.overriddenAt?.toDate?.() ?? raw.gateOverride.overriddenAt ?? new Date(),
+                overriddenBy: String(raw.gateOverride.overriddenBy ?? ''),
+                bypassedKind: raw.gateOverride.bypassedKind,
+            }
+            : undefined;
+        return {
+            version: raw.version,
+            reportId: String(raw.reportId ?? ''),
+            sermonId: String(raw.sermonId ?? ''),
+            generatedAt: raw.generatedAt?.toDate?.() ?? raw.generatedAt ?? new Date(),
+            modelTier: raw.modelTier,
+            verdicts,
+            summary: raw.summary,
+            gateStatus: raw.gateStatus,
+            ...(gateOverride ? { gateOverride } : {}),
+            ...(raw.pluralityReport ? { pluralityReport: raw.pluralityReport } : {}),
+            ...(raw.authorityReport ? { authorityReport: raw.authorityReport } : {}),
+            ...(raw.attributionReport ? { attributionReport: raw.attributionReport } : {}),
         };
     }
 
@@ -284,6 +370,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
                         ?? new Date(),
                 }
                 : undefined,
+            fidelityReport: this.fidelityReportFromFirestore(d.fidelityReport),
         });
     }
 }
