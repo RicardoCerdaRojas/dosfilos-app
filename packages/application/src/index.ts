@@ -67,3 +67,8 @@ export * from './hebrew-tutor/index.js';
 
 // 🌱 Pastoral Fidelity Phase 1.5 — Pastoral Word Study use cases
 export * from './use-cases/pastoral-word-study';
+
+// 🌱 Pastoral Fidelity Phase 3 PR 1 — Claim ↔ source fidelity pass (ADR-029)
+export * from './use-cases/sermon/RunFidelityPassUseCase';
+export * from './services/CallableFidelityEvaluator';
+export * from './services/CallableLlmClient';
