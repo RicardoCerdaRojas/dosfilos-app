@@ -44,6 +44,7 @@ import { SermonPreview } from '@/components/sermons/SermonPreview';
 import { SermonRepurposeSection } from '@/components/sermons/SermonRepurposeSection';
 import { SermonBibliographySection } from '@/components/sermons/SermonBibliographySection';
 import { PastoralSeedAuditPanel } from '@/components/sermons/PastoralSeedAuditPanel';
+import { FidelityReviewPanel } from '@/components/sermons/FidelityReviewPanel';
 import { useTranslation } from 'react-i18next';
 import { ShareSermonDialog } from './components/detail/ShareSermonDialog';
 import { LogPreachingDialog } from './components/detail/LogPreachingDialog';
@@ -512,6 +513,11 @@ export function SermonDetailPage() {
                 citationManifest={sermon.citationManifest}
               />
               <PastoralSeedAuditPanel sermonId={sermon.id} />
+              <FidelityReviewPanel
+                sermonId={sermon.id}
+                report={sermon.fidelityReport}
+                onReportUpdated={mutate}
+              />
               <SermonBibliographySection
                 bibliography={sermon.bibliography}
                 manifest={sermon.citationManifest}
