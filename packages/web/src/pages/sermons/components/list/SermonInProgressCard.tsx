@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowRight, BookOpen, Sprout, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PastoralSeedSummary } from '@/hooks/usePastoralSeedsByUser';
@@ -12,6 +13,10 @@ interface Props {
     passage: string;
     seed: PastoralSeedSummary;
     onDelete?: () => void;
+    /** Multi-select state — renders checkbox affordance + suppresses "Continuar" nav when selecting. */
+    selected?: boolean;
+    onToggleSelect?: (id: string) => void;
+    selectionActive?: boolean;
 }
 
 /**
@@ -24,13 +29,51 @@ interface Props {
  * no "Publicar" affordance — those belong to finished sermons. The
  * pastor here is mid-flight; the card is a runway, not a trophy.
  */
-export function SermonInProgressCard({ sermonId, title, passage, seed, onDelete }: Props) {
+export function SermonInProgressCard({
+    sermonId,
+    title,
+    passage,
+    seed,
+    onDelete,
+    selected = false,
+    onToggleSelect,
+    selectionActive = false,
+}: Props) {
     const navigate = useNavigate();
     const pct = Math.round((seed.completedSteps / seed.totalSteps) * 100);
 
+    const handleContinue = () => {
+        if (selectionActive && onToggleSelect) {
+            onToggleSelect(sermonId);
+            return;
+        }
+        navigate(`/dashboard/sermons/generate?id=${sermonId}`);
+    };
+
     return (
-        <Card className="p-4 space-y-3 border-emerald-500/30 hover:border-emerald-500/50 transition-colors">
-            <div className="flex items-start justify-between gap-3">
+        <Card
+            className={cn(
+                'group relative p-4 space-y-3 border-emerald-500/30 hover:border-emerald-500/50 transition-colors',
+                selected && 'border-primary ring-2 ring-primary/30',
+            )}
+            data-testid={`sermon-in-progress-card-${sermonId}`}
+        >
+            {onToggleSelect && (
+                <div
+                    className={cn(
+                        'absolute top-2 left-2 z-10 rounded-md bg-background/95 p-1 shadow-sm transition-opacity',
+                        selectionActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                    )}
+                >
+                    <Checkbox
+                        checked={selected}
+                        onCheckedChange={() => onToggleSelect(sermonId)}
+                        aria-label={selected ? 'Quitar de la selección' : 'Seleccionar estudio'}
+                        data-testid={`sermon-in-progress-card-checkbox-${sermonId}`}
+                    />
+                </div>
+            )}
+            <div className={cn('flex items-start justify-between gap-3', onToggleSelect && 'pl-7')}>
                 <div className="flex items-start gap-2 min-w-0">
                     <div className="p-1.5 rounded-md bg-emerald-500/10 mt-0.5 shrink-0">
                         <Sprout className="h-4 w-4 text-emerald-600" />
@@ -93,7 +136,7 @@ export function SermonInProgressCard({ sermonId, title, passage, seed, onDelete 
                     )}
                     <Button
                         size="sm"
-                        onClick={() => navigate(`/dashboard/sermons/generate?id=${sermonId}`)}
+                        onClick={handleContinue}
                         className="bg-emerald-600 hover:bg-emerald-700"
                     >
                         Continuar
