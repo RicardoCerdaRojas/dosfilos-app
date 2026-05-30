@@ -1,5 +1,6 @@
 import { CitationManifest, ExegeticalStudy, HomileticalAnalysis, RAGSource, SermonContent } from './SermonGenerator';
 import type { SermonPersonalization } from './SermonPersonalization';
+import type { FidelityReport } from './FidelityReport';
 import { aggregateRagSourcesFlat } from '../services/aggregateRagSources';
 
 export interface PreachingLog {
@@ -170,6 +171,18 @@ export interface Sermon {
      * sermons have this `undefined`; the badge falls back to "no data".
      */
     studyDepthSnapshot?: import('./StudyDepthAssessment').StudyDepthSnapshot;
+
+    /**
+     * Phase 3 PR 1 (ADR-029) — Claim/source fidelity pass result. Written by
+     * `RunFidelityPassUseCase` after a Gemini Flash (+ optional Sonnet
+     * escalation) evaluator scores every `[N]` marker. Read by the
+     * FidelityReviewPanel in the editor and (later PRs) the pre-publish
+     * gate. Absent on sermons whose pastor never ran the pass or whose
+     * `fidelity_pass` sub-flag is off. The field is purely additive —
+     * mutators carry it forward without alteration so re-running the pass
+     * fully replaces the report instead of merging it.
+     */
+    fidelityReport?: FidelityReport;
 }
 
 export class SermonEntity implements Sermon {
@@ -198,7 +211,8 @@ export class SermonEntity implements Sermon {
         public sourcePaperId?: string,
         public bibliography?: RAGSource[],
         public citationManifest?: CitationManifest,
-        public studyDepthSnapshot?: Sermon['studyDepthSnapshot']
+        public studyDepthSnapshot?: Sermon['studyDepthSnapshot'],
+        public fidelityReport?: FidelityReport
     ) {
         this.validate();
     }
@@ -255,7 +269,8 @@ export class SermonEntity implements Sermon {
             data.sourcePaperId,
             data.bibliography ?? (data as any).bibliography,
             data.citationManifest,
-            data.studyDepthSnapshot
+            data.studyDepthSnapshot,
+            data.fidelityReport
         );
     }
 
@@ -286,7 +301,8 @@ export class SermonEntity implements Sermon {
             d.sourcePaperId ?? this.sourcePaperId,
             data.bibliography ?? this.bibliography,
             data.citationManifest ?? this.citationManifest,
-            data.studyDepthSnapshot ?? this.studyDepthSnapshot
+            data.studyDepthSnapshot ?? this.studyDepthSnapshot,
+            data.fidelityReport ?? this.fidelityReport
         );
     }
 
@@ -320,7 +336,8 @@ export class SermonEntity implements Sermon {
                 draftSources: this.wizardProgress?.draft?.ragSources,
             }),
             this.citationManifest ?? this.wizardProgress?.draft?.citationManifest,
-            this.studyDepthSnapshot
+            this.studyDepthSnapshot,
+            this.fidelityReport
         );
     }
 
@@ -372,7 +389,8 @@ export class SermonEntity implements Sermon {
                 draftSources: this.wizardProgress?.draft?.ragSources,
             }),
             this.citationManifest ?? this.wizardProgress?.draft?.citationManifest,
-            this.studyDepthSnapshot
+            this.studyDepthSnapshot,
+            this.fidelityReport
         );
     }
 
@@ -402,7 +420,8 @@ export class SermonEntity implements Sermon {
             this.sourcePaperId,
             this.bibliography,
             this.citationManifest,
-            this.studyDepthSnapshot
+            this.studyDepthSnapshot,
+            this.fidelityReport
         );
     }
 
@@ -432,7 +451,8 @@ export class SermonEntity implements Sermon {
             this.sourcePaperId,
             this.bibliography,
             this.citationManifest,
-            this.studyDepthSnapshot
+            this.studyDepthSnapshot,
+            this.fidelityReport
         );
     }
 
@@ -462,7 +482,8 @@ export class SermonEntity implements Sermon {
             this.sourcePaperId,
             this.bibliography,
             this.citationManifest,
-            this.studyDepthSnapshot
+            this.studyDepthSnapshot,
+            this.fidelityReport
         );
     }
 
