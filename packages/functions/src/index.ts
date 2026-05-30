@@ -136,6 +136,8 @@ export { orientStudy } from './study-companion/orientStudy';
 export { runSocraticTurnLlm } from './guided-sermon/runSocraticTurnLlm';
 // 🌱 Pastoral Fidelity Phase 2.5 Tier 3 — Structural puzzle builder (proposal `structural-puzzle-tier3.md`)
 export { buildStructuralPuzzle } from './study-companion/buildStructuralPuzzle';
+// 🌱 Pastoral Fidelity Phase 3 PR1 — Claim ↔ source fidelity evaluator (ADR-029)
+export { evaluateClaimSourceFidelity } from './sermon/evaluateClaimSourceFidelity';
 
 
 

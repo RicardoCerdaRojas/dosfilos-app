@@ -47,6 +47,23 @@ export function useStudyDepthGate(): { enabled: boolean; loading: boolean } {
     };
 }
 
+/**
+ * Phase 3 sub-gate: pastor needs BOTH `pastoral_fidelity_flow` (parent)
+ * AND `fidelity_pass` (sub-flag) for the claim/source fidelity pass — the
+ * second-pass LLM evaluator that scores every `[N]` marker (ADR-029) and
+ * the FidelityReviewPanel in the sermon editor. Default off → blast
+ * radius 0 until toggled. When only the parent is on, sermons publish
+ * with identity-only validation (Phase B+C citation engine) as before.
+ */
+export function useFidelityPassGate(): { enabled: boolean; loading: boolean } {
+    const parent = useFeatureFlag('pastoral_fidelity_flow');
+    const sub = useFeatureFlag('fidelity_pass');
+    return {
+        enabled: parent.enabled && sub.enabled,
+        loading: parent.loading || sub.loading,
+    };
+}
+
 export type PastoralFidelityGateReason =
     | 'loading'
     | 'flag-disabled'

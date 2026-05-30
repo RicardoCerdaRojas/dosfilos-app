@@ -164,6 +164,17 @@ export const FEATURE_FLAG_NAMES = [
      * until toggled.
      */
     'study_depth',
+    /**
+     * Phase 3 sub-flag — gates the claim/source fidelity pass: the second
+     * LLM evaluator that scores every `[N]` marker in a generated sermon
+     * (supports/partial/unrelated/contradicts), the FidelityReviewPanel in
+     * the sermon editor, and (later PRs) the pre-publish gate + plurality
+     * + authority + attribution-footer validators (ADR-029). Requires
+     * `pastoral_fidelity_flow` to also be on. Default off → blast radius 0
+     * until toggled. Flip to default on only after smoke with real pastors
+     * (Phase 3 closeout).
+     */
+    'fidelity_pass',
 ] as const;
 
 export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];

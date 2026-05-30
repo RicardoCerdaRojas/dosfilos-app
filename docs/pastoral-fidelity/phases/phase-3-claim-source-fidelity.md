@@ -2,16 +2,29 @@
 
 ## Estado
 
-`planning` — prereqs actualizados al cerrar Fase 2.5 (2026-05-29). Lista de dependencias
+`in-progress` — arrancada 2026-05-30 con `/iniciar-fase 3`. Plan locked + ADR-029 escrito.
+PR 1 (fidelity pass core + per-marker verdicts panel) sigue.
+
+Prereqs actualizados al cerrar Fase 2.5 (2026-05-29). Lista de dependencias
 satisfechas + no satisfechas + preguntas emergentes + riesgos cross-fase abajo.
 
 ## Objetivo
 
-Implementar segundo-pass LLM que evalúa, para cada marcador `[N]` del borrador generado, si el chunk citado realmente respalda la oración a la izquierda del marcador. Surface al pastor los marcadores dudosos antes de publish. Gate de publish si >20% son `unrelated` o `contradicts`.
+Implementar segundo-pass LLM que evalúa, para cada marcador `[N]` del borrador generado, si el chunk
+citado realmente respalda la oración a la izquierda del marcador. Surface al pastor los marcadores
+dudosos antes de publish. Gate de publish basado en thresholds (>20% `unrelated|contradicts` →
+hard-block, override impossible; `partial` → soft-block con justificación ≥100 chars audit-logged).
 
-Cierra el gap más grande del motor de citas actual: validamos identidad, no fidelidad.
+Cierra el gap más grande del motor de citas actual: validamos identidad (Fases B+C ya en main), NO
+fidelidad.
 
-## Prerequisitos
+Extiende con 3 validators de [ADR-006](../decisions/ADR-006-rights-aware-citation-system.md):
+
+- **Plurality** (no-proof-texting): claims sustantivas exigen ≥2 pasajes bíblicos distintos.
+- **Attribution**: licencias CC BY/BY-SA honoradas — el render final incluye atribución obligatoria.
+- **Authority**: detecta "WCF dice X, por tanto X" → confronta, exige reformular apelando al texto.
+
+## Handoff Fase 2.5 → Fase 3 (snapshot al cierre 2.5, 2026-05-29)
 
 ### Satisfechos (al cierre Fase 2.5, 2026-05-29)
 
@@ -77,94 +90,370 @@ Cierra el gap más grande del motor de citas actual: validamos identidad, no fid
    3, el output (`StructuralDiagram` con esqueleto + roleLabel) es más rico — fidelity pass
    podría usar el `roleLabel` ("apositivo", "subordinada causal") para detectar claims que
    apoyan una cláusula subordinada como si fuera la principal.
+## Prerequisitos — ESTADO
 
-## Decisiones tomadas
+| Prereq | De dónde viene | Estado |
+|---|---|---|
+| Fase 1 + 1.6 + 2 + 2.5 cerradas (seed + tres testigos + study depth producen borradores fundamentados) | Fases anteriores | ✅ |
+| Motor de citas Fases B+C en main | PRs Phase B.1-B.5 + C.1 (commits `a174ac05`, `b15dfcf5`, `248c40d6`, `2b74237a`, `21ba44c9`) | ✅ |
+| `citationManifest` persistido por sermón (`wizardProgress.draft.citationManifest`, mirror en `sermons/{id}/content.citationManifest`) | PR #213 | ✅ |
+| `validateCitations` domain pure function (identity-only) | [`packages/domain/src/services/validateCitations.ts:48`](../../packages/domain/src/services/validateCitations.ts) | ✅ |
+| `aggregateRequiredAttributions` (computa AttributionBlock[] desde manifest) | [`packages/domain/src/services/aggregateRequiredAttributions.ts:70`](../../packages/domain/src/services/aggregateRequiredAttributions.ts) | ✅ wired, ❌ footer NO renderizado en PDF/Docx — PR 5 |
+| `LibraryResource` + `DocumentChunk` con rights fields (license, ingestionStatus, requiredAttribution, etc.) | [`packages/domain/src/entities/LibraryResource.ts`](../../packages/domain/src/entities/LibraryResource.ts), [`DocumentChunk.ts`](../../packages/domain/src/entities/DocumentChunk.ts) | ✅ |
+| `SermonService.publishSermon(id)` — gate point natural | [`packages/application/src/services/SermonService.ts:126`](../../packages/application/src/services/SermonService.ts) | ✅ |
+| `study_depth` flag + modo experto self-service (SDS>80, N sermones) | Fase 2.5 ADR-027 | ✅ — Fase 3 reusa el mismo gate experto |
+| `AiAssistLog` audit infrastructure | Fase 1.6 + cableado completo Fase 2.5 PR A | ✅ |
 
-- [ADR-006](../decisions/ADR-006-rights-aware-citation-system.md) — citation engine rights-aware. Esta fase **extiende** el fidelity pass con:
-  - **Validador de atribución required**: para cada chunk citado, verificar que su `requiredAttribution[]` esté presente en el render final
-  - **No-proof-texting validator**: para claims `doctrinaSustantiva` con solo 1 cita bíblica → bloqueo blando "necesita testimonio plural"
-  - **Authority subordination check**: detectar y flagear cuando el sermón cita una confesión/credo como autoridad final ("la WCF dice X, por tanto X") en vez de como resumen del texto bíblico
+**Deuda heredada** (no bloquea, pero documentada):
+- **SBLGNT license discrepancia**: ADR-006 + esta phase doc + `07-citation-policy` dicen `CC BY 4.0`,
+  el código (`SBLGNT_ATTRIBUTION` en `aggregateRequiredAttributions.ts:39`) renderea
+  `CC BY-SA 4.0` (upstream MorphGNT es BY-SA). Inconsistencia entre docs y código. Resolver con el
+  fundador antes de PR 5 (render compliance es público).
+- **SBLGNT hardcoded como constante** en `aggregateRequiredAttributions.ts:30-42`, no viene del
+  catálogo CORE Library. Tech debt de Fase 0. Phase 3 lo deja igual; mover a catalog viene con
+  próxima ingesta CORE (memoria nueva `tech_debt_sblgnt_hardcoded` al cerrar PR 5).
+- **Claim-level metadata ausente**: `SermonContent.body[]` son párrafos prosa sin tagging por
+  oración. PR 3 (Plurality) extrae claims con LLM tagger antes de validar pluralidad.
 
-## Decisiones pendientes (TBD al iniciar fase)
+## Decisiones tomadas — Q1-Q10 (lock 2026-05-30, ADR-029)
 
-- Modelo LLM para evaluación (Sonnet 4.6 vs Opus 4.7 — tradeoff costo/calidad)
-- Granularidad de la oración a evaluar (oración completa antes del marcador vs. claim semántico)
-- Threshold exacto del gate (¿20% es correcto? testear con corpus piloto)
-- UX para revisar marcadores dudosos en el editor
-- Re-run del fidelity pass después de re-citar (caching invalidation)
+Resueltas en sesión kickoff `/iniciar-fase 3`. Detalle + justificación en
+[ADR-029](../decisions/ADR-029-fidelity-pass-gate-policy.md).
 
-## Arquitectura propuesta (alto nivel)
+| # | Pregunta | Decisión |
+|---|---|---|
+| Q1 | Modelo LLM evaluator | **Gemini Flash batched** para evaluar todos los markers; **escalar a Sonnet 4.6** los verdicts `partial`/`contradicts` para razonamiento más fino. Costo estimado <$0.05/sermón. |
+| Q2 | Granularidad del claim | **Oración completa antes del marker** (regex de fin de oración). NO claim semántico extraído (evita LLM extra). |
+| Q3 | Threshold del gate | **20% `unrelated|contradicts` → hard-block sin override**. `>10% partial` → soft-block con justificación. Toggle admin para calibrar post-launch con corpus real. |
+| Q4 | Detección de claim sustantiva (PR 3) | **LLM tagger en el mismo batch del fidelity pass** (no call separado). Reusa Gemini Flash. |
+| Q5 | Modo experto / skip fidelity pass | **Reusa el gate de Fase 2.5** (SDS>80, N sermones threshold). NO doble paternalismo. |
+| Q6 | Re-run y cache | **Invalidar solo verdicts del marker afectado** cuando user re-cita/re-genera una oración. Full report intacto. |
+| Q7 | Attribution footer scope | **TODOS los surfaces**: PDF + Docx + web view. Full compliance CC BY/BY-SA. |
+| Q8 | SBLGNT hardcoded | **Dejar esta fase** + memoria nueva de deuda. Mover a catalog CORE en próxima ingesta Fase 0. |
+| Q9 | PR ordering | **Secuencial 1→2→3→4→5**. NO priorizar PR 5 antes (aunque sea compliance). |
+| Q10 | Sub-flag `fidelity_pass` | **Default off** en PR1-4. Flip default on tras smoke con 1-2 usuarios reales. |
+
+## Arquitectura propuesta
+
+### Schema
 
 ```typescript
-interface FidelityPass {
-  run(sermon: Sermon, manifest: CitationManifest): Promise<FidelityReport>;
-}
+// packages/domain/src/entities/FidelityReport.ts (new)
 
 interface FidelityReport {
+  version: '1';
+  reportId: string;
+  sermonId: string;
+  generatedAt: Date;
+  modelTier: 'flash' | 'sonnet' | 'mixed';  // tracking Q1 tiering
   verdicts: FidelityVerdict[];
-  summary: {
-    supports: number;
-    partial: number;
-    unrelated: number;
-    contradicts: number;
-    totalMarkers: number;
-  };
-  pluralityCheck: PluralityReport;       // NEW (ADR-006)
-  attributionCheck: AttributionReport;   // NEW (ADR-006)
-  authorityCheck: AuthorityReport;       // NEW (ADR-006)
+  summary: FidelitySummary;
+
+  // Sub-reports opt-in (Discrepancia D3 — composables, no monolítico)
+  pluralityReport?: PluralityReport;      // PR 3
+  attributionReport?: AttributionReport;  // PR 5
+  authorityReport?: AuthorityReport;      // PR 4
+
   gateStatus: 'pass' | 'soft-block' | 'hard-block';
+  gateOverride?: GateOverride;            // PR 2
 }
 
 interface FidelityVerdict {
-  marker: number;
-  claim: string;                  // sentence_before(marker)
+  marker: number;                          // [N]
+  claim: string;                           // sentence_before(marker), Q2
   citedSource: ChunkRef;
   verdict: 'supports' | 'partial' | 'unrelated' | 'contradicts';
   reasoning: string;
   confidence: number;
-  evaluatedAt: timestamp;
+  modelUsed: 'flash' | 'sonnet';           // Q1
+  evaluatedAt: Date;
+  stale?: boolean;                         // Q6 — set when marker re-cited
 }
 
-// NEW — ADR-006 extensions
+interface FidelitySummary {
+  supports: number;
+  partial: number;
+  unrelated: number;
+  contradicts: number;
+  totalMarkers: number;
+  unrelatedRatio: number;                  // for gate calc
+}
 
+interface GateOverride {
+  reason: string;                          // ≥100 chars
+  overriddenAt: Date;
+  overriddenBy: UserId;
+  bypassedKind: 'partial' | 'plurality' | 'authority';
+  // hard-block (>20% unrelated|contradicts) NO admite override
+}
+
+// PR 3
 interface PluralityReport {
-  // For claims tagged doctrinaSustantiva, verify >= 2 distinct biblical sources
   substantiveClaims: SubstantiveClaim[];
-  failures: SubstantiveClaim[];   // claims with only 1 biblical source
+  failures: SubstantiveClaim[];            // <2 distinct biblical sources
 }
 
-interface AttributionReport {
-  // For sources with requiredAttribution[], verify presence in artifact render
-  requiredAttributions: AttributionEntry[];
-  missingAttributions: AttributionEntry[];
+interface SubstantiveClaim {
+  claimText: string;
+  detectedLevel: 'core' | 'distinctive' | 'open-evangelical';
+  biblicalSources: PassageRef[];           // distinct passages
+  confessionalSupport: ChunkRef[];         // not counted toward plurality
 }
 
+// PR 4
 interface AuthorityReport {
-  // Detect claims that cite confession/creed as final authority instead of as summary
   authorityViolations: AuthorityViolation[];
 }
 
 interface AuthorityViolation {
   claim: string;
-  citedSource: ChunkRef;  // confessional source
-  reasoning: string;       // "Phrase 'por tanto X' positions WCF as ground; reformulate apelando al texto bíblico"
+  citedSource: ChunkRef;
+  reformulationHint: string;               // suggested rewrite
+  reasoning: string;
+}
+
+// PR 5
+interface AttributionReport {
+  requiredAttributions: AttributionBlock[];
+  missingAttributions: AttributionBlock[]; // present in manifest, not in rendered output
+  ok: boolean;
 }
 ```
 
+### Componentes a construir
+
+```
+FidelityPass (orchestrator — PR 1)
+├── ClaimExtractor (regex sentence-before-marker, Q2)
+├── FidelityEvaluator (LLM call — Gemini Flash batched, Q1)
+│   └── PartialContradictionEscalator (Sonnet 4.6 follow-up, Q1)
+├── FidelityReportRepository (Firestore persist on sermon doc)
+└── FidelityReviewPanel (UI sidebar, manual run button)
+
+PublishGate (PR 2)
+├── FidelityGatePolicy (pure, thresholds — Q3)
+├── PrePublishFidelityModal (confront flow)
+└── FidelityOverrideForm (≥100 chars, audit)
+
+PluralityValidator (PR 3)
+├── SubstantiveClaimDetector (LLM tagger in same batch, Q4)
+├── PluralityCheck (pure)
+└── PluralityFailureRow (UI w/ CTA "Añadir paralelo canónico")
+
+AuthorityValidator (PR 4)
+├── AuthorityDetector (LLM)
+├── AuthorityReportComputer (pure)
+├── Sermon prompt update (AUTHORITY SUBORDINATION clause)
+└── AuthorityViolationRow (UI w/ reformulation hint)
+
+AttributionFooter (PR 5)
+├── computeAttributionCheck (pure, verifies render against requiredAttribution)
+├── PDF render extension (append "Atribuciones" section)
+├── Docx render extension (append "Atribuciones" section)
+└── Web view section (SermonAttributionsSection)
+```
+
+## Plan de PRs (locked 2026-05-30)
+
+Cada PR = unidad funcional completa testeable en UI (regla `feedback_pr_complete_units`).
+
+### PR 1 — Fidelity pass core + per-marker verdicts visibles
+
+**Branch**: `feat/pastoral-fidelity-phase-3-pr-1-fidelity-core`
+
+**Archivos clave**:
+- `packages/domain/src/entities/FidelityReport.ts` (new)
+- `packages/domain/src/services/computeFidelitySummary.ts` (new, pure)
+- `packages/application/src/use-cases/RunFidelityPassUseCase.ts` (new)
+- `packages/application/src/services/SermonService.ts` (edit) — `runFidelityPass(sermonId)`
+- `packages/infrastructure/src/gemini/fidelityEvaluatorPrompt.ts` (new)
+- `packages/functions/src/sermon/evaluateClaimSourceFidelity.ts` (new, callable, Gemini Flash batched + Sonnet escalation)
+- `packages/infrastructure/src/repositories/SermonRepository.ts` (edit) — persist `fidelityReport?`
+- `packages/domain/src/entities/Sermon.ts` (edit) — add `fidelityReport?: FidelityReport`
+- `packages/web/src/features/sermon/editor/FidelityReviewPanel.tsx` (new)
+- `packages/web/src/features/sermon/editor/FidelityVerdictRow.tsx` (new)
+- `packages/web/src/features/sermon/editor/SermonEditorPage.tsx` (edit) — wire panel + manual button
+- Sub-flag `fidelity_pass` en `packages/domain/src/featureFlags.ts` Y allowlist server-side
+  `packages/functions/src/users/setUserFeatureFlags.ts` (gotcha heredado Fase 2)
+- Tests: domain + application + UI snapshots
+
+**UI test (smoke)**: pastor abre sermón con flag on → click "Revisar fidelidad" → modal de progreso
+→ panel muestra verdicts → click verdict → jumps al marker.
+
+**Estimación**: 5-7 días.
+
+### PR 2 — Publish gate + thresholds + override + audit
+
+**Branch**: `feat/pastoral-fidelity-phase-3-pr-2-publish-gate`
+
+**Archivos clave**:
+- `packages/application/src/services/SermonService.ts` (edit) — `publishSermon` runs fidelity, applies gateStatus
+- `packages/domain/src/services/computeFidelitySummary.ts` (edit) — threshold logic (20%/10%)
+- `packages/domain/src/entities/FidelityReport.ts` (edit) — add `gateOverride?`
+- `packages/functions/src/sermon/publishSermonWithFidelity.ts` (new, server-enforced)
+- `packages/web/src/features/sermon/publish/PrePublishFidelityModal.tsx` (new)
+- `packages/web/src/features/sermon/publish/FidelityOverrideForm.tsx` (new)
+- `packages/web/src/features/sermon/editor/SermonEditorPage.tsx` (edit) — replace "Publicar" click
+- Audit log writes
+
+**UI test**: 22% unrelated → hard-block sin path; 15% partial → soft-block → justification 100+ → publica.
+
+**Estimación**: 3-4 días.
+
+### PR 3 — Plurality validator (no-proof-texting)
+
+**Branch**: `feat/pastoral-fidelity-phase-3-pr-3-plurality`
+
+**Archivos clave**:
+- `packages/domain/src/entities/FidelityReport.ts` (edit) — add `pluralityReport?`, `SubstantiveClaim`
+- `packages/domain/src/services/computePluralityCheck.ts` (new, pure)
+- `packages/infrastructure/src/gemini/substantiveClaimDetectorPrompt.ts` (new)
+- `packages/functions/src/sermon/evaluateClaimSourceFidelity.ts` (edit) — piggy-back substantive claim tagging (Q4)
+- `packages/web/src/features/sermon/editor/PluralityFailureRow.tsx` (new) — CTA "Añadir paralelo canónico" → opens cross-ref lookup (reusa Fase 0)
+- `packages/web/src/features/sermon/editor/FidelityReviewPanel.tsx` (edit) — sección "Pluralidad"
+
+**UI test**: claim "Cristo es preexistente" con solo Juan 1:1 → Plurality fail → CTA → lookup propone Col 1:16, Heb 1:3.
+
+**Estimación**: 3-4 días.
+
+### PR 4 — Authority subordination + prompt update
+
+**Branch**: `feat/pastoral-fidelity-phase-3-pr-4-authority`
+
+**Archivos clave**:
+- `packages/domain/src/entities/FidelityReport.ts` (edit) — add `authorityReport?`, `AuthorityViolation`
+- `packages/infrastructure/src/gemini/authorityDetectorPrompt.ts` (new)
+- `packages/functions/src/sermon/detectAuthorityViolations.ts` (new)
+- `packages/infrastructure/src/gemini/prompts.ts` (edit) — append `AUTHORITY SUBORDINATION` block al sermon prompt principal (referencia ADR-006 §8 + manifesto §6)
+- `packages/web/src/features/sermon/editor/AuthorityViolationRow.tsx` (new) — "Sugerencia de reformulación" inline
+- `packages/web/src/features/sermon/editor/FidelityReviewPanel.tsx` (edit) — sección "Autoridad"
+
+**UI test**: prompt actualizado reduce violaciones; las que quedan → reformulación sugerida click-to-replace.
+
+**Estimación**: 3 días.
+
+### PR 5 — Attribution footer en exports + AttributionReport pre-publish check
+
+**Branch**: `feat/pastoral-fidelity-phase-3-pr-5-attribution-footer`
+
+**Archivos clave**:
+- `packages/infrastructure/src/export/PdfExportService.ts` (edit) — append "Atribuciones" section
+- `packages/web/src/lib/sermon/exportSermonToDocx.ts` (edit) — append "Atribuciones" section
+- `packages/web/src/features/sermon/preview/SermonAttributionsSection.tsx` (new)
+- `packages/web/src/features/sermon/preview/SermonPublishedView.tsx` (edit) — include section
+- `packages/domain/src/entities/FidelityReport.ts` (edit) — add `attributionReport?`
+- `packages/domain/src/services/computeAttributionCheck.ts` (new, pure)
+- `packages/web/src/features/sermon/editor/AttributionMissingRow.tsx` (new)
+- Snapshot tests PDF + Docx con corpus que incluye SBLGNT
+
+**UI test**: pastor exporta sermón con SBLGNT → última página tiene bloque "Atribuciones" con copyright notice + license URL.
+
+**Estimación**: 2-3 días.
+
+**Total**: 16-21 días ≈ 3-4 semanas.
+
 ## Reuso identificado
 
-- `citationManifest` (existente)
-- `validateCitationManifest` server-side hook (existente, se extiende)
-- Editor del sermón (UI surface para verdicts)
+| Componente | Uso en Fase 3 |
+|---|---|
+| `citationManifest` schema (PR #213) | Input directo del fidelity pass |
+| `validateCitations` (domain pure) | Pre-condition: marker identity validado antes de fidelity |
+| `CitationManifestEntry.requiredAttribution[]` | Source-of-truth para AttributionReport (PR 5) |
+| `aggregateRequiredAttributions` | Wired pero unused — PR 5 lo enchufa |
+| `SermonService.publishSermon` línea 126 | Gate point (PR 2) |
+| `SubstantiveClaim.detectedLevel` (core/distinctive/open) | Reusa tagging de Fase 0 / 06-pedagogy-applied §4 |
+| Cross-ref engine (Fase 0) | CTA "Añadir paralelo" (PR 3) |
+| `pastoralFidelity_flow` flag + sub-flag pattern (Fase 2) | `fidelity_pass` sub-flag (Q10) |
+| Modo experto self-service (Fase 2.5 ADR-027) | Skip fidelity gate (Q5) |
+| `AiAssistLog` (Fase 1.6/2.5) | Audit de overrides + verdicts |
+| `LlmClient` port (Fase 2.5 PR A) | Llamadas LLM batched + escalation |
 
-## Detalle TBD
+## Criterios de aceptación
 
-- Prompt del fidelity evaluator
-- Caching strategy
-- Reporting dashboard
-- Re-evaluation triggers
+### PR 1
+- [ ] `evaluateClaimSourceFidelity` callable disparable manualmente desde editor
+- [ ] Batch Gemini Flash + escalate `partial`/`contradicts` a Sonnet 4.6
+- [ ] Verdicts persistidos en `sermons/{id}/fidelityReport`
+- [ ] Sidebar panel muestra summary + lista de verdicts
+- [ ] Click verdict → jumps al marker en el editor
+
+### PR 2
+- [ ] `publishSermon` auto-corre fidelity si no hay report fresh
+- [ ] Thresholds aplicados (>20% unrelated|contradicts → hard, >10% partial → soft)
+- [ ] Hard-block NO admite override
+- [ ] Soft-block exige justificación ≥100 chars, audit-logged
+- [ ] Modo experto (Fase 2.5) skip-able
+
+### PR 3
+- [ ] LLM tagger detecta claims sustantivas en mismo batch
+- [ ] Plurality fail surface en panel con CTA cross-ref
+- [ ] CTA abre lookup de paralelos canónicos
+
+### PR 4
+- [ ] Sermon prompt incluye `AUTHORITY SUBORDINATION` clause
+- [ ] Authority detector surface violaciones con reformulación sugerida
+- [ ] Click-to-replace funcional
+
+### PR 5
+- [ ] PDF export incluye sección "Atribuciones" con AttributionBlock[] rendered
+- [ ] Docx export idem
+- [ ] Web view publicada incluye sección
+- [ ] AttributionReport check: missing attributions → pre-publish flag
+
+## Riesgos
+
+| Riesgo | Mitigación |
+|---|---|
+| Costo LLM × markers × usuarios | Batch + Flash tier por default; escalate solo `partial`/`contradicts` (Q1). Cache por marker (Q6). |
+| LLM evaluator falso positivo `contradicts` → frustración pastor | Sonnet escalation + confidence score + path "Reportar evaluación incorrecta" → audit + future calibration. |
+| Threshold 20% mal calibrado para launch | Admin toggle (Q3) + dashboard de pass-rate post-launch. |
+| Override demasiado fácil → derrota propósito | 100-char justification + audit log + Fase 4 contra-scan refuerza. |
+| Sermon prompt update (PR 4) regresa calidad | Snapshot tests + A/B con corpus pre-vs-post. |
+| Attribution footer rompe layout export | Tests visuales por export type. |
+| `study_depth` (Fase 2.5) + `fidelity_pass` (Fase 3) confusion para pastor | Copy unificada: panel `FidelityReviewPanel` agrupa todo bajo "Revisión pre-publicación". |
 
 ## Bitácora
+
+- **2026-05-30 (`/iniciar-fase 3` — kickoff + decisiones locked)** — Sesión de planning con el
+  fundador. Decisiones Q1-Q10 formalizadas en
+  [ADR-029](../decisions/ADR-029-fidelity-pass-gate-policy.md):
+  - Q1 Flash batched + Sonnet escalation para `partial`/`contradicts`
+  - Q2 oración completa antes del marker (regex)
+  - Q3 thresholds 20%/10% + admin toggle calibrable
+  - Q4 LLM tagger plurality en mismo batch
+  - Q5 reusa modo experto Fase 2.5
+  - Q6 cache invalidation por marker
+  - Q7 attribution footer en TODOS los surfaces
+  - Q8 SBLGNT hardcoded queda; deuda nueva
+  - Q9 orden secuencial 1→2→3→4→5
+  - Q10 sub-flag `fidelity_pass` default off + flip post-smoke
+
+  **Discrepancias detectadas vs phase doc anterior**:
+  - D1: README tabla decía Fase 2.5 `in-progress`; reality 19 PRs en main + smoke OK → corregido a `completed`.
+  - D2: phase doc anterior referenciaba branch `feat/phase-c1-export-with-citations`; en main desde Fase B+C → corregido.
+  - D3: `FidelityReport` debería tener sub-reports opt-in (no monolítico) → reflejado en schema arriba.
+  - D5: SBLGNT hardcoded leak Fase 0 → memoria nueva pendiente al cerrar PR 5.
+  - D8: gate vive en `SermonService.publishSermon`, NO trigger Firebase → reflejado en arquitectura.
+  - D-SBLGNT-license: código renderea `CC BY-SA 4.0` (real upstream), docs dicen `CC BY 4.0` →
+    a resolver con fundador antes de PR 5 (público).
+
+- **2026-05-30 (decisión D-SBLGNT-license)** — Fundador eligió **Opción 1: separar en dos blocks**.
+  PR 5 renderea dos `AttributionBlock` distintos cuando el manifest contiene chunks SBLGNT:
+  - Block 1: **SBLGNT base text** (Holmes 2010) bajo **CC BY 4.0** — siempre presente si hay
+    chunk SBLGNT.
+  - Block 2: **MorphGNT morphology** bajo **CC BY-SA 4.0** — presente solo si el sermón renderea
+    tagging morfológico (tiempo verbal, caso, etc.) en el output.
+
+  Razón: refleja realidad upstream, preserva flexibilidad comercial del sermón sobre el texto base
+  (ShareAlike solo viral cuando morfología efectivamente aparece), defendible standalone ante futura
+  legal review. ADR-029 §Q8 sigue válido (hardcoded queda; mover a catalog en próxima ingesta CORE);
+  esta decisión es operacional de PR 5, no estructural. Updates pendientes:
+  - `aggregateRequiredAttributions.ts` (PR 5) — split `SBLGNT_ATTRIBUTION` en `SBLGNT_TEXT_ATTRIBUTION`
+    + `MORPHGNT_ATTRIBUTION`, agregar detector `hasMorphologyRendered(manifest)`.
+  - ADR-006 + 07-citation-policy + ADR-029 — bajan a "ver phase-3 bitácora 2026-05-30" para evitar
+    duplicación. Legal review pendiente como tarea fuera de banda (no bloquea PR 5).
+
+  **PR 1 sigue** — branch `feat/pastoral-fidelity-phase-3-pr-1-fidelity-core` por crear.
 
 - **2026-05-29 (prereqs actualizados al cerrar Fase 2.5)** — Fase 2.5 cerrada (19 PRs #267–#285,
   ADRs 025-028 accepted). Prereqs duros para Fase 3 ahora incluyen: `studyDepthSnapshot` en
@@ -176,4 +465,5 @@ interface AuthorityViolation {
   parser (cualquier cambio en `BibleService` mirrorearse web↔infra). 4 preguntas nuevas
   documentadas para responder al iniciar fase. Ver
   [sessions/2026-05-29-phase-2.5-closeout.md](../sessions/2026-05-29-phase-2.5-closeout.md).
+
 - **2026-05-22** — Placeholder creado.

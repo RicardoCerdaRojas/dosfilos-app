@@ -442,6 +442,10 @@
                 "study_depth": {
                     "label": "Acompañante de estudio",
                     "description": "Insignia de profundidad de estudio + orientación por paso en el wizard (Fase 2.5). Requiere flujo de fidelidad pastoral."
+                },
+                "fidelity_pass": {
+                    "label": "Pase de fidelidad",
+                    "description": "Pase de fidelidad claim/fuente — segundo-pass LLM que evalúa cada marcador `[N]` del sermón generado y surface un panel de revisión en el editor (Fase 3, ADR-029). Requiere pastoral_fidelity_flow."
                 }
             }
         },

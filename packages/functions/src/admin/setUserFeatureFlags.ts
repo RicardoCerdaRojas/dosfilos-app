@@ -9,6 +9,7 @@ const ALLOWED_FLAGS = new Set<string>([
     'pastoral_word_study',
     'three_witnesses',
     'study_depth',
+    'fidelity_pass',
 ]);
 
 /**
