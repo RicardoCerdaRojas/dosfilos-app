@@ -52,6 +52,9 @@ import { SermonGridCard } from './sermons/components/list/SermonGridCard';
 import { SermonsTableRow } from './sermons/components/list/SermonsTableRow';
 import { SermonsEmptyState } from './sermons/components/list/SermonsEmptyState';
 import { SermonInProgressCard } from './sermons/components/list/SermonInProgressCard';
+import { BulkSelectionBar } from './sermons/components/list/BulkSelectionBar';
+import { useBulkSelection } from './sermons/hooks/useBulkSelection';
+import { toast } from 'sonner';
 
 export function SermonsPage() {
     const navigate = useNavigate();
@@ -79,6 +82,13 @@ export function SermonsPage() {
     });
 
     const { deleteSermon, loading: deleting } = useDeleteSermon();
+    // Bulk-select state is per-tab so a selection in "Sermones" doesn't
+    // leak into "Estudios en curso" and vice-versa. Both bars share the
+    // same dialog + delete handler so the UX stays uniform.
+    const publishedSelection = useBulkSelection();
+    const inProgressSelection = useBulkSelection();
+    const [bulkConfirm, setBulkConfirm] = useState<null | { ids: string[]; surface: 'published' | 'in_progress' }>(null);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
     const { projects } = useFacultyProjects();
     const projectById = new Map(projects?.map((p) => [p.id, p]) ?? []);
     const { sermonToLink, setSermonToLink, linking, linkToProject } = useLinkSermonToProject(refetch);
@@ -156,61 +166,79 @@ export function SermonsPage() {
      * can reuse it inside the `published` tab and as the bare fallback
      * when no in-progress drafts exist (legacy flow unchanged).
      */
-    const renderPublishedList = () => (
-        <>
-            <div className="text-sm text-muted-foreground mb-3">
-                {filteredSermons.length} {filteredSermons.length === 1 ? t('results.sermon') : t('results.sermons')}
-                {planFilter !== 'all' && planFilter !== 'none' && (
-                    <span> {t('results.inPlan')} "{getSeriesName(planFilter)}"</span>
-                )}
-                {planFilter === 'none' && <span> {t('results.noPlanAssigned')}</span>}
-            </div>
-
-            {filteredSermons.length === 0 ? (
-                <Card className="p-8 text-center">
-                    <p className="text-muted-foreground">{t('noResults')}</p>
-                </Card>
-            ) : viewMode === 'table' ? (
-                <Card>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[40%]">{t('table.title')}</TableHead>
-                                <TableHead>{t('table.plan')}</TableHead>
-                                <TableHead>{t('table.status')}</TableHead>
-                                <TableHead>{t('table.date')}</TableHead>
-                                <TableHead className="text-right">{t('table.actions')}</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredSermons.map((sermon) => (
-                                <SermonsTableRow
-                                    key={sermon.id}
-                                    sermon={sermon}
-                                    seriesName={getSeriesName(sermon.seriesId)}
-                                    project={sermon.projectId ? projectById.get(sermon.projectId) ?? null : null}
-                                    onDelete={() => setSermonToDelete(sermon.id)}
-                                    onLink={() => setSermonToLink(sermon.id)}
-                                />
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Card>
-            ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredSermons.map((sermon) => (
-                        <SermonGridCard
-                            key={sermon.id}
-                            sermon={sermon}
-                            seriesName={getSeriesName(sermon.seriesId)}
-                            project={sermon.projectId ? projectById.get(sermon.projectId) ?? null : null}
-                            onDelete={() => setSermonToDelete(sermon.id)}
-                        />
-                    ))}
+    const renderPublishedList = () => {
+        const pool = filteredSermons.map((s) => s.id);
+        const selectionActive = publishedSelection.count > 0;
+        return (
+            <>
+                <BulkSelectionBar
+                    count={publishedSelection.count}
+                    poolSize={filteredSermons.length}
+                    allSelected={publishedSelection.allSelected(pool)}
+                    onToggleAll={() => publishedSelection.toggleAll(pool)}
+                    onClear={publishedSelection.clear}
+                    onDelete={() =>
+                        setBulkConfirm({ ids: Array.from(publishedSelection.selected), surface: 'published' })
+                    }
+                    deleting={bulkDeleting}
+                />
+                <div className="text-sm text-muted-foreground mb-3">
+                    {filteredSermons.length} {filteredSermons.length === 1 ? t('results.sermon') : t('results.sermons')}
+                    {planFilter !== 'all' && planFilter !== 'none' && (
+                        <span> {t('results.inPlan')} "{getSeriesName(planFilter)}"</span>
+                    )}
+                    {planFilter === 'none' && <span> {t('results.noPlanAssigned')}</span>}
                 </div>
-            )}
-        </>
-    );
+
+                {filteredSermons.length === 0 ? (
+                    <Card className="p-8 text-center">
+                        <p className="text-muted-foreground">{t('noResults')}</p>
+                    </Card>
+                ) : viewMode === 'table' ? (
+                    <Card>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[40%]">{t('table.title')}</TableHead>
+                                    <TableHead>{t('table.plan')}</TableHead>
+                                    <TableHead>{t('table.status')}</TableHead>
+                                    <TableHead>{t('table.date')}</TableHead>
+                                    <TableHead className="text-right">{t('table.actions')}</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredSermons.map((sermon) => (
+                                    <SermonsTableRow
+                                        key={sermon.id}
+                                        sermon={sermon}
+                                        seriesName={getSeriesName(sermon.seriesId)}
+                                        project={sermon.projectId ? projectById.get(sermon.projectId) ?? null : null}
+                                        onDelete={() => setSermonToDelete(sermon.id)}
+                                        onLink={() => setSermonToLink(sermon.id)}
+                                    />
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </Card>
+                ) : (
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {filteredSermons.map((sermon) => (
+                            <SermonGridCard
+                                key={sermon.id}
+                                sermon={sermon}
+                                seriesName={getSeriesName(sermon.seriesId)}
+                                project={sermon.projectId ? projectById.get(sermon.projectId) ?? null : null}
+                                onDelete={() => setSermonToDelete(sermon.id)}
+                                selected={publishedSelection.isSelected(sermon.id)}
+                                onToggleSelect={publishedSelection.toggle}
+                                selectionActive={selectionActive}
+                            />
+                        ))}
+                    </div>
+                )}
+            </>
+        );
+    };
 
     const handleDelete = async () => {
         if (!sermonToDelete) return;
@@ -219,6 +247,34 @@ export function SermonsPage() {
         refetch();
         // Seed may be orphaned now; refetch so the "Estudios en curso"
         // counter and tab don't show a phantom card.
+        void refetchSeeds();
+    };
+
+    const handleBulkDeleteConfirmed = async () => {
+        if (!bulkConfirm) return;
+        const ids = bulkConfirm.ids;
+        const surface = bulkConfirm.surface;
+        setBulkDeleting(true);
+        // Promise.allSettled — one failure does not block the rest. The
+        // useDeleteSermon hook already toasts per-call, so we add a single
+        // summary toast at the end with success/failure counts.
+        const results = await Promise.allSettled(ids.map((id) => deleteSermon(id)));
+        setBulkDeleting(false);
+        const ok = results.filter((r) => r.status === 'fulfilled').length;
+        const failed = results.length - ok;
+        if (ok > 0) {
+            toast.success(`${ok} ${ok === 1 ? 'sermón eliminado' : 'sermones eliminados'}.`);
+        }
+        if (failed > 0) {
+            toast.error(`No se pudieron eliminar ${failed}. Reintenta los que quedaron.`);
+        }
+        if (surface === 'published') {
+            publishedSelection.clear();
+        } else {
+            inProgressSelection.clear();
+        }
+        setBulkConfirm(null);
+        refetch();
         void refetchSeeds();
     };
 
@@ -378,6 +434,21 @@ export function SermonsPage() {
                     </TabsContent>
 
                     <TabsContent value="in_progress" className="mt-0">
+                        <BulkSelectionBar
+                            count={inProgressSelection.count}
+                            poolSize={inProgressSermons.length}
+                            allSelected={inProgressSelection.allSelected(inProgressSermons.map((s) => s.id))}
+                            onToggleAll={() => inProgressSelection.toggleAll(inProgressSermons.map((s) => s.id))}
+                            onClear={inProgressSelection.clear}
+                            onDelete={() =>
+                                setBulkConfirm({
+                                    ids: Array.from(inProgressSelection.selected),
+                                    surface: 'in_progress',
+                                })
+                            }
+                            deleting={bulkDeleting}
+                            label="estudios"
+                        />
                         {inProgressSermons.length === 0 ? (
                             <Card className="p-8 text-center">
                                 <p className="text-muted-foreground">
@@ -466,6 +537,9 @@ export function SermonsPage() {
                                             passage={sermon.bibleReferences?.[0] ?? seed.passage}
                                             seed={seed}
                                             onDelete={() => setSermonToDelete(sermon.id)}
+                                            selected={inProgressSelection.isSelected(sermon.id)}
+                                            onToggleSelect={inProgressSelection.toggle}
+                                            selectionActive={inProgressSelection.count > 0}
                                         />
                                     );
                                 })}
@@ -487,6 +561,33 @@ export function SermonsPage() {
                         <AlertDialogCancel>{t('deleteDialog.cancel')}</AlertDialogCancel>
                         <AlertDialogAction onClick={handleDelete} disabled={deleting}>
                             {deleting ? t('deleteDialog.deleting') : t('deleteDialog.confirm')}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={!!bulkConfirm} onOpenChange={(open) => { if (!open) setBulkConfirm(null); }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            Eliminar {bulkConfirm?.ids.length ?? 0}{' '}
+                            {bulkConfirm?.surface === 'in_progress' ? 'estudios' : 'sermones'}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción no se puede deshacer. Se eliminarán los {bulkConfirm?.ids.length ?? 0}{' '}
+                            {bulkConfirm?.surface === 'in_progress' ? 'estudios seleccionados' : 'sermones seleccionados'}
+                            {' '}de forma permanente.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleBulkDeleteConfirmed}
+                            disabled={bulkDeleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            data-testid="sermons-bulk-delete-confirm"
+                        >
+                            {bulkDeleting ? 'Eliminando…' : `Eliminar ${bulkConfirm?.ids.length ?? 0}`}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

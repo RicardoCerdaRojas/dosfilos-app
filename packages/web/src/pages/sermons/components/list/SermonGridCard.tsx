@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Calendar, FileText, Tag } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import type { SermonEntity, AIProject } from '@dosfilos/domain';
@@ -14,17 +15,59 @@ interface SermonGridCardProps {
     seriesName: string | null;
     project: AIProject | null;
     onDelete: () => void;
+    /** Multi-select state — when defined, renders the checkbox affordance + suppresses title nav while selecting. */
+    selected?: boolean;
+    onToggleSelect?: (id: string) => void;
+    /** True when there is at least one card selected on the page, so cards in "select mode" highlight + the title click toggles instead of navigating. */
+    selectionActive?: boolean;
 }
 
-export const SermonGridCard: React.FC<SermonGridCardProps> = ({ sermon, seriesName, project, onDelete }) => {
+export const SermonGridCard: React.FC<SermonGridCardProps> = ({
+    sermon,
+    seriesName,
+    project,
+    onDelete,
+    selected = false,
+    onToggleSelect,
+    selectionActive = false,
+}) => {
     const { t, i18n } = useTranslation('sermons');
     const navigate = useNavigate();
 
+    const handleTitleClick = () => {
+        if (selectionActive && onToggleSelect) {
+            onToggleSelect(sermon.id);
+            return;
+        }
+        navigate(`/dashboard/sermons/${sermon.id}`);
+    };
+
     return (
-        <Card className="py-0 group flex flex-col hover:shadow-lg transition-all duration-300 border-muted hover:border-primary/50 overflow-hidden">
+        <Card
+            className={cn(
+                'py-0 group relative flex flex-col hover:shadow-lg transition-all duration-300 border-muted hover:border-primary/50 overflow-hidden',
+                selected && 'border-primary ring-2 ring-primary/30',
+            )}
+            data-testid={`sermon-grid-card-${sermon.id}`}
+        >
+            {onToggleSelect && (
+                <div
+                    className={cn(
+                        'absolute top-3 left-3 z-10 rounded-md bg-background/95 p-1 shadow-sm transition-opacity',
+                        selectionActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                    )}
+                >
+                    <Checkbox
+                        checked={selected}
+                        onCheckedChange={() => onToggleSelect(sermon.id)}
+                        aria-label={selected ? 'Quitar de la selección' : 'Seleccionar sermón'}
+                        data-testid={`sermon-grid-card-checkbox-${sermon.id}`}
+                    />
+                </div>
+            )}
             <div className="p-6 flex-1 space-y-4">
                 <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                    <div className={cn('flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider font-medium', onToggleSelect && 'pl-8')}>
                         <Calendar className="h-3.5 w-3.5" />
                         {new Date(sermon.updatedAt).toLocaleDateString(i18n.language, {
                             month: 'short',
@@ -38,7 +81,7 @@ export const SermonGridCard: React.FC<SermonGridCardProps> = ({ sermon, seriesNa
                 <div className="space-y-2">
                     <h3
                         className="text-xl font-bold font-serif leading-tight cursor-pointer group-hover:text-primary transition-colors line-clamp-2"
-                        onClick={() => navigate(`/dashboard/sermons/${sermon.id}`)}
+                        onClick={handleTitleClick}
                     >
                         {sermon.title}
                     </h3>
