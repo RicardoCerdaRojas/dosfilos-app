@@ -29,6 +29,7 @@ export * from './entities/StudyDepthAssessment'; // 🌱 Pastoral Fidelity Phase
 export * from './entities/FidelityReport'; // 🌱 Pastoral Fidelity Phase 3 PR 1 — claim/source fidelity pass (ADR-029)
 export * from './services/computeFidelitySummary'; // 🌱 Pastoral Fidelity Phase 3 PR 1 — gate policy (ADR-029 Q3/Q6)
 export * from './ports/ILlmClient'; // 🌱 Pastoral Fidelity Phase 2.5 — thin LLM provider port (Q7/ADR-025)
+export * from './ports/IFidelityEvaluator'; // 🌱 Pastoral Fidelity Phase 3 PR 1 — claim/source evaluator port (ADR-029)
 // 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent
 export * from './guided-sermon/SocraticTurn';
 export * from './guided-sermon/GuidedSermonSession';
