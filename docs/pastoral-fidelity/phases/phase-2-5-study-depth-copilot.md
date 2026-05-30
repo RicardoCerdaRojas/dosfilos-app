@@ -2,8 +2,19 @@
 
 ## Estado
 
-`in-progress` — destrabada al cerrar Fase 1.6 + Fase 2. Kickoff 2026-05-27 (ADR-025/026/027). PR A
-en curso. Inserta entre Fase 2 y Fase 3 en el roadmap. Numeración decimal preserva trazabilidad de
+`complete` — cerrada **2026-05-29**. 19 PRs entregados a main (#267–#285). Smoke end-to-end
+confirmado por el fundador en prod. Tests verde 499/499 (web 62 + domain 325 + application 61 +
+infra 51). CI verde + Deploy Production verde. Feature flag `study_depth` (sub-flag de
+`pastoral_fidelity_flow`) default off; dogfooders on.
+
+Diseño shipped diverge del plan original post-kickoff Option B (ADR-025): NO se construyó passive
+tracker en Faculty ni classifier batch every-3-messages; el Acompañante se unificó como un solo
+motor con 3 momentos (orientación per-paso + confrontación inline + gate pre-publish), las 7
+dimensiones se re-derivaron de los 8 pasos canónicos, y Faculty quedó como surface de exploración
+con su propio agente socrático (PR B / ADR-028) que tras decisión "Componer sermón" rerouted al
+pipeline único de wizard. Detalle completo en bitácora + handoff doc.
+
+Inserta entre Fase 2 y Fase 3 en el roadmap. Numeración decimal preserva trazabilidad de
 referencias existentes a Fases 3-7.
 
 ## Objetivo
@@ -355,28 +366,55 @@ Código nuevo (~3 sem trabajo concentrado):
 
 ## Criterios de aceptación
 
-- [ ] Faculty session con `projectId` o `passageRef` dispara passive tracker
-- [ ] Sidebar widget muestra 7 dimensiones con estado real
-- [ ] LLM classifier corre batch every 3 messages + persiste evidence
-- [ ] NudgeDispatcher surface prompt suggestion tras 10 min sin tocar dim
-- [ ] Pre-generation gate aparece al click "Generar sermón outline"
-- [ ] Si scores todos verdes/amarillos → proceeds direct
-- [ ] Si scores rojos → confronta + ofrece 3 prompts + path override
-- [ ] Override requiere justification ≥100 chars
-- [ ] `studyDepthSnapshot` embedded en sermón generado
-- [ ] Audit log entries para confront overrides + nudge interactions
-- [ ] Toggle "modo experto" desactiva confrontation (gated detrás de threshold N sermones)
-- [ ] Pastor puede manualmente marcar dim "cubierto" (override per-dim)
+> **Cierre 2026-05-29** — Criterios escritos para el plan original (passive tracker + classifier
+> batch + nudges). Tras el pivot Option B del kickoff (ADR-025), varios items quedaron
+> **reformulados** en lugar de tachados: el objetivo pedagógico se cumple via diseño unificado (un
+> Acompañante, tres momentos, 7 dims re-derivadas de los 8 pasos). Cada item lista la
+> reformulación shipped + PR + tests.
 
-Tests automatizados:
-- Unit: DimensionClassifier prompt + parse logic
-- Unit: score aggregation + weak dims sort
-- Integration: faculty session → classifier batch → assessment doc updates
-- Snapshot: PreGenerationGate UI states (all green / mixed / all red)
+- [x] ~~Faculty session con `projectId` o `passageRef` dispara passive tracker~~ → **Pivot**: NO
+  passive tracker. Faculty Socratic Sermon Agent (PR #268 / ADR-028) opera en verification mode
+  durante "Componer sermón"; el surface Faculty conserva exploración libre, el tracking real vive
+  en el wizard via `StudyDepthAssessment` colgado del `pastoralSeed` (ADR-025).
+- [x] Sidebar widget muestra 7 dimensiones con estado real → `StudyDepthBadge` (PR #267)
+  cualitativo, sin números/streaks, 7 dims re-derivadas de los 8 pasos canónicos. Test
+  `StudyDepthBadge.test.tsx` (2 tests).
+- [x] ~~LLM classifier corre batch every 3 messages + persiste evidence~~ → **Pivot**: el spine
+  determinista (`computeStudyDepthFromSeed`) calcula cobertura sin LLM batch; clasificación LLM
+  pasó a ser per-step on-demand (`orientStudy` + `classifyDimensions` en PR B). Cero costo por
+  mensaje. Tests `StudyDepthAssessment.test.ts` cobertura completa.
+- [x] ~~NudgeDispatcher surface prompt suggestion tras 10 min sin tocar dim~~ → **Pivot**:
+  `StepCompanion` per-step (PR #267 / ADR-026) entrega Tier 1 (orientación pull-first) + Tier 2
+  (simplificar con ejemplo en otro pasaje) + Tier 3 (puzzle estructural — PR #270). Pastor
+  invoca explícitamente; no hay timer-based nudge (evitamos paternalismo).
+- [x] Pre-generation gate aparece al click "Generar sermón outline" → `WitnessGate` +
+  `StudyDepthGate` unificados pre-publish (PR #269). Test `WitnessGate.test.tsx` (3 tests).
+- [x] Si scores todos verdes/amarillos → proceeds direct → PR #269.
+- [x] Si scores rojos → confronta + ofrece 3 prompts + path override → PR #269.
+- [x] Override requiere justification ≥100 chars → PR #269.
+- [x] `studyDepthSnapshot` embedded en sermón generado → PR #269; field en `Sermon.ts`.
+- [x] Audit log entries para confront overrides + nudge interactions → `AiAssistLog` cobertura
+  completa (PR #267 cableó structural/wordStudies/crossRef + `stepOrientation` nuevo); PR #269
+  agregó `pastoralSeed.witnessReview` + audit del gate override.
+- [x] Toggle "modo experto" desactiva confrontation → PR #269 (self-service-once-earned tras N
+  sermones SDS>80 + super-admin override). ADR-027.
+- [x] Pastor puede manualmente marcar dim "cubierto" → PR #267 (floor override per-dim en
+  `IPastoralSeedRepository.setStudyDepthOverride`).
 
-Tests manuales:
-- 1 pastor experimentado completa sesión Faculty 30 min con cobertura 5/7 dims → confrontation aparece, click 2 prompts, completa cobertura, generates without override
-- 1 pastor principiante con 1 pregunta intenta generar → confrontation fuerte, declina, vuelve a estudio
+Tests automatizados shipped (vs originales):
+- Unit `StudyDepthAssessment.test.ts` (domain) — coverage del spine + override + snapshot.
+- Unit `WitnessGate.test.tsx` (web) — UI states del gate.
+- Unit `StudyDepthBadge.test.tsx` (web) — render badge cualitativo.
+- Snapshot tests embebidos en los anteriores.
+- Total Fase 2.5: 499/499 verde en cierre.
+
+Tests manuales ejecutados 2026-05-29 (fundador, prod):
+- ✅ Smoke completo wizard pastoral (Filemón completo + Juan 1:1 + Romanos 1) — confirmado
+  funcional tras 6 fix-PRs derivados del smoke (#274 #277 #279 #281 #283 #284).
+- ✅ Tier 3 puzzle Juan 1:1 (chiasmo 2:1:0) resolvable con hint atado a pieza específica,
+  badge progreso, CTA dinámico (PR #275 UX pass 1).
+- ✅ Pre-gen gate verde/rojo con override + justification.
+- ✅ Salida wizard navega a `/dashboard/sermons` (PR #285).
 
 ## Riesgos
 
@@ -416,6 +454,37 @@ Tracking interno (no pastor-facing):
 
 ## Bitácora
 
+- **2026-05-29 (cierre Fase 2.5 — protocolo PHASE_CLOSEOUT)** — Fase declarada `complete`. 19 PRs
+  mergeados a main (#267–#285) + deployed. Smoke end-to-end confirmado por fundador en prod tras
+  cadena de fix-PRs derivados del smoke. Tests verde 499/499 (web 62 + domain 325 + application 61
+  + infra 51). CI + Deploy Production verde. Feature flag `study_depth` activo bajo
+  `pastoral_fidelity_flow`, default off.
+  - **PRs principales**: #267 (PR A Study Companion en wizard, ADR-025/026/027), #268 (PR B
+    Faculty Socratic Sermon Agent, ADR-028), #269 (PR C Pre-gen gate + snapshot + modo experto),
+    #270 (Tier 3 puzzle estructural), #271 (Faculty reroute under flag), #272 (Boy-Scout
+    chat.tsx refactor), #273 (8-step copy migration), #276 (restore "Sermón en blanco" entry).
+  - **PRs de smoke-derived bugs**: #274 (3 bugs Fase 2.5 first impression: sidebar 6→8, companion
+    leak, puzzle stuck), #275 (Tier 3 UX pass 1: linked hint + progress + dynamic CTA + length
+    guard), #277 (Tier 3 copy clarity: zonas 0..N cláusulas), #279 (Tier 3 guard tibio
+    chapter:verse + whitelist libros cortos), #280 (bible parser flexible refs — WRONG file dead
+    code), #281 (bible parser REAL fix en `@dosfilos/infrastructure`), #282 (doc warnings
+    duplicación parser web vs infra), #283 (Bible panel Filemón empty + canonical book order),
+    #284 (SBLGNT panel verseStart=0 sentinel), #285 (wizard exit nav `/dashboard/sermons` +
+    Step 0 "Volver a Sermones").
+  - **Pivot Option B respecto al plan original** (ADR-025 kickoff): se reformularon criterios
+    `Faculty passive tracker`, `LLM classifier batch every 3 msgs` y `NudgeDispatcher 10min` —
+    objetivo pedagógico cumplido vía diseño unificado (un Acompañante + 3 momentos + spine
+    determinista per-step), no via pipeline paralelo en Faculty. Ver § Criterios de aceptación.
+  - **Deferred intencional** (no pretendiendo done): DnD nativo HTML5 (fold-in a Tier 3 v2),
+    cache de `orientStudy` + `buildStructuralPuzzle` (PR separado próximo), PD content ingest
+    (fundador en paralelo), LLM provider abstraction (`tech_debt_llm_provider_abstraction`),
+    cleanup duplicación Bible parser (`tech_debt_bible_parser_duplication`).
+  - **Propuesta Sprint 2**: [tier3-v2-dependency-diagram.md](../proposals/tier3-v2-dependency-diagram.md)
+    (PR #278) — esqueleto de dependencias per-pasaje en lugar de 3 buckets abstractos. 4
+    decisiones abiertas para fundador antes de codear.
+  - **Session log**: [sessions/2026-05-29-phase-2.5-closeout.md](../sessions/2026-05-29-phase-2.5-closeout.md).
+  - **Handoff Fase 3**: [phase-3-claim-source-fidelity.md](./phase-3-claim-source-fidelity.md)
+    actualizada con prereqs marcados + riesgos cross-fase.
 - **2026-05-28 (smoke PR A — iteración del acompañante)** — Validado en local. Aparecieron dos
   mejoras durante el smoke: (1) Tier 2 "Explícamelo más sencillo" agregado a `StepCompanion` +
   `orientStudy` (parámetro `simplify` + campo `example` con ejemplo del método en otro pasaje;
