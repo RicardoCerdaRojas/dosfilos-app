@@ -160,5 +160,28 @@
             "notFound": "Could not find text. Check reference.",
             "error": "Error loading bible text."
         }
+    },
+    "fidelityGate": {
+        "preparing": "Checking fidelity…",
+        "softTitle": "Review before publishing",
+        "softDescription": "Some citations only partly support what the draft claims. You can fix those markers or proceed by recording your pastoral justification.",
+        "hardTitle": "We can't publish yet",
+        "hardDescription": "Too many markers are unsupported or contradict their source. Fix those citations before publishing — this block has no exception.",
+        "summary": "{{unrelated}}% unsupported · {{partial}}% partial · {{total}} markers",
+        "reviewMarkers": "Review markers",
+        "cancel": "Cancel",
+        "publishAnyway": "Publish anyway",
+        "publishing": "Publishing…",
+        "override": {
+            "label": "Why are you publishing despite the findings?",
+            "placeholder": "Explain your pastoral decision carefully (at least {{min}} characters)…",
+            "counter": "{{count}}/{{min}}",
+            "remaining": "{{remaining}} more characters needed to continue."
+        },
+        "toast": {
+            "published": "Sermon published.",
+            "error": "We couldn't publish the sermon. Try again.",
+            "reviewFailed": "We couldn't check fidelity. Try again."
+        }
     }
 }

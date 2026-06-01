@@ -1,5 +1,13 @@
 import { FirebaseSermonRepository, AnalyticsService } from '@dosfilos/infrastructure';
-import { SermonEntity, FindOptions, Sermon } from '@dosfilos/domain';
+import {
+    SermonEntity,
+    FindOptions,
+    Sermon,
+    evaluatePublishGate,
+    FidelityGateError,
+    type GateOverride,
+    type PublishOverrideInput,
+} from '@dosfilos/domain';
 import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 
 export class SermonService {
@@ -123,16 +131,62 @@ export class SermonService {
         }
     }
 
-    async publishSermon(id: string): Promise<SermonEntity> {
+    async publishSermon(id: string, override?: PublishOverrideInput): Promise<SermonEntity> {
         try {
             const sermon = await this.sermonRepository.findById(id);
             if (!sermon) {
                 throw new Error('Sermón no encontrado');
             }
+            await this.enforceFidelityGate(sermon, override);
             const publishedSermon = sermon.publish();
             return await this.sermonRepository.update(publishedSermon);
         } catch (error: any) {
+            // Preserve the typed gate refusal so the UI can map `reason` to
+            // the right confrontation copy (Phase 3 PR 2, ADR-029).
+            if (error instanceof FidelityGateError) throw error;
             throw new Error(error.message || 'Error al publicar el sermón');
+        }
+    }
+
+    /**
+     * Pastoral Fidelity — Phase 3 PR 2 (ADR-029 §Q3/Q5). Enforces the
+     * claim↔source fidelity gate before a sermon publishes.
+     *
+     * Defense-in-depth: the editor runs the fidelity pass and confronts the
+     * pastor before calling publish, but this service is the choke point that
+     * actually refuses a blocked publish so the UI flow cannot be bypassed.
+     *
+     * The gate only bites when a `fidelityReport` is present on the sermon —
+     * with the `fidelity_pass` flag off, no report is ever generated, so
+     * publish behaves exactly as before (blast radius 0). When the pastor
+     * clears a soft-block, the supplied `GateOverride` is stamped + persisted
+     * onto the report as the permanent audit record.
+     */
+    private async enforceFidelityGate(
+        sermon: SermonEntity,
+        override?: PublishOverrideInput,
+    ): Promise<void> {
+        const report = sermon.fidelityReport;
+        if (!report) return;
+
+        const decision = evaluatePublishGate(report.gateStatus, override);
+        if (!decision.allowed) {
+            throw new FidelityGateError(decision.reason);
+        }
+
+        if (decision.reason === 'soft-block-overridden' && override) {
+            const stamped: GateOverride = {
+                reason: override.reason.trim(),
+                overriddenBy: override.overriddenBy,
+                bypassedKind: override.bypassedKind,
+                overriddenAt: new Date(),
+            };
+            await this.sermonRepository.updateFidelityReport(sermon.id, {
+                ...report,
+                gateOverride: stamped,
+            });
+            // Keep the in-memory entity consistent for the subsequent publish.
+            sermon.fidelityReport = { ...report, gateOverride: stamped };
         }
     }
 
@@ -142,12 +196,16 @@ export class SermonService {
      * The copy has a new ID and status='published'.
      * @returns The newly created published sermon copy
      */
-    async publishSermonAsCopy(draftId: string): Promise<SermonEntity> {
+    async publishSermonAsCopy(draftId: string, override?: PublishOverrideInput): Promise<SermonEntity> {
         try {
             const draft = await this.sermonRepository.findById(draftId);
             if (!draft) {
                 throw new Error('Borrador no encontrado');
             }
+
+            // Fidelity gate (Phase 3 PR 2, ADR-029). The wizard publishes via
+            // this copy path; the override + audit attach to the draft's report.
+            await this.enforceFidelityGate(draft, override);
 
             // Create a published copy using the entity method
             const publishedCopy = draft.publishAsCopy();
@@ -171,6 +229,7 @@ export class SermonService {
 
             return createdCopy;
         } catch (error: any) {
+            if (error instanceof FidelityGateError) throw error;
             throw new Error(error.message || 'Error al publicar el sermón');
         }
     }

@@ -161,5 +161,28 @@
             "notFound": "No se pudo encontrar el texto. Verifique la referencia.",
             "error": "Error al cargar el texto bíblico."
         }
+    },
+    "fidelityGate": {
+        "preparing": "Revisando fidelidad…",
+        "softTitle": "Revisa antes de publicar",
+        "softDescription": "Algunas citas respaldan solo en parte lo que afirma el borrador. Puedes corregir esos marcadores o continuar dejando registrada tu justificación pastoral.",
+        "hardTitle": "Todavía no podemos publicar",
+        "hardDescription": "Demasiados marcadores no tienen respaldo o contradicen su fuente. Corrige esas citas antes de publicar — este bloqueo no admite excepción.",
+        "summary": "{{unrelated}}% sin respaldo · {{partial}}% parcial · {{total}} marcadores",
+        "reviewMarkers": "Revisar marcadores",
+        "cancel": "Cancelar",
+        "publishAnyway": "Publicar de todas formas",
+        "publishing": "Publicando…",
+        "override": {
+            "label": "¿Por qué publicas a pesar de las observaciones?",
+            "placeholder": "Explica tu decisión pastoral con cuidado (mínimo {{min}} caracteres)…",
+            "counter": "{{count}}/{{min}}",
+            "remaining": "Faltan {{remaining}} caracteres para poder continuar."
+        },
+        "toast": {
+            "published": "Sermón publicado.",
+            "error": "No pudimos publicar el sermón. Intenta de nuevo.",
+            "reviewFailed": "No pudimos revisar la fidelidad. Intenta de nuevo."
+        }
     }
 }

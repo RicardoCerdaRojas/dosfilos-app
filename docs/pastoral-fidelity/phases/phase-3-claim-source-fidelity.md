@@ -3,7 +3,10 @@
 ## Estado
 
 `in-progress` — arrancada 2026-05-30 con `/iniciar-fase 3`. Plan locked + ADR-029 escrito.
-PR 1 (fidelity pass core + per-marker verdicts panel) sigue.
+- **PR 1** (fidelity pass core + per-marker verdicts panel) — ✅ MERGEADO #287 (2026-05-30).
+- **PR 2** (publish gate + thresholds + override + audit) — ✅ code-complete (2026-05-31),
+  branch `feat/pastoral-fidelity-phase-3-pr-2-publish-gate`. PR por abrir.
+- **PR 3/4/5** — pendientes.
 
 Prereqs actualizados al cerrar Fase 2.5 (2026-05-29). Lista de dependencias
 satisfechas + no satisfechas + preguntas emergentes + riesgos cross-fase abajo.
@@ -413,6 +416,43 @@ Cada PR = unidad funcional completa testeable en UI (regla `feedback_pr_complete
 | `study_depth` (Fase 2.5) + `fidelity_pass` (Fase 3) confusion para pastor | Copy unificada: panel `FidelityReviewPanel` agrupa todo bajo "Revisión pre-publicación". |
 
 ## Bitácora
+
+- **2026-05-31 (PR 2 — publish gate, code-complete)** — Gate de publish aterrizado. Decisiones
+  de scope confirmadas con el fundador antes de codear:
+  - **Q-A (scope del gate) → ambos paths.** `SermonService.publishSermon` Y
+    `publishSermonAsCopy` (path del wizard) enforquean el gate. La orquestación UI completa
+    (run pass → modal de confrontación) vive en el editor/detail (`detail.tsx`), surface
+    canónico de revisión donde ya está el `FidelityReviewPanel`. El wizard
+    (`StepDraft.performPublish`) queda cubierto **solo server-side** (defense-in-depth): si el
+    draft trae un `fidelityReport` bloqueante, `publishSermonAsCopy` lanza `FidelityGateError`
+    y el catch existente muestra error genérico. En la práctica el wizard rara vez tiene report
+    (se genera en el editor), así que el edge es casi-nulo; documentado como scope deliberado.
+  - **Q-B (enforcement) → solo client-side `SermonService`.** Coherente con ADR-029 §contexto
+    ("gate vive en `SermonService.publishSermon`, no Firebase trigger"). NO se agregó el callable
+    `publishSermonWithFidelity.ts` que el phase doc listaba — feature pastoral flag-gated, no
+    adversarial; Fase 4 contra-scan refuerza después. **El plan de archivos del phase doc queda
+    desviado en este punto** (ver § "Plan de PRs" PR 2: ignorar `publishSermonWithFidelity.ts`).
+  - **Entregado**:
+    - Domain: `evaluatePublishGate.ts` (pura, hard-block nunca overridable, soft-block exige
+      justificación ≥`FIDELITY_OVERRIDE_MIN_CHARS`) + `FidelityGateError` tipado (lleva `reason`
+      máquina-legible para mapear copy). 8 tests.
+    - Application: `SermonService.enforceFidelityGate` privado — bite SOLO si el sermón tiene
+      `fidelityReport` (flag off ⇒ sin report ⇒ blast radius 0). Persiste `GateOverride` stampeado
+      (clock server-side) como audit permanente en `fidelityReport.gateOverride`. `publishSermon`
+      y `publishSermonAsCopy` aceptan `override?` y rethrow `FidelityGateError` sin envolver.
+    - Web: `PrePublishFidelityModal` (hard = sin override, solo "Revisar marcadores"; soft = form
+      override) + `FidelityOverrideForm` (counter + min chars) + `useSermonPublishGate` (orquesta
+      ensure-fresh-report → pass/modal → override) + `usePublishSermon(override?)` +
+      `detail.tsx` cableado + i18n es/en (`fidelityGate.*`). 4 tests de modal.
+  - **Audit**: el `GateOverride` en el report ES el registro de audit (overriddenBy + overriddenAt
+    + reason + bypassedKind). NO se usó `AiAssistLog` (es seed-scoped; el override de publish es
+    otro dominio). `bypassedKind` siempre `'partial'` en PR 2 (plurality/authority son PR 3/4).
+  - **Deuda tocada (no introducida)**: `detail.tsx` ya era god component (587→605 líneas);
+    decomposición es PR de refactor aparte. PR 1 dejó color-literals + strings sin i18n en
+    `FidelityReviewPanel`/`FidelityVerdictRow`; mis componentes nuevos cumplen standards (tokens
+    semánticos + i18n). `usePublishSermon` perdió su toast inline (ahora lo dueña el gate hook).
+  - **Verde**: tsc 0 errores (domain/application/infrastructure/web), 510 tests
+    (domain 366 + application 66 + web 78), compliance:staged sin hard violations.
 
 - **2026-05-30 (`/iniciar-fase 3` — kickoff + decisiones locked)** — Sesión de planning con el
   fundador. Decisiones Q1-Q10 formalizadas en
