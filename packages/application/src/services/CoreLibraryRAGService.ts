@@ -125,8 +125,19 @@ export class CoreLibraryRAGService {
      * downstream prompt rules and the client-side extractor both recognise,
      * so the model NEVER produces an inline `(Author, "Title")` for protected
      * material — and if it leaks one, the extractor strips it defensively.
+     *
+     * `options.revealProtected` lifts the mask for ALL sources. This is the
+     * super-admin path: the founder needs to see the real attribution of
+     * every source the answer drew on (internal reference, not public
+     * distribution — consistent with the client-side `isAdmin` gate in
+     * `extractCitations`, which already declines to strip those citations).
+     * Default `false` — the legal masking stays on for every normal user.
      */
-    static formatContextForPrompt(chunks: RetrievedChunk[], language: 'es' | 'en' = 'es'): string {
+    static formatContextForPrompt(
+        chunks: RetrievedChunk[],
+        language: 'es' | 'en' = 'es',
+        options: { revealProtected?: boolean } = {},
+    ): string {
         if (chunks.length === 0) return '';
         const sourceWord = language === 'en' ? 'Source' : 'Fuente';
         const protectedLabel = language === 'en'
@@ -135,7 +146,7 @@ export class CoreLibraryRAGService {
 
         return chunks
             .map((c, i) => {
-                const cleared = c.publiclyCitable === true;
+                const cleared = c.publiclyCitable === true || options.revealProtected === true;
                 let header: string;
                 if (cleared) {
                     const page = c.metadata.page ? `p. ${c.metadata.page}` : '';
