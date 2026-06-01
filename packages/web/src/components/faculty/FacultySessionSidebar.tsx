@@ -104,8 +104,8 @@ function SessionItem({
                     )}
                     <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] text-muted-foreground">{formatDistanceToNow(s.updatedAt, { locale: es, addSuffix: true })}</span>
-                        {s.messages.length > 0 && (
-                            <span className="text-[10px] bg-muted text-muted-foreground px-1 rounded tabular-nums">{s.messages.length}</span>
+                        {(s.messageCount ?? s.messages.length) > 0 && (
+                            <span className="text-[10px] bg-muted text-muted-foreground px-1 rounded tabular-nums">{s.messageCount ?? s.messages.length}</span>
                         )}
                     </div>
                 </div>

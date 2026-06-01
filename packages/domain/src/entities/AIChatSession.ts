@@ -58,6 +58,13 @@ export interface AIChatSession {
     updatedAt: Date;
     messages: AIChatMessage[];
     /**
+     * Message count, populated by the trimmed dashboard read
+     * (`getUserSessionSummaries`) where `messages` is intentionally empty to
+     * keep the list payload small. Full reads leave this undefined — read it
+     * as `messageCount ?? messages.length`.
+     */
+    messageCount?: number;
+    /**
      * Optional structured context the user opened the session FROM
      * (e.g. clicked "Preguntar a Faculty" while reading an exegetical
      * paper). Each ref is consumed by the orchestrator to enrich the

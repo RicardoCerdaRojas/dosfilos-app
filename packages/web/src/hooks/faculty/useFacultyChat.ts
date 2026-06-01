@@ -69,8 +69,9 @@ export function useFacultyChat(sessionId: string) {
         queryKey: sessionQueryKey,
         queryFn: async () => {
             if (!user?.uid) throw new Error('User not authenticated');
-            const sessions = await facultyService.getHistory.execute(user.uid);
-            return sessions.find(s => s.id === sessionId) || null;
+            // Single-doc read (full transcript) — no longer fetches the whole
+            // history just to pick one session.
+            return await facultyService.getSession.execute(user.uid, sessionId);
         },
         enabled: !!user?.uid && !!sessionId,
     });

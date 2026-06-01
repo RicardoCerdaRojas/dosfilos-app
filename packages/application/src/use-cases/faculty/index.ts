@@ -1,6 +1,7 @@
 export * from './CreateChatSessionUseCase';
 export * from './GetChatHistoryUseCase';
 export * from './GetSessionUseCase';
+export * from './GetSessionSummariesUseCase';
 export * from './SendAgentMessageUseCase';
 export * from './OrchestratedMessageUseCase';
 export * from './ExtractTheologicalContentUseCase';

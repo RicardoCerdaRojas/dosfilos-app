@@ -3,6 +3,13 @@ import { AIChatSession, AIChatMessage } from '../entities/AIChatSession';
 export interface IAIChatRepository {
     getSession(userId: string, sessionId: string): Promise<AIChatSession | null>;
     getUserSessions(userId: string): Promise<AIChatSession[]>;
+    /**
+     * Trimmed list read for the sidebar/dashboard — returns sessions WITHOUT
+     * their `messages` (set to `[]`) but with `messageCount`, so the list
+     * payload stays tiny. The full transcript is fetched via `getSession`
+     * only when a session is opened.
+     */
+    getUserSessionSummaries(userId: string): Promise<AIChatSession[]>;
     createSession(session: Omit<AIChatSession, 'id' | 'createdAt' | 'updatedAt'>): Promise<AIChatSession>;
     updateSession(session: AIChatSession): Promise<void>;
     deleteSession(userId: string, sessionId: string): Promise<void>;

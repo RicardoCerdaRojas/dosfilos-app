@@ -11,6 +11,7 @@ import {
     where,
     writeBatch
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../config/firebase';
 import { AIChatSession, IAIChatRepository, AIChatMessage } from '@dosfilos/domain';
 
@@ -66,6 +67,33 @@ export class FirestoreAIChatRepository implements IAIChatRepository {
                 updatedAt: data.updatedAt?.toDate() || new Date(),
             } as AIChatSession;
         });
+    }
+
+    /**
+     * Trimmed list read — delegates to the `getFacultyDashboardSessions`
+     * callable, which reads server-side and strips each session's `messages[]`
+     * (heavy) down to a `messageCount`. Used by the sidebar/dashboard so the
+     * full transcripts don't cross the wire just to draw the list.
+     */
+    async getUserSessionSummaries(userId: string): Promise<AIChatSession[]> {
+        const callable = httpsCallable<
+            Record<string, never>,
+            { sessions: any[]; truncated: boolean }
+        >(getFunctions(), 'getFacultyDashboardSessions');
+        const res = await callable({});
+        return (res.data.sessions ?? []).map((s: any) => ({
+            id: s.id,
+            userId: s.userId,
+            agentId: s.agentId,
+            title: s.title,
+            projectId: s.projectId,
+            createdAt: new Date(s.createdAt),
+            updatedAt: new Date(s.updatedAt),
+            messages: [],
+            messageCount: typeof s.messageCount === 'number' ? s.messageCount : 0,
+            context: s.context,
+            guidedSermonSession: s.guidedSermonSession,
+        } as AIChatSession));
     }
 
     async createSession(sessionData: Omit<AIChatSession, 'id' | 'createdAt' | 'updatedAt'>): Promise<AIChatSession> {

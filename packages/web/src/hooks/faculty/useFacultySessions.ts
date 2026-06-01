@@ -16,7 +16,8 @@ export function useFacultySessions() {
         queryKey: ['faculty', 'sessions', user?.uid],
         queryFn: async () => {
             if (!user?.uid) throw new Error('User not authenticated');
-            return await facultyService.getHistory.execute(user.uid);
+            // Trimmed list (no transcripts) — keeps the sidebar payload tiny.
+            return await facultyService.getSessionSummaries.execute(user.uid);
         },
         enabled: !!user?.uid,
     });
