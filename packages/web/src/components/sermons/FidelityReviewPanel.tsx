@@ -2,12 +2,13 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, AlertTriangle, ShieldAlert, RefreshCw, Loader2, Layers } from 'lucide-react';
-import type { FidelityReport, SubstantiveClaim } from '@dosfilos/domain';
+import { ShieldCheck, AlertTriangle, ShieldAlert, RefreshCw, Loader2, Layers, Scale } from 'lucide-react';
+import type { FidelityReport, SubstantiveClaim, AuthorityViolation } from '@dosfilos/domain';
 import { useFidelityPassGate } from '@/hooks/usePastoralFidelityGate';
 import { useRunFidelityPass } from '@/hooks/useRunFidelityPass';
 import { FidelityVerdictRow } from './FidelityVerdictRow';
 import { PluralityFailureRow } from './PluralityFailureRow';
+import { AuthorityViolationRow } from './AuthorityViolationRow';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -141,6 +142,8 @@ export function FidelityReviewPanel({ sermonId, report, onReportUpdated, onJumpT
 
                     <PluralitySection failures={report.pluralityReport?.failures ?? []} />
 
+                    <AuthoritySection violations={report.authorityReport?.authorityViolations ?? []} />
+
                     {summary
                         && summary.totalMarkers === 0
                         && (report.pluralityReport?.failures.length ?? 0) === 0 && (
@@ -171,6 +174,27 @@ function PluralitySection({ failures }: { failures: SubstantiveClaim[] }) {
             <div className="space-y-2">
                 {failures.map((claim, i) => (
                     <PluralityFailureRow key={`${i}-${claim.claimText.slice(0, 24)}`} claim={claim} />
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function AuthoritySection({ violations }: { violations: AuthorityViolation[] }) {
+    const { t } = useTranslation('sermonDetail');
+    if (violations.length === 0) return null;
+    return (
+        <section className="mt-4">
+            <h4 className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Scale className="h-3.5 w-3.5" />
+                {t('fidelityGate.authority.title')}
+            </h4>
+            <p className="mb-2 text-xs text-muted-foreground">
+                {t('fidelityGate.authority.description')}
+            </p>
+            <div className="space-y-2">
+                {violations.map((v, i) => (
+                    <AuthorityViolationRow key={`${i}-${v.claim.slice(0, 24)}`} violation={v} />
                 ))}
             </div>
         </section>

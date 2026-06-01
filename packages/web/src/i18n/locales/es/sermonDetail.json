@@ -229,6 +229,12 @@
                 "open-evangelical": "Asunto abierto"
             }
         },
+        "authority": {
+            "title": "Autoridad subordinada",
+            "description": "Estas afirmaciones se apoyan en una confesión, credo o teólogo como autoridad final. El fundamento debe ser el texto; la confesión es testigo, no fundamento.",
+            "reformulation": "Reformulación sugerida",
+            "unnamedAuthority": "Autoridad citada"
+        },
         "toast": {
             "published": "Sermón publicado.",
             "error": "No pudimos publicar el sermón. Intenta de nuevo.",

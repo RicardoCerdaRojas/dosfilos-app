@@ -1,4 +1,4 @@
-import type { FidelityVerdict, SubstantiveClaim } from '../entities/FidelityReport';
+import type { FidelityVerdict, SubstantiveClaim, AuthorityViolation } from '../entities/FidelityReport';
 
 /**
  * Pastoral Fidelity — Phase 3 PR 1 (ADR-029) port for the second-pass
@@ -44,6 +44,13 @@ export interface FidelityEvaluationResult {
      * evaluators that don't run the tagger (older stubs) — treat as `[]`.
      */
     substantiveClaims?: SubstantiveClaim[];
+    /**
+     * Authority-subordination violations (PR 4) — claims leaning on a
+     * confession/creed as the final authority. Consumed by the use case to
+     * build the `AuthorityReport` + feed the gate. Absent on evaluators that
+     * don't run the detector — treat as `[]`.
+     */
+    authorityViolations?: AuthorityViolation[];
 }
 
 export interface IFidelityEvaluator {
