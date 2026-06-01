@@ -27,6 +27,10 @@ vi.mock('@/hooks/useRunFidelityPass', () => ({
 vi.mock('sonner', () => ({
     toast: { success: vi.fn(), error: vi.fn() },
 }));
+// Passthrough i18n so assertions target the translation KEY, not copy.
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'es' } }),
+}));
 
 function makeReport(overrides: Partial<FidelityReport> = {}): FidelityReport {
     return {
@@ -102,15 +106,15 @@ describe('FidelityReviewPanel', () => {
     it('offers a "Revisar fidelidad" CTA when no report exists yet', () => {
         render(<FidelityReviewPanel sermonId="sermon-1" />);
         expect(screen.getByTestId('fidelity-review-panel')).toBeTruthy();
-        expect(screen.getByRole('button', { name: /revisar fidelidad/i })).toBeTruthy();
+        expect(screen.getByTestId('fidelity-run-button')).toBeTruthy();
         expect(screen.queryByTestId('fidelity-gate-banner-pass')).toBeNull();
     });
 
     it('renders the soft-block banner and verdict groups when a soft report is present', () => {
         render(<FidelityReviewPanel sermonId="sermon-1" report={makeReport()} />);
         expect(screen.getByTestId('fidelity-gate-banner-soft')).toBeTruthy();
-        expect(screen.getByText('Requiere tu atención')).toBeTruthy();
-        expect(screen.getByText('Respaldadas')).toBeTruthy();
+        expect(screen.getByText('fidelityReview.attention')).toBeTruthy();
+        expect(screen.getByText('fidelityReview.supported')).toBeTruthy();
         expect(screen.getByTestId('fidelity-verdict-row-1')).toBeTruthy();
         expect(screen.getByTestId('fidelity-verdict-row-2')).toBeTruthy();
     });
