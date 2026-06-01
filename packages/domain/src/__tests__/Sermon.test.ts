@@ -117,4 +117,45 @@ describe('SermonEntity', () => {
         const copy = sermon.publishAsCopy();
         expect(copy.citationManifest).toEqual(manifest);
     });
+
+    describe('createSummary (trimmed list projection)', () => {
+        it('reconstructs a published sermon with empty content without throwing', () => {
+            // Regression: the list summary callable returns no `content`; a
+            // published/working/archived sermon would trip the
+            // "content required" validation and blank the whole list.
+            const summary = SermonEntity.createSummary({
+                id: 'sermon-1',
+                userId: 'user123',
+                title: 'El amor de Dios',
+                status: 'published',
+            });
+            expect(summary.id).toBe('sermon-1');
+            expect(summary.status).toBe('published');
+            expect(summary.content).toBe('');
+        });
+
+        it('still preserves id, status and dates passed in', () => {
+            const created = new Date('2026-01-01T00:00:00Z');
+            const summary = SermonEntity.createSummary({
+                id: 's2',
+                userId: 'u',
+                title: 'Título válido',
+                status: 'archived',
+                createdAt: created,
+            });
+            expect(summary.status).toBe('archived');
+            expect(summary.createdAt).toEqual(created);
+        });
+
+        it('create() (non-summary) STILL rejects empty content for a published sermon', () => {
+            expect(() =>
+                SermonEntity.create({
+                    userId: 'u',
+                    title: 'Título válido',
+                    content: '',
+                    status: 'published',
+                }),
+            ).toThrow('El contenido no puede estar vacío');
+        });
+    });
 });

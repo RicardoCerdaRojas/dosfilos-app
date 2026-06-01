@@ -212,7 +212,14 @@ export class SermonEntity implements Sermon {
         public bibliography?: RAGSource[],
         public citationManifest?: CitationManifest,
         public studyDepthSnapshot?: Sermon['studyDepthSnapshot'],
-        public fidelityReport?: FidelityReport
+        public fidelityReport?: FidelityReport,
+        /**
+         * Skips the "content required" rule. Set ONLY when reconstructing a
+         * trimmed list summary (`createSummary`), where `content` is empty by
+         * design because the full body loads on the detail page. Never set on
+         * a real create/save path. Not a persisted field.
+         */
+        private readonly _skipContentValidation: boolean = false
     ) {
         this.validate();
     }
@@ -224,8 +231,9 @@ export class SermonEntity implements Sermon {
         if (this.title.length > 200) {
             throw new Error('El título no puede exceder 200 caracteres');
         }
-        // Allow empty content for draft sermons (wizard in progress)
-        if (this.status !== 'draft' && (!this.content || this.content.trim().length === 0)) {
+        // Allow empty content for draft sermons (wizard in progress) and for
+        // trimmed list summaries (content lives on the detail page, not the list).
+        if (!this._skipContentValidation && this.status !== 'draft' && (!this.content || this.content.trim().length === 0)) {
             throw new Error('El contenido no puede estar vacío');
         }
         if (!this.userId) {
@@ -236,7 +244,9 @@ export class SermonEntity implements Sermon {
     static create(
         data: Pick<Sermon, 'userId' | 'title' | 'content'>
             & Partial<Omit<Sermon, 'userId' | 'title' | 'content' | 'id'>>
-            & { id?: string; preachingHistory?: PreachingLog[] }
+            & { id?: string; preachingHistory?: PreachingLog[] },
+        /** Internal — skips the content-required rule for trimmed summaries. */
+        skipContentValidation = false
     ): SermonEntity {
         const d = data as any;
         return new SermonEntity(
@@ -270,8 +280,23 @@ export class SermonEntity implements Sermon {
             data.bibliography ?? (data as any).bibliography,
             data.citationManifest,
             data.studyDepthSnapshot,
-            data.fidelityReport
+            data.fidelityReport,
+            skipContentValidation
         );
+    }
+
+    /**
+     * Reconstruct a trimmed LIST summary (no `content`). The dashboard list
+     * only reads headline fields; the full body loads on the detail page. This
+     * skips the "content required" validation that legitimately doesn't apply
+     * to a summary projection — see `findSummariesByUserId`.
+     */
+    static createSummary(
+        data: Pick<Sermon, 'userId' | 'title'>
+            & Partial<Omit<Sermon, 'userId' | 'title' | 'id'>>
+            & { id?: string; preachingHistory?: PreachingLog[] }
+    ): SermonEntity {
+        return SermonEntity.create({ content: '', ...data }, true);
     }
 
     update(data: Partial<Omit<Sermon, 'id' | 'userId' | 'createdAt'>>): SermonEntity {
