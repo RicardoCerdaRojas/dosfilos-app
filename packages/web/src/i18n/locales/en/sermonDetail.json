@@ -228,6 +228,12 @@
                 "open-evangelical": "Open question"
             }
         },
+        "authority": {
+            "title": "Authority subordination",
+            "description": "These claims lean on a confession, creed, or theologian as the final authority. The ground must be the text; the confession is a witness, not the ground.",
+            "reformulation": "Suggested reformulation",
+            "unnamedAuthority": "Cited authority"
+        },
         "toast": {
             "published": "Sermon published.",
             "error": "We couldn't publish the sermon. Try again.",

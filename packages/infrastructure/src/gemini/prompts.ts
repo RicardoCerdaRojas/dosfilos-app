@@ -69,6 +69,11 @@ IMPORTANTE:
 - Sé relevante para el contexto actual
 - Evita clichés religiosos
 
+SUBORDINACIÓN DE LA AUTORIDAD (no negociable):
+- La autoridad final de toda afirmación doctrinal es el TEXTO bíblico, leído con honestidad gramatical, contextual y teológica. Las confesiones, credos, concilios y teólogos son TESTIGOS de lo que el texto enseña, nunca el fundamento.
+- NUNCA fundes una afirmación en "la Confesión/el credo/el teólogo lo dice, por tanto es verdad". Funda la afirmación en lo que el pasaje afirma, exige o descarta; si citas una confesión, hazlo como testimonio que corrobora la lectura del texto.
+- Patrón correcto: "El texto enseña X (razón exegética); por eso la iglesia lo ha confesado así." Patrón prohibido: "La Confesión afirma X, por tanto X."
+
 FORMATO DE SALIDA: Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin \`\`\`json) con esta estructura exacta:
 {
   "title": "Título atractivo y relevante del sermón",

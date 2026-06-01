@@ -10,6 +10,7 @@ import {
     type FidelityClaimInput,
 } from './fidelityEvaluatorPrompt';
 import { buildSubstantiveClaimDetectorPrompt } from './substantiveClaimDetectorPrompt';
+import { buildAuthorityDetectorPrompt } from './authorityDetectorPrompt';
 
 /**
  * Pastoral Fidelity — Phase 3 PR 1 callable.
@@ -77,6 +78,14 @@ interface SubstantiveClaimPayload {
     biblicalSources: PassageRefPayload[];
 }
 
+/** PR 4 — one authority-subordination violation. */
+interface AuthorityViolationPayload {
+    claim: string;
+    citedAuthority: string;
+    reformulationHint: string;
+    reasoning: string;
+}
+
 interface VerdictPayload {
     marker: number;
     claim: string;
@@ -106,6 +115,8 @@ interface EvaluateResult {
     skippedMarkers: number;
     /** PR 3 (Q4) — substantive doctrinal claims + their biblical grounding. */
     substantiveClaims: SubstantiveClaimPayload[];
+    /** PR 4 — claims leaning on a confession/creed as the final authority. */
+    authorityViolations: AuthorityViolationPayload[];
 }
 
 export const evaluateClaimSourceFidelity = onCall(
@@ -176,6 +187,7 @@ export const evaluateClaimSourceFidelity = onCall(
         // prose. Degrades to [] on failure so a tagger hiccup never blocks the
         // marker report the pastor came for.
         const substantiveClaims = await detectSubstantiveClaims(flash, prose, bibleReferences, locale);
+        const authorityViolations = await detectAuthorityViolations(flash, prose, locale);
 
         return {
             reportId,
@@ -185,6 +197,7 @@ export const evaluateClaimSourceFidelity = onCall(
             verdicts,
             skippedMarkers: Math.max(0, manifestEntries.length - claims.length),
             substantiveClaims,
+            authorityViolations,
         };
     },
 );
@@ -312,6 +325,52 @@ async function detectSubstantiveClaims(
         console.warn('[evaluateClaimSourceFidelity] substantive-claim detector failed', err);
         return [];
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Authority-subordination detector (PR 4)
+// ─────────────────────────────────────────────────────────────────────────
+
+async function detectAuthorityViolations(
+    flash: ILlmClient,
+    prose: string,
+    locale: 'es' | 'en',
+): Promise<AuthorityViolationPayload[]> {
+    if (!prose.trim()) return [];
+    try {
+        const { system, prompt } = buildAuthorityDetectorPrompt({ prose, locale });
+        const raw = await flash.generate({
+            system,
+            prompt,
+            temperature: 0.2,
+            responseMimeType: 'application/json',
+            maxOutputTokens: 4096,
+        });
+        return parseAuthorityViolations(raw);
+    } catch (err) {
+        console.warn('[evaluateClaimSourceFidelity] authority detector failed', err);
+        return [];
+    }
+}
+
+function parseAuthorityViolations(raw: string): AuthorityViolationPayload[] {
+    const json = safeParseJson(raw);
+    const arr = Array.isArray((json as { violations?: unknown }).violations)
+        ? ((json as { violations: unknown[] }).violations)
+        : [];
+    const result: AuthorityViolationPayload[] = [];
+    for (const item of arr) {
+        if (!item || typeof item !== 'object') continue;
+        const claim = String((item as { claim?: unknown }).claim ?? '').trim();
+        if (!claim) continue;
+        result.push({
+            claim: claim.slice(0, 500),
+            citedAuthority: String((item as { citedAuthority?: unknown }).citedAuthority ?? '').trim().slice(0, 120),
+            reformulationHint: String((item as { reformulationHint?: unknown }).reformulationHint ?? '').trim().slice(0, 600),
+            reasoning: String((item as { reasoning?: unknown }).reasoning ?? '').trim().slice(0, 400),
+        });
+    }
+    return result;
 }
 
 // ─────────────────────────────────────────────────────────────────────────

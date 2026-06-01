@@ -44,9 +44,15 @@ export class RunFidelityPassUseCase {
         // a single biblical passage.
         const pluralityReport = computePluralityCheck(evaluation.substantiveClaims ?? []);
 
+        // Authority (PR 4) — confession-as-final-authority check. Any violation
+        // feeds the gate as a soft-block (overridable, like plurality).
+        const authorityViolations = evaluation.authorityViolations ?? [];
+        const authorityReport = { authorityViolations };
+
         const { summary, gateStatus } = computeFidelitySummary({
             verdicts: evaluation.verdicts,
             pluralityHasFailures: pluralityReport.failures.length > 0,
+            authorityHasViolations: authorityViolations.length > 0,
         });
 
         const report: FidelityReport = {
@@ -59,6 +65,7 @@ export class RunFidelityPassUseCase {
             summary,
             gateStatus,
             pluralityReport,
+            authorityReport,
         };
 
         await this.sermonRepository.updateFidelityReport(input.sermonId, report);

@@ -5,9 +5,10 @@
 `in-progress` — arrancada 2026-05-30 con `/iniciar-fase 3`. Plan locked + ADR-029 escrito.
 - **PR 1** (fidelity pass core + per-marker verdicts panel) — ✅ MERGEADO #287 (2026-05-30).
 - **PR 2** (publish gate + thresholds + override + audit) — ✅ MERGEADO #289 (2026-05-31).
-- **PR 3** (plurality validator — no-proof-texting) — ✅ code-complete (2026-05-31),
-  branch `feat/pastoral-fidelity-phase-3-pr-3-plurality`. PR por abrir.
-- **PR 4/5** — pendientes.
+- **PR 3** (plurality validator — no-proof-texting) — ✅ MERGEADO #290 (2026-05-31).
+- **PR 4** (authority subordination + prompt clause) — ✅ code-complete (2026-06-01),
+  branch `feat/pastoral-fidelity-phase-3-pr-4-authority`. PR por abrir.
+- **PR 5** (attribution footer) — pendiente.
 
 Prereqs actualizados al cerrar Fase 2.5 (2026-05-29). Lista de dependencias
 satisfechas + no satisfechas + preguntas emergentes + riesgos cross-fase abajo.

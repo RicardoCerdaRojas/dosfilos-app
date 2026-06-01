@@ -179,11 +179,28 @@ export interface PluralityReport {
 export const PLURALITY_MIN_PASSAGES = 2;
 
 /**
- * Stub for the Authority sub-report (PR 4). PR 4 extends with
- * `authorityViolations` (claim citing a confession as final authority).
+ * One authority-subordination violation (PR 4, ADR-006 §8 / manifesto §6):
+ * a claim that leans on a confession/creed/theologian as the FINAL authority
+ * ("la WCF dice X, por tanto X") instead of grounding the assertion in the
+ * biblical text. The creed is a witness, not the ground.
+ */
+export interface AuthorityViolation {
+    /** The sentence that appeals to a human/confessional authority as final. */
+    claim: string;
+    /** The authority it leans on (e.g. "Confesión de Westminster 2.1", "Calvino"). */
+    citedAuthority: string;
+    /** Suggested rewrite that grounds the same claim in the text. */
+    reformulationHint: string;
+    /** Short LLM justification of why this reads as authority-as-ground. */
+    reasoning: string;
+}
+
+/**
+ * Authority sub-report (PR 4). Empty `authorityViolations` ⇒ no problem; any
+ * entry feeds the gate as a soft-block (overridable, like plurality).
  */
 export interface AuthorityReport {
-    readonly placeholder?: never;
+    authorityViolations: AuthorityViolation[];
 }
 
 /**

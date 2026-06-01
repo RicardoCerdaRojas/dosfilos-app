@@ -19,6 +19,7 @@ import type {
     FidelityVerdict,
     IFidelityEvaluator,
     SubstantiveClaim,
+    AuthorityViolation,
 } from '@dosfilos/domain';
 
 interface CallableVerdictPayload {
@@ -42,6 +43,8 @@ interface CallableEvaluateResponse {
     skippedMarkers: number;
     /** PR 3 — present on evaluators that run the substantive-claim tagger. */
     substantiveClaims?: SubstantiveClaim[];
+    /** PR 4 — present on evaluators that run the authority detector. */
+    authorityViolations?: AuthorityViolation[];
 }
 
 export class CallableFidelityEvaluator implements IFidelityEvaluator {
@@ -72,6 +75,7 @@ export class CallableFidelityEvaluator implements IFidelityEvaluator {
             skippedMarkers: data.skippedMarkers ?? 0,
             // Plain data (no Date fields) — pass through as-is.
             substantiveClaims: Array.isArray(data.substantiveClaims) ? data.substantiveClaims : [],
+            authorityViolations: Array.isArray(data.authorityViolations) ? data.authorityViolations : [],
         };
     }
 }
