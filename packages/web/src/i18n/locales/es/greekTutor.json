@@ -205,6 +205,8 @@
         "title": "Mis Sesiones de Estudio",
         "newSession": "Nueva Sesión",
         "loadingSessions": "Cargando sesiones...",
+        "loadMore": "Cargar más",
+        "loadingMore": "Cargando...",
         "loadError": "Error al cargar las sesiones",
         "deleteConfirm": "¿Estás seguro de que deseas eliminar esta sesión de estudio? Esta acción no se puede deshacer.",
         "deleteError": "Error al eliminar la sesión. Por favor intenta de nuevo.",

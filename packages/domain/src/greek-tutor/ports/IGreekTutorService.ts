@@ -97,10 +97,24 @@ export interface IGreekTutorService {
     analyzeSyntax(prompt: string): Promise<string>;
 }
 
+export interface SessionsPage {
+    sessions: import('../entities/entities').StudySession[];
+    /** True when at least one more page exists after this one. */
+    hasMore: boolean;
+    /** `createdAt` of the last session — pass back as the next page cursor. */
+    nextCursor?: Date;
+}
+
 export interface ISessionRepository {
     createSession(session: import('../entities/entities').StudySession): Promise<void>;
     getSession(sessionId: string): Promise<import('../entities/entities').StudySession | null>;
     getAllSessions(userId: string): Promise<import('../entities/entities').StudySession[]>;
+    /**
+     * Paginated session read for the dashboard (createdAt DESC). Caps the
+     * payload vs. `getAllSessions`. See the Firestore impl for the
+     * `responses`-omission + over-fetch sentinel details.
+     */
+    getSessionsPage(userId: string, pageSize: number, cursorCreatedAt?: Date): Promise<SessionsPage>;
     updateSession(session: import('../entities/entities').StudySession): Promise<void>;
     saveInsight(insight: ExegeticalInsight): Promise<void>;
     getInsightsBySession(sessionId: string): Promise<ExegeticalInsight[]>;

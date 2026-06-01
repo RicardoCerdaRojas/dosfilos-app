@@ -1,7 +1,8 @@
 
-import { ISessionRepository, StudySession, ExegeticalInsight } from '@dosfilos/domain';
+import { ISessionRepository, StudySession, ExegeticalInsight, SessionsPage } from '@dosfilos/domain';
 import { db } from '../../config/firebase';
 import { doc, setDoc, getDoc, updateDoc, deleteDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 // Helper to recursively remove undefined fields (Firestore doesn't accept undefined)
 function removeUndefined<T>(obj: T): any {
@@ -76,6 +77,51 @@ export class FirestoreGreekSessionRepository implements ISessionRepository {
         });
 
         return sessions;
+    }
+
+    /**
+     * Paginated read for the dashboard. Delegates to the
+     * `getGreekDashboardSessions` callable, which reads server-side (Admin
+     * SDK, in-datacenter) and returns each session with units TRIMMED to the
+     * few fields the dashboard renders (greekForm + progress), dropping the
+     * heavy per-unit LLM text + morphologyBreakdown + the session `responses`
+     * map. Reading the full docs in the browser was ~10s for a dozen sessions;
+     * the trimmed payload makes it instant. The full session is fetched only
+     * when the pastor opens it (`getSession`).
+     *
+     * Ordering createdAt DESC; `cursorCreatedAt` (a Date) is sent as epoch
+     * millis and fed to `startAfter` server-side.
+     */
+    async getSessionsPage(_userId: string, pageSize: number, cursorCreatedAt?: Date): Promise<SessionsPage> {
+        const callable = httpsCallable<
+            { pageSize: number; cursorCreatedAt?: number },
+            { sessions: any[]; hasMore: boolean; nextCursor?: number }
+        >(getFunctions(), 'getGreekDashboardSessions');
+
+        const res = await callable({
+            pageSize,
+            ...(cursorCreatedAt ? { cursorCreatedAt: cursorCreatedAt.getTime() } : {}),
+        });
+        const data = res.data;
+
+        const sessions: StudySession[] = (data.sessions ?? []).map((s: any) => ({
+            id: s.id,
+            userId: s.userId,
+            passage: s.passage,
+            createdAt: new Date(s.createdAt),
+            updatedAt: new Date(s.updatedAt),
+            status: s.status,
+            units: s.units ?? [], // trimmed server-side; dashboard reads only greekForm + progress
+            responses: {},
+            sessionProgress: s.sessionProgress,
+            projectId: s.projectId,
+        }));
+
+        return {
+            sessions,
+            hasMore: !!data.hasMore,
+            nextCursor: typeof data.nextCursor === 'number' ? new Date(data.nextCursor) : undefined,
+        };
     }
 
     async updateSession(session: StudySession): Promise<void> {

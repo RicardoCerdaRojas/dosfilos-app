@@ -238,6 +238,8 @@
         "title": "My Study Sessions",
         "newSession": "New Session",
         "loadingSessions": "Loading sessions...",
+        "loadMore": "Load more",
+        "loadingMore": "Loading...",
         "loadError": "Error loading sessions",
         "deleteConfirm": "Are you sure you want to delete this study session? This action cannot be undone.",
         "deleteError": "Error deleting session. Please try again.",
