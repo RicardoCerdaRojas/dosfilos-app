@@ -8,6 +8,15 @@ export interface ISermonRepository {
     findById(id: string): Promise<SermonEntity | null>;
     findByShareToken(token: string): Promise<SermonEntity | null>;
     findByUserId(userId: string, options?: FindOptions): Promise<SermonEntity[]>;
+    /**
+     * Trimmed list read for the dashboard — same query as `findByUserId` but
+     * returns sermons WITHOUT the heavy fields (`content`, the wizard
+     * draft/outline, `citationManifest`, `fidelityReport`,
+     * `studyDepthSnapshot`). `wizardProgress` is reduced to
+     * `{ currentStep, lastSaved }` so the list's wizard-draft check still
+     * works. The full sermon loads via `findById` when one is opened.
+     */
+    findSummariesByUserId(userId: string, options?: FindOptions): Promise<SermonEntity[]>;
     findAll(options?: FindOptions): Promise<SermonEntity[]>;
     findByDraftId(draftId: string, userId: string): Promise<SermonEntity[]>;
     /**

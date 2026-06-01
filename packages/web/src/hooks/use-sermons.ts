@@ -16,7 +16,10 @@ export function useSermons(options?: FindOptions) {
         setLoading(true);
         setError(null);
         try {
-            const data = await sermonService.getUserSermons(user.uid, options);
+            // Trimmed list read — the sermons page only needs summary fields;
+            // the full sermon (content, citation manifest, fidelity report…)
+            // loads on the detail page.
+            const data = await sermonService.getUserSermonSummaries(user.uid, options);
             setSermons(data);
         } catch (err: any) {
             setError(err.message);

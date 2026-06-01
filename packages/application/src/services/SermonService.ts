@@ -131,6 +131,20 @@ export class SermonService {
         }
     }
 
+    /**
+     * Trimmed list read for the dashboard — same options as `getUserSermons`
+     * but returns sermons without the heavy fields (content, wizard
+     * draft/outline, citationManifest, fidelityReport, studyDepthSnapshot).
+     * Keeps the list payload small; the full sermon loads via `getSermon`.
+     */
+    async getUserSermonSummaries(userId: string, options?: FindOptions): Promise<SermonEntity[]> {
+        try {
+            return await this.sermonRepository.findSummariesByUserId(userId, options);
+        } catch (error: any) {
+            throw new Error(error.message || 'Error al obtener los sermones');
+        }
+    }
+
     async publishSermon(id: string, override?: PublishOverrideInput): Promise<SermonEntity> {
         try {
             const sermon = await this.sermonRepository.findById(id);
