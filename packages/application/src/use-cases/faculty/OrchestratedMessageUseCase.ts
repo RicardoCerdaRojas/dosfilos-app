@@ -190,6 +190,12 @@ export class OrchestratedMessageUseCase {
         language: SupportedLanguage = DEFAULT_LANGUAGE,
         attachments?: InlineAttachment[],
         attachmentsMeta?: MessageAttachmentMeta[],
+        /**
+         * Super-admin only: keep the real author/title of protected sources in
+         * the model context so they appear as inline citations. Default false
+         * (legal masking on). See `CoreLibraryRAGService.formatContextForPrompt`.
+         */
+        revealProtectedCitations = false,
     ): Promise<{ response: string; selectedAgents: AIAgent[]; effectiveMode: ConcreteResponseMode }> {
         const session = await this.chatRepository.getSession(userId, sessionId);
         if (!session) throw new Error('Session not found');
@@ -367,7 +373,7 @@ export class OrchestratedMessageUseCase {
                 const combined = [...coreChunks, ...personalChunks];
                 if (combined.length > 0) {
                     retrievedContextByAgent.set(a.id, {
-                        context: CoreLibraryRAGService.formatContextForPrompt(combined, language),
+                        context: CoreLibraryRAGService.formatContextForPrompt(combined, language, { revealProtected: revealProtectedCitations }),
                         chunks: combined,
                     });
                 }

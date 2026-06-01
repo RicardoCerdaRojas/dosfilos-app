@@ -121,6 +121,12 @@ export class SendAgentMessageUseCase {
         lengthPreference?: ResponseMode,
         onSources?: (sources: SourceReference[]) => void,
         language: SupportedLanguage = DEFAULT_LANGUAGE,
+        /**
+         * Super-admin only: keep the real author/title of protected sources in
+         * the model context so they appear as inline citations. Default false
+         * (legal masking on). See `CoreLibraryRAGService.formatContextForPrompt`.
+         */
+        revealProtectedCitations = false,
     ): Promise<string> {
         const session = await this.chatRepository.getSession(userId, sessionId);
         if (!session) {
@@ -185,7 +191,7 @@ export class SendAgentMessageUseCase {
             const allChunks = [...coreChunks, ...personalChunks];
             console.log(`[SendAgentMessage] Retrieved ${coreChunks.length} core + ${personalChunks.length} personal chunks for "${resolveLocalized(agent.name, language)}" (mode=${effectiveMode ?? 'default'})`);
             if (allChunks.length > 0) {
-                retrievedContext = CoreLibraryRAGService.formatContextForPrompt(allChunks, language);
+                retrievedContext = CoreLibraryRAGService.formatContextForPrompt(allChunks, language, { revealProtected: revealProtectedCitations });
                 capturedSources = chunksToSources(allChunks);
                 // Notify UI immediately — sources are known before Gemini even replies
                 onSources?.(capturedSources);

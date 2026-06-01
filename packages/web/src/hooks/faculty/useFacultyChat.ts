@@ -3,6 +3,7 @@ import { facultyService, type ApprovedSermonOutline } from '@dosfilos/applicatio
 import { UsageLimitsService } from '@dosfilos/application/src/services/UsageLimitsService';
 import { FirebaseUserProfileRepository, FirebasePlanRepository } from '@dosfilos/infrastructure';
 import { useFirebase } from '@/context/firebase-context';
+import { useAuthorization } from '@/hooks/useAuthorization';
 import { AIAgent, SermonPersonalization, ResponseMode, ConcreteResponseMode, DEFAULT_LANGUAGE } from '@dosfilos/domain';
 import type {
     SupportedLanguage,
@@ -47,6 +48,7 @@ import { useState } from 'react';
 
 export function useFacultyChat(sessionId: string) {
     const { user } = useFirebase();
+    const { isAdmin } = useAuthorization();
     const queryClient = useQueryClient();
     const { i18n } = useTranslation();
     const [streamingMessage, setStreamingMessage] = useState<string>('');
@@ -152,6 +154,7 @@ export function useFacultyChat(sessionId: string) {
                     lengthPreference,
                     (sources) => { capturedSources = sources; },
                     resolveActiveLanguage(i18n.language),
+                    isAdmin, // super-admin sees protected-source citations (reveal mask)
                 );
                 // Inject the new exchange into the cache BEFORE clearing the
                 // streaming state so there's no gap on screen. See
@@ -247,6 +250,7 @@ export function useFacultyChat(sessionId: string) {
                     resolveActiveLanguage(i18n.language),
                     attachments,
                     attachmentsMeta,
+                    isAdmin, // super-admin sees protected-source citations (reveal mask)
                 );
                 // Inject the user message + the streamed model response into
                 // the cache before clearing the streaming state — otherwise
