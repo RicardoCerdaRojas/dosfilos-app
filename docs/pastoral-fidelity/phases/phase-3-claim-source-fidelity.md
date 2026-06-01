@@ -4,9 +4,10 @@
 
 `in-progress` — arrancada 2026-05-30 con `/iniciar-fase 3`. Plan locked + ADR-029 escrito.
 - **PR 1** (fidelity pass core + per-marker verdicts panel) — ✅ MERGEADO #287 (2026-05-30).
-- **PR 2** (publish gate + thresholds + override + audit) — ✅ code-complete (2026-05-31),
-  branch `feat/pastoral-fidelity-phase-3-pr-2-publish-gate`. PR por abrir.
-- **PR 3/4/5** — pendientes.
+- **PR 2** (publish gate + thresholds + override + audit) — ✅ MERGEADO #289 (2026-05-31).
+- **PR 3** (plurality validator — no-proof-texting) — ✅ code-complete (2026-05-31),
+  branch `feat/pastoral-fidelity-phase-3-pr-3-plurality`. PR por abrir.
+- **PR 4/5** — pendientes.
 
 Prereqs actualizados al cerrar Fase 2.5 (2026-05-29). Lista de dependencias
 satisfechas + no satisfechas + preguntas emergentes + riesgos cross-fase abajo.
@@ -416,6 +417,40 @@ Cada PR = unidad funcional completa testeable en UI (regla `feedback_pr_complete
 | `study_depth` (Fase 2.5) + `fidelity_pass` (Fase 3) confusion para pastor | Copy unificada: panel `FidelityReviewPanel` agrupa todo bajo "Revisión pre-publicación". |
 
 ## Bitácora
+
+- **2026-05-31 (PR 3 — plurality validator, code-complete)** — Check anti-proof-texting aterrizado.
+  - **Decisión operacional Q4**: "mismo batch" se implementa como **2ª llamada Flash dentro del
+    mismo callable** `evaluateClaimSourceFidelity` (no el mismo prompt — las unidades difieren:
+    fidelity es per-marker de cita de biblioteca, plurality es por afirmación doctrinal sobre la
+    prosa completa). Costo ≈ 1 request Flash extra (~$0.001), dentro del budget Q1. El detector
+    corre **aunque el sermón no tenga markers de cita** (un sermón sin citas de biblioteca igual
+    puede hacer afirmaciones doctrinales mono-pasaje).
+  - **Niveles de doctrina**: se reusa el `DoctrineLevel` canónico de `entities/Confession`
+    (`core|distinctive|open-evangelical`) — NO se duplicó el tipo. Plurality aplica solo a
+    `core`+`distinctive`; `open-evangelical` exento (materia de libertad).
+  - **Distinctness de pasajes**: `book|chapter|verseStart` (citar "Juan 1:1" dos veces = un testigo);
+    fallback a label normalizado cuando faltan campos estructurados. Mínimo 2 pasajes distintos.
+  - **CTA "Añadir paralelo canónico"**: reusa el cross-ref engine de Fase 0 vía
+    `useCrossReferences(label)`. **Read-only / propone** paralelos (Col 1:16, Heb 1:3…); el pastor
+    inserta manualmente — PR 3 NO auto-inserta en el borrador (lazy-mount: el callable
+    `lookupCrossReferences` solo dispara al expandir la fila).
+  - **Gate**: `pluralityReport.failures.length > 0` → `pluralityHasFailures: true` a
+    `computeFidelitySummary` → **soft-block** (ya cableado desde PR 1). Override con justificación
+    reusa el flujo de PR 2.
+  - **Entregado**: domain `PluralityReport`/`SubstantiveClaim`/`PassageRef`/`PLURALITY_MIN_PASSAGES`
+    + `computePluralityCheck` puro (8 tests); port `IFidelityEvaluator.substantiveClaims?`;
+    functions `substantiveClaimDetectorPrompt` + handler refactor (extraído `runMarkerFidelity`,
+    nuevo `detectSubstantiveClaims` con degradación a `[]` en fallo); application
+    `CallableFidelityEvaluator` mapea claims + `RunFidelityPassUseCase` computa plurality + feeds
+    gate; web `PluralityFailureRow` + sección "Pluralidad" en `FidelityReviewPanel` + i18n es/en
+    (`fidelityGate.plurality.*`) + 4 tests.
+  - **Deuda no tocada**: 8 color-literals de PR 1 en `FidelityReviewPanel` (GateBanner/SummaryBar)
+    siguen — el SummaryBar de 4 colores necesita un token semántico nuevo; refactor aparte. Mi
+    código nuevo usa tokens (`warning-subtle`/`card`/`border`). PR 1 strings hardcoded sin i18n
+    también siguen.
+  - **Verde**: tsc 0 errores en domain/application/infrastructure/web (functions tiene 1 error
+    pre-existente en `migratePastoralSeedsEightStep.ts`, ajeno a esta fase). 522 tests
+    (domain 374 + application 66 + web 82). compliance:staged sin hard violations.
 
 - **2026-05-31 (PR 2 — publish gate, code-complete)** — Gate de publish aterrizado. Decisiones
   de scope confirmadas con el fundador antes de codear:

@@ -18,6 +18,7 @@ import type {
     FidelityEvaluationResult,
     FidelityVerdict,
     IFidelityEvaluator,
+    SubstantiveClaim,
 } from '@dosfilos/domain';
 
 interface CallableVerdictPayload {
@@ -39,6 +40,8 @@ interface CallableEvaluateResponse {
     modelTier: 'flash' | 'sonnet' | 'mixed';
     verdicts: CallableVerdictPayload[];
     skippedMarkers: number;
+    /** PR 3 — present on evaluators that run the substantive-claim tagger. */
+    substantiveClaims?: SubstantiveClaim[];
 }
 
 export class CallableFidelityEvaluator implements IFidelityEvaluator {
@@ -67,6 +70,8 @@ export class CallableFidelityEvaluator implements IFidelityEvaluator {
                 ...(v.stale !== undefined ? { stale: v.stale } : {}),
             })),
             skippedMarkers: data.skippedMarkers ?? 0,
+            // Plain data (no Date fields) — pass through as-is.
+            substantiveClaims: Array.isArray(data.substantiveClaims) ? data.substantiveClaims : [],
         };
     }
 }

@@ -22,6 +22,8 @@
  * and filled in by PRs 3/4/5.
  */
 
+import type { DoctrineLevel } from './Confession';
+
 /**
  * Verdict the evaluator emits for a single marker.
  *
@@ -125,14 +127,56 @@ export interface GateOverride {
 }
 
 /**
- * Stub for the Plurality sub-report (PR 3). Defined as an empty interface
- * here so the field on `FidelityReport` is type-stable from PR 1; PR 3
- * extends with `substantiveClaims` + `failures`.
+ * Doctrine level a substantive claim falls under (06-pedagogy-applied §4).
+ * Re-exported from the canonical `DoctrineLevel` in `Confession`
+ * (core/distinctive/open-evangelical). Plurality only applies to `core` +
+ * `distinctive` claims — `open-evangelical` positions are matters of liberty,
+ * exempt from the two-witness bar.
+ */
+export type { DoctrineLevel };
+
+/**
+ * A biblical passage a claim rests on. `label` is the human-readable
+ * reference (e.g. "Juan 1:1") and is also what the cross-reference lookup
+ * parses, so it must round-trip through `LocalBibleService.parseReference`.
+ */
+export interface PassageRef {
+    book: string;
+    chapter: number;
+    verseStart?: number;
+    verseEnd?: number;
+    /** Display + lookup key, e.g. "Juan 1:1" or "Colosenses 1:16-17". */
+    label: string;
+}
+
+/**
+ * A doctrinally substantive assertion the sermon makes, with the distinct
+ * biblical passages it leans on. Detected by the LLM tagger that piggy-backs
+ * on the fidelity pass (ADR-029 §Q4).
+ */
+export interface SubstantiveClaim {
+    /** The sentence carrying the doctrinal assertion. */
+    claimText: string;
+    detectedLevel: DoctrineLevel;
+    /** Distinct biblical passages the claim is grounded on. */
+    biblicalSources: PassageRef[];
+}
+
+/**
+ * Plurality sub-report (PR 3, ADR-029 §Q4) — the no-proof-texting check.
+ * A substantive `core`/`distinctive` claim grounded on fewer than two
+ * distinct biblical passages is a proof-texting risk and lands in `failures`,
+ * which feeds the gate as a soft-block.
  */
 export interface PluralityReport {
-    /** Marker fields filled in by PR 3 — kept empty for forward-compat. */
-    readonly placeholder?: never;
+    /** Every substantive claim the tagger surfaced. */
+    substantiveClaims: SubstantiveClaim[];
+    /** Subset of `substantiveClaims` failing the two-witness bar. */
+    failures: SubstantiveClaim[];
 }
+
+/** Minimum distinct biblical passages a substantive claim needs (Q4). */
+export const PLURALITY_MIN_PASSAGES = 2;
 
 /**
  * Stub for the Authority sub-report (PR 4). PR 4 extends with
