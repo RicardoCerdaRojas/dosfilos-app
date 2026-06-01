@@ -1,66 +1,86 @@
-import { useState, useEffect } from 'react';
-import { StudySession } from '@dosfilos/domain';
-import { SessionFilters } from '@dosfilos/application/src/greek-tutor/use-cases/GetUserSessionsUseCase';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { StudySession, SessionsPage } from '@dosfilos/domain';
 
 interface UseSessionListProps {
     userId: string;
-    getUserSessions: (userId: string, filters?: SessionFilters) => Promise<StudySession[]>;
+    /** Paginated fetcher (createdAt DESC). One page per call. */
+    getSessionsPage: (userId: string, pageSize: number, cursorCreatedAt?: Date) => Promise<SessionsPage>;
+    /** Sessions per page. */
+    pageSize?: number;
 }
 
 /**
- * Hook for managing session list state and filtering
+ * Hook for the Greek dashboard session list.
+ *
+ * Loads sessions one page at a time (createdAt DESC) instead of pulling every
+ * full session doc up front — the previous behaviour made the dashboard slow
+ * to open for users with many sessions. The dashboard applies its own
+ * client-side search / progress filter / sort over the accumulated pages, so
+ * filtering operates on what has been loaded (the "Cargar más" button extends
+ * the set).
  */
-export const useSessionList = ({ userId, getUserSessions }: UseSessionListProps) => {
+export const useSessionList = ({ userId, getSessionsPage, pageSize = 12 }: UseSessionListProps) => {
     const [sessions, setSessions] = useState<StudySession[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [filters, setFilters] = useState<SessionFilters>({});
+    const cursorRef = useRef<Date | undefined>(undefined);
 
-    /**
-     * Fetch sessions from repository
-     */
-    const fetchSessions = async () => {
+    // Keep the fetcher in a ref so callbacks don't depend on its identity.
+    // The dashboard passes an inline arrow (new reference every render); without
+    // this, `loadFirstPage` would change each render and the mount effect would
+    // re-run in a loop ("Cargando sesiones…" flicker).
+    const getSessionsPageRef = useRef(getSessionsPage);
+    getSessionsPageRef.current = getSessionsPage;
+
+    const loadFirstPage = useCallback(async () => {
         if (!userId) return;
-
         setIsLoading(true);
         setError(null);
-
+        cursorRef.current = undefined;
         try {
-            const fetchedSessions = await getUserSessions(userId, filters);
-            setSessions(fetchedSessions);
+            const page = await getSessionsPageRef.current(userId, pageSize);
+            setSessions(page.sessions);
+            setHasMore(page.hasMore);
+            cursorRef.current = page.nextCursor;
         } catch (err) {
             console.error('[useSessionList] Error fetching sessions:', err);
             setError(err instanceof Error ? err.message : 'Error al cargar sesiones');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [userId, pageSize]);
 
-    /**
-     * Refetch sessions (useful after delete/update)
-     */
-    const refetch = () => {
-        fetchSessions();
-    };
+    const loadMore = useCallback(async () => {
+        if (!userId || !hasMore || isLoadingMore) return;
+        setIsLoadingMore(true);
+        try {
+            const page = await getSessionsPageRef.current(userId, pageSize, cursorRef.current);
+            setSessions(prev => [...prev, ...page.sessions]);
+            setHasMore(page.hasMore);
+            cursorRef.current = page.nextCursor;
+        } catch (err) {
+            console.error('[useSessionList] Error loading more sessions:', err);
+            setError(err instanceof Error ? err.message : 'Error al cargar más sesiones');
+        } finally {
+            setIsLoadingMore(false);
+        }
+    }, [userId, hasMore, isLoadingMore, pageSize]);
 
-    /**
-     * Update filters and refetch
-     */
-    const updateFilters = (newFilters: SessionFilters) => {
-        setFilters(newFilters);
-    };
-
-    // Initial fetch and refetch on filter changes
+    // Initial load (resets pagination) on mount / user change.
     useEffect(() => {
-        fetchSessions();
-    }, [userId, filters]);
+        loadFirstPage();
+    }, [loadFirstPage]);
 
     return {
         sessions,
         isLoading,
+        isLoadingMore,
+        hasMore,
         error,
-        filters,
-        updateFilters,
-        refetch
+        loadMore,
+        /** Reloads from the first page (used after delete / cleanup). */
+        refetch: loadFirstPage,
     };
 };

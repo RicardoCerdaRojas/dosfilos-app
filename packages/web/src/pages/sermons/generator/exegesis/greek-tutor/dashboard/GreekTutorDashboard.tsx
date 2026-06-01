@@ -10,7 +10,7 @@ import { SessionFilters, ProgressFilter, SortBy } from './components/SessionFilt
 import { CleanupButton } from './components/CleanupButton';
 import { EmptyState } from './components/EmptyState';
 import { useSessionList } from './hooks/useSessionList';
-import { GetUserSessionsUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/GetUserSessionsUseCase';
+import { GetUserSessionsPageUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/GetUserSessionsPageUseCase';
 import { DeleteSessionUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/DeleteSessionUseCase';
 import { calculateSessionProgress, getSessionLastActivity } from './utils/sessionUtils';
 import { useTranslation } from '@/i18n';
@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 
 interface GreekTutorDashboardProps {
     userId: string;
-    getUserSessionsUseCase: GetUserSessionsUseCase;
+    getUserSessionsPageUseCase: GetUserSessionsPageUseCase;
     deleteSessionUseCase: DeleteSessionUseCase;
     /** Optional `passage` is forwarded as `?passage=` deep-link so
      *  the IntroView pre-fills the selector instead of starting a
@@ -35,7 +35,7 @@ interface GreekTutorDashboardProps {
  */
 export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
     userId,
-    getUserSessionsUseCase,
+    getUserSessionsPageUseCase,
     deleteSessionUseCase,
     onCreateNew
 }) => {
@@ -49,10 +49,10 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
     const [progressFilter, setProgressFilter] = useState<ProgressFilter>('all');
     const [sortBy, setSortBy] = useState<SortBy>('date-desc');
 
-    // Fetch sessions
-    const { sessions, isLoading, error, refetch } = useSessionList({
+    // Fetch sessions (paginated — createdAt DESC, one page at a time)
+    const { sessions, isLoading, isLoadingMore, hasMore, error, loadMore, refetch } = useSessionList({
         userId,
-        getUserSessions: (userId, filters) => getUserSessionsUseCase.execute(userId, filters)
+        getSessionsPage: (uid, pageSize, cursor) => getUserSessionsPageUseCase.execute(uid, pageSize, cursor),
     });
 
     /**
@@ -313,6 +313,20 @@ export const GreekTutorDashboard: React.FC<GreekTutorDashboardProps> = ({
                             />
                         ))}
                     </div>
+                    {hasMore && (
+                        <div className="flex justify-center pt-2">
+                            <Button variant="outline" onClick={loadMore} disabled={isLoadingMore}>
+                                {isLoadingMore ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        {t('dashboard.loadingMore')}
+                                    </>
+                                ) : (
+                                    t('dashboard.loadMore')
+                                )}
+                            </Button>
+                        </div>
+                    )}
                 </>
             )}
 

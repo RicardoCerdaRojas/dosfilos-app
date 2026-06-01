@@ -21,6 +21,7 @@ import { IdentifyPassageWordUseCase } from '@dosfilos/application/src/greek-tuto
 import { AddPassageWordToUnitsUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/AddPassageWordToUnitsUseCase';
 // Phase 4A: Dashboard use cases
 import { GetUserSessionsUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/GetUserSessionsUseCase';
+import { GetUserSessionsPageUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/GetUserSessionsPageUseCase';
 import { DeleteSessionUseCase } from '@dosfilos/application/src/greek-tutor/use-cases/DeleteSessionUseCase';
 import { GeminiGreekTutorService, FirestoreGreekSessionRepository } from '@dosfilos/infrastructure';
 import { IBibleVersionRepository } from '@dosfilos/domain';
@@ -50,6 +51,7 @@ interface GreekTutorContextType {
     analyzePassageSyntax: AnalyzePassageSyntaxUseCase;
     // Phase 4A: Dashboard use cases
     getUserSessions: GetUserSessionsUseCase;
+    getUserSessionsPage: GetUserSessionsPageUseCase;
     deleteSession: DeleteSessionUseCase;
     sessionRepository: FirestoreGreekSessionRepository; // Exposed for QuizSection
 }
@@ -148,6 +150,7 @@ export const GreekTutorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     
     // Phase 4A: Dashboard use cases
     const getUserSessions = useMemo(() => new GetUserSessionsUseCase(sessionRepository), []);
+    const getUserSessionsPage = useMemo(() => new GetUserSessionsPageUseCase(sessionRepository), []);
     const deleteSessionUse = useMemo(() => new DeleteSessionUseCase(sessionRepository), []);
 
     return (
@@ -167,6 +170,7 @@ export const GreekTutorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             addPassageWordToUnits,
             analyzePassageSyntax,
             getUserSessions,
+            getUserSessionsPage,
             deleteSession: deleteSessionUse,
             sessionRepository
         }}>

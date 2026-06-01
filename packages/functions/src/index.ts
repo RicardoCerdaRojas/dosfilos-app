@@ -13,6 +13,7 @@ export { alertLlamaParseUsage } from './library/alertLlamaParseUsage';
 export { indexStructuredDocument } from './library/indexStructuredDocument';
 export { autoIndexOnExtractionReady } from './library/autoIndexOnExtractionReady';
 export { incrementUsage } from './usage/incrementUsage';
+export { getGreekDashboardSessions } from './greek-tutor/getGreekDashboardSessions';
 export { retrieveChunks } from './library/retrieveChunks';
 export { auditIndexing } from './library/auditIndexing';
 export { createCoreLibraryStore } from './library/createCoreLibraryStore';

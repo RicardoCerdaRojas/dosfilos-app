@@ -11,7 +11,7 @@ import { UpgradeRequiredModal } from '@/components/upgrade';
  * and handles navigation to create new sessions
  */
 export const GreekTutorDashboardView: React.FC = () => {
-    const { getUserSessions, deleteSession } = useGreekTutor();
+    const { getUserSessionsPage, deleteSession } = useGreekTutor();
     const { user } = useFirebase();
     const navigate = useNavigate();
     const { checkCanStartGreekSession } = useUsageLimits();
@@ -56,7 +56,7 @@ export const GreekTutorDashboardView: React.FC = () => {
         <div className="container mx-auto py-8 px-4">
             <GreekTutorDashboard
                 userId={user.uid}
-                getUserSessionsUseCase={getUserSessions}
+                getUserSessionsPageUseCase={getUserSessionsPage}
                 deleteSessionUseCase={deleteSession}
                 onCreateNew={handleCreateNew}
             />

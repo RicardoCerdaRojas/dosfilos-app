@@ -63,7 +63,14 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     const quizAccuracy = session.sessionProgress?.quizAccuracy;
     const difficultWordsCount = countDifficultWords(session);
 
-    const greekPreview = session.units.slice(0, 3).map(u => u.greekForm.text).join(' · ');
+    // Defensive: legacy / partially-written sessions can hold a unit without a
+    // `greekForm` (the type says it's required, but persisted data predates
+    // that guarantee). Skip those instead of crashing the whole dashboard.
+    const greekPreview = session.units
+        .slice(0, 3)
+        .map(u => u.greekForm?.text)
+        .filter(Boolean)
+        .join(' · ');
     const nextUnit = findNextUnit(session.units);
 
     return (
@@ -156,7 +163,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
 
             {/* Footer: next-word hint + compact CTA aligned right (no full-width button) */}
             <div className="mt-4 flex items-center justify-between gap-3">
-                {nextUnit && session.status === 'ACTIVE' ? (
+                {nextUnit?.greekForm?.text && session.status === 'ACTIVE' ? (
                     <p className="text-xs text-muted-foreground truncate">
                         {t('dashboard.sessionCard.nextWord')}{' '}
                         <span className="font-serif text-primary">{nextUnit.greekForm.text}</span>
