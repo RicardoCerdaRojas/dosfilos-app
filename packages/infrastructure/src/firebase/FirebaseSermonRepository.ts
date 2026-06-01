@@ -145,7 +145,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
         });
         const ms = (v: any): Date | undefined => (typeof v === 'number' ? new Date(v) : undefined);
         return (res.data.sermons ?? []).map((s: any) =>
-            SermonEntity.create({
+            SermonEntity.createSummary({
                 id: s.id,
                 userId: s.userId,
                 title: s.title ?? '',
