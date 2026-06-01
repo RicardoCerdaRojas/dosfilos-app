@@ -161,6 +161,40 @@
             "error": "Error loading bible text."
         }
     },
+    "fidelityReview": {
+        "title": "Fidelity review",
+        "run": "Review fidelity",
+        "rerun": "Review again",
+        "running": "Reviewing…",
+        "toastDone": "Fidelity review complete.",
+        "toastError": "We couldn't complete the review. Try again.",
+        "empty": "The review hasn't run for this sermon yet. It evaluates, marker by marker, whether the cited source supports the preceding sentence.",
+        "noMarkers": "This sermon has no citation markers to review.",
+        "attention": "Needs your attention",
+        "supported": "Supported",
+        "markersEvaluated": "{{count}} markers evaluated",
+        "ratios": "{{unrelated}}% unsupported · {{partial}}% partial",
+        "lastReview": "Last review: {{date}}",
+        "model": "Model: {{model}}",
+        "expand": "Expand detail",
+        "collapse": "Collapse detail",
+        "jumpToMarker": "Jump to marker {{marker}} in the sermon",
+        "stale": "(stale)",
+        "reasoning": "Reasoning",
+        "citedExcerpt": "Cited excerpt",
+        "modelLine": "Model: {{model}} · {{date}}",
+        "banner": {
+            "pass": "The citations support the draft's claims.",
+            "soft": "Some citations only partly support the claim. Review the flagged markers before publishing.",
+            "hard": "Too many markers are unsupported or contradict their source. Fix the citations before publishing."
+        },
+        "verdict": {
+            "supports": "Supports",
+            "partial": "Partial",
+            "unrelated": "Unsupported",
+            "contradicts": "Contradicts"
+        }
+    },
     "fidelityGate": {
         "preparing": "Checking fidelity…",
         "softTitle": "Review before publishing",

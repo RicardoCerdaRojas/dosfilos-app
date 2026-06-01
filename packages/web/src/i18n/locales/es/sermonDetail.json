@@ -162,6 +162,40 @@
             "error": "Error al cargar el texto bíblico."
         }
     },
+    "fidelityReview": {
+        "title": "Revisión de fidelidad",
+        "run": "Revisar fidelidad",
+        "rerun": "Volver a revisar",
+        "running": "Revisando…",
+        "toastDone": "Revisión de fidelidad completada.",
+        "toastError": "No pudimos completar la revisión. Intenta de nuevo.",
+        "empty": "Aún no se ha corrido la revisión para este sermón. La revisión evalúa, marcador por marcador, si la fuente citada respalda la oración previa.",
+        "noMarkers": "Este sermón no tiene marcadores de cita para revisar.",
+        "attention": "Requiere tu atención",
+        "supported": "Respaldadas",
+        "markersEvaluated": "{{count}} marcadores evaluados",
+        "ratios": "{{unrelated}}% sin respaldo · {{partial}}% parcial",
+        "lastReview": "Última revisión: {{date}}",
+        "model": "Modelo: {{model}}",
+        "expand": "Expandir detalle",
+        "collapse": "Contraer detalle",
+        "jumpToMarker": "Saltar al marcador {{marker}} en el sermón",
+        "stale": "(obsoleto)",
+        "reasoning": "Razonamiento",
+        "citedExcerpt": "Extracto citado",
+        "modelLine": "Modelo: {{model}} · {{date}}",
+        "banner": {
+            "pass": "Las citas respaldan los reclamos del borrador.",
+            "soft": "Algunas citas respaldan parcialmente el reclamo. Revisa los marcadores marcados antes de publicar.",
+            "hard": "Demasiados marcadores sin respaldo o que contradicen su fuente. Corrige las citas antes de publicar."
+        },
+        "verdict": {
+            "supports": "Respalda",
+            "partial": "Parcial",
+            "unrelated": "No respalda",
+            "contradicts": "Contradice"
+        }
+    },
     "fidelityGate": {
         "preparing": "Revisando fidelidad…",
         "softTitle": "Revisa antes de publicar",
