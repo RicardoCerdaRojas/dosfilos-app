@@ -179,6 +179,22 @@
             "counter": "{{count}}/{{min}}",
             "remaining": "Faltan {{remaining}} caracteres para poder continuar."
         },
+        "plurality": {
+            "title": "Pluralidad bíblica",
+            "description": "Estas afirmaciones doctrinales se apoyan en un solo pasaje. Un reclamo de peso debería sostenerse en al menos dos testigos bíblicos.",
+            "groundedOn": "Apoyada en:",
+            "noPassage": "No cita ningún pasaje bíblico.",
+            "addParallel": "Añadir paralelo canónico",
+            "hideParallel": "Ocultar paralelos",
+            "loadingParallels": "Buscando paralelos…",
+            "noParallels": "No encontramos paralelos para {{passage}}.",
+            "parallelsHint": "Paralelos sugeridos para {{passage}}:",
+            "level": {
+                "core": "Doctrina central",
+                "distinctive": "Doctrina distintiva",
+                "open-evangelical": "Asunto abierto"
+            }
+        },
         "toast": {
             "published": "Sermón publicado.",
             "error": "No pudimos publicar el sermón. Intenta de nuevo.",

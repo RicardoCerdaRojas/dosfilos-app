@@ -9,6 +9,7 @@ import {
     buildFidelitySonnetEscalationPrompt,
     type FidelityClaimInput,
 } from './fidelityEvaluatorPrompt';
+import { buildSubstantiveClaimDetectorPrompt } from './substantiveClaimDetectorPrompt';
 
 /**
  * Pastoral Fidelity — Phase 3 PR 1 callable.
@@ -61,6 +62,21 @@ interface RawSermonContent {
     citationManifest?: { entries?: RawCitationManifestEntry[] };
 }
 
+/** PR 3 — one tagged substantive doctrinal claim + its biblical passages. */
+interface PassageRefPayload {
+    book: string;
+    chapter: number;
+    verseStart?: number;
+    verseEnd?: number;
+    label: string;
+}
+
+interface SubstantiveClaimPayload {
+    claimText: string;
+    detectedLevel: 'core' | 'distinctive' | 'open-evangelical';
+    biblicalSources: PassageRefPayload[];
+}
+
 interface VerdictPayload {
     marker: number;
     claim: string;
@@ -88,6 +104,8 @@ interface EvaluateResult {
     verdicts: VerdictPayload[];
     /** Diagnostic: how many markers were dropped because the prose held no claim. */
     skippedMarkers: number;
+    /** PR 3 (Q4) — substantive doctrinal claims + their biblical grounding. */
+    substantiveClaims: SubstantiveClaimPayload[];
 }
 
 export const evaluateClaimSourceFidelity = onCall(
@@ -121,13 +139,21 @@ export const evaluateClaimSourceFidelity = onCall(
         if (!sermonSnap.exists) {
             throw new HttpsError('not-found', `Sermon ${sermonId} not found`);
         }
-        const sermonData = sermonSnap.data() as { userId?: string; content?: RawSermonContent };
+        const sermonData = sermonSnap.data() as {
+            userId?: string;
+            content?: RawSermonContent;
+            bibleReferences?: unknown;
+        };
         if (sermonData.userId && sermonData.userId !== request.auth.uid) {
             throw new HttpsError('permission-denied', 'Caller does not own this sermon');
         }
 
         const content = sermonData.content ?? {};
+        const bibleReferences = Array.isArray(sermonData.bibleReferences)
+            ? sermonData.bibleReferences.filter((r): r is string => typeof r === 'string')
+            : [];
         const manifestEntries = content.citationManifest?.entries ?? [];
+        const prose = joinProse(content);
         const claims = extractClaims(content, manifestEntries);
 
         const flash: ILlmClient = new GeminiLlmClient(geminiKey, 'gemini-2.5-flash');
@@ -136,99 +162,20 @@ export const evaluateClaimSourceFidelity = onCall(
         const generatedAtMs = Date.now();
         const reportId = `${sermonId}-${generatedAtMs}`;
 
-        if (claims.length === 0) {
-            return {
-                reportId,
-                sermonId,
-                generatedAt: generatedAtMs,
-                modelTier: 'flash',
-                verdicts: [],
-                skippedMarkers: 0,
-            };
+        // Marker fidelity — skip the LLM entirely when the sermon has no
+        // citations, but still run the plurality tagger below.
+        let verdicts: VerdictPayload[] = [];
+        let modelTier: 'flash' | 'sonnet' | 'mixed' = 'flash';
+        if (claims.length > 0) {
+            const marker = await runMarkerFidelity(claims, flash, sonnet, locale, generatedAtMs);
+            verdicts = marker.verdicts;
+            modelTier = marker.modelTier;
         }
 
-        const { system: flashSystem, prompt: flashPrompt } = buildFidelityFlashBatchPrompt(
-            claims.map((c) => c.input),
-            { locale },
-        );
-
-        let flashVerdicts: ParsedVerdict[];
-        try {
-            const raw = await flash.generate({
-                system: flashSystem,
-                prompt: flashPrompt,
-                temperature: 0.2,
-                responseMimeType: 'application/json',
-                maxOutputTokens: 4096,
-            });
-            flashVerdicts = parseFlashVerdicts(raw, claims.map((c) => c.input.marker));
-        } catch (err) {
-            console.error('[evaluateClaimSourceFidelity] flash failed', err);
-            throw new HttpsError(
-                'internal',
-                err instanceof Error ? err.message : 'Flash evaluator failed',
-            );
-        }
-
-        // Escalate partial/contradicts in parallel via Sonnet.
-        const escalations = await Promise.all(
-            flashVerdicts.map(async (v) => {
-                if (v.verdict !== 'partial' && v.verdict !== 'contradicts') return v;
-                const claim = claims.find((c) => c.input.marker === v.marker);
-                if (!claim) return v;
-                try {
-                    const { system, prompt } = buildFidelitySonnetEscalationPrompt(
-                        claim.input,
-                        v.verdict,
-                        v.reasoning,
-                        { locale },
-                    );
-                    const raw = await sonnet.generate({
-                        system,
-                        prompt,
-                        temperature: 0.2,
-                        responseMimeType: 'application/json',
-                        maxOutputTokens: 1024,
-                    });
-                    const re = parseSonnetVerdict(raw);
-                    return {
-                        marker: v.marker,
-                        verdict: re.verdict,
-                        reasoning: re.reasoning,
-                        confidence: re.confidence,
-                        modelUsed: 'sonnet' as const,
-                    };
-                } catch (err) {
-                    console.warn('[evaluateClaimSourceFidelity] sonnet escalation failed', {
-                        marker: v.marker,
-                        error: err instanceof Error ? err.message : String(err),
-                    });
-                    // Fall back to the Flash verdict; do not block the report.
-                    return v;
-                }
-            }),
-        );
-
-        const verdicts: VerdictPayload[] = [];
-        for (const e of escalations) {
-            const claim = claims.find((c) => c.input.marker === e.marker);
-            if (!claim) continue;
-            verdicts.push({
-                marker: e.marker,
-                claim: claim.input.claim,
-                citedSource: claim.citedSource,
-                verdict: e.verdict,
-                reasoning: e.reasoning,
-                confidence: e.confidence,
-                modelUsed: e.modelUsed,
-                evaluatedAt: generatedAtMs,
-            });
-        }
-
-        const usedSonnet = verdicts.some((v) => v.modelUsed === 'sonnet');
-        const usedFlash = verdicts.some((v) => v.modelUsed === 'flash');
-        const modelTier: 'flash' | 'sonnet' | 'mixed' =
-            usedSonnet && usedFlash ? 'mixed' : usedSonnet ? 'sonnet' : 'flash';
+        // Substantive-claim detector (Q4) — second Flash call over the whole
+        // prose. Degrades to [] on failure so a tagger hiccup never blocks the
+        // marker report the pastor came for.
+        const substantiveClaims = await detectSubstantiveClaims(flash, prose, bibleReferences, locale);
 
         return {
             reportId,
@@ -236,10 +183,136 @@ export const evaluateClaimSourceFidelity = onCall(
             generatedAt: generatedAtMs,
             modelTier,
             verdicts,
-            skippedMarkers: claims.length === 0 ? 0 : Math.max(0, manifestEntries.length - claims.length),
+            skippedMarkers: Math.max(0, manifestEntries.length - claims.length),
+            substantiveClaims,
         };
     },
 );
+
+// ─────────────────────────────────────────────────────────────────────────
+// Marker fidelity pipeline (PR 1) — extracted so the handler stays readable
+// once the PR 3 tagger joins it.
+// ─────────────────────────────────────────────────────────────────────────
+
+async function runMarkerFidelity(
+    claims: ExtractedClaim[],
+    flash: ILlmClient,
+    sonnet: ILlmClient,
+    locale: 'es' | 'en',
+    generatedAtMs: number,
+): Promise<{ verdicts: VerdictPayload[]; modelTier: 'flash' | 'sonnet' | 'mixed' }> {
+    const { system: flashSystem, prompt: flashPrompt } = buildFidelityFlashBatchPrompt(
+        claims.map((c) => c.input),
+        { locale },
+    );
+
+    let flashVerdicts: ParsedVerdict[];
+    try {
+        const raw = await flash.generate({
+            system: flashSystem,
+            prompt: flashPrompt,
+            temperature: 0.2,
+            responseMimeType: 'application/json',
+            maxOutputTokens: 4096,
+        });
+        flashVerdicts = parseFlashVerdicts(raw, claims.map((c) => c.input.marker));
+    } catch (err) {
+        console.error('[evaluateClaimSourceFidelity] flash failed', err);
+        throw new HttpsError('internal', err instanceof Error ? err.message : 'Flash evaluator failed');
+    }
+
+    // Escalate partial/contradicts in parallel via Sonnet.
+    const escalations = await Promise.all(
+        flashVerdicts.map(async (v) => {
+            if (v.verdict !== 'partial' && v.verdict !== 'contradicts') return v;
+            const claim = claims.find((c) => c.input.marker === v.marker);
+            if (!claim) return v;
+            try {
+                const { system, prompt } = buildFidelitySonnetEscalationPrompt(
+                    claim.input,
+                    v.verdict,
+                    v.reasoning,
+                    { locale },
+                );
+                const raw = await sonnet.generate({
+                    system,
+                    prompt,
+                    temperature: 0.2,
+                    responseMimeType: 'application/json',
+                    maxOutputTokens: 1024,
+                });
+                const re = parseSonnetVerdict(raw);
+                return {
+                    marker: v.marker,
+                    verdict: re.verdict,
+                    reasoning: re.reasoning,
+                    confidence: re.confidence,
+                    modelUsed: 'sonnet' as const,
+                };
+            } catch (err) {
+                console.warn('[evaluateClaimSourceFidelity] sonnet escalation failed', {
+                    marker: v.marker,
+                    error: err instanceof Error ? err.message : String(err),
+                });
+                return v;
+            }
+        }),
+    );
+
+    const verdicts: VerdictPayload[] = [];
+    for (const e of escalations) {
+        const claim = claims.find((c) => c.input.marker === e.marker);
+        if (!claim) continue;
+        verdicts.push({
+            marker: e.marker,
+            claim: claim.input.claim,
+            citedSource: claim.citedSource,
+            verdict: e.verdict,
+            reasoning: e.reasoning,
+            confidence: e.confidence,
+            modelUsed: e.modelUsed,
+            evaluatedAt: generatedAtMs,
+        });
+    }
+
+    const usedSonnet = verdicts.some((v) => v.modelUsed === 'sonnet');
+    const usedFlash = verdicts.some((v) => v.modelUsed === 'flash');
+    const modelTier: 'flash' | 'sonnet' | 'mixed' =
+        usedSonnet && usedFlash ? 'mixed' : usedSonnet ? 'sonnet' : 'flash';
+
+    return { verdicts, modelTier };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Substantive-claim detector (PR 3, Q4)
+// ─────────────────────────────────────────────────────────────────────────
+
+async function detectSubstantiveClaims(
+    flash: ILlmClient,
+    prose: string,
+    bibleReferences: string[],
+    locale: 'es' | 'en',
+): Promise<SubstantiveClaimPayload[]> {
+    if (!prose.trim()) return [];
+    try {
+        const { system, prompt } = buildSubstantiveClaimDetectorPrompt({
+            prose,
+            bibleReferences,
+            locale,
+        });
+        const raw = await flash.generate({
+            system,
+            prompt,
+            temperature: 0.2,
+            responseMimeType: 'application/json',
+            maxOutputTokens: 4096,
+        });
+        return parseSubstantiveClaims(raw);
+    } catch (err) {
+        console.warn('[evaluateClaimSourceFidelity] substantive-claim detector failed', err);
+        return [];
+    }
+}
 
 // ─────────────────────────────────────────────────────────────────────────
 // Claim + manifest extraction (mirrored from domain — see ADR-025 note on
@@ -396,6 +469,48 @@ function parseSonnetVerdict(raw: string): { verdict: ParsedVerdict['verdict']; r
 function normalizeVerdict(v: unknown): ParsedVerdict['verdict'] | null {
     if (v === 'supports' || v === 'partial' || v === 'unrelated' || v === 'contradicts') return v;
     return null;
+}
+
+function normalizeLevel(v: unknown): SubstantiveClaimPayload['detectedLevel'] | null {
+    if (v === 'core' || v === 'distinctive' || v === 'open-evangelical') return v;
+    return null;
+}
+
+function parseSubstantiveClaims(raw: string): SubstantiveClaimPayload[] {
+    const json = safeParseJson(raw);
+    const arr = Array.isArray((json as { claims?: unknown }).claims)
+        ? ((json as { claims: unknown[] }).claims)
+        : [];
+    const result: SubstantiveClaimPayload[] = [];
+    for (const item of arr) {
+        if (!item || typeof item !== 'object') continue;
+        const claimText = String((item as { claimText?: unknown }).claimText ?? '').trim();
+        if (!claimText) continue;
+        const detectedLevel = normalizeLevel((item as { detectedLevel?: unknown }).detectedLevel);
+        if (!detectedLevel) continue;
+
+        const rawSources = (item as { biblicalSources?: unknown }).biblicalSources;
+        const sources = Array.isArray(rawSources) ? rawSources : [];
+        const biblicalSources: PassageRefPayload[] = [];
+        for (const s of sources) {
+            if (!s || typeof s !== 'object') continue;
+            const label = String((s as { label?: unknown }).label ?? '').trim();
+            if (!label) continue;
+            const chapterNum = Number((s as { chapter?: unknown }).chapter);
+            const ref: PassageRefPayload = {
+                label: label.slice(0, 60),
+                book: String((s as { book?: unknown }).book ?? '').trim(),
+                chapter: Number.isFinite(chapterNum) ? chapterNum : 0,
+            };
+            const vs = Number((s as { verseStart?: unknown }).verseStart);
+            if (Number.isFinite(vs)) ref.verseStart = vs;
+            const ve = Number((s as { verseEnd?: unknown }).verseEnd);
+            if (Number.isFinite(ve)) ref.verseEnd = ve;
+            biblicalSources.push(ref);
+        }
+        result.push({ claimText: claimText.slice(0, 500), detectedLevel, biblicalSources });
+    }
+    return result;
 }
 
 function clampConfidence(n: number): number {

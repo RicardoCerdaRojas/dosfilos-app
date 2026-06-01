@@ -178,6 +178,22 @@
             "counter": "{{count}}/{{min}}",
             "remaining": "{{remaining}} more characters needed to continue."
         },
+        "plurality": {
+            "title": "Biblical plurality",
+            "description": "These doctrinal claims rest on a single passage. A weight-bearing claim should stand on at least two biblical witnesses.",
+            "groundedOn": "Grounded on:",
+            "noPassage": "No biblical passage is cited.",
+            "addParallel": "Add canonical parallel",
+            "hideParallel": "Hide parallels",
+            "loadingParallels": "Looking up parallels…",
+            "noParallels": "No parallels found for {{passage}}.",
+            "parallelsHint": "Suggested parallels for {{passage}}:",
+            "level": {
+                "core": "Core doctrine",
+                "distinctive": "Distinctive doctrine",
+                "open-evangelical": "Open question"
+            }
+        },
         "toast": {
             "published": "Sermon published.",
             "error": "We couldn't publish the sermon. Try again.",

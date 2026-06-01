@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, AlertTriangle, ShieldAlert, RefreshCw, Loader2 } from 'lucide-react';
-import type { FidelityReport } from '@dosfilos/domain';
+import { ShieldCheck, AlertTriangle, ShieldAlert, RefreshCw, Loader2, Layers } from 'lucide-react';
+import type { FidelityReport, SubstantiveClaim } from '@dosfilos/domain';
 import { useFidelityPassGate } from '@/hooks/usePastoralFidelityGate';
 import { useRunFidelityPass } from '@/hooks/useRunFidelityPass';
 import { FidelityVerdictRow } from './FidelityVerdictRow';
+import { PluralityFailureRow } from './PluralityFailureRow';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -92,54 +94,86 @@ export function FidelityReviewPanel({ sermonId, report, onReportUpdated, onJumpT
                     Aún no se ha corrido la revisión para este sermón. La revisión evalúa, marcador por marcador,
                     si la fuente citada respalda la oración previa.
                 </p>
-            ) : summary && summary.totalMarkers === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                    Este sermón no tiene marcadores de cita para revisar.
-                </p>
             ) : (
                 <>
-                    <GateBanner gateStatus={report.gateStatus} />
-                    {summary && <SummaryBar summary={summary} />}
-                    {groupedVerdicts && (
-                        <div className="mt-4 space-y-3">
-                            {groupedVerdicts.attention.length > 0 && (
-                                <section>
-                                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                        Requiere tu atención
-                                    </h4>
-                                    <div className="space-y-2">
-                                        {groupedVerdicts.attention.map((v) => (
-                                            <FidelityVerdictRow
-                                                key={`${v.marker}-${v.evaluatedAt instanceof Date ? v.evaluatedAt.getTime() : 0}`}
-                                                verdict={v}
-                                                onJumpToMarker={onJumpToMarker}
-                                            />
-                                        ))}
-                                    </div>
-                                </section>
+                    {summary && summary.totalMarkers > 0 && (
+                        <>
+                            <GateBanner gateStatus={report.gateStatus} />
+                            <SummaryBar summary={summary} />
+                            {groupedVerdicts && (
+                                <div className="mt-4 space-y-3">
+                                    {groupedVerdicts.attention.length > 0 && (
+                                        <section>
+                                            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                Requiere tu atención
+                                            </h4>
+                                            <div className="space-y-2">
+                                                {groupedVerdicts.attention.map((v) => (
+                                                    <FidelityVerdictRow
+                                                        key={`${v.marker}-${v.evaluatedAt instanceof Date ? v.evaluatedAt.getTime() : 0}`}
+                                                        verdict={v}
+                                                        onJumpToMarker={onJumpToMarker}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </section>
+                                    )}
+                                    {groupedVerdicts.supports.length > 0 && (
+                                        <section>
+                                            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                Respaldadas
+                                            </h4>
+                                            <div className="space-y-2">
+                                                {groupedVerdicts.supports.map((v) => (
+                                                    <FidelityVerdictRow
+                                                        key={`${v.marker}-${v.evaluatedAt instanceof Date ? v.evaluatedAt.getTime() : 0}`}
+                                                        verdict={v}
+                                                        onJumpToMarker={onJumpToMarker}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </section>
+                                    )}
+                                </div>
                             )}
-                            {groupedVerdicts.supports.length > 0 && (
-                                <section>
-                                    <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                        Respaldadas
-                                    </h4>
-                                    <div className="space-y-2">
-                                        {groupedVerdicts.supports.map((v) => (
-                                            <FidelityVerdictRow
-                                                key={`${v.marker}-${v.evaluatedAt instanceof Date ? v.evaluatedAt.getTime() : 0}`}
-                                                verdict={v}
-                                                onJumpToMarker={onJumpToMarker}
-                                            />
-                                        ))}
-                                    </div>
-                                </section>
-                            )}
-                        </div>
+                        </>
                     )}
+
+                    <PluralitySection failures={report.pluralityReport?.failures ?? []} />
+
+                    {summary
+                        && summary.totalMarkers === 0
+                        && (report.pluralityReport?.failures.length ?? 0) === 0 && (
+                        <p className="text-sm text-muted-foreground">
+                            Este sermón no tiene marcadores de cita para revisar.
+                        </p>
+                    )}
+
                     <FooterNote report={report} />
                 </>
             )}
         </Card>
+    );
+}
+
+function PluralitySection({ failures }: { failures: SubstantiveClaim[] }) {
+    const { t } = useTranslation('sermonDetail');
+    if (failures.length === 0) return null;
+    return (
+        <section className="mt-4">
+            <h4 className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Layers className="h-3.5 w-3.5" />
+                {t('fidelityGate.plurality.title')}
+            </h4>
+            <p className="mb-2 text-xs text-muted-foreground">
+                {t('fidelityGate.plurality.description')}
+            </p>
+            <div className="space-y-2">
+                {failures.map((claim, i) => (
+                    <PluralityFailureRow key={`${i}-${claim.claimText.slice(0, 24)}`} claim={claim} />
+                ))}
+            </div>
+        </section>
     );
 }
 

@@ -1,4 +1,4 @@
-import type { FidelityVerdict } from '../entities/FidelityReport';
+import type { FidelityVerdict, SubstantiveClaim } from '../entities/FidelityReport';
 
 /**
  * Pastoral Fidelity — Phase 3 PR 1 (ADR-029) port for the second-pass
@@ -37,6 +37,13 @@ export interface FidelityEvaluationResult {
      * the report is not silently incomplete.
      */
     skippedMarkers: number;
+    /**
+     * Substantive doctrinal claims the tagger surfaced (ADR-029 §Q4), with
+     * the distinct biblical passages each rests on. Consumed by
+     * `computePluralityCheck` to build the plurality sub-report. Absent on
+     * evaluators that don't run the tagger (older stubs) — treat as `[]`.
+     */
+    substantiveClaims?: SubstantiveClaim[];
 }
 
 export interface IFidelityEvaluator {

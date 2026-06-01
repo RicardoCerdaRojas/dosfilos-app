@@ -1,6 +1,7 @@
 import {
     FIDELITY_REPORT_VERSION,
     computeFidelitySummary,
+    computePluralityCheck,
     type FidelityReport,
     type IFidelityEvaluator,
     type ISermonRepository,
@@ -38,8 +39,14 @@ export class RunFidelityPassUseCase {
             locale: input.locale,
         });
 
+        // Plurality (PR 3, Q4) — the no-proof-texting check. Feeds the gate
+        // as a soft-block when any substantive core/distinctive claim leans on
+        // a single biblical passage.
+        const pluralityReport = computePluralityCheck(evaluation.substantiveClaims ?? []);
+
         const { summary, gateStatus } = computeFidelitySummary({
             verdicts: evaluation.verdicts,
+            pluralityHasFailures: pluralityReport.failures.length > 0,
         });
 
         const report: FidelityReport = {
@@ -51,6 +58,7 @@ export class RunFidelityPassUseCase {
             verdicts: evaluation.verdicts,
             summary,
             gateStatus,
+            pluralityReport,
         };
 
         await this.sermonRepository.updateFidelityReport(input.sermonId, report);
