@@ -1,5 +1,6 @@
 export { CreateExegeticalPaperUseCase } from './CreateExegeticalPaperUseCase';
 export { ListExegeticalPapersUseCase } from './ListExegeticalPapersUseCase';
+export { ListExegesisPaperSummariesUseCase } from './ListExegesisPaperSummariesUseCase';
 export { GetExegeticalPaperUseCase } from './GetExegeticalPaperUseCase';
 export { ArchiveExegeticalPaperUseCase } from './ArchiveExegeticalPaperUseCase';
 export { UpdatePaperBriefUseCase } from './UpdatePaperBriefUseCase';

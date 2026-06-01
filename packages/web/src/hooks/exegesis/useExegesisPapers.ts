@@ -47,7 +47,9 @@ export function useExegesisPapers() {
         queryKey: ['exegesis', 'papers', user?.uid],
         queryFn: async () => {
             if (!user?.uid) throw new Error('User not authenticated');
-            return exegesisService.listPapers.execute(user.uid);
+            // Trimmed summaries (no steps/assembledMarkdown/sources) — the list
+            // only needs headline fields + counts. Full paper loads on open.
+            return exegesisService.listPaperSummaries.execute(user.uid);
         },
         enabled: !!user?.uid,
     });

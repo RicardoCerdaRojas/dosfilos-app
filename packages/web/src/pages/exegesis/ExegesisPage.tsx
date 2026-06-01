@@ -14,7 +14,7 @@ import { ExegesisQuotaBadge } from '@/components/exegesis/ExegesisQuotaBadge';
 import { CreditPacksDialog } from '@/pages/library/components/CreditPacksDialog';
 import {
     formatPassageReference,
-    type ExegeticalPaper,
+    type ExegesisPaperSummary,
     type ExegeticalPaperPhase,
     type SupportedLanguage,
 } from '@dosfilos/domain';
@@ -490,7 +490,7 @@ function PhaseChip({ active, onClick, label }: { active: boolean; onClick: () =>
 // ── Card ────────────────────────────────────────────────────────────────
 
 interface PaperCardProps {
-    paper: ExegeticalPaper;
+    paper: ExegesisPaperSummary;
     language: SupportedLanguage;
     t: (key: string) => string;
     /**
@@ -538,11 +538,11 @@ function PaperCard({ paper, language, t, seriesLink }: PaperCardProps) {
     // Step progress — accepted vs total. Tells the user at a glance
     // whether this paper is sitting at setup (no steps), mid-write
     // (X/Y), or fully accepted (Y/Y). Matches what the detail page shows.
-    const totalSteps = paper.steps.length;
-    const acceptedSteps = paper.steps.filter(s => s.accepted !== null).length;
+    const totalSteps = paper.stepCount;
+    const acceptedSteps = paper.acceptedStepCount;
     const showStepProgress = totalSteps > 0;
 
-    const sourceCount = paper.sources.length;
+    const sourceCount = paper.sourceCount;
 
     const handleSeriesClick = (e: React.MouseEvent) => {
         // Stop the parent button's onClick (which navigates to the
@@ -670,9 +670,9 @@ function PaperListRow({ paper, language, t, seriesLink }: PaperCardProps) {
     const hasCustomTitle = !!paper.title && paper.title.trim().length > 0
         && paper.title.trim() !== formattedPassage;
     const headline = hasCustomTitle ? paper.title!.trim() : formattedPassage;
-    const totalSteps = paper.steps.length;
-    const acceptedSteps = paper.steps.filter(s => s.accepted !== null).length;
-    const sourceCount = paper.sources.length;
+    const totalSteps = paper.stepCount;
+    const acceptedSteps = paper.acceptedStepCount;
+    const sourceCount = paper.sourceCount;
 
     return (
         <li>
