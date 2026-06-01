@@ -14,6 +14,7 @@ import {
     serverTimestamp,
     Timestamp,
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ISermonRepository, FindOptions } from '@dosfilos/domain';
 import { SermonEntity } from '@dosfilos/domain';
 import type { FidelityReport, FidelityVerdict, GateOverride } from '@dosfilos/domain';
@@ -119,6 +120,62 @@ export class FirebaseSermonRepository implements ISermonRepository {
         const snapshot = await getDocs(q);
 
         return snapshot.docs.map((doc) => this.firestoreToSermon(doc.id, doc.data()));
+    }
+
+    /**
+     * Trimmed list read — delegates to the `getSermonsListSummary` callable,
+     * which mirrors this query server-side and strips the heavy fields
+     * (`content`, wizard draft/outline, citationManifest, fidelityReport,
+     * studyDepthSnapshot). Builds SermonEntity instances from the light payload
+     * so the dashboard's property reads keep working; the full sermon loads via
+     * `findById` when one is opened.
+     */
+    async findSummariesByUserId(userId: string, options?: FindOptions): Promise<SermonEntity[]> {
+        const callable = httpsCallable<FindOptions, { sermons: any[] }>(
+            getFunctions(),
+            'getSermonsListSummary',
+        );
+        const res = await callable({
+            status: options?.status,
+            category: options?.category,
+            tags: options?.tags,
+            orderBy: options?.orderBy,
+            order: options?.order,
+            limit: options?.limit,
+        });
+        const ms = (v: any): Date | undefined => (typeof v === 'number' ? new Date(v) : undefined);
+        return (res.data.sermons ?? []).map((s: any) =>
+            SermonEntity.create({
+                id: s.id,
+                userId: s.userId,
+                title: s.title ?? '',
+                content: '', // omitted in the summary; full content loads on open
+                bibleReferences: Array.isArray(s.bibleReferences) ? s.bibleReferences : [],
+                tags: Array.isArray(s.tags) ? s.tags : [],
+                category: s.category,
+                status: s.status,
+                createdAt: ms(s.createdAt) ?? new Date(),
+                updatedAt: ms(s.updatedAt) ?? new Date(),
+                publishedAt: ms(s.publishedAt),
+                shareToken: s.shareToken,
+                isShared: s.isShared,
+                authorName: s.authorName,
+                seriesId: s.seriesId,
+                scheduledDate: ms(s.scheduledDate),
+                preachingHistory: [],
+                wizardProgress: s.wizardProgress
+                    ? {
+                          currentStep: s.wizardProgress.currentStep ?? 0,
+                          passage: s.wizardProgress.passage ?? '',
+                          lastSaved: ms(s.wizardProgress.lastSaved) ?? new Date(),
+                      }
+                    : undefined,
+                sourceSermonId: s.sourceSermonId,
+                sourceFacultySessionId: s.sourceFacultySessionId ?? undefined,
+                projectId: s.projectId ?? undefined,
+                sourcePaperId: s.sourcePaperId ?? undefined,
+            }),
+        );
     }
 
     async findAll(options?: FindOptions): Promise<SermonEntity[]> {
