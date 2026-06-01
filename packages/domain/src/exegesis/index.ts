@@ -5,6 +5,7 @@
 // internal folder structure.
 
 export * from './entities/ExegeticalPaper';
+export * from './entities/ExegesisPaperSummary';
 export * from './entities/ExegeticalStep';
 export * from './entities/exportPaperToMarkdown';
 export * from './entities/PaperRubric';

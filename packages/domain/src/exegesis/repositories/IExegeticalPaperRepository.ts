@@ -3,6 +3,7 @@ import type {
     ExegeticalPaperDraft,
     ExegeticalPaperPhase,
 } from '../entities/ExegeticalPaper';
+import type { ExegesisPaperSummary } from '../entities/ExegesisPaperSummary';
 import type {
     ExegeticalStep,
     ExegeticalStepState,
@@ -35,6 +36,15 @@ export interface IExegeticalPaperRepository {
 
     /** All papers owned by the user, ordered by `updatedAt` desc. Excludes archived. */
     listPapers(ownerId: string): Promise<ExegeticalPaper[]>;
+
+    /**
+     * Lightweight list projection for the dashboard — returns
+     * `ExegesisPaperSummary` (headline fields + counts) WITHOUT the heavy
+     * `steps`/`assembledMarkdown`/`sources`. Includes archived (the list
+     * filters client-side). Reads server-side so full papers don't cross the
+     * wire just to draw the list.
+     */
+    listPaperSummaries(ownerId: string): Promise<ExegesisPaperSummary[]>;
 
     /** Includes archived papers. Used by the "Trash" view. */
     listAllPapers(ownerId: string): Promise<ExegeticalPaper[]>;

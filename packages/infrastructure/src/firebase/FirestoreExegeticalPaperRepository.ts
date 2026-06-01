@@ -11,6 +11,7 @@ import {
     runTransaction,
     type DocumentData,
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../config/firebase';
 import type {
     ExegeticalPaper,
@@ -20,6 +21,7 @@ import type {
     ExegeticalStepKind,
     ExegeticalStepState,
     ExegeticalStepVersion,
+    ExegesisPaperSummary,
     IExegeticalPaperRepository,
     PaperRubric,
     ProjectSource,
@@ -90,6 +92,37 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         const snap = await getDocs(q);
         return snap.docs
             .map(d => deserialize(d.id, d.data()))
+            .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    }
+
+    /**
+     * Trimmed list read — delegates to the `getExegesisPapersSummary` callable,
+     * which reads server-side and drops the heavy `steps`/`assembledMarkdown`/
+     * `sources` (computing the counts the list shows). Sorted by `updatedAt`
+     * desc client-side, matching `listPapers`. Includes archived (the list
+     * filters them).
+     */
+    async listPaperSummaries(ownerId: string): Promise<ExegesisPaperSummary[]> {
+        const callable = httpsCallable<Record<string, never>, { papers: any[] }>(
+            getFunctions(),
+            'getExegesisPapersSummary',
+        );
+        const res = await callable({});
+        return (res.data.papers ?? [])
+            .map((p: any): ExegesisPaperSummary => ({
+                id: p.id,
+                title: p.title,
+                passage: p.passage,
+                displayLanguage: p.displayLanguage === 'en' ? 'en' : 'es',
+                phase: p.phase,
+                archivedAt: typeof p.archivedAt === 'number' ? new Date(p.archivedAt) : null,
+                createdAt: new Date(p.createdAt),
+                updatedAt: new Date(p.updatedAt),
+                assignmentBrief: typeof p.assignmentBrief === 'string' ? p.assignmentBrief : null,
+                stepCount: p.stepCount ?? 0,
+                acceptedStepCount: p.acceptedStepCount ?? 0,
+                sourceCount: p.sourceCount ?? 0,
+            }))
             .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
     }
 

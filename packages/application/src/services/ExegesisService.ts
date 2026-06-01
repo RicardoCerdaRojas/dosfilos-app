@@ -43,6 +43,7 @@ import { LibraryService } from './LibraryService';
 import {
     CreateExegeticalPaperUseCase,
     ListExegeticalPapersUseCase,
+    ListExegesisPaperSummariesUseCase,
     GetExegeticalPaperUseCase,
     ArchiveExegeticalPaperUseCase,
     UpdatePaperBriefUseCase,
@@ -120,6 +121,7 @@ class ExegesisService {
     // Papers
     public createPaper: CreateExegeticalPaperUseCase;
     public listPapers: ListExegeticalPapersUseCase;
+    public listPaperSummaries: ListExegesisPaperSummariesUseCase;
     public getPaper: GetExegeticalPaperUseCase;
     public archivePaper: ArchiveExegeticalPaperUseCase;
     public updatePaperBrief: UpdatePaperBriefUseCase;
@@ -275,6 +277,7 @@ class ExegesisService {
         // Papers
         this.createPaper = new CreateExegeticalPaperUseCase(paperRepository, userRubricRepository);
         this.listPapers = new ListExegeticalPapersUseCase(paperRepository);
+        this.listPaperSummaries = new ListExegesisPaperSummariesUseCase(paperRepository);
         this.getPaper = new GetExegeticalPaperUseCase(paperRepository);
         this.archivePaper = new ArchiveExegeticalPaperUseCase(paperRepository);
         this.updatePaperBrief = new UpdatePaperBriefUseCase(paperRepository);
