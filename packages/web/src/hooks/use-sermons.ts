@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { SermonEntity, FindOptions } from '@dosfilos/domain';
+import { SermonEntity, FindOptions, type PublishOverrideInput } from '@dosfilos/domain';
 import { sermonService, facultyService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
@@ -165,15 +165,14 @@ export function useDeleteSermon() {
 export function usePublishSermon() {
     const [loading, setLoading] = useState(false);
 
-    const publishSermon = async (id: string) => {
+    // Toasts are owned by the caller (e.g. `useSermonPublishGate`) so the
+    // fidelity gate flow can distinguish a `FidelityGateError` (open the
+    // confrontation modal) from a real failure (Phase 3 PR 2). The override
+    // is forwarded to the service, which enforces the gate + persists audit.
+    const publishSermon = async (id: string, override?: PublishOverrideInput) => {
         setLoading(true);
         try {
-            const sermon = await sermonService.publishSermon(id);
-            toast.success('Sermón publicado exitosamente');
-            return sermon;
-        } catch (err: any) {
-            toast.error(err.message);
-            throw err;
+            return await sermonService.publishSermon(id, override);
         } finally {
             setLoading(false);
         }

@@ -35,7 +35,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useSermon, useDeleteSermon, usePublishSermon, useArchiveSermon } from '@/hooks/use-sermons';
+import { useSermon, useDeleteSermon, useArchiveSermon } from '@/hooks/use-sermons';
+import { useSermonPublishGate } from '@/hooks/useSermonPublishGate';
 import { useState, useEffect } from 'react';
 import { exportService, sermonService, seriesService } from '@dosfilos/application';
 import { SermonSeriesEntity, PreachingLog } from '@dosfilos/domain';
@@ -45,6 +46,7 @@ import { SermonRepurposeSection } from '@/components/sermons/SermonRepurposeSect
 import { SermonBibliographySection } from '@/components/sermons/SermonBibliographySection';
 import { PastoralSeedAuditPanel } from '@/components/sermons/PastoralSeedAuditPanel';
 import { FidelityReviewPanel } from '@/components/sermons/FidelityReviewPanel';
+import { PrePublishFidelityModal } from '@/components/sermons/PrePublishFidelityModal';
 import { useTranslation } from 'react-i18next';
 import { ShareSermonDialog } from './components/detail/ShareSermonDialog';
 import { LogPreachingDialog } from './components/detail/LogPreachingDialog';
@@ -63,8 +65,10 @@ export function SermonDetailPage() {
 
   const { sermon, loading, mutate } = useSermon(id);
   const { deleteSermon, loading: deleting } = useDeleteSermon();
-  const { publishSermon, loading: publishing } = usePublishSermon();
   const { archiveSermon, loading: archiving } = useArchiveSermon();
+  const publishGate = useSermonPublishGate({ onPublished: () => mutate() });
+  const publishing = publishGate.preparing || publishGate.publishing;
+  const fidelityPanelRef = useRef<HTMLDivElement>(null);
 
   // Sidebar control
   const { open, setOpen, isMobile } = useSidebar();
@@ -158,9 +162,12 @@ export function SermonDetailPage() {
   };
 
   const handlePublish = async () => {
-    if (!id) return;
-    await publishSermon(id);
-    mutate();
+    if (!id || !sermon) return;
+    await publishGate.attemptPublish(id, sermon.fidelityReport);
+  };
+
+  const handleReviewMarkers = () => {
+    fidelityPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   const handleArchive = async () => {
@@ -513,11 +520,13 @@ export function SermonDetailPage() {
                 citationManifest={sermon.citationManifest}
               />
               <PastoralSeedAuditPanel sermonId={sermon.id} />
-              <FidelityReviewPanel
-                sermonId={sermon.id}
-                report={sermon.fidelityReport}
-                onReportUpdated={mutate}
-              />
+              <div ref={fidelityPanelRef}>
+                <FidelityReviewPanel
+                  sermonId={sermon.id}
+                  report={sermon.fidelityReport}
+                  onReportUpdated={mutate}
+                />
+              </div>
               <SermonBibliographySection
                 bibliography={sermon.bibliography}
                 manifest={sermon.citationManifest}
@@ -581,6 +590,15 @@ export function SermonDetailPage() {
         sermon={sermon}
         series={series}
         onAddLog={() => setShowLogDialog(true)}
+      />
+
+      <PrePublishFidelityModal
+        open={publishGate.modalOpen}
+        onOpenChange={publishGate.setModalOpen}
+        report={publishGate.report}
+        publishing={publishGate.publishing}
+        onConfirmOverride={(reason) => id && publishGate.confirmOverride(id, reason)}
+        onReviewMarkers={handleReviewMarkers}
       />
     </div>
   );
