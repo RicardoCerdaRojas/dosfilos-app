@@ -83,6 +83,21 @@ export interface CitationManifestEntry {
      * per artefact regardless of how many Greek words are cited.
      */
     requiredAttribution?: string[];
+
+    /**
+     * ShareAlike trigger for SBLGNT chunks (Phase 3 PR 5, founder decision
+     * 2026-05-30). Set to `true` only when this entry reproduces MorphGNT
+     * **morphological tagging** (part-of-speech / parsing) in the output, not
+     * just the surface Greek text. `aggregateRequiredAttributions` reads it
+     * via `hasMorphologyRendered` to decide whether the CC BY-SA 4.0 MorphGNT
+     * block must accompany the CC BY 4.0 base-text block.
+     *
+     * No current pipeline path sets it — `SBLGNTBibleProvider` discards the
+     * parsing columns — so it is absent today and the morphology block stays
+     * latent. Wired here so the export is correct the day a morphology path
+     * lands, without revisiting the licence logic.
+     */
+    morphologyRendered?: boolean;
 }
 
 export interface ExegeticalStudy {

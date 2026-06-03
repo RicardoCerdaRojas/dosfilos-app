@@ -4,40 +4,67 @@ import type { CitationManifest } from '../entities/SermonGenerator';
  * Canonical resource id used by `SBLGNTBibleProvider` for every chunk
  * derived from the SBL Greek New Testament critical text. The orchestrator
  * stamps chunks with this id so the export pipeline can attach the
- * CC BY 4.0 attribution that the license requires.
+ * required attribution that the licence demands.
  */
 export const SBLGNT_SOURCE_ID = 'sblgnt';
 
 /**
- * Mandatory attribution block for the MorphGNT distribution of SBLGNT,
- * the Greek text actually consumed by `SBLGNTBibleProvider` (downloaded
- * from `cdn.jsdelivr.net/gh/morphgnt/sblgnt`). Defined here (not in the
- * per-source seed) because the Greek text reaches the citation manifest
- * through the bible provider, not through a regular library resource —
- * so it isn't covered by the rights-snapshot resolver the orchestrator
- * passes to `buildCitationManifest`.
- *
- * Licence is CC BY-SA 4.0 per the MorphGNT LICENSE file. Sermons that
- * include Greek analysis derived from this corpus inherit the
- * ShareAlike obligation; the founder owns the policy decision on how
- * to communicate that downstream (`docs/pastoral-fidelity/decisions/`
- * has an open question on this).
- *
- * The export pipeline merges these lines into the artefact's
- * attribution footer whenever the manifest contains at least one
- * SBLGNT-derived entry.
+ * Source id used to deduplicate the MorphGNT morphology attribution block.
+ * It is a logical sub-source of SBLGNT (same upstream repo) but carries a
+ * different licence, so it gets its own id + block.
  */
-export const SBLGNT_ATTRIBUTION: AttributionBlock = {
+export const MORPHGNT_SOURCE_ID = 'morphgnt';
+
+/**
+ * Block 1 — the SBLGNT **base Greek text** (Holmes 2010).
+ *
+ * The text itself is released by the Society of Biblical Literature under
+ * CC BY 4.0. `SBLGNTBibleProvider` consumes only the surface-form column of
+ * the MorphGNT files (it discards the part-of-speech + parsing columns), so
+ * a sermon that cites SBLGNT redistributes the base text alone. That is why
+ * this block is **always** present when any SBLGNT chunk reaches the
+ * manifest.
+ *
+ * Founder decision (phase-3 bitácora 2026-05-30, "D-SBLGNT-license"):
+ * separate the base text (CC BY 4.0) from the morphological tagging
+ * (CC BY-SA 4.0) so the ShareAlike obligation only attaches when the
+ * morphology is actually reproduced downstream.
+ */
+export const SBLGNT_TEXT_ATTRIBUTION: AttributionBlock = {
     sourceId: SBLGNT_SOURCE_ID,
-    title: 'The Greek New Testament: SBL Edition (MorphGNT distribution)',
+    title: 'The Greek New Testament: SBL Edition (base text)',
     lines: [
-        'Greek text + morphology: The Greek New Testament: SBL Edition,',
-        'edited by Michael W. Holmes, with morphological tagging from MorphGNT.',
+        'Greek base text: The Greek New Testament: SBL Edition,',
+        'edited by Michael W. Holmes.',
         'Copyright © 2010 Society of Biblical Literature and Logos Bible Software.',
-        'Morphological data © MorphGNT contributors.',
-        'Source: https://github.com/morphgnt/sblgnt',
-        'Licensed under CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/).',
+        'Source: https://sblgnt.com',
+        'Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).',
         'Used with segmentation and tokenization for retrieval.',
+    ],
+};
+
+/**
+ * Block 2 — the MorphGNT **morphological tagging** of SBLGNT.
+ *
+ * MorphGNT's morphology (part-of-speech, parsing: tense, voice, mood, case,
+ * etc.) is licensed CC BY-SA 4.0. Reproducing that data downstream triggers
+ * the ShareAlike obligation, so this block is appended **only when the
+ * artefact actually renders morphological tagging** (see
+ * `hasMorphologyRendered`). Today no sermon-pipeline path emits morphology
+ * into the manifest — the provider strips those columns — so this block is
+ * latent until such a path lands; the export then stays correct without
+ * further changes.
+ */
+export const MORPHGNT_ATTRIBUTION: AttributionBlock = {
+    sourceId: MORPHGNT_SOURCE_ID,
+    title: 'MorphGNT — morphological analysis of SBLGNT',
+    lines: [
+        'Morphological tagging: MorphGNT (https://github.com/morphgnt/sblgnt),',
+        'derived from The Greek New Testament: SBL Edition.',
+        'Morphological data © MorphGNT contributors.',
+        'Licensed under CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/).',
+        'Morphological analysis reproduced in this document inherits the',
+        'ShareAlike (CC BY-SA 4.0) obligation.',
     ],
 };
 
@@ -54,18 +81,42 @@ export interface AttributionBlock {
 }
 
 /**
+ * True when the artefact redistributes MorphGNT morphological tagging, which
+ * is the trigger for the CC BY-SA 4.0 ShareAlike block (Block 2). The signal
+ * is the structural `morphologyRendered` flag on an SBLGNT manifest entry —
+ * stamped by whatever path surfaces parsing data (tense, case, …) in the
+ * output.
+ *
+ * No current sermon-pipeline path sets the flag (`SBLGNTBibleProvider` emits
+ * surface text only), so this returns `false` in practice today and only
+ * Block 1 (CC BY 4.0) renders. Keeping the check structural — rather than
+ * sniffing the prose — avoids false positives from a pastor describing Greek
+ * grammar in their own words (which carries no ShareAlike obligation).
+ */
+export function hasMorphologyRendered(manifest: CitationManifest | undefined): boolean {
+    if (!manifest || !manifest.entries) return false;
+    return manifest.entries.some(
+        (e) => e.resourceId === SBLGNT_SOURCE_ID && e.morphologyRendered === true,
+    );
+}
+
+/**
  * Computes the mandatory attribution footer for an exported artefact.
  *
  * Rules:
- *   1. Any manifest entry with `resourceId === SBLGNT_SOURCE_ID` triggers
- *      the SBLGNT attribution block (CC BY 4.0 compliance, ADR-006).
- *   2. Any manifest entry that carries `requiredAttribution` lines from
- *      its source rights metadata emits its own block.
+ *   1. Any manifest entry with `resourceId === SBLGNT_SOURCE_ID` triggers the
+ *      SBLGNT **base text** block (CC BY 4.0, ADR-006). The MorphGNT
+ *      **morphology** block (CC BY-SA 4.0) is appended right after it only
+ *      when `hasMorphologyRendered(manifest)` is true (founder decision,
+ *      phase-3 bitácora 2026-05-30).
+ *   2. Any manifest entry that carries `requiredAttribution` lines from its
+ *      source rights metadata emits its own block.
  *   3. Blocks are deduplicated by `sourceId` so a single source attributes
  *      once per artefact regardless of citation count.
  *
- * Order is stable: SBLGNT first (if present), then other sources in the
- * order they first appear in the manifest.
+ * Order is stable: SBLGNT base text first (if present), then MorphGNT
+ * morphology (if rendered), then other sources in the order they first
+ * appear in the manifest.
  */
 export function aggregateRequiredAttributions(
     manifest: CitationManifest | undefined,
@@ -77,8 +128,12 @@ export function aggregateRequiredAttributions(
 
     const hasSblgnt = manifest.entries.some((e) => e.resourceId === SBLGNT_SOURCE_ID);
     if (hasSblgnt) {
-        blocks.push(SBLGNT_ATTRIBUTION);
+        blocks.push(SBLGNT_TEXT_ATTRIBUTION);
         seen.add(SBLGNT_SOURCE_ID);
+        if (hasMorphologyRendered(manifest)) {
+            blocks.push(MORPHGNT_ATTRIBUTION);
+            seen.add(MORPHGNT_SOURCE_ID);
+        }
     }
 
     for (const entry of manifest.entries) {

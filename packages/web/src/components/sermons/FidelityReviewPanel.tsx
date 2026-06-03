@@ -2,13 +2,14 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, AlertTriangle, ShieldAlert, RefreshCw, Loader2, Layers, Scale } from 'lucide-react';
-import type { FidelityReport, SubstantiveClaim, AuthorityViolation } from '@dosfilos/domain';
+import { ShieldCheck, AlertTriangle, ShieldAlert, RefreshCw, Loader2, Layers, Scale, FileWarning } from 'lucide-react';
+import type { FidelityReport, SubstantiveClaim, AuthorityViolation, MissingAttribution } from '@dosfilos/domain';
 import { useFidelityPassGate } from '@/hooks/usePastoralFidelityGate';
 import { useRunFidelityPass } from '@/hooks/useRunFidelityPass';
 import { FidelityVerdictRow } from './FidelityVerdictRow';
 import { PluralityFailureRow } from './PluralityFailureRow';
 import { AuthorityViolationRow } from './AuthorityViolationRow';
+import { AttributionMissingRow } from './AttributionMissingRow';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -144,6 +145,8 @@ export function FidelityReviewPanel({ sermonId, report, onReportUpdated, onJumpT
 
                     <AuthoritySection violations={report.authorityReport?.authorityViolations ?? []} />
 
+                    <AttributionSection missing={report.attributionReport?.missingAttributions ?? []} />
+
                     {summary
                         && summary.totalMarkers === 0
                         && (report.pluralityReport?.failures.length ?? 0) === 0 && (
@@ -195,6 +198,27 @@ function AuthoritySection({ violations }: { violations: AuthorityViolation[] }) 
             <div className="space-y-2">
                 {violations.map((v, i) => (
                     <AuthorityViolationRow key={`${i}-${v.claim.slice(0, 24)}`} violation={v} />
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function AttributionSection({ missing }: { missing: MissingAttribution[] }) {
+    const { t } = useTranslation('sermonDetail');
+    if (missing.length === 0) return null;
+    return (
+        <section className="mt-4">
+            <h4 className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <FileWarning className="h-3.5 w-3.5" />
+                {t('fidelityGate.attribution.title')}
+            </h4>
+            <p className="mb-2 text-xs text-muted-foreground">
+                {t('fidelityGate.attribution.description')}
+            </p>
+            <div className="space-y-2">
+                {missing.map((m) => (
+                    <AttributionMissingRow key={m.sourceId} missing={m} />
                 ))}
             </div>
         </section>

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { RunFidelityPassUseCase } from '../RunFidelityPassUseCase';
 import type {
+    CitationManifest,
     FidelityEvaluationInput,
     FidelityEvaluationResult,
     FidelityVerdict,
@@ -39,18 +40,22 @@ function makeEvaluation(verdicts: FidelityVerdict[]): FidelityEvaluationResult {
     };
 }
 
-function makeMocks(evaluation: FidelityEvaluationResult) {
+function makeMocks(evaluation: FidelityEvaluationResult, citationManifest?: CitationManifest) {
     const evaluate = vi.fn<[FidelityEvaluationInput], Promise<FidelityEvaluationResult>>(
         async () => evaluation,
     );
     const evaluator: IFidelityEvaluator = { evaluate };
 
     const updateFidelityReport = vi.fn().mockResolvedValue(undefined);
+    const findById = vi.fn().mockResolvedValue(
+        citationManifest ? { id: evaluation.sermonId, citationManifest } : null,
+    );
     const sermonRepository = {
         updateFidelityReport,
+        findById,
     } as unknown as ISermonRepository;
 
-    return { evaluator, sermonRepository, evaluate, updateFidelityReport };
+    return { evaluator, sermonRepository, evaluate, updateFidelityReport, findById };
 }
 
 describe('RunFidelityPassUseCase', () => {
@@ -118,6 +123,45 @@ describe('RunFidelityPassUseCase', () => {
         await useCase.execute({ sermonId: 'sermon-7', locale: 'en' });
 
         expect(evaluate).toHaveBeenCalledWith({ sermonId: 'sermon-7', locale: 'en' });
+    });
+
+    it('attaches the attribution sub-report computed from the sermon manifest', async () => {
+        const manifest: CitationManifest = {
+            version: '1',
+            entries: [
+                {
+                    sourceId: 'S1',
+                    resourceId: 'sblgnt',
+                    chunkId: 'c-1',
+                    title: 'SBLGNT — Juan 1:1',
+                    excerpt: 'Ἐν ἀρχῇ ἦν ὁ λόγος…',
+                },
+                {
+                    sourceId: 'S2',
+                    resourceId: 'res-cc-by',
+                    chunkId: 'c-2',
+                    title: 'Comentario abierto',
+                    excerpt: '…',
+                    license: 'CC BY 4.0',
+                    // no requiredAttribution lines → flagged as missing
+                },
+            ],
+        };
+        const { evaluator, sermonRepository } = makeMocks(makeEvaluation([]), manifest);
+        const useCase = new RunFidelityPassUseCase(evaluator, sermonRepository);
+
+        const report = await useCase.execute({ sermonId: 'sermon-7' });
+
+        expect(report.attributionReport).toBeDefined();
+        // SBLGNT base-text block renders (CC BY 4.0); morphology stays latent.
+        expect(report.attributionReport?.requiredAttributions.map((b) => b.sourceId)).toEqual([
+            'sblgnt',
+        ]);
+        // The CC BY source without attribution lines is flagged.
+        expect(report.attributionReport?.ok).toBe(false);
+        expect(report.attributionReport?.missingAttributions).toEqual([
+            { sourceId: 'res-cc-by', title: 'Comentario abierto', license: 'CC BY 4.0' },
+        ]);
     });
 
     it('returns gateStatus=pass when the sermon has no markers to evaluate', async () => {

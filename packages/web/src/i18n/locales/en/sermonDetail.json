@@ -234,10 +234,20 @@
             "reformulation": "Suggested reformulation",
             "unnamedAuthority": "Cited authority"
         },
+        "attribution": {
+            "title": "Source attribution",
+            "description": "These sources require attribution under their licence, but the data to render it is missing. Review the resource in your library before publishing.",
+            "missingLabel": "Missing attribution",
+            "unknownLicense": "Licence requires attribution"
+        },
         "toast": {
             "published": "Sermon published.",
             "error": "We couldn't publish the sermon. Try again.",
             "reviewFailed": "We couldn't check fidelity. Try again."
         }
+    },
+    "attributions": {
+        "title": "Attributions",
+        "description": "License-required attributions for the sources cited in this sermon."
     }
 }

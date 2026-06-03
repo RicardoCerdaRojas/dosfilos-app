@@ -23,6 +23,7 @@
  */
 
 import type { DoctrineLevel } from './Confession';
+import type { AttributionBlock } from '../services/aggregateRequiredAttributions';
 
 /**
  * Verdict the evaluator emits for a single marker.
@@ -204,11 +205,31 @@ export interface AuthorityReport {
 }
 
 /**
- * Stub for the Attribution sub-report (PR 5). PR 5 extends with
- * `requiredAttributions` + `missingAttributions` + `ok`.
+ * A source the artefact owes attribution to (its licence requires it) but
+ * for which the citation manifest carries no `requiredAttribution` lines —
+ * a data gap from ingestion. Surfaces in the pre-publish panel so the pastor
+ * (or admin) knows the export would ship without a legally-required notice.
+ */
+export interface MissingAttribution {
+    /** Library resource id of the under-attributed source. */
+    sourceId: string;
+    /** Snapshot title for display. */
+    title: string;
+    /** Effective licence that requires the attribution (e.g. 'CC BY 4.0'). */
+    license?: string;
+}
+
+/**
+ * Attribution sub-report (PR 5, ADR-006 / ADR-029 §Q7). Derived purely from
+ * the citation manifest — no LLM. `requiredAttributions` are the blocks the
+ * export footer will render (CC BY / BY-SA compliance); `missingAttributions`
+ * flags sources that owe attribution but lack the lines to render it.
+ * `ok` is `true` when nothing is missing.
  */
 export interface AttributionReport {
-    readonly placeholder?: never;
+    requiredAttributions: AttributionBlock[];
+    missingAttributions: MissingAttribution[];
+    ok: boolean;
 }
 
 export interface FidelityReport {

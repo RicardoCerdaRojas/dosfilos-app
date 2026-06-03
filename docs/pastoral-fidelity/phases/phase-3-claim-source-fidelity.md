@@ -6,9 +6,10 @@
 - **PR 1** (fidelity pass core + per-marker verdicts panel) — ✅ MERGEADO #287 (2026-05-30).
 - **PR 2** (publish gate + thresholds + override + audit) — ✅ MERGEADO #289 (2026-05-31).
 - **PR 3** (plurality validator — no-proof-texting) — ✅ MERGEADO #290 (2026-05-31).
-- **PR 4** (authority subordination + prompt clause) — ✅ code-complete (2026-06-01),
-  branch `feat/pastoral-fidelity-phase-3-pr-4-authority`. PR por abrir.
-- **PR 5** (attribution footer) — pendiente.
+- **PR 4** (authority subordination + prompt clause) — ✅ MERGEADO #298 (2026-06-01).
+- **PR 5** (attribution footer) — ✅ code-complete (2026-06-02),
+  branch `feat/pastoral-fidelity-phase-3-pr-5-attribution-footer`. PR por abrir.
+  **Cierra Fase 3.**
 
 Prereqs actualizados al cerrar Fase 2.5 (2026-05-29). Lista de dependencias
 satisfechas + no satisfechas + preguntas emergentes + riesgos cross-fase abajo.
@@ -103,20 +104,21 @@ Extiende con 3 validators de [ADR-006](../decisions/ADR-006-rights-aware-citatio
 | Motor de citas Fases B+C en main | PRs Phase B.1-B.5 + C.1 (commits `a174ac05`, `b15dfcf5`, `248c40d6`, `2b74237a`, `21ba44c9`) | ✅ |
 | `citationManifest` persistido por sermón (`wizardProgress.draft.citationManifest`, mirror en `sermons/{id}/content.citationManifest`) | PR #213 | ✅ |
 | `validateCitations` domain pure function (identity-only) | [`packages/domain/src/services/validateCitations.ts:48`](../../packages/domain/src/services/validateCitations.ts) | ✅ |
-| `aggregateRequiredAttributions` (computa AttributionBlock[] desde manifest) | [`packages/domain/src/services/aggregateRequiredAttributions.ts:70`](../../packages/domain/src/services/aggregateRequiredAttributions.ts) | ✅ wired, ❌ footer NO renderizado en PDF/Docx — PR 5 |
+| `aggregateRequiredAttributions` (computa AttributionBlock[] desde manifest) | [`packages/domain/src/services/aggregateRequiredAttributions.ts`](../../packages/domain/src/services/aggregateRequiredAttributions.ts) | ✅ renderizado PDF + Docx + web view (PR 5); split SBLGNT BY 4.0 / MorphGNT BY-SA 4.0 |
 | `LibraryResource` + `DocumentChunk` con rights fields (license, ingestionStatus, requiredAttribution, etc.) | [`packages/domain/src/entities/LibraryResource.ts`](../../packages/domain/src/entities/LibraryResource.ts), [`DocumentChunk.ts`](../../packages/domain/src/entities/DocumentChunk.ts) | ✅ |
 | `SermonService.publishSermon(id)` — gate point natural | [`packages/application/src/services/SermonService.ts:126`](../../packages/application/src/services/SermonService.ts) | ✅ |
 | `study_depth` flag + modo experto self-service (SDS>80, N sermones) | Fase 2.5 ADR-027 | ✅ — Fase 3 reusa el mismo gate experto |
 | `AiAssistLog` audit infrastructure | Fase 1.6 + cableado completo Fase 2.5 PR A | ✅ |
 
 **Deuda heredada** (no bloquea, pero documentada):
-- **SBLGNT license discrepancia**: ADR-006 + esta phase doc + `07-citation-policy` dicen `CC BY 4.0`,
-  el código (`SBLGNT_ATTRIBUTION` en `aggregateRequiredAttributions.ts:39`) renderea
-  `CC BY-SA 4.0` (upstream MorphGNT es BY-SA). Inconsistencia entre docs y código. Resolver con el
-  fundador antes de PR 5 (render compliance es público).
-- **SBLGNT hardcoded como constante** en `aggregateRequiredAttributions.ts:30-42`, no viene del
-  catálogo CORE Library. Tech debt de Fase 0. Phase 3 lo deja igual; mover a catalog viene con
-  próxima ingesta CORE (memoria nueva `tech_debt_sblgnt_hardcoded` al cerrar PR 5).
+- **SBLGNT license discrepancia** — ✅ RESUELTA en PR 5 (2026-06-02). Decisión locked del fundador
+  (2026-05-30): split en dos blocks — texto base **CC BY 4.0** + morfología **CC BY-SA 4.0**
+  (latente). El código ahora renderea ambos según `hasMorphologyRendered`. Legal review del split
+  queda fuera de banda (no bloquea). Ver bitácora 2026-06-02.
+- **SBLGNT hardcoded como constante** en `aggregateRequiredAttributions.ts` (ahora
+  `SBLGNT_TEXT_ATTRIBUTION` + `MORPHGNT_ATTRIBUTION`), no viene del catálogo CORE Library. Tech debt
+  de Fase 0 NO resuelta en Phase 3 (Q8); mover a catalog viene con próxima ingesta CORE. Memoria
+  `tech_debt_sblgnt_hardcoded` creada al cerrar PR 5.
 - **Claim-level metadata ausente**: `SermonContent.body[]` son párrafos prosa sin tagging por
   oración. PR 3 (Plurality) extrae claims con LLM tagger antes de validar pluralidad.
 
@@ -418,6 +420,49 @@ Cada PR = unidad funcional completa testeable en UI (regla `feedback_pr_complete
 | `study_depth` (Fase 2.5) + `fidelity_pass` (Fase 3) confusion para pastor | Copy unificada: panel `FidelityReviewPanel` agrupa todo bajo "Revisión pre-publicación". |
 
 ## Bitácora
+
+- **2026-06-02 (PR 5 — attribution footer, code-complete)** — Cierra Fase 3. El footer
+  obligatorio de atribución por licencia ahora rendea en TODOS los surfaces (Q7) y el split de
+  SBLGNT del fundador (decisión 2026-05-30) quedó aterrizado.
+  - **Split SBLGNT en dos blocks** (`aggregateRequiredAttributions.ts`): `SBLGNT_TEXT_ATTRIBUTION`
+    (texto base Holmes 2010, **CC BY 4.0**, siempre que haya chunk SBLGNT) +
+    `MORPHGNT_ATTRIBUTION` (tagging morfológico, **CC BY-SA 4.0**, solo si
+    `hasMorphologyRendered(manifest)`). Reemplaza el block único anterior `SBLGNT_ATTRIBUTION`
+    (que renderaba todo bajo BY-SA). **Conflicto detectado y resuelto con el fundador antes de
+    codear**: una respuesta inicial pidió "un block todo BY-SA"; se levantó que contradecía la
+    decisión locked 2026-05-30 (dos blocks) → confirmado dos blocks.
+  - **`hasMorphologyRendered` es estructural, no content-sniffing**: lee un flag nuevo opcional
+    `CitationManifestEntry.morphologyRendered`. Hallazgo de arquitectura: `SBLGNTBibleProvider`
+    **descarta** las columnas `pos`+`parsing` de MorphGNT (solo emite la forma de superficie), así
+    que hoy NINGÚN path del pipeline emite morfología al manifest → el flag queda ausente → solo
+    Block 1 (BY 4.0) rendea. Block 2 (BY-SA) queda **latente** y correcto el día que aterrice un
+    path que renderee parsing, sin re-tocar la lógica de licencia. Se eligió el flag estructural
+    sobre un regex sobre la prosa para evitar falsos positivos (un pastor describiendo gramática
+    griega con sus palabras NO dispara ShareAlike).
+  - **`computeAttributionCheck` (puro, sin LLM)**: deriva `AttributionReport`
+    (`requiredAttributions` = lo que el footer rendea, vía `aggregateRequiredAttributions` como
+    SSOT; `missingAttributions` = fuentes con licencia CC BY/copyright pero **sin** líneas de
+    `requiredAttribution` — gap de ingesta; `ok`). SBLGNT exento (su atribución viene de los
+    compliance blocks, no de líneas per-entry). Reemplaza el stub `AttributionReport`.
+  - **Wiring (Option report-attached)**: `RunFidelityPassUseCase` hace `findById` y computa
+    `attributionReport` del `citationManifest` del sermón — independiente del LLM, así que es
+    correcto aunque el evaluador devuelva 0 verdicts. **NO alimenta el gate** (la compliance legal
+    rendea en cada export sin importar el flag); es una bandera pre-publish en el panel.
+  - **Render**: PDF (`PdfExportService`) + Docx (`exportSermonToDocx`) ya llamaban
+    `aggregateRequiredAttributions` → heredan el split automáticamente (cero cambios en esos
+    archivos). Web view: nuevo `SermonAttributionsSection` cableado en `detail.tsx` tras la
+    bibliografía (footer público on-screen, Q7). Panel: nuevo `AttributionMissingRow` +
+    `AttributionSection` en `FidelityReviewPanel` (sección "Atribución de fuentes") +
+    i18n `fidelityGate.attribution.*` + `attributions.*` (es/en).
+  - **Deuda registrada (no resuelta esta fase, Q8)**: SBLGNT sigue hardcoded en
+    `aggregateRequiredAttributions.ts` (no viene del catálogo CORE) → memoria nueva
+    `tech_debt_sblgnt_hardcoded`. Legal review del split BY/BY-SA queda fuera de banda (no bloquea).
+    Deuda heredada de PR 1 (color-literals + strings sin i18n en `FidelityReviewPanel`/`SummaryBar`)
+    NO tocada; mis componentes nuevos cumplen standards (tokens semánticos + i18n + a11y label).
+  - **Verde**: tsc 0 errores (domain/application/infrastructure/web). 558 tests
+    (domain 392 + application 73 + web 93). Tests nuevos: `aggregateRequiredAttributions` (7,
+    split + morphology + dedup), `computeAttributionCheck` (8), `RunFidelityPassUseCase` +1
+    (attribution attach), `SermonAttributionsSection` (4). compliance:staged sin hard violations.
 
 - **2026-05-31 (PR 3 — plurality validator, code-complete)** — Check anti-proof-texting aterrizado.
   - **Decisión operacional Q4**: "mismo batch" se implementa como **2ª llamada Flash dentro del
