@@ -44,6 +44,7 @@ import { toast } from 'sonner';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
 import { SermonRepurposeSection } from '@/components/sermons/SermonRepurposeSection';
 import { SermonBibliographySection } from '@/components/sermons/SermonBibliographySection';
+import { SermonAttributionsSection } from '@/components/sermons/SermonAttributionsSection';
 import { PastoralSeedAuditPanel } from '@/components/sermons/PastoralSeedAuditPanel';
 import { FidelityReviewPanel } from '@/components/sermons/FidelityReviewPanel';
 import { PrePublishFidelityModal } from '@/components/sermons/PrePublishFidelityModal';
@@ -531,6 +532,7 @@ export function SermonDetailPage() {
                 bibliography={sermon.bibliography}
                 manifest={sermon.citationManifest}
               />
+              <SermonAttributionsSection manifest={sermon.citationManifest} />
               <SermonRepurposeSection
                 sermonId={sermon.id}
                 sermonTitle={sermon.title}

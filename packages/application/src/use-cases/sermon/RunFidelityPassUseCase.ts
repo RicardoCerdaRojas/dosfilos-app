@@ -1,5 +1,6 @@
 import {
     FIDELITY_REPORT_VERSION,
+    computeAttributionCheck,
     computeFidelitySummary,
     computePluralityCheck,
     type FidelityReport,
@@ -49,6 +50,14 @@ export class RunFidelityPassUseCase {
         const authorityViolations = evaluation.authorityViolations ?? [];
         const authorityReport = { authorityViolations };
 
+        // Attribution (PR 5, ADR-006 / Q7) — pure, manifest-derived. Computed
+        // from the sermon's own citation manifest, NOT the LLM pass, so it
+        // stays correct even when the evaluator returns no verdicts. Does NOT
+        // feed the gate (legal compliance renders on every export regardless of
+        // the fidelity flag); surfaced in the panel as a pre-publish flag.
+        const sermon = await this.sermonRepository.findById(input.sermonId);
+        const attributionReport = computeAttributionCheck(sermon?.citationManifest);
+
         const { summary, gateStatus } = computeFidelitySummary({
             verdicts: evaluation.verdicts,
             pluralityHasFailures: pluralityReport.failures.length > 0,
@@ -66,6 +75,7 @@ export class RunFidelityPassUseCase {
             gateStatus,
             pluralityReport,
             authorityReport,
+            attributionReport,
         };
 
         await this.sermonRepository.updateFidelityReport(input.sermonId, report);

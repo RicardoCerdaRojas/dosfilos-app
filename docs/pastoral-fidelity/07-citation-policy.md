@@ -164,6 +164,12 @@ Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 Used with segmentation and tokenization for retrieval.
 ```
 
+> **Actualización Fase 3 PR 5 (2026-06-02):** el texto base SBLGNT (arriba) es **CC BY 4.0**. El
+> etiquetado **morfológico** de MorphGNT es **CC BY-SA 4.0** y se rendea como un block aparte solo
+> cuando el artefacto reproduce morfología (`hasMorphologyRendered`). Decisión locked del fundador
+> 2026-05-30; implementación en `aggregateRequiredAttributions.ts`. Ver
+> [phase-3 bitácora 2026-06-02](./phases/phase-3-claim-source-fidelity.md).
+
 Implementación:
 
 - Citation engine computa una lista de `requiredAttributions[]` para todo el artefacto

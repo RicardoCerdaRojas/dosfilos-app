@@ -235,10 +235,20 @@
             "reformulation": "Reformulación sugerida",
             "unnamedAuthority": "Autoridad citada"
         },
+        "attribution": {
+            "title": "Atribución de fuentes",
+            "description": "Estas fuentes requieren una atribución por su licencia, pero no encontramos los datos para incluirla. Revisa el recurso en tu biblioteca antes de publicar.",
+            "missingLabel": "Falta atribución",
+            "unknownLicense": "Licencia con atribución obligatoria"
+        },
         "toast": {
             "published": "Sermón publicado.",
             "error": "No pudimos publicar el sermón. Intenta de nuevo.",
             "reviewFailed": "No pudimos revisar la fidelidad. Intenta de nuevo."
         }
+    },
+    "attributions": {
+        "title": "Atribuciones",
+        "description": "Atribuciones obligatorias por licencia para las fuentes citadas en este sermón."
     }
 }
