@@ -2,14 +2,16 @@
 
 ## Estado
 
-`in-progress` — arrancada 2026-05-30 con `/iniciar-fase 3`. Plan locked + ADR-029 escrito.
+`complete` — cerrada 2026-06-03 con `/cerrar-fase 3`. Plan locked + ADR-029 escrito.
 - **PR 1** (fidelity pass core + per-marker verdicts panel) — ✅ MERGEADO #287 (2026-05-30).
 - **PR 2** (publish gate + thresholds + override + audit) — ✅ MERGEADO #289 (2026-05-31).
 - **PR 3** (plurality validator — no-proof-texting) — ✅ MERGEADO #290 (2026-05-31).
 - **PR 4** (authority subordination + prompt clause) — ✅ MERGEADO #298 (2026-06-01).
-- **PR 5** (attribution footer) — ✅ code-complete (2026-06-02),
-  branch `feat/pastoral-fidelity-phase-3-pr-5-attribution-footer`. PR por abrir.
-  **Cierra Fase 3.**
+- **PR 5** (attribution footer) — ✅ MERGEADO #300 (2026-06-03), merge commit `3aefc7a8`.
+  CI verde (Build / Lint+TypeCheck / Run Tests). **Cierra Fase 3.**
+
+**Smoke manual pendiente** (no bloquea cierre, consistente con patrón de la fase): export con
+SBLGNT → página "Atribuciones". Se ejecuta al flip del flag `fidelity_pass` (default off hoy, Q10).
 
 Prereqs actualizados al cerrar Fase 2.5 (2026-05-29). Lista de dependencias
 satisfechas + no satisfechas + preguntas emergentes + riesgos cross-fase abajo.
@@ -402,10 +404,10 @@ Cada PR = unidad funcional completa testeable en UI (regla `feedback_pr_complete
 - [ ] Click-to-replace funcional
 
 ### PR 5
-- [ ] PDF export incluye sección "Atribuciones" con AttributionBlock[] rendered
-- [ ] Docx export idem
-- [ ] Web view publicada incluye sección
-- [ ] AttributionReport check: missing attributions → pre-publish flag
+- [x] PDF export incluye sección "Atribuciones" con AttributionBlock[] rendered (hereda split vía `aggregateRequiredAttributions`)
+- [x] Docx export idem
+- [x] Web view publicada incluye sección (`SermonAttributionsSection` en `detail.tsx`)
+- [x] AttributionReport check: missing attributions → pre-publish flag (`AttributionMissingRow` en panel)
 
 ## Riesgos
 
