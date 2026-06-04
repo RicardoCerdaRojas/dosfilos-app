@@ -105,26 +105,31 @@ export function injectNarrativeCitationAnchors(
     // source; if a source genuinely overlaps the point's content we anchor it
     // (defensible — the point draws on that source), otherwise we leave it
     // uncited (the goal's "salvo que no haya recursos" exception — never invent).
-    const ensurePointCited = (pointContent: string): string => {
+    const ensurePointCited = (pointContent: string, idx: number): string => {
         if (!pointContent || /\[\s*S?\d/.test(pointContent)) return pointContent;
         const words = significantWords(pointContent);
-        let best: { sourceId: string; score: number } | null = null;
+        let best: { entry: CitationManifest['entries'][number]; score: number } | null = null;
         for (const e of manifest.entries) {
             const score = overlapScore(words, e);
             if (score >= MIN_POINT_OVERLAP && (!best || score > best.score)) {
-                best = { sourceId: e.sourceId, score };
+                best = { entry: e, score };
             }
         }
         if (!best) return pointContent; // no supporting source → leave uncited
-        const m = /[^.!?\n]*[.!?]/.exec(pointContent); // anchor the first sentence
-        if (m) {
-            return (
-                pointContent.slice(0, m.index) +
-                m[0].replace(/\s*([.!?])\s*$/, ` [${best.sourceId}]$1`) +
-                pointContent.slice(m.index + m[0].length)
-            );
-        }
-        return `${pointContent} [${best.sourceId}]`;
+        // The LLM gave no narrative attribution for this point, so WRITE one
+        // pointing at the real overlapping source. The popover (anchor) exposes
+        // the verbatim excerpt + page; we never quote a possibly-messy fragment
+        // inline. Author + work are real manifest data — nothing fabricated.
+        const e = best.entry;
+        const displayTitle = (e.title ?? '').split(/\s[-–—]\s/).slice(-1)[0] || e.title || '';
+        const author = e.author?.trim();
+        const leadIns = ['Como lo desarrolla', 'Como lo expone', 'Como bien lo trabaja', 'Según lo expone'];
+        const lead = leadIns[idx % leadIns.length];
+        const attribution = author
+            ? `${lead} ${author}${displayTitle ? ` en «${displayTitle}»` : ''} [${e.sourceId}].`
+            : `Esta verdad se expone en «${displayTitle}» [${e.sourceId}].`;
+        const sep = /\n$/.test(pointContent) ? '' : '\n\n';
+        return `${pointContent}${sep}${attribution}`;
     };
 
     return {
@@ -132,9 +137,9 @@ export function injectNarrativeCitationAnchors(
         introduction: anchorSurface(content.introduction) ?? content.introduction,
         conclusion: anchorSurface(content.conclusion) ?? content.conclusion,
         callToAction: anchorSurface(content.callToAction),
-        body: content.body.map((p) => ({
+        body: content.body.map((p, idx) => ({
             ...p,
-            content: ensurePointCited(anchorSurface(p.content) ?? p.content),
+            content: ensurePointCited(anchorSurface(p.content) ?? p.content, idx),
         })),
     };
 }

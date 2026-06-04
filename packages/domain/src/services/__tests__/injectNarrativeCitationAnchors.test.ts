@@ -67,6 +67,11 @@ describe('injectNarrativeCitationAnchors (ADR-031)', () => {
             mf,
         );
         expect(out.body[0].content).toMatch(/\[S1\]/); // point now cited
+        // explicit NARRATIVE attribution written (author + work named), not a bare anchor
+        expect(out.body[0].content).toContain('Autor');
+        expect(out.body[0].content).toContain('«Inspiración»');
+        // original prose preserved
+        expect(out.body[0].content).toContain('Confiamos en ella.');
     });
 
     it('leaves a point uncited when NO source overlaps it (never invents)', () => {

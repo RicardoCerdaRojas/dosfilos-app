@@ -293,6 +293,18 @@ export class SermonGeneratorService {
             // source, BEFORE validateCitations maps `[Sn]` → `[n]`.
             const anchored = injectNarrativeCitationAnchors(rawDraft, manifest);
             const validated = validateCitations(anchored, manifest);
+            // [ADR-031 diag] temporary — where do anchors live at each stage? REVERT.
+            try {
+                const has = (c: any) => /\[\s*S?\d/.test(JSON.stringify(c?.body ?? []));
+                const stripped = stripSermonCitationMarkers(validated.content);
+                console.log('[sermon citations] STAGES', {
+                    manifestSample: manifest.entries.slice(0, 2).map((e) => ({ id: e.sourceId, author: e.author, title: e.title?.slice(0, 30), excerptLen: e.excerpt?.length })),
+                    afterInject: has(anchored),
+                    afterValidate: has(validated.content),
+                    afterStrip: has(stripped),
+                    finalFirstBody: stripped.body?.[0]?.content?.slice(0, 200),
+                });
+            } catch (e) { console.warn('diag err', e); }
             if (validated.stats.markersDropped > 0 || validated.stats.droppedEntries.length > 0) {
                 console.warn('[generateSermonDraft] citation validator dropped content', {
                     markersDropped: validated.stats.markersDropped,
