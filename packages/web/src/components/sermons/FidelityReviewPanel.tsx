@@ -33,6 +33,12 @@ interface Props {
  * The panel is read-only in PR 1: it surfaces verdicts + the gate banner,
  * but the publish gate enforcement lands in PR 2.
  */
+// 🛑 DORMANT (ADR-032). The per-marker claim↔source fidelity pass is OFF on the
+// sermon: per ADR-030/031 it belongs to the PAPER, and on the published sermon
+// it hits a content-shape mismatch (string content + top-level manifest), so it
+// finds no markers. Gated by `fidelity_pass` (default off). The guard below
+// keeps the empty/broken panel from showing even if someone flips the flag.
+// Revival path + relocation to the paper (Phase 7): see ADR-032.
 export function FidelityReviewPanel({ sermonId, report, onReportUpdated, onJumpToMarker }: Props) {
     const { t } = useTranslation('sermonDetail');
     const gate = useFidelityPassGate();
@@ -49,6 +55,16 @@ export function FidelityReviewPanel({ sermonId, report, onReportUpdated, onJumpT
 
     if (gate.loading) return null;
     if (!gate.enabled) return null;
+    // DORMANT guard (ADR-032): if the flag is on but the pass produced nothing
+    // evaluable (no verdicts and no sub-report findings — the sermon-content
+    // shape mismatch), don't render the broken "no markers" panel.
+    const hasContent =
+        !!report &&
+        (report.verdicts.length > 0 ||
+            (report.pluralityReport?.failures?.length ?? 0) > 0 ||
+            (report.authorityReport?.authorityViolations?.length ?? 0) > 0 ||
+            (report.attributionReport?.missingAttributions?.length ?? 0) > 0);
+    if (report && !hasContent) return null;
 
     const handleRun = async () => {
         try {
