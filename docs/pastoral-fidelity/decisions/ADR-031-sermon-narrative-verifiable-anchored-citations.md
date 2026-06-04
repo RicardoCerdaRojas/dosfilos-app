@@ -97,6 +97,28 @@ El sermón cita de forma **narrativa CON ancla verificable** (refina ADR-030 §"
 5. **Verificación runtime** (fundador): generar sermón → narrativa + ancla clickeable + popover con cita
    precisa, desde personal (prioridad) y CORE (fallback).
 
+## Nota de implementación (2026-06-04, verificado en prod)
+
+La verificación runtime mostró que el LLM (con File Search Store activo) **atribuye
+las fuentes en `ragSources` pero NO emite el ancla `[Sn]` inline de forma confiable**,
+y a veces **no produce ninguna atribución narrativa**, aunque el prompt lo instruya
+explícitamente (`hasAnchorRule: true`, `rawHasBracketMarker: false`). El prompt solo no
+garantiza el comportamiento.
+
+Resolución: `injectNarrativeCitationAnchors` (domain, puro) cierra la brecha de forma
+**determinista**, sin fabricar:
+1. Donde la prosa **nombra** una fuente del manifest (apellido del autor / prefijo del
+   título), inyecta el ancla `[Sn]` al final de esa oración.
+2. Para cada punto del cuerpo que quede **sin** cita, lo matchea con la fuente de mayor
+   **solape léxico** (≥2 palabras significativas con el excerpt+título). Si hay solape
+   real, **escribe** la atribución narrativa *"Como lo desarrolla {autor} en «{obra}» [Sn]"*
+   (autor + obra reales; el popover expone el excerpt verbatim + página). Si ninguna fuente
+   solapa → el punto queda sin cita (la excepción "salvo que no haya recursos"; nunca inventa).
+
+`[Sn]` → `validateCitations` lo mapea a `[n]` → `MarkdownRenderer`/`SermonPreview` lo
+renderizan como popover verificable. Verificado en prod por el fundador (cita de Kistemaker,
+p.223, desde biblioteca personal). Impl en PR #306.
+
 ## Referencias
 
 - [ADR-030](./ADR-030-fidelity-per-marker-belongs-to-paper-sermon-narrative.md) — enmendado por este ADR.
