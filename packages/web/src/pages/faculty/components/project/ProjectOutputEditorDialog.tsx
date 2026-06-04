@@ -10,7 +10,11 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
 
-const OUTPUT_KINDS: ProjectOutputKind[] = ['note', 'draft', 'outline', 'sermon'];
+// Creatable material types. 'sermon' is intentionally NOT here: a real sermon
+// comes from the generation pipeline ("Generar sermón"), not a freeform note.
+// Legacy ProjectOutputs of kind 'sermon' still render + remain editable (see
+// kindOptions below) — we just don't offer it for new material.
+const OUTPUT_KINDS: ProjectOutputKind[] = ['note', 'draft', 'outline'];
 
 type EditorMode = 'create' | 'edit';
 
@@ -43,6 +47,9 @@ export function ProjectOutputEditorDialog({
     const [title, setTitle] = useState(output?.title ?? '');
     const [content, setContent] = useState(output?.content ?? '');
     const [kind, setKind] = useState<ProjectOutputKind>(output?.kind ?? 'note');
+    // Offer the creatable kinds, plus the current one if it's a legacy kind
+    // (e.g. an existing 'sermon' output) so editing it doesn't blank the Select.
+    const kindOptions = OUTPUT_KINDS.includes(kind) ? OUTPUT_KINDS : [...OUTPUT_KINDS, kind];
 
     const handleSave = () => {
         if (!title.trim()) {
@@ -85,7 +92,7 @@ export function ProjectOutputEditorDialog({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                {OUTPUT_KINDS.map(k => (
+                                {kindOptions.map(k => (
                                     <SelectItem key={k} value={k}>
                                         {t(`outputEditor.kindOptions.${k}`)}
                                     </SelectItem>
