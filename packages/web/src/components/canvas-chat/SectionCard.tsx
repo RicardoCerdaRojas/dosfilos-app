@@ -333,7 +333,9 @@ export function SectionCard({
                               {Array.isArray(value) ? (
                                 <ul className="list-disc list-inside pl-2 space-y-1">
                                   {value.map((v, idx) => (
-                                    <li key={idx}>{renderTextWithBibleLinks(v)}</li>
+                                    // Cross-refs arrive with a leading "> " blockquote prefix; inside a
+                                    // list item it renders as a literal char, so strip it.
+                                    <li key={idx}>{renderTextWithBibleLinks(typeof v === 'string' ? v.replace(/^\s*>\s*/, '') : v)}</li>
                                   ))}
                                 </ul>
                               ) : typeof value === 'string' ? (
