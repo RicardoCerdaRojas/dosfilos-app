@@ -262,9 +262,8 @@ function buildCitationContractBlock(manifest?: CitationManifest): string {
   return `
 ═══ FUENTES DISPONIBLES PARA CITAR (CONTRATO DE CITACIÓN) ═══
 A continuación va la lista CERRADA de fuentes en las que puedes apoyarte en
-este sermón. Cada fuente tiene un ID estable (S1, S2, …) que usarás SOLO en
-el campo \`ragSources\` del JSON (alimenta la bibliografía y las atribuciones
-legales del export), NUNCA en la prosa del sermón.
+este sermón. Cada fuente tiene un ID estable (S1, S2, …) y trae su cita
+textual entre comillas — esa es la ÚNICA evidencia de lo que dice la fuente.
 
 ${sourceList}
 
@@ -272,33 +271,42 @@ REGLAS DE CITACIÓN (OBLIGATORIAS — el servidor valida y descarta lo que no cu
 
 1. **Atribución NARRATIVA (estilo sermón, NO académico)**: cuando te apoyes
    en una de estas fuentes, atribúyela TEJIDA EN LA PROSA, nombrando la
-   fuente con naturalidad pastoral. El sermón se predica en voz alta: la
-   atribución debe sonar natural dicha desde el púlpito. Ejemplos:
+   fuente con naturalidad pastoral. Debe sonar natural dicha desde el púlpito:
    - "Como resume la Confesión de Westminster, Dios quiso dejar su
      revelación por escrito…"
    - "Como observa Schreiner en su comentario sobre este pasaje, el verbo
      aquí denota una acción decisiva…"
-   - "El pastor Subukjian lo expresa bien: la Escritura no nace de la
-     voluntad humana sino del Espíritu."
-2. **PROHIBIDO usar marcadores de cita en la prosa**: NUNCA escribas NINGÚN
-   token de cita entre corchetes en el cuerpo del sermón — ni \`[S1]\`,
-   \`[1]\`, \`[cite: S1]\`, \`[fuente: 1]\`, footnotes ni superíndices. Eso es
-   estilo de paper académico, no de sermón predicado: nombra la fuente EN la
-   oración y nada más. (Las referencias bíblicas SÍ usan su formato propio
-   \`[📖 Juan 1:1](#bible-juan-1-1)\`.)
-3. **IDs válidos únicamente en \`ragSources\`**: en el campo \`ragSources\`
-   del JSON usa SOLO los IDs listados arriba (S1, S2, …). NUNCA inventes
-   \`S99\`, \`Otro\`, \`Wallace\`, etc.
-4. **\`ragSources\` debe reflejar lo que atribuiste**: por cada fuente que
-   cites narrativamente en la prosa, incluye una entrada en \`ragSources\`
-   con el campo \`"sourceId": "Sn"\` EXACTO (mismo string del contrato).
-   Esto alimenta la bibliografía y las atribuciones legales del export. El
-   servidor descarta entradas con \`sourceId\` faltante o desconocido.
-5. **Cobertura**: apóyate en estas fuentes SOLO cuando el contenido del
-   sermón realmente lo amerite. No es obligatorio usar todas; es obligatorio
-   que toda afirmación atribuida esté respaldada por una de estas fuentes.
-6. **Honestidad**: NUNCA atribuyas a una fuente algo que no dice. Si dudas
-   de que la fuente respalde la afirmación, no la atribuyas.
+
+2. **Ancla verificable \`[Sn]\` al final de la oración atribuida**: después de
+   atribuir narrativamente, coloca el ID de la fuente entre corchetes al final
+   de esa oración (o cláusula). Ejemplo:
+   "Como observa Schreiner, el verbo denota una acción decisiva [S2]."
+   Este ancla NO es un footnote académico: la app lo convierte en un enlace
+   sutil que abre la cita textual + libro + página para que el oyente la
+   compruebe. Multi-fuente en una oración: \`[S1, S3]\` (un solo par de
+   corchetes), nunca \`[S1][S3]\`.
+
+3. **Una cita por punto (mínimo)**: CADA punto del sermón debe apoyarse en al
+   menos UNA de estas fuentes (atribución narrativa + ancla). ÚNICA excepción:
+   si ninguna fuente de la lista respalda genuinamente ese punto, déjalo SIN
+   cita — jamás fuerces una cita irrelevante.
+
+4. **NUNCA inventes una cita**: solo puedes usar los IDs listados arriba.
+   PROHIBIDO inventar \`S99\`/\`Otro\`/\`Wallace\`, atribuir a una fuente algo
+   que su cita textual NO dice, o citar un autor/obra que no esté en la lista.
+   Una cita inventada en el púlpito destruye la credibilidad. Ante la duda, no
+   cites.
+
+5. **Fidelidad al texto (grounding)**: tu atribución narrativa debe ser una
+   representación FIEL de la cita textual de la fuente que anclas. No
+   tergiverses ni amplíes lo que la fuente realmente dice.
+
+6. **\`ragSources\` debe reflejar lo que anclaste**: por cada \`[Sn]\` que uses
+   en la prosa, incluye una entrada en \`ragSources\` con \`"sourceId": "Sn"\`
+   EXACTO. El servidor descarta entradas con \`sourceId\` faltante o desconocido.
+
+7. **Citas bíblicas NO usan este contrato**: las referencias bíblicas siguen su
+   formato propio \`[📖 Juan 1:1](#bible-juan-1-1)\`, nunca \`[Sn]\`.
 
 ═══════════════════════════════════════════════════════════════════
 

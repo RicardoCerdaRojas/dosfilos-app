@@ -22,13 +22,21 @@ describe('stripSermonCitationMarkers (ADR-030)', () => {
         expect(out.introduction).toBe('Como el pastor Subukjian nos recuerda, Dios es veraz. Confía.');
     });
 
-    it('removes [S3], [3] and grouped [1, 3] forms', () => {
+    it('strips S-prefixed junk but KEEPS valid numeric [N] anchors (ADR-031)', () => {
         const out = stripSermonCitationMarkers(
             content({
                 introduction: 'Uno [S3]. Dos [3]. Tres [1, 3].',
             }),
         );
-        expect(out.introduction).toBe('Uno. Dos. Tres.');
+        // [S3] (unvalidated) stripped; [3] and [1, 3] (validated anchors) kept.
+        expect(out.introduction).toBe('Uno. Dos [3]. Tres [1, 3].');
+    });
+
+    it('strips labelled junk ([fuente:], [source:], [ref:]) too', () => {
+        const out = stripSermonCitationMarkers(
+            content({ introduction: 'A [fuente: 1]. B [source: S2]. C [ref: 3].' }),
+        );
+        expect(out.introduction).toBe('A. B. C.');
     });
 
     it('preserves bible reference links', () => {
@@ -37,7 +45,7 @@ describe('stripSermonCitationMarkers (ADR-030)', () => {
         expect(out.introduction).toBe(ref);
     });
 
-    it('strips across body content, illustration, transition, conclusion and callToAction', () => {
+    it('strips junk across body content, illustration, transition, conclusion and callToAction; keeps [N]', () => {
         const out = stripSermonCitationMarkers(
             content({
                 conclusion: 'Cierre [S1].',
@@ -55,7 +63,7 @@ describe('stripSermonCitationMarkers (ADR-030)', () => {
         );
         expect(out.conclusion).toBe('Cierre.');
         expect(out.callToAction).toBe('Actúa.');
-        expect(out.body[0].content).toBe('Cuerpo.');
+        expect(out.body[0].content).toBe('Cuerpo [1].'); // valid anchor kept
         expect(out.body[0].illustration).toBe('Ilustración.');
         expect(out.body[0].transition).toBe('Transición.');
     });

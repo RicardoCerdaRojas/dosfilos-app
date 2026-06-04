@@ -167,11 +167,11 @@ describe('buildSermonDraftPrompt — project context preservation (T3 #16 Fase 2
     });
 });
 
-describe('buildSermonDraftPrompt — narrative citation contract (ADR-030)', () => {
+describe('buildSermonDraftPrompt — narrative + verifiable anchor citation contract (ADR-031)', () => {
     const manifest: CitationManifest = {
         entries: [
-            { sourceId: 'S1', title: 'Volvamos a la predicación Bíblica', author: 'Subukjian', page: '102' },
-            { sourceId: 'S2', title: 'Comentario de 2 Pedro', author: 'Schreiner' },
+            { sourceId: 'S1', title: 'Volvamos a la predicación Bíblica', author: 'Subukjian', page: '102', excerpt: 'La doctrina es el negocio del predicador.' },
+            { sourceId: 'S2', title: 'Comentario de 2 Pedro', author: 'Schreiner', excerpt: 'El verbo denota una acción decisiva.' },
         ],
     } as CitationManifest;
 
@@ -182,19 +182,25 @@ describe('buildSermonDraftPrompt — narrative citation contract (ADR-030)', () 
         expect(prompt).not.toContain('FUENTES DISPONIBLES PARA CITAR');
     });
 
-    it('instructs NARRATIVE attribution, not footnote markers (ADR-030)', () => {
+    it('instructs BOTH narrative attribution AND a verifiable [Sn] anchor (ADR-031)', () => {
         const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules, undefined, manifest);
         expect(prompt).toContain('FUENTES DISPONIBLES PARA CITAR');
         expect(prompt).toContain('Atribución NARRATIVA');
-        // The sermon prose must NOT be told to emit [Sn] footnote markers.
-        expect(prompt).not.toContain('Marcadores en línea');
-        expect(prompt).toContain('PROHIBIDO usar marcadores de cita en la prosa');
+        expect(prompt).toContain('Ancla verificable');
     });
 
-    it('keeps the S-IDs in the contract so ragSources can reference them (manifest/attribution survive)', () => {
+    it('requires at least one citation per point and forbids inventing citations', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules, undefined, manifest);
+        expect(prompt).toContain('Una cita por punto');
+        expect(prompt).toContain('NUNCA inventes una cita');
+        expect(prompt).toContain('grounding'); // fidelity-to-text rule
+    });
+
+    it('surfaces the source S-IDs + textual excerpt as the citation evidence', () => {
         const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules, undefined, manifest);
         expect(prompt).toContain('[S1]');
         expect(prompt).toContain('[S2]');
+        expect(prompt).toContain('La doctrina es el negocio del predicador.');
         expect(prompt).toContain('ragSources');
     });
 });

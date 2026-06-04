@@ -222,6 +222,13 @@ export class SermonGeneratorService {
         config?: ExtendedPhaseConfiguration,
         userId?: string,
         language: SupportedLanguage = DEFAULT_LANGUAGE,
+        /**
+         * ADR-031: when the caller (web) has already retrieved citation chunks
+         * from personal + CORE via `retrieveChunks` and built the manifest
+         * (personal-priority selection), it passes it here. Takes precedence
+         * over the legacy internal `buildDraftManifest` (personal-only).
+         */
+        prebuiltManifest?: CitationManifest,
     ): Promise<{ draft: SermonContent; cacheName?: string }> {
         // Use homiletical proposition as search query
         const searchQuery = analysis.homileticalProposition;
@@ -250,11 +257,12 @@ export class SermonGeneratorService {
             ? { ...hydratedConfig, fileSearchStoreId }
             : { ...defaultConfig, fileSearchStoreId };
 
-        // Phase B: build the citation manifest from the same library
-        // chunks the prompt is about to consume. The contract gets
-        // injected into the prompt; `validateCitations` strips any
-        // marker / ragSources entry the LLM emits that doesn't match.
-        const manifest = await this.buildDraftManifest(config, searchQuery);
+        // Phase B / ADR-031: prefer the web-built manifest (personal + CORE
+        // via retrieveChunks, personal-priority). Fall back to the legacy
+        // personal-only internal build when none was passed (back-compat).
+        // The contract gets injected into the prompt; `validateCitations`
+        // strips any marker / ragSources entry the LLM emits that doesn't match.
+        const manifest = prebuiltManifest ?? await this.buildDraftManifest(config, searchQuery);
 
         const rawDraft = await this.generator.generateSermonDraft(analysis, rules, finalConfig, language, manifest);
 

@@ -7,7 +7,8 @@ export * from './entities/ExegesisOperationCatalog';
 export * from './services/computeExegesisQuotaState';
 export * from './services/aggregateRagSources';
 export * from './services/validateCitations';
-export * from './services/stripSermonCitationMarkers'; // 🌱 ADR-030 — sermon prose carries no inline citation markers
+export * from './services/stripSermonCitationMarkers'; // 🌱 ADR-030/031 — sermon prose: strip junk, keep valid [N] anchors
+export * from './services/selectSermonCitationChunks'; // 🌱 ADR-031 — personal>CORE citation chunk selection
 export * from './services/buildCitationManifest';
 export * from './services/aggregateRequiredAttributions';
 export * from './services/aggregateLexiconAttributions';
