@@ -5,6 +5,13 @@
 `accepted` — aceptado 2026-05-30 al arrancar Fase 3 con `/iniciar-fase 3`. Formaliza las 10
 decisiones (Q1-Q10) tomadas en sesión de planning con el fundador.
 
+> **Refinado/superseded en parte por [ADR-030](./ADR-030-fidelity-per-marker-belongs-to-paper-sermon-narrative.md)
+> (2026-06-03).** El smoke de prod mostró que el fidelity pass per-marcador no encaja en el sermón
+> (07 §4 manda cita narrativa pastoral para sermones, footnote `[N]` solo para papers). ADR-030 relocaliza
+> el claim↔source per-marcador (Q1/Q2 verdicts + hard-block de Q3) al paper/estudio; el sermón cita
+> narrativo y hereda fidelidad del estudio. Plurality (Q4), authority y attribution (Q7) — prose/manifest,
+> no per-marker — siguen vigentes en el sermón.
+
 ## Fecha
 
 2026-05-30

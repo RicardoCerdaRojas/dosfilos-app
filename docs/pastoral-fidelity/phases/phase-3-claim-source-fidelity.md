@@ -36,6 +36,17 @@ Smoke en prod + dev (founder). El código de los 5 PRs está bien; el smoke expu
 modelo emite `[Sn]` inline, no el path. Fidelity NO está roto estructuralmente — necesita emisión confiable
 de markers inline.
 
+### Decisión tomada (2026-06-03) — ADR-030
+
+El análisis post-smoke encontró que **07-citation-policy §4 ya manda cita narrativa pastoral para el
+sermón** (footnote `[N]` solo para el paper). El fidelity pass per-marcador aplicó el modelo de paper al
+sermón. **Decisión del fundador → [ADR-030](../decisions/ADR-030-fidelity-per-marker-belongs-to-paper-sermon-narrative.md)**:
+el claim↔source **per-marcador es feature del paper/estudio, NO del sermón**; el **sermón cita de forma
+narrativa** y hereda fidelidad del estudio que lo originó. Se relocaliza al paper PR 1 (verdicts) + el
+hard-block per-marcador de PR 2; se quedan en el sermón plurality (PR 3), authority (PR 4) y attribution
+(PR 5) — operan sobre prosa/manifest, no markers. Plan de remediación en ADR-030 §"Plan de remediación".
+**`fidelity_pass` per-marcador sobre sermón NO se flipea.**
+
 Prereqs actualizados al cerrar Fase 2.5 (2026-05-29). Lista de dependencias
 satisfechas + no satisfechas + preguntas emergentes + riesgos cross-fase abajo.
 
