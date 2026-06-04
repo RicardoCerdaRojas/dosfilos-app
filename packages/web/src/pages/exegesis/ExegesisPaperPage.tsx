@@ -617,8 +617,9 @@ function StepsPanel({
     starting,
     t,
 }: StepsPanelProps) {
-    const hasSteps = paper.steps.length > 0;
-    const sortedSteps = [...paper.steps].sort((a, b) => a.order - b.order);
+    const steps = paper.steps ?? [];
+    const hasSteps = steps.length > 0;
+    const sortedSteps = [...steps].sort((a, b) => a.order - b.order);
 
     return (
         <section className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
