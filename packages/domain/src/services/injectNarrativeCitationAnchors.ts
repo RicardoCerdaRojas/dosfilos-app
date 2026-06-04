@@ -50,6 +50,24 @@ function candidateNames(author?: string, title?: string): string[] {
     return [...names];
 }
 
+/** Significant content words (≥5 chars, not stopwords) for lexical overlap. */
+function significantWords(text: string): Set<string> {
+    const out = new Set<string>();
+    for (const raw of (text ?? '').toLowerCase().split(/[^\p{L}]+/u)) {
+        if (raw.length >= 5 && !STOP.has(raw)) out.add(raw);
+    }
+    return out;
+}
+
+function overlapScore(pointWords: Set<string>, source: { excerpt?: string; title?: string }): number {
+    const srcWords = significantWords(`${source.excerpt ?? ''} ${source.title ?? ''}`);
+    let n = 0;
+    for (const w of srcWords) if (pointWords.has(w)) n++;
+    return n;
+}
+
+const MIN_POINT_OVERLAP = 2; // shared significant words to call a point "supported"
+
 export function injectNarrativeCitationAnchors(
     content: SermonContent,
     manifest: CitationManifest | undefined,
@@ -81,11 +99,42 @@ export function injectNarrativeCitationAnchors(
         return out;
     };
 
+    // Per-point guarantee (ADR-031): every BODY point should carry ≥1 citation
+    // — UNLESS no real source supports it. After named-source anchoring, any
+    // point still without an anchor is matched to its best lexically-overlapping
+    // source; if a source genuinely overlaps the point's content we anchor it
+    // (defensible — the point draws on that source), otherwise we leave it
+    // uncited (the goal's "salvo que no haya recursos" exception — never invent).
+    const ensurePointCited = (pointContent: string): string => {
+        if (!pointContent || /\[\s*S?\d/.test(pointContent)) return pointContent;
+        const words = significantWords(pointContent);
+        let best: { sourceId: string; score: number } | null = null;
+        for (const e of manifest.entries) {
+            const score = overlapScore(words, e);
+            if (score >= MIN_POINT_OVERLAP && (!best || score > best.score)) {
+                best = { sourceId: e.sourceId, score };
+            }
+        }
+        if (!best) return pointContent; // no supporting source → leave uncited
+        const m = /[^.!?\n]*[.!?]/.exec(pointContent); // anchor the first sentence
+        if (m) {
+            return (
+                pointContent.slice(0, m.index) +
+                m[0].replace(/\s*([.!?])\s*$/, ` [${best.sourceId}]$1`) +
+                pointContent.slice(m.index + m[0].length)
+            );
+        }
+        return `${pointContent} [${best.sourceId}]`;
+    };
+
     return {
         ...content,
         introduction: anchorSurface(content.introduction) ?? content.introduction,
         conclusion: anchorSurface(content.conclusion) ?? content.conclusion,
         callToAction: anchorSurface(content.callToAction),
-        body: content.body.map((p) => ({ ...p, content: anchorSurface(p.content) ?? p.content })),
+        body: content.body.map((p) => ({
+            ...p,
+            content: ensurePointCited(anchorSurface(p.content) ?? p.content),
+        })),
     };
 }

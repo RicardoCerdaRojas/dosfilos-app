@@ -57,6 +57,30 @@ describe('injectNarrativeCitationAnchors (ADR-031)', () => {
         expect(injectNarrativeCitationAnchors(c, { version: '1', entries: [] })).toEqual(c);
     });
 
+    it('GUARANTEES a citation for a point that overlaps a source even when no author is named', () => {
+        const mf: CitationManifest = {
+            version: '1',
+            entries: [{ sourceId: 'S1', resourceId: 'r1', chunkId: 'c1', title: 'Inspiración', author: 'Autor', page: '5', excerpt: 'La Escritura inspirada permanece como autoridad inmutable y permanente.' }],
+        };
+        const out = injectNarrativeCitationAnchors(
+            content({ body: [{ point: 'I', content: 'La Escritura inspirada es nuestra autoridad permanente. Confiamos en ella.', scriptureReferences: [] }] }),
+            mf,
+        );
+        expect(out.body[0].content).toMatch(/\[S1\]/); // point now cited
+    });
+
+    it('leaves a point uncited when NO source overlaps it (never invents)', () => {
+        const mf: CitationManifest = {
+            version: '1',
+            entries: [{ sourceId: 'S1', resourceId: 'r1', chunkId: 'c1', title: 'Homilética', author: 'Autor', page: '5', excerpt: 'El predicador entrega ilustraciones memorables al auditorio.' }],
+        };
+        const out = injectNarrativeCitationAnchors(
+            content({ body: [{ point: 'I', content: 'Hoy el clima estaba agradable y tranquilo afuera.', scriptureReferences: [] }] }),
+            mf,
+        );
+        expect(out.body[0].content).not.toMatch(/\[S?\d/); // genuinely unsupported → no citation
+    });
+
     it('anchors across introduction, body and conclusion', () => {
         const out = injectNarrativeCitationAnchors(
             content({
