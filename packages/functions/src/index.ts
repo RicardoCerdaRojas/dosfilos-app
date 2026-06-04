@@ -142,6 +142,8 @@ export { runSocraticTurnLlm } from './guided-sermon/runSocraticTurnLlm';
 export { buildStructuralPuzzle } from './study-companion/buildStructuralPuzzle';
 // 🌱 Pastoral Fidelity Phase 3 PR1 — Claim ↔ source fidelity evaluator (ADR-029)
 export { evaluateClaimSourceFidelity } from './sermon/evaluateClaimSourceFidelity';
+// 🌱 Pastoral Fidelity Phase 4 PR1 — contra-scan dissent retrieval + classification (ADR-033)
+export { findDissentingChunks } from './sermon/findDissentingChunks';
 
 
 

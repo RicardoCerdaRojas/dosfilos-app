@@ -10,6 +10,7 @@ const ALLOWED_FLAGS = new Set<string>([
     'three_witnesses',
     'study_depth',
     'fidelity_pass',
+    'contra_scan',
 ]);
 
 /**

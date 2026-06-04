@@ -180,6 +180,19 @@ export const FEATURE_FLAG_NAMES = [
      * machinery relocates to the paper in Phase 7.
      */
     'fidelity_pass',
+
+    /**
+     * Phase 4 PR 1 sub-flag (ADR-033) — gates the contra-scan pre-publish
+     * confrontation: before publishing a sermon, the system surfaces library
+     * chunks that DISSENT from the pastor's central idea (`findDissentingChunks`
+     * callable, personal→CORE priority per ADR-031) and requires the pastor to
+     * consider at least one with a ≥100-char note of their own (soft-block,
+     * overridable with an audit-logged justification). Implements P3 (Acts 20:27).
+     * Independent of `fidelity_pass` (which is dormant per ADR-032) — this is the
+     * ACTIVE confrontation on the sermon. Requires `pastoral_fidelity_flow` to
+     * also be on. Default off → legacy publish, blast radius 0.
+     */
+    'contra_scan',
 ] as const;
 
 export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];

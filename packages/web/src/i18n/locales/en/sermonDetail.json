@@ -195,6 +195,42 @@
             "contradicts": "Contradicts"
         }
     },
+    "contraScan": {
+        "cancel": "Back",
+        "publish": "Publish",
+        "publishing": "Publishing…",
+        "page": "p. {{page}}",
+        "coreBadge": "Core library",
+        "noDissent": {
+            "title": "No contrary positions found",
+            "description": "We searched your library for voices that dissent from your central idea and found none.",
+            "invite": "Consider adding sources that represent other faithful traditions. Engaging the strongest objection makes your preaching sturdier — and we never invent a contrary position that isn't in a real resource."
+        },
+        "dissent": {
+            "title": "Before publishing: hear the whole counsel",
+            "description": "Your library holds {{count}} position(s) that tension your central idea. Consider at least one before you step into the pulpit (Acts 20:27)."
+        },
+        "note": {
+            "label": "How do you answer this objection from the text?",
+            "placeholder": "Write your reflection (at least {{min}} characters). We don't write it for you.",
+            "counter": "{{count}}/{{min}} characters"
+        },
+        "consider": {
+            "publish": "Record consideration and publish"
+        },
+        "override": {
+            "toggle": "I can't address this now",
+            "back": "Back to considering",
+            "label": "Justify why you publish without recording a consideration",
+            "placeholder": "Explain your decision (at least {{min}} characters). It is logged.",
+            "counter": "{{count}}/{{min}} characters",
+            "publish": "Publish anyway"
+        },
+        "toast": {
+            "error": "We couldn't record the review. Please try again.",
+            "gateError": "You must consider a contrary position or justify your decision before publishing."
+        }
+    },
     "fidelityGate": {
         "preparing": "Checking fidelity…",
         "softTitle": "Review before publishing",

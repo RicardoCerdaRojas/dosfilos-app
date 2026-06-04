@@ -1,6 +1,7 @@
 import { CitationManifest, ExegeticalStudy, HomileticalAnalysis, RAGSource, SermonContent } from './SermonGenerator';
 import type { SermonPersonalization } from './SermonPersonalization';
 import type { FidelityReport } from './FidelityReport';
+import type { ContraScanReport } from './ContraScanReport';
 import { aggregateRagSourcesFlat } from '../services/aggregateRagSources';
 
 export interface PreachingLog {
@@ -183,6 +184,16 @@ export interface Sermon {
      * fully replaces the report instead of merging it.
      */
     fidelityReport?: FidelityReport;
+
+    /**
+     * Phase 4 PR 1 (ADR-033) — contra-scan confrontation report. Written when
+     * the pastor publishes under the `contra_scan` flag: the dissenting library
+     * chunks surfaced + the pastor's recorded consideration (or override). The
+     * permanent P3 audit trail (Acts 20:27). Independent of `fidelityReport`
+     * (dormant per ADR-032). Absent on sermons published before this feature or
+     * with the flag off. Purely additive — mutators carry it forward unchanged.
+     */
+    contraScanReport?: ContraScanReport;
 }
 
 export class SermonEntity implements Sermon {
@@ -213,6 +224,7 @@ export class SermonEntity implements Sermon {
         public citationManifest?: CitationManifest,
         public studyDepthSnapshot?: Sermon['studyDepthSnapshot'],
         public fidelityReport?: FidelityReport,
+        public contraScanReport?: ContraScanReport,
         /**
          * Skips the "content required" rule. Set ONLY when reconstructing a
          * trimmed list summary (`createSummary`), where `content` is empty by
@@ -281,6 +293,7 @@ export class SermonEntity implements Sermon {
             data.citationManifest,
             data.studyDepthSnapshot,
             data.fidelityReport,
+            data.contraScanReport,
             skipContentValidation
         );
     }
@@ -327,7 +340,8 @@ export class SermonEntity implements Sermon {
             data.bibliography ?? this.bibliography,
             data.citationManifest ?? this.citationManifest,
             data.studyDepthSnapshot ?? this.studyDepthSnapshot,
-            data.fidelityReport ?? this.fidelityReport
+            data.fidelityReport ?? this.fidelityReport,
+            data.contraScanReport ?? this.contraScanReport
         );
     }
 
@@ -362,7 +376,8 @@ export class SermonEntity implements Sermon {
             }),
             this.citationManifest ?? this.wizardProgress?.draft?.citationManifest,
             this.studyDepthSnapshot,
-            this.fidelityReport
+            this.fidelityReport,
+            this.contraScanReport
         );
     }
 
@@ -415,7 +430,8 @@ export class SermonEntity implements Sermon {
             }),
             this.citationManifest ?? this.wizardProgress?.draft?.citationManifest,
             this.studyDepthSnapshot,
-            this.fidelityReport
+            this.fidelityReport,
+            this.contraScanReport
         );
     }
 
@@ -446,7 +462,8 @@ export class SermonEntity implements Sermon {
             this.bibliography,
             this.citationManifest,
             this.studyDepthSnapshot,
-            this.fidelityReport
+            this.fidelityReport,
+            this.contraScanReport
         );
     }
 
@@ -477,7 +494,8 @@ export class SermonEntity implements Sermon {
             this.bibliography,
             this.citationManifest,
             this.studyDepthSnapshot,
-            this.fidelityReport
+            this.fidelityReport,
+            this.contraScanReport
         );
     }
 
@@ -508,7 +526,8 @@ export class SermonEntity implements Sermon {
             this.bibliography,
             this.citationManifest,
             this.studyDepthSnapshot,
-            this.fidelityReport
+            this.fidelityReport,
+            this.contraScanReport
         );
     }
 

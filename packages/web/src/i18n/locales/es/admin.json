@@ -446,6 +446,10 @@
                 "fidelity_pass": {
                     "label": "Pase de fidelidad",
                     "description": "Pase de fidelidad claim/fuente — segundo-pass LLM que evalúa cada marcador `[N]` del sermón generado y surface un panel de revisión en el editor (Fase 3, ADR-029). Requiere pastoral_fidelity_flow."
+                },
+                "contra_scan": {
+                    "label": "Contra-scan",
+                    "description": "Confrontación pre-publicación: surface fragmentos de la biblioteca que disienten de la idea central del sermón y exige al pastor considerar al menos uno antes de publicar (Fase 4, ADR-033, Hechos 20:27). Requiere pastoral_fidelity_flow."
                 }
             }
         },
