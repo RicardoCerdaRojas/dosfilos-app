@@ -108,6 +108,7 @@ export class VerifySermonCitationsUseCase {
         sourceFacultySessionId?: string;
         userId: string;
         citationManifest?: { entries?: Array<{ excerpt?: string; author?: string; title?: string }> };
+        wizardProgress?: { draft?: { citationManifest?: { entries?: Array<{ excerpt?: string; author?: string; title?: string }> } } };
     }): Promise<{ kind: 'paper' | 'faculty' | 'library' | null; text: string }> {
         const parts: string[] = [];
         let kind: 'paper' | 'faculty' | 'library' | null = null;
@@ -151,7 +152,13 @@ export class VerifySermonCitationsUseCase {
         // them to the corpus. This lets standalone wizard sermons (no paper /
         // Faculty) verify against their actual library sources instead of falsely
         // flagging every citation as invented.
-        const entries = sermon.citationManifest?.entries ?? [];
+        // Published sermons carry the manifest at the top level; an
+        // unpublished draft (verified pre-publish) carries it under
+        // wizardProgress.draft — check both.
+        const entries =
+            sermon.citationManifest?.entries ??
+            sermon.wizardProgress?.draft?.citationManifest?.entries ??
+            [];
         if (entries.length > 0) {
             for (const e of entries) {
                 if (e.excerpt) parts.push(e.excerpt);
