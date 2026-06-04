@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useContext, useState, useMemo } from 'react';
 import { BookOpen } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -6,6 +6,7 @@ import rehypeRaw from 'rehype-raw';
 import { cn } from '@/lib/utils';
 import { BiblePassageViewer } from '@/components/bible/BiblePassageViewer';
 import { LocalBibleService } from '@/services/LocalBibleService';
+import { CitationManifestContext, CitationMarker, wrapCitationMarkers } from '@/lib/citationMarkers';
 
 interface MarkdownRendererProps {
   content: string;
@@ -40,27 +41,42 @@ const BIBLE_REF_PATTERN = /(?:^|[^\wáéíóúñ])((?:[1-3]\s?)?(?:Génesis|Gene
 export function MarkdownRenderer({ content, className, enableBibleLinks = true }: MarkdownRendererProps) {
   const [selectedReference, setSelectedReference] = useState<string | null>(null);
 
+  // ADR-031 — when a sermon citation manifest is in context (provided by the
+  // editor / preview), inline `[N]` anchors render as a clickable popover with
+  // the chunk text + book + page. No manifest in context → no-op (other
+  // surfaces are unaffected).
+  const citationManifest = useContext(CitationManifestContext);
+  const hasCitations = Boolean(citationManifest && citationManifest.entries.length > 0);
+
   const textContent = typeof content === 'string' ? content : String(content ?? '');
 
   // Pre-process: convert Bible refs to markdown links so react-markdown
   // parses them as anchors. Skips refs already inside markdown link
   // syntax to avoid double-wrapping (idempotent across re-renders).
   const processed = useMemo(() => {
-    if (!enableBibleLinks || !textContent) return textContent;
-    return textContent.replace(BIBLE_REF_PATTERN, (match, ref, offset, source) => {
-      const before = source.slice(Math.max(0, offset - 10), offset);
-      const after = source.slice(offset + match.length, Math.min(source.length, offset + match.length + 20));
-      if (before.includes('[📖') || after.includes('](#bible-') || before.includes('#bible-')) {
-        return match;
-      }
-      const trimmed = ref.trim();
-      if (LocalBibleService.parseReference(trimmed) === null) {
-        return match;
-      }
-      const prefix = match.slice(0, match.length - ref.length);
-      return `${prefix}[📖 ${trimmed}](#bible-${encodeURIComponent(trimmed)})`;
-    });
-  }, [textContent, enableBibleLinks]);
+    let out = textContent;
+    if (enableBibleLinks && out) {
+      out = out.replace(BIBLE_REF_PATTERN, (match, ref, offset, source) => {
+        const before = source.slice(Math.max(0, offset - 10), offset);
+        const after = source.slice(offset + match.length, Math.min(source.length, offset + match.length + 20));
+        if (before.includes('[📖') || after.includes('](#bible-') || before.includes('#bible-')) {
+          return match;
+        }
+        const trimmed = ref.trim();
+        if (LocalBibleService.parseReference(trimmed) === null) {
+          return match;
+        }
+        const prefix = match.slice(0, match.length - ref.length);
+        return `${prefix}[📖 ${trimmed}](#bible-${encodeURIComponent(trimmed)})`;
+      });
+    }
+    // Wrap bare-ordinal citation markers into <span data-cite-id> so the
+    // span component below can hand them to <CitationMarker>.
+    if (hasCitations && out) {
+      out = wrapCitationMarkers(out);
+    }
+    return out;
+  }, [textContent, enableBibleLinks, hasCitations]);
 
   if (!textContent) {
     return <p className="text-muted-foreground text-sm">Sin contenido</p>;
@@ -90,6 +106,12 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
           components={{
+            span: ({ node, ...props }: any) => {
+              if (hasCitations && props['data-cite-id']) {
+                return <CitationMarker {...props} />;
+              }
+              return <span {...props} />;
+            },
             a: ({ node, ...props }: any) => {
               const href = props.href || '';
               if (href.startsWith('#bible-')) {

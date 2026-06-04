@@ -47,6 +47,7 @@ import {
 import { useTranslation } from '@/i18n';
 import { buildFullContent } from './draft/sermonContent';
 import { buildSermonCitationManifest } from './draft/buildSermonCitationManifest';
+import { CitationManifestContext } from '@/lib/citationMarkers';
 import { useDraftRefinement } from './draft/useDraftRefinement';
 import { useDraftVersions } from './draft/useDraftVersions';
 import { HomileticsSavedIndicator } from './homiletics/HomileticsLoadingScreen';
@@ -573,7 +574,11 @@ export function StepDraft() {
                 <DerivedContextBanner stepHintKey="draftHint" />
             </div>
 
-            {draft ? leftPanel : <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />}
+            {/* ADR-031 — provide the citation manifest so [N] anchors in the
+                editor render as verifiable popovers (chunk + book + page). */}
+            <CitationManifestContext.Provider value={draft?.citationManifest}>
+                {draft ? leftPanel : <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />}
+            </CitationManifestContext.Provider>
 
             <Dialog open={showPreview} onOpenChange={setShowPreview}>
                 <DialogContent className="!max-w-[95vw] !w-full sm:!w-[1200px] lg:!w-[1600px] h-[90vh] max-h-[90vh] flex flex-col p-0 overflow-hidden">
