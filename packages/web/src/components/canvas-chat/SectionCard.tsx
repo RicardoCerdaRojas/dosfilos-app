@@ -9,6 +9,18 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 import { BiblePassageViewer } from '@/components/bible/BiblePassageViewer';
 import { LocalBibleService } from '@/services/LocalBibleService';
 
+/**
+ * Strip a redundant leading field label from a value. The LLM occasionally
+ * repeats the section label inside the field value (e.g. an `authorityQuote`
+ * that begins with "**Cita de Autoridad:**"), which would render the label
+ * twice. Removes a single leading occurrence (with optional `**` / `:`).
+ */
+function stripLeadingFieldLabel(value: string, label: string): string {
+  if (!value || !label) return value;
+  const esc = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return value.replace(new RegExp(`^\\s*\\*{0,2}\\s*${esc}\\s*:?\\s*\\*{0,2}\\s*\\n*`, 'i'), '');
+}
+
 // Comprehensive pattern to match Bible references in Spanish
 const BIBLE_REF_PATTERN = /(?:^|[^\wáéíóúñ])((?:[1-3]\s?)?(?:Génesis|Genesis|Gén|Gen|Gn|Éxodo|Exodo|Éx|Ex|Levítico|Levitico|Lev|Lv|Números|Numeros|Núm|Num|Nm|Deuteronomio|Deut|Dt|Josué|Josue|Jos|Jueces|Jue|Jc|Rut|Rt|Samuel|Sam|S|Reyes|Rey|R|Crónicas|Cronicas|Cr|Esdras|Esd|Ezr|Nehemías|Nehemias|Neh|Ne|Ester|Est|Et|Job|Jb|Salmos?|Sal|Sl|Ps|Proverbios|Prov|Pr|Prv|Eclesiastés|Eclesiastes|Ecl|Ec|Cantares|Cantar|Cnt|Ct|Isaías|Isaias|Is|Isa|Jeremías|Jeremias|Jer|Jr|Lamentaciones|Lam|Lm|Ezequiel|Ezeq|Ez|Daniel|Dan|Dn|Oseas|Os|Joel|Jl|Amós|Amos|Am|Abdías|Abdias|Abd|Ab|Jonás|Jonas|Jon|Miqueas|Miq|Mi|Nahúm|Nahum|Nah|Na|Habacuc|Hab|Sofonías|Sofonias|Sof|Hageo|Hag|Zacarías|Zacarias|Zac|Zc|Malaquías|Malaquias|Mal|Mateo|Mat|Mt|Marcos|Mar|Mc|Mr|Lucas|Luc|Lc|Juan|Jn|Hechos|Hch|Hec|Romanos|Rom|Ro|Rm|Corintios|Cor|Co|Gálatas|Galatas|Gál|Gal|Ga|Efesios|Ef|Efe|Filipenses|Fil|Fp|Colosenses|Col|Tesalonicenses|Tes|Ts|Timoteo|Tim|Ti|Tito|Tit|Filemón|Filemon|Flm|Flmn|Hebreos|Heb|He|Santiago|Sant|Stg|Pedro|Ped|Pe|P|Judas|Jud|Apocalipsis|Apoc|Ap)\s*\d+[:.]\d+(?:[-–]\d+)?)/gi;
 
@@ -347,11 +359,14 @@ export function SectionCard({
                                   ))}
                                 </ul>
                               ) : typeof value === 'string' ? (
-                                // Use MarkdownRenderer for content, illustration, and other long text fields
+                                // Use MarkdownRenderer for content, illustration, and other long text fields.
+                                // The LLM sometimes repeats the field label inside the value
+                                // (e.g. authorityQuote starts with "Cita de Autoridad:") — strip it
+                                // so the label doesn't render twice.
                                 (key === 'content' || key === 'illustration' || key === 'significance' || value.length > 100) ? (
-                                  <MarkdownRenderer content={value} />
+                                  <MarkdownRenderer content={stripLeadingFieldLabel(value, translateFieldName(key))} />
                                 ) : (
-                                  renderTextWithBibleLinks(value)
+                                  renderTextWithBibleLinks(stripLeadingFieldLabel(value, translateFieldName(key)))
                                 )
                               ) : (
                                 JSON.stringify(value)
