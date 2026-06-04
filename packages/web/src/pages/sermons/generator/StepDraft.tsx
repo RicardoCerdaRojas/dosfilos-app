@@ -31,6 +31,8 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
 import { SermonBibliographySection } from '@/components/sermons/SermonBibliographySection';
 import { SermonCitationVerificationDialog } from '@/components/sermons/SermonCitationVerificationDialog';
+import { ContraScanModal } from '@/components/sermons/ContraScanModal';
+import { useSermonContraScan } from '@/hooks/useSermonContraScan';
 import { WorkflowPhase, CoachingStyle, formatPassageReference, aggregateRagSourcesFlat, type GenerationRules, type Sermon } from '@dosfilos/domain';
 import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
 import {
@@ -71,6 +73,10 @@ export function StepDraft() {
     const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
     const [verifying, setVerifying] = useState(false);
     const [verificationResult, setVerificationResult] = useState<VerifySermonCitationsOutput | null>(null);
+    // Phase 4 PR 1 (ADR-033) — contra-scan runs as the FIRST pre-publish gate
+    // here too (the wizard publishes via the copy path). Once it clears, the
+    // existing citation verifier runs. Flag off → onCleared fires immediately.
+    const contraScan = useSermonContraScan({ onCleared: () => runCitationVerifier() });
     const {
         messages,
         setMessages,
@@ -200,6 +206,16 @@ export function StepDraft() {
             toast.error(t('drafting.errors.noDraft'));
             return;
         }
+        // Contra-scan (P3, ADR-033) first. Flag off → calls onCleared
+        // (runCitationVerifier) directly, so the flow is unchanged. Central idea
+        // is the pastor's own seed thesis (AI-forbidden); fall back to title.
+        const centralIdea = draft.pastoralSeed?.centralIdea?.trim() || draft.title;
+        await contraScan.attempt(sermonId, centralIdea);
+    };
+
+    /** Pre-publish citation verifier (PR #218) — runs after contra-scan clears. */
+    const runCitationVerifier = async () => {
+        if (!draft || !user || !exegesis || !sermonId) return;
         setVerificationDialogOpen(true);
         setVerifying(true);
         setVerificationResult(null);
@@ -527,8 +543,8 @@ export function StepDraft() {
                     {t('drafting.saveAndExit')}
                 </Button>
 
-                <Button onClick={handlePublish} disabled={publishing || !sermonId} size="lg" className="flex-1">
-                    {publishing ? (
+                <Button onClick={handlePublish} disabled={publishing || contraScan.scanning || !sermonId} size="lg" className="flex-1">
+                    {publishing || contraScan.scanning ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             {t('drafting.publishing')}
@@ -616,6 +632,17 @@ export function StepDraft() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Pre-publish contra-scan confrontation gate (Phase 4 PR 1, ADR-033) */}
+            <ContraScanModal
+                open={contraScan.modalOpen}
+                onOpenChange={contraScan.setModalOpen}
+                dissentingChunks={contraScan.dissentingChunks}
+                publishing={contraScan.persisting}
+                onProceed={contraScan.confirmProceed}
+                onConsider={contraScan.confirmConsideration}
+                onOverride={contraScan.confirmOverride}
+            />
 
             {/* Pre-publish citation verification gate (PR #218) */}
             <SermonCitationVerificationDialog
