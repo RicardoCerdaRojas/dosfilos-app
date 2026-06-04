@@ -171,8 +171,13 @@ export const FEATURE_FLAG_NAMES = [
      * the sermon editor, and (later PRs) the pre-publish gate + plurality
      * + authority + attribution-footer validators (ADR-029). Requires
      * `pastoral_fidelity_flow` to also be on. Default off → blast radius 0
-     * until toggled. Flip to default on only after smoke with real pastors
-     * (Phase 3 closeout).
+     * until toggled.
+     *
+     * 🛑 DORMANT (ADR-032). Per ADR-030/031 the per-marker claim↔source pass is
+     * a PAPER feature, not a sermon feature; on the published sermon it also
+     * hits a content-shape mismatch (string content + top-level manifest). Keep
+     * this OFF — do NOT flip on for the sermon without revisiting ADR-032. The
+     * machinery relocates to the paper in Phase 7.
      */
     'fidelity_pass',
 ] as const;

@@ -119,6 +119,13 @@ interface EvaluateResult {
     authorityViolations: AuthorityViolationPayload[];
 }
 
+// 🛑 DORMANT (ADR-032). Gated by the `fidelity_pass` flag (default OFF). Per
+// ADR-030/031 the per-marker claim↔source pass belongs to the PAPER, not the
+// sermon. It also assumes STRUCTURED content (content.introduction/body[] +
+// content.citationManifest); the published sermon persists `content` as a
+// markdown STRING with the manifest at top level, so joinProse/extractClaims
+// find nothing. Do NOT wire this on for the sermon without revisiting ADR-032 —
+// the machinery relocates to the paper in Phase 7 (revival steps in the ADR).
 export const evaluateClaimSourceFidelity = onCall(
     {
         ...appCheckCallableOptions(),
