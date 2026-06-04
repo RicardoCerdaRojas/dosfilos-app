@@ -196,11 +196,15 @@ describe('buildSermonDraftPrompt — narrative + verifiable anchor citation cont
         expect(prompt).toContain('grounding'); // fidelity-to-text rule
     });
 
-    it('surfaces the source S-IDs + textual excerpt as the citation evidence', () => {
+    it('lists source identity (S-IDs + author/title) but NOT the verbatim excerpt (anti-recitation)', () => {
         const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules, undefined, manifest);
         expect(prompt).toContain('[S1]');
         expect(prompt).toContain('[S2]');
-        expect(prompt).toContain('La doctrina es el negocio del predicador.');
+        expect(prompt).toContain('Subukjian');
         expect(prompt).toContain('ragSources');
+        // The verbatim copyrighted excerpt must NOT be fed to the model
+        // (it trips Gemini's RECITATION filter); it lives in the manifest/popover.
+        expect(prompt).not.toContain('La doctrina es el negocio del predicador.');
+        expect(prompt).toContain('PROHIBIDO reproducir texto');
     });
 });

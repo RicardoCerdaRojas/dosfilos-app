@@ -251,19 +251,23 @@ export function buildSermonDraftPrompt(
  */
 function buildCitationContractBlock(manifest?: CitationManifest): string {
   if (!manifest || manifest.entries.length === 0) return '';
+  // IMPORTANT: we deliberately DO NOT include the verbatim source excerpt
+  // here. Feeding long copyrighted passages into the prompt makes Gemini
+  // reproduce them and trips its RECITATION safety filter (blocks the whole
+  // sermon). The model only needs the source identity to attribute it
+  // narratively; the exact quote + page live in the citation manifest (popover)
+  // and the post-generation anchor injector grounds the attribution.
   const sourceList = manifest.entries
     .map((e) => {
       const author = e.author?.trim() ? ` — ${e.author}` : '';
       const page = e.page?.trim() ? ` (p. ${e.page})` : '';
-      const excerpt = e.excerpt?.trim() ? `\n     Cita: "${e.excerpt}"` : '';
-      return `  [${e.sourceId}] ${e.title}${author}${page}${excerpt}`;
+      return `  [${e.sourceId}] ${e.title}${author}${page}`;
     })
     .join('\n');
   return `
 ═══ FUENTES DISPONIBLES PARA CITAR (CONTRATO DE CITACIÓN) ═══
 A continuación va la lista CERRADA de fuentes en las que puedes apoyarte en
-este sermón. Cada fuente tiene un ID estable (S1, S2, …) y trae su cita
-textual entre comillas — esa es la ÚNICA evidencia de lo que dice la fuente.
+este sermón. Cada fuente tiene un ID estable (S1, S2, …) con su autor y obra.
 
 ${sourceList}
 
@@ -292,14 +296,16 @@ REGLAS DE CITACIÓN (OBLIGATORIAS — el servidor valida y descarta lo que no cu
    cita — jamás fuerces una cita irrelevante.
 
 4. **NUNCA inventes una cita**: solo puedes usar los IDs listados arriba.
-   PROHIBIDO inventar \`S99\`/\`Otro\`/\`Wallace\`, atribuir a una fuente algo
-   que su cita textual NO dice, o citar un autor/obra que no esté en la lista.
-   Una cita inventada en el púlpito destruye la credibilidad. Ante la duda, no
-   cites.
+   PROHIBIDO inventar \`S99\`/\`Otro\`/\`Wallace\` o citar un autor/obra que no
+   esté en la lista. Una cita inventada en el púlpito destruye la credibilidad.
+   Ante la duda, no cites.
 
-5. **Fidelidad al texto (grounding)**: tu atribución narrativa debe ser una
-   representación FIEL de la cita textual de la fuente que anclas. No
-   tergiverses ni amplíes lo que la fuente realmente dice.
+5. **Parafrasea SIEMPRE con tus propias palabras — PROHIBIDO reproducir texto
+   verbatim de las fuentes (grounding)**: atribuye la IDEA de la fuente
+   redactada por ti ("Como enseña MacArthur, el contentamiento nace de Cristo"),
+   NUNCA copies frases textuales de la obra. Reproducir prosa con copyright
+   palabra-por-palabra hace que el sistema bloquee el sermón. Sé fiel a la idea
+   sin transcribir.
 
 6. **\`ragSources\` debe reflejar lo que anclaste**: por cada \`[Sn]\` que uses
    en la prosa, incluye una entrada en \`ragSources\` con \`"sourceId": "Sn"\`

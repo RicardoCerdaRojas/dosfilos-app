@@ -224,26 +224,40 @@ export class GeminiSermonGenerator implements ISermonGenerator {
         manifest?: CitationManifest,
     ): Promise<SermonContent> {
         try {
-            const prompt = buildSermonDraftPrompt(analysis, rules, language, manifest);
-            const model = this.getModel({
-                fileSearchStoreId: _config?.fileSearchStoreId,
-                temperature: _config?.temperature,
-                modelName: _config?.aiModel,
-                responseMimeType: 'application/json',
-                // A full sermon JSON (intro 200-400w + 3-5 body points
-                // 600-900w each + conclusion 250-450w + callToAction +
-                // ragSources + scriptureReferences/illustration/quote
-                // sub-fields) easily clears 12-15k tokens. The default
-                // 8192 budget truncates the JSON mid-array, the parser
-                // falls back to `body: []` + `conclusion: ''`, and the
-                // pastor sees an empty sermon. 24k gives generous
-                // headroom while staying well under Flash 2.5's 32k cap.
-                maxOutputTokens: 24576,
-            });
-            const content = prompt;
-            const result = await model.generateContent(content);
-            const response = result.response;
-            const text = response.text();
+            // A full sermon JSON (intro 200-400w + 3-5 body points 600-900w
+            // each + conclusion + callToAction + ragSources) easily clears
+            // 12-15k tokens; 24k headroom avoids mid-array truncation while
+            // staying under Flash 2.5's 32k cap.
+            const attempt = async (mf: CitationManifest | undefined, useFileSearch: boolean): Promise<string> => {
+                const prompt = buildSermonDraftPrompt(analysis, rules, language, mf);
+                const model = this.getModel({
+                    fileSearchStoreId: useFileSearch ? _config?.fileSearchStoreId : undefined,
+                    temperature: _config?.temperature,
+                    modelName: _config?.aiModel,
+                    responseMimeType: 'application/json',
+                    maxOutputTokens: 24576,
+                });
+                const result = await model.generateContent(prompt);
+                return result.response.text();
+            };
+
+            let text: string;
+            try {
+                text = await attempt(manifest, true);
+            } catch (err: any) {
+                // RECITATION: Gemini blocked the candidate for reproducing
+                // copyrighted source text. Retry once WITHOUT the citation
+                // contract (no source list) and WITHOUT the File Search Store,
+                // so no copyrighted prose is fed to the model. The post-gen
+                // anchor injector (application layer) still adds the citations
+                // from the manifest, so the sermon stays cited.
+                if (this.isRecitationError(err)) {
+                    console.warn('[generateSermonDraft] RECITATION block — retrying without citation contract + File Search');
+                    text = await attempt(undefined, false);
+                } else {
+                    throw err;
+                }
+            }
             const parsed = JSON.parse(this.cleanJsonResponse(text));
             // Warn when the model returned a structurally-incomplete
             // sermon so we surface truncation / schema regressions in
@@ -722,6 +736,14 @@ REGLAS:
         if (errorMessage.includes('API_KEY')) return new Error('API key de Gemini inválida');
         if (errorMessage.includes('quota')) return new Error('Límite de cuota excedido');
         return new Error(`Error en generación de sermón: ${errorMessage}`);
+    }
+
+    /** Gemini blocks the candidate (finishReason RECITATION) when the output
+     *  reproduces copyrighted training/source text. Detect it so the caller can
+     *  retry with a recitation-safe prompt. */
+    private isRecitationError(error: any): boolean {
+        const msg = (error?.message || error?.toString() || '') as string;
+        return /RECITATION/i.test(msg);
     }
 
     async generateHomileticsPreview(
