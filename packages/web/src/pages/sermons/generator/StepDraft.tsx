@@ -138,6 +138,11 @@ export function StepDraft() {
                 query: homiletics.homileticalProposition,
                 userId: user?.uid,
             });
+            // [ADR-031 diag] temporary — confirm what reaches generation.
+            console.log('[sermon citations] StepDraft', {
+                prebuiltEntries: citationManifest?.entries.length ?? 'undefined',
+                legacyLibraryDocIds: (draftConfig as any)?.libraryDocIds?.length ?? 'none',
+            });
 
             const { draft: result } = await sermonGeneratorService.generateSermonDraft(
                 homiletics,

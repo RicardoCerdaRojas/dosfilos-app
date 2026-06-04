@@ -72,11 +72,22 @@ export async function buildSermonCitationManifest(opts: {
         retrieve({ query: opts.query, stores: [FileSearchStoreContext.HOMILETICS], topK }),
     ]);
 
+    // [ADR-031 diag] temporary — remove after root-causing empty citations.
+    console.log('[sermon citations] retrieved', {
+        query: opts.query?.slice(0, 60),
+        userId: opts.userId?.slice(0, 8),
+        personal: personal.length,
+        core: core.length,
+        personalTitles: personal.slice(0, 3).map((c) => c.resourceTitle),
+        coreTitles: core.slice(0, 3).map((c) => c.resourceTitle),
+    });
+
     const selected = selectSermonCitationChunks(
         personal.map(toCitationChunk),
         core.map(toCitationChunk),
         { maxChunks: 10 },
     );
+    console.log('[sermon citations] selected', selected.length, '→ manifest', selected.length === 0 ? 'undefined (fallback to legacy)' : `${selected.length} entries`);
     if (selected.length === 0) return undefined;
     return buildCitationManifest(selected);
 }
