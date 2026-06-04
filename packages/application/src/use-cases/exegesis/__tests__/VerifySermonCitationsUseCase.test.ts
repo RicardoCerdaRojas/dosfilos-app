@@ -239,6 +239,31 @@ More.`,
         expect(result.citations[0]!.status).not.toBe('not-found');
     });
 
+    it('reads the manifest from wizardProgress.draft when not yet published (pre-publish)', async () => {
+        const excerpt = 'La vida cristiana es una vida de dependencia constante de Dios y su gracia.';
+        const sermon = stubSermon({
+            // no top-level citationManifest yet (unpublished draft)
+            wizardProgress: {
+                draft: {
+                    title: 'Dependencia',
+                    introduction: 'Intro',
+                    body: [{ point: 'I', content: `"${excerpt}" — *Charles Ryrie, Teología Básica*` }],
+                    conclusion: 'C',
+                    citationManifest: {
+                        version: '1',
+                        entries: [
+                            { sourceId: 'S1', resourceId: 'r1', chunkId: 'c1', title: 'Teología Básica', author: 'Charles Ryrie', page: '5', excerpt },
+                        ],
+                    },
+                },
+            },
+        } as any);
+        const useCase = new VerifySermonCitationsUseCase(stubSermonRepo(sermon), stubPaperRepo(null), stubChatRepo(null));
+        const result = await useCase.execute({ ownerId: 'user-1', sermonId: 'sermon-1' });
+        expect(result.sourceKind).toBe('library'); // draft manifest found → not null/unavailable
+        expect(result.citations[0]!.status).not.toBe('not-found');
+    });
+
     it('still flags a quote absent from the manifest (real invented citation)', async () => {
         const sermon = stubSermon({
             citationManifest: {
