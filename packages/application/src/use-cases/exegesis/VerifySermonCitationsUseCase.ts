@@ -64,7 +64,7 @@ export interface VerifySermonCitationsOutput {
      * an "unavailable" notice rather than treating zero citations as
      * a clean bill of health.
      */
-    sourceKind: 'paper' | 'faculty' | null;
+    sourceKind: 'paper' | 'faculty' | 'library' | null;
     /** Number of source-corpus characters checked against. */
     sourceCorpusLength: number;
     citations: VerifiedSermonCitation[];
@@ -107,48 +107,61 @@ export class VerifySermonCitationsUseCase {
         sourcePaperId?: string;
         sourceFacultySessionId?: string;
         userId: string;
-    }): Promise<{ kind: 'paper' | 'faculty' | null; text: string }> {
+        citationManifest?: { entries?: Array<{ excerpt?: string; author?: string; title?: string }> };
+    }): Promise<{ kind: 'paper' | 'faculty' | 'library' | null; text: string }> {
+        const parts: string[] = [];
+        let kind: 'paper' | 'faculty' | 'library' | null = null;
+
         if (sermon.sourcePaperId) {
+            kind = 'paper';
             const paper = await this.paperRepository.getPaper(sermon.userId, sermon.sourcePaperId);
-            if (!paper) {
-                return { kind: 'paper', text: '' };
-            }
-            const parts: string[] = [];
-            if (paper.assembledMarkdown) parts.push(paper.assembledMarkdown);
-            // Each project source contributes its curated excerpts +
-            // its display label. The display label catches "as Owen
-            // wrote in his commentary on Hebrews" — if Owen's commentary
-            // is in the paper's sources, the author surname is present.
-            for (const source of paper.sources ?? []) {
-                if (source.displayLabel) parts.push(source.displayLabel);
-                if (source.citationKey) parts.push(source.citationKey);
-                const excerpts = (source as any).excerpts;
-                if (Array.isArray(excerpts)) {
-                    for (const ex of excerpts) {
-                        if (ex?.text) parts.push(ex.text);
+            if (paper) {
+                if (paper.assembledMarkdown) parts.push(paper.assembledMarkdown);
+                // Each project source contributes its curated excerpts + its
+                // display label. The label catches "as Owen wrote in his
+                // commentary on Hebrews" — if Owen's commentary is a source,
+                // the author surname is present.
+                for (const source of paper.sources ?? []) {
+                    if (source.displayLabel) parts.push(source.displayLabel);
+                    if (source.citationKey) parts.push(source.citationKey);
+                    const excerpts = (source as any).excerpts;
+                    if (Array.isArray(excerpts)) {
+                        for (const ex of excerpts) {
+                            if (ex?.text) parts.push(ex.text);
+                        }
                     }
                 }
             }
-            return { kind: 'paper', text: parts.join('\n\n') };
-        }
-
-        if (sermon.sourceFacultySessionId) {
+        } else if (sermon.sourceFacultySessionId) {
+            kind = 'faculty';
             const session = await this.chatRepository.getSession(
                 sermon.userId,
                 sermon.sourceFacultySessionId,
             );
-            if (!session) {
-                return { kind: 'faculty', text: '' };
+            if (session) {
+                const messages = (session.messages ?? []) as Array<{ content?: string }>;
+                for (const m of messages) {
+                    if (m?.content) parts.push(m.content);
+                }
             }
-            const messages = (session.messages ?? []) as Array<{ content?: string }>;
-            const text = messages
-                .map((m) => m?.content ?? '')
-                .filter(Boolean)
-                .join('\n\n');
-            return { kind: 'faculty', text };
         }
 
-        return { kind: null, text: '' };
+        // ADR-031: library-backed citations live in the citation manifest. Their
+        // verbatim excerpts + author + title ARE real source material, so add
+        // them to the corpus. This lets standalone wizard sermons (no paper /
+        // Faculty) verify against their actual library sources instead of falsely
+        // flagging every citation as invented.
+        const entries = sermon.citationManifest?.entries ?? [];
+        if (entries.length > 0) {
+            for (const e of entries) {
+                if (e.excerpt) parts.push(e.excerpt);
+                if (e.author) parts.push(e.author);
+                if (e.title) parts.push(e.title);
+            }
+            if (!kind) kind = 'library';
+        }
+
+        return { kind, text: parts.join('\n\n') };
     }
 
     private resolveSermonMarkdown(sermon: {
