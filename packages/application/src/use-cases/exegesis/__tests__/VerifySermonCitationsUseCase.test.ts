@@ -237,6 +237,24 @@ More.`,
         // quote came verbatim from the manifest excerpt → not a false "invented" flag
         expect(result.citations).toHaveLength(1);
         expect(result.citations[0]!.status).not.toBe('not-found');
+        expect(result.hasLibraryManifest).toBe(true);
+    });
+
+    it('reports hasLibraryManifest even for a paper-derived sermon (narrative anchors, no false "no citations")', async () => {
+        const sermon = stubSermon({
+            sourcePaperId: 'paper-1',
+            citationManifest: {
+                version: '1',
+                entries: [{ sourceId: 'S1', resourceId: 'r1', chunkId: 'c1', title: 'Comentario', author: 'Autor', page: '10', excerpt: 'algo' }],
+            },
+            wizardProgress: { draft: { title: 'T', introduction: 'Exposición sin comillas.', body: [{ point: 'I', content: 'Cuerpo.' }], conclusion: 'C' } },
+        } as any);
+        const paper = { assembledMarkdown: 'Paper content.', sources: [] };
+        const useCase = new VerifySermonCitationsUseCase(stubSermonRepo(sermon), stubPaperRepo(paper), stubChatRepo(null));
+        const result = await useCase.execute({ ownerId: 'user-1', sermonId: 'sermon-1' });
+        expect(result.sourceKind).toBe('paper'); // paper takes the kind
+        expect(result.hasLibraryManifest).toBe(true); // but manifest present → UI shows narrative-citations message, not "no citations"
+        expect(result.citations).toHaveLength(0); // no pull-quotes
     });
 
     it('reads the manifest from wizardProgress.draft when not yet published (pre-publish)', async () => {

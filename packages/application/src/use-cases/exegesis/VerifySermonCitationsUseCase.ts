@@ -67,6 +67,13 @@ export interface VerifySermonCitationsOutput {
     sourceKind: 'paper' | 'faculty' | 'library' | null;
     /** Number of source-corpus characters checked against. */
     sourceCorpusLength: number;
+    /**
+     * True when the sermon carries a library citation manifest (ADR-031
+     * narrative anchors), regardless of whether it is also paper/Faculty
+     * derived. The UI uses this to show "narrative citations anchored to your
+     * library" instead of falsely claiming the sermon has no citations.
+     */
+    hasLibraryManifest: boolean;
     citations: VerifiedSermonCitation[];
 }
 
@@ -99,6 +106,7 @@ export class VerifySermonCitationsUseCase {
         return {
             sourceKind: sourceCorpus.kind,
             sourceCorpusLength: sourceCorpus.text.length,
+            hasLibraryManifest: sourceCorpus.hasManifest,
             citations: verified,
         };
     }
@@ -109,7 +117,7 @@ export class VerifySermonCitationsUseCase {
         userId: string;
         citationManifest?: { entries?: Array<{ excerpt?: string; author?: string; title?: string }> };
         wizardProgress?: { draft?: { citationManifest?: { entries?: Array<{ excerpt?: string; author?: string; title?: string }> } } };
-    }): Promise<{ kind: 'paper' | 'faculty' | 'library' | null; text: string }> {
+    }): Promise<{ kind: 'paper' | 'faculty' | 'library' | null; text: string; hasManifest: boolean }> {
         const parts: string[] = [];
         let kind: 'paper' | 'faculty' | 'library' | null = null;
 
@@ -168,7 +176,7 @@ export class VerifySermonCitationsUseCase {
             if (!kind) kind = 'library';
         }
 
-        return { kind, text: parts.join('\n\n') };
+        return { kind, text: parts.join('\n\n'), hasManifest: entries.length > 0 };
     }
 
     private resolveSermonMarkdown(sermon: {

@@ -63,11 +63,12 @@ export function SermonCitationVerificationDialog({
     );
     const allClean = !!result && result.citations.length > 0 && !hasIssues;
     const sourceUnavailable = !!result && result.sourceKind === null;
-    // ADR-031: a library-backed sermon whose citations are NARRATIVE
-    // attributions (anchored to the manifest, no verbatim pull-quotes) parses
-    // to zero quote-citations. That is not "no citations" — they are verifiable
-    // via the inline anchors, so show a tailored, accurate message.
-    const libraryNarrative = !!result && result.sourceKind === 'library' && result.citations.length === 0;
+    // ADR-031: a sermon whose citations are NARRATIVE attributions (anchored to
+    // the library manifest, no verbatim pull-quotes) parses to zero
+    // quote-citations. That is not "no citations" — they are verifiable via the
+    // inline anchors. Keyed on the manifest (not sourceKind) so paper/Faculty-
+    // derived sermons with narrative anchors also get the accurate message.
+    const libraryNarrative = !!result && result.hasLibraryManifest && result.citations.length === 0;
     const noCitations = !!result && result.citations.length === 0 && !libraryNarrative;
 
     // Pre-verification state (StepDraft mounts the dialog with
