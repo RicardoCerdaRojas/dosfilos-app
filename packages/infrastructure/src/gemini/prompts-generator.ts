@@ -234,11 +234,17 @@ export function buildSermonDraftPrompt(
 }
 
 /**
- * Phase B citation contract block. Tells the LLM the EXACT set of source
- * IDs it may cite, the marker syntax (`[S1]`), and the matching
- * `ragSources` schema. The server post-processes with `validateCitations`
- * to strip anything that drifts off-contract, so this prompt is
- * authoritative — anything not listed here will be silently dropped.
+ * Citation contract block for the sermon draft. Tells the LLM the EXACT set
+ * of source IDs it may use and that it must attribute them NARRATIVELY in
+ * the prose (07-citation-policy §4 / ADR-030) — sermons cite pastorally
+ * ("Como resume la Confesión…"), NOT with `[Sn]` footnote markers (those
+ * are paper-only). The S-IDs live solely in the `ragSources` JSON field,
+ * which feeds the bibliography + legal attributions; `validateCitations`
+ * still drops any `ragSources` entry whose `sourceId` is off-contract.
+ *
+ * Per ADR-030 the per-marker claim↔source fidelity pass is a paper/study
+ * feature, not a sermon feature, so the sermon prose deliberately carries
+ * no inline citation markers.
  *
  * Returns '' when the manifest is empty so the prompt stays clean for
  * sermons generated without retrieval context (manual flow, no library).
@@ -255,34 +261,43 @@ function buildCitationContractBlock(manifest?: CitationManifest): string {
     .join('\n');
   return `
 ═══ FUENTES DISPONIBLES PARA CITAR (CONTRATO DE CITACIÓN) ═══
-A continuación va la lista CERRADA de fuentes que puedes citar en este
-sermón. Cada fuente tiene un ID estable (S1, S2, …). Usa SIEMPRE el ID
-exacto cuando te apoyes en el contenido de la fuente.
+A continuación va la lista CERRADA de fuentes en las que puedes apoyarte en
+este sermón. Cada fuente tiene un ID estable (S1, S2, …) que usarás SOLO en
+el campo \`ragSources\` del JSON (alimenta la bibliografía y las atribuciones
+legales del export), NUNCA en la prosa del sermón.
 
 ${sourceList}
 
 REGLAS DE CITACIÓN (OBLIGATORIAS — el servidor valida y descarta lo que no cumpla):
 
-1. **Marcadores en línea**: cada vez que afirmes algo apoyado en una de
-   estas fuentes, agrega el marcador \`[Sn]\` al final de la oración (o de
-   la cláusula afectada). Ejemplo: "El aoristo aquí denota una acción
-   completa en el pasado [S2]."
-2. **Multi-cita**: si una oración sintetiza dos o más fuentes, agrupa los
-   IDs separados por coma dentro de UN solo par de corchetes:
-   \`[S1, S3]\`. NO uses \`[S1][S3]\`.
-3. **IDs válidos únicamente**: SOLO puedes usar los IDs listados arriba.
-   NUNCA inventes \`[S99]\`, \`[Otro]\`, \`[Wallace]\`, etc. El servidor
-   borra cualquier marcador con ID desconocido.
-4. **\`ragSources\` debe coincidir**: por cada \`[Sn]\` que uses en la
-   prosa, incluye una entrada en \`ragSources\` con el campo
-   \`"sourceId": "Sn"\` EXACTO (mismo string del contrato). El servidor
-   descarta entradas con \`sourceId\` faltante o desconocido.
-5. **Cobertura**: úsalas SOLO cuando el contenido del sermón realmente se
-   apoye en la fuente. No es obligatorio usar todas; es obligatorio que
-   toda cita esté respaldada por una de estas fuentes.
-6. **Citas bíblicas NO usan este contrato**: las referencias bíblicas
-   siguen el formato existente (\`[📖 Juan 1:1](#bible-juan-1-1)\`),
-   nunca \`[Sn]\`.
+1. **Atribución NARRATIVA (estilo sermón, NO académico)**: cuando te apoyes
+   en una de estas fuentes, atribúyela TEJIDA EN LA PROSA, nombrando la
+   fuente con naturalidad pastoral. El sermón se predica en voz alta: la
+   atribución debe sonar natural dicha desde el púlpito. Ejemplos:
+   - "Como resume la Confesión de Westminster, Dios quiso dejar su
+     revelación por escrito…"
+   - "Como observa Schreiner en su comentario sobre este pasaje, el verbo
+     aquí denota una acción decisiva…"
+   - "El pastor Subukjian lo expresa bien: la Escritura no nace de la
+     voluntad humana sino del Espíritu."
+2. **PROHIBIDO usar marcadores de nota al pie en la prosa**: NUNCA escribas
+   \`[S1]\`, \`[1]\`, footnotes, superíndices ni corchetes de cita en el
+   cuerpo del sermón. Eso es estilo de paper académico, no de sermón
+   predicado. (Las referencias bíblicas SÍ usan su formato propio
+   \`[📖 Juan 1:1](#bible-juan-1-1)\`.)
+3. **IDs válidos únicamente en \`ragSources\`**: en el campo \`ragSources\`
+   del JSON usa SOLO los IDs listados arriba (S1, S2, …). NUNCA inventes
+   \`S99\`, \`Otro\`, \`Wallace\`, etc.
+4. **\`ragSources\` debe reflejar lo que atribuiste**: por cada fuente que
+   cites narrativamente en la prosa, incluye una entrada en \`ragSources\`
+   con el campo \`"sourceId": "Sn"\` EXACTO (mismo string del contrato).
+   Esto alimenta la bibliografía y las atribuciones legales del export. El
+   servidor descarta entradas con \`sourceId\` faltante o desconocido.
+5. **Cobertura**: apóyate en estas fuentes SOLO cuando el contenido del
+   sermón realmente lo amerite. No es obligatorio usar todas; es obligatorio
+   que toda afirmación atribuida esté respaldada por una de estas fuentes.
+6. **Honestidad**: NUNCA atribuyas a una fuente algo que no dice. Si dudas
+   de que la fuente respalde la afirmación, no la atribuyas.
 
 ═══════════════════════════════════════════════════════════════════
 

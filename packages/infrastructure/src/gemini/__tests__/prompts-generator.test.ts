@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildSermonDraftPrompt } from '../prompts-generator';
-import type { HomileticalAnalysis, GenerationRules } from '@dosfilos/domain';
+import type { HomileticalAnalysis, GenerationRules, CitationManifest } from '@dosfilos/domain';
 
 const baseAnalysis: HomileticalAnalysis = {
     exegeticalStudy: {
@@ -164,5 +164,37 @@ describe('buildSermonDraftPrompt — project context preservation (T3 #16 Fase 2
         expect(paperIdx).toBeGreaterThan(projectIdx);
         expect(facultyIdx).toBeGreaterThan(paperIdx);
         expect(fase3Idx).toBeGreaterThan(facultyIdx);
+    });
+});
+
+describe('buildSermonDraftPrompt — narrative citation contract (ADR-030)', () => {
+    const manifest: CitationManifest = {
+        entries: [
+            { sourceId: 'S1', title: 'Volvamos a la predicación Bíblica', author: 'Subukjian', page: '102' },
+            { sourceId: 'S2', title: 'Comentario de 2 Pedro', author: 'Schreiner' },
+        ],
+    } as CitationManifest;
+
+    it('omits the citation contract block when the manifest is empty', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules, undefined, {
+            entries: [],
+        } as CitationManifest);
+        expect(prompt).not.toContain('FUENTES DISPONIBLES PARA CITAR');
+    });
+
+    it('instructs NARRATIVE attribution, not footnote markers (ADR-030)', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules, undefined, manifest);
+        expect(prompt).toContain('FUENTES DISPONIBLES PARA CITAR');
+        expect(prompt).toContain('Atribución NARRATIVA');
+        // The sermon prose must NOT be told to emit [Sn] footnote markers.
+        expect(prompt).not.toContain('Marcadores en línea');
+        expect(prompt).toContain('PROHIBIDO usar marcadores de nota al pie en la prosa');
+    });
+
+    it('keeps the S-IDs in the contract so ragSources can reference them (manifest/attribution survive)', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules, undefined, manifest);
+        expect(prompt).toContain('[S1]');
+        expect(prompt).toContain('[S2]');
+        expect(prompt).toContain('ragSources');
     });
 });
