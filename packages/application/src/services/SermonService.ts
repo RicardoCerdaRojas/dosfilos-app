@@ -5,8 +5,11 @@ import {
     Sermon,
     evaluatePublishGate,
     FidelityGateError,
+    evaluateContraScanGate,
+    ContraScanGateError,
     type GateOverride,
     type PublishOverrideInput,
+    type ContraScanReport,
 } from '@dosfilos/domain';
 import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 
@@ -151,14 +154,48 @@ export class SermonService {
             if (!sermon) {
                 throw new Error('Sermón no encontrado');
             }
+            this.enforceContraScanGate(sermon);
             await this.enforceFidelityGate(sermon, override);
             const publishedSermon = sermon.publish();
             return await this.sermonRepository.update(publishedSermon);
         } catch (error: any) {
-            // Preserve the typed gate refusal so the UI can map `reason` to
-            // the right confrontation copy (Phase 3 PR 2, ADR-029).
+            // Preserve the typed gate refusals so the UI can map `reason` to
+            // the right confrontation copy (Phase 3 PR 2 ADR-029 / Phase 4 PR 1 ADR-033).
             if (error instanceof FidelityGateError) throw error;
+            if (error instanceof ContraScanGateError) throw error;
             throw new Error(error.message || 'Error al publicar el sermón');
+        }
+    }
+
+    /**
+     * Phase 4 PR 1 (ADR-033) — Persists the contra-scan confrontation result.
+     * The web flow runs the scan, records the pastor's consideration (or
+     * override), and calls this before `publishSermon`. The report is the
+     * permanent P3 audit trail; `publishSermon` then re-reads it and refuses
+     * a still-unresolved soft-block (defense-in-depth, mirrors the fidelity
+     * gate). With the `contra_scan` flag off no report is ever written, so
+     * publish behaves exactly as before (blast radius 0).
+     */
+    async recordContraScan(sermonId: string, report: ContraScanReport): Promise<void> {
+        try {
+            await this.sermonRepository.updateContraScanReport(sermonId, report);
+        } catch (error: any) {
+            throw new Error(error.message || 'Error al registrar la revisión de posiciones contrarias');
+        }
+    }
+
+    /**
+     * Phase 4 PR 1 (ADR-033) — Refuses publish when a contra-scan surfaced
+     * dissent the pastor never engaged. Bites only when a `contraScanReport`
+     * is present (flag on + scan ran). `no-dissent`/`pass` proceed; an
+     * unresolved `soft-block` throws so the UI flow cannot be bypassed.
+     */
+    private enforceContraScanGate(sermon: SermonEntity): void {
+        const report = sermon.contraScanReport;
+        if (!report) return;
+        const decision = evaluateContraScanGate(report.status);
+        if (!decision.allowed) {
+            throw new ContraScanGateError(decision.reason);
         }
     }
 

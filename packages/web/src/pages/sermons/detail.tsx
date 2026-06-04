@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useSermon, useDeleteSermon, useArchiveSermon } from '@/hooks/use-sermons';
 import { useSermonPublishGate } from '@/hooks/useSermonPublishGate';
+import { useSermonContraScan } from '@/hooks/useSermonContraScan';
 import { useState, useEffect } from 'react';
 import { exportService, sermonService, seriesService } from '@dosfilos/application';
 import { SermonSeriesEntity, PreachingLog } from '@dosfilos/domain';
@@ -48,6 +49,7 @@ import { SermonAttributionsSection } from '@/components/sermons/SermonAttributio
 import { PastoralSeedAuditPanel } from '@/components/sermons/PastoralSeedAuditPanel';
 import { FidelityReviewPanel } from '@/components/sermons/FidelityReviewPanel';
 import { PrePublishFidelityModal } from '@/components/sermons/PrePublishFidelityModal';
+import { ContraScanModal } from '@/components/sermons/ContraScanModal';
 import { useTranslation } from 'react-i18next';
 import { ShareSermonDialog } from './components/detail/ShareSermonDialog';
 import { LogPreachingDialog } from './components/detail/LogPreachingDialog';
@@ -68,7 +70,13 @@ export function SermonDetailPage() {
   const { deleteSermon, loading: deleting } = useDeleteSermon();
   const { archiveSermon, loading: archiving } = useArchiveSermon();
   const publishGate = useSermonPublishGate({ onPublished: () => mutate() });
-  const publishing = publishGate.preparing || publishGate.publishing;
+  // Phase 4 PR 1 (ADR-033) — contra-scan wraps publish as the first
+  // confrontation: once it clears, the fidelity publish gate runs.
+  const contraScan = useSermonContraScan({
+    onCleared: (sermonId) => publishGate.attemptPublish(sermonId, sermon?.fidelityReport),
+  });
+  const publishing =
+    publishGate.preparing || publishGate.publishing || contraScan.scanning || contraScan.persisting;
   const fidelityPanelRef = useRef<HTMLDivElement>(null);
 
   // Sidebar control
@@ -164,7 +172,15 @@ export function SermonDetailPage() {
 
   const handlePublish = async () => {
     if (!id || !sermon) return;
-    await publishGate.attemptPublish(id, sermon.fidelityReport);
+    // Contra-scan (P3, ADR-033) runs first. With the `contra_scan` flag off it
+    // calls onCleared directly, so this stays equivalent to the prior flow. The
+    // central idea is the pastor's own (AI-forbidden) seed thesis; fall back to
+    // the title when a sermon predates the structured seed.
+    const centralIdea =
+      sermon.wizardProgress?.draft?.pastoralSeed?.centralIdea?.trim() ||
+      sermon.wizardProgress?.draft?.title?.trim() ||
+      sermon.title;
+    await contraScan.attempt(id, centralIdea);
   };
 
   const handleReviewMarkers = () => {
@@ -601,6 +617,16 @@ export function SermonDetailPage() {
         publishing={publishGate.publishing}
         onConfirmOverride={(reason) => id && publishGate.confirmOverride(id, reason)}
         onReviewMarkers={handleReviewMarkers}
+      />
+
+      <ContraScanModal
+        open={contraScan.modalOpen}
+        onOpenChange={contraScan.setModalOpen}
+        dissentingChunks={contraScan.dissentingChunks}
+        publishing={contraScan.persisting || publishGate.preparing || publishGate.publishing}
+        onProceed={contraScan.confirmProceed}
+        onConsider={contraScan.confirmConsideration}
+        onOverride={contraScan.confirmOverride}
       />
     </div>
   );

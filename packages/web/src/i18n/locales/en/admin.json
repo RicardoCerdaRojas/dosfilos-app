@@ -446,6 +446,10 @@
                 "fidelity_pass": {
                     "label": "Fidelity pass",
                     "description": "Claim/source fidelity pass — second-pass LLM that scores every `[N]` marker in a generated sermon and surfaces a review panel in the editor (Phase 3, ADR-029). Requires pastoral_fidelity_flow."
+                },
+                "contra_scan": {
+                    "label": "Contra-scan",
+                    "description": "Pre-publish confrontation: surfaces library chunks that dissent from the sermon's central idea and requires the pastor to consider at least one before publishing (Phase 4, ADR-033, Acts 20:27). Requires pastoral_fidelity_flow."
                 }
             }
         },

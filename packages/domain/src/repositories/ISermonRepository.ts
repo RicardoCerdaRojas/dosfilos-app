@@ -1,5 +1,6 @@
 import { SermonEntity } from '../entities/Sermon';
 import type { FidelityReport } from '../entities/FidelityReport';
+import type { ContraScanReport } from '../entities/ContraScanReport';
 
 export interface ISermonRepository {
     create(sermon: SermonEntity): Promise<SermonEntity>;
@@ -35,6 +36,13 @@ export interface ISermonRepository {
      * the rest of the sermon.
      */
     updateFidelityReport(sermonId: string, report: FidelityReport): Promise<void>;
+    /**
+     * Phase 4 PR 1 (ADR-033) — Focused write for the contra-scan
+     * confrontation result. Mirrors `updateFidelityReport`: patches the
+     * single embedded `contraScanReport` field without re-validating the
+     * rest of the sermon. The permanent P3 audit trail.
+     */
+    updateContraScanReport(sermonId: string, report: ContraScanReport): Promise<void>;
 }
 
 export interface FindOptions {

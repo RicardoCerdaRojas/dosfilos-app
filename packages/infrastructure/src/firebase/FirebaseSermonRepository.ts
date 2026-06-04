@@ -18,6 +18,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ISermonRepository, FindOptions } from '@dosfilos/domain';
 import { SermonEntity } from '@dosfilos/domain';
 import type { FidelityReport, FidelityVerdict, GateOverride } from '@dosfilos/domain';
+import type { ContraScanReport, DissentingChunk } from '@dosfilos/domain';
 import { db } from '../config/firebase';
 
 export class FirebaseSermonRepository implements ISermonRepository {
@@ -272,6 +273,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
             citationManifest: sermon.citationManifest ?? null,
             studyDepthSnapshot: sermon.studyDepthSnapshot ?? null,
             fidelityReport: sermon.fidelityReport ? this.fidelityReportToFirestore(sermon.fidelityReport) : null,
+            contraScanReport: sermon.contraScanReport ? this.contraScanReportToFirestore(sermon.contraScanReport) : null,
         };
     }
 
@@ -281,6 +283,96 @@ export class FirebaseSermonRepository implements ISermonRepository {
             fidelityReport: this.fidelityReportToFirestore(report),
             updatedAt: serverTimestamp(),
         });
+    }
+
+    async updateContraScanReport(sermonId: string, report: ContraScanReport): Promise<void> {
+        const sermonRef = doc(db, this.collectionName, sermonId);
+        await updateDoc(sermonRef, {
+            contraScanReport: this.contraScanReportToFirestore(report),
+            updatedAt: serverTimestamp(),
+        });
+    }
+
+    private contraScanReportToFirestore(report: ContraScanReport): any {
+        return {
+            centralIdea: report.centralIdea,
+            scannedAt: Timestamp.fromDate(report.scannedAt),
+            status: report.status,
+            dissentingChunks: report.dissentingChunks.map((c) => ({
+                chunkId: c.chunkId,
+                resourceId: c.resourceId,
+                resourceTitle: c.resourceTitle,
+                resourceAuthor: c.resourceAuthor,
+                excerpt: c.excerpt,
+                tension: c.tension,
+                score: c.score,
+                fromPersonalLibrary: c.fromPersonalLibrary,
+                ...(c.page !== undefined ? { page: c.page } : {}),
+            })),
+            ...(report.consideration
+                ? {
+                    consideration: {
+                        chunkId: report.consideration.chunkId,
+                        note: report.consideration.note,
+                        consideredAt: Timestamp.fromDate(report.consideration.consideredAt),
+                    },
+                }
+                : {}),
+            ...(report.override
+                ? {
+                    override: {
+                        reason: report.override.reason,
+                        overriddenAt: Timestamp.fromDate(report.override.overriddenAt),
+                        overriddenBy: report.override.overriddenBy,
+                    },
+                }
+                : {}),
+        };
+    }
+
+    private contraScanReportFromFirestore(raw: any): ContraScanReport | undefined {
+        if (!raw || typeof raw !== 'object') return undefined;
+        const dissentingChunks: DissentingChunk[] = Array.isArray(raw.dissentingChunks)
+            ? raw.dissentingChunks.map((c: any) => ({
+                chunkId: String(c.chunkId ?? ''),
+                resourceId: String(c.resourceId ?? ''),
+                resourceTitle: String(c.resourceTitle ?? ''),
+                resourceAuthor: String(c.resourceAuthor ?? ''),
+                excerpt: String(c.excerpt ?? ''),
+                tension: String(c.tension ?? ''),
+                score: Number(c.score ?? 0),
+                fromPersonalLibrary: Boolean(c.fromPersonalLibrary),
+                ...(c.page !== undefined ? { page: Number(c.page) } : {}),
+            }))
+            : [];
+        return {
+            centralIdea: String(raw.centralIdea ?? ''),
+            scannedAt: raw.scannedAt?.toDate?.() ?? raw.scannedAt ?? new Date(),
+            status: raw.status,
+            dissentingChunks,
+            ...(raw.consideration
+                ? {
+                    consideration: {
+                        chunkId: String(raw.consideration.chunkId ?? ''),
+                        note: String(raw.consideration.note ?? ''),
+                        consideredAt:
+                            raw.consideration.consideredAt?.toDate?.()
+                            ?? raw.consideration.consideredAt
+                            ?? new Date(),
+                    },
+                }
+                : {}),
+            ...(raw.override
+                ? {
+                    override: {
+                        reason: String(raw.override.reason ?? ''),
+                        overriddenAt:
+                            raw.override.overriddenAt?.toDate?.() ?? raw.override.overriddenAt ?? new Date(),
+                        overriddenBy: String(raw.override.overriddenBy ?? ''),
+                    },
+                }
+                : {}),
+        };
     }
 
     private fidelityReportToFirestore(report: FidelityReport): any {
@@ -428,6 +520,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
                 }
                 : undefined,
             fidelityReport: this.fidelityReportFromFirestore(d.fidelityReport),
+            contraScanReport: this.contraScanReportFromFirestore(d.contraScanReport),
         });
     }
 }

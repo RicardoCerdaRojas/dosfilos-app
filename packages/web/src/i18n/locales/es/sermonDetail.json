@@ -196,6 +196,42 @@
             "contradicts": "Contradice"
         }
     },
+    "contraScan": {
+        "cancel": "Volver",
+        "publish": "Publicar",
+        "publishing": "Publicando…",
+        "page": "p. {{page}}",
+        "coreBadge": "Biblioteca base",
+        "noDissent": {
+            "title": "No encontramos posiciones contrarias",
+            "description": "Revisamos tu biblioteca buscando voces que disientan de tu idea central y no hallamos ninguna.",
+            "invite": "Considera sumar fuentes que representen otras tradiciones fieles. Confrontar la mejor objeción hace tu predicación más sólida — y aquí nunca inventamos una posición contraria que no esté en un recurso real."
+        },
+        "dissent": {
+            "title": "Antes de publicar: escucha el consejo completo",
+            "description": "Tu biblioteca contiene {{count}} posición(es) que tensionan tu idea central. Considera al menos una antes de subir al púlpito (Hechos 20:27)."
+        },
+        "note": {
+            "label": "¿Cómo respondes a esta objeción desde el texto?",
+            "placeholder": "Escribe tu reflexión (mínimo {{min}} caracteres). No la escribimos por ti.",
+            "counter": "{{count}}/{{min}} caracteres"
+        },
+        "consider": {
+            "publish": "Registrar consideración y publicar"
+        },
+        "override": {
+            "toggle": "No puedo abordar esto ahora",
+            "back": "Volver a considerar",
+            "label": "Justifica por qué publicas sin registrar una consideración",
+            "placeholder": "Explica tu decisión (mínimo {{min}} caracteres). Queda registrada.",
+            "counter": "{{count}}/{{min}} caracteres",
+            "publish": "Publicar de todos modos"
+        },
+        "toast": {
+            "error": "No pudimos registrar la revisión. Intenta de nuevo.",
+            "gateError": "Debes considerar una posición contraria o justificar tu decisión antes de publicar."
+        }
+    },
     "fidelityGate": {
         "preparing": "Revisando fidelidad…",
         "softTitle": "Revisa antes de publicar",

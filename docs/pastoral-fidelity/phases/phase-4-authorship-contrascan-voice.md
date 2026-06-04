@@ -2,7 +2,7 @@
 
 ## Estado
 
-`planning` — placeholder. Detalle se completa al cierre de Fase 3.
+`in-progress` — PR 1 (contra-scan, sub-feature 2) en curso. ADR-033 emitido. Sub-features 1 (autoría verbatim) y 3 (voice fingerprint) siguen `planning`.
 
 ## Objetivo
 
@@ -117,6 +117,21 @@ Recomendación tentativa: empezar con few-shot, evaluar.
 
 ## Bitácora
 
+- **2026-06-04 (PR 1 contra-scan — ADR-033, decoupled del gate dormido)** — Arranque de Fase 4 por la
+  sub-feature 2 (contra-scan, P3 Hch 20:27). **Tensión resuelta vía ADR-033**: el prereq del 2026-06-03
+  mandaba "extender `evaluatePublishGate`, no duplicar" — pero ADR-030/031/032 (emitidos esta sesión, post-cierre
+  Fase 3) dejaron el fidelity pass **dormido en el sermón** (se reubica al paper, Fase 7). Extenderlo despertaría
+  maquinaria recién apagada. Decisión: contra-scan es **paso de confrontación independiente** con reporte/gate/modal/hook
+  propios (`ContraScanReport`, `evaluateContraScanGate`, `ContraScanModal`, `useContraScanGate`), reusando el **patrón**
+  (gate puro + override audit `GateOverride`) y la **infra de recuperación de ADR-031** (`retrieveChunks` core extraído,
+  prioridad personal→CORE), NO la instancia de fidelidad. Sub-flag propio `contra_scan` (bajo `pastoral_fidelity_flow`),
+  default off. **3 decisiones de producto del fundador (2026-06-04)**: (1) step propio pre-publish vivo siempre, no
+  atado a `fidelity_pass`; (2) soft con nota obligatoria ≥100 chars + override audit-logged (no hard-block); (3)
+  biblioteca sin disenso → pasa + invita a sumar fuentes (NO cae a CORE para no traer disenso ajeno al marco). Cierra
+  las preguntas Q1 (gate compartido vs secuencial → independiente) y Q2 (reusa evaluator batcheado → callable propio
+  `findDissentingChunks` con `ILlmClient`). Q3 (studyDepthSnapshot modula threshold) y verbatim/voice quedan para PRs
+  siguientes. La fila "extender `evaluatePublishGate`" de la tabla de dependencias queda matizada: se extiende el
+  **patrón**, no la instancia.
 - **2026-06-03 (prereqs actualizados al cerrar Fase 3)** — Fase 3 cerrada (5 PRs #287/#289/#290/#298/#300,
   ADR-029). Prereq duro "Fase 3 completa" satisfecho. Dependencias satisfechas que Fase 4 consume: `FidelityReport`
   schema composable (extender con `authorshipReport?`/`contraScanReport?`), publish gate puro `evaluatePublishGate`

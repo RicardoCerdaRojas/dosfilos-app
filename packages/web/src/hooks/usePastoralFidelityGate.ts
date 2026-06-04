@@ -64,6 +64,22 @@ export function useFidelityPassGate(): { enabled: boolean; loading: boolean } {
     };
 }
 
+/**
+ * Phase 4 PR 1 sub-gate: pastor needs BOTH `pastoral_fidelity_flow` (parent)
+ * AND `contra_scan` (sub-flag) for the contra-scan pre-publish confrontation
+ * (ADR-033) — surfacing dissenting library chunks before publish. Default off
+ * → blast radius 0. Independent of `fidelity_pass` (dormant per ADR-032): this
+ * is the active P3 confrontation on the sermon.
+ */
+export function useContraScanGate(): { enabled: boolean; loading: boolean } {
+    const parent = useFeatureFlag('pastoral_fidelity_flow');
+    const sub = useFeatureFlag('contra_scan');
+    return {
+        enabled: parent.enabled && sub.enabled,
+        loading: parent.loading || sub.loading,
+    };
+}
+
 export type PastoralFidelityGateReason =
     | 'loading'
     | 'flag-disabled'

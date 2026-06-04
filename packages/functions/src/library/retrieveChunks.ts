@@ -320,7 +320,7 @@ async function resolveStoreKeysFromCorpusIds(
     }
 }
 
-async function embedQuery(text: string, apiKey: string): Promise<number[]> {
+export async function embedQuery(text: string, apiKey: string): Promise<number[]> {
     const url = `https://generativelanguage.googleapis.com/v1beta/${EMBEDDING_MODEL}:embedContent?key=${apiKey}`;
     const body = {
         model: EMBEDDING_MODEL,
