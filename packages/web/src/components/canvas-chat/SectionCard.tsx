@@ -320,7 +320,15 @@ export function SectionCard({
             items.map((item, i) => {
               // If item is an object, render it as a card with key-value pairs
               if (typeof item === 'object' && item !== null) {
-                const sortedEntries = sortObjectEntries(Object.entries(item));
+                const sortedEntries = sortObjectEntries(Object.entries(item))
+                  // Skip empty fields (e.g. authorityQuote: null) so they don't
+                  // render as "Cita de Autoridad: null" or a bare label.
+                  .filter(([, value]) =>
+                    value !== null &&
+                    value !== undefined &&
+                    !(typeof value === 'string' && value.trim() === '') &&
+                    !(Array.isArray(value) && value.length === 0),
+                  );
                 return (
                   <Card key={i} className="p-3 bg-muted/30">
                     <div className="space-y-1">
