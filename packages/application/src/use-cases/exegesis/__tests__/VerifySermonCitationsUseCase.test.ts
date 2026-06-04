@@ -209,4 +209,55 @@ More.`,
         expect(result.citations).toHaveLength(1);
         expect(result.citations[0]!.status).toBe('not-found');
     });
+
+    it('verifies library-backed citations against the citationManifest (ADR-031)', async () => {
+        const excerpt = 'El creyente halla su fortaleza en la provision de Cristo para toda situacion.';
+        const sermon = stubSermon({
+            // standalone: no paper / Faculty origin, but library-backed via manifest
+            citationManifest: {
+                version: '1',
+                entries: [
+                    { sourceId: 'S1', resourceId: 'r1', chunkId: 'c1', title: 'La Predicación', author: 'John MacArthur', page: '120', excerpt },
+                ],
+            },
+            wizardProgress: {
+                draft: {
+                    title: 'Fortaleza',
+                    introduction: 'Intro',
+                    body: [{ point: 'Punto I', content: `"${excerpt}" — *John MacArthur, La Predicación*` }],
+                    conclusion: 'Conclusion',
+                },
+            },
+        } as any);
+        const useCase = new VerifySermonCitationsUseCase(stubSermonRepo(sermon), stubPaperRepo(null), stubChatRepo(null));
+        const result = await useCase.execute({ ownerId: 'user-1', sermonId: 'sermon-1' });
+        // manifest present → corpus is the library, NOT null (no false "unavailable")
+        expect(result.sourceKind).toBe('library');
+        expect(result.sourceCorpusLength).toBeGreaterThan(0);
+        // quote came verbatim from the manifest excerpt → not a false "invented" flag
+        expect(result.citations).toHaveLength(1);
+        expect(result.citations[0]!.status).not.toBe('not-found');
+    });
+
+    it('still flags a quote absent from the manifest (real invented citation)', async () => {
+        const sermon = stubSermon({
+            citationManifest: {
+                version: '1',
+                entries: [
+                    { sourceId: 'S1', resourceId: 'r1', chunkId: 'c1', title: 'La Predicación', author: 'John MacArthur', page: '120', excerpt: 'Algo totalmente distinto sobre homiletica.' },
+                ],
+            },
+            wizardProgress: {
+                draft: {
+                    title: 'T', introduction: 'Intro',
+                    body: [{ point: 'I', content: `"Una cita inventada que no aparece en ninguna fuente real." — *Autor Falso, Libro Imaginario*` }],
+                    conclusion: 'C',
+                },
+            },
+        } as any);
+        const useCase = new VerifySermonCitationsUseCase(stubSermonRepo(sermon), stubPaperRepo(null), stubChatRepo(null));
+        const result = await useCase.execute({ ownerId: 'user-1', sermonId: 'sermon-1' });
+        expect(result.sourceKind).toBe('library'); // manifest present → not null
+        expect(result.citations[0]!.status).toBe('not-found'); // genuinely invented → still caught
+    });
 });
