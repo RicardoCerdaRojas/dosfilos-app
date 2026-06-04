@@ -62,8 +62,13 @@ export function SermonCitationVerificationDialog({
         (c) => c.status === 'not-found' || c.status === 'fuzzy-low',
     );
     const allClean = !!result && result.citations.length > 0 && !hasIssues;
-    const noCitations = !!result && result.citations.length === 0;
     const sourceUnavailable = !!result && result.sourceKind === null;
+    // ADR-031: a library-backed sermon whose citations are NARRATIVE
+    // attributions (anchored to the manifest, no verbatim pull-quotes) parses
+    // to zero quote-citations. That is not "no citations" — they are verifiable
+    // via the inline anchors, so show a tailored, accurate message.
+    const libraryNarrative = !!result && result.sourceKind === 'library' && result.citations.length === 0;
+    const noCitations = !!result && result.citations.length === 0 && !libraryNarrative;
 
     // Pre-verification state (StepDraft mounts the dialog with
     // result=null while loading=false until "Publicar" is clicked).
@@ -94,7 +99,9 @@ export function SermonCitationVerificationDialog({
                         ) : (
                             <>
                                 <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                                {t('citationVerification.titleClean')}
+                                {libraryNarrative
+                                    ? t('citationVerification.titleLibraryNarrative')
+                                    : t('citationVerification.titleClean')}
                             </>
                         )}
                     </AlertDialogTitle>
@@ -103,11 +110,13 @@ export function SermonCitationVerificationDialog({
                             ? t('citationVerification.descVerifying')
                             : sourceUnavailable
                                 ? t('citationVerification.descUnavailable')
-                                : noCitations
-                                    ? t('citationVerification.descNoCitations')
-                                    : hasIssues
-                                        ? t('citationVerification.descIssues', { count: countIssues(result!.citations) })
-                                        : t('citationVerification.descClean', { count: result!.citations.length })}
+                                : libraryNarrative
+                                    ? t('citationVerification.descLibraryNarrative')
+                                    : noCitations
+                                        ? t('citationVerification.descNoCitations')
+                                        : hasIssues
+                                            ? t('citationVerification.descIssues', { count: countIssues(result!.citations) })
+                                            : t('citationVerification.descClean', { count: result!.citations.length })}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
