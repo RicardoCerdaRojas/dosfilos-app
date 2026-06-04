@@ -254,6 +254,10 @@ export class SermonService {
                 throw new Error('Borrador no encontrado');
             }
 
+            // Contra-scan gate (Phase 4 PR 1, ADR-033). The wizard publishes via
+            // this copy path too; the report was persisted on the draft before
+            // this call, so re-read enforces it.
+            this.enforceContraScanGate(draft);
             // Fidelity gate (Phase 3 PR 2, ADR-029). The wizard publishes via
             // this copy path; the override + audit attach to the draft's report.
             await this.enforceFidelityGate(draft, override);
@@ -281,6 +285,7 @@ export class SermonService {
             return createdCopy;
         } catch (error: any) {
             if (error instanceof FidelityGateError) throw error;
+            if (error instanceof ContraScanGateError) throw error;
             throw new Error(error.message || 'Error al publicar el sermón');
         }
     }
