@@ -454,6 +454,17 @@ Tracking interno (no pastor-facing):
 
 ## Bitácora
 
+- **2026-06-04 (fix nudge↔mecánica D7 Confrontación — hallazgo smoke #5)** — El nudge de D7
+  (`studyDepth.json` `dimensionNudges.D7_confrontacion`) decía "Considera al menos una postura
+  contraria y desmantélala con el texto" — sonaba a *escribir/pensar* algo, pero `computeD7`
+  (`StudyDepthAssessment.ts`) sube el score SOLO por artefactos de confrontación reales:
+  `seed.timelessPrinciple.verificationReport` (verificar el principio) + `seed.witnessReview`
+  (completar la Validación de tres testigos). Mismatch copy↔mecánica: el pastor podía "considerar"
+  una postura sin mover el puntaje. Fix: reword del nudge (es+en) para nombrar la ACCIÓN que registra
+  D7 — *"verifica tu principio atemporal y completa la validación de testigos para registrarlo"* —
+  manteniendo el goal pedagógico (P3, Hch 20:27). Solo copy; la mecánica (enriquecida con
+  argumentative-engagement / contra-scan en Fase 4) no cambia.
+
 - **2026-05-29 (cierre Fase 2.5 — protocolo PHASE_CLOSEOUT)** — Fase declarada `complete`. 19 PRs
   mergeados a main (#267–#285) + deployed. Smoke end-to-end confirmado por fundador en prod tras
   cadena de fix-PRs derivados del smoke. Tests verde 499/499 (web 62 + domain 325 + application 61
