@@ -10,8 +10,31 @@
 - **PR 5** (attribution footer) — ✅ MERGEADO #300 (2026-06-03), merge commit `3aefc7a8`.
   CI verde (Build / Lint+TypeCheck / Run Tests). **Cierra Fase 3.**
 
-**Smoke manual pendiente** (no bloquea cierre, consistente con patrón de la fase): export con
-SBLGNT → página "Atribuciones". Se ejecuta al flip del flag `fidelity_pass` (default off hoy, Q10).
+**Smoke prod ejecutado 2026-06-03 — FLIP BLOQUEADO.** El smoke encontró que el fidelity pass no
+surface verdicts sobre sermones generados por el flujo principal (estudio→genera) porque el modelo
+omite los marcadores `[Sn]` inline. Ver § "Hallazgos del smoke (2026-06-03)" abajo. **No flipear
+`fidelity_pass` a default-on hasta resolver el hallazgo #1.** Fase 3 queda `complete` en código, NO
+validada en prod.
+
+## Hallazgos del smoke (2026-06-03)
+
+Smoke en prod + dev (founder). El código de los 5 PRs está bien; el smoke expuso gaps de
+**emisión de citas** y **convergencia de generación**, no de la lógica de fidelity en sí.
+
+| # | Sev | Hallazgo | Evidencia |
+|---|-----|----------|-----------|
+| **1** | 🟠 flip-blocker | **Emisión de markers inline poco confiable.** El generador instruye `[Sn]` + `ragSources`; el modelo a veces llena `ragSources` (→ "Fuentes consultadas") **sin** anclar `[Sn]` en la prosa. `validateCitations` renumera los markers que existen pero NO inserta los que faltan → sermón con bibliografía pero **0 citas inline** → fidelity no tiene qué evaluar. Afecta **todos los paths** (depende de adherencia del modelo, no del path). NO es mismatch de formato: `validateCitations` maneja `[Sn]` y `[n]` y normaliza a numérico. | `SermonGeneratorService.ts:268` (validateCitations condicional a manifest no vacío); `prompts-generator.ts:267`; sermón real con 4 fuentes → "no tiene marcadores de cita" |
+| **2** | 🟠 | **Sprawl de generación de sermón** (deuda de convergencia). 4-5 entradas con outputs distintos; solo algunas fidelity-evaluables. "Nuevo material → Tipo Sermón" en Proyectos crea un `ProjectOutput` freeform (markdown), NO un `Sermon` real (sin detalle, sin manifest, sin fidelity) — colisión de naming. | `ProjectMaterialList.tsx` (`source:'sermon'` vs `source:'output'`); entradas: wizard standalone, planner "Generar desde paper", Faculty "Bosquejo de sermón", project material |
+| **3** | 🟠 bug | **Crash al abrir paper** de serie (stub sin `steps`): `Cannot read properties of undefined (reading 'length')`. Fix defensive aplicado (guard `paper.steps ?? []`); va en su propio PR. | `ExegesisPaperPage.tsx:620` |
+| **4** | 🟡 | **Corpus de serie no se hereda**: serie con "CORPUS BASE: Sin fuentes" → papers sin corpus → sermones sin citas de biblioteca → fidelity sin markers por falta de fuentes. | Planner / series config |
+| **5** | 🟡 UX | **Nudge ↔ mecánica desalineados** (Fase 2.5): el gate pre-gen dice "Confrontación: considera una postura contraria y desmantélala con el texto" (suena a escribir), pero el score D7 sube SOLO por `witnessReview`/`verificationReport` (correr Validación). Copy implica acción distinta a la que mueve el puntaje. | `StudyDepthAssessment.ts` computeD7; `studyDepth.json:61` |
+| **6** | 🟡 | **"Verificación no disponible"** en sermones standalone (sin paper/Faculty): no corre verificación de citas, solo aviso manual. | StepDraft pre-publish |
+| **7** | ⚪ decisión | **No flipear `fidelity_pass`** hasta resolver #1. | — |
+
+**Pregunta clave del smoke (cerrada por code-trace)**: ¿el path paper/Faculty produce markers numéricos?
+→ **Sí, el mismo `validateCitations` corre en todos los paths con manifest no vacío.** La variable es si el
+modelo emite `[Sn]` inline, no el path. Fidelity NO está roto estructuralmente — necesita emisión confiable
+de markers inline.
 
 Prereqs actualizados al cerrar Fase 2.5 (2026-05-29). Lista de dependencias
 satisfechas + no satisfechas + preguntas emergentes + riesgos cross-fase abajo.
