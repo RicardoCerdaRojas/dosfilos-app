@@ -1,5 +1,18 @@
-import type { DocumentChunkData } from '../entities/DocumentChunk';
 import type { CitationManifest, CitationManifestEntry } from '../entities/SermonGenerator';
+
+/**
+ * Minimal chunk shape the manifest builder needs. Decoupled from
+ * `DocumentChunkData` so retrieval payloads (where `page` may be a string,
+ * e.g. "Q&A 1") feed it directly — the builder stringifies `page` anyway.
+ */
+export interface CitationSourceChunk {
+    id: string;
+    resourceId: string;
+    resourceTitle: string;
+    resourceAuthor?: string;
+    text: string;
+    metadata?: { page?: string | number };
+}
 
 export interface CitationRightsSnapshot {
     license?: string;
@@ -37,7 +50,7 @@ export interface BuildCitationManifestOptions {
  * Firestore doc bloats.
  */
 export function buildCitationManifest(
-    chunks: Array<Pick<DocumentChunkData, 'id' | 'resourceId' | 'resourceTitle' | 'resourceAuthor' | 'text' | 'metadata'>>,
+    chunks: Array<CitationSourceChunk>,
     options: BuildCitationManifestOptions = {},
 ): CitationManifest {
     const maxEntries = options.maxEntries ?? 10;

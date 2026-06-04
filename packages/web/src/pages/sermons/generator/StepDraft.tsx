@@ -46,6 +46,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useTranslation } from '@/i18n';
 import { buildFullContent } from './draft/sermonContent';
+import { buildSermonCitationManifest } from './draft/buildSermonCitationManifest';
+import { CitationManifestContext } from '@/lib/citationMarkers';
 import { useDraftRefinement } from './draft/useDraftRefinement';
 import { useDraftVersions } from './draft/useDraftVersions';
 import { HomileticsSavedIndicator } from './homiletics/HomileticsLoadingScreen';
@@ -127,12 +129,23 @@ export function StepDraft() {
             // is the pastor's confirmed output).
             const rulesWithContext = await augmentRulesWithPastoralSeed(withProject, sermonId);
 
+            // ADR-031 — build the citation manifest from the pastor's personal
+            // library (priority) + CORE homiletics (fallback) via retrieveChunks,
+            // so the sermon cites narratively with a verifiable anchor (chunk +
+            // book + page). Best-effort: on failure the manifest is undefined and
+            // generateSermonDraft falls back to its legacy personal-only build.
+            const citationManifest = await buildSermonCitationManifest({
+                query: homiletics.homileticalProposition,
+                userId: user?.uid,
+            });
+
             const { draft: result } = await sermonGeneratorService.generateSermonDraft(
                 homiletics,
                 rulesWithContext,
                 draftConfig,
                 user?.uid,
                 activeLanguage,
+                citationManifest,
             );
 
             // Post-generation verbatim check: the prompt instructs the
@@ -561,7 +574,11 @@ export function StepDraft() {
                 <DerivedContextBanner stepHintKey="draftHint" />
             </div>
 
-            {draft ? leftPanel : <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />}
+            {/* ADR-031 — provide the citation manifest so [N] anchors in the
+                editor render as verifiable popovers (chunk + book + page). */}
+            <CitationManifestContext.Provider value={draft?.citationManifest}>
+                {draft ? leftPanel : <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />}
+            </CitationManifestContext.Provider>
 
             <Dialog open={showPreview} onOpenChange={setShowPreview}>
                 <DialogContent className="!max-w-[95vw] !w-full sm:!w-[1200px] lg:!w-[1600px] h-[90vh] max-h-[90vh] flex flex-col p-0 overflow-hidden">

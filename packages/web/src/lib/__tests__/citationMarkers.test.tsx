@@ -101,6 +101,34 @@ describe('CitationMarker (rendered via markdown pipeline)', () => {
         expect(buttons[2]?.textContent).toBe('3');
     });
 
+    it('surfaces the PRECISE citation in the popover: book + page + exact chunk text (ADR-031)', () => {
+        const mf: CitationManifest = {
+            version: '1',
+            entries: [{
+                sourceId: 'S1',
+                resourceId: 'r1',
+                chunkId: 'c1',
+                title: 'Volvamos a la predicación Bíblica',
+                author: 'Donald R. Subukjian',
+                page: '102',
+                excerpt: 'La doctrina es el negocio principal del predicador.',
+            }],
+        };
+        const { container } = render_('Como enseña Subukjian [1].', mf);
+        // The narrative prose remains.
+        expect(container.textContent).toContain('Como enseña Subukjian');
+        // The anchor is a clickable element labelled with the book.
+        const trigger = container.querySelector('button[aria-label^="Ver fuente"]');
+        expect(trigger).not.toBeNull();
+        // The popover content carries the verifiable, precise citation:
+        expect(container.textContent).toContain('Volvamos a la predicación Bíblica'); // book
+        expect(container.textContent).toContain('Donald R. Subukjian');               // author
+        expect(container.textContent).toContain('102');                                // page
+        expect(container.textContent).toContain(
+            'La doctrina es el negocio principal del predicador.',                      // exact chunk text
+        );
+    });
+
     it('falls back to plain [N] text when manifest is missing', () => {
         const { container } = render_('Cite [1] here.', undefined);
         expect(container.textContent).toContain('[1]');

@@ -30,7 +30,10 @@ export function buildFullContent(draft: SermonDraft | null, t: TFunction): strin
             let pointContent = `## ${point.point}\n<br/>\n${point.content}`;
 
             if (point.scriptureReferences && point.scriptureReferences.length > 0) {
-                pointContent += `\n<br/>\n### ${t('drafting.fullContent.crossReferences')}\n${point.scriptureReferences.map((ref) => `- ${ref}`).join('\n')}`;
+                // Each generated ref carries a leading "> " blockquote prefix.
+                // Inside a markdown list item that ">" renders as a literal
+                // character, so strip it — the bullet IS the visual marker.
+                pointContent += `\n<br/>\n### ${t('drafting.fullContent.crossReferences')}\n${point.scriptureReferences.map((ref) => `- ${ref.replace(/^\s*>\s*/, '')}`).join('\n')}`;
             }
 
             if (point.illustration) {

@@ -1,4 +1,4 @@
-import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent, DEFAULT_LANGUAGE, buildCitationManifest, validateCitations, type CitationManifest } from '@dosfilos/domain';
+import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent, DEFAULT_LANGUAGE, buildCitationManifest, validateCitations, stripSermonCitationMarkers, injectNarrativeCitationAnchors, type CitationManifest } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 import { GeminiSermonGenerator, DocumentProcessingService } from '@dosfilos/infrastructure';
 
@@ -222,6 +222,13 @@ export class SermonGeneratorService {
         config?: ExtendedPhaseConfiguration,
         userId?: string,
         language: SupportedLanguage = DEFAULT_LANGUAGE,
+        /**
+         * ADR-031: when the caller (web) has already retrieved citation chunks
+         * from personal + CORE via `retrieveChunks` and built the manifest
+         * (personal-priority selection), it passes it here. Takes precedence
+         * over the legacy internal `buildDraftManifest` (personal-only).
+         */
+        prebuiltManifest?: CitationManifest,
     ): Promise<{ draft: SermonContent; cacheName?: string }> {
         // Use homiletical proposition as search query
         const searchQuery = analysis.homileticalProposition;
@@ -250,11 +257,12 @@ export class SermonGeneratorService {
             ? { ...hydratedConfig, fileSearchStoreId }
             : { ...defaultConfig, fileSearchStoreId };
 
-        // Phase B: build the citation manifest from the same library
-        // chunks the prompt is about to consume. The contract gets
-        // injected into the prompt; `validateCitations` strips any
-        // marker / ragSources entry the LLM emits that doesn't match.
-        const manifest = await this.buildDraftManifest(config, searchQuery);
+        // Phase B / ADR-031: prefer the web-built manifest (personal + CORE
+        // via retrieveChunks, personal-priority). Fall back to the legacy
+        // personal-only internal build when none was passed (back-compat).
+        // The contract gets injected into the prompt; `validateCitations`
+        // strips any marker / ragSources entry the LLM emits that doesn't match.
+        const manifest = prebuiltManifest ?? await this.buildDraftManifest(config, searchQuery);
 
         const rawDraft = await this.generator.generateSermonDraft(analysis, rules, finalConfig, language, manifest);
 
@@ -265,7 +273,13 @@ export class SermonGeneratorService {
         // returned content so engineering can audit drop rates after
         // the fact without re-running generation.
         if (manifest && manifest.entries.length > 0) {
-            const validated = validateCitations(rawDraft, manifest);
+            // ADR-031: the LLM attributes sources narratively but does NOT
+            // reliably emit the inline `[Sn]` anchor the verifiable popover
+            // needs (confirmed at runtime: ragSources present, zero markers).
+            // Inject the anchor deterministically where the prose names the
+            // source, BEFORE validateCitations maps `[Sn]` → `[n]`.
+            const anchored = injectNarrativeCitationAnchors(rawDraft, manifest);
+            const validated = validateCitations(anchored, manifest);
             if (validated.stats.markersDropped > 0 || validated.stats.droppedEntries.length > 0) {
                 console.warn('[generateSermonDraft] citation validator dropped content', {
                     markersDropped: validated.stats.markersDropped,
@@ -273,15 +287,19 @@ export class SermonGeneratorService {
                     surfaces: validated.stats.surfaces,
                 });
             }
+            // ADR-030: the sermon cites narratively; strip any inline citation
+            // marker the model leaked (e.g. `[cite: S3]`) so the pulpit prose
+            // stays clean. Bibliography + attribution come from the manifest,
+            // not from prose markers, so they are unaffected.
             return {
                 draft: {
-                    ...validated.content,
+                    ...stripSermonCitationMarkers(validated.content),
                     citationValidation: validated.stats,
                 },
             };
         }
 
-        return { draft: rawDraft };
+        return { draft: stripSermonCitationMarkers(rawDraft) };
     }
 
     /**
