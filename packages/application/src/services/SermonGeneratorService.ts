@@ -1,4 +1,4 @@
-import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent, DEFAULT_LANGUAGE, buildCitationManifest, validateCitations, stripSermonCitationMarkers, type CitationManifest } from '@dosfilos/domain';
+import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent, DEFAULT_LANGUAGE, buildCitationManifest, validateCitations, stripSermonCitationMarkers, injectNarrativeCitationAnchors, type CitationManifest } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 import { GeminiSermonGenerator, DocumentProcessingService } from '@dosfilos/infrastructure';
 
@@ -286,7 +286,13 @@ export class SermonGeneratorService {
         // returned content so engineering can audit drop rates after
         // the fact without re-running generation.
         if (manifest && manifest.entries.length > 0) {
-            const validated = validateCitations(rawDraft, manifest);
+            // ADR-031: the LLM attributes sources narratively but does NOT
+            // reliably emit the inline `[Sn]` anchor the verifiable popover
+            // needs (confirmed at runtime: ragSources present, zero markers).
+            // Inject the anchor deterministically where the prose names the
+            // source, BEFORE validateCitations maps `[Sn]` → `[n]`.
+            const anchored = injectNarrativeCitationAnchors(rawDraft, manifest);
+            const validated = validateCitations(anchored, manifest);
             if (validated.stats.markersDropped > 0 || validated.stats.droppedEntries.length > 0) {
                 console.warn('[generateSermonDraft] citation validator dropped content', {
                     markersDropped: validated.stats.markersDropped,
