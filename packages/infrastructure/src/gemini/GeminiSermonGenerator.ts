@@ -225,11 +225,6 @@ export class GeminiSermonGenerator implements ISermonGenerator {
     ): Promise<SermonContent> {
         try {
             const prompt = buildSermonDraftPrompt(analysis, rules, language, manifest);
-            // [ADR-031 diag] temporary — is the NEW anchor prompt loaded? REVERT.
-            console.log('[sermon citations] INFRA prompt check', {
-                hasAnchorRule: prompt.includes('Ancla verificable'),
-                hasContractBlock: prompt.includes('FUENTES DISPONIBLES PARA CITAR'),
-            });
             const model = this.getModel({
                 fileSearchStoreId: _config?.fileSearchStoreId,
                 temperature: _config?.temperature,

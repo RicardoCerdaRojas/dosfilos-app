@@ -266,19 +266,6 @@ export class SermonGeneratorService {
 
         const rawDraft = await this.generator.generateSermonDraft(analysis, rules, finalConfig, language, manifest);
 
-        // [ADR-031 diag] temporary — did the LLM actually cite? REVERT after.
-        try {
-            const firstBody = (rawDraft as any)?.body?.[0]?.content ?? '';
-            const allProse = JSON.stringify((rawDraft as any)?.body ?? []);
-            console.log('[sermon citations] RAW LLM draft', {
-                manifestEntries: manifest?.entries.length ?? 0,
-                hasFileSearchStore: !!(finalConfig as any)?.fileSearchStoreId,
-                rawRagSources: (rawDraft as any)?.ragSources?.length ?? 0,
-                rawHasBracketMarker: /\[\s*S?\d/.test(allProse),
-                firstBodySnippet: firstBody.slice(0, 220),
-            });
-        } catch { /* diag only */ }
-
         // Phase B: enforce the citation contract server-side. Strips
         // unknown `[Sn]` markers, drops hallucinated `ragSources`
         // entries, and renumbers survivors 1..M so prose, manifest,
@@ -293,18 +280,6 @@ export class SermonGeneratorService {
             // source, BEFORE validateCitations maps `[Sn]` → `[n]`.
             const anchored = injectNarrativeCitationAnchors(rawDraft, manifest);
             const validated = validateCitations(anchored, manifest);
-            // [ADR-031 diag] temporary — where do anchors live at each stage? REVERT.
-            try {
-                const has = (c: any) => /\[\s*S?\d/.test(JSON.stringify(c?.body ?? []));
-                const stripped = stripSermonCitationMarkers(validated.content);
-                console.log('[sermon citations] STAGES', {
-                    manifestSample: manifest.entries.slice(0, 2).map((e) => ({ id: e.sourceId, author: e.author, title: e.title?.slice(0, 30), excerptLen: e.excerpt?.length })),
-                    afterInject: has(anchored),
-                    afterValidate: has(validated.content),
-                    afterStrip: has(stripped),
-                    finalFirstBody: stripped.body?.[0]?.content?.slice(0, 200),
-                });
-            } catch (e) { console.warn('diag err', e); }
             if (validated.stats.markersDropped > 0 || validated.stats.droppedEntries.length > 0) {
                 console.warn('[generateSermonDraft] citation validator dropped content', {
                     markersDropped: validated.stats.markersDropped,
