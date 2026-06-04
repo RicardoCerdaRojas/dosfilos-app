@@ -7,6 +7,7 @@ export * from './entities/ExegesisOperationCatalog';
 export * from './services/computeExegesisQuotaState';
 export * from './services/aggregateRagSources';
 export * from './services/validateCitations';
+export * from './services/stripSermonCitationMarkers'; // 🌱 ADR-030 — sermon prose carries no inline citation markers
 export * from './services/buildCitationManifest';
 export * from './services/aggregateRequiredAttributions';
 export * from './services/aggregateLexiconAttributions';

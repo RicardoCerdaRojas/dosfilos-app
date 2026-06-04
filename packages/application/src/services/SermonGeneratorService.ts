@@ -1,4 +1,4 @@
-import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent, DEFAULT_LANGUAGE, buildCitationManifest, validateCitations, type CitationManifest } from '@dosfilos/domain';
+import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent, DEFAULT_LANGUAGE, buildCitationManifest, validateCitations, stripSermonCitationMarkers, type CitationManifest } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 import { GeminiSermonGenerator, DocumentProcessingService } from '@dosfilos/infrastructure';
 
@@ -273,15 +273,19 @@ export class SermonGeneratorService {
                     surfaces: validated.stats.surfaces,
                 });
             }
+            // ADR-030: the sermon cites narratively; strip any inline citation
+            // marker the model leaked (e.g. `[cite: S3]`) so the pulpit prose
+            // stays clean. Bibliography + attribution come from the manifest,
+            // not from prose markers, so they are unaffected.
             return {
                 draft: {
-                    ...validated.content,
+                    ...stripSermonCitationMarkers(validated.content),
                     citationValidation: validated.stats,
                 },
             };
         }
 
-        return { draft: rawDraft };
+        return { draft: stripSermonCitationMarkers(rawDraft) };
     }
 
     /**

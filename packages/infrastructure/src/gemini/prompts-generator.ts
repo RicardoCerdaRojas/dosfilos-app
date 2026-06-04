@@ -280,10 +280,11 @@ REGLAS DE CITACIÓN (OBLIGATORIAS — el servidor valida y descarta lo que no cu
      aquí denota una acción decisiva…"
    - "El pastor Subukjian lo expresa bien: la Escritura no nace de la
      voluntad humana sino del Espíritu."
-2. **PROHIBIDO usar marcadores de nota al pie en la prosa**: NUNCA escribas
-   \`[S1]\`, \`[1]\`, footnotes, superíndices ni corchetes de cita en el
-   cuerpo del sermón. Eso es estilo de paper académico, no de sermón
-   predicado. (Las referencias bíblicas SÍ usan su formato propio
+2. **PROHIBIDO usar marcadores de cita en la prosa**: NUNCA escribas NINGÚN
+   token de cita entre corchetes en el cuerpo del sermón — ni \`[S1]\`,
+   \`[1]\`, \`[cite: S1]\`, \`[fuente: 1]\`, footnotes ni superíndices. Eso es
+   estilo de paper académico, no de sermón predicado: nombra la fuente EN la
+   oración y nada más. (Las referencias bíblicas SÍ usan su formato propio
    \`[📖 Juan 1:1](#bible-juan-1-1)\`.)
 3. **IDs válidos únicamente en \`ragSources\`**: en el campo \`ragSources\`
    del JSON usa SOLO los IDs listados arriba (S1, S2, …). NUNCA inventes

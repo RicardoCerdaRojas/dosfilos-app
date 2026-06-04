@@ -188,7 +188,7 @@ describe('buildSermonDraftPrompt — narrative citation contract (ADR-030)', () 
         expect(prompt).toContain('Atribución NARRATIVA');
         // The sermon prose must NOT be told to emit [Sn] footnote markers.
         expect(prompt).not.toContain('Marcadores en línea');
-        expect(prompt).toContain('PROHIBIDO usar marcadores de nota al pie en la prosa');
+        expect(prompt).toContain('PROHIBIDO usar marcadores de cita en la prosa');
     });
 
     it('keeps the S-IDs in the contract so ragSources can reference them (manifest/attribution survive)', () => {
