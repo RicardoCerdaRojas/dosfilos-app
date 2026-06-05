@@ -637,6 +637,7 @@ export function StepDraft() {
             <ContraScanModal
                 open={contraScan.modalOpen}
                 onOpenChange={contraScan.setModalOpen}
+                centralIdea={contraScan.centralIdea}
                 dissentingChunks={contraScan.dissentingChunks}
                 publishing={contraScan.persisting}
                 onProceed={contraScan.confirmProceed}

@@ -151,6 +151,8 @@ export function useSermonContraScan({ onCleared }: Options) {
         persisting,
         modalOpen,
         setModalOpen,
+        /** The pastor's central idea this scan ran against (drives the modal contrast). */
+        centralIdea: pending?.centralIdea ?? '',
         /** Dissenting chunks surfaced for the open confrontation (may be []). */
         dissentingChunks: pending?.chunks ?? [],
         attempt,

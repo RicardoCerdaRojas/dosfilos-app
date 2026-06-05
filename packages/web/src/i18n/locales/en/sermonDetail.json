@@ -201,6 +201,12 @@
         "publishing": "Publishing…",
         "page": "p. {{page}}",
         "coreBadge": "Core library",
+        "personalBadge": "Your library",
+        "tensionLabel": "How it tensions your idea",
+        "selectedHint": "Write below how you answer this objection ↓",
+        "yourIdea": {
+            "label": "Your central idea (what you preach)"
+        },
         "noDissent": {
             "title": "No contrary positions found",
             "description": "We searched your library for voices that dissent from your central idea and found none.",
@@ -208,11 +214,13 @@
         },
         "dissent": {
             "title": "Before publishing: hear the whole counsel",
-            "description": "Your library holds {{count}} position(s) that tension your central idea. Consider at least one before you step into the pulpit (Acts 20:27)."
+            "description": "These resources in your library push in a different direction than your central idea. Consider at least one before you step into the pulpit (Acts 20:27).",
+            "step": "Select the objection you'll engage ({{count}} from your library):"
         },
         "note": {
             "label": "How do you answer this objection from the text?",
-            "placeholder": "Write your reflection (at least {{min}} characters). We don't write it for you.",
+            "hint": "Your reflection, in your words. We don't write it for you. If the objection convinces you, go back and adjust that point of the sermon.",
+            "placeholder": "Write your reflection (at least {{min}} characters).",
             "counter": "{{count}}/{{min}} characters"
         },
         "consider": {

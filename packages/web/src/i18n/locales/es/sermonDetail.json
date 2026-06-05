@@ -202,6 +202,12 @@
         "publishing": "Publicando…",
         "page": "p. {{page}}",
         "coreBadge": "Biblioteca base",
+        "personalBadge": "Tu biblioteca",
+        "tensionLabel": "En qué tensiona tu idea",
+        "selectedHint": "Escribe abajo cómo respondes a esta objeción ↓",
+        "yourIdea": {
+            "label": "Tu idea central (lo que predicas)"
+        },
         "noDissent": {
             "title": "No encontramos posiciones contrarias",
             "description": "Revisamos tu biblioteca buscando voces que disientan de tu idea central y no hallamos ninguna.",
@@ -209,11 +215,13 @@
         },
         "dissent": {
             "title": "Antes de publicar: escucha el consejo completo",
-            "description": "Tu biblioteca contiene {{count}} posición(es) que tensionan tu idea central. Considera al menos una antes de subir al púlpito (Hechos 20:27)."
+            "description": "Estos recursos de tu biblioteca empujan en otra dirección que tu idea central. Considera al menos uno antes de subir al púlpito (Hechos 20:27).",
+            "step": "Selecciona la objeción que vas a considerar ({{count}} de tu biblioteca):"
         },
         "note": {
             "label": "¿Cómo respondes a esta objeción desde el texto?",
-            "placeholder": "Escribe tu reflexión (mínimo {{min}} caracteres). No la escribimos por ti.",
+            "hint": "Tu reflexión, en tus palabras. No la escribimos por ti. Si la objeción te convence, vuelve y ajusta ese punto del sermón.",
+            "placeholder": "Escribe tu reflexión (mínimo {{min}} caracteres).",
             "counter": "{{count}}/{{min}} caracteres"
         },
         "consider": {
