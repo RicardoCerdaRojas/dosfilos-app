@@ -117,6 +117,21 @@ Recomendación tentativa: empezar con few-shot, evaluar.
 
 ## Bitácora
 
+- **2026-06-04 (PR 1 contra-scan CERRADO + MERGED + DEPLOYED + SMOKE OK)** — Sub-feature 2 (contra-scan)
+  entregada y validada en vivo. **3 PRs en main** (deploy prod verde): **#315** (core: domain `ContraScanReport` +
+  `evaluateContraScanGate` puro + 12 tests, callable `findDissentingChunks`, persistencia repo/service, modal +
+  hook + flag en sermón detail, i18n, admin label), **#316** (gap del wizard: contra-scan como 1er gate en
+  `StepDraft` + `enforceContraScanGate` en `publishSermonAsCopy` — el wizard es el surface real de publicación),
+  **#317** (claridad del modal por smoke: muestra la idea central + etiqueta "tu biblioteca" vs "en qué tensiona"
+  + cita textual apartada + hint de los dos caminos). **Smoke en prod confirmado por el fundador**: publicó "Anclados
+  en la Verdad" (2 Pedro 1:16-21) → contra-scan surface 2 fragmentos reales de Kistemaker (Comentario 1-2 Pedro y
+  Judas, p.224) que tensionan βεβαιότερον ("hecha más segura" vs "más confiable") + dirección de confirmación
+  AT↔apostólico. Funciona end-to-end: retrieve real + clasificación de disenso real + nunca inventa. Tests al cierre:
+  domain 430 + app 77 + infra 55 + web 96 verde, tsc limpio. Flag `contra_scan` default off, on en cuenta del fundador.
+  **Fase 4 sigue `in-progress`**: sub-feature 1 (autoría verbatim ≥50%) y 3 (voice fingerprint) NO empezadas
+  (`planning`). Gotcha del smoke: contra-scan no estaba en el wizard inicialmente (#315 solo detalle) — el fundador
+  publica desde el wizard, no el detalle; #316 lo cerró. Aprendizaje: el surface canónico de publish del wizard es
+  `publishSermonAsCopy`, no `publishSermon` — gatear AMBOS.
 - **2026-06-04 (PR 1 contra-scan — ADR-033, decoupled del gate dormido)** — Arranque de Fase 4 por la
   sub-feature 2 (contra-scan, P3 Hch 20:27). **Tensión resuelta vía ADR-033**: el prereq del 2026-06-03
   mandaba "extender `evaluatePublishGate`, no duplicar" — pero ADR-030/031/032 (emitidos esta sesión, post-cierre
