@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BookOpen, Loader2, Scale, ShieldQuestion } from 'lucide-react';
+import { BookOpen, FileText, Loader2, Scale, ShieldQuestion } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -22,6 +22,8 @@ import {
 interface Props {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    /** The pastor's central idea — shown so the contrast with the library is explicit. */
+    centralIdea: string;
     /** Dissenting chunks surfaced by the scan (empty ⇒ no-dissent mode). */
     dissentingChunks: DissentingChunk[];
     /** Persist + publish in flight. */
@@ -49,6 +51,7 @@ interface Props {
 export function ContraScanModal({
     open,
     onOpenChange,
+    centralIdea,
     dissentingChunks,
     publishing,
     onProceed,
@@ -114,7 +117,23 @@ export function ContraScanModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="max-h-[40vh] space-y-2 overflow-y-auto pr-1">
+                {/* Your central idea — anchors the contrast so the pastor sees
+                    exactly what the library pushes back against. */}
+                <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+                    <p className="mb-0.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
+                        <FileText className="h-3.5 w-3.5" />
+                        {t('contraScan.yourIdea.label')}
+                    </p>
+                    <p className="text-sm text-foreground">{centralIdea}</p>
+                </div>
+
+                {!overrideMode && (
+                    <p className="text-xs font-medium text-muted-foreground">
+                        {t('contraScan.dissent.step', { count: dissentingChunks.length })}
+                    </p>
+                )}
+
+                <div className="max-h-[34vh] space-y-2 overflow-y-auto pr-1">
                     {dissentingChunks.map((c) => {
                         const selected = selectedId === c.chunkId;
                         return (
@@ -124,31 +143,39 @@ export function ContraScanModal({
                                 onClick={() => setSelectedId(selected ? null : c.chunkId)}
                                 disabled={publishing || overrideMode}
                                 className={cn(
-                                    'w-full rounded-md border px-3 py-2 text-left transition-colors',
+                                    'w-full rounded-md border px-3 py-2.5 text-left transition-colors',
                                     selected
-                                        ? 'border-primary bg-primary/5'
+                                        ? 'border-primary bg-primary/5 ring-1 ring-primary/40'
                                         : 'border-border hover:border-primary/40',
                                     (publishing || overrideMode) && 'opacity-60',
                                 )}
                             >
-                                <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                                    <BookOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                                    {c.resourceAuthor} — «{c.resourceTitle}»
-                                    {c.page !== undefined && (
-                                        <span className="font-normal text-muted-foreground">
-                                            · {t('contraScan.page', { page: c.page })}
-                                        </span>
-                                    )}
-                                    {!c.fromPersonalLibrary && (
-                                        <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
-                                            {t('contraScan.coreBadge')}
-                                        </span>
-                                    )}
+                                {/* Source provenance — this is FROM the library. */}
+                                <div className="mb-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                                    <BookOpen className="h-3.5 w-3.5 shrink-0" />
+                                    <span className="font-medium text-foreground/80">{c.resourceAuthor}</span>
+                                    <span>— «{c.resourceTitle}»</span>
+                                    {c.page !== undefined && <span>· {t('contraScan.page', { page: c.page })}</span>}
+                                    <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px]">
+                                        {c.fromPersonalLibrary
+                                            ? t('contraScan.personalBadge')
+                                            : t('contraScan.coreBadge')}
+                                    </span>
                                 </div>
-                                <p className="text-xs font-medium text-primary/90">{c.tension}</p>
-                                <p className="mt-1 line-clamp-2 text-[11px] italic text-muted-foreground">
-                                    "{c.excerpt}"
+                                {/* The tension — what this source disputes in your idea. */}
+                                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-warning-subtle-foreground">
+                                    {t('contraScan.tensionLabel')}
                                 </p>
+                                <p className="text-sm font-medium text-foreground">{c.tension}</p>
+                                {/* The verbatim source quote backing the tension. */}
+                                <p className="mt-1.5 border-l-2 border-border pl-2 text-[11px] italic text-muted-foreground line-clamp-3">
+                                    {c.excerpt}
+                                </p>
+                                {selected && (
+                                    <p className="mt-1.5 text-[11px] font-medium text-primary">
+                                        {t('contraScan.selectedHint')}
+                                    </p>
+                                )}
                             </button>
                         );
                     })}
@@ -157,6 +184,7 @@ export function ContraScanModal({
                 {!overrideMode && selectedId && (
                     <div className="space-y-1.5">
                         <Label htmlFor="contra-scan-note">{t('contraScan.note.label')}</Label>
+                        <p className="text-[11px] text-muted-foreground">{t('contraScan.note.hint')}</p>
                         <Textarea
                             id="contra-scan-note"
                             value={note}

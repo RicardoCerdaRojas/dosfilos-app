@@ -622,6 +622,7 @@ export function SermonDetailPage() {
       <ContraScanModal
         open={contraScan.modalOpen}
         onOpenChange={contraScan.setModalOpen}
+        centralIdea={contraScan.centralIdea}
         dissentingChunks={contraScan.dissentingChunks}
         publishing={contraScan.persisting || publishGate.preparing || publishGate.publishing}
         onProceed={contraScan.confirmProceed}
