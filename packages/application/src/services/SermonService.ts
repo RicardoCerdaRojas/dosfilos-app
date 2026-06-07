@@ -97,6 +97,28 @@ export class SermonService {
         }
     }
 
+    /**
+     * Creates an editable VERSION of an existing sermon so the pastor can
+     * re-preach the same message in a new context with light edits. Copies
+     * only the finished sermon (not the wizard exegetical material) into a
+     * fresh `'draft'` linked to the original ROOT via `versionOf`. Works
+     * whether `sourceId` is the root or an existing version — the entity
+     * resolves the root so the whole family stays a flat group.
+     * @param label Optional occasion label (e.g. "Retiro jóvenes 2026").
+     */
+    async createVersion(sourceId: string, label?: string): Promise<SermonEntity> {
+        try {
+            const source = await this.sermonRepository.findById(sourceId);
+            if (!source) {
+                throw new Error('Sermón no encontrado');
+            }
+            const version = source.createVersion(label?.trim() || undefined);
+            return await this.sermonRepository.create(version);
+        } catch (error: any) {
+            throw new Error(error.message || 'Error al crear la versión del sermón');
+        }
+    }
+
     async deleteSermon(id: string): Promise<void> {
         try {
             await this.sermonRepository.delete(id);

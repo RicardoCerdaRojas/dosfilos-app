@@ -76,6 +76,9 @@ export const getSermonsListSummary = onCall(
                 sourceSermonId: d.sourceSermonId,
                 sourceFacultySessionId: d.sourceFacultySessionId,
                 sourcePaperId: d.sourcePaperId,
+                // Version grouping — the list nests versions under their root.
+                versionOf: d.versionOf,
+                versionLabel: d.versionLabel,
                 authorName: d.authorName,
                 isShared: d.isShared,
                 shareToken: d.shareToken,

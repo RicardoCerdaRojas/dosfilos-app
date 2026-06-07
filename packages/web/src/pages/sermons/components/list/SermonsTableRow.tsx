@@ -13,10 +13,22 @@ interface SermonsTableRowProps {
     seriesName: string | null;
     project: AIProject | null;
     onDelete: () => void;
-    onLink: () => void;
+    onLink?: () => void;
+    /** Optional: opens the "create new version" dialog for this sermon. */
+    onCreateVersion?: () => void;
+    /** Optional inline node (e.g. a "N versiones" popover trigger) rendered next to the title. */
+    versionsSlot?: React.ReactNode;
 }
 
-export const SermonsTableRow: React.FC<SermonsTableRowProps> = ({ sermon, seriesName, project, onDelete, onLink }) => {
+export const SermonsTableRow: React.FC<SermonsTableRowProps> = ({
+    sermon,
+    seriesName,
+    project,
+    onDelete,
+    onLink,
+    onCreateVersion,
+    versionsSlot,
+}) => {
     const { t, i18n } = useTranslation('sermons');
     const navigate = useNavigate();
 
@@ -34,12 +46,15 @@ export const SermonsTableRow: React.FC<SermonsTableRowProps> = ({ sermon, series
     return (
         <TableRow className="cursor-pointer hover:bg-muted/50">
             <TableCell className="max-w-0">
-                <div
-                    className="font-medium hover:text-primary transition-colors cursor-pointer truncate"
-                    onClick={() => navigate(`/dashboard/sermons/${sermon.id}`)}
-                    title={sermon.title}
-                >
-                    {sermon.title}
+                <div className="flex items-center gap-2 min-w-0">
+                    <div
+                        className="font-medium hover:text-primary transition-colors cursor-pointer truncate"
+                        onClick={() => navigate(`/dashboard/sermons/${sermon.id}`)}
+                        title={sermon.title}
+                    >
+                        {sermon.title}
+                    </div>
+                    {versionsSlot}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-1 min-w-0">
                     {project && (
@@ -91,7 +106,12 @@ export const SermonsTableRow: React.FC<SermonsTableRowProps> = ({ sermon, series
             </TableCell>
             <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
-                    <SermonRowActions sermonId={sermon.id} onDelete={onDelete} onLink={onLink} />
+                    <SermonRowActions
+                        sermonId={sermon.id}
+                        onDelete={onDelete}
+                        onLink={onLink}
+                        onCreateVersion={onCreateVersion}
+                    />
                 </div>
             </TableCell>
         </TableRow>

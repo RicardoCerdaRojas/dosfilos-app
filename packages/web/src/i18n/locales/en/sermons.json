@@ -107,6 +107,7 @@
         "edit": "Edit",
         "preachMode": "Preach mode",
         "linkToProject": "Link to project…",
+        "createVersion": "Create new version…",
         "viewProject": "View project \"{{title}}\""
     },
     "deleteDialog": {
@@ -127,5 +128,28 @@
         "linkSuccess": "Sermon linked to project",
         "unlinkSuccess": "Sermon unlinked from project",
         "error": "Linking failed"
+    },
+    "versions": {
+        "badge": "Version",
+        "count_one": "{{count}} version",
+        "count_other": "{{count}} versions",
+        "original": "Original",
+        "prev": "Previous version",
+        "next": "Next version",
+        "pagerLabel": "Sermon versions",
+        "bannerOf": "of “{{title}}”",
+        "bannerOfGeneric": "of another sermon",
+        "viewOriginal": "View original",
+        "dialogEyebrow": "New version",
+        "dialogFallbackTitle": "Sermon",
+        "dialogDescription": "Create an editable copy to preach this message again in another context. Title, content and references are copied; you can tweak it without affecting the original.",
+        "labelField": "Occasion label (optional)",
+        "labelPlaceholder": "e.g. Youth retreat 2026",
+        "labelHint": "Helps you tell this version apart from the original in the list.",
+        "cancel": "Cancel",
+        "confirm": "Create version",
+        "creating": "Creating…",
+        "createSuccess": "Version created",
+        "createError": "Failed to create version"
     }
 }

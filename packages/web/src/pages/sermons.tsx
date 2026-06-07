@@ -47,9 +47,12 @@ import {
 } from '@/components/ui/table';
 import { useTranslation } from '@/i18n';
 import { useLinkSermonToProject } from './sermons/hooks/useLinkSermonToProject';
+import { useCreateVersionFlow } from './sermons/hooks/useCreateVersionFlow';
 import { LinkToProjectDialog } from './sermons/components/list/LinkToProjectDialog';
-import { SermonGridCard } from './sermons/components/list/SermonGridCard';
-import { SermonsTableRow } from './sermons/components/list/SermonsTableRow';
+import { CreateVersionDialog } from './sermons/components/list/CreateVersionDialog';
+import { SermonVersionsGroup } from './sermons/components/list/SermonVersionsGroup';
+import { SermonsTableGroup } from './sermons/components/list/SermonsTableGroup';
+import { groupSermonVersions } from './sermons/utils/groupSermonVersions';
 import { SermonsEmptyState } from './sermons/components/list/SermonsEmptyState';
 import { SermonInProgressCard } from './sermons/components/list/SermonInProgressCard';
 import { BulkSelectionBar } from './sermons/components/list/BulkSelectionBar';
@@ -92,8 +95,11 @@ export function SermonsPage() {
     const { projects } = useFacultyProjects();
     const projectById = new Map(projects?.map((p) => [p.id, p]) ?? []);
     const { sermonToLink, setSermonToLink, linking, linkToProject } = useLinkSermonToProject(refetch);
+    const { sermonToVersion, setSermonToVersion, creating: creatingVersion, confirmCreateVersion } =
+        useCreateVersionFlow(refetch);
 
     const sermonBeingLinked = sermonToLink ? sermons.find(s => s.id === sermonToLink) ?? null : null;
+    const sermonBeingVersioned = sermonToVersion ? sermons.find(s => s.id === sermonToVersion) ?? null : null;
 
     useEffect(() => {
         const loadSeries = async () => {
@@ -167,13 +173,17 @@ export function SermonsPage() {
      * when no in-progress drafts exist (legacy flow unchanged).
      */
     const renderPublishedList = () => {
-        const pool = filteredSermons.map((s) => s.id);
+        // Fold versions under their root. Bulk-selection operates on roots
+        // (versions are managed via their own row actions), so the pool is the
+        // set of root ids, not every sermon.
+        const sermonGroups = groupSermonVersions(filteredSermons);
+        const pool = sermonGroups.map((g) => g.root.id);
         const selectionActive = publishedSelection.count > 0;
         return (
             <>
                 <BulkSelectionBar
                     count={publishedSelection.count}
-                    poolSize={filteredSermons.length}
+                    poolSize={sermonGroups.length}
                     allSelected={publishedSelection.allSelected(pool)}
                     onToggleAll={() => publishedSelection.toggleAll(pool)}
                     onClear={publishedSelection.clear}
@@ -207,29 +217,31 @@ export function SermonsPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredSermons.map((sermon) => (
-                                    <SermonsTableRow
-                                        key={sermon.id}
-                                        sermon={sermon}
-                                        seriesName={getSeriesName(sermon.seriesId)}
-                                        project={sermon.projectId ? projectById.get(sermon.projectId) ?? null : null}
-                                        onDelete={() => setSermonToDelete(sermon.id)}
-                                        onLink={() => setSermonToLink(sermon.id)}
+                                {sermonGroups.map((group) => (
+                                    <SermonsTableGroup
+                                        key={group.root.id}
+                                        group={group}
+                                        getSeriesName={getSeriesName}
+                                        projectById={projectById}
+                                        onDelete={setSermonToDelete}
+                                        onLink={setSermonToLink}
+                                        onCreateVersion={setSermonToVersion}
                                     />
                                 ))}
                             </TableBody>
                         </Table>
                     </Card>
                 ) : (
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {filteredSermons.map((sermon) => (
-                            <SermonGridCard
-                                key={sermon.id}
-                                sermon={sermon}
-                                seriesName={getSeriesName(sermon.seriesId)}
-                                project={sermon.projectId ? projectById.get(sermon.projectId) ?? null : null}
-                                onDelete={() => setSermonToDelete(sermon.id)}
-                                selected={publishedSelection.isSelected(sermon.id)}
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-start">
+                        {sermonGroups.map((group) => (
+                            <SermonVersionsGroup
+                                key={group.root.id}
+                                group={group}
+                                getSeriesName={getSeriesName}
+                                projectById={projectById}
+                                onDelete={setSermonToDelete}
+                                onCreateVersion={setSermonToVersion}
+                                selected={publishedSelection.isSelected(group.root.id)}
                                 onToggleSelect={publishedSelection.toggle}
                                 selectionActive={selectionActive}
                             />
@@ -599,6 +611,13 @@ export function SermonsPage() {
                 linking={linking}
                 onClose={() => setSermonToLink(null)}
                 onLink={linkToProject}
+            />
+
+            <CreateVersionDialog
+                sermon={sermonBeingVersioned}
+                creating={creatingVersion}
+                onClose={() => setSermonToVersion(null)}
+                onConfirm={confirmCreateVersion}
             />
         </div>
     );
