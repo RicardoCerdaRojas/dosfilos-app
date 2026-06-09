@@ -193,7 +193,11 @@ export function AppSidebar() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+    // isAdmin must be in deps: when impersonating a non-admin, `user` changes
+    // while `isAdmin` is still stale-true, so without re-running on the role
+    // flip we'd subscribe to the admin-only `contact_leads` query as a normal
+    // user and hit "insufficient permissions".
+  }, [user, isAdmin]);
 
   const handleLogout = async () => {
     try {

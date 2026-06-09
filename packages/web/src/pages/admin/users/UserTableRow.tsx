@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Activity, CreditCard, Eye, Loader2, Mail, Trash2, User as UserIcon,
-    UserCheck, UserX, MoreHorizontal, RotateCcw, ExternalLink,
+    UserCheck, UserX, MoreHorizontal, RotateCcw, ExternalLink, LogIn,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +32,7 @@ interface UserTableRowProps {
     onToggleSelected: (id: string, selected: boolean) => void;
     onViewActivity: (id: string) => void;
     onViewDetails: (user: User) => void;
+    onImpersonate: (user: User) => void;
     onChangePlan: (user: User) => void;
     onResetQuota: (user: User) => void;
     onResendEmail: (id: string, email: string) => void;
@@ -56,6 +57,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
     onToggleSelected,
     onViewActivity,
     onViewDetails,
+    onImpersonate,
     onChangePlan,
     onResetQuota,
     onResendEmail,
@@ -187,6 +189,10 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
                             <DropdownMenuItem onSelect={() => onViewActivity(user.id)}>
                                 <Activity className="h-4 w-4 mr-2" />
                                 {t('users.rowActions.activity')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => onImpersonate(user)}>
+                                <LogIn className="h-4 w-4 mr-2" />
+                                {t('users.rowActions.impersonate')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => onChangePlan(user)}>
                                 <CreditCard className="h-4 w-4 mr-2" />

@@ -17,6 +17,8 @@ export type AdminAuditAction =
     | 'user.reset_quota'
     | 'user.extend_trial'
     | 'user.set_feature_flags'
+    | 'user.impersonate'
+    | 'user.stop_impersonate'
     | 'core_library.ingest'
     | 'core_library.seed_ingest'
     | 'core_library.tag_doctrine_levels'

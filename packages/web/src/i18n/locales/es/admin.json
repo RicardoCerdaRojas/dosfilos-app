@@ -191,6 +191,7 @@
         "rowActions": {
             "activity": "Ver actividad",
             "view": "Ver",
+            "impersonate": "Entrar como usuario",
             "openDetail": "Detalle completo",
             "viewActivity": "Ver actividad detallada",
             "changePlan": "Cambiar plan",
@@ -427,7 +428,25 @@
             "resetQuotaSuccess": "Cuotas reseteadas: {{standard}} estándar · {{premium}} premium",
             "resetQuotaError": "Error al resetear cuotas",
             "featureFlagsSuccess": "Flags actualizadas",
-            "featureFlagsError": "Error al actualizar flags"
+            "featureFlagsError": "Error al actualizar flags",
+            "impersonateSuccess": "Ahora estás viendo la cuenta de {{name}}",
+            "impersonateError": "No se pudo iniciar la sesión como este usuario",
+            "stopImpersonateSuccess": "Volviste a tu cuenta de administrador",
+            "stopImpersonateError": "No se pudo volver a tu cuenta de administrador"
+        },
+        "impersonation": {
+            "banner": "Estás viendo la plataforma como {{user}}",
+            "exit": "Salir"
+        },
+        "impersonateDialog": {
+            "title": "Entrar como usuario",
+            "intro": "Vas a iniciar sesión como {{name}} para ver la plataforma tal como la ve este usuario.",
+            "point1": "Tu sesión cambiará a la de este usuario.",
+            "point2": "Verás su biblioteca, sermones y contenido — no el panel de administración.",
+            "point3": "Puedes volver a tu cuenta en cualquier momento con el botón \"Salir\" del banner superior.",
+            "cancel": "Cancelar",
+            "confirm": "Entrar como usuario",
+            "loading": "Cambiando sesión..."
         },
         "featureFlags": {
             "title": "Feature flags",
