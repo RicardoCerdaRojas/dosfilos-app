@@ -328,7 +328,7 @@
         },
         "quickPrompts": {
             "outline": {
-                "label": "Bosquejo de Sermón",
+                "label": "Trabajemos en tu Sermón",
                 "prompt": "Ayúdame a desarrollar un bosquejo de sermón expositivo."
             },
             "counseling": {

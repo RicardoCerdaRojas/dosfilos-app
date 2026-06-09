@@ -72,7 +72,8 @@ export function FacultyDirectoryPage() {
     // Specialists are now a secondary path behind a disclosure — the
     // primary CTA is the orchestrator input. Keeps the home focused
     // on "describe what you need" instead of a tutor-catalog dump.
-    const [showSpecialists, setShowSpecialists] = useState(false);
+    // Expanded by default so the direct-to-specialist option is visible on landing.
+    const [showSpecialists, setShowSpecialists] = useState(true);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -369,6 +370,10 @@ export function FacultyDirectoryPage() {
                             const label = t(`directory.quickPrompts.${key}.label`);
                             const prompt = t(`directory.quickPrompts.${key}.prompt`);
                             const rerouteToGuided = key === 'outline' && studyDepthGate.enabled;
+                            // "Trabajemos en tu Sermón" is the primary action on this
+                            // surface — render it filled so it reads as the main CTA,
+                            // the other quick prompts stay as subtle muted chips.
+                            const isFeatured = key === 'outline';
                             return (
                                 <button
                                     key={key}
@@ -378,7 +383,11 @@ export function FacultyDirectoryPage() {
                                             : handleStartOrchestrated(prompt)
                                     }
                                     disabled={isBusy || agents.length === 0}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted hover:bg-secondary border border-border text-foreground text-xs font-medium transition-colors disabled:opacity-40"
+                                    className={
+                                        isFeatured
+                                            ? "inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary hover:bg-primary/90 border border-primary text-primary-foreground text-xs font-semibold shadow-sm transition-colors disabled:opacity-40"
+                                            : "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted hover:bg-secondary border border-border text-foreground text-xs font-medium transition-colors disabled:opacity-40"
+                                    }
                                 >
                                     <Icon className="h-3 w-3" />
                                     {label}
