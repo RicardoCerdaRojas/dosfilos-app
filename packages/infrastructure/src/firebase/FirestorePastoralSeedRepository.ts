@@ -200,6 +200,8 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
         assign('toolsConsulted', (seed.toolsConsulted ?? []).map(this.toolToFirestore));
         assign('completed', seed.completed);
         assign('completedAt', seed.completedAt ? Timestamp.fromDate(seed.completedAt) : null);
+        // ADR-034 — routed doubts (plain, no Dates).
+        assign('openDoubts', seed.openDoubts);
         return out;
     }
 
@@ -300,6 +302,7 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
                 : [],
             completed: Boolean(data.completed),
             completedAt: data.completedAt ? this.toDate(data.completedAt) : undefined,
+            openDoubts: Array.isArray(data.openDoubts) ? data.openDoubts : undefined,
         };
     }
 

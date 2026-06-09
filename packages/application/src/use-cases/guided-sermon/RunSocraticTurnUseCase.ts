@@ -10,8 +10,12 @@
 
 import {
     advance,
+    appendDoubt,
     assertAiAssistAllowed,
+    buildDoubtRoutingNote,
+    detectRaisedDoubt,
     isLastStep,
+    makeRaisedDoubt,
     PASTORAL_SEED_STEP_ORDER,
     retry,
     type AIChatMessage,
@@ -208,12 +212,28 @@ export class RunSocraticTurnUseCase {
             nextState,
         );
 
+        // 4b. ADR-034 — capture + route any doubt the pastor raised. The
+        // routing is DETERMINISTIC (not model-dependent) and PERSISTED so the
+        // doubt resurfaces later (Paso 8 / wizard) instead of being lost. We
+        // never answer it — only pin "guárdala para el Paso N".
+        const detected = detectRaisedDoubt(input.pastorMessage);
+        let routingNote: string | null = null;
+        if (detected) {
+            const doubt = makeRaisedDoubt(gss.currentStep, detected);
+            await this.seedRepo.update(seed.id, {
+                openDoubts: appendDoubt(seed.openDoubts ?? [], doubt),
+            });
+            routingNote = buildDoubtRoutingNote(doubt, gss.currentStep);
+        }
+
         // 5. Append the agent's reply. For accepted turns we add a brief
-        // transition prompt for the next step (or the completion CTA).
+        // transition prompt for the next step (or the completion CTA), then the
+        // deterministic doubt reminder (if any).
+        const composedReply = this.composeAgentReply(output, nextState, sermonReady);
         const agentMessage: AIChatMessage = {
             id: generateId('msg'),
             role: 'model',
-            content: this.composeAgentReply(output, nextState, sermonReady),
+            content: routingNote ? `${composedReply}\n\n${routingNote}` : composedReply,
             timestamp: new Date(),
         };
         await this.chatRepo.addMessageToSession(input.userId, input.sessionId, agentMessage);

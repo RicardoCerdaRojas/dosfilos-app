@@ -279,6 +279,14 @@ export interface PastoralSeed {
      * runtime cycle between the seed and witness modules.
      */
     witnessReview?: import('./WitnessValidation').WitnessReview;
+
+    /**
+     * ADR-034 — doubts the pastor raised mid-study, captured + routed to the
+     * step that resolves them (never answered). Additive + optional; does NOT
+     * participate in `evaluatePastoralSeed`. Resurfaced at Paso 8 / wizard.
+     * Lazy type import to avoid a runtime cycle with the guided-sermon module.
+     */
+    openDoubts?: import('../guided-sermon/doubtRouting').RaisedDoubt[];
 }
 
 /**
