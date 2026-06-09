@@ -87,3 +87,11 @@ packages/mobile/android/
 # Generated Native Projects (at root)
 /android/
 /ios/
+
+# Local agent/MCP tooling (byblos, atlassian) — never committed.
+# byblos in particular must NOT land in package.json: it breaks CI's
+# `ls-remote`. It lives in .mcp.json locally only.
+.byblos/
+.atl/
+.mcp.json
+.husky/post-commit
