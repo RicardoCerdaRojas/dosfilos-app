@@ -158,4 +158,67 @@ describe('SermonEntity', () => {
             ).toThrow('El contenido no puede estar vacío');
         });
     });
+
+    describe('createVersion', () => {
+        const makeRoot = () =>
+            SermonEntity.create({
+                id: 'root-1',
+                userId: 'user123',
+                title: 'Sermón sobre la gracia',
+                content: 'Cuerpo del sermón',
+                bibleReferences: ['Efesios 2:8'],
+                tags: ['gracia'],
+                category: 'doctrina',
+                status: 'published',
+                projectId: 'proj-1',
+                isShared: true,
+                shareToken: 'tok',
+            });
+
+        it('copies the finished sermon into a fresh editable draft linked to the root', () => {
+            const root = makeRoot();
+            const version = root.createVersion('Retiro jóvenes 2026');
+
+            expect(version.id).not.toBe(root.id);
+            expect(version.versionOf).toBe('root-1');
+            expect(version.versionLabel).toBe('Retiro jóvenes 2026');
+            expect(version.status).toBe('draft');
+            expect(version.title).toBe(root.title);
+            expect(version.content).toBe(root.content);
+            expect(version.bibleReferences).toEqual(['Efesios 2:8']);
+            expect(version.tags).toEqual(['gracia']);
+            expect(version.category).toBe('doctrina');
+            expect(version.projectId).toBe('proj-1');
+        });
+
+        it('resets sharing, schedule, series and preaching history on the version', () => {
+            const root = makeRoot();
+            const version = root.createVersion();
+
+            expect(version.isShared).toBe(false);
+            expect(version.shareToken).toBeUndefined();
+            expect(version.seriesId).toBeUndefined();
+            expect(version.scheduledDate).toBeUndefined();
+            expect(version.preachingHistory).toEqual([]);
+            expect(version.versionLabel).toBeUndefined();
+        });
+
+        it('flattens versions of versions onto the original root', () => {
+            const root = makeRoot();
+            const v2 = root.createVersion('Contexto A');
+            const v3 = v2.createVersion('Contexto B');
+
+            // v3 points at the ROOT, not at v2 — the group stays flat.
+            expect(v3.versionOf).toBe('root-1');
+        });
+
+        it('carries versionOf/versionLabel across update without altering them', () => {
+            const version = makeRoot().createVersion('Contexto A');
+            const edited = version.update({ content: 'Cuerpo retocado' });
+
+            expect(edited.versionOf).toBe('root-1');
+            expect(edited.versionLabel).toBe('Contexto A');
+            expect(edited.content).toBe('Cuerpo retocado');
+        });
+    });
 });

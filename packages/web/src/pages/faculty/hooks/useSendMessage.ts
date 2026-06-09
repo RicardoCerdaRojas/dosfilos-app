@@ -144,7 +144,20 @@ export function useSendMessage(params: UseSendMessageParams) {
                         sessionIdOverride: newSession.id,
                     });
                 } else {
-                    navigate(`/dashboard/faculty/${newSession.id}?q=${encodeURIComponent(userMsg)}`, { replace: true });
+                    // Send the first message directly against the fresh session
+                    // instead of bouncing through `?q=` + useAutoSendQuestion.
+                    // The old round-trip waited for the new session's query to
+                    // load before firing, which could silently drop the first
+                    // send (felt like "Enter does nothing" on a new session).
+                    // `sessionIdOverride` bypasses the disabled session query on
+                    // the pre-navigate /new render — same pattern as the
+                    // attachment branch above.
+                    navigate(`/dashboard/faculty/${newSession.id}`, { replace: true });
+                    await sendOrchestratedMessage({
+                        message: userMsg,
+                        lengthPreference,
+                        sessionIdOverride: newSession.id,
+                    });
                 }
             } catch (err) {
                 console.error('Failed to create session:', err);

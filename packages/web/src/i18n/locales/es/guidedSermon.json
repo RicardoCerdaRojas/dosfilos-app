@@ -33,5 +33,43 @@
   "error": {
     "activate": "No se pudo activar la guía. Intentá de nuevo.",
     "runTurn": "No se pudo procesar tu respuesta. Intentá de nuevo."
+  },
+  "wordStudy": {
+    "helperTitle": "Palabras clave del pasaje (ayuda)",
+    "helperHint": "Elige una palabra para ver su forma original y significado. Luego escribe TU descubrimiento en el chat: qué aporta al mensaje del pasaje.",
+    "identifying": "Identificando palabras clave…",
+    "analyzing": "Analizando la palabra…",
+    "gloss": "Significado",
+    "semanticRange": "Rango semántico",
+    "functionInVerse": "Función en el versículo",
+    "resonances": "Resuena con",
+    "discoveryPrompt": "El dato es del léxico, no tu respuesta. Escribe con tus palabras qué aporta esta palabra a ESTE pasaje.",
+    "useInAnswer": "Usar en mi respuesta",
+    "backToList": "Volver a las palabras"
+  },
+  "crossRef": {
+    "helperTitle": "Pasajes paralelos sugeridos (ayuda)",
+    "helperHint": "Elige un paralelo y escribe TU nota en el chat: por qué se relaciona con este pasaje.",
+    "loading": "Buscando paralelos…",
+    "empty": "No encontramos paralelos automáticos. Puedes anotar uno que conozcas.",
+    "discoveryPrompt": "El paralelo es del motor de referencias, no tu respuesta. Escribe con tus palabras por qué se conecta con ESTE pasaje.",
+    "useInAnswer": "Usar en mi respuesta"
+  },
+  "insight": {
+    "helperTitle": "Arma tu insight (ayuda)",
+    "helperHint": "Llena las 5 partes con tus palabras. Lo armamos en el formato correcto y lo pones en el chat para revisar y enviar.",
+    "centralIdea": "Idea central",
+    "centralIdeaPlaceholder": "La afirmación central de tu sermón, en una frase.",
+    "observations": "Observaciones (mínimo 3)",
+    "observationsHint": "Una por línea; cada una con algo de cuerpo.",
+    "addObservation": "Agregar observación",
+    "removeObservation": "Quitar observación",
+    "openQuestion": "Pregunta abierta",
+    "openQuestionPlaceholder": "Una pregunta que el texto deja para reflexionar.",
+    "anecdote": "Anécdota / ilustración",
+    "anecdotePlaceholder": "Una ilustración o anécdota pastoral (un par de frases).",
+    "doxological": "Aplicación doxológica",
+    "doxologicalPlaceholder": "Cómo esto te lleva a adorar y responder a Dios (un par de frases).",
+    "useInAnswer": "Poner en mi respuesta"
   }
 }

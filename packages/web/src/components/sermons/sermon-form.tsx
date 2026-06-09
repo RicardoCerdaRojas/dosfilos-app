@@ -5,6 +5,7 @@ import { SermonPreview } from './SermonPreview';
 import { SermonSettingsSheet } from './SermonSettingsSheet';
 import { RichSermonEditor } from '@/components/ui/RichSermonEditor';
 import { Save, Eye, PenLine, Calendar, User, ArrowLeft } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -24,6 +25,8 @@ interface SermonFormProps {
   submitLabel?: string;
   loading?: boolean;
   onBack?: () => void;
+  /** Extra actions rendered inline in the toolbar's right group (e.g. the tutor toggle). */
+  headerActions?: React.ReactNode;
 }
 
 import TextareaAutosize from 'react-textarea-autosize';
@@ -34,6 +37,7 @@ export function SermonForm({
   submitLabel = 'Guardar',
   loading = false,
   onBack,
+  headerActions,
 }: SermonFormProps) {
   const { t } = useTranslation('sermonDetail');
   
@@ -100,42 +104,52 @@ export function SermonForm({
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] min-h-[600px] bg-background">
       {/* Toolbar */}
-      <div className="flex items-center justify-between py-2 border-b mb-6 bg-background sticky top-0 z-10 px-1">
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between gap-3 py-2.5 border-b mb-6 bg-background sticky top-0 z-10 px-4 sm:px-6 lg:px-8">
+        {/* Left: back + view switcher */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {onBack && (
-            <Button variant="ghost" size="icon" onClick={onBack} title={t('common.back', 'Volver')}>
+            <Button variant="ghost" size="icon" onClick={onBack} title={t('common.back', 'Volver')} className="shrink-0">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           )}
 
-          <div className="flex items-center gap-1 bg-muted/20 p-1 rounded-lg">
-            <Button 
-              variant={viewMode === 'write' ? 'secondary' : 'ghost'} 
-              size="sm" 
+          <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-lg">
+            <Button
+              variant={viewMode === 'write' ? 'secondary' : 'ghost'}
+              size="sm"
               onClick={() => setViewMode('write')}
-              className="gap-2 text-xs"
+              className="gap-2 text-xs h-8"
             >
               <PenLine className="h-3.5 w-3.5" />
-              Escribir
+              <span className="hidden sm:inline">{t('form.write', 'Escribir')}</span>
             </Button>
-            <Button 
-              variant={viewMode === 'preview' ? 'secondary' : 'ghost'} 
-              size="sm" 
+            <Button
+              variant={viewMode === 'preview' ? 'secondary' : 'ghost'}
+              size="sm"
               onClick={() => setViewMode('preview')}
-              className="gap-2 text-xs"
+              className="gap-2 text-xs h-8"
             >
               <Eye className="h-3.5 w-3.5" />
-              Vista Previa
+              <span className="hidden sm:inline">{t('form.preview', 'Vista Previa')}</span>
             </Button>
           </div>
         </div>
-        
-        <div className="flex items-center gap-2">
-            <div className="text-xs text-muted-foreground mr-2">
-                {status === 'draft' && <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-yellow-500"/> Borrador</span>}
-                {status === 'published' && <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-green-500"/> Publicado</span>}
-                {status === 'archived' && <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-gray-500"/> Archivado</span>}
-            </div>
+
+        {/* Right: status + actions, all on one row */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <span className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span
+              className={cn(
+                'h-2 w-2 rounded-full',
+                status === 'published' ? 'bg-success' : status === 'archived' ? 'bg-muted-foreground' : 'bg-warning',
+              )}
+            />
+            {t(`status.${status === 'working' ? 'draft' : status}`)}
+          </span>
+
+          {headerActions}
+
+          <div className="h-5 w-px bg-border mx-0.5 hidden sm:block" />
 
           <SermonSettingsSheet
             category={category}
@@ -151,7 +165,7 @@ export function SermonForm({
             loading={loading}
           />
 
-          <Button onClick={() => handleSubmit()} disabled={loading} size="sm" className="gap-2">
+          <Button onClick={() => handleSubmit()} disabled={loading} size="sm" className="gap-2 h-8">
             <Save className="h-4 w-4" />
             {loading ? t('form.saving') : resolvedSubmitLabel}
           </Button>

@@ -31,6 +31,15 @@ export interface IStepPolicy {
     readonly isAiGenerationForbidden: boolean;
 
     /**
+     * True for steps whose items build up over multiple turns (e.g. Step 4
+     * Word Studies needs ≥2, one per message). The orchestrator then persists
+     * the merged partial each turn and lets the domain validator (on the
+     * accumulated total) decide advancement — instead of demanding everything
+     * in a single message. Defaults to falsy (single-message steps).
+     */
+    readonly accumulatesAcrossTurns?: boolean;
+
+    /**
      * System prompt for the LLM call. Encodes the step's contract:
      * - what the agent is allowed to do this turn (orient vs confront vs accept)
      * - the validator's thresholds (min chars, min items)

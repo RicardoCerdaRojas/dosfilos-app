@@ -157,9 +157,11 @@ export class GeminiPastoralWordStudyService implements IPastoralWordStudyService
             throw new Error(`Candidato ${index} no es un objeto.`);
         }
         const r = raw as Record<string, unknown>;
+        const gloss = typeof r.gloss === 'string' ? r.gloss.trim() : '';
         return {
             word: String(r.word ?? '').trim(),
             transliteration: String(r.transliteration ?? '').trim(),
+            ...(gloss ? { gloss } : {}),
             lemma: String(r.lemma ?? '').trim(),
             verseRef: String(r.verseRef ?? '').trim(),
             theologicalWeight: this.clampWeight(Number(r.theologicalWeight)),

@@ -54,6 +54,9 @@ export function KeyWordsPicker({ candidates, selectedLemma, language, onSelect }
                                         {c.word}
                                     </span>
                                     <span className="text-xs text-muted-foreground">{c.transliteration}</span>
+                                    {c.gloss && (
+                                        <span className="text-xs font-semibold text-info">“{c.gloss}”</span>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                                     <span>{c.verseRef}</span>

@@ -10,6 +10,7 @@ import {
     type GateOverride,
     type PublishOverrideInput,
     type ContraScanReport,
+    type PastoralSeed,
 } from '@dosfilos/domain';
 import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 
@@ -81,6 +82,8 @@ export class SermonService {
             scheduledDate: Date;
             wizardProgress: any;
             preachingHistory: any[];
+            /** Editor tutor session opened for follow-up questions (lazy-created). */
+            tutorSessionId: string;
             /** Phase 2.5 PR C (ADR-027) — gate snapshot embedded at generation time. */
             studyDepthSnapshot: import('@dosfilos/domain').StudyDepthSnapshot;
         }>
@@ -95,6 +98,51 @@ export class SermonService {
         } catch (error: any) {
             throw new Error(error.message || 'Error al actualizar el sermón');
         }
+    }
+
+    /**
+     * Creates an editable VERSION of an existing sermon so the pastor can
+     * re-preach the same message in a new context with light edits. Copies
+     * only the finished sermon (not the wizard exegetical material) into a
+     * fresh `'draft'` linked to the original ROOT via `versionOf`. Works
+     * whether `sourceId` is the root or an existing version — the entity
+     * resolves the root so the whole family stays a flat group.
+     * @param label Optional occasion label (e.g. "Retiro jóvenes 2026").
+     */
+    async createVersion(sourceId: string, label?: string): Promise<SermonEntity> {
+        try {
+            const source = await this.sermonRepository.findById(sourceId);
+            if (!source) {
+                throw new Error('Sermón no encontrado');
+            }
+            const version = source.createVersion(label?.trim() || undefined);
+            return await this.sermonRepository.create(version);
+        } catch (error: any) {
+            throw new Error(error.message || 'Error al crear la versión del sermón');
+        }
+    }
+
+    /**
+     * Guided-sermon handoff: ensures a sermon doc exists with the SAME id the
+     * completed `pastoralSeed` already references (`seed.sermonId`), so the
+     * wizard's `getBySermonId` reconnects the 8-step study to the sermon. The
+     * guided flow mints only the seed (placeholder sermonId, no doc); this
+     * materializes the doc when the pastor crosses into the wizard. Idempotent.
+     */
+    async ensureSermonForCompletedSeed(seed: PastoralSeed): Promise<SermonEntity> {
+        const existing = await this.sermonRepository.findById(seed.sermonId);
+        if (existing) return existing;
+        const rawTitle = seed.insight?.centralIdea?.trim() || `Sermón sobre ${seed.passage}`;
+        const sermon = SermonEntity.create({
+            id: seed.sermonId,
+            userId: seed.userId,
+            title: rawTitle.slice(0, 200),
+            content: '',
+            bibleReferences: seed.passage ? [seed.passage] : [],
+            status: 'draft',
+            ...(seed.projectId ? { projectId: seed.projectId } : {}),
+        });
+        return this.sermonRepository.create(sermon);
     }
 
     async deleteSermon(id: string): Promise<void> {

@@ -9,7 +9,7 @@ import { StepDraft } from './StepDraft';
 import { SermonsInProgress } from './SermonInProgress';
 import { sermonService, exegesisService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
-import { SermonEntity, type Sermon } from '@dosfilos/domain';
+import { SermonEntity, evaluatePastoralSeed, type Sermon } from '@dosfilos/domain';
 import { migrateLegacyWizardProgress } from './migrateLegacyWizardProgress';
 import { usePastoralFidelityGate } from '@/hooks/usePastoralFidelityGate';
 import { PastoralSeedWizard } from './pastoralSeed/PastoralSeedWizard';
@@ -62,6 +62,50 @@ function WizardContent() {
                     let sermon = await sermonService.getSermon(sermonIdParam);
 
                     if (sermon) {
+                        // Guided handoff: a COMPLETED pastoral seed for this
+                        // sermon means the 8-step study is already done (in
+                        // Faculty's guided mode or the wizard) → synthesize the
+                        // exegesis from the seed and land directly on homiletics.
+                        const completedSeed = await pastoralSeedService.getBySermonId(sermon.id);
+                        // Only do the fresh handoff when the pastor hasn't started
+                        // homiletics/draft yet — otherwise fall through to the normal
+                        // resume so reopening lands where they left off.
+                        const hasWizardProgress = Boolean(
+                            sermon.wizardProgress?.homiletics || sermon.wizardProgress?.draft,
+                        );
+                        // Compute completion from the 8 step validators rather than
+                        // the stored `completed` flag — the guided flow advances the
+                        // session to 'completed' without persisting that flag.
+                        if (!hasWizardProgress && completedSeed && evaluatePastoralSeed(completedSeed).completed) {
+                            setSermonId(sermon.id);
+                            setPassage(completedSeed.passage);
+                            setExegesis(seedToExegesis(completedSeed));
+                            // Carry the pastor's own Insight work into the
+                            // Redacción form: his anecdote → illustrations, his
+                            // observations / open question / doxology → notes.
+                            const ins = completedSeed.insight;
+                            if (ins) {
+                                const notes = [
+                                    (ins.observations ?? []).length
+                                        ? `Observaciones del estudio:\n${(ins.observations ?? []).map((o) => `- ${o}`).join('\n')}`
+                                        : '',
+                                    ins.openQuestion ? `Pregunta abierta: ${ins.openQuestion}` : '',
+                                    ins.doxologicalApplication ? `Aplicación doxológica: ${ins.doxologicalApplication}` : '',
+                                ].filter(Boolean).join('\n\n');
+                                setRules((prev) => ({
+                                    ...prev,
+                                    personalization: {
+                                        ...prev.personalization,
+                                        illustrations: ins.pastoralAnecdote || prev.personalization?.illustrations || '',
+                                        preacherNotes: notes || prev.personalization?.preacherNotes || '',
+                                    },
+                                }));
+                            }
+                            setStep(2);
+                            setLoading(false);
+                            return;
+                        }
+
                         // Paper-linked empty placeholder recovery
                         // (PR #216). If the sermon is empty + linked
                         // to a paper, fire `generateSermonFromPaper`
@@ -373,7 +417,7 @@ function WizardContent() {
             .getBySermonId(sermonId)
             .then((seed) => {
                 if (cancelled) return;
-                if (!seed?.completed) {
+                if (!seed || !evaluatePastoralSeed(seed).completed) {
                     toast.warning('Completa los 6 pasos de estudio antes de continuar al borrador.');
                     setStep(1);
                 }

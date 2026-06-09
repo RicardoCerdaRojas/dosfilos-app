@@ -179,6 +179,22 @@ export function StepDraft() {
     const getFullContent = () => buildFullContent(draft, t);
 
     const handleSaveAndExit = async () => {
+        // Persist the rendered draft into the sermon's top-level `content` so it
+        // is viewable on the detail page — the autosave only stores
+        // `wizardProgress.draft`, which the detail view doesn't read. Without
+        // this a saved draft opens with an empty body.
+        try {
+            if (sermonId && draft && exegesis) {
+                await sermonService.updateSermon(sermonId, {
+                    title: draft.title,
+                    content: getFullContent(),
+                    bibleReferences: [exegesis.passage],
+                    tags: exegesis.keyWords.map((kw) => kw.original),
+                });
+            }
+        } catch (err) {
+            console.error('[StepDraft] save-and-exit content persist failed', err);
+        }
         toast.success(t('drafting.success.saved'));
         navigate('/dashboard');
     };

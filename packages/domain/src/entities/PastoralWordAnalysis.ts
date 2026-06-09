@@ -25,6 +25,12 @@ export interface KeyWordCandidate {
     word: string;
     /** Latin-script transliteration. */
     transliteration: string;
+    /**
+     * Short literal translation/gloss (1-3 words, Spanish) for quick scanning
+     * in the candidate list. Optional — results from before this field shipped
+     * omit it, so the UI renders it only when present.
+     */
+    gloss?: string;
     /** Lemma / dictionary form. */
     lemma: string;
     /** Where the word appears (e.g. "Rom 8:4"). */

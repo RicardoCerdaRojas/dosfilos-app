@@ -107,6 +107,7 @@
         "edit": "Editar",
         "preachMode": "Modo predicación",
         "linkToProject": "Vincular a proyecto…",
+        "createVersion": "Crear nueva versión…",
         "viewProject": "Ver proyecto \"{{title}}\""
     },
     "deleteDialog": {
@@ -127,5 +128,28 @@
         "linkSuccess": "Sermón vinculado al proyecto",
         "unlinkSuccess": "Sermón desvinculado del proyecto",
         "error": "Error al vincular"
+    },
+    "versions": {
+        "badge": "Versión",
+        "count_one": "{{count}} versión",
+        "count_other": "{{count}} versiones",
+        "original": "Original",
+        "prev": "Versión anterior",
+        "next": "Versión siguiente",
+        "pagerLabel": "Versiones del sermón",
+        "bannerOf": "de «{{title}}»",
+        "bannerOfGeneric": "de otro sermón",
+        "viewOriginal": "Ver original",
+        "dialogEyebrow": "Nueva versión",
+        "dialogFallbackTitle": "Sermón",
+        "dialogDescription": "Crea una copia editable para volver a predicar este mensaje en otro contexto. Se copia el contenido, el título y las referencias; podrás retocarlo sin afectar el original.",
+        "labelField": "Etiqueta de ocasión (opcional)",
+        "labelPlaceholder": "Ej. Retiro de jóvenes 2026",
+        "labelHint": "Te ayuda a distinguir esta versión del original en la lista.",
+        "cancel": "Cancelar",
+        "confirm": "Crear versión",
+        "creating": "Creando…",
+        "createSuccess": "Versión creada",
+        "createError": "Error al crear la versión"
     }
 }

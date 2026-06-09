@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Sprout } from 'lucide-react';
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { useSidebar } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import { track } from '@/lib/analytics/track';
@@ -18,6 +19,9 @@ import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
 import { GuidedSermonHeader } from '@/components/faculty/GuidedSermonHeader';
 import { useGuidedSermonIntegration } from './hooks/useGuidedSermonIntegration';
 import { FacultyChatGuidedZone } from './components/FacultyChatGuidedZone';
+import { GuidedWordStudyHelper } from './components/GuidedWordStudyHelper';
+import { GuidedCrossRefHelper } from './components/GuidedCrossRefHelper';
+import { GuidedInsightHelper } from './components/GuidedInsightHelper';
 import { FacultyChatModals } from './components/FacultyChatModals';
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
 import { type Extraction, type ExtractionType } from '@dosfilos/domain';
@@ -34,6 +38,7 @@ import { useResponseModePref } from './hooks/useResponseModePref';
 
 export function FacultyChatPage() {
     const { t } = useTranslation('faculty');
+    const { t: tGuided } = useTranslation('guidedSermon');
     const { sessionId } = useParams();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -227,6 +232,10 @@ export function FacultyChatPage() {
         session,
         effectiveSessionId,
         setInput,
+        createSession,
+        agentIdForNew,
+        agents,
+        navigate,
     });
 
     // Wrap the submit so guided turns route through the Socratic agent.
@@ -436,18 +445,14 @@ export function FacultyChatPage() {
                                                     session={session.guidedSermonSession}
                                                     onPause={guidedIntegration.pause}
                                                     onResume={guidedIntegration.resume}
-                                                    onOpenWizard={() => navigate(`/dashboard/sermons?id=${session.guidedSermonSession?.seedId ?? ''}`)}
+                                                    onOpenWizard={guidedIntegration.openCompletedWizard}
                                                 />
                                             )}
                                             <div ref={chatScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-8 py-8 space-y-6 scroll-smooth pb-40">
                                                 <div className="max-w-3xl mx-auto space-y-6 w-full">
                                                     <FacultyChatGuidedZone
-                                                        effectiveSessionId={effectiveSessionId}
-                                                        isFlagEnabled={guidedIntegration.isFlagEnabled}
-                                                        hasGuidedSession={guidedIntegration.hasGuidedSession}
                                                         activationPromptOpen={guidedIntegration.activationPromptOpen}
                                                         isProcessing={guidedIntegration.isProcessing}
-                                                        openActivationPrompt={guidedIntegration.openActivationPrompt}
                                                         closeActivationPrompt={guidedIntegration.closeActivationPrompt}
                                                         activate={guidedIntegration.activate}
                                                     />
@@ -455,7 +460,7 @@ export function FacultyChatPage() {
                                                         messages={session?.messages || []}
                                                         isNewSession={isNewSession}
                                                         isStreaming={isStreaming}
-                                                        isSending={isSending}
+                                                        isSending={isSending || guidedIntegration.isProcessing}
                                                         deletingMessageId={deletingMessageId}
                                                         streamingMessage={streamingMessage}
                                                         activeAgents={activeAgents}
@@ -463,6 +468,31 @@ export function FacultyChatPage() {
                                                         onRequestDeleteMessage={requestDeleteMessage}
                                                         onCopyMessage={(content, messageId) => copyMessageToClipboard(content, messageId, t)}
                                                     />
+                                                    {guidedIntegration.isGuidedActive
+                                                        && session?.guidedSermonSession?.currentStep === 'wordStudies'
+                                                        && session.guidedSermonSession.passage && (
+                                                        <GuidedWordStudyHelper
+                                                            passage={session.guidedSermonSession.passage}
+                                                            onInsert={(text) => setInput(input ? `${input}\n${text}` : text)}
+                                                            busy={guidedIntegration.isProcessing}
+                                                        />
+                                                    )}
+                                                    {guidedIntegration.isGuidedActive
+                                                        && session?.guidedSermonSession?.currentStep === 'recognition'
+                                                        && session.guidedSermonSession.passage && (
+                                                        <GuidedCrossRefHelper
+                                                            passage={session.guidedSermonSession.passage}
+                                                            onInsert={(text) => setInput(input ? `${input}\n${text}` : text)}
+                                                            busy={guidedIntegration.isProcessing}
+                                                        />
+                                                    )}
+                                                    {guidedIntegration.isGuidedActive
+                                                        && session?.guidedSermonSession?.currentStep === 'insight' && (
+                                                        <GuidedInsightHelper
+                                                            onInsert={(text) => setInput(text)}
+                                                            busy={guidedIntegration.isProcessing}
+                                                        />
+                                                    )}
                                                     <div ref={messagesEndRef} />
                                                 </div>
                                             </div>
@@ -480,6 +510,21 @@ export function FacultyChatPage() {
                                                 onAttach={setPendingAttachment}
                                                 lengthPreference={lengthPreference}
                                                 onSetLengthPreference={setLengthPreference}
+                                                leadingAction={
+                                                    guidedIntegration.isFlagEnabled && !guidedIntegration.hasGuidedSession ? (
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={guidedIntegration.openActivationPrompt}
+                                                            className="h-7 gap-1.5 text-xs text-success hover:text-success hover:bg-success/10"
+                                                            title={tGuided('cta.startGuided')}
+                                                        >
+                                                            <Sprout className="h-3.5 w-3.5" />
+                                                            <span className="hidden sm:inline">{tGuided('cta.startGuided')}</span>
+                                                        </Button>
+                                                    ) : null
+                                                }
                                             />
                                         </>
                                     )}

@@ -1,11 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Sprout, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 interface Props {
+    /** Controls the modal visibility. */
+    open: boolean;
     /** When the chat already has context (e.g. user discussed a passage), pre-fill it. */
     suggestedPassage?: string;
     /** Called with the confirmed passage when the pastor activates the agent. */
@@ -25,6 +34,7 @@ interface Props {
  * passage when possible.
  */
 export function GuidedSermonActivationPrompt({
+    open,
     suggestedPassage,
     onActivate,
     onCancel,
@@ -32,6 +42,12 @@ export function GuidedSermonActivationPrompt({
 }: Props) {
     const { t } = useTranslation('guidedSermon');
     const [passage, setPassage] = useState(suggestedPassage?.trim() ?? '');
+
+    // Reset the field each time the modal opens so a cancelled+reopened prompt
+    // starts clean (or re-seeds from the suggested passage).
+    useEffect(() => {
+        if (open) setPassage(suggestedPassage?.trim() ?? '');
+    }, [open, suggestedPassage]);
 
     const canActivate = passage.trim().length > 0 && !isProcessing;
 
@@ -42,49 +58,51 @@ export function GuidedSermonActivationPrompt({
     };
 
     return (
-        <Card className="p-4 border-info/30 bg-info-subtle/30">
-            <form onSubmit={handleSubmit} className="space-y-3">
-                <div className="flex items-start gap-2">
-                    <Sprout className="h-5 w-5 text-success shrink-0 mt-0.5" />
-                    <div className="flex-1 space-y-1">
-                        <h3 className="text-sm font-semibold text-foreground">{t('activation.title')}</h3>
-                        <p className="text-xs text-muted-foreground">{t('activation.description')}</p>
+        <Dialog open={open} onOpenChange={(o) => { if (!o && !isProcessing) onCancel(); }}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Sprout className="h-5 w-5 text-success" />
+                        {t('activation.title')}
+                    </DialogTitle>
+                    <DialogDescription>{t('activation.description')}</DialogDescription>
+                </DialogHeader>
+
+                <form onSubmit={handleSubmit} className="space-y-3">
+                    <div className="space-y-1.5">
+                        <label htmlFor="guided-sermon-passage" className="text-xs font-medium text-foreground">
+                            {t('activation.passageLabel')}
+                        </label>
+                        <Input
+                            id="guided-sermon-passage"
+                            type="text"
+                            value={passage}
+                            onChange={(e) => setPassage(e.target.value)}
+                            placeholder={t('activation.passagePlaceholder')}
+                            disabled={isProcessing}
+                            autoFocus
+                        />
+                        <p className="text-[10px] text-muted-foreground">{t('activation.passageHint')}</p>
                     </div>
-                </div>
 
-                <div className="space-y-1.5">
-                    <label htmlFor="guided-sermon-passage" className="text-xs font-medium text-foreground">
-                        {t('activation.passageLabel')}
-                    </label>
-                    <Input
-                        id="guided-sermon-passage"
-                        type="text"
-                        value={passage}
-                        onChange={(e) => setPassage(e.target.value)}
-                        placeholder={t('activation.passagePlaceholder')}
-                        disabled={isProcessing}
-                        autoFocus
-                    />
-                    <p className="text-[10px] text-muted-foreground">{t('activation.passageHint')}</p>
-                </div>
-
-                <div className="flex items-center justify-end gap-2">
-                    <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={isProcessing}>
-                        {t('activation.cancel')}
-                    </Button>
-                    <Button type="submit" size="sm" disabled={!canActivate}>
-                        {isProcessing ? (
-                            <>
-                                <Loader2 className="h-4 w-4 animate-spin" /> {t('activation.activating')}
-                            </>
-                        ) : (
-                            <>
-                                <Sprout className="h-4 w-4" /> {t('activation.activate')}
-                            </>
-                        )}
-                    </Button>
-                </div>
-            </form>
-        </Card>
+                    <DialogFooter>
+                        <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={isProcessing}>
+                            {t('activation.cancel')}
+                        </Button>
+                        <Button type="submit" size="sm" disabled={!canActivate}>
+                            {isProcessing ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" /> {t('activation.activating')}
+                                </>
+                            ) : (
+                                <>
+                                    <Sprout className="h-4 w-4" /> {t('activation.activate')}
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }

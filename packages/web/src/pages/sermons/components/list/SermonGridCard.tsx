@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Calendar, FileText, Tag } from 'lucide-react';
+import { BookOpen, Calendar, Tag, GitBranch } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,6 +15,8 @@ interface SermonGridCardProps {
     seriesName: string | null;
     project: AIProject | null;
     onDelete: () => void;
+    /** Optional: opens the "create new version" dialog for this sermon. */
+    onCreateVersion?: () => void;
     /** Multi-select state — when defined, renders the checkbox affordance + suppresses title nav while selecting. */
     selected?: boolean;
     onToggleSelect?: (id: string) => void;
@@ -27,12 +29,23 @@ export const SermonGridCard: React.FC<SermonGridCardProps> = ({
     seriesName,
     project,
     onDelete,
+    onCreateVersion,
     selected = false,
     onToggleSelect,
     selectionActive = false,
 }) => {
     const { t, i18n } = useTranslation('sermons');
     const navigate = useNavigate();
+
+    // Some legacy sermons store several passages as a single
+    // semicolon/comma-separated string in bibleReferences[0]; split + clamp so
+    // the card shows the actual passage(s) without overflowing.
+    const allRefs = sermon.bibleReferences.flatMap((r) =>
+        typeof r === 'string' ? r.split(/[;,]\s*/).filter(Boolean) : [r],
+    );
+    const refsPreview = allRefs.slice(0, 2).join(', ');
+    const refsExtra = allRefs.length > 2 ? ` +${allRefs.length - 2}` : '';
+    const refsFull = allRefs.join(', ');
 
     const handleTitleClick = () => {
         if (selectionActive && onToggleSelect) {
@@ -79,6 +92,22 @@ export const SermonGridCard: React.FC<SermonGridCardProps> = ({
                 </div>
 
                 <div className="space-y-2">
+                    {sermon.versionOf && (
+                        <div className="flex items-center gap-1.5 min-w-0">
+                            <Badge
+                                variant="outline"
+                                className="shrink-0 border-info/30 bg-info/10 text-info text-[10px] px-1.5 py-0 font-medium inline-flex items-center gap-1"
+                            >
+                                <GitBranch className="h-3 w-3" />
+                                {t('versions.badge')}
+                            </Badge>
+                            {sermon.versionLabel && (
+                                <span className="text-[11px] text-info truncate" title={sermon.versionLabel}>
+                                    {sermon.versionLabel}
+                                </span>
+                            )}
+                        </div>
+                    )}
                     <h3
                         className="text-xl font-bold font-serif leading-tight cursor-pointer group-hover:text-primary transition-colors line-clamp-2"
                         onClick={handleTitleClick}
@@ -142,15 +171,20 @@ export const SermonGridCard: React.FC<SermonGridCardProps> = ({
             </div>
 
             <div className="p-3 border-t bg-muted/20 flex items-center justify-between gap-2">
-                <div className="text-xs text-muted-foreground">
-                    {sermon.bibleReferences.length > 0 && (
-                        <span className="flex items-center gap-1">
-                            <FileText className="h-3.5 w-3.5" />
-                            {sermon.bibleReferences.length} {t('grid.references')}
+                <div className="text-xs text-muted-foreground min-w-0">
+                    {allRefs.length > 0 && (
+                        <span className="flex items-center gap-1 min-w-0 max-w-full" title={refsFull}>
+                            <BookOpen className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{refsPreview}{refsExtra}</span>
                         </span>
                     )}
                 </div>
-                <SermonRowActions sermonId={sermon.id} onDelete={onDelete} hoverPrimary />
+                <SermonRowActions
+                    sermonId={sermon.id}
+                    onDelete={onDelete}
+                    onCreateVersion={onCreateVersion}
+                    hoverPrimary
+                />
             </div>
         </Card>
     );

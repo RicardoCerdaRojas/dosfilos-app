@@ -114,6 +114,8 @@
         "status": "Estado",
         "save": "Guardar Cambios",
         "saving": "Guardando...",
+        "write": "Escribir",
+        "preview": "Vista Previa",
         "editTitle": "Editar Sermón",
         "sermonDetails": "Detalles del Sermón",
         "categories": {
@@ -294,5 +296,22 @@
     "attributions": {
         "title": "Atribuciones",
         "description": "Atribuciones obligatorias por licencia para las fuentes citadas en este sermón."
+    },
+    "tutorPanel": {
+        "title": "Tutor",
+        "close": "Cerrar panel",
+        "toggleOpen": "Consultar al tutor",
+        "toggleClose": "Ocultar tutor",
+        "subtitleOrigin": "Continúa tu conversación de estudio",
+        "subtitleNew": "Pregunta sobre este sermón",
+        "savedHint": "El tutor considera el sermón guardado. Guarda para incluir tus últimos cambios.",
+        "emptyTitle": "Pregúntale al tutor",
+        "emptyBody": "Haz preguntas sobre este sermón: ilustraciones, fidelidad al texto, aplicación, estructura…",
+        "placeholder": "Escribe tu pregunta…",
+        "send": "Enviar",
+        "you": "Tú",
+        "tutor": "Tutor",
+        "thinking": "Pensando…",
+        "fullSession": "Ir a la sesión completa"
     }
 }

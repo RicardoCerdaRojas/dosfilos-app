@@ -194,6 +194,46 @@ export interface Sermon {
      * with the flag off. Purely additive — mutators carry it forward unchanged.
      */
     contraScanReport?: ContraScanReport;
+
+    /**
+     * Version grouping — set on a sermon that is a re-preaching VERSION of an
+     * existing sermon (pastor preaches the same message in a new context with
+     * light edits). Points to the ROOT sermon's id. The group is flat: a
+     * version of a version still points to the original root, so the whole
+     * family is fetched with a single `versionOf == rootId` filter and the
+     * "v2 / v3…" ordinal is computed in the UI from `createdAt` order. The
+     * root sermon itself leaves this `undefined`. Carried forward unchanged
+     * by every mutator (additive field).
+     */
+    versionOf?: string | undefined;
+
+    /**
+     * Optional occasion label for a version (e.g. "Retiro jóvenes 2026",
+     * "Iglesia X"). Lets the pastor tell two versions apart at a glance in
+     * the grouped list without editing the title. Only meaningful when
+     * `versionOf` is set. Carried forward unchanged by mutators.
+     */
+    versionLabel?: string | undefined;
+
+    /**
+     * Faculty (tutor) chat session opened from the SERMON EDITOR so the pastor
+     * can ask follow-up questions about an already-generated sermon. Distinct
+     * from `sourceFacultySessionId` (the session the sermon was GENERATED from):
+     * this one is created lazily on the first editor question for sermons that
+     * have no origin session (wizard/paper/blank). The editor prefers
+     * `sourceFacultySessionId` when present and falls back to this. Points to a
+     * `users/{uid}/ai_sessions/{id}` doc. Carried forward unchanged by mutators.
+     */
+    tutorSessionId?: string | undefined;
+
+    /**
+     * SUMMARY-ONLY derived flag: whether the sermon has a non-empty `content`
+     * body. The trimmed list read strips `content`, so the dashboard can't tell
+     * a finished sermon from an in-progress wizard draft without it. Set by the
+     * list-summary projection; `undefined` on full entities (which carry the
+     * real `content`). Not persisted.
+     */
+    hasContent?: boolean | undefined;
 }
 
 export class SermonEntity implements Sermon {
@@ -225,6 +265,10 @@ export class SermonEntity implements Sermon {
         public studyDepthSnapshot?: Sermon['studyDepthSnapshot'],
         public fidelityReport?: FidelityReport,
         public contraScanReport?: ContraScanReport,
+        public versionOf?: string,
+        public versionLabel?: string,
+        public tutorSessionId?: string,
+        public hasContent?: boolean,
         /**
          * Skips the "content required" rule. Set ONLY when reconstructing a
          * trimmed list summary (`createSummary`), where `content` is empty by
@@ -294,6 +338,10 @@ export class SermonEntity implements Sermon {
             data.studyDepthSnapshot,
             data.fidelityReport,
             data.contraScanReport,
+            data.versionOf,
+            data.versionLabel,
+            data.tutorSessionId,
+            data.hasContent,
             skipContentValidation
         );
     }
@@ -341,7 +389,10 @@ export class SermonEntity implements Sermon {
             data.citationManifest ?? this.citationManifest,
             data.studyDepthSnapshot ?? this.studyDepthSnapshot,
             data.fidelityReport ?? this.fidelityReport,
-            data.contraScanReport ?? this.contraScanReport
+            data.contraScanReport ?? this.contraScanReport,
+            d.versionOf ?? this.versionOf,
+            d.versionLabel ?? this.versionLabel,
+            d.tutorSessionId ?? this.tutorSessionId
         );
     }
 
@@ -377,7 +428,10 @@ export class SermonEntity implements Sermon {
             this.citationManifest ?? this.wizardProgress?.draft?.citationManifest,
             this.studyDepthSnapshot,
             this.fidelityReport,
-            this.contraScanReport
+            this.contraScanReport,
+            this.versionOf,
+            this.versionLabel,
+            this.tutorSessionId
         );
     }
 
@@ -431,8 +485,42 @@ export class SermonEntity implements Sermon {
             this.citationManifest ?? this.wizardProgress?.draft?.citationManifest,
             this.studyDepthSnapshot,
             this.fidelityReport,
-            this.contraScanReport
+            this.contraScanReport,
+            this.versionOf,
+            this.versionLabel,
+            this.tutorSessionId
         );
+    }
+
+    /**
+     * Creates an editable VERSION of this sermon for re-preaching the same
+     * message in a new context with light edits. The version is a fresh
+     * `'draft'` sermon with a new id that copies only the FINISHED sermon
+     * (title/content/references/tags/category + bibliography/citation manifest
+     * so footnotes keep rendering) — NOT the wizard exegetical material. It
+     * points at the ROOT sermon via `versionOf` (flat grouping: a version of a
+     * version still resolves to the original root) and carries an optional
+     * occasion `label`. Preaching history, sharing, schedule and series are
+     * intentionally reset so the new context starts clean.
+     */
+    createVersion(label?: string): SermonEntity {
+        const rootId = this.versionOf ?? this.id;
+        return SermonEntity.create({
+            userId: this.userId,
+            title: this.title,
+            content: this.content,
+            bibleReferences: [...this.bibleReferences],
+            tags: [...this.tags],
+            category: this.category,
+            status: 'draft',
+            isShared: false,
+            authorName: this.authorName,
+            projectId: this.projectId,
+            bibliography: this.bibliography,
+            citationManifest: this.citationManifest,
+            versionOf: rootId,
+            versionLabel: label,
+        });
     }
 
     archive(): SermonEntity {
@@ -463,7 +551,10 @@ export class SermonEntity implements Sermon {
             this.citationManifest,
             this.studyDepthSnapshot,
             this.fidelityReport,
-            this.contraScanReport
+            this.contraScanReport,
+            this.versionOf,
+            this.versionLabel,
+            this.tutorSessionId
         );
     }
 
@@ -495,7 +586,10 @@ export class SermonEntity implements Sermon {
             this.citationManifest,
             this.studyDepthSnapshot,
             this.fidelityReport,
-            this.contraScanReport
+            this.contraScanReport,
+            this.versionOf,
+            this.versionLabel,
+            this.tutorSessionId
         );
     }
 
@@ -527,7 +621,10 @@ export class SermonEntity implements Sermon {
             this.citationManifest,
             this.studyDepthSnapshot,
             this.fidelityReport,
-            this.contraScanReport
+            this.contraScanReport,
+            this.versionOf,
+            this.versionLabel,
+            this.tutorSessionId
         );
     }
 

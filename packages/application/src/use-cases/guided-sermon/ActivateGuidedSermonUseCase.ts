@@ -14,12 +14,15 @@
 import {
     createEmptyPastoralSeed,
     createGuidedSermonSession,
+    inferGenreFromBook,
+    parsePassageReference,
     PASTORAL_SEED_STEP_ORDER,
     PASTORAL_SEED_THRESHOLDS,
     type AIChatMessage,
     type GuidedSermonSession,
     type IAIChatRepository,
     type IPastoralSeedRepository,
+    type LiteraryGenre,
     type PastoralSeed,
 } from '@dosfilos/domain';
 
@@ -65,11 +68,19 @@ export class ActivateGuidedSermonUseCase {
         // Mint the seed with a placeholder sermonId — when the seed completes
         // the wizard mints the real sermon doc with the same id (one-to-one).
         const sermonId = generateId('srm');
+        // Deterministically infer the literary genre from the passage's book so
+        // the Context/Genre step (step 2) has a confirmed genre to validate
+        // against. Without this the genre stays empty and that step can never
+        // pass (the conversational flow has no genre-confirm UI). The pastor
+        // still writes the interpretive implication himself.
+        const parsed = parsePassageReference(input.passage.trim());
+        const genre: LiteraryGenre | undefined = parsed.ok ? inferGenreFromBook(parsed.ref.bookId) : undefined;
         const empty = createEmptyPastoralSeed({
             id: '', // repo assigns the doc id
             sermonId,
             userId: input.userId,
             passage: input.passage.trim(),
+            ...(genre ? { genre } : {}),
         });
         const seed = await this.seedRepo.create(empty);
 

@@ -24,6 +24,10 @@ export function useAutoSave(
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
     const previousStateRef = useRef<WizardState | null>(null);
+    // Always read the latest wizardState inside `save` without re-creating
+    // `save` (and the autosave effect) on every render.
+    const wizardStateRef = useRef(wizardState);
+    wizardStateRef.current = wizardState;
     // Surface a toast only once per failure burst so a flaky connection
     // doesn't spam the user with identical toasts on every keystroke.
     // Reset on first success so the next failure burst surfaces again.
@@ -33,6 +37,7 @@ export function useAutoSave(
         if (!sermonId || !userId) {
             return;
         }
+        const wizardState = wizardStateRef.current;
 
         // Only save if we have at least one phase completed
         if (!wizardState.exegesis && !wizardState.homiletics && !wizardState.draft) {
@@ -92,9 +97,11 @@ export function useAutoSave(
         } finally {
             setSaving(false);
         }
-    }, [sermonId, wizardState, userId]);
+    }, [sermonId, userId]);
 
-    // Auto-save ONLY when content actually changes
+    // Auto-save when content actually changes — DEBOUNCED so a burst of
+    // keystrokes (e.g. typing pastoral notes) coalesces into one save instead
+    // of firing per character and flickering the "Guardando…" indicator.
     useEffect(() => {
         if (!sermonId) return;
 
@@ -107,17 +114,18 @@ export function useAutoSave(
         }
 
         // Check if any content has actually changed
-        const exegesisChanged = prev.exegesis !== wizardState.exegesis;
-        const homileticsChanged = prev.homiletics !== wizardState.homiletics;
-        const draftChanged = prev.draft !== wizardState.draft;
-        const stepChanged = prev.step !== wizardState.step;
-        const personalizationChanged = prev.personalization !== wizardState.personalization;
-        const audienceRigorChanged = prev.audienceRigor !== wizardState.audienceRigor;
+        const changed =
+            prev.exegesis !== wizardState.exegesis ||
+            prev.homiletics !== wizardState.homiletics ||
+            prev.draft !== wizardState.draft ||
+            prev.step !== wizardState.step ||
+            prev.personalization !== wizardState.personalization ||
+            prev.audienceRigor !== wizardState.audienceRigor;
 
-        // Only save if there's a real change
-        if (exegesisChanged || homileticsChanged || draftChanged || stepChanged || personalizationChanged || audienceRigorChanged) {
-            save();
-        }
+        if (!changed) return;
+
+        const timer = setTimeout(() => { void save(); }, 800);
+        return () => clearTimeout(timer);
     }, [wizardState.exegesis, wizardState.homiletics, wizardState.draft, wizardState.step, wizardState.personalization, wizardState.audienceRigor, sermonId, save]);
 
     return { saving, lastSaved, save };
