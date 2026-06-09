@@ -491,6 +491,7 @@ export function FacultyChatPage() {
                                                         <GuidedInsightHelper
                                                             onInsert={(text) => setInput(text)}
                                                             busy={guidedIntegration.isProcessing}
+                                                            seedId={session.guidedSermonSession.seedId}
                                                         />
                                                     )}
                                                     <div ref={messagesEndRef} />
