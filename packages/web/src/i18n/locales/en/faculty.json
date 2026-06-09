@@ -328,7 +328,7 @@
         },
         "quickPrompts": {
             "outline": {
-                "label": "Sermon Outline",
+                "label": "Let's work on your sermon",
                 "prompt": "Help me develop an expository sermon outline."
             },
             "counseling": {

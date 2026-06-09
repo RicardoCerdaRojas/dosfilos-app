@@ -6,6 +6,7 @@ import { useDeleteUser } from '@/hooks/admin/useDeleteUser';
 import { useDisableUser } from '@/hooks/admin/useDisableUser';
 import { useEnableUser } from '@/hooks/admin/useEnableUser';
 import { useResendWelcomeEmail } from '@/hooks/admin/useResendWelcomeEmail';
+import { useImpersonateUser } from '@/hooks/admin/useImpersonateUser';
 import { useBulkUserAction } from '@/hooks/admin/useBulkUserAction';
 import { UserDetailsModal } from '@/components/admin/UserDetailsModal';
 import { ChangePlanDialog } from '@/components/admin/ChangePlanDialog';
@@ -39,6 +40,7 @@ import {
 import { useTranslation } from '@/i18n';
 import { UserTableRow } from './users/UserTableRow';
 import { DisableUserDialog } from './users/DisableUserDialog';
+import { ImpersonateUserDialog } from './users/ImpersonateUserDialog';
 import { DeleteUserDialog } from './users/DeleteUserDialog';
 import { BulkActionsToolbar } from './users/BulkActionsToolbar';
 import { SortableHeader } from './users/SortableHeader';
@@ -130,6 +132,8 @@ export function UserManagement() {
     const { enableUser, isLoading: isEnabling } = useEnableUser();
 
     const { resendEmail, isLoading: isResending } = useResendWelcomeEmail();
+    const { impersonate, isLoading: isImpersonating } = useImpersonateUser();
+    const [userToImpersonate, setUserToImpersonate] = useState<User | null>(null);
 
     const [planChangeUser, setPlanChangeUser] = useState<User | null>(null);
     const [resetQuotaUser, setResetQuotaUser] = useState<User | null>(null);
@@ -245,6 +249,14 @@ export function UserManagement() {
 
     const handleViewActivity = (userId: string) => {
         navigate(`/dashboard/admin/users/${userId}`);
+    };
+
+    const handleImpersonate = (user: User) => setUserToImpersonate(user);
+
+    const handleConfirmImpersonate = async () => {
+        if (!userToImpersonate) return;
+        await impersonate(userToImpersonate.id);
+        setUserToImpersonate(null);
     };
 
     const handleDeleteClick = (user: User) => {
@@ -453,6 +465,7 @@ export function UserManagement() {
                                     onToggleSelected={toggleSelected}
                                     onViewActivity={handleViewActivity}
                                     onViewDetails={handleViewDetails}
+                                    onImpersonate={handleImpersonate}
                                     onChangePlan={handleChangePlanClick}
                                     onResetQuota={handleResetQuotaClick}
                                     onResendEmail={resendEmail}
@@ -526,6 +539,13 @@ export function UserManagement() {
                 user={extendTrialUser}
                 isOpen={!!extendTrialUser}
                 onClose={() => setExtendTrialUser(null)}
+            />
+
+            <ImpersonateUserDialog
+                user={userToImpersonate}
+                isLoading={isImpersonating}
+                onCancel={() => setUserToImpersonate(null)}
+                onConfirm={handleConfirmImpersonate}
             />
 
             <DisableUserDialog

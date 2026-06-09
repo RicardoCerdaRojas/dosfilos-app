@@ -92,21 +92,23 @@ function AssistantMessageContent({ content, sources, isAdmin }: { content: strin
     return (
         <>
             <div className={cn(
+                // Measure (line length) is capped on the bubble card itself
+                // (max-w-[42rem] ≈ 68ch) — robust regardless of the typography
+                // plugin's default; prose fills that capped card.
                 "prose prose-slate prose-sm md:prose-base dark:prose-invert max-w-none break-words",
-                // Reading-optimized serif body for long-form theology
-                "font-reading",
-                // Generous leading for prose paragraphs (long-form reading comfort)
-                "prose-p:leading-[1.75]",
+                // Modern sans body (Inter) — clean, contemporary chat feel
+                "font-sans",
+                // Comfortable leading for sans long-form reading
+                "prose-p:leading-[1.7]",
                 // Tighter leading AND margins inside lists — dense bullets read better than airy ones
                 "prose-li:leading-normal prose-li:my-0.5",
                 "prose-ul:my-3 prose-ol:my-3",
-                // Paragraphs nested inside list items should not add extra vertical gap
                 "prose-li:marker:text-muted-foreground",
-                // Tighter, modern sans-serif for headings to contrast with serif body
-                "prose-headings:font-sans prose-headings:tracking-tight",
-                "prose-h2:mt-5 prose-h2:mb-2 prose-h3:mt-4 prose-h3:mb-1.5",
-                // Subtle indigo accent for strong emphasis
-                "prose-strong:text-foreground",
+                // Refined heading hierarchy — tight, heavier, clear scale steps
+                "prose-headings:font-sans prose-headings:tracking-tight prose-headings:font-semibold",
+                "prose-h2:text-[1.15em] prose-h2:mt-5 prose-h2:mb-2",
+                "prose-h3:text-[1.02em] prose-h3:mt-4 prose-h3:mb-1.5",
+                "prose-strong:text-foreground prose-strong:font-semibold",
                 // Tables (paradigms, conjugations) — cleaner borders
                 "prose-table:text-sm prose-th:bg-muted"
             )}>
@@ -248,7 +250,7 @@ export function FacultyChatMessages({
                             "relative text-[15px] leading-relaxed transition-shadow duration-500",
                             msg.role === 'user'
                                 ? "bg-primary text-primary-foreground rounded-3xl rounded-tr-sm px-6 py-3.5 max-w-[85%] md:max-w-[70%] shadow-sm font-medium"
-                                : "flex-1 min-w-0 bg-card border border-border shadow-sm rounded-3xl rounded-tl-sm px-6 py-5",
+                                : "w-full max-w-[42rem] min-w-0 bg-card border border-border shadow-sm rounded-3xl rounded-tl-sm px-6 py-5",
                             msg.id && highlightedIds.has(msg.id) && "ring-2 ring-primary ring-offset-2 ring-offset-background"
                         )}
                     >

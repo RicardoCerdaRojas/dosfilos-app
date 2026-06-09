@@ -16,6 +16,18 @@ interface CompleteRegistrationInput {
     locale: 'en' | 'es';
 }
 
+interface ImpersonateUserResult {
+    customToken: string;
+    targetUid: string;
+    targetEmail: string | null;
+    targetName: string | null;
+}
+
+interface StopImpersonatingResult {
+    customToken: string;
+    adminUid: string;
+}
+
 interface CreateCheckoutSessionInput {
     /** Subscription price (ignored when `packId` is set). */
     priceId?: string;
@@ -103,6 +115,36 @@ export class AuthService {
         const { customToken, userId, message } = result.data;
         await signInWithCustomToken(getAuth(), customToken);
         return { userId, message };
+    }
+
+    /**
+     * Super-admin only: swap the current session for the target user's, so the
+     * admin browses the app as that user. Returns the target's identity for the
+     * "you are impersonating X" banner. The minted token carries the
+     * `impersonatorUid` claim that powers `stopImpersonating`.
+     */
+    async impersonateUser(userId: string): Promise<ImpersonateUserResult> {
+        const callable = httpsCallable<{ userId: string }, ImpersonateUserResult>(
+            getFunctions(),
+            'impersonateUser',
+        );
+        const { data } = await callable({ userId });
+        await signInWithCustomToken(getAuth(), data.customToken);
+        return data;
+    }
+
+    /**
+     * Ends an impersonation session and signs back in as the original admin.
+     * Only works from a session that carries the `impersonatorUid` claim.
+     */
+    async stopImpersonating(): Promise<StopImpersonatingResult> {
+        const callable = httpsCallable<unknown, StopImpersonatingResult>(
+            getFunctions(),
+            'stopImpersonating',
+        );
+        const { data } = await callable({});
+        await signInWithCustomToken(getAuth(), data.customToken);
+        return data;
     }
 
     async getCurrentUser(): Promise<UserEntity | null> {

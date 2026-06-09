@@ -10,6 +10,7 @@ import { useSmartTriggers } from '@/hooks/useSmartTriggers';
 import { useLibrarySync } from '@/hooks/library';
 import { FloatingHelpButton } from '@/components/onboarding';
 import { DashboardTour, useDashboardTourTrigger } from '@/components/onboarding/DashboardTour';
+import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 
 export function DashboardLayout() {
   const location = useLocation();
@@ -47,6 +48,9 @@ export function DashboardLayout() {
         isFullScreen ? "h-svh overflow-hidden print:h-auto print:overflow-visible" : "min-h-svh print:h-auto", 
         isFullScreen && "md:peer-data-[variant=inset]:m-0 md:peer-data-[variant=inset]:rounded-none"
       )}>
+        {/* Impersonation banner — only renders while a super admin views as another user */}
+        <ImpersonationBanner />
+
         {/* Header with toggle button */}
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />

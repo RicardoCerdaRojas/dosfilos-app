@@ -113,6 +113,8 @@ export { notifyApproachingQuota } from './billing/notifyApproachingQuota';
 export { migrateLegacySermons } from './admin/migrateLegacySermons';
 export { changePlanForUser } from './admin/changePlanForUser';
 export { bulkUserAction } from './admin/bulkUserAction';
+export { impersonateUser } from './admin/impersonateUser';
+export { stopImpersonating } from './admin/stopImpersonating';
 export { grantUserCredits } from './admin/grantUserCredits';
 export { resetUserPlanQuota } from './admin/resetUserPlanQuota';
 export { extendUserTrialAdmin } from './admin/extendUserTrialAdmin';

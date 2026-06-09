@@ -191,6 +191,7 @@
         "rowActions": {
             "activity": "View activity",
             "view": "View",
+            "impersonate": "Log in as user",
             "openDetail": "Full detail",
             "viewActivity": "View detailed activity",
             "changePlan": "Change plan",
@@ -427,7 +428,25 @@
             "resetQuotaSuccess": "Quotas reset: {{standard}} standard · {{premium}} premium",
             "resetQuotaError": "Error resetting quotas",
             "featureFlagsSuccess": "Flags updated",
-            "featureFlagsError": "Failed to update flags"
+            "featureFlagsError": "Failed to update flags",
+            "impersonateSuccess": "You are now viewing {{name}}'s account",
+            "impersonateError": "Could not log in as this user",
+            "stopImpersonateSuccess": "Back to your admin account",
+            "stopImpersonateError": "Could not return to your admin account"
+        },
+        "impersonation": {
+            "banner": "You are viewing the platform as {{user}}",
+            "exit": "Exit"
+        },
+        "impersonateDialog": {
+            "title": "Log in as user",
+            "intro": "You are about to log in as {{name}} to see the platform exactly as this user sees it.",
+            "point1": "Your session will switch to this user.",
+            "point2": "You'll see their library, sermons and content — not the admin panel.",
+            "point3": "You can return to your account anytime with the \"Exit\" button in the top banner.",
+            "cancel": "Cancel",
+            "confirm": "Log in as user",
+            "loading": "Switching session..."
         },
         "featureFlags": {
             "title": "Feature flags",
