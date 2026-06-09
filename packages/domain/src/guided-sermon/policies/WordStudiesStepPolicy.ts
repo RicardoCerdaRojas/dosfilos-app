@@ -118,6 +118,8 @@ Reglas duras de este paso:
 Trabajo previo del pastor:
 ${priorStepsBlock(ctx)}
 
+AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): un descubrimiento exegético propio gobernado por el contexto (no copia de diccionario) — nombrá la palabra. Nada genérico.
+
 Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 

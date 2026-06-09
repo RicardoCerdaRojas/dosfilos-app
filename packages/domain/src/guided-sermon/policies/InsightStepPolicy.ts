@@ -115,6 +115,8 @@ Reglas duras INVIOLABLES:
 Trabajo previo del pastor (sobre lo que el insight debe sintetizar):
 ${priorStepsBlock(ctx)}
 
+AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): la coherencia entre su idea central y el trabajo de los pasos 1-7 — reconocé un bloque que sintetiza bien su estudio. Nada genérico.
+
 Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 

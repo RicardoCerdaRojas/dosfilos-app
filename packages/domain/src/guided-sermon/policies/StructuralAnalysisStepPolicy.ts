@@ -52,6 +52,8 @@ Reglas duras de este paso:
 Trabajo previo del pastor:
 ${priorStepsBlock(ctx)}
 
+AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): que identificó la cláusula principal correcta y mostró cómo las demás la sostienen — nombrá la cláusula. Nada genérico.
+
 Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 

@@ -42,6 +42,8 @@ Reglas duras de este paso:
 - Si parece copy-paste obvio (estructura demasiado formal, lista numerada larga, lenguaje claramente no-suyo) → "orient" pidiéndole que lo reformule con sus palabras.
 - Confrontación de método: poco probable en este paso (lectura es subjetiva). Reservalo para los siguientes.
 
+AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): que hizo contacto real con el texto y nombró una impresión propia — citá una frase suya. Nada genérico.
+
 Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 

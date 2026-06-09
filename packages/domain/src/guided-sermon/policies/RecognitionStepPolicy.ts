@@ -67,6 +67,8 @@ Reglas duras de este paso:
 Trabajo previo del pastor:
 ${priorStepsBlock(ctx)}
 
+AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): un paralelo con convergencia teológica genuina (no eco verbal) — citá la conexión que trazó. Nada genérico.
+
 Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 

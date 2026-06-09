@@ -81,6 +81,14 @@ describe('Socratic feedback contract (ADR-034)', () => {
         expect(prompt).toContain('SIN resolverla');
         expect(prompt).toContain('NUNCA respondas la duda doctrinal');
     });
+
+    it('every policy carries a step-specific affirmation rubric (PR4)', () => {
+        for (const key of PASTORAL_SEED_STEP_ORDER) {
+            const prompt = registry.get(key).buildSystemPrompt(ctxFor(key));
+            expect(prompt).toContain('AFIRMACIÓN (al aceptar, reconocé algo CONCRETO)');
+            expect(prompt).toContain('Nada genérico.');
+        }
+    });
 });
 
 describe('Step policies — orient + confront parsing', () => {
