@@ -95,6 +95,15 @@ export class ActivateGuidedSermonUseCase {
             guidedSermonSession,
         );
 
+        // Name the session by its passage so the sidebar shows the sermon being
+        // built, not the generic agent name ("Sesión con Dra. Alétheia"). Mirrors
+        // the "Exégesis de <passage>" naming of exegesis sessions.
+        await this.chatRepo.renameSession(
+            input.userId,
+            input.sessionId,
+            `Guía de sermón: ${input.passage.trim()}`,
+        );
+
         const firstStep = PASTORAL_SEED_STEP_ORDER[0]; // 'reading'
         const minChars = PASTORAL_SEED_THRESHOLDS.reading.firstImpressionMinChars;
         const welcomeMessage: AIChatMessage = {
