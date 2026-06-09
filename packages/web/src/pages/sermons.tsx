@@ -119,8 +119,10 @@ export function SermonsPage() {
         // Never show 'working' status sermons in the list
         if (sermon.status === 'working') return false;
 
-        // Hide sermons that are wizard drafts (have wizardProgress but no sourceSermonId)
-        if (sermon.wizardProgress && !sermon.sourceSermonId) return false;
+        // Hide only IN-PROGRESS wizard drafts (wizardProgress, no published copy,
+        // and no content body yet). A finished draft — one that reached a saved
+        // sermon body — belongs in this list with its "Borrador" badge.
+        if (sermon.wizardProgress && !sermon.sourceSermonId && !sermon.hasContent) return false;
 
         const matchesSearch = sermon.title.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesPlan = planFilter === 'all'
@@ -141,6 +143,9 @@ export function SermonsPage() {
         .filter((sermon) => {
             if (sermon.status === 'working') return false;
             if (sermon.status === 'published' || sermon.status === 'archived') return false;
+            // A sermon that already has a content body is FINISHED — it lives in
+            // the "Sermones" list, not here, even though its study seed exists.
+            if (sermon.hasContent) return false;
             if (!seedsBySermonId.has(sermon.id)) return false;
             const seed = seedsBySermonId.get(sermon.id)!;
             // Search matches title OR passage so the pastor can filter

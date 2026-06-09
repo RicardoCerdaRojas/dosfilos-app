@@ -163,4 +163,61 @@ describe('Validator equivalence with the wizard (Phase 1.6 invariant)', () => {
         expect(policy.validatePastorInput(two, ctxFor('wordStudies')).valid).toBe(true);
         expect(policy.validatePastorInput(one, ctxFor('wordStudies')).valid).toBe(false);
     });
+
+    it('wordStudies ACCUMULATES across turns via ctx.existingWordStudies', () => {
+        const policy = registry.get('wordStudies');
+        const oneNew = `ἀρχή (Juan 1:1): inicio absoluto que evoca Génesis y la creación, con peso teológico.`;
+        // One new word alone is not enough…
+        expect(policy.validatePastorInput(oneNew, ctxFor('wordStudies')).valid).toBe(false);
+        // …but with one already saved on the seed, the merged total is 2 → valid.
+        const ctx: TurnContext = {
+            ...ctxFor('wordStudies'),
+            existingWordStudies: [
+                { word: 'λόγος', reference: 'Juan 1:1', pastorDiscovery: 'el Verbo es agente personal con carga ontológica fuerte.' },
+            ],
+        };
+        expect(policy.validatePastorInput(oneNew, ctx).valid).toBe(true);
+    });
+
+    it('wordStudies ignores stray/garbage lines and self-heals a polluted seed', () => {
+        const policy = registry.get('wordStudies');
+        // Seed polluted by earlier stray lines: a bare "2:1" became {word:'2'}.
+        const seed = {
+            wordStudies: {
+                studies: [
+                    { word: 'λόγος', reference: 'Juan 1:1', pastorDiscovery: 'descubrimiento propio sustantivo sobre el Verbo encarnado.' },
+                    { word: '2', reference: '', pastorDiscovery: '1' }, // garbage
+                ],
+            },
+        } as unknown as Parameters<typeof policy.persistTo>[0];
+        // A bare reference line must NOT count or persist as a study.
+        const patch = policy.persistTo(seed, '2:1');
+        expect(patch.wordStudies!.studies.map((s) => s.word)).toEqual(['λόγος']); // garbage dropped
+
+        // Validating that same stray line against the (still 1 complete) seed → not enough.
+        const ctxOne: TurnContext = {
+            ...ctxFor('wordStudies'),
+            existingWordStudies: seed.wordStudies.studies,
+        };
+        expect(policy.validatePastorInput('2:1', ctxOne).valid).toBe(false);
+
+        // One real new study added → 2 complete → valid.
+        const ctxClean: TurnContext = {
+            ...ctxFor('wordStudies'),
+            existingWordStudies: [seed.wordStudies.studies[0]],
+        };
+        const ok = 'ἀρχή (Juan 1:1): inicio absoluto con ecos creacionales, descubrimiento propio del pastor.';
+        expect(policy.validatePastorInput(ok, ctxClean).valid).toBe(true);
+    });
+
+    it('wordStudies persistTo merges new studies onto the seed (dedupe by word)', () => {
+        const policy = registry.get('wordStudies');
+        const seed = {
+            wordStudies: {
+                studies: [{ word: 'λόγος', reference: 'Juan 1:1', pastorDiscovery: 'descubrimiento previo del pastor sobre el Verbo.' }],
+            },
+        } as unknown as Parameters<typeof policy.persistTo>[0];
+        const patch = policy.persistTo(seed, `ἀρχή (Juan 1:1): inicio absoluto que evoca la creación, descubrimiento propio.`);
+        expect(patch.wordStudies!.studies.map((s) => s.word)).toEqual(['λόγος', 'ἀρχή']);
+    });
 });

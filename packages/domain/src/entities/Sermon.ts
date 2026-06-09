@@ -214,6 +214,26 @@ export interface Sermon {
      * `versionOf` is set. Carried forward unchanged by mutators.
      */
     versionLabel?: string | undefined;
+
+    /**
+     * Faculty (tutor) chat session opened from the SERMON EDITOR so the pastor
+     * can ask follow-up questions about an already-generated sermon. Distinct
+     * from `sourceFacultySessionId` (the session the sermon was GENERATED from):
+     * this one is created lazily on the first editor question for sermons that
+     * have no origin session (wizard/paper/blank). The editor prefers
+     * `sourceFacultySessionId` when present and falls back to this. Points to a
+     * `users/{uid}/ai_sessions/{id}` doc. Carried forward unchanged by mutators.
+     */
+    tutorSessionId?: string | undefined;
+
+    /**
+     * SUMMARY-ONLY derived flag: whether the sermon has a non-empty `content`
+     * body. The trimmed list read strips `content`, so the dashboard can't tell
+     * a finished sermon from an in-progress wizard draft without it. Set by the
+     * list-summary projection; `undefined` on full entities (which carry the
+     * real `content`). Not persisted.
+     */
+    hasContent?: boolean | undefined;
 }
 
 export class SermonEntity implements Sermon {
@@ -247,6 +267,8 @@ export class SermonEntity implements Sermon {
         public contraScanReport?: ContraScanReport,
         public versionOf?: string,
         public versionLabel?: string,
+        public tutorSessionId?: string,
+        public hasContent?: boolean,
         /**
          * Skips the "content required" rule. Set ONLY when reconstructing a
          * trimmed list summary (`createSummary`), where `content` is empty by
@@ -318,6 +340,8 @@ export class SermonEntity implements Sermon {
             data.contraScanReport,
             data.versionOf,
             data.versionLabel,
+            data.tutorSessionId,
+            data.hasContent,
             skipContentValidation
         );
     }
@@ -367,7 +391,8 @@ export class SermonEntity implements Sermon {
             data.fidelityReport ?? this.fidelityReport,
             data.contraScanReport ?? this.contraScanReport,
             d.versionOf ?? this.versionOf,
-            d.versionLabel ?? this.versionLabel
+            d.versionLabel ?? this.versionLabel,
+            d.tutorSessionId ?? this.tutorSessionId
         );
     }
 
@@ -405,7 +430,8 @@ export class SermonEntity implements Sermon {
             this.fidelityReport,
             this.contraScanReport,
             this.versionOf,
-            this.versionLabel
+            this.versionLabel,
+            this.tutorSessionId
         );
     }
 
@@ -461,7 +487,8 @@ export class SermonEntity implements Sermon {
             this.fidelityReport,
             this.contraScanReport,
             this.versionOf,
-            this.versionLabel
+            this.versionLabel,
+            this.tutorSessionId
         );
     }
 
@@ -526,7 +553,8 @@ export class SermonEntity implements Sermon {
             this.fidelityReport,
             this.contraScanReport,
             this.versionOf,
-            this.versionLabel
+            this.versionLabel,
+            this.tutorSessionId
         );
     }
 
@@ -560,7 +588,8 @@ export class SermonEntity implements Sermon {
             this.fidelityReport,
             this.contraScanReport,
             this.versionOf,
-            this.versionLabel
+            this.versionLabel,
+            this.tutorSessionId
         );
     }
 
@@ -594,7 +623,8 @@ export class SermonEntity implements Sermon {
             this.fidelityReport,
             this.contraScanReport,
             this.versionOf,
-            this.versionLabel
+            this.versionLabel,
+            this.tutorSessionId
         );
     }
 

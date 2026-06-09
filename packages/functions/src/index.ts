@@ -129,6 +129,7 @@ export { migratePastoralSeedsEightStep } from './admin/migratePastoralSeedsEight
 // 🌱 Pastoral Fidelity Phase 1.5 — Pastoral Word Study callables
 export { identifyKeyWords } from './pastoral-word-study/identifyKeyWords';
 export { analyzeWordPastorally } from './pastoral-word-study/analyzeWordPastorally';
+export { suggestCanonicalParallels } from './pastoral-word-study/suggestCanonicalParallels';
 
 // 🌱 Pastoral Fidelity Phase 2 — three-witnesses validation (ADR-011)
 export { validateSeedWitnesses } from './three-witnesses/validateSeedWitnesses';

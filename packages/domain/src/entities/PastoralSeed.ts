@@ -496,6 +496,15 @@ export function createEmptyPastoralSeed(args: {
     passage: string;
     projectId?: string;
     now?: Date;
+    /**
+     * Optional literary genre, deterministically inferred from the passage's
+     * book (`inferGenreFromBook`). When supplied, the genre is pre-set and
+     * marked confirmed so the Context/Genre step validator only gates on the
+     * pastor's interpretive IMPLICATION — without it, the genre stays empty and
+     * the validator can never pass (the guided conversational flow has no UI to
+     * confirm a proposed genre). The pastor still writes the implication.
+     */
+    genre?: LiteraryGenre;
 }): PastoralSeed {
     const now = args.now ?? new Date();
     return {
@@ -508,8 +517,8 @@ export function createEmptyPastoralSeed(args: {
         passage: args.passage,
         reading: { firstImpression: '', timeSpentSeconds: 0 },
         contextGenre: {
-            genre: '',
-            genreConfirmed: false,
+            genre: args.genre ?? '',
+            genreConfirmed: Boolean(args.genre),
             genreImplication: '',
             bookLocationNote: '',
             historicalContextConsulted: false,

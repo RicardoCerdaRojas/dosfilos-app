@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { SermonForm, SermonFormData } from '@/components/sermons/sermon-form';
 import { useSermon, useUpdateSermon } from '@/hooks/use-sermons';
-import { StudySessionPanel } from '@/components/sermons/StudySessionPanel';
-import { GraduationCap, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { SermonTutorPanel } from '@/components/sermons/tutor/SermonTutorPanel';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { useDefaultLayout } from 'react-resizable-panels';
+import { GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 
@@ -15,10 +17,24 @@ export function SermonEditPage() {
   const { sermon, loading: loadingSermon } = useSermon(id);
   const { updateSermon, loading: updating } = useUpdateSermon();
 
-  // Panel is open by default when the sermon has a linked session
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  // The tutor panel is available for every sermon. It auto-opens once for
+  // sermons that already carry a study conversation (origin or a previous
+  // editor session); for the rest it stays closed until the pastor opens it.
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const autoOpenedRef = useRef(false);
 
-  const sessionId = sermon?.sourceFacultySessionId;
+  useEffect(() => {
+    if (autoOpenedRef.current || !sermon) return;
+    autoOpenedRef.current = true;
+    if (sermon.sourceFacultySessionId || sermon.tutorSessionId) setIsPanelOpen(true);
+  }, [sermon]);
+
+  // Persist the editor/tutor split width across sessions via localStorage.
+  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+    id: 'sermon-editor-tutor',
+    panelIds: ['editor', 'tutor'],
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+  });
 
   const handleSubmit = async (data: SermonFormData) => {
     if (!id) return;
@@ -52,65 +68,68 @@ export function SermonEditPage() {
     );
   }
 
+  const tutorToggle = (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => setIsPanelOpen(prev => !prev)}
+      className={cn(
+        'gap-2 text-xs font-semibold transition-colors h-8',
+        isPanelOpen
+          ? 'border-info/40 text-info hover:bg-info/10'
+          : 'text-muted-foreground'
+      )}
+      title={isPanelOpen ? t('tutorPanel.toggleClose') : t('tutorPanel.toggleOpen')}
+    >
+      <GraduationCap className="w-3.5 h-3.5" />
+      <span className="hidden lg:inline">
+        {isPanelOpen ? t('tutorPanel.toggleClose') : t('tutorPanel.toggleOpen')}
+      </span>
+    </Button>
+  );
+
+  const formNode = (
+    <SermonForm
+      defaultValues={{
+        title: sermon.title,
+        category: sermon.category,
+        content: sermon.content,
+        bibleReferences: sermon.bibleReferences,
+        tags: sermon.tags,
+        authorName: sermon.authorName,
+        status: sermon.status,
+      }}
+      onSubmit={handleSubmit}
+      submitLabel={t('form.save')}
+      loading={updating}
+      onBack={() => navigate(`/dashboard/sermons/${id}`)}
+      headerActions={tutorToggle}
+    />
+  );
+
   return (
     <div className="flex h-full overflow-hidden">
-      {/* Main editor area */}
-      <div className="flex-1 min-w-0 overflow-y-auto">
-        {/* Toggle button – only rendered when a session is linked */}
-        {sessionId && (
-          <div className="flex justify-end px-4 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsPanelOpen(prev => !prev)}
-              className={cn(
-                'gap-2 text-xs font-semibold transition-colors',
-                isPanelOpen
-                  ? 'border-indigo-300 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40'
-                  : 'text-muted-foreground'
-              )}
-            >
-              <GraduationCap className="w-3.5 h-3.5" />
-              {isPanelOpen ? (
-                <>
-                  <PanelRightClose className="w-3.5 h-3.5" />
-                  Ocultar sesión
-                </>
-              ) : (
-                <>
-                  <PanelRightOpen className="w-3.5 h-3.5" />
-                  Ver sesión de estudio
-                </>
-              )}
-            </Button>
-          </div>
-        )}
-
-        <SermonForm
-          defaultValues={{
-            title: sermon.title,
-            category: sermon.category,
-            content: sermon.content,
-            bibleReferences: sermon.bibleReferences,
-            tags: sermon.tags,
-            authorName: sermon.authorName,
-            status: sermon.status,
-          }}
-          onSubmit={handleSubmit}
-          submitLabel={t('form.save')}
-          loading={updating}
-          onBack={() => navigate(`/dashboard/sermons/${id}`)}
-        />
-      </div>
-
-      {/* Study session side panel – only rendered when linked and open */}
-      {sessionId && isPanelOpen && (
-        <div className="w-80 xl:w-96 shrink-0 h-full overflow-hidden">
-          <StudySessionPanel
-            sessionId={sessionId}
-            onClose={() => setIsPanelOpen(false)}
-          />
-        </div>
+      {isPanelOpen ? (
+        // Resizable split: drag the handle to size the tutor panel. The chosen
+        // width is saved to localStorage and restored on the next visit.
+        <ResizablePanelGroup
+          orientation="horizontal"
+          defaultLayout={defaultLayout}
+          onLayoutChanged={onLayoutChanged}
+          className="h-full w-full"
+        >
+          <ResizablePanel id="editor" defaultSize={68} minSize={40}>
+            <div className="h-full overflow-y-auto">{formNode}</div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel id="tutor" defaultSize={32} minSize={22}>
+            <div className="h-full overflow-hidden">
+              <SermonTutorPanel sermon={sermon} onClose={() => setIsPanelOpen(false)} />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      ) : (
+        <div className="flex-1 min-w-0 overflow-y-auto">{formNode}</div>
       )}
     </div>
   );

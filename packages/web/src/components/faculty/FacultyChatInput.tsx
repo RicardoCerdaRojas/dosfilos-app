@@ -23,6 +23,8 @@ interface FacultyChatInputProps {
      *  it modifies (replaces the old page-header dropdown). */
     lengthPreference: ResponseMode;
     onSetLengthPreference: (mode: ResponseMode) => void;
+    /** Optional action rendered next to the mode selector (e.g. guided-sermon entry). */
+    leadingAction?: React.ReactNode;
 }
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
@@ -45,6 +47,7 @@ export function FacultyChatInput({
     onAttach,
     lengthPreference,
     onSetLengthPreference,
+    leadingAction,
 }: FacultyChatInputProps) {
     const { t } = useTranslation('faculty');
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -236,11 +239,12 @@ export function FacultyChatInput({
                      * dropdown — the choice now lives where the
                      * user is when they make it.
                      */}
-                    <div className="flex items-center justify-start px-2 pb-1.5 -mt-1">
+                    <div className="flex items-center justify-start gap-1.5 px-2 pb-1.5 -mt-1">
                         <ModeSelectorButton
                             value={lengthPreference}
                             onChange={onSetLengthPreference}
                         />
+                        {leadingAction}
                     </div>
 
                     {isDragging && (

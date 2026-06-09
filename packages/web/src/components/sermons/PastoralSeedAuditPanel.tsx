@@ -56,15 +56,18 @@ export function PastoralSeedAuditPanel({ sermonId, compact = false }: Props) {
         };
     }, [sermonId]);
 
+    // Hooks must run on every render — keep this BEFORE the early return below
+    // (null-safe seed access) so the hook order never changes.
+    const lexiconAttributions = useMemo(
+        () => aggregateLexiconAttributions(seed?.wordStudies?.studies ?? []),
+        [seed?.wordStudies?.studies],
+    );
+
     if (loading || !seed) return null;
 
     const evaluation = evaluatePastoralSeed(seed);
     const pasteCount = seed.insight.pasteEvents?.length ?? 0;
     const totalMinutes = Math.round((seed.totalTimeSeconds ?? 0) / 60);
-    const lexiconAttributions = useMemo(
-        () => aggregateLexiconAttributions(seed.wordStudies?.studies ?? []),
-        [seed.wordStudies?.studies],
-    );
 
     return (
         <Card className={`${compact ? 'p-3' : 'p-4'} space-y-3 border-emerald-500/30`}>

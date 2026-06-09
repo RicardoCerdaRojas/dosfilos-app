@@ -177,6 +177,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
                 sourcePaperId: s.sourcePaperId ?? undefined,
                 versionOf: s.versionOf ?? undefined,
                 versionLabel: s.versionLabel ?? undefined,
+                hasContent: Boolean(s.hasContent),
             }),
         );
     }
@@ -278,6 +279,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
             contraScanReport: sermon.contraScanReport ? this.contraScanReportToFirestore(sermon.contraScanReport) : null,
             versionOf: sermon.versionOf ?? null,
             versionLabel: sermon.versionLabel ?? null,
+            tutorSessionId: sermon.tutorSessionId ?? null,
         };
     }
 
@@ -527,6 +529,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
             contraScanReport: this.contraScanReportFromFirestore(d.contraScanReport),
             versionOf: d.versionOf ?? undefined,
             versionLabel: d.versionLabel ?? undefined,
+            tutorSessionId: d.tutorSessionId ?? undefined,
         });
     }
 }

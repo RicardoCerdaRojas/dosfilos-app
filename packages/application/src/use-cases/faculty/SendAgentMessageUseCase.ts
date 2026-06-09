@@ -127,6 +127,13 @@ export class SendAgentMessageUseCase {
          * (legal masking on). See `CoreLibraryRAGService.formatContextForPrompt`.
          */
         revealProtectedCitations = false,
+        /**
+         * Ephemeral grounding injected into THIS request's model context only —
+         * never persisted to the session history. Used by the sermon editor to
+         * give the tutor the current sermon (passage + content) so answers are
+         * grounded in the sermon being edited, without bloating the transcript.
+         */
+        ephemeralContext?: string,
     ): Promise<string> {
         const session = await this.chatRepository.getSession(userId, sessionId);
         if (!session) {
@@ -200,6 +207,17 @@ export class SendAgentMessageUseCase {
             console.warn('[SendAgentMessage] RAG retrieval failed, continuing without context:', err?.message ?? err);
         }
 
+        // Fold the ephemeral sermon context (editor follow-ups) into the model
+        // grounding alongside any retrieved chunks. Never persisted — only sent
+        // to the generator for this turn, so the tutor answers about the sermon
+        // the pastor is editing without polluting the saved transcript.
+        const modelContext = [
+            ephemeralContext
+                ? `CONTEXTO DEL SERMÓN EN EDICIÓN (texto del pastor, no es una fuente citable):\n${ephemeralContext}`
+                : null,
+            retrievedContext,
+        ].filter(Boolean).join('\n\n---\n\n') || undefined;
+
         // 4. Request generation (streaming or bulk)
         let responseContent = '';
         const handleSources = (sources: SourceReference[]) => {
@@ -216,7 +234,7 @@ export class SendAgentMessageUseCase {
                 onChunk,
                 effectiveMode,
                 retrievedContext ? undefined : handleSources,  // Skip legacy path if we have Phase 2 context
-                retrievedContext,
+                modelContext,
                 language,
             );
         } else {

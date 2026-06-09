@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { guidedSermonService, type ActivateGuidedSermonResult } from '@dosfilos/application';
-import type { SocraticTurnResult } from '@dosfilos/domain';
+import type { SocraticTurnResult, AIChatSession, AIChatMessage } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import { useTranslation } from '@/i18n';
 
@@ -30,18 +31,32 @@ interface UseGuidedSermonResult {
 export function useGuidedSermon(): UseGuidedSermonResult {
     const { user } = useFirebase();
     const { t } = useTranslation('guidedSermon');
+    const queryClient = useQueryClient();
     const [isProcessing, setIsProcessing] = useState(false);
+
+    // The guided agent mutates the chat session server-side (welcome message,
+    // guidedSermonSession field, per-turn messages + step advance). The Faculty
+    // chat reads that session via react-query — NOT a realtime subscription —
+    // so every guided op must invalidate it or the UI looks frozen ("nothing
+    // happened" → user re-activates → "already active"). Prefix-invalidate hits
+    // both the session detail and the sidebar list.
+    const refreshSession = useCallback(() => {
+        if (!user?.uid) return;
+        queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user.uid] });
+    }, [queryClient, user?.uid]);
 
     const activate = useCallback(
         async (sessionId: string, passage: string) => {
             if (!user?.uid) return null;
             setIsProcessing(true);
             try {
-                return await guidedSermonService.activate({
+                const result = await guidedSermonService.activate({
                     userId: user.uid,
                     sessionId,
                     passage,
                 });
+                refreshSession();
+                return result;
             } catch (err) {
                 console.error('[useGuidedSermon] activate failed', err);
                 toast.error(t('error.activate'));
@@ -50,28 +65,51 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                 setIsProcessing(false);
             }
         },
-        [user?.uid, t],
+        [user?.uid, t, refreshSession, queryClient],
     );
 
     const runTurn = useCallback(
         async (sessionId: string, pastorMessage: string) => {
             if (!user?.uid) return null;
             setIsProcessing(true);
+
+            // Optimistically show the pastor's message right away. The Socratic
+            // turn runs an LLM call (can take many seconds); without this the
+            // message vanishes from the input and nothing shows until the
+            // post-turn refetch lands. The refetch replaces this with the
+            // server-assigned message; on failure we roll it back.
+            const sessionKey = ['faculty', 'sessions', user.uid, sessionId];
+            const optimisticId = `optimistic_${Date.now()}`;
+            const optimisticMsg: AIChatMessage = {
+                id: optimisticId,
+                role: 'user',
+                content: pastorMessage,
+                timestamp: new Date(),
+            };
+            queryClient.setQueryData<AIChatSession | null>(sessionKey, (prev) =>
+                prev ? { ...prev, messages: [...prev.messages, optimisticMsg] } : prev,
+            );
+
             try {
-                return await guidedSermonService.runTurn({
+                const result = await guidedSermonService.runTurn({
                     userId: user.uid,
                     sessionId,
                     pastorMessage,
                 });
+                refreshSession();
+                return result;
             } catch (err) {
                 console.error('[useGuidedSermon] runTurn failed', err);
+                queryClient.setQueryData<AIChatSession | null>(sessionKey, (prev) =>
+                    prev ? { ...prev, messages: prev.messages.filter((m) => m.id !== optimisticId) } : prev,
+                );
                 toast.error(t('error.runTurn'));
                 return null;
             } finally {
                 setIsProcessing(false);
             }
         },
-        [user?.uid, t],
+        [user?.uid, t, refreshSession, queryClient],
     );
 
     const pause = useCallback(
@@ -79,11 +117,12 @@ export function useGuidedSermon(): UseGuidedSermonResult {
             if (!user?.uid) return;
             try {
                 await guidedSermonService.pause({ userId: user.uid, sessionId });
+                refreshSession();
             } catch (err) {
                 console.error('[useGuidedSermon] pause failed', err);
             }
         },
-        [user?.uid],
+        [user?.uid, refreshSession],
     );
 
     const resume = useCallback(
@@ -91,11 +130,12 @@ export function useGuidedSermon(): UseGuidedSermonResult {
             if (!user?.uid) return;
             try {
                 await guidedSermonService.resume({ userId: user.uid, sessionId });
+                refreshSession();
             } catch (err) {
                 console.error('[useGuidedSermon] resume failed', err);
             }
         },
-        [user?.uid],
+        [user?.uid, refreshSession],
     );
 
     return { isProcessing, activate, runTurn, pause, resume };

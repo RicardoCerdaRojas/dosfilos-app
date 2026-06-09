@@ -79,6 +79,9 @@ export const getSermonsListSummary = onCall(
                 // Version grouping — the list nests versions under their root.
                 versionOf: d.versionOf,
                 versionLabel: d.versionLabel,
+                // Whether the (heavy, stripped) content body is non-empty — lets
+                // the list tell a finished sermon from an in-progress draft.
+                hasContent: !!(typeof d.content === 'string' && d.content.trim()),
                 authorName: d.authorName,
                 isShared: d.isShared,
                 shareToken: d.shareToken,

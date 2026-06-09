@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import type { AIChatSession } from '@dosfilos/domain';
+import { useSearchParams, type NavigateFunction } from 'react-router-dom';
+import type { AIChatSession, AIAgent } from '@dosfilos/domain';
+import { pastoralSeedService, sermonService } from '@dosfilos/application';
 import { useGuidedSermon } from '@/hooks/useGuidedSermon';
 import { useStudyDepthGate } from '@/hooks/usePastoralFidelityGate';
 
@@ -9,6 +10,11 @@ interface Params {
     effectiveSessionId: string;
     /** Cleared after a turn is dispatched so the input is responsive. */
     setInput: (v: string) => void;
+    /** Needed to activate guided mode straight from a brand-new (/new) session. */
+    createSession: { mutateAsync: (input: { agentId: string }) => Promise<{ id: string }> };
+    agentIdForNew: string;
+    agents: AIAgent[];
+    navigate: NavigateFunction;
 }
 
 interface Result {
@@ -29,6 +35,8 @@ interface Result {
     /** Pause/resume the agent on the current session. */
     pause: () => Promise<void>;
     resume: () => Promise<void>;
+    /** Materializes the sermon doc + opens the wizard at homiletics (completed study). */
+    openCompletedWizard: () => Promise<void>;
     /**
      * Submit handler suitable for a chat form. When guided mode is active,
      * routes the message through the Socratic agent's `runTurn`. Otherwise
@@ -47,6 +55,10 @@ export function useGuidedSermonIntegration({
     session,
     effectiveSessionId,
     setInput,
+    createSession,
+    agentIdForNew,
+    agents,
+    navigate,
 }: Params): Result {
     const { enabled: isFlagEnabled } = useStudyDepthGate();
     const guidedSermon = useGuidedSermon();
@@ -79,12 +91,66 @@ export function useGuidedSermonIntegration({
 
     const activate = useCallback(
         async (passage: string) => {
-            if (!effectiveSessionId) return;
-            const result = await guidedSermon.activate(effectiveSessionId, passage);
-            if (result) setActivationPromptOpen(false);
+            // Already active → just close the prompt. Prevents the
+            // "Guided sermon is already active" throw when the pastor
+            // re-submits because the first activation hadn't visibly landed.
+            if (isGuidedActive) {
+                setActivationPromptOpen(false);
+                return;
+            }
+
+            // On a brand-new (/new) session there is no session id yet — create
+            // one first, then activate against it. Without this the activation
+            // silently no-ops on /new (the modal button does nothing).
+            let sessionId = effectiveSessionId;
+            let agentIdForCreate = '';
+            if (!sessionId) {
+                agentIdForCreate = agentIdForNew || agents.find((a) => a.isActive)?.id || agents[0]?.id || '';
+                if (!agentIdForCreate) return; // agents not loaded yet — let the pastor retry
+            }
+
+            // Close the modal up-front so it doesn't flash again on the landing
+            // page during the async create + activate round-trip.
+            setActivationPromptOpen(false);
+
+            if (!sessionId) {
+                const created = await createSession.mutateAsync({ agentId: agentIdForCreate });
+                sessionId = created.id;
+                navigate(`/dashboard/faculty/${sessionId}`, { replace: true });
+            }
+
+            await guidedSermon.activate(sessionId, passage);
         },
-        [effectiveSessionId, guidedSermon],
+        [effectiveSessionId, guidedSermon, isGuidedActive, createSession, agentIdForNew, agents, navigate],
     );
+
+    /**
+     * Crosses from the completed guided study into the sermon wizard. The guided
+     * flow only minted the seed (placeholder sermonId, no doc); here we
+     * materialize the sermon doc with that same id, then open the wizard at
+     * `?id=<sermonId>` (the correct /generate route) where it lands on
+     * homiletics. Without this the old CTA pointed `/dashboard/sermons?id=<seedId>`
+     * — the list, which ignores the param.
+     */
+    const openCompletedWizard = useCallback(async () => {
+        const seedId = guidedSermonSession?.seedId;
+        if (!seedId) {
+            navigate('/dashboard/sermons');
+            return;
+        }
+        try {
+            const seed = await pastoralSeedService.getById(seedId);
+            if (!seed) {
+                navigate('/dashboard/sermons');
+                return;
+            }
+            await sermonService.ensureSermonForCompletedSeed(seed);
+            navigate(`/dashboard/sermons/generate?id=${seed.sermonId}`);
+        } catch (err) {
+            console.error('[useGuidedSermonIntegration] openCompletedWizard failed', err);
+            navigate('/dashboard/sermons');
+        }
+    }, [guidedSermonSession?.seedId, navigate]);
 
     const pause = useCallback(async () => {
         if (!effectiveSessionId) return;
@@ -119,6 +185,7 @@ export function useGuidedSermonIntegration({
         activate,
         pause,
         resume,
+        openCompletedWizard,
         trySocraticSubmit,
     };
 }

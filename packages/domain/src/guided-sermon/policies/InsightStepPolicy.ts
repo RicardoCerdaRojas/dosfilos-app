@@ -43,7 +43,7 @@ const BLOCK_MARKERS: Array<{ key: keyof InsightStepData; regex: RegExp }> = [
     { key: 'observations', regex: /observaciones?\s*[:\-]/i },
     { key: 'openQuestion', regex: /(?:pregunta\s+abierta|pregunta)\s*[:\-]/i },
     { key: 'pastoralAnecdote', regex: /(?:an[eé]cdota|ilustraci[oó]n)\s*[:\-]/i },
-    { key: 'doxologicalApplication', regex: /(?:aplicaci[oó]n\s+dox[oó]logica|doxolog[ií]a|aplicaci[oó]n)\s*[:\-]/i },
+    { key: 'doxologicalApplication', regex: /(?:aplicaci[oó]n\s+doxol[oó]gica|doxolog[ií]a|aplicaci[oó]n)\s*[:\-]/i },
 ];
 
 interface ParsedInsight {

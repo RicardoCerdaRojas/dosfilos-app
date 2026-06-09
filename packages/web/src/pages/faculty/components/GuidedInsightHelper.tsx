@@ -1,0 +1,168 @@
+import { useState, useEffect } from 'react';
+import { ChevronDown, ChevronRight, ClipboardList, ArrowDownToLine, Plus, X } from 'lucide-react';
+import { PASTORAL_SEED_THRESHOLDS } from '@dosfilos/domain';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { useTranslation } from '@/i18n';
+
+const T = PASTORAL_SEED_THRESHOLDS.insight;
+
+/** Live char counter that turns green once the minimum is met. */
+function Meter({ value, min }: { value: string; min: number }) {
+    const n = value.trim().length;
+    return (
+        <span className={cn('text-[10px] tabular-nums shrink-0', n >= min ? 'text-success' : 'text-muted-foreground')}>
+            {n}/{min}
+        </span>
+    );
+}
+
+interface Props {
+    /** Inserts the assembled, labelled insight into the chat input. */
+    onInsert: (text: string) => void;
+    /** True while a turn is being sent — collapses the helper out of the way. */
+    busy?: boolean;
+}
+
+const MIN_OBSERVATIONS = 3;
+
+/**
+ * Inline form for guided Step 8 (Insight). The pastor fills five fields and the
+ * helper assembles them into the exact labelled format the seed parser expects
+ * (`Idea central:` / `Observaciones:` / `Pregunta abierta:` / `Anécdota:` /
+ * `Aplicación doxológica:`), then drops it in the chat to review + send. The
+ * content is 100% the pastor's — this only structures it (manifesto-safe).
+ */
+export function GuidedInsightHelper({ onInsert, busy }: Props) {
+    const { t } = useTranslation('guidedSermon');
+    const [open, setOpen] = useState(true);
+    const [centralIdea, setCentralIdea] = useState('');
+    const [observations, setObservations] = useState<string[]>(['', '', '']);
+    const [openQuestion, setOpenQuestion] = useState('');
+    const [anecdote, setAnecdote] = useState('');
+    const [doxological, setDoxological] = useState('');
+
+    useEffect(() => {
+        if (busy) setOpen(false);
+    }, [busy]);
+
+    const setObservation = (i: number, v: string) =>
+        setObservations((prev) => prev.map((o, idx) => (idx === i ? v : o)));
+    const addObservation = () => setObservations((prev) => [...prev, '']);
+    const removeObservation = (i: number) =>
+        setObservations((prev) => (prev.length > MIN_OBSERVATIONS ? prev.filter((_, idx) => idx !== i) : prev));
+
+    const build = (): string => {
+        const obs = observations.map((o) => o.trim()).filter(Boolean);
+        return [
+            `Idea central: ${centralIdea.trim()}`,
+            'Observaciones:',
+            ...obs,
+            `Pregunta abierta: ${openQuestion.trim()}`,
+            `Anécdota: ${anecdote.trim()}`,
+            `Aplicación doxológica: ${doxological.trim()}`,
+        ].join('\n');
+    };
+
+    const labelClass = 'text-[11px] font-semibold text-foreground';
+    const hintClass = 'text-[10px] text-muted-foreground';
+
+    return (
+        <div className="rounded-lg border border-info/30 bg-info/5 overflow-hidden">
+            <button
+                onClick={() => setOpen((v) => !v)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-[13px] font-semibold text-info hover:bg-info/10 transition-colors"
+                aria-expanded={open}
+            >
+                {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <ClipboardList className="h-4 w-4" />
+                {t('insight.helperTitle')}
+            </button>
+
+            {open && (
+                <div className="px-3 pb-3 space-y-3 max-h-[50vh] overflow-y-auto">
+                    <p className="text-[11px] text-muted-foreground">{t('insight.helperHint')}</p>
+
+                    <div className="space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                            <label className={labelClass}>{t('insight.centralIdea')}</label>
+                            <Meter value={centralIdea} min={T.centralIdeaMinChars} />
+                        </div>
+                        <Input value={centralIdea} onChange={(e) => setCentralIdea(e.target.value)} placeholder={t('insight.centralIdeaPlaceholder')} />
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className={labelClass}>{t('insight.observations')}</label>
+                        <p className={hintClass}>{t('insight.observationsHint')}</p>
+                        {observations.map((o, i) => (
+                            <div key={i} className="flex items-center gap-1.5">
+                                <Input value={o} onChange={(e) => setObservation(i, e.target.value)} placeholder={`${i + 1}.`} />
+                                <Meter value={o} min={T.observationMinChars} />
+                                {observations.length > MIN_OBSERVATIONS && (
+                                    <button
+                                        onClick={() => removeObservation(i)}
+                                        className="text-muted-foreground hover:text-destructive shrink-0"
+                                        aria-label={t('insight.removeObservation')}
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                        <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-info" onClick={addObservation}>
+                            <Plus className="h-3.5 w-3.5" />
+                            {t('insight.addObservation')}
+                        </Button>
+                    </div>
+
+                    <div className="space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                            <label className={labelClass}>{t('insight.openQuestion')}</label>
+                            <Meter value={openQuestion} min={T.openQuestionMinChars} />
+                        </div>
+                        <Input value={openQuestion} onChange={(e) => setOpenQuestion(e.target.value)} placeholder={t('insight.openQuestionPlaceholder')} />
+                    </div>
+
+                    <div className="space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                            <label className={labelClass}>{t('insight.anecdote')}</label>
+                            <Meter value={anecdote} min={T.pastoralAnecdoteMinChars} />
+                        </div>
+                        <textarea
+                            value={anecdote}
+                            onChange={(e) => setAnecdote(e.target.value)}
+                            rows={2}
+                            placeholder={t('insight.anecdotePlaceholder')}
+                            className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                    </div>
+
+                    <div className="space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                            <label className={labelClass}>{t('insight.doxological')}</label>
+                            <Meter value={doxological} min={T.doxologicalApplicationMinChars} />
+                        </div>
+                        <textarea
+                            value={doxological}
+                            onChange={(e) => setDoxological(e.target.value)}
+                            rows={2}
+                            placeholder={t('insight.doxologicalPlaceholder')}
+                            className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                    </div>
+
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full h-8 gap-1.5 text-xs border-info/30 text-info hover:bg-info/10"
+                        onClick={() => onInsert(build())}
+                    >
+                        <ArrowDownToLine className="h-3.5 w-3.5" />
+                        {t('insight.useInAnswer')}
+                    </Button>
+                </div>
+            )}
+        </div>
+    );
+}

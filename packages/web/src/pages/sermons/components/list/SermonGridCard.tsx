@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Calendar, FileText, Tag, GitBranch } from 'lucide-react';
+import { BookOpen, Calendar, Tag, GitBranch } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -36,6 +36,16 @@ export const SermonGridCard: React.FC<SermonGridCardProps> = ({
 }) => {
     const { t, i18n } = useTranslation('sermons');
     const navigate = useNavigate();
+
+    // Some legacy sermons store several passages as a single
+    // semicolon/comma-separated string in bibleReferences[0]; split + clamp so
+    // the card shows the actual passage(s) without overflowing.
+    const allRefs = sermon.bibleReferences.flatMap((r) =>
+        typeof r === 'string' ? r.split(/[;,]\s*/).filter(Boolean) : [r],
+    );
+    const refsPreview = allRefs.slice(0, 2).join(', ');
+    const refsExtra = allRefs.length > 2 ? ` +${allRefs.length - 2}` : '';
+    const refsFull = allRefs.join(', ');
 
     const handleTitleClick = () => {
         if (selectionActive && onToggleSelect) {
@@ -161,11 +171,11 @@ export const SermonGridCard: React.FC<SermonGridCardProps> = ({
             </div>
 
             <div className="p-3 border-t bg-muted/20 flex items-center justify-between gap-2">
-                <div className="text-xs text-muted-foreground">
-                    {sermon.bibleReferences.length > 0 && (
-                        <span className="flex items-center gap-1">
-                            <FileText className="h-3.5 w-3.5" />
-                            {sermon.bibleReferences.length} {t('grid.references')}
+                <div className="text-xs text-muted-foreground min-w-0">
+                    {allRefs.length > 0 && (
+                        <span className="flex items-center gap-1 min-w-0 max-w-full" title={refsFull}>
+                            <BookOpen className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{refsPreview}{refsExtra}</span>
                         </span>
                     )}
                 </div>

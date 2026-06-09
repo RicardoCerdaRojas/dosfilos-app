@@ -129,7 +129,7 @@ export function useFacultyChat(sessionId: string) {
 
     // Direct message to the session's assigned agent (original behaviour)
     const sendMessageMutation = useMutation({
-        mutationFn: async ({ message, lengthPreference }: { message: string, lengthPreference?: ResponseMode }) => {
+        mutationFn: async ({ message, lengthPreference, ephemeralContext }: { message: string, lengthPreference?: ResponseMode, ephemeralContext?: string }) => {
             if (!user?.uid) throw new Error('User not authenticated');
             if (!sessionQuery.data) throw new Error('Session not found');
 
@@ -156,6 +156,7 @@ export function useFacultyChat(sessionId: string) {
                     (sources) => { capturedSources = sources; },
                     resolveActiveLanguage(i18n.language),
                     isAdmin, // super-admin sees protected-source citations (reveal mask)
+                    ephemeralContext, // editor follow-ups: current sermon as transient grounding
                 );
                 // Inject the new exchange into the cache BEFORE clearing the
                 // streaming state so there's no gap on screen. See

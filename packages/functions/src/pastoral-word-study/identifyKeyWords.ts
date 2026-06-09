@@ -23,6 +23,7 @@ type Language = 'greek' | 'hebrew';
 interface KeyWordCandidate {
     word: string;
     transliteration: string;
+    gloss?: string;
     lemma: string;
     verseRef: string;
     theologicalWeight: number;
@@ -39,6 +40,7 @@ REGLAS DURAS:
 - Ignora artículos, preposiciones, conjunciones, partículas y verbos comunes (εἰμί, אמר) SALVO que carguen peso teológico explícito en este verso.
 - Cada palabra debe aparecer literalmente en el pasaje original.
 - "lemma" es la forma de diccionario (no la forma flexionada).
+- "gloss": traducción literal BREVE (1-3 palabras) en español, para escaneo rápido. Ej. δικαιοσύνη → "justicia"; ἀγοράζω → "comprar, redimir".
 - "theologicalWeight" 0-10: 10 = idea central del texto, 5 = sustantiva pero secundaria, 1-2 = relevante pero menor.
 - "rationale" en una frase pastoral en español (no académico).
 
@@ -69,6 +71,7 @@ Schema de salida JSON:
     {
       "word": "δικαιοσύνη",
       "transliteration": "dikaiosynē",
+      "gloss": "justicia",
       "lemma": "δικαιοσύνη",
       "verseRef": "Romanos 8:4",
       "theologicalWeight": 9,
@@ -97,9 +100,11 @@ function shapeCandidate(raw: unknown, index: number): KeyWordCandidate {
     }
     const r = raw as Record<string, unknown>;
     const weight = Number(r.theologicalWeight);
+    const gloss = typeof r.gloss === 'string' ? r.gloss.trim() : '';
     return {
         word: String(r.word ?? '').trim(),
         transliteration: String(r.transliteration ?? '').trim(),
+        ...(gloss ? { gloss } : {}),
         lemma: String(r.lemma ?? '').trim(),
         verseRef: String(r.verseRef ?? '').trim(),
         theologicalWeight: Number.isFinite(weight)

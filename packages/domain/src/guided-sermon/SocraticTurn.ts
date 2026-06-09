@@ -8,7 +8,7 @@
  * Pure types; no LLM/Firestore dependencies. Domain layer.
  */
 
-import type { PastoralSeedStepKey, StepValidationResult } from '../entities/PastoralSeed';
+import type { PastoralSeedStepKey, StepValidationResult, WordStudy } from '../entities/PastoralSeed';
 
 /**
  * Context passed to a step policy when building prompts / parsing replies
@@ -33,6 +33,12 @@ export interface TurnContext {
      * keyed by step.
      */
     priorSteps?: Partial<Record<PastoralSeedStepKey, string>>;
+    /**
+     * Word studies already saved on the seed. Step 4 ACCUMULATES across turns
+     * (the pastor studies one word per message), so the policy validates +
+     * persists the merged set instead of just the current message.
+     */
+    existingWordStudies?: WordStudy[];
 }
 
 /**

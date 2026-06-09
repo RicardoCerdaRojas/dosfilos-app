@@ -114,6 +114,8 @@
         "status": "Status",
         "save": "Save Changes",
         "saving": "Saving...",
+        "write": "Write",
+        "preview": "Preview",
         "editTitle": "Edit Sermon",
         "categories": {
             "evangelismo": "Evangelism",
@@ -293,5 +295,22 @@
     "attributions": {
         "title": "Attributions",
         "description": "License-required attributions for the sources cited in this sermon."
+    },
+    "tutorPanel": {
+        "title": "Tutor",
+        "close": "Close panel",
+        "toggleOpen": "Ask the tutor",
+        "toggleClose": "Hide tutor",
+        "subtitleOrigin": "Continue your study conversation",
+        "subtitleNew": "Ask about this sermon",
+        "savedHint": "The tutor sees the saved sermon. Save to include your latest edits.",
+        "emptyTitle": "Ask the tutor",
+        "emptyBody": "Ask anything about this sermon: illustrations, faithfulness to the text, application, structure…",
+        "placeholder": "Type your question…",
+        "send": "Send",
+        "you": "You",
+        "tutor": "Tutor",
+        "thinking": "Thinking…",
+        "fullSession": "Open full session"
     }
 }

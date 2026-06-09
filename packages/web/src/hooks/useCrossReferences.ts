@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { LocalBibleService } from '@/services/LocalBibleService';
 
@@ -30,44 +30,37 @@ interface UseCrossReferencesResult {
 }
 
 /**
- * Wraps the `lookupCrossReferences` callable (PR 0.5). Resolves a
- * passage string to its `book/chapter/verseStart-verseEnd` shape,
- * then aggregates parallels across the range. Failures degrade
- * silently — the RecognitionStep falls back to letting the pastor
- * type parallels manually.
+ * Wraps the `lookupCrossReferences` callable behind react-query so the TSK
+ * lookup is made ONCE per passage and cached — re-mounts (e.g. the guided chat
+ * helper re-rendering after each turn) and step re-opens serve the cached
+ * parallels instead of re-calling. Failures degrade silently — the pastor can
+ * still type parallels manually.
  */
 export function useCrossReferences(passage: string): UseCrossReferencesResult {
-    const [parallels, setParallels] = useState<CrossReferenceParallel[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetch = useCallback(async () => {
-        const parsed = LocalBibleService.parseReference(passage);
-        if (!parsed) {
-            setError('No pudimos interpretar la referencia.');
-            setParallels([]);
-            return;
-        }
-        setLoading(true);
-        setError(null);
-        try {
+    const query = useQuery({
+        queryKey: ['crossReferences', passage],
+        queryFn: async (): Promise<CrossReferenceParallel[]> => {
+            const parsed = LocalBibleService.parseReference(passage);
+            if (!parsed) throw new Error('No pudimos interpretar la referencia.');
             const callable = httpsCallable(getFunctions(), 'lookupCrossReferences');
-            const payload =
-                parsed.verseEnd && parsed.verseEnd !== parsed.verseStart
-                    ? {
-                          book: parsed.book,
-                          chapter: parsed.chapter,
-                          startVerse: parsed.verseStart,
-                          endVerse: parsed.verseEnd,
-                      }
-                    : { book: parsed.book, chapter: parsed.chapter, verse: parsed.verseStart };
-            const result = await callable(payload);
-            const data = result.data as { docs?: CrossReferenceDoc[]; doc?: CrossReferenceDoc | null };
-            const docs = data.docs ?? (data.doc ? [data.doc] : []);
+            // Query each verse in the range with the SINGLE-verse shape (a doc
+            // get) instead of the range shape — the range query needs a
+            // composite index that isn't provisioned (returned 500). Capped so
+            // a whole-chapter passage doesn't fan out unbounded.
+            const end =
+                parsed.verseEnd && parsed.verseEnd !== parsed.verseStart ? parsed.verseEnd : parsed.verseStart;
+            const verses: number[] = [];
+            for (let v = parsed.verseStart; v <= end && verses.length < 15; v++) verses.push(v);
+            const results = await Promise.all(
+                verses.map((verse) => callable({ book: parsed.book, chapter: parsed.chapter, verse })),
+            );
+            const docs = results.flatMap((r) => {
+                const d = r.data as { docs?: CrossReferenceDoc[]; doc?: CrossReferenceDoc | null };
+                return d.docs ?? (d.doc ? [d.doc] : []);
+            });
             const aggregated = docs.flatMap((d) => d.parallels);
-            // Dedupe by `book/chapter/verse` so range queries don't
-            // surface the same parallel multiple times when several
-            // source verses point to the same target.
+            // Dedupe by book/chapter/verse so range queries don't surface the
+            // same parallel multiple times.
             const seen = new Set<string>();
             const unique: CrossReferenceParallel[] = [];
             for (const p of aggregated) {
@@ -76,19 +69,20 @@ export function useCrossReferences(passage: string): UseCrossReferencesResult {
                 seen.add(key);
                 unique.push(p);
             }
-            setParallels(unique);
-        } catch (err: any) {
-            console.error('[useCrossReferences]', err);
-            setError(err?.message ?? 'No pudimos cargar paralelos.');
-            setParallels([]);
-        } finally {
-            setLoading(false);
-        }
-    }, [passage]);
+            return unique;
+        },
+        enabled: !!passage,
+        staleTime: 1000 * 60 * 60,
+        gcTime: 1000 * 60 * 60,
+        retry: false,
+    });
 
-    useEffect(() => {
-        if (passage) void fetch();
-    }, [passage, fetch]);
-
-    return { parallels, loading, error, refresh: fetch };
+    return {
+        parallels: query.data ?? [],
+        loading: query.isLoading,
+        error: query.error ? (query.error instanceof Error ? query.error.message : 'No pudimos cargar paralelos.') : null,
+        refresh: async () => {
+            await query.refetch();
+        },
+    };
 }

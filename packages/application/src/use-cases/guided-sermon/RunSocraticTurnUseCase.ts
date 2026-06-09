@@ -108,6 +108,9 @@ export class RunSocraticTurnUseCase {
             attemptIndex: gss.stepAttempts[gss.currentStep] ?? 0,
             genre: seed.contextGenre?.genre || undefined,
             priorSteps: buildPriorSteps(seed),
+            // Step 4 accumulates word studies across turns — the policy merges
+            // the saved set with the current message before validating.
+            existingWordStudies: seed.wordStudies?.studies ?? [],
         };
 
         // Persist the pastor's user message FIRST so it always appears in chat
@@ -150,6 +153,23 @@ export class RunSocraticTurnUseCase {
             }
         }
 
+        // 3b. Accumulating steps (e.g. Step 4 Word Studies): the pastor builds
+        // the set one item per turn. Let the DOMAIN VALIDATOR — on the merged
+        // total (saved items + this message) — decide accept vs orient,
+        // independent of the LLM's guess; keep the LLM's reply for feedback.
+        if (policy.accumulatesAcrossTurns && output.kind !== 'confront') {
+            const accumulated = policy.validatePastorInput(input.pastorMessage, ctx);
+            output = accumulated.valid
+                ? { kind: 'accepted', pastorTextToPersist: input.pastorMessage, agentReply: output.agentReply }
+                : {
+                      kind: 'orient',
+                      reason: 'accumulating-incomplete',
+                      agentReply: output.agentReply,
+                      data: output.kind === 'orient' ? output.data : [],
+                      questions: output.kind === 'orient' ? output.questions : [],
+                  };
+        }
+
         // 4. Dispatch on output kind. Single `if` per branch — no switch on stepKey.
         let nextState: GuidedSermonSession;
         let sermonReady = false;
@@ -161,6 +181,12 @@ export class RunSocraticTurnUseCase {
             await this.seedRepo.update(seed.id, patch);
             nextState = advance(gss);
             sermonReady = nextState.status === 'completed';
+            // Mark the seed itself complete so downstream readers (sermons list,
+            // wizard gate, badges) see the canonical flag — the state machine only
+            // flips the session status.
+            if (sermonReady) {
+                await this.seedRepo.update(seed.id, { completed: true, completedAt: new Date() });
+            }
             assistType = 'socraticGuidance';
             pastorTextPersisted = output.pastorTextToPersist;
         } else if (output.kind === 'confront') {
@@ -169,6 +195,11 @@ export class RunSocraticTurnUseCase {
         } else {
             nextState = retry(gss);
             assistType = 'stepOrientation';
+            // Accumulating steps: save the valid partial so items build up
+            // across turns even though the step isn't complete yet.
+            if (policy.accumulatesAcrossTurns) {
+                await this.seedRepo.update(seed.id, policy.persistTo(seed, input.pastorMessage));
+            }
         }
 
         await this.chatRepo.updateGuidedSermonSession(
@@ -229,7 +260,7 @@ export class RunSocraticTurnUseCase {
                 return `${output.agentReply}\n\n¡Tu sermón está listo! Has completado los 8 pasos del estudio. Hacé click en **"Pasar al sermón"** para abrir el wizard y comenzar la homilética.`;
             }
             const nextIdx = PASTORAL_SEED_STEP_ORDER.indexOf(nextState.currentStep) + 1;
-            return `${output.agentReply}\n\n**Paso ${nextIdx} de 8 — ${stepDisplayName(nextState.currentStep)}.**\nContinuemos.`;
+            return `${output.agentReply}\n\n**Paso ${nextIdx} de 8 — ${stepDisplayName(nextState.currentStep)}.**\n${STEP_INSTRUCTIONS[nextState.currentStep]}`;
         }
         // orient / confront — render data + questions
         const dataBlock = output.data.length > 0
@@ -241,6 +272,31 @@ export class RunSocraticTurnUseCase {
         return `${output.agentReply}${dataBlock}${questionsBlock}`;
     }
 }
+
+/**
+ * User-facing instruction surfaced when the agent advances to each step, so the
+ * pastor always knows WHAT to write next (not just the step name). Phrased as
+ * the agent's ask; never proposes content (P1/P2). Mirrors the welcome message
+ * style used for step 1 at activation.
+ */
+const STEP_INSTRUCTIONS: Record<PastoralSeedStepKey, string> = {
+    reading:
+        'Lee el pasaje completo y comparte tu primera impresión, con tus palabras: ¿qué te llamó la atención, qué sentiste, qué preguntas surgen?',
+    contextGenre:
+        'Con tus palabras, explica qué IMPLICA el género del texto para tu manera de leerlo — no solo nombrarlo, sino cómo cambia tu forma de interpretarlo.',
+    structuralAnalysis:
+        'Identifica la oración o idea PRINCIPAL del pasaje (con su referencia) y escribe una nota tuya sobre cómo se organiza el argumento alrededor de ella. Ejemplo del método (otro pasaje, para que veas cómo — no es tu respuesta): en Romanos 12:1 la idea principal es "presentad vuestros cuerpos en sacrificio vivo"; lo demás la rodea — el motivo ("por las misericordias de Dios") y la valoración ("vuestro culto racional"). Haz lo mismo con tu pasaje.',
+    wordStudies:
+        'Elige al menos 2 palabras clave. Para CADA una escribe: la palabra, una referencia (ej. 2 Pedro 2:1) y qué descubriste de su significado, con tus palabras.',
+    recognition:
+        'Anota de 1 a 3 pasajes paralelos. Para CADA uno escribe la referencia (ej. Judas 4) y, con tus palabras, por qué se relaciona con este texto.',
+    function:
+        'Describe qué BUSCABA LOGRAR este texto en su audiencia original — no qué dice, sino qué les HACÍA: ¿advertir, consolar, exhortar, corregir, dar seguridad, mover a actuar? Piensa en la situación concreta de ellos. Ejemplo del método (otro pasaje, no es tu respuesta): Filipenses 4:6-7 buscaba calmar la ansiedad de una iglesia presionada, llevándolos a confiar en Dios mediante la oración. Hazlo con tu pasaje, con tus palabras.',
+    timelessPrinciple:
+        'Toma lo que el texto HACÍA a su audiencia original (Paso 6) y destílalo en una verdad transferible que aplica a cualquier creyente, en cualquier época — no el mandato específico de aquel contexto, sino el principio perdurable detrás. Ejemplo del método (otro pasaje, para que veas cómo — no es tu respuesta): si la función de Josué 1:9 era animar a Josué a ser valiente al entrar a Canaán, el principio atemporal sería "Dios sostiene a su pueblo en cada tarea que les encomienda". Hazlo con tu pasaje, con tus palabras.',
+    insight:
+        'Cierra tu estudio con un mensaje que tenga estas 5 partes — usa estos rótulos para que queden bien guardadas:\n\n- **Idea central:** la afirmación central de tu sermón, en una frase.\n- **Observaciones:** al menos 3, una por línea (cada una con cuerpo, ~40+ caracteres).\n- **Pregunta abierta:** una pregunta que el texto deja para reflexionar.\n- **Anécdota:** una ilustración o anécdota pastoral (un par de frases).\n- **Aplicación doxológica:** cómo esto te lleva a adorar y responder a Dios (un par de frases).\n\nTodo con tus palabras.',
+};
 
 const STEP_NAMES: Record<PastoralSeedStepKey, string> = {
     reading: 'Lectura',

@@ -33,5 +33,43 @@
   "error": {
     "activate": "Could not activate the guide. Please try again.",
     "runTurn": "Could not process your reply. Please try again."
+  },
+  "wordStudy": {
+    "helperTitle": "Passage key words (helper)",
+    "helperHint": "Pick a word to see its original form and meaning. Then write YOUR discovery in the chat: what it contributes to the passage's message.",
+    "identifying": "Identifying key words…",
+    "analyzing": "Analyzing the word…",
+    "gloss": "Meaning",
+    "semanticRange": "Semantic range",
+    "functionInVerse": "Function in the verse",
+    "resonances": "Resonates with",
+    "discoveryPrompt": "This data is from the lexicon, not your answer. In your own words, write what this word contributes to THIS passage.",
+    "useInAnswer": "Use in my answer",
+    "backToList": "Back to words"
+  },
+  "crossRef": {
+    "helperTitle": "Suggested parallel passages (helper)",
+    "helperHint": "Pick a parallel and write YOUR note in the chat: why it relates to this passage.",
+    "loading": "Finding parallels…",
+    "empty": "No automatic parallels found. You can note one you know.",
+    "discoveryPrompt": "The parallel is from the cross-reference engine, not your answer. In your own words, write why it connects to THIS passage.",
+    "useInAnswer": "Use in my answer"
+  },
+  "insight": {
+    "helperTitle": "Build your insight (helper)",
+    "helperHint": "Fill the 5 parts in your own words. We assemble them in the right format and drop it in the chat to review and send.",
+    "centralIdea": "Central idea",
+    "centralIdeaPlaceholder": "Your sermon's central claim, in one sentence.",
+    "observations": "Observations (at least 3)",
+    "observationsHint": "One per line; each with some substance.",
+    "addObservation": "Add observation",
+    "removeObservation": "Remove observation",
+    "openQuestion": "Open question",
+    "openQuestionPlaceholder": "A question the text leaves for reflection.",
+    "anecdote": "Anecdote / illustration",
+    "anecdotePlaceholder": "A pastoral illustration or anecdote (a couple of sentences).",
+    "doxological": "Doxological application",
+    "doxologicalPlaceholder": "How this leads you to worship and respond to God (a couple of sentences).",
+    "useInAnswer": "Put in my answer"
   }
 }
