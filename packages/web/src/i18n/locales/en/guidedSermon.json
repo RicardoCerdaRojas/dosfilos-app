@@ -66,6 +66,8 @@
     "removeObservation": "Remove observation",
     "openQuestion": "Open question",
     "openQuestionPlaceholder": "A question the text leaves for reflection.",
+    "savedDoubtsTitle": "Doubts you saved",
+    "savedDoubtsHint": "These questions came up during your study. Tap one to use it as your open question.",
     "anecdote": "Anecdote / illustration",
     "anecdotePlaceholder": "A pastoral illustration or anecdote (a couple of sentences).",
     "doxological": "Doxological application",

@@ -46,6 +46,8 @@ Reglas duras INVIOLABLES en este paso:
 Trabajo previo del pastor (sobre lo que el principio debe fundarse):
 ${priorStepsBlock(ctx)}
 
+AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): un puente que se funda en su estudio previo (no eisegético) — señalá de qué paso lo sostiene, sin redactarlo por él. Nada genérico.
+
 Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 

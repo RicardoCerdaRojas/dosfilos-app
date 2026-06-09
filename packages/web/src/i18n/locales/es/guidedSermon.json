@@ -66,6 +66,8 @@
     "removeObservation": "Quitar observación",
     "openQuestion": "Pregunta abierta",
     "openQuestionPlaceholder": "Una pregunta que el texto deja para reflexionar.",
+    "savedDoubtsTitle": "Dudas que guardaste",
+    "savedDoubtsHint": "Estas preguntas surgieron durante tu estudio. Toca una para usarla como pregunta abierta.",
     "anecdote": "Anécdota / ilustración",
     "anecdotePlaceholder": "Una ilustración o anécdota pastoral (un par de frases).",
     "doxological": "Aplicación doxológica",

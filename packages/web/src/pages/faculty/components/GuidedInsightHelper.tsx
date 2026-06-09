@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, ClipboardList, ArrowDownToLine, Plus, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, ClipboardList, ArrowDownToLine, Plus, X, Pin } from 'lucide-react';
 import { PASTORAL_SEED_THRESHOLDS } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
+import { useGuidedSeedDoubts } from '@/hooks/useGuidedSeedDoubts';
 
 const T = PASTORAL_SEED_THRESHOLDS.insight;
 
@@ -23,6 +24,8 @@ interface Props {
     onInsert: (text: string) => void;
     /** True while a turn is being sent — collapses the helper out of the way. */
     busy?: boolean;
+    /** Seed under study — used to resurface the doubts the pastor raised. */
+    seedId?: string;
 }
 
 const MIN_OBSERVATIONS = 3;
@@ -34,8 +37,9 @@ const MIN_OBSERVATIONS = 3;
  * `Aplicación doxológica:`), then drops it in the chat to review + send. The
  * content is 100% the pastor's — this only structures it (manifesto-safe).
  */
-export function GuidedInsightHelper({ onInsert, busy }: Props) {
+export function GuidedInsightHelper({ onInsert, busy, seedId }: Props) {
     const { t } = useTranslation('guidedSermon');
+    const { data: doubts = [] } = useGuidedSeedDoubts(seedId);
     const [open, setOpen] = useState(true);
     const [centralIdea, setCentralIdea] = useState('');
     const [observations, setObservations] = useState<string[]>(['', '', '']);
@@ -115,6 +119,28 @@ export function GuidedInsightHelper({ onInsert, busy }: Props) {
                             {t('insight.addObservation')}
                         </Button>
                     </div>
+
+                    {doubts.length > 0 && (
+                        <div className="space-y-1 rounded-md border border-warning/30 bg-warning/5 p-2">
+                            <label className={cn(labelClass, 'flex items-center gap-1 text-warning')}>
+                                <Pin className="h-3 w-3" />
+                                {t('insight.savedDoubtsTitle')}
+                            </label>
+                            <p className={hintClass}>{t('insight.savedDoubtsHint')}</p>
+                            <div className="flex flex-col gap-1">
+                                {doubts.map((d, i) => (
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => setOpenQuestion(d.text)}
+                                        className="text-left text-[11px] text-foreground rounded border border-warning/20 bg-background px-2 py-1 hover:bg-warning/10 transition-colors"
+                                    >
+                                        {d.text}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="space-y-1">
                         <div className="flex items-center justify-between gap-2">

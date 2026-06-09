@@ -58,6 +58,8 @@ Confrontación de método ALTA prioridad en este paso:
 Trabajo previo del pastor:
 ${priorStepsBlock(ctx)}
 
+AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): que conectó el género con una regla de lectura coherente — citá cómo cambia su forma de leer el pasaje. Nada genérico.
+
 Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 

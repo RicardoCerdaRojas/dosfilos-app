@@ -52,6 +52,7 @@ export * from './guided-sermon/policies/FunctionStepPolicy';
 export * from './guided-sermon/policies/TimelessPrincipleStepPolicy';
 export * from './guided-sermon/policies/InsightStepPolicy';
 export * from './guided-sermon/StepPolicyRegistry';
+export * from './guided-sermon/doubtRouting';
 export * from './repositories/IPastoralSeedRepository';
 export * from './entities/PastoralWordAnalysis'; // 🌱 Pastoral Fidelity Phase 1.5 — Pastoral Word Study types
 export * from './entities/WitnessValidation'; // 🌱 Pastoral Fidelity Phase 2 — three-witnesses validation

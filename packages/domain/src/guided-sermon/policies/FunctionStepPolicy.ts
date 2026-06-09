@@ -51,6 +51,8 @@ Reglas duras de este paso:
 Trabajo previo del pastor:
 ${priorStepsBlock(ctx)}
 
+AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): que ancló la función en la audiencia ORIGINAL antes de cualquier salto a hoy — citá qué les hacía el texto. Nada genérico.
+
 Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 
