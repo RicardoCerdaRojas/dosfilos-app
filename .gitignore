@@ -94,4 +94,5 @@ packages/mobile/android/
 .byblos/
 .atl/
 .mcp.json
+.npmrc
 .husky/post-commit
