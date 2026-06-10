@@ -4,11 +4,13 @@ import {
     getDoc,
     getDocs,
     getFirestore,
+    onSnapshot,
     query,
     updateDoc,
     where,
     writeBatch,
     arrayUnion,
+    type Unsubscribe,
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getStorage, ref as storageRef, getDownloadURL } from 'firebase/storage';
@@ -258,6 +260,41 @@ export class CoreLibraryAdminService {
         );
         const snapshot = await getDocs(q);
         return snapshot.docs.map(d => applyRightsDefaults({ id: d.id, ...(d.data() as any) }));
+    }
+
+    /**
+     * Live variant of `getResourcesInStore` — subscribes to the same query via
+     * `onSnapshot` and invokes `onChange` with the mapped resources on every
+     * server change. Lets the admin UI reflect backend-driven status flips
+     * (e.g. `indexingStatus: 'processing' → 'ready'` when an async index job
+     * finishes) without a manual reload. Returns the Firestore unsubscribe;
+     * callers MUST call it on cleanup to avoid leaking listeners across tab
+     * switches / unmount.
+     */
+    subscribeResourcesInStore(
+        userId: string,
+        storeKey: string,
+        onChange: (resources: AdminLibraryResource[]) => void,
+        onError?: (err: Error) => void,
+    ): Unsubscribe {
+        const db = getFirestore();
+        const q = query(
+            collection(db, this.RESOURCES),
+            where('userId', '==', userId),
+            where('coreStores', 'array-contains', storeKey),
+        );
+        return onSnapshot(
+            q,
+            (snapshot) => {
+                onChange(
+                    snapshot.docs.map(d => applyRightsDefaults({ id: d.id, ...(d.data() as any) })),
+                );
+            },
+            (err) => {
+                console.error(`[CoreLibraryAdminService.subscribeResourcesInStore] ${storeKey}:`, err);
+                onError?.(err);
+            },
+        );
     }
 
     async findResourceByTitleInStore(
