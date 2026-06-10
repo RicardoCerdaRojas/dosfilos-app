@@ -45,6 +45,14 @@ export interface IExtractionRepository {
     listByUser(userId: string): Promise<Extraction[]>;
 
     /**
+     * Trimmed variant of `listByUser` for the cross-session library list:
+     * returns the same artifacts newest-first but with `markdown` dropped to
+     * `''` (the dominant payload the list never renders). The full body loads
+     * per-artifact via `getById` when one is opened in the editor.
+     */
+    listSummariesByUser(userId: string): Promise<Extraction[]>;
+
+    /**
      * All extractions whose `externalRef` matches the given collection
      * + id. Used by the per-paper "Artefactos derivados" panel to
      * surface every composition that was saved from this paper.

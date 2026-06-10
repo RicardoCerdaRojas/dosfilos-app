@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '@/i18n';
-import { useUserExtractions, useExtractionMutations } from '@/hooks/faculty';
+import { useUserExtractions, useExtraction, useExtractionMutations } from '@/hooks/faculty';
 import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
 import { FacultyExtractionsList } from '@/components/faculty/FacultyExtractionsList';
 import { FacultyDocumentEditor } from '@/components/faculty/FacultyDocumentEditor';
@@ -29,6 +29,11 @@ export function FacultyLibraryPage() {
     const { updateMarkdown, rename, addToProject, removeFromProject, deleteExtraction } = useExtractionMutations();
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
+
+    // The list comes back trimmed (no `markdown` body); the full document
+    // for the selected artifact is fetched on demand here. Seeds the editor
+    // draft and serves as the autosave baseline.
+    const { extraction: fullSelected } = useExtraction(selectedId ?? undefined);
     const [query, setQuery] = useState('');
     const [typeFilter, setTypeFilter] = useState<TypeFilterValue>('all');
     const [timeFilter, setTimeFilter] = useState<TimeFilterValue>('all');
@@ -38,51 +43,53 @@ export function FacultyLibraryPage() {
     const [draftFor, setDraftFor] = useState<string | null>(null);
 
     /**
-     * Atomic selection setter. Updates id + draft + draftFor in one batch
-     * so a single render observes all three values consistent. Doing this
-     * via useEffect created a race where the editor would mount with the
-     * previous selection's markdown (or empty on first click) because
-     * setSelectedId triggered a render before the effect could seed the
-     * draft.
+     * Selecting only sets the id + clears the draft. The list is trimmed
+     * (no `markdown`), so the body can't be seeded synchronously; the seed
+     * effect below fills it once `useExtraction` resolves the full doc. The
+     * editor stays gated on `draftFor === selectedId` so it never mounts with
+     * a stale/empty body (MDXEditor is uncontrolled — it reads `markdown` only
+     * on mount).
      */
     const selectExtraction = (extraction: Extraction) => {
         setSelectedId(extraction.id);
-        setDraftMarkdown(extraction.markdown);
-        setDraftFor(extraction.id);
+        setDraftMarkdown('');
+        setDraftFor(null);
     };
 
-    // Fallback re-seed: covers the case where the user picked an
-    // artifact before the extractions list finished loading (no entry
-    // in the list at click time → we can't seed synchronously).
+    // Seed the editor draft once the full document for the current selection
+    // has loaded. Guarded by `draftFor === selectedId` so it seeds exactly
+    // once per selection and never clobbers in-progress edits.
     useEffect(() => {
         if (!selectedId) return;
         if (draftFor === selectedId) return;
-        const found = extractions.find(e => e.id === selectedId);
-        if (!found) return;
-        setDraftMarkdown(found.markdown);
+        if (!fullSelected || fullSelected.id !== selectedId) return;
+        setDraftMarkdown(fullSelected.markdown);
         setDraftFor(selectedId);
-    }, [selectedId, extractions, draftFor]);
+    }, [selectedId, fullSelected, draftFor]);
 
-    // Debounced autosave: save 1.5s after the user stops typing.
+    // Debounced autosave: save 1.5s after the user stops typing. Baseline is
+    // the fetched full doc, not the trimmed list entry (which has no body).
     useEffect(() => {
         if (!selectedId || draftFor !== selectedId) return;
-        const original = extractions.find(e => e.id === selectedId)?.markdown;
-        if (original === draftMarkdown) return;
+        const original = fullSelected?.id === selectedId ? fullSelected.markdown : undefined;
+        if (original === undefined || original === draftMarkdown) return;
         const handle = setTimeout(() => {
             updateMarkdown.mutate({ extractionId: selectedId, markdown: draftMarkdown });
         }, 1500);
         return () => clearTimeout(handle);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [draftMarkdown, selectedId, draftFor]);
+    }, [draftMarkdown, selectedId, draftFor, fullSelected]);
 
     const filtered = useMemo(() => {
         const afterFilters = filterExtractions(extractions, typeFilter, timeFilter);
         const q = query.trim().toLowerCase();
         if (!q) return afterFilters;
+        // Search runs over title + type only. The list is trimmed (no
+        // `markdown` body crosses the wire), so full-text body search is not
+        // available here — opening an artifact loads its body on demand.
         return afterFilters.filter(e =>
             e.title.toLowerCase().includes(q) ||
-            e.type.toLowerCase().includes(q) ||
-            e.markdown.toLowerCase().includes(q),
+            e.type.toLowerCase().includes(q),
         );
     }, [extractions, query, typeFilter, timeFilter]);
 
@@ -215,7 +222,7 @@ export function FacultyLibraryPage() {
                 </aside>
 
                 <main className="flex-1 overflow-hidden bg-background">
-                    {selected ? (
+                    {selected && draftFor === selected.id ? (
                         <FacultyDocumentEditor
                             // Remount on artifact change. MDXEditor is
                             // uncontrolled — it only reads the `markdown`
@@ -239,6 +246,11 @@ export function FacultyLibraryPage() {
                             isProcessing={false}
                             isZenMode={false}
                         />
+                    ) : selected ? (
+                        // Selected but the full body is still loading.
+                        <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+                            {t('library.loading')}
+                        </div>
                     ) : (
                         <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
                             {t('library.emptyState')}

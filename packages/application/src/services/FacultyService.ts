@@ -41,6 +41,7 @@ import {
     ListSessionExtractionsUseCase,
     ListProjectExtractionsUseCase,
     ListUserExtractionsUseCase,
+    ListUserExtractionSummariesUseCase,
     GetExtractionUseCase,
     UpdateExtractionMarkdownUseCase,
     RenameExtractionUseCase,
@@ -84,6 +85,7 @@ class FacultyService {
     public listSessionExtractions: ListSessionExtractionsUseCase;
     public listProjectExtractions: ListProjectExtractionsUseCase;
     public listUserExtractions: ListUserExtractionsUseCase;
+    public listUserExtractionSummaries: ListUserExtractionSummariesUseCase;
     public getExtraction: GetExtractionUseCase;
     public updateExtractionMarkdown: UpdateExtractionMarkdownUseCase;
     public renameExtraction: RenameExtractionUseCase;
@@ -140,6 +142,7 @@ class FacultyService {
         this.listSessionExtractions = new ListSessionExtractionsUseCase(extractionRepository);
         this.listProjectExtractions = new ListProjectExtractionsUseCase(extractionRepository);
         this.listUserExtractions = new ListUserExtractionsUseCase(extractionRepository);
+        this.listUserExtractionSummaries = new ListUserExtractionSummariesUseCase(extractionRepository);
         this.getExtraction = new GetExtractionUseCase(extractionRepository);
         this.updateExtractionMarkdown = new UpdateExtractionMarkdownUseCase(extractionRepository);
         this.renameExtraction = new RenameExtractionUseCase(extractionRepository);

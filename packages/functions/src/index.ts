@@ -15,6 +15,7 @@ export { autoIndexOnExtractionReady } from './library/autoIndexOnExtractionReady
 export { incrementUsage } from './usage/incrementUsage';
 export { getGreekDashboardSessions } from './greek-tutor/getGreekDashboardSessions';
 export { getFacultyDashboardSessions } from './faculty/getFacultyDashboardSessions';
+export { getUserExtractionsSummary } from './faculty/getUserExtractionsSummary';
 export { getExegesisPapersSummary } from './exegesis/getExegesisPapersSummary';
 export { getSermonsListSummary } from './sermon/getSermonsListSummary';
 export { retrieveChunks } from './library/retrieveChunks';
