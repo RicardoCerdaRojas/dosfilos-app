@@ -387,6 +387,24 @@ export default function CoreLibraryAdmin() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Live subscription to the active store's resources. The initial load +
+    // sync validation still come from loadConfig/validateAllStores; this
+    // listener keeps the *active tab's* `indexingStatus` fresh so a backend
+    // index job finishing flips the "Procesando" badge to "Listo" without a
+    // manual reload. Re-subscribes when the tab changes; unsubscribes on
+    // cleanup so listeners don't leak across switches.
+    const activeStoreExists = !!config?.stores?.[activeTab];
+    useEffect(() => {
+        const uid = firebase?.user?.uid;
+        if (!uid || !activeTab || !activeStoreExists) return;
+        const unsubscribe = coreLibraryAdminService.subscribeResourcesInStore(
+            uid,
+            activeTab,
+            (docs) => setStoreResources(prev => ({ ...prev, [activeTab]: docs })),
+        );
+        return () => unsubscribe();
+    }, [firebase?.user?.uid, activeTab, activeStoreExists]);
+
     const tutorsForStoreId = (storeId: string | null | undefined) =>
         storeId ? agents.filter(a => a.corpusIds?.includes(storeId)) : [];
 
