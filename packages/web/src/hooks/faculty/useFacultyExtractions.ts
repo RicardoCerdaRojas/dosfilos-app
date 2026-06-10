@@ -86,6 +86,11 @@ export function useProjectExtractions(projectId: string | undefined) {
 /**
  * All extractions owned by the current user, newest first. Used by the
  * cross-session library page at /dashboard/faculty/library.
+ *
+ * Uses the trimmed `listUserExtractionSummaries` read — each artifact comes
+ * back WITHOUT its `markdown` body (the dominant payload), so the list draws
+ * from tiny docs. The full body for the selected artifact is fetched on demand
+ * via {@link useExtraction} when it's opened in the editor.
  */
 export function useUserExtractions() {
     const { user } = useFirebase();
@@ -94,7 +99,7 @@ export function useUserExtractions() {
         queryKey: queryKeys.byUser(user?.uid),
         queryFn: async () => {
             if (!user?.uid) return [] as Extraction[];
-            return facultyService.listUserExtractions.execute(user.uid);
+            return facultyService.listUserExtractionSummaries.execute(user.uid);
         },
         enabled: !!user?.uid,
     });

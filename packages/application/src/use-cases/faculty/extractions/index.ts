@@ -2,6 +2,7 @@ export * from './GenerateAndSaveExtractionUseCase';
 export * from './ListSessionExtractionsUseCase';
 export * from './ListProjectExtractionsUseCase';
 export * from './ListUserExtractionsUseCase';
+export * from './ListUserExtractionSummariesUseCase';
 export * from './GetExtractionUseCase';
 export * from './UpdateExtractionMarkdownUseCase';
 export * from './RenameExtractionUseCase';

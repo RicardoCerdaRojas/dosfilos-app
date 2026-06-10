@@ -15,6 +15,7 @@ import {
     arrayUnion,
     arrayRemove,
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../config/firebase';
 import {
     Extraction,
@@ -158,6 +159,50 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
         );
         const snap = await getDocs(q);
         return snap.docs.map(d => this.fromFirestore(d));
+    }
+
+    /**
+     * Trimmed list read — delegates to the `getUserExtractionsSummary`
+     * callable, which mirrors `listByUser`'s query server-side and strips each
+     * doc's `markdown` (the dominant payload) down to `''`. Maps the light
+     * payload back into the `Extraction` shape so the library list's reads keep
+     * working; the full body loads via `getById` when an artifact is opened.
+     */
+    async listSummariesByUser(userId: string): Promise<Extraction[]> {
+        // userId is implied by the caller's auth on the callable; the param is
+        // kept to satisfy the port and guard against a mismatched caller.
+        void userId;
+        const callable = httpsCallable<
+            Record<string, never>,
+            { extractions: any[]; truncated: boolean }
+        >(getFunctions(), 'getUserExtractionsSummary');
+        const res = await callable({});
+        const ms = (v: any): Date =>
+            typeof v === 'number' ? new Date(v) : new Date();
+        return (res.data.extractions ?? []).map((e: any) => ({
+            id: e.id,
+            userId: e.userId,
+            sessionId: e.sessionId ?? null,
+            projectIds: Array.isArray(e.projectIds) ? e.projectIds : [],
+            type: e.type,
+            title: e.title ?? '',
+            markdown: '', // stripped in the summary; full body loads on open
+            createdAt: ms(e.createdAt),
+            updatedAt: ms(e.updatedAt),
+            derivedFromMessageIds: Array.isArray(e.derivedFromMessageIds) ? e.derivedFromMessageIds : [],
+            externalRef: e.externalRef ?? null,
+            version: typeof e.version === 'number' ? e.version : 1,
+            sourceSessionDeleted: e.sourceSessionDeleted ?? false,
+            publishedRefs: Array.isArray(e.publishedRefs)
+                ? e.publishedRefs.map((r: any) => ({
+                      platform: r.platform,
+                      externalId: r.externalId,
+                      externalUrl: r.externalUrl,
+                      status: r.status,
+                      publishedAt: ms(r.publishedAt),
+                  }))
+                : [],
+        } as Extraction));
     }
 
     async listByExternalRef(
