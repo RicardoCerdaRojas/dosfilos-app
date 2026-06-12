@@ -208,16 +208,42 @@ export function subscribeJob(
   );
 }
 
+export interface CrearClaseOpts {
+  /** Curso: agrupa la clase bajo una serie. */
+  serie?: string;
+  cursoId?: string;
+}
+
 /** Persiste el plan aprobado y crea la clase con la marca elegida. */
 export async function crearClaseDesdePlan(
   plan: TeachingPlan,
   marcaId: string,
+  opts: CrearClaseOpts = {},
 ): Promise<{ claseId: string; planId: string }> {
-  const fn = httpsCallable<{ plan: TeachingPlan; marcaId: string }, { claseId: string; planId: string }>(
+  const fn = httpsCallable<
+    { plan: TeachingPlan; marcaId: string; serie?: string; cursoId?: string },
+    { claseId: string; planId: string }
+  >(functions, 'crearClaseDesdePlan');
+  return (await fn({ plan, marcaId, ...opts })).data;
+}
+
+export interface SesionOutline {
+  titulo: string;
+  alcance: string;
+  min: number;
+}
+
+/** Propone el esquema de un curso (lista de sesiones) desde un estudio. */
+export async function proponerOutlineCurso(input: {
+  estudioId: string;
+  genero: 'exegesis' | 'doctrina';
+  sesionesSugeridas?: number;
+}): Promise<SesionOutline[]> {
+  const fn = httpsCallable<typeof input, { sesiones: SesionOutline[] }>(
     functions,
-    'crearClaseDesdePlan',
+    'proponerOutlineCurso',
   );
-  return (await fn({ plan, marcaId })).data;
+  return (await fn(input)).data.sesiones;
 }
 
 /** Abre el HTML de un artefacto/preview en una pestaña nueva (Blob URL). */
