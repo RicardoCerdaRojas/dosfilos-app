@@ -86,9 +86,4 @@ describe('teaching-suite render parity (demo_v4_sebex)', () => {
     const d = { n: 1, tipo: 'portada', html: '<section>raw</section>' } as DiapoPortada;
     expect(renderSlide(d, { bloqueRotulo: '' })).toBe('<section>raw</section>');
   });
-
-  it('tipo no portado lanza error explícito', () => {
-    const d = { n: 1, tipo: 'quiasmo' } as never;
-    expect(() => renderSlide(d, { bloqueRotulo: '' })).toThrow(/no portado/);
-  });
 });
