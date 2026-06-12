@@ -1,8 +1,8 @@
 import { db, functions } from '@dosfilos/infrastructure';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import type { TeachingPlan } from '@dosfilos/domain';
-import { renderPlanArtifacts } from './render';
+import type { Artefacto, TeachingPlan } from '@dosfilos/domain';
+import { renderArtifact } from './render';
 
 /**
  * Servicio de la Suite de Enseñanza (F1). Lee clases/planes de Firestore y
@@ -18,6 +18,7 @@ export interface TeachingClaseRow {
   estado: string;
   planId: string;
   marcaId: string;
+  artefactos: Artefacto[];
 }
 
 export async function listClases(ownerId: string): Promise<TeachingClaseRow[]> {
@@ -34,6 +35,7 @@ export async function listClases(ownerId: string): Promise<TeachingClaseRow[]> {
       estado: (x.estado as string) ?? 'borrador',
       planId: (x.planId as string) ?? '',
       marcaId: (x.marcaId as string) ?? '',
+      artefactos: Array.isArray(x.artefactos) ? (x.artefactos as Artefacto[]) : ['presentacion'],
     } satisfies TeachingClaseRow;
   });
   // Orden estable por título (los docs no traen índice de orden en F1).
@@ -46,23 +48,22 @@ export async function getPlan(planId: string): Promise<TeachingPlan | null> {
   return snap.data() as TeachingPlan;
 }
 
-export async function seedDemo(): Promise<{ claseId: string; created: boolean }> {
-  const fn = httpsCallable<Record<string, never>, { claseId: string; created: boolean }>(
-    functions,
-    'seedTeachingDemo',
-  );
+export interface SeedResult {
+  demos: { seedKey: string; claseId: string; created: boolean }[];
+}
+
+export async function seedDemo(): Promise<SeedResult> {
+  const fn = httpsCallable<Record<string, never>, SeedResult>(functions, 'seedTeachingDemo');
   return (await fn({})).data;
 }
 
 /**
- * Renderiza la presentación del plan y la abre en una pestaña nueva (Blob URL).
+ * Renderiza UN artefacto del plan y lo abre en una pestaña nueva (Blob URL).
  * F1 no persiste el HTML en Storage — es un derivado desechable; se re-renderiza
  * a demanda desde el plan.
  */
-export function openPresentacion(plan: TeachingPlan): void {
-  const out = renderPlanArtifacts(plan);
-  const html = out.presentacion;
-  if (!html) throw new Error('El plan no declara el artefacto "presentacion".');
+export function openArtifact(plan: TeachingPlan, artefacto: Artefacto): void {
+  const html = renderArtifact(plan, artefacto);
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   window.open(url, '_blank', 'noopener');

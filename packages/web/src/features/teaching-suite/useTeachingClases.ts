@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFirebase } from '@/context/firebase-context';
+import type { Artefacto } from '@dosfilos/domain';
 import {
   listClases,
   seedDemo,
   getPlan,
-  openPresentacion,
+  openArtifact,
   type TeachingClaseRow,
 } from './teachingSuiteService';
 
@@ -50,7 +51,7 @@ export function useTeachingClases() {
     }
   };
 
-  const verPresentacion = async (planId: string) => {
+  const verArtefacto = async (planId: string, artefacto: Artefacto) => {
     setError(null);
     try {
       const plan = await getPlan(planId);
@@ -58,11 +59,11 @@ export function useTeachingClases() {
         setError('No se encontró el plan de la clase.');
         return;
       }
-      openPresentacion(plan);
+      openArtifact(plan, artefacto);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo abrir la presentación');
+      setError(e instanceof Error ? e.message : 'No se pudo abrir el artefacto');
     }
   };
 
-  return { clases, loading, seeding, error, refresh, sembrarDemo, verPresentacion };
+  return { clases, loading, seeding, error, refresh, sembrarDemo, verArtefacto };
 }

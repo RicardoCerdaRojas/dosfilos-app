@@ -1,6 +1,14 @@
-import { Presentation, Plus, RefreshCw, FileText } from 'lucide-react';
+import { Presentation, Plus, RefreshCw, FileText, MonitorPlay, ClipboardList } from 'lucide-react';
+import type { Artefacto } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
 import { useTeachingClases } from '@/features/teaching-suite/useTeachingClases';
+
+const ARTEFACTO_META: Record<Artefacto, { label: string; Icon: typeof Presentation }> = {
+  presentacion: { label: 'Presentación', Icon: Presentation },
+  notas: { label: 'Notas', Icon: MonitorPlay },
+  hoja: { label: 'Hoja', Icon: ClipboardList },
+  guia_sesion: { label: 'Guía', Icon: FileText },
+};
 
 /**
  * Suite de Enseñanza — F1 (sin IA aún).
@@ -9,7 +17,7 @@ import { useTeachingClases } from '@/features/teaching-suite/useTeachingClases';
  * desechable, no se almacena).
  */
 export function TeachingSuitePage(): JSX.Element {
-  const { clases, loading, seeding, error, refresh, sembrarDemo, verPresentacion } =
+  const { clases, loading, seeding, error, refresh, sembrarDemo, verArtefacto } =
     useTeachingClases();
 
   return (
@@ -59,7 +67,7 @@ export function TeachingSuitePage(): JSX.Element {
           {clases.map((c) => (
             <li
               key={c.id}
-              className="flex items-center gap-3 rounded-lg border px-4 py-3 bg-background"
+              className="flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 bg-background"
             >
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{c.titulo}</p>
@@ -67,15 +75,25 @@ export function TeachingSuitePage(): JSX.Element {
                   {[c.serie, c.genero, c.estado].filter(Boolean).join(' · ')}
                 </p>
               </div>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => void verPresentacion(c.planId)}
-                disabled={!c.planId}
-              >
-                <Presentation className="w-4 h-4 mr-2" />
-                Ver presentación
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                {c.artefactos.map((a) => {
+                  const meta = ARTEFACTO_META[a];
+                  if (!meta) return null;
+                  const { label, Icon } = meta;
+                  return (
+                    <Button
+                      key={a}
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => void verArtefacto(c.planId, a)}
+                      disabled={!c.planId}
+                    >
+                      <Icon className="w-4 h-4 mr-2" />
+                      {label}
+                    </Button>
+                  );
+                })}
+              </div>
             </li>
           ))}
         </ul>
