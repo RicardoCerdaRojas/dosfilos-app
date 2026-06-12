@@ -11,7 +11,8 @@ interface OutlineReviewProps {
   onVolver: () => void;
 }
 
-const INPUT_CLS = 'w-full rounded-md border bg-background px-2 py-1.5 text-sm';
+// Sin `w-full`: el ancho lo fija cada input (flex-1 / w-20 / w-full) sin conflicto.
+const INPUT_CLS = 'rounded-md border bg-background px-2 py-1.5 text-sm';
 
 export function OutlineReview({
   serieNombre,
@@ -39,7 +40,7 @@ export function OutlineReview({
           id="cs-serie"
           value={serieNombre}
           onChange={(e) => setSerieNombre(e.target.value)}
-          className={`${INPUT_CLS} max-w-md`}
+          className={`${INPUT_CLS} w-full max-w-md`}
         />
       </div>
 
@@ -56,7 +57,7 @@ export function OutlineReview({
                 value={s.titulo}
                 onChange={(e) => update(i, { titulo: e.target.value })}
                 placeholder="Título de la sesión"
-                className={`${INPUT_CLS} flex-1`}
+                className={`${INPUT_CLS} flex-1 min-w-0`}
               />
               <input
                 type="number"
@@ -82,7 +83,7 @@ export function OutlineReview({
               onChange={(e) => update(i, { alcance: e.target.value })}
               placeholder="Alcance: qué parte/subtema del estudio cubre esta sesión"
               rows={2}
-              className={`${INPUT_CLS} resize-y`}
+              className={`${INPUT_CLS} w-full resize-y`}
             />
           </div>
         ))}
