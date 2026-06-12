@@ -176,6 +176,7 @@ export function useGenerarCurso() {
         const { claseId } = await crearClaseDesdePlan(s.plan, marcaId, {
           serie: serieNombre,
           cursoId: cursoIdRef.current,
+          orden: i + 1,
         });
         actualizarSesion(i, { claseId });
       }

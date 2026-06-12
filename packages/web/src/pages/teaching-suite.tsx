@@ -13,6 +13,18 @@ const ARTEFACTO_META: Record<Artefacto, { label: string; Icon: typeof Presentati
 
 interface ClaseLike {
   serie?: string;
+  orden?: number;
+  titulo: string;
+}
+
+/** Ordena por índice de sesión (si lo hay); cae a orden por título. */
+function ordenarSesiones<T extends ClaseLike>(clases: T[]): T[] {
+  return [...clases].sort((a, b) => {
+    if (a.orden != null && b.orden != null) return a.orden - b.orden;
+    if (a.orden != null) return -1;
+    if (b.orden != null) return 1;
+    return a.titulo.localeCompare(b.titulo);
+  });
 }
 
 /** Agrupa las clases por serie (cursos primero, sueltas al final). */
@@ -28,8 +40,11 @@ function agruparPorSerie<T extends ClaseLike>(clases: T[]): { serie: string | nu
       sueltas.push(c);
     }
   }
-  const grupos = [...conSerie.entries()].map(([serie, cs]) => ({ serie, clases: cs }));
-  if (sueltas.length > 0) grupos.push({ serie: null, clases: sueltas });
+  const grupos = [...conSerie.entries()].map(([serie, cs]) => ({
+    serie,
+    clases: ordenarSesiones(cs),
+  }));
+  if (sueltas.length > 0) grupos.push({ serie: null, clases: ordenarSesiones(sueltas) });
   return grupos;
 }
 

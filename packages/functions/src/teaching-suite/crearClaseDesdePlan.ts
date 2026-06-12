@@ -23,6 +23,8 @@ interface CrearClaseInput {
   /** Curso (Eje 2): agrupa varias clases bajo una serie. */
   serie?: string;
   cursoId?: string;
+  /** Índice de la sesión dentro del curso (para ordenar la serie). */
+  orden?: number;
 }
 
 function sanitizeArtefactos(value: unknown): string[] {
@@ -63,6 +65,7 @@ export const crearClaseDesdePlan = onCall(appCheckCallableOptions(), async (requ
         ? plan.serie
         : null;
   const cursoId = typeof input.cursoId === 'string' && input.cursoId.trim() ? input.cursoId.trim() : null;
+  const orden = Number.isFinite(Number(input.orden)) ? Math.round(Number(input.orden)) : null;
 
   const artefactos = sanitizeArtefactos(plan.artefactos);
   const batch = db.batch();
@@ -83,6 +86,7 @@ export const crearClaseDesdePlan = onCall(appCheckCallableOptions(), async (requ
     titulo: typeof plan.titulo === 'string' ? plan.titulo : 'Clase',
     serie,
     cursoId,
+    orden,
     genero: typeof plan.genero === 'string' ? plan.genero : 'exegesis',
     modalidad: typeof plan.modalidad === 'string' ? plan.modalidad : null,
     artefactos,
