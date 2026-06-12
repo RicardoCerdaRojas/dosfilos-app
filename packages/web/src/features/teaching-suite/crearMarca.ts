@@ -60,7 +60,7 @@ export function buildUserBundle(draft: BrandDraft): BrandBundle {
 }
 
 /** Plan mínimo para previsualizar una marca (ejercita tokens, Escritura y acento). */
-const PREVIEW_PLAN: TeachingPlan = {
+export const PREVIEW_PLAN: TeachingPlan = {
   id: 'preview',
   titulo: 'Vista previa de marca',
   serie: 'Suite de Enseñanza',

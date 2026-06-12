@@ -19,7 +19,7 @@ const ARTEFACTO_META: Record<Artefacto, { label: string; Icon: typeof Presentati
  */
 export function TeachingSuitePage(): JSX.Element {
   const navigate = useNavigate();
-  const { clases, loading, seeding, error, refresh, sembrarDemo, verArtefacto } =
+  const { clases, brands, loading, seeding, error, refresh, sembrarDemo, verArtefacto, verMarca } =
     useTeachingClases();
 
   return (
@@ -97,7 +97,7 @@ export function TeachingSuitePage(): JSX.Element {
                       key={a}
                       size="sm"
                       variant="secondary"
-                      onClick={() => void verArtefacto(c.planId, a)}
+                      onClick={() => void verArtefacto(c, a)}
                       disabled={!c.planId}
                     >
                       <Icon className="w-4 h-4 mr-2" />
@@ -110,6 +110,49 @@ export function TeachingSuitePage(): JSX.Element {
           ))}
         </ul>
       )}
+
+      {/* Marcas */}
+      <section className="space-y-2 pt-2">
+        <div className="flex items-center gap-2">
+          <Palette className="w-4 h-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold">Marcas</h2>
+        </div>
+        {brands.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Aún no hay marcas. Siembra la clase demo (trae SEBEX e Iglesia) o crea una marca nueva.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {brands.map((b) => (
+              <li
+                key={b.id}
+                className="flex items-center gap-3 rounded-lg border px-4 py-2.5 bg-background"
+              >
+                <div className="flex gap-1">
+                  {['oscuro', 'acento', 'escritura'].map((t) => (
+                    <span
+                      key={t}
+                      className="inline-block h-5 w-5 rounded border"
+                      style={{ backgroundColor: b.tokens[t] }}
+                      title={`${t}: ${b.tokens[t] ?? ''}`}
+                    />
+                  ))}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{b.nombre}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {b.source === 'user' ? 'creada por ti' : 'semilla'}
+                  </p>
+                </div>
+                <Button size="sm" variant="secondary" onClick={() => void verMarca(b.id)}>
+                  <Presentation className="w-4 h-4 mr-2" />
+                  Vista previa
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
