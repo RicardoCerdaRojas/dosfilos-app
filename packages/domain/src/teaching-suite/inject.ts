@@ -14,6 +14,18 @@ const SANGRIA = '        '; // 8 espacios, como el original
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+/**
+ * Los espacios de la hoja (`<span class="blanco ...">`) deben ir VACÍOS: la
+ * clase pinta la línea para que el alumno escriba. Si el contenido del plan trae
+ * la respuesta dentro del span (el modelo a veces la mete), se vería el texto
+ * con el `border-bottom` cortándolo por la mitad. Aquí se vacían en el render
+ * (el plan queda intacto para una eventual "clave del profesor"). La palabra
+ * omitida se infiere del contexto de la frase, como en los ejemplos del skill.
+ */
+function vaciarBlancos(html: string): string {
+  return html.replace(/(<span class="blanco[^"]*">)[\s\S]*?(<\/span>)/g, '$1$2');
+}
 function rstrip(s: string): string {
   return s.replace(/\s+$/, '');
 }
@@ -177,7 +189,7 @@ export function injectArtifacts(plan: TeachingPlan, assets: InjectAssets): Injec
     out.hoja = rellenar(assets.templates.hoja!, {
       '@@TITULO_HOJA@@': T.titulo_hoja ?? plan.titulo + ' — Hoja de trabajo',
       '@@META_HOJA@@': T.meta_hoja ?? '<strong>Hoja de trabajo del alumno</strong>',
-      '@@CUERPO_HOJA@@': plan.cuerpo_hoja_html ?? '',
+      '@@CUERPO_HOJA@@': vaciarBlancos(plan.cuerpo_hoja_html ?? ''),
       '@@FOOTER@@': T.footer_hoja ?? comunes['@@FOOTER@@'],
     });
   }

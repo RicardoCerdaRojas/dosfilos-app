@@ -88,6 +88,7 @@ export function buildPlanPrompt(input: BuildPlanPromptInput): BuiltPrompt {
     '- Reglas por tipo: escritura/escritura-anotada llevan "ref"; lista ≤4 ítems (≤6 si variante dos-columnas); quiasmo con niveles espejados y exactamente un "centro"; flujo con al menos un nodo raíz (conecta=null) y sin conexiones a ids inexistentes; escritura-anotada: cada palabra destacada debe aparecer literal en "texto".',
     '- Regla de la Escritura: el color de Escritura es solo para palabras citadas textualmente de la Biblia, en cursiva; citas de comentaristas/confesiones nunca en ese color.',
     '- Si los artefactos incluyen "notas"/"hoja", redacta "cuerpo_notas_html"/"cuerpo_hoja_html" coherentes con las diapositivas; la síntesis doctrinal va DESPUÉS del trabajo con el texto.',
+    '- En "cuerpo_hoja_html" los espacios para rellenar van VACÍOS: `<span class="blanco corto"></span>` SIN texto dentro (el alumno escribe ahí). NUNCA escribas la respuesta dentro del span; la palabra omitida se infiere del contexto de la frase. El texto ancla bíblico SIEMPRE impreso completo.',
     '- Sin emojis. Una idea por diapositiva.',
   ].join('\n');
 
