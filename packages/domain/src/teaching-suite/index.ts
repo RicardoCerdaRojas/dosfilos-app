@@ -7,6 +7,9 @@ export * from './TeachingPlan';
 export * from './Brand';
 export * from './validatePlan';
 export { injectArtifacts } from './inject';
+export * from './brand/color';
+export * from './brand/validateBrand';
+export * from './brand/logoProcessing';
 // Superficie pública del render (sin filtrar internos como `I`/`escHtml`/`wrapSection`).
 export {
   renderSlide,
