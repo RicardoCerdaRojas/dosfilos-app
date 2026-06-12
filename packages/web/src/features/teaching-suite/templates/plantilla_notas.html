@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>@@TITULO_NOTAS@@</title>
+<style>
+  /* suite-ensenanza-biblica · runtime diseño v5 · 2026-06-11 */
+  /* @@FUENTES@@ */
+  :root{
+    --oscuro:#000A16; --panel:#001F34; --medio:#34586E; --acento:#00B8B0;
+    --claro1:#CCE0E7; --claro2:#D6EAF1; --tinta:#1a2b35; --fondo:#f7fafb;
+    --escritura:#C9A227; --escritura-tinta:#8C6E14;
+    --fuente:'Inter','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fondo);color:var(--tinta);
+    font-family:var(--fuente);
+    line-height:1.65;font-size:17px}
+  header.banda{background:var(--oscuro);padding:14px 28px;display:flex;align-items:center;gap:18px;
+    border-bottom:4px solid var(--acento)}
+  header.banda img{height:44px}
+  header.banda .meta{color:var(--claro2);font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+  header.banda .meta strong{color:var(--acento)}
+  .barra-edicion{position:sticky;top:0;z-index:50;background:var(--panel);color:var(--claro2);
+    display:flex;gap:10px;align-items:center;padding:8px 28px;font-size:14px}
+  .barra-edicion button{background:var(--medio);color:#fff;border:none;border-radius:6px;
+    padding:7px 16px;font-size:14px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center}
+  .barra-edicion button:hover{background:var(--acento);color:var(--oscuro)}
+  .barra-edicion .estado{margin-left:auto;font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+  body.editando #cuerpo{outline:2px dashed var(--acento);outline-offset:6px}
+  main{max-width:880px;margin:0 auto;padding:36px 28px 80px}
+  h1{font-size:30px;line-height:1.25;color:var(--oscuro);letter-spacing:.01em;
+    border-left:6px solid var(--acento);padding-left:16px;margin:8px 0 4px}
+  .subtitulo{color:var(--medio);font-size:15px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 26px;padding-left:22px}
+  h2{font-size:21px;color:var(--oscuro);margin:42px 0 6px;padding:10px 14px;background:var(--panel);
+    color:var(--claro2);border-radius:8px;display:flex;align-items:baseline;gap:12px}
+  h2 .num{color:var(--acento);font-weight:800;white-space:nowrap}
+  h2 .slide-tag{margin-left:auto;font-size:11.5px;font-weight:600;letter-spacing:.1em;
+    color:var(--acento);text-transform:uppercase;white-space:nowrap}
+  h3{font-size:17px;color:var(--medio);margin:24px 0 4px;text-transform:uppercase;letter-spacing:.06em}
+  .ficha{background:#fff;border:1px solid #dde7ec;border-radius:10px;padding:18px 22px;margin:0 0 8px}
+  .ficha table{width:100%;border-collapse:collapse;font-size:15.5px}
+  .ficha td{padding:6px 8px;vertical-align:top;border-bottom:1px solid #eef3f6}
+  .ficha td:first-child{width:190px;font-weight:700;color:var(--medio);text-transform:uppercase;font-size:12.5px;letter-spacing:.08em;padding-top:9px}
+  .escritura{font-style:italic;color:var(--escritura-tinta);background:#fffdf4;border:1px solid #efe3bd;
+    border-left:5px solid var(--escritura);border-radius:8px;padding:16px 22px;margin:14px 0;font-size:17.5px;line-height:1.75}
+  .escritura .ref{display:block;font-style:normal;color:var(--medio);font-size:13px;
+    letter-spacing:.1em;text-transform:uppercase;margin-top:8px}
+  .frase-clave{background:var(--panel);color:var(--claro2);border-radius:10px;padding:16px 22px;margin:16px 0;
+    font-size:18px;font-weight:600;border-left:6px solid var(--acento)}
+  .frase-clave small{display:block;font-weight:400;font-size:12px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--acento);margin-bottom:6px}
+  .pregunta{border:1.5px dashed var(--acento);border-radius:8px;padding:12px 18px;margin:12px 0;
+    color:var(--tinta);background:#f1fbfa}
+  .pregunta strong{color:var(--medio);font-size:12px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:4px}
+  .griego{font-weight:700;font-style:italic;color:var(--medio)}
+  .tiempo{display:inline-block;background:var(--acento);color:var(--oscuro);font-size:12px;
+    font-weight:800;border-radius:20px;padding:2px 12px;letter-spacing:.06em;vertical-align:middle}
+  .confronta{background:#fdf6f3;border:1px solid #ecd6cc;border-left:5px solid #b4543a;border-radius:8px;
+    padding:14px 20px;margin:14px 0}
+  .confronta h4{margin:0 0 6px;color:#8a3a24;font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+  ul{padding-left:22px}
+  li{margin:7px 0}
+  footer{background:var(--oscuro);color:var(--claro1);text-align:center;padding:20px;font-size:13px;letter-spacing:.06em}
+  footer strong{color:var(--acento)}
+  @page{margin:18mm 16mm}
+  @media print{
+    .barra-edicion,#panelProyector,#capaMarcado{display:none !important}
+    body{background:#fff;font-size:13px}
+    body.consola #zonaNotas{margin-right:0 !important}
+    main{max-width:880px !important;margin:0 auto !important}
+    h2{break-inside:avoid}
+    .ficha,.escritura,.frase-clave,.pregunta,.confronta{break-inside:avoid}
+  }
+
+  /* ===== Consola: notas (izq) + panel del proyector (der) ===== */
+  body.consola #zonaNotas{margin-right:430px;transition:margin .2s}
+  body.consola main{max-width:760px}
+
+  #panelProyector{position:fixed;top:0;right:0;width:420px;height:100vh;z-index:40;
+    background:var(--oscuro);border-left:2px solid var(--acento);display:none;flex-direction:column;color:var(--claro2)}
+  body.consola #panelProyector{display:flex}
+  #panelProyector .pp-head{padding:12px 16px;border-bottom:1px solid var(--medio);display:flex;align-items:center;gap:10px}
+  #panelProyector .pp-head span{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--acento);font-weight:700}
+  #panelProyector .pp-head .estado-canal{margin-left:auto;font-size:11px;padding:3px 9px;border-radius:20px;background:var(--panel);border:1px solid var(--medio)}
+  #panelProyector .pp-head .estado-canal.ok{color:var(--acento);border-color:var(--acento)}
+
+  .pp-cuerpo{flex:1;display:flex;flex-direction:column;padding:14px 16px;gap:12px;overflow:hidden;min-height:0}
+  .rotulo{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--medio);font-weight:700;margin-bottom:6px}
+
+  /* Marco 16:9 de la réplica */
+  .replica-marco{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:8px;overflow:hidden;
+    box-shadow:0 6px 24px rgba(0,0,0,.4);flex:none}
+  .replica-marco .escenario-mini{position:absolute;top:0;left:0;width:1280px;height:720px;transform-origin:top left}
+  .replica-marco .diapo{position:absolute;inset:0;padding:70px 90px;display:none;flex-direction:column;justify-content:center}
+  .replica-marco .diapo.activa{display:flex}
+  #lienzoMini{position:absolute;inset:0;z-index:5;pointer-events:none}
+
+  .pp-botones{display:flex;gap:8px;flex-wrap:wrap}
+  .pp-botones button{flex:1;min-width:0;background:var(--panel);border:1px solid var(--medio);color:var(--claro2);
+    border-radius:8px;padding:9px 6px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center}
+  .pp-botones button:hover{border-color:var(--acento)}
+  .pp-botones button.act{background:var(--acento);color:var(--oscuro);font-weight:700;border-color:var(--acento)}
+  .pp-nav{display:flex;gap:8px}
+  .pp-nav button{flex:1;background:var(--medio);border:none;color:#fff;border-radius:8px;padding:10px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+  .pp-nav button:hover{background:var(--acento);color:var(--oscuro)}
+  .pp-info{font-size:12px;color:var(--medio);line-height:1.5;margin-top:auto}
+  .pp-info b{color:var(--claro2)}
+
+
+  /* ===== Temporizador de bloque ===== */
+  #tarjetaTiempo{background:color-mix(in srgb, var(--acento) 6%, transparent);border:1px solid var(--medio);border-radius:10px;padding:10px 14px}
+  .tt-fila{display:flex;align-items:baseline;gap:10px}
+  .tt-bloque{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--acento);font-weight:800;flex:1}
+  .tt-reloj{font-size:26px;font-weight:800;color:var(--claro2);font-variant-numeric:tabular-nums}
+  .tt-reloj.excedido{color:var(--alerta, var(--alerta))}
+  .tt-barra{height:6px;background:var(--panel);border-radius:4px;margin:8px 0;overflow:hidden}
+  #ttProgreso{height:100%;width:0%;background:var(--acento);border-radius:4px;transition:width 1s linear}
+  #ttProgreso.excedido{background:var(--alerta)}
+  .tt-pie{font-size:12px;color:var(--medio)}
+  .tt-pie span{flex:1;font-variant-numeric:tabular-nums}
+  .tt-pie button{background:transparent;border:1px solid var(--medio);color:var(--claro2);border-radius:6px;
+    padding:3px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+  .tt-pie button:hover{border-color:var(--acento)}
+  .replica-sig{opacity:.75;width:62%}
+  .replica-sig .escenario-mini{pointer-events:none}
+
+  /* ===== Capa de marcado ampliado (casi pantalla completa) ===== */
+  #capaMarcado{position:fixed;inset:0;z-index:90;background:color-mix(in srgb, color-mix(in srgb, var(--oscuro) 55%, black) 96%, transparent);display:none;
+    flex-direction:column;align-items:center;justify-content:center;padding:18px}
+  #capaMarcado.activa{display:flex}
+  #capaMarcado .cm-marco{position:relative;width:min(94vw,calc(94vh*16/9));aspect-ratio:16/9;
+    background:#000;border-radius:10px;overflow:hidden;box-shadow:0 0 50px rgba(0,0,0,.7)}
+  #capaMarcado .escenario-mini{position:absolute;top:0;left:0;width:1280px;height:720px;transform-origin:top left}
+  #capaMarcado .diapo{position:absolute;inset:0;padding:70px 90px;display:none;flex-direction:column;justify-content:center}
+  #capaMarcado .diapo.activa{display:flex}
+  #lienzoGrande{position:absolute;inset:0;z-index:5;cursor:crosshair;touch-action:none}
+  #cmBarra{display:flex;gap:8px;align-items:center;margin-top:14px;background:color-mix(in srgb, var(--panel) 95%, transparent);
+    border:1px solid var(--medio);border-radius:14px;padding:10px 14px;flex-wrap:wrap;justify-content:center}
+  #cmBarra button{background:transparent;border:1px solid transparent;color:var(--claro2);font-size:15px;
+    border-radius:8px;padding:8px 12px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center}
+  #cmBarra button:hover{border-color:var(--medio)}
+  #cmBarra button.act{background:var(--acento);color:var(--oscuro);font-weight:700}
+  #cmBarra .muestra{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+  #cmBarra .muestra.act{border-color:#fff;transform:scale(1.15)}
+  #cmBarra .sep{width:1px;height:26px;background:var(--medio);margin:0 4px}
+  #cmBarra .cerrar{background:var(--medio);color:#fff;font-weight:700}
+
+  /* Reutilizar estilos de diapositiva dentro de las réplicas */
+  .escenario-mini .kicker{color:var(--acento);font-size:20px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:18px}
+  .escenario-mini h1{font-size:64px;line-height:1.12;margin:0 0 14px;color:#fff;letter-spacing:.015em;font-weight:800;text-transform:uppercase;border:none;padding:0}
+  .escenario-mini h2{font-size:46px;line-height:1.18;margin:0 0 22px;color:#fff;font-weight:800;letter-spacing:.01em;background:none;padding:0;border-radius:0;display:block}
+  .escenario-mini .sub{font-size:30px;color:var(--claro1);line-height:1.45}
+  .escenario-mini .escritura{font-style:italic;color:var(--escritura);font-size:34px;line-height:1.55;margin:18px 0;background:none;border:none;padding:0}
+  .escenario-mini .escritura.larga{font-size:25px;line-height:1.6}
+  .escenario-mini .ref{font-style:normal;color:var(--medio);font-size:19px;letter-spacing:.14em;text-transform:uppercase;display:block;margin-top:14px;font-weight:700}
+  .escenario-mini .lista{font-size:30px;line-height:1.5;color:var(--claro1);padding-left:0;list-style:none;margin:10px 0}
+  .escenario-mini .lista li{margin:16px 0;padding-left:34px;position:relative}
+  .escenario-mini .lista li::before{content:"";position:absolute;left:0;top:.55em;width:14px;height:14px;background:var(--acento);border-radius:3px}
+  .escenario-mini .lista li b{color:#fff}
+  .escenario-mini .esc-inline{font-style:italic;color:var(--escritura)}
+  .escenario-mini .esquema{display:flex;justify-content:center;margin:10px 0}
+  .escenario-mini .esquema svg{max-width:100%;height:auto}
+  .escenario-mini .esq-caja{fill:var(--panel);stroke:var(--acento);stroke-width:2.5}
+  .escenario-mini .esq-caja-suave{fill:var(--panel);stroke:var(--medio);stroke-width:2}
+  .escenario-mini .esq-linea{stroke:var(--medio);stroke-width:2.5;fill:none}
+  .escenario-mini .esq-flecha{stroke:var(--acento);stroke-width:3;fill:none;marker-end:url(#pf)}
+  .escenario-mini .esq-titulo{fill:#fff;font-family:var(--fuente);font-weight:800}
+  .escenario-mini .esq-texto{fill:var(--claro1);font-family:var(--fuente)}
+  .escenario-mini .esq-griego{fill:var(--acento);font-family:var(--fuente);font-style:italic;font-weight:700}
+  .escenario-mini .esq-escritura{fill:var(--escritura);font-family:var(--fuente);font-style:italic}
+  .escenario-mini .esq-etq{fill:var(--medio);font-family:var(--fuente);font-weight:700;letter-spacing:.14em}
+  .escenario-mini .griego{font-style:italic;font-weight:800;color:var(--acento)}
+  .escenario-mini .caja{background:var(--panel);border-left:8px solid var(--acento);border-radius:10px;padding:26px 34px;margin:14px 0}
+  .escenario-mini .caja-error{background:#1d0e08;border-left:8px solid var(--alerta)}
+  .escenario-mini .caja-error .titulo-error{color:var(--alerta);font-size:20px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;margin-bottom:10px}
+  .escenario-mini .centro{text-align:center;align-items:center}
+  .escenario-mini .pie-diapo{position:absolute;bottom:18px;right:36px;display:flex;align-items:center;gap:16px}
+  .escenario-mini .pie-diapo img{height:34px;opacity:.9}
+  .escenario-mini .pie-diapo .npag{color:var(--medio);font-size:17px;font-weight:700;letter-spacing:.08em}
+  .escenario-mini .marca-serie{position:absolute;bottom:26px;left:36px;color:var(--medio);font-size:14px;letter-spacing:.1em;text-transform:uppercase}
+  .escenario-mini > canvas#lienzoMini{display:block}
+
+  /* ===== Iconos SVG en línea ===== */
+  .ic{width:1em;height:1em;display:inline-block;vertical-align:-0.14em;fill:none;
+    stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-right:.45em;flex:none}
+  button .ic{margin-right:.4em}
+  #cmBarra button .ic,.pp-nav button .ic{margin-right:.3em}
+
+  /* @@COMPONENTES-FASE2@@ */
+.diapo .esc, .diapo .esc-inline { color: var(--escritura); font-style: italic; }
+.diapo .esc-realce { color: var(--escritura); font-style: italic;
+  text-decoration: underline; text-decoration-color: var(--acento);
+  text-decoration-thickness: 3px; text-underline-offset: 6px; }
+.diapo .esc-num { color: var(--medio); font-size: .62em; font-style: normal;
+  vertical-align: super; }
+.diapo .lexico { color: var(--acento); font-style: normal; font-weight: 700; }
+.diapo .parafrasis { font-style: normal; }
+.diapo .cita-humana { color: var(--claro1); font-style: italic;
+  border-left: 4px solid var(--medio); padding-left: 18px; }
+.diapo .cita-humana .atrib { color: var(--medio); font-style: normal;
+  font-size: .8em; display: block; margin-top: 6px; }
+.diapo .escritura.ea { font-size: 30px; }
+.diapo .ea-num { color: var(--acento); font-style: normal; font-weight: 800;
+  font-size: .58em; vertical-align: super; margin-left: 2px; }
+.diapo .ea-notas { margin-top: 26px; display: grid; gap: 10px; max-width: 1080px; }
+.diapo .ea-nota { display: grid; grid-template-columns: 26px auto 1fr; gap: 12px;
+  align-items: baseline; font-size: 24px; color: var(--claro1);
+  background: var(--panel); border-left: 4px solid var(--acento);
+  padding: 10px 16px; border-radius: 8px; }
+.diapo .ea-nota .ea-num { font-size: 18px; vertical-align: baseline; }
+.diapo .ea-palabra { color: var(--escritura); font-style: italic; font-weight: 700; }
+.diapo .ea-texto { color: var(--claro2); }
+.diapo .quiasmo { display: grid; gap: 8px; margin-top: 10px; max-width: 1100px; }
+.diapo .q-linea { display: grid; grid-template-columns: 52px 1fr; gap: 14px;
+  align-items: baseline; font-size: 28px; padding: 8px 14px;
+  border-left: 3px solid var(--medio); border-radius: 6px; }
+.diapo .q-linea.nivel-1 { margin-left: 70px; }
+.diapo .q-linea.nivel-2 { margin-left: 140px; }
+.diapo .q-linea.nivel-3 { margin-left: 210px; }
+.diapo .q-linea.nivel-4 { margin-left: 280px; }
+.diapo .q-etq { color: var(--acento); font-weight: 800; letter-spacing: .04em; }
+.diapo .q-centro { background: var(--panel); border-left-color: var(--acento);
+  border-left-width: 5px; }
+.diapo .q-centro .q-etq { font-size: 1.1em; }
+.diapo .paralelo { display: grid; gap: 12px; margin-top: 14px; max-width: 1140px; }
+.diapo .par-fila { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px;
+  align-items: center; font-size: 27px; }
+.diapo .par-a, .diapo .par-b { background: var(--panel); padding: 14px 18px;
+  border-radius: 10px; border: 1px solid var(--medio); }
+.diapo .par-rel { color: var(--acento); font-weight: 700; font-size: 22px;
+  white-space: nowrap; }
+.diapo .p-antitetico .par-rel { color: var(--alerta); }
+.diapo .f-prop { color: var(--claro2); font-weight: 700; }
+.diapo .flujo { display: grid; gap: 10px; margin-top: 10px; max-width: 1140px; }
+.diapo .f-nodo { display: grid;
+  grid-template-columns: auto auto auto 1fr; gap: 12px;
+  align-items: baseline; font-size: 26px; padding: 10px 14px;
+  background: var(--panel); border-radius: 8px;
+  border-left: 4px solid var(--medio); }
+.diapo .f-nodo.prof-1 { margin-left: 64px; }
+.diapo .f-nodo.prof-2 { margin-left: 128px; }
+.diapo .f-nodo.prof-3 { margin-left: 192px; }
+.diapo .f-conector { color: var(--acento); font-weight: 700; font-size: 22px; }
+.diapo .f-rol { color: var(--medio); text-transform: uppercase; font-size: 17px;
+  letter-spacing: .06em; }
+.diapo .f-ref { color: var(--medio); font-size: 20px; }
+.diapo .f-nodo.rol-principal { border-left-color: var(--acento); }
+.diapo .f-nodo.rol-contraste { border-left-color: var(--alerta); }
+.diapo .termino { background: var(--panel); border: 1px solid var(--medio);
+  border-radius: 14px; padding: 26px 32px; max-width: 980px;
+  display: grid; gap: 12px; }
+.diapo .t-cab { display: flex; gap: 18px; align-items: baseline; }
+.diapo .t-lema { font-size: 52px; }
+.diapo .t-translit { color: var(--claro2); font-size: 26px; font-style: italic; }
+.diapo .t-morf { color: var(--medio); font-size: 22px; text-transform: uppercase;
+  letter-spacing: .05em; }
+.diapo .t-glosa { font-size: 30px; color: var(--claro1); }
+.diapo .t-rango { color: var(--claro2); font-size: 24px; }
+.diapo .t-usos { list-style: none; padding: 0; margin: 6px 0 0;
+  display: grid; gap: 8px; font-size: 23px; color: var(--claro2); }
+#cuerpo .esc, #cuerpo .esc-inline { color: var(--escritura-tinta); font-style: italic; }
+#cuerpo .esc-realce { color: var(--escritura-tinta); font-style: italic;
+  text-decoration: underline; text-decoration-color: var(--acento);
+  text-decoration-thickness: 2px; text-underline-offset: 4px; }
+#cuerpo .esc-num { color: var(--medio); font-size: .62em; font-style: normal;
+  vertical-align: super; }
+#cuerpo .lexico { color: var(--medio); font-style: normal; font-weight: 700; }
+#cuerpo .cita-humana { color: #1a2b35; font-style: italic;
+  border-left: 3px solid var(--medio); padding-left: 14px; }
+#cuerpo .cita-humana .atrib { color: var(--medio); font-style: normal;
+  font-size: .85em; display: block; margin-top: 4px; }
+#cuerpo .ea-notas { margin-top: 12px; display: grid; gap: 6px; }
+#cuerpo .ea-nota { display: grid; grid-template-columns: 20px auto 1fr; gap: 10px;
+  align-items: baseline; font-size: 14px;
+  border-left: 3px solid var(--acento); padding: 6px 10px;
+  background: #f2f7f9; border-radius: 5px; break-inside: avoid; }
+#cuerpo .ea-num { color: var(--acento); font-style: normal; font-weight: 800;
+  font-size: .7em; vertical-align: super; }
+#cuerpo .ea-palabra { color: var(--escritura-tinta); font-style: italic;
+  font-weight: 700; }
+#cuerpo .quiasmo { display: grid; gap: 5px; margin: 10px 0; break-inside: avoid; }
+#cuerpo .q-linea { display: grid; grid-template-columns: 36px 1fr; gap: 10px;
+  align-items: baseline; font-size: 14.5px; padding: 5px 10px;
+  border-left: 2px solid var(--medio); border-radius: 4px; }
+#cuerpo .q-linea.nivel-1 { margin-left: 36px; }
+#cuerpo .q-linea.nivel-2 { margin-left: 72px; }
+#cuerpo .q-linea.nivel-3 { margin-left: 108px; }
+#cuerpo .q-linea.nivel-4 { margin-left: 144px; }
+#cuerpo .q-etq { color: var(--medio); font-weight: 800; }
+#cuerpo .q-centro { background: #eef6f3; border-left-color: var(--acento);
+  border-left-width: 4px; }
+#cuerpo .q-etq.blanco { color: transparent; border-bottom: 1.5px solid #94a8b3;
+  min-width: 28px; display: inline-block; }
+#cuerpo .paralelo { display: grid; gap: 8px; margin: 10px 0; break-inside: avoid; }
+#cuerpo .par-fila { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px;
+  align-items: center; font-size: 14.5px; }
+#cuerpo .par-a, #cuerpo .par-b { background: #f2f7f9; padding: 8px 12px; border-radius: 6px;
+  border: 1px solid #d5e2e8; }
+#cuerpo .par-rel { color: var(--medio); font-weight: 700; font-size: 12.5px;
+  white-space: nowrap; }
+#cuerpo .flujo { display: grid; gap: 6px; margin: 10px 0; break-inside: avoid; }
+#cuerpo .f-nodo { display: grid; grid-template-columns: auto auto auto 1fr; gap: 9px;
+  align-items: baseline; font-size: 14px; padding: 6px 10px;
+  background: #f2f7f9; border-radius: 5px;
+  border-left: 3px solid var(--medio); }
+#cuerpo .f-nodo.prof-1 { margin-left: 34px; }
+#cuerpo .f-nodo.prof-2 { margin-left: 68px; }
+#cuerpo .f-nodo.prof-3 { margin-left: 102px; }
+#cuerpo .f-conector { color: var(--medio); font-weight: 700; font-size: 12.5px; }
+#cuerpo .f-rol { color: var(--medio); text-transform: uppercase; font-size: 10.5px;
+  letter-spacing: .05em; }
+#cuerpo .f-ref { color: var(--medio); font-size: 12px; }
+#cuerpo .f-nodo.rol-principal { border-left-color: var(--acento); }
+#cuerpo .f-nodo.rol-contraste { border-left-color: var(--alerta); }
+#cuerpo .termino { border: 1px solid #d5e2e8; border-radius: 9px;
+  padding: 12px 16px; display: grid; gap: 6px; margin: 10px 0;
+  break-inside: avoid; background: #fbfdfe; }
+#cuerpo .t-cab { display: flex; gap: 12px; align-items: baseline; }
+#cuerpo .t-lema { font-size: 24px; }
+#cuerpo .t-translit { color: #44606e; font-size: 14px; font-style: italic; }
+#cuerpo .t-morf { color: var(--medio); font-size: 11.5px; text-transform: uppercase;
+  letter-spacing: .05em; }
+#cuerpo .t-glosa { font-size: 15px; }
+#cuerpo .t-rango { color: #44606e; font-size: 13.5px; }
+#cuerpo .t-usos { list-style: none; padding: 0; margin: 2px 0 0; display: grid;
+  gap: 4px; font-size: 13px; color: #44606e; }
+#cuerpo .dv { display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  margin: 10px 0; break-inside: avoid; }
+#cuerpo .dv > div { border: 1px solid #d5e2e8; border-radius: 8px; padding: 10px 14px; }
+#cuerpo .dv h4 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase;
+  letter-spacing: .06em; }
+#cuerpo .dv .despojar h4 { color: var(--alerta); }
+#cuerpo .dv .vestir h4 { color: var(--acento); }
+#cuerpo .tareas { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 8px; }
+#cuerpo .tareas li { display: grid; grid-template-columns: 22px 1fr; gap: 10px;
+  align-items: start; font-size: 14.5px; }
+#cuerpo .tareas li::before { content: ""; width: 15px; height: 15px;
+  border: 1.6px solid var(--medio); border-radius: 3px; margin-top: 2px; }
+#cuerpo .memorizar { border: 2px solid var(--acento); border-radius: 10px;
+  padding: 12px 16px; margin: 12px 0; break-inside: avoid; }
+#cuerpo .memorizar .rotulo { font-size: 11px; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--medio); display: block;
+  margin-bottom: 4px; }
+  /* @@FIN-COMPONENTES-FASE2@@ */
+
+  /* @@DISENO-V4@@
+   Sistema común v4 — composición editorial, componentes tarjetas/pasos,
+   riel de secuencia. Cromo 100% por tokens; cero colores de marca cableados. */
+
+/* ---- Composición: cabecera anclada -------------------------------- */
+.diapo { overflow:hidden;
+  background: radial-gradient(120% 95% at 50% 16%, var(--panel) 0%, var(--oscuro) 60%); }
+body.alto-contraste .diapo { background: var(--oscuro); }
+.diapo:not(.centro):not(.portada) {
+  justify-content:flex-start; padding:60px 96px 64px; }
+.diapo h1, .diapo h2, .diapo .sintesis-texto { text-wrap: balance; }
+.diapo .sub, .diapo ul.lista li { text-wrap: pretty; }
+
+.diapo h1 {
+  font-family: var(--fuente-titulos, Georgia, 'Times New Roman', serif);
+  font-weight: 700; letter-spacing: .045em; line-height: 1.04;
+  font-size: 86px; }
+.diapo h2 {
+  font-family: var(--fuente-titulos, Georgia, 'Times New Roman', serif);
+  font-weight: 600; letter-spacing: .008em; line-height: 1.12;
+  font-size: 54px; text-transform: none; }
+.diapo:not(.centro) h2 {
+  padding-bottom: 24px; margin-bottom: 36px;
+  border-bottom: 1px solid color-mix(in srgb, var(--medio) 45%, transparent); }
+.diapo h2 .ref { display:inline-block; margin-left:18px; vertical-align: 6px; }
+.diapo .kicker {
+  display:inline-flex; align-items:center; gap:16px;
+  font-size:18px; letter-spacing:.3em; font-weight:600;
+  margin-bottom:24px; }
+.diapo .kicker::before {
+  content:""; width:44px; height:1px; background:currentColor; opacity:.85; flex:none; }
+
+/* ---- Riel de secuencia (storytelling por partes) ------------------- */
+.diapo .secuencia {
+  display:flex; align-items:center; gap:0; margin:-10px 0 24px;
+  font-size:15px; letter-spacing:.18em; text-transform:uppercase; font-weight:600; }
+.diapo .secuencia .sq { color: color-mix(in srgb, var(--medio) 80%, transparent);
+  display:inline-flex; align-items:center; gap:10px; }
+.diapo .secuencia .sq .sq-n { font-weight:700; }
+.diapo .secuencia .sq + .sq::before {
+  content:""; width:54px; height:1px; margin:0 18px;
+  background: color-mix(in srgb, var(--medio) 50%, transparent); }
+.diapo .secuencia .sq.hecha { color: var(--medio); }
+.diapo .secuencia .sq.act { color: var(--acento); }
+.diapo .secuencia .sq.act .sq-n {
+  display:inline-flex; width:30px; height:30px; border:1px solid var(--acento);
+  border-radius:50%; align-items:center; justify-content:center; }
+
+/* ---- Lista: filas editoriales con filete --------------------------- */
+.diapo ul.lista { margin:0; }
+.diapo ul.lista li {
+  padding:17px 0 17px 56px; margin:0;
+  border-top:1px solid color-mix(in srgb, var(--medio) 30%, transparent); }
+.diapo ul.lista li:first-child { border-top:none; padding-top:4px; }
+.diapo ul.lista li::before {
+  width:28px; height:2px; border-radius:0; top:1.28em; background:var(--acento); }
+.diapo ul.lista li:first-child::before { top:.85em; }
+.diapo ul.lista li b { letter-spacing:.01em; color:#fff; }
+.diapo ul.lista.lista-compacta { font-size:25px; }
+.diapo ul.lista.lista-compacta li { padding-top:14px; padding-bottom:14px; }
+.diapo p.sub.cierre-lista {
+  margin-top:20px; padding-top:16px;
+  border-top:1px solid color-mix(in srgb, var(--medio) 30%, transparent);
+  color: var(--claro1); font-size:25px; line-height:1.45; }
+
+/* ---- Escritura ------------------------------------------------------ */
+.diapo .escritura {
+  font-family: var(--fuente-escritura, var(--fuente-titulos, Georgia, serif));
+  font-weight:600; font-size:40px; line-height:1.5;
+  position:relative; max-width:1080px; }
+.diapo .escritura.larga { font-size:31px; line-height:1.62; }
+.diapo .escritura::before {
+  content:"«"; position:absolute; left:-34px; top:-118px;
+  font-size:240px; line-height:1; color:var(--escritura); opacity:.10;
+  font-family: var(--fuente-escritura, var(--fuente-titulos, Georgia, serif));
+  font-style:normal; pointer-events:none; }
+.diapo.centro .escritura::before, .diapo .escritura.ea::before { display:none; }
+.diapo .escritura .ref {
+  font-family: var(--fuente, sans-serif); font-weight:600;
+  font-size:17px; letter-spacing:.22em; margin-top:22px;
+  padding-top:14px; border-top:1px solid var(--medio); max-width:420px; }
+.diapo.centro .escritura { margin-inline:auto; text-wrap:balance; }
+.diapo.centro .escritura .ref { margin-inline:auto; }
+.diapo .esc, .diapo .esc-inline, .diapo .esc-realce, .diapo .q-texto,
+.diapo .par-a, .diapo .par-b, .diapo .f-texto {
+  font-family: var(--fuente-escritura, var(--fuente-titulos, Georgia, serif)); }
+.diapo .q-texto, .diapo .par-a, .diapo .par-b, .diapo .f-texto {
+  font-style: italic; font-weight:600; }
+
+/* ---- Escritura anotada: notas como filas editoriales --------------- */
+.diapo .ea-notas { margin-top:22px; gap:0; max-width:1100px;
+  border-top:1px solid color-mix(in srgb, var(--medio) 40%, transparent); }
+.diapo .ea-nota {
+  background:none; border-left:none; border-radius:0;
+  border-bottom:1px solid color-mix(in srgb, var(--medio) 25%, transparent);
+  grid-template-columns: 40px 250px 1fr; gap:14px; align-items:start;
+  padding:11px 4px; font-size:22px; line-height:1.4; }
+.diapo .ea-nota .ea-num {
+  display:inline-flex; width:25px; height:25px; margin-top:2px;
+  border:1px solid var(--acento); border-radius:50%;
+  align-items:center; justify-content:center;
+  color:var(--acento); font-size:14px; font-weight:700; vertical-align:baseline; }
+.diapo .ea-palabra { font-size:23px; }
+.diapo .ea-texto { color:var(--claro1); line-height:1.45; }
+
+/* ---- Tarjetas comparativas (2–4 columnas) --------------------------- */
+.diapo .tarjetas { display:grid; gap:30px; margin-top:14px; }
+.diapo .tarjetas.n2 { grid-template-columns:repeat(2,1fr); max-width:980px; }
+.diapo .tarjetas.n3 { grid-template-columns:repeat(3,1fr); }
+.diapo .tarjetas.n4 { grid-template-columns:repeat(4,1fr); }
+.diapo .tarjeta { position:relative;
+  background: linear-gradient(180deg, var(--panel) 0%, rgba(0,0,0,0) 165%);
+  border:1px solid color-mix(in srgb, var(--medio) 70%, transparent);
+  padding:30px 30px 26px; display:flex; flex-direction:column; gap:15px; }
+.diapo .tarjeta::before { /* tic de esquina */
+  content:""; position:absolute; top:-1px; left:-1px; width:22px; height:22px;
+  border-top:2px solid var(--acento); border-left:2px solid var(--acento); }
+.diapo .tj-titulo {
+  font-size:26px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;
+  color:#fff; padding-bottom:14px;
+  border-bottom:1px solid color-mix(in srgb, var(--medio) 45%, transparent); }
+.diapo .tj-fila { font-size:24px; color:var(--claro1); line-height:1.4; }
+.diapo .tj-fila .etq { color:var(--medio); text-transform:uppercase;
+  font-size:16px; letter-spacing:.1em; font-weight:700; display:block; margin-bottom:3px; }
+.diapo .tj-realce { font-size:27px; font-weight:700; color:var(--acento); line-height:1.3; }
+.diapo .tj-nota { font-size:20px; color:var(--medio); margin-top:auto; padding-top:8px; }
+.diapo .tarjetas-intro { font-size:28px; color:var(--claro2); margin:2px 0 26px; font-weight:600; }
+
+/* ---- Pasos (progresión horizontal) ---------------------------------- */
+.diapo .pasos { display:flex; align-items:stretch; gap:0; margin-top:22px; }
+.diapo .paso { flex:1; position:relative;
+  background: linear-gradient(180deg, var(--panel) 0%, rgba(0,0,0,0) 165%);
+  border:1px solid color-mix(in srgb, var(--medio) 70%, transparent);
+  padding:26px 26px 24px; text-align:center;
+  display:flex; flex-direction:column; gap:8px; justify-content:center; }
+.diapo .paso .p-titulo { font-size:27px; font-weight:800; color:var(--acento); }
+.diapo .paso .p-sub { font-size:22px; color:var(--claro1); line-height:1.35; }
+.diapo .paso.p-realce { border-color:var(--acento); }
+.diapo .paso.p-realce::before {
+  content:""; position:absolute; top:-1px; left:-1px; width:22px; height:22px;
+  border-top:2px solid var(--acento); border-left:2px solid var(--acento); }
+.diapo .paso.p-realce .p-titulo { color:#fff; }
+.diapo .paso-con { flex:none; width:64px; position:relative; align-self:center;
+  height:1px; background: color-mix(in srgb, var(--medio) 75%, transparent); }
+.diapo .paso-con::after {
+  content:""; position:absolute; right:0; top:-4.5px; width:9px; height:9px;
+  border-top:1px solid var(--medio); border-right:1px solid var(--medio);
+  transform:rotate(45deg); }
+.diapo p.sub.cierre-pasos { margin-top:36px; text-align:center;
+  font-size:26px; color:var(--claro1); }
+
+/* ---- Cajas, síntesis, confrontación --------------------------------- */
+.diapo .caja { position:relative;
+  border-radius:0; border:1px solid color-mix(in srgb, var(--medio) 70%, transparent);
+  background: linear-gradient(180deg, var(--panel) 0%, rgba(0,0,0,0) 160%);
+  padding:30px 40px; }
+.diapo .caja::before {
+  content:""; position:absolute; top:-1px; left:-1px; width:22px; height:22px;
+  border-top:2px solid var(--acento); border-left:2px solid var(--acento); }
+.diapo .caja-error {
+  border-color: color-mix(in srgb, var(--alerta) 75%, transparent); background:#1a0c07; }
+.diapo .caja-error::before { border-color: var(--alerta); }
+.diapo .titulo-error {
+  font-size:16px; letter-spacing:.3em; text-transform:uppercase;
+  font-weight:700; color:var(--alerta); margin-bottom:14px; }
+.diapo .caja-sintesis { max-width:1020px; }
+.diapo .sintesis-texto {
+  font-family: var(--fuente-titulos, Georgia, serif);
+  font-weight:600; font-style:normal; font-size:40px; line-height:1.42;
+  color:#fff; margin:0; }
+.diapo .transicion-titulo { font-size:56px; max-width:1060px; }
+
+/* ---- Término --------------------------------------------------------- */
+.diapo .termino { background:none; border:none; border-radius:0;
+  border-left:2px solid var(--acento); padding:14px 0 14px 44px;
+  max-width:1060px; gap:14px; }
+.diapo .t-lema { font-size:62px; }
+.diapo .t-translit { font-size:28px;
+  font-family: var(--fuente-titulos, Georgia, serif); }
+.diapo .t-morf { font-size:19px; letter-spacing:.18em;
+  padding-bottom:14px;
+  border-bottom:1px solid color-mix(in srgb, var(--medio) 40%, transparent); }
+.diapo .t-glosa { font-size:31px; color:#fff; line-height:1.4; }
+.diapo .t-rango { font-size:23px; }
+.diapo .t-usos { gap:0; margin-top:8px; }
+.diapo .t-usos li { padding:12px 0;
+  border-top:1px solid color-mix(in srgb, var(--medio) 25%, transparent); }
+.diapo .q-etq { font-family: var(--fuente-titulos, Georgia, serif);
+  font-style:normal; font-size:1.15em; }
+.diapo .ea-nota, .diapo .f-nodo, .diapo .par-a, .diapo .par-b { border-radius:2px; }
+
+/* ---- Portada --------------------------------------------------------- */
+.diapo.portada { overflow:hidden; }
+.diapo.portada .kicker { margin-bottom:40px; }
+.diapo.portada .kicker::after {
+  content:""; width:44px; height:1px; background:currentColor; opacity:.85; flex:none; }
+.diapo.portada h1, .diapo.portada .portada-titulo {
+  font-size:104px; letter-spacing:.05em; line-height:1.02; margin-bottom:30px; }
+.diapo.portada .portada-destacado {
+  font-family: var(--fuente, sans-serif);
+  color:var(--acento); font-weight:700; letter-spacing:.24em;
+  text-transform:uppercase; font-size:23px; margin-top:6px; }
+.diapo.portada .portada-meta {
+  margin-top:38px; font-size:20px; color:var(--medio); letter-spacing:.1em;
+  text-transform:uppercase; }
+.diapo.portada .portada-meta::before {
+  content:""; display:block; width:64px; height:1px; margin:0 auto 22px;
+  background: color-mix(in srgb, var(--medio) 70%, transparent); }
+.diapo.portada::after {
+  content:""; position:absolute; right:-150px; bottom:-190px;
+  width:660px; height:660px;
+  background: var(--icono-marca, none) center/contain no-repeat;
+  opacity:.055; pointer-events:none; }
+body.alto-contraste .diapo.portada::after { display:none; }
+
+/* ---- Movimiento sobrio ----------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .diapo.activa { animation: diapo-aparece .3s ease both; }
+}
+@keyframes diapo-aparece {
+  from { opacity:0; transform: translateY(8px); }
+  to   { opacity:1; transform: none; } }
+
+/* ---- Cromo ------------------------------------------------------------ */
+.diapo ~ .marca-serie, .marca-serie { letter-spacing:.22em; font-size:13px; }
+#progresoClase { position:absolute; left:0; bottom:0; height:3px; z-index:15;
+  width:0; background: var(--acento); opacity:.5; transition:width .35s ease; }
+body.alto-contraste #progresoClase { opacity:.9; }
+#barra button, .barra button {
+  background: rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:8px; letter-spacing:.03em; }
+#barra button:hover, .barra button:hover { background: rgba(255,255,255,.10); }
+
+/* ---- VARIANTES-V5: composiciones alternativas por tipo --------------- */
+/* portada · v-margen: arquitectura editorial alineada a la izquierda */
+.diapo.portada.v-margen { align-items:flex-start; text-align:left;
+  padding:90px 110px; }
+.diapo.portada.v-margen .kicker::after { display:none; }
+.diapo.portada.v-margen h1 { font-size:92px; }
+.diapo.portada.v-margen .portada-meta::before { margin:0 0 22px; }
+.diapo.portada.v-margen::after { opacity:.045; }
+
+/* lista · v-numerada: numerales grandes para puntos con orden real */
+.diapo.v-numerada ul.lista { counter-reset: pto; }
+.diapo.v-numerada ul.lista li { counter-increment: pto; padding-left:92px; }
+.diapo.v-numerada ul.lista li::before {
+  content: counter(pto, decimal-leading-zero);
+  width:auto; height:auto; background:none; top:.5em;
+  font-family: var(--fuente-titulos, Georgia, serif);
+  font-size:30px; line-height:1; color:var(--acento); }
+.diapo.v-numerada ul.lista li:first-child::before { top:.18em; }
+
+/* lista · v-dos-columnas: 4–6 ítems breves en retícula */
+.diapo.v-dos-columnas ul.lista { display:grid;
+  grid-template-columns:1fr 1fr; column-gap:64px; }
+.diapo.v-dos-columnas ul.lista li:nth-child(2) {
+  border-top:none; padding-top:4px; }
+.diapo.v-dos-columnas ul.lista li:nth-child(2)::before { top:.85em; }
+
+/* escritura · v-banda: la cita como evidencia, en banda compacta */
+.diapo.v-banda .escritura { font-size:31px; line-height:1.55;
+  max-width:1100px; padding:32px 44px;
+  background: linear-gradient(180deg, var(--panel) 0%, rgba(0,0,0,0) 165%);
+  border-left:3px solid var(--acento); }
+.diapo.v-banda .escritura::before { display:none; }
+.diapo.v-banda .escritura .ref { border-top:none; padding-top:0; margin-top:16px; }
+
+/* sintesis · v-plena: la declaración sin caja, a escenario completo */
+.diapo.v-plena .caja-sintesis { background:none; border:none; padding:0;
+  outline:none; max-width:1100px; }
+.diapo.v-plena .caja-sintesis::before { display:none; }
+.diapo.v-plena .sintesis-texto { font-size:52px; line-height:1.3; }
+
+/* tarjetas · v-horizontal: tarjetas como filas (2–3 con texto largo) */
+.diapo.v-horizontal .tarjetas { display:flex; flex-direction:column; gap:24px; }
+.diapo.v-horizontal .tarjeta { display:grid;
+  grid-template-columns:260px 1fr; column-gap:34px; row-gap:6px;
+  align-items:start; padding:20px 30px; }
+.diapo.v-horizontal .tj-titulo { grid-column:1; grid-row:1 / span 4;
+  align-self:stretch; display:flex; align-items:center;
+  border-bottom:none; padding:4px 28px 4px 0;
+  border-right:1px solid color-mix(in srgb, var(--medio) 45%, transparent); }
+.diapo.v-horizontal .tj-fila, .diapo.v-horizontal .tj-realce,
+.diapo.v-horizontal .tj-nota { grid-column:2; }
+.diapo.v-horizontal .tj-nota { margin-top:0; padding-top:2px; }
+  /* @@FIN-DISENO-V4@@ */
+</style>
+</head>
+<body class="consola">
+
+<div id="zonaNotas">
+<header class="banda">
+  <img src="data:image/png;base64,@@LOGO_B64@@" alt="La Iglesia · 1ra de Concepción">
+  <div class="meta">@@META_NOTAS@@</div>
+</header>
+
+<div class="barra-edicion">
+  <button id="btnEditar" onclick="alternarEdicion()"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg><span class="lbl">Editar</span></button>
+  <button onclick="exportarHTML()"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M5 19h14"/></svg>Exportar HTML</button>
+  <button onclick="window.print()"><svg class="ic" viewBox="0 0 24 24"><path d="M7 9V4h10v5"/><rect x="5" y="9" width="14" height="7" rx="1.5"/><path d="M8 16h8v4H8z"/></svg>Imprimir</button>
+  <button id="btnConsola" onclick="alternarConsola()"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span class="lbl">Consola: ON</span></button>
+  <button id="btnSync" onclick="alternarSync()"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M5.5 5.5a9 9 0 0 0 0 13M18.5 5.5a9 9 0 0 1 0 13M3 3a13 13 0 0 0 0 18M21 3a13 13 0 0 1 0 18"/></svg><span class="lbl">Proyector: ON</span></button>
+  <span id="indSync" style="font-size:12px;color:var(--acento);font-weight:700">D1</span>
+  <span class="estado" id="estadoEdicion">Modo lectura</span>
+</div>
+
+<main id="cuerpo">@@CUERPO_NOTAS@@</main>
+
+<footer>@@FOOTER@@</footer>
+
+
+</div><!-- /#zonaNotas -->
+
+<!-- ===== Panel del proyector (derecha) ===== -->
+<aside id="panelProyector">
+  <div class="pp-head">
+    <span>Lo que ve el proyector</span>
+    <span class="estado-canal" id="estadoCanal">enlazando…</span>
+  </div>
+  <div class="pp-cuerpo">
+    <div>
+      <div class="rotulo">Réplica en vivo · <span id="ppNum">D1 / 17</span></div>
+      <div class="replica-marco">
+        <div class="escenario-mini" id="escMini">@@DIAPOSITIVAS_MINI@@
+          <canvas id="lienzoMini" width="1280" height="720"></canvas>
+        </div>
+      </div>
+    </div>
+    <div id="tarjetaTiempo">
+      <div class="tt-fila">
+        <span class="tt-bloque" id="ttBloque">Portada</span>
+        <span class="tt-reloj" id="ttReloj">—</span>
+      </div>
+      <div class="tt-barra"><div id="ttProgreso"></div></div>
+      <div class="tt-fila tt-pie">
+        <span id="ttTotal">Clase: 00:00</span>
+        <button onclick="pausarTiempo()" id="btnPausa" aria-label="Pausar o reanudar el tiempo">Pausar</button>
+        <button onclick="reiniciarBloque()" aria-label="Reiniciar el bloque">Reiniciar bloque</button>
+      </div>
+    </div>
+    <div>
+      <div class="rotulo">Siguiente · <span id="lblSig">D2</span></div>
+      <div class="replica-marco replica-sig">
+        <div class="escenario-mini" id="escSig"></div>
+      </div>
+    </div>
+    <div class="pp-nav">
+      <button onclick="irDiapo(-1)"><svg class="ic" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Anterior</button>
+      <button onclick="irDiapo(1)">Siguiente<svg class="ic" viewBox="0 0 24 24" style="margin:0 0 0 .4em"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="pp-botones">
+      <button onclick="abrirMarcado()" class="act" style="flex:2"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg>Marcar en grande</button>
+      <button onclick="borrarActual()"><svg class="ic" viewBox="0 0 24 24"><path d="M8 6V4h8v2"/><path d="M5 6h14l-1 14H6L5 6z"/><path d="M10 11v5M14 11v5"/></svg>Borrar</button>
+    </div>
+    <div class="pp-info">
+      El <b>scroll de las notas</b> avanza el proyector. Toque <b>Marcar en grande</b> para dibujar sobre la diapositiva con precisión: lo que trace aquí aparece en el proyector.
+    </div>
+  </div>
+</aside>
+
+<!-- ===== Capa de marcado ampliado ===== -->
+<div id="capaMarcado">
+  <div class="cm-marco">
+    <div class="escenario-mini" id="escGrande">@@DIAPOSITIVAS_GRANDE@@
+          <canvas id="lienzoGrande" width="1280" height="720"></canvas>
+    </div>
+  </div>
+  <div id="cmBarra">
+    <button id="cmLapiz" class="act" onclick="cmHerr('lapiz')"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg>Lápiz</button>
+    <button id="cmResalt" onclick="cmHerr('resalt')"><svg class="ic" viewBox="0 0 24 24"><path d="M5 18l3 3 9-9-3-3-9 9z"/><path d="M14 7l3 3"/><path d="M4 21h6"/></svg>Resaltador</button>
+    <div class="sep"></div>
+    <button class="muestra act" style="background:#00B8B0" onclick="cmColor('#00B8B0',this)" title="Turquesa"></button>
+    <button class="muestra" style="background:#C9A227" onclick="cmColor('#C9A227',this)" title="Dorado (Escritura)"></button>
+    <button class="muestra" style="background:#D6EAF1" onclick="cmColor('#D6EAF1',this)" title="Claro"></button>
+    <button class="muestra" style="background:var(--alerta)" onclick="cmColor('var(--alerta)',this)" title="Alto contraste"></button>
+    <div class="sep"></div>
+    <button id="cmFino" class="act" onclick="cmGrosor(4,this)">Fino</button>
+    <button id="cmGrueso" onclick="cmGrosor(10,this)">Grueso</button>
+    <div class="sep"></div>
+    <button onclick="borrarActual()"><svg class="ic" viewBox="0 0 24 24"><path d="M8 6V4h8v2"/><path d="M5 6h14l-1 14H6L5 6z"/><path d="M10 11v5M14 11v5"/></svg>Borrar</button>
+    <button onclick="irDiapo(-1)" title="Anterior"><svg class="ic" viewBox="0 0 24 24" style="margin:0"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <button onclick="irDiapo(1)" title="Siguiente"><svg class="ic" viewBox="0 0 24 24" style="margin:0"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="cerrar" onclick="cerrarMarcado()"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12l5 5L20 6"/></svg>Listo</button>
+  </div>
+</div>
+
+<script>
+
+/* ============================================================
+   CONSOLA DEL MAESTRO
+   - Notas a la izquierda (su scroll avanza el proyector)
+   - Réplica en vivo de la diapositiva a la derecha
+   - "Marcar en grande": dibuja sobre la diapositiva; los trazos
+     viajan al proyector por BroadcastChannel.
+   ============================================================ */
+
+const TOTAL = 18;
+let diapoActual = 0;          // 0-indexada
+let syncOn = true, consolaOn = true;
+let canal = null;
+const trazos = Array.from({length: TOTAL}, () => []);  // trazos por diapositiva (espejo local)
+
+try{ canal = new BroadcastChannel('laiglesia_@@ID@@'); }catch(e){}
+
+/* --- Estado del enlace: lo gobierna el handshake ping/pong (más abajo) --- */
+if(canal){
+  canal.onmessage = ev=>{
+    const m = ev.data; if(!m) return;
+    // Si el proyector cambia de diapo por su cuenta (teclado/clic), reflejarlo aquí
+    if(m.tipo==='diapo' && typeof m.n==='number' && m.n!==diapoActual){
+      diapoActual = m.n; pintarReplicas(); actualizarIndicadores();
+    }
+  };
+}
+
+/* --- Render de las dos réplicas (mini y grande) --- */
+const escMini = document.getElementById('escMini');
+const escGrande = document.getElementById('escGrande');
+const diaposMini = escMini.querySelectorAll('.diapo');
+const diaposGrande = escGrande.querySelectorAll('.diapo');
+
+function escalarReplicas(){
+  // mini
+  const marcoMini = escMini.parentElement;
+  escMini.style.transform = 'scale(' + (marcoMini.clientWidth/1280) + ')';
+  // grande
+  const marcoG = escGrande.parentElement;
+  escGrande.style.transform = 'scale(' + (marcoG.clientWidth/1280) + ')';
+}
+window.addEventListener('resize', ()=>{ escalarReplicas(); pintarSiguiente(); });
+
+function pintarReplicas(){
+  diaposMini.forEach((d,i)=>d.classList.toggle('activa', i===diapoActual));
+  diaposGrande.forEach((d,i)=>d.classList.toggle('activa', i===diapoActual));
+  pintarSiguiente();
+  entrarBloque(diapoActual);
+  redibujarMini();
+  if(document.getElementById('capaMarcado').classList.contains('activa')) redibujarGrande();
+}
+function actualizarIndicadores(){
+  const et = 'D'+(diapoActual+1);
+  document.getElementById('indSync').textContent = et;
+  document.getElementById('ppNum').textContent = (diapoActual+1)+' / '+TOTAL;
+}
+
+/* --- Cambiar de diapositiva desde la consola --- */
+function setDiapo(n, origen){
+  diapoActual = Math.max(0, Math.min(TOTAL-1, n));
+  pintarReplicas(); actualizarIndicadores();
+  if(origen!=='scroll'){
+    // mover el documento de notas al bloque correspondiente
+    const ancla = anclasPorDiapo[diapoActual+1];
+    if(ancla){ scrollProgramatico = true; ancla.scrollIntoView({behavior:'smooth', block:'start'});
+      setTimeout(()=>scrollProgramatico=false, 600); }
+  }
+  if(syncOn && canal){ try{ canal.postMessage({tipo:'diapo', n:diapoActual}); }catch(e){} }
+}
+function irDiapo(d){ setDiapo(diapoActual + d); }
+
+/* --- Sincronización por scroll de las NOTAS --- */
+const anclas = [...document.querySelectorAll('[data-slide]')];
+const anclasPorDiapo = {};
+anclas.forEach(a=>{ const n=+a.dataset.slide; if(!anclasPorDiapo[n]) anclasPorDiapo[n]=a; });
+let scrollProgramatico = false, timerScroll = null;
+window.addEventListener('scroll', ()=>{
+  if(scrollProgramatico || timerScroll) return;
+  timerScroll = setTimeout(()=>{
+    timerScroll = null;
+    let n = 1;
+    anclas.forEach(el=>{ if(el.getBoundingClientRect().top <= 170) n = +el.dataset.slide; });
+    if(n-1 !== diapoActual) setDiapo(n-1, 'scroll');
+  }, 110);
+}, {passive:true});
+
+function alternarSync(){
+  syncOn = !syncOn;
+  document.querySelector('#btnSync .lbl').textContent = 'Proyector: ' + (syncOn ? 'ON' : 'OFF');
+}
+function alternarConsola(){
+  consolaOn = !consolaOn;
+  document.body.classList.toggle('consola', consolaOn);
+  document.querySelector('#btnConsola .lbl').textContent = 'Consola: ' + (consolaOn ? 'ON' : 'OFF');
+  if(consolaOn) setTimeout(escalarReplicas, 60);
+}
+
+/* ============ Marcado ============ */
+let herr = 'lapiz', color = '#00B8B0', grosor = 4;
+const ctxMini = document.getElementById('lienzoMini').getContext('2d');
+const lienzoGrande = document.getElementById('lienzoGrande');
+const ctxGrande = lienzoGrande.getContext('2d');
+let dibujando = false, trazoAct = null;
+
+function pintarTrazo(ctx, t){
+  ctx.globalAlpha = t.a; ctx.strokeStyle = t.color; ctx.lineWidth = t.w;
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath();
+  t.pts.forEach((p,i)=> i? ctx.lineTo(p.x,p.y): ctx.moveTo(p.x,p.y));
+  ctx.stroke(); ctx.globalAlpha = 1;
+}
+function redibujarMini(){
+  ctxMini.clearRect(0,0,1280,720);
+  trazos[diapoActual].forEach(t=>pintarTrazo(ctxMini,t));
+}
+function redibujarGrande(){
+  ctxGrande.clearRect(0,0,1280,720);
+  trazos[diapoActual].forEach(t=>pintarTrazo(ctxGrande,t));
+  if(trazoAct) pintarTrazo(ctxGrande, trazoAct);
+}
+
+function abrirMarcado(){
+  document.getElementById('capaMarcado').classList.add('activa');
+  setTimeout(()=>{ escalarReplicas(); redibujarGrande(); }, 30);
+}
+function cerrarMarcado(){
+  document.getElementById('capaMarcado').classList.remove('activa');
+}
+function cmHerr(h){
+  herr = h;
+  document.getElementById('cmLapiz').classList.toggle('act', h==='lapiz');
+  document.getElementById('cmResalt').classList.toggle('act', h==='resalt');
+}
+function cmColor(c, btn){
+  color = c;
+  document.querySelectorAll('#cmBarra .muestra').forEach(m=>m.classList.remove('act'));
+  btn.classList.add('act');
+}
+function cmGrosor(g, btn){
+  grosor = g;
+  document.getElementById('cmFino').classList.toggle('act', g===4);
+  document.getElementById('cmGrueso').classList.toggle('act', g===10);
+}
+function posGrande(ev){
+  const r = lienzoGrande.getBoundingClientRect();
+  return {x:(ev.clientX-r.left)/r.width*1280, y:(ev.clientY-r.top)/r.height*720};
+}
+lienzoGrande.addEventListener('pointerdown', ev=>{
+  dibujando = true;
+  trazoAct = {color, w: herr==='resalt'? grosor*3 : grosor, a: herr==='resalt'? 0.35 : 1, pts:[posGrande(ev)]};
+  lienzoGrande.setPointerCapture(ev.pointerId);
+});
+lienzoGrande.addEventListener('pointermove', ev=>{
+  if(!dibujando) return;
+  trazoAct.pts.push(posGrande(ev));
+  redibujarGrande();
+});
+lienzoGrande.addEventListener('pointerup', ()=>{
+  if(dibujando && trazoAct && trazoAct.pts.length>1){
+    trazos[diapoActual].push(trazoAct);
+    // enviar al proyector
+    if(canal){ try{ canal.postMessage({tipo:'trazo-remoto', d:diapoActual, t:trazoAct}); }catch(e){} }
+    redibujarMini();
+  }
+  dibujando = false; trazoAct = null; redibujarGrande();
+});
+function borrarActual(){
+  trazos[diapoActual] = [];
+  redibujarMini(); redibujarGrande();
+  if(canal){ try{ canal.postMessage({tipo:'borrar-remoto', d:diapoActual}); }catch(e){} }
+}
+
+/* ============ Réplica de la SIGUIENTE diapositiva ============ */
+const escSig = document.getElementById('escSig');
+diaposMini.forEach(d=>escSig.appendChild(d.cloneNode(true)));
+const diaposSig = escSig.querySelectorAll('.diapo');
+function pintarSiguiente(){
+  const n = Math.min(TOTAL-1, diapoActual+1);
+  diaposSig.forEach((d,i)=>d.classList.toggle('activa', i===n));
+  document.getElementById('lblSig').textContent = (diapoActual>=TOTAL-1) ? 'fin' : 'D'+(n+1);
+  const marcoSig = escSig.parentElement;
+  escSig.style.transform = 'scale(' + (marcoSig.clientWidth/1280) + ')';
+}
+
+/* ============ Temporizador de bloque (plan de 50 minutos) ============ */
+const BLOQUES = @@BLOQUES_JS@@;
+let bloqueIdx = 0, segRestantes = 0, pausado = false, inicioClase = null;
+function bloqueDe(n){ return BLOQUES.findIndex(b=>n>=b.ini && n<=b.fin); }
+function fmt(seg){
+  const neg = seg<0; seg = Math.abs(seg);
+  const m = Math.floor(seg/60), x = seg%60;
+  return (neg?'+':'')+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0');
+}
+function actualizarTiempoUI(){
+  const b = BLOQUES[bloqueIdx];
+  document.getElementById('ttBloque').textContent = b.nombre + (b.min? ' · '+b.min+' min':'');
+  const reloj = document.getElementById('ttReloj');
+  const prog = document.getElementById('ttProgreso');
+  if(b.min===0){ reloj.textContent='—'; prog.style.width='0%'; prog.classList.remove('excedido'); reloj.classList.remove('excedido'); return; }
+  reloj.textContent = fmt(segRestantes);
+  const usado = b.min*60 - segRestantes;
+  prog.style.width = Math.min(100, usado/(b.min*60)*100) + '%';
+  const exc = segRestantes < 0;
+  reloj.classList.toggle('excedido', exc);
+  prog.classList.toggle('excedido', exc);
+}
+function entrarBloque(n){
+  const idx = bloqueDe(n);
+  if(idx === bloqueIdx) return;
+  bloqueIdx = idx;
+  segRestantes = BLOQUES[idx].min * 60;
+  if(idx > 0 && !inicioClase) inicioClase = Date.now();
+  actualizarTiempoUI();
+}
+function pausarTiempo(){
+  pausado = !pausado;
+  document.getElementById('btnPausa').textContent = pausado ? 'Reanudar' : 'Pausar';
+}
+function reiniciarBloque(){
+  segRestantes = BLOQUES[bloqueIdx].min * 60;
+  actualizarTiempoUI();
+}
+setInterval(()=>{
+  if(!pausado && BLOQUES[bloqueIdx].min > 0 && inicioClase){ segRestantes--; actualizarTiempoUI(); }
+  if(inicioClase){
+    const t = Math.floor((Date.now()-inicioClase)/1000);
+    document.getElementById('ttTotal').textContent = 'Clase: ' + fmt(t);
+  }
+}, 1000);
+
+/* ============ Handshake con el proyector (ping/pong) ============ */
+let ultimoPong = 0;
+if(canal){
+  const onmsgOriginal = canal.onmessage;
+  canal.onmessage = ev=>{
+    const m = ev.data;
+    if(m && m.tipo==='pong'){ ultimoPong = Date.now(); return; }
+    if(onmsgOriginal) onmsgOriginal(ev);
+  };
+  setInterval(()=>{ try{ canal.postMessage({tipo:'ping'}); }catch(e){} }, 3000);
+  setInterval(()=>{
+    const ok = (Date.now() - ultimoPong) < 7000;
+    const el = document.getElementById('estadoCanal');
+    if(el){
+      el.textContent = ok ? '● enlazado' : '○ sin proyector';
+      el.classList.toggle('ok', ok);
+    }
+  }, 1500);
+}
+
+/* ============ Atajos de teclado de la consola ============ */
+document.addEventListener('keydown', ev=>{
+  if(editando) return;
+  const enMarcado = document.getElementById('capaMarcado').classList.contains('activa');
+  if(ev.key==='Escape' && enMarcado){ cerrarMarcado(); return; }
+  // No capturar flechas si el foco está en un campo editable
+  if(ev.key==='ArrowRight'){ irDiapo(1); }
+  else if(ev.key==='ArrowLeft'){ irDiapo(-1); }
+  else if(enMarcado){
+    const k = ev.key.toLowerCase();
+    if(k==='d') cmHerr('lapiz');
+    else if(k==='h') cmHerr('resalt');
+    else if(k==='e') borrarActual();
+  }
+});
+
+/* ============ Edición de las notas (sin cambios) ============ */
+let editando = false;
+function alternarEdicion(){
+  editando = !editando;
+  const cuerpo = document.getElementById('cuerpo');
+  cuerpo.contentEditable = editando ? 'true' : 'false';
+  document.body.classList.toggle('editando', editando);
+  document.querySelector('#btnEditar .lbl').textContent = editando ? 'Bloquear' : 'Editar';
+  document.getElementById('estadoEdicion').textContent = editando ? 'Modo edición — los cambios viven en esta pestaña; exporte para conservarlos' : 'Modo lectura';
+}
+function exportarHTML(){
+  const clon = document.documentElement.cloneNode(true);
+  clon.querySelector('#cuerpo').removeAttribute('contenteditable');
+  const blob = new Blob(['<!DOCTYPE html>\n' + clon.outerHTML], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'clase4_notas_docentes_editado.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ============ Inicio ============ */
+escalarReplicas();
+pintarReplicas();
+actualizarIndicadores();
+</script>
+</body>
+</html>

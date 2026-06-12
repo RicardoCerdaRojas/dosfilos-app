@@ -1,0 +1,40 @@
+{
+  "nombre": "SEBEX · Seminario Bíblico de Expositores — Chile",
+  "tokens": {
+    "oscuro": "#101317",
+    "panel": "#1A2027",
+    "medio": "#76828F",
+    "acento": "#8FA8C4",
+    "claro1": "#E8EDF2",
+    "claro2": "#F4F7FA",
+    "escritura": "#D8A848",
+    "escritura_tinta": "#7E6009",
+    "alerta": "#CC4F45"
+  },
+  "fuente": "'Inter','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif",
+  "logo": "logo.png",
+  "fuente_titulos": "'Newsreader', Georgia, 'Times New Roman', serif",
+  "fuentes": [
+    {
+      "archivo": "fonts/newsreader-latin-500-normal.woff2",
+      "familia": "Newsreader",
+      "peso": 500,
+      "estilo": "normal"
+    },
+    {
+      "archivo": "fonts/newsreader-latin-600-normal.woff2",
+      "familia": "Newsreader",
+      "peso": 600,
+      "estilo": "normal"
+    },
+    {
+      "archivo": "fonts/newsreader-latin-600-italic.woff2",
+      "familia": "Newsreader",
+      "peso": 600,
+      "estilo": "italic"
+    }
+  ],
+  "icono": "icono.png",
+  "fuente_escritura": "'Newsreader', Georgia, 'Times New Roman', serif",
+  "css_extra": "extra.css"
+}
