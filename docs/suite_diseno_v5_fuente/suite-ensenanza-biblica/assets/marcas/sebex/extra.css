@@ -1,0 +1,15 @@
+/* SEBEX v2 · «Páginas de madrugada» — editorial frío:
+   grafito azulado, azul ceniza, y el oro de la Escritura como única
+   calidez de la pantalla. Newsreader en voz híbrida: títulos ligeros
+   (600/500), Escritura firme (itálica 600) — decisión por proyector
+   modesto y clases por Zoom: la Palabra no puede perder presencia. */
+.diapo h1 { font-weight: 600; letter-spacing: .02em; }
+.diapo h2 { font-weight: 500; }
+.diapo .kicker { letter-spacing: .3em; font-weight: 600; }
+.diapo .sintesis-texto { font-weight: 500; }
+.diapo .t-translit, .diapo .q-etq { font-weight: 500; }
+/* firma: hairline vertical al margen izquierdo del título de portada */
+.diapo.portada h1 { position: relative; }
+.diapo.portada h1::before {
+  content: ""; position: absolute; left: -46px; top: 8%; bottom: 8%;
+  width: 1px; background: color-mix(in srgb, var(--acento) 65%, transparent); }

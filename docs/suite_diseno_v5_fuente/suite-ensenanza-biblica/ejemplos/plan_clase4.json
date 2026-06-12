@@ -1,0 +1,267 @@
+{
+ "id": "clase4",
+ "version_contrato": "0-fase1",
+ "genero": "exegesis",
+ "marca": "iglesia-1ra-concepcion",
+ "artefactos": [
+  "presentacion",
+  "notas",
+  "hoja"
+ ],
+ "textos": {
+  "titulo_presentacion": "Clase 4 · Presentación — El carácter del siervo",
+  "info_presentacion": "Clase 4 · 1 Timoteo 3:8",
+  "_pie_serie_original": "Serie: El diseño divino para los hombres de la iglesia",
+  "_canal_original": "laiglesia_clase4",
+  "titulo_notas": "Clase 4 · Notas docentes — El carácter del siervo",
+  "meta_notas": "<strong>Notas docentes</strong> · Clase 4 · Tema 2 · 50 minutos",
+  "footer_notas": "<strong>Serie:</strong> El diseño divino para los hombres de la iglesia · La Iglesia 1ra de Concepción",
+  "titulo_hoja": "Clase 4 · Hoja de trabajo — El carácter del siervo",
+  "meta_hoja": "<strong>Hoja de trabajo del alumno</strong> · Clase 4 · Tema 2",
+  "footer_hoja": "<strong>Serie:</strong> El diseño divino para los hombres de la iglesia · La Iglesia 1ra de Concepción"
+ },
+ "diapositivas": [
+  {
+   "n": 1,
+   "rotulo": "D1 · Portada",
+   "html": "<section class=\"diapo centro\" data-bloque=\"Portada\">\n          <div class=\"kicker\">Serie · El diseño divino para los hombres de la iglesia</div>\n          <h1 style=\"font-size:74px\">El carácter<br>del siervo</h1>\n          <p class=\"sub\" style=\"color:var(--acento);font-weight:700;letter-spacing:.06em\">honestos · sin doblez · sobrios · no codiciosos</p>\n          <p class=\"sub\" style=\"margin-top:26px;font-size:24px;color:var(--medio)\">Clase 4 · Tema 2 — Un cargo que exige carácter intachable · 1 Timoteo 3:8</p>\n        </section>"
+  },
+  {
+   "n": 2,
+   "rotulo": "D2 · B1 situaciones",
+   "html": "<section class=\"diapo\" data-bloque=\"Bloque 1\">\n          <div class=\"kicker\">Bloque 1 · Nuestro contexto</div>\n          <h2>Tres situaciones que conocemos de cerca</h2>\n          <ul class=\"lista\">\n            <li><b>La confusión de oficios:</b> hombres que la Biblia llamaría <i>diáconos</i>… enviados al ministerio pastoral.</li>\n            <li><b>La urgencia que salta la prueba:</b> \"hay que llenar el puesto\" — hombres sirviendo sin ser probados.</li>\n            <li><b>La más triste:</b> un oficio tan desconocido… que ya no despierta interés.</li>\n          </ul>\n        </section>"
+  },
+  {
+   "n": 3,
+   "rotulo": "D3 · B1 pregunta",
+   "html": "<section class=\"diapo centro\" data-bloque=\"Bloque 1\">\n          <div class=\"kicker\">Bloque 1 · La pregunta abierta</div>\n          <h2 style=\"font-size:52px;max-width:1000px\">¿Qué busca Dios <span style=\"color:var(--acento)\">primero</span> en un hombre que va a servir su casa?</h2>\n          <p class=\"sub\" style=\"font-size:34px;margin-top:18px\">¿disponibilidad… habilidad… o carácter?</p>\n        </section>"
+  },
+  {
+   "n": 4,
+   "rotulo": "D4 · B2 lectura I (vv. 8–10)",
+   "html": "<section class=\"diapo\" data-bloque=\"Bloque 2\">\n          <div class=\"kicker\">Bloque 2 · Texto ancla — lectura · I</div>\n          <p class=\"escritura larga\">«⁸ Los diáconos asimismo deben ser honestos, sin doblez, no dados a mucho vino, no codiciosos de ganancias deshonestas; ⁹ que guarden el misterio de la fe con limpia conciencia. ¹⁰ Y estos también sean sometidos a prueba primero, y entonces ejerzan el diaconado, si son irreprensibles.»\n          <span class=\"ref\">1 Timoteo 3:8–10 · RV1960</span></p>\n        </section>"
+  },
+  {
+   "n": 5,
+   "rotulo": "D5 · B2 lectura II (vv. 11–13)",
+   "html": "<section class=\"diapo\" data-bloque=\"Bloque 2\">\n          <div class=\"kicker\">Bloque 2 · Texto ancla — lectura · II</div>\n          <p class=\"escritura larga\">«¹¹ Las mujeres asimismo sean honestas, no calumniadoras, sino sobrias, fieles en todo. ¹² Los diáconos sean maridos de una sola mujer, y que gobiernen bien sus hijos y sus casas. ¹³ Porque los que ejerzan bien el diaconado, ganan para sí un grado honroso, y mucha confianza en la fe que es en Cristo Jesús.»\n          <span class=\"ref\">1 Timoteo 3:11–13 · RV1960</span></p>\n        </section>"
+  },
+  {
+   "n": 6,
+   "rotulo": "D6 · B2 v.8 destacado",
+   "html": "<section class=\"diapo centro\" data-bloque=\"Bloque 2\">\n          <div class=\"kicker\">Bloque 2 · El versículo de hoy</div>\n          <p class=\"escritura\" style=\"font-size:42px;max-width:1050px\">«Los diáconos asimismo deben ser honestos, sin doblez, no dados a mucho vino, no codiciosos de ganancias deshonestas.»\n          <span class=\"ref\">1 Timoteo 3:8 · RV1960</span></p>\n        </section>"
+  },
+  {
+   "n": 7,
+   "rotulo": "D7 · B3.1 asimismo",
+   "html": "<section class=\"diapo\" data-bloque=\"Bloque 3\">\n          <div class=\"kicker\">Bloque 3 · Observación 1</div>\n          <h2>«Asimismo» — <span class=\"griego\">hōsautōs</span></h2>\n          <ul class=\"lista\">\n            <li>Engancha 3:8–13 con <b>3:1–7: los requisitos del obispo</b>.</li>\n            <li><b>Afirma:</b> el diaconado exige la misma seriedad que el oficio pastoral.</li>\n            <li><b>Descarta:</b> el diaconado como cargo menor o decorativo.</li>\n          </ul>\n          <div class=\"caja\"><p class=\"sub\" style=\"margin:0\">Si el oficio fuera insignificante, Pablo no gastaría tinta inspirada en sus requisitos.</p></div>\n        </section>"
+  },
+  {
+   "n": 8,
+   "rotulo": "D8 · B3.2 estructura — LÁMINA-ESQUEMA",
+   "html": "<section class=\"diapo\" data-bloque=\"Bloque 3\">\n          <div class=\"kicker\">Bloque 3 · Observación 2 — la estructura del versículo</div>\n          <h2 style=\"font-size:40px;margin-bottom:8px\">Una cualidad… y tres prohibiciones que la protegen</h2>\n          <div class=\"esquema\">\n            <svg viewBox=\"0 0 1100 400\" width=\"1060\" role=\"img\" aria-label=\"Esquema: la cualidad honestos protegida por tres prohibiciones\">\n              <!-- Cualidad central -->\n              <rect class=\"esq-caja\" x=\"330\" y=\"18\" width=\"440\" height=\"96\" rx=\"14\"/>\n              <text class=\"esq-titulo\" x=\"550\" y=\"62\" font-size=\"36\" text-anchor=\"middle\">HONESTOS</text>\n              <text class=\"esq-griego\" x=\"550\" y=\"96\" font-size=\"22\" text-anchor=\"middle\">semnos — digno de respeto</text>\n              <!-- Líneas que suben desde las tres prohibiciones -->\n              <path class=\"esq-linea\" d=\"M190 240 L190 180 Q190 150 230 150 L500 150 L500 118\"/>\n              <path class=\"esq-linea\" d=\"M550 240 L550 118\"/>\n              <path class=\"esq-linea\" d=\"M910 240 L910 180 Q910 150 870 150 L600 150 L600 118\"/>\n              <text class=\"esq-etq\" x=\"550\" y=\"205\" font-size=\"16\" text-anchor=\"middle\">LA PROTEGEN</text>\n              <!-- Tres prohibiciones -->\n              <rect class=\"esq-caja-suave\" x=\"60\" y=\"240\" width=\"260\" height=\"110\" rx=\"12\"/>\n              <text class=\"esq-titulo\" x=\"190\" y=\"288\" font-size=\"25\" text-anchor=\"middle\">sin doblez</text>\n              <text class=\"esq-texto\" x=\"190\" y=\"324\" font-size=\"21\" text-anchor=\"middle\">la lengua</text>\n              <rect class=\"esq-caja-suave\" x=\"420\" y=\"240\" width=\"260\" height=\"110\" rx=\"12\"/>\n              <text class=\"esq-titulo\" x=\"550\" y=\"288\" font-size=\"25\" text-anchor=\"middle\">no mucho vino</text>\n              <text class=\"esq-texto\" x=\"550\" y=\"324\" font-size=\"21\" text-anchor=\"middle\">el vino</text>\n              <rect class=\"esq-caja-suave\" x=\"780\" y=\"240\" width=\"260\" height=\"110\" rx=\"12\"/>\n              <text class=\"esq-titulo\" x=\"910\" y=\"288\" font-size=\"25\" text-anchor=\"middle\">no codiciosos</text>\n              <text class=\"esq-texto\" x=\"910\" y=\"324\" font-size=\"21\" text-anchor=\"middle\">el dinero</text>\n              <text class=\"esq-texto\" x=\"550\" y=\"388\" font-size=\"22\" text-anchor=\"middle\" fill=\"var(--claro1)\">Ni una sola habilidad técnica en la lista. Carácter primero.</text>\n            </svg>\n          </div>\n        </section>"
+  },
+  {
+   "n": 9,
+   "rotulo": "D9 · B3.3 honestos",
+   "html": "<section class=\"diapo\" data-bloque=\"Bloque 3\">\n          <div class=\"kicker\">Bloque 3 · Requisito 1</div>\n          <h2>Honestos — <span class=\"griego\">semnos</span></h2>\n          <ul class=\"lista\">\n            <li>«Dignos de respeto» (NVI) · «hombres respetables» (DHH).</li>\n            <li>Un carácter que <b>evoca la estima de la congregación</b>.</li>\n            <li>Paralelo exacto: Hechos 6:3 — <span class=\"esc-inline\">«de buen testimonio»</span>… e incluye sabiduría.</li>\n          </ul>\n          <div class=\"caja\"><p class=\"sub\" style=\"margin:0\">Nadie es \"digno de respeto\" de la noche a la mañana: esta cualidad exige tiempo y vida observada.</p></div>\n        </section>"
+  },
+  {
+   "n": 10,
+   "rotulo": "D10 · B3.4 sin doblez",
+   "html": "<section class=\"diapo\" data-bloque=\"Bloque 3\">\n          <div class=\"kicker\">Bloque 3 · Requisito 2</div>\n          <h2>Sin doblez — <span class=\"griego\">dilogos</span></h2>\n          <ul class=\"lista\">\n            <li>«Decirle una cosa a alguien y otra diferente a otro» (Kelly).</li>\n            <li>Prohíbe toda habla manipuladora, insincera o falsa.</li>\n            <li>Positivamente: hombre de una sola palabra — su «sí» es sí (2 Co 1:17–20).</li>\n          </ul>\n          <div class=\"caja\"><p class=\"sub\" style=\"margin:0\">«Un hombre no vale más que su palabra.» Nada destruye tanto a la comunidad como el engaño.</p></div>\n        </section>"
+  },
+  {
+   "n": 11,
+   "rotulo": "D11 · B3.5 vino",
+   "html": "<section class=\"diapo\" data-bloque=\"Bloque 3\">\n          <div class=\"kicker\">Bloque 3 · Requisito 3</div>\n          <h2>No dados a <u>mucho</u> vino</h2>\n          <p class=\"sub\">No prohibición absoluta del vino — prohibición del <b style=\"color:#fff\">exceso</b> que destruye el testimonio.</p>\n          <p class=\"escritura\" style=\"font-size:29px\">«No es de los reyes beber vino… no sea que bebiendo olviden la ley, y perviertan el derecho de todos los afligidos.»\n          <span class=\"ref\">Proverbios 31:4–5 · RV1960</span></p>\n          <p class=\"sub\" style=\"color:var(--acento);font-weight:700\">El que bebe pervierte el derecho de los afligidos — y el diácono atiende afligidos.</p>\n        </section>"
+  },
+  {
+   "n": 12,
+   "rotulo": "D12 · B3.6 codicia",
+   "html": "<section class=\"diapo\" data-bloque=\"Bloque 3\">\n          <div class=\"kicker\">Bloque 3 · Requisito 4</div>\n          <h2>No codiciosos de ganancias deshonestas — <span class=\"griego\">aischrokerdēs</span></h2>\n          <ul class=\"lista\">\n            <li>El diácono <b>maneja dinero</b> y tiene acceso a los <b>vulnerables</b>.</li>\n            <li>El contraejemplo: <b>Judas</b> — hablaba de los pobres, <span class=\"esc-inline\">«era ladrón, y teniendo la bolsa, sustraía de lo que se echaba en ella»</span> (Jn 12:5–6).</li>\n            <li>Positivamente: aficionado de la <b>integridad financiera</b>, no del dinero.</li>\n          </ul>\n        </section>"
+  },
+  {
+   "n": 13,
+   "rotulo": "D13 · B4 convergencia — LÁMINA-ESQUEMA",
+   "html": "<section class=\"diapo\" data-bloque=\"Bloque 4\">\n          <div class=\"kicker\">Bloque 4 · Convergencia exegética — toda la Escritura apunta igual</div>\n          <div class=\"esquema\">\n            <svg viewBox=\"0 0 1120 520\" width=\"1080\" role=\"img\" aria-label=\"Esquema: cuatro pasajes convergen en carácter probado\">\n              <defs>\n                <marker id=\"pf\" markerWidth=\"9\" markerHeight=\"9\" refX=\"7\" refY=\"4.5\" orient=\"auto\">\n                  <path d=\"M0,0 L9,4.5 L0,9 z\" fill=\"var(--acento)\"/>\n                </marker>\n              </defs>\n              <!-- Cuatro testigos -->\n              <rect class=\"esq-caja-suave\" x=\"20\" y=\"30\" width=\"500\" height=\"104\" rx=\"12\"/>\n              <text class=\"esq-etq\" x=\"44\" y=\"62\" font-size=\"17\">HECHOS 6:3</text>\n              <text class=\"esq-escritura\" x=\"44\" y=\"92\" font-size=\"22\">«varones de buen testimonio, llenos</text>\n              <text class=\"esq-escritura\" x=\"44\" y=\"118\" font-size=\"22\">del Espíritu Santo y de sabiduría»</text>\n\n              <rect class=\"esq-caja-suave\" x=\"600\" y=\"30\" width=\"500\" height=\"104\" rx=\"12\"/>\n              <text class=\"esq-etq\" x=\"624\" y=\"62\" font-size=\"17\">ÉXODO 18:21</text>\n              <text class=\"esq-escritura\" x=\"624\" y=\"92\" font-size=\"22\">«varones de verdad,</text>\n              <text class=\"esq-escritura\" x=\"624\" y=\"118\" font-size=\"22\">que aborrezcan la avaricia»</text>\n\n              <rect class=\"esq-caja-suave\" x=\"20\" y=\"386\" width=\"500\" height=\"104\" rx=\"12\"/>\n              <text class=\"esq-etq\" x=\"44\" y=\"418\" font-size=\"17\">SALMO 101:6</text>\n              <text class=\"esq-escritura\" x=\"44\" y=\"448\" font-size=\"22\">«el que ande en el camino de la</text>\n              <text class=\"esq-escritura\" x=\"44\" y=\"474\" font-size=\"22\">perfección, éste me servirá»</text>\n\n              <rect class=\"esq-caja-suave\" x=\"600\" y=\"386\" width=\"500\" height=\"104\" rx=\"12\"/>\n              <text class=\"esq-etq\" x=\"624\" y=\"418\" font-size=\"17\">LUCAS 20:47 — LA ADVERTENCIA</text>\n              <text class=\"esq-escritura\" x=\"624\" y=\"448\" font-size=\"22\">«devoran las casas de las viudas»</text>\n              <text class=\"esq-texto\" x=\"624\" y=\"474\" font-size=\"19\">lo que haría un diácono corrupto</text>\n\n              <!-- Flechas convergentes -->\n              <path class=\"esq-flecha\" d=\"M270 134 L430 218\"/>\n              <path class=\"esq-flecha\" d=\"M850 134 L690 218\"/>\n              <path class=\"esq-flecha\" d=\"M270 386 L430 302\"/>\n              <path class=\"esq-flecha\" d=\"M850 386 L690 302\"/>\n\n              <!-- Centro -->\n              <rect class=\"esq-caja\" x=\"400\" y=\"210\" width=\"320\" height=\"100\" rx=\"16\"/>\n              <text class=\"esq-titulo\" x=\"560\" y=\"252\" font-size=\"30\" text-anchor=\"middle\">CARÁCTER</text>\n              <text class=\"esq-titulo\" x=\"560\" y=\"290\" font-size=\"30\" text-anchor=\"middle\">PROBADO</text>\n            </svg>\n          </div>\n        </section>"
+  },
+  {
+   "n": 14,
+   "rotulo": "D14 · B4 testigos",
+   "html": "<section class=\"diapo\" data-bloque=\"Bloque 4\">\n          <div class=\"kicker\">Bloque 4 · Testimonio de la iglesia fiel</div>\n          <h2>El problema no es nuevo</h2>\n          <ul class=\"lista\">\n            <li><b>Jerónimo, 394 d.C.:</b> iglesias de mármol y oro… que «no prestan atención a la elección de los ministros de Dios».</li>\n            <li><b>Calvino, Ginebra:</b> el diaconado exige sabiduría probada — el cargo está expuesto a dificultades y a quejas.</li>\n          </ul>\n          <p class=\"sub\" style=\"font-size:24px;color:var(--medio)\">Los testigos confirman lo que el texto ya dijo; no son autoridad sobre el texto.</p>\n        </section>"
+  },
+  {
+   "n": 15,
+   "rotulo": "D15 · B5 síntesis",
+   "html": "<section class=\"diapo centro\" data-bloque=\"Bloque 5\">\n          <div class=\"kicker\">Bloque 5 · Síntesis doctrinal</div>\n          <div class=\"caja\" style=\"max-width:1020px\">\n            <p class=\"sub\" style=\"font-size:34px;margin:0;color:#fff;line-height:1.5\">Dios califica para el servicio oficial por <b style=\"color:var(--acento)\">carácter probado</b> — no por carisma, urgencia ni capacidad técnica.</p>\n          </div>\n          <p class=\"sub\" style=\"margin-top:22px\">Hombres controlados por el Espíritu — no por el dinero, el vino o una lengua suelta.</p>\n        </section>"
+  },
+  {
+   "n": 16,
+   "rotulo": "D16 · B6 confrontación",
+   "html": "<section class=\"diapo\" data-bloque=\"Bloque 6\">\n          <div class=\"kicker\">Bloque 6 · Exégesis confrontativa</div>\n          <div class=\"caja caja-error\">\n            <div class=\"titulo-error\">El error que confrontamos</div>\n            <p class=\"sub\" style=\"margin:0\">«Cualquiera puede servir; lo que urge es llenar el puesto — y si sabe de números o construcción, mejor.»</p>\n          </div>\n          <ul class=\"lista\" style=\"font-size:27px\">\n            <li><b>El «asimismo»:</b> requisitos paralelos al obispo ⇒ no es trabajo menor.</li>\n            <li><b>1 Tim 5:22:</b> <span class=\"esc-inline\">«No impongas con ligereza las manos a ninguno»</span> — la urgencia es lo que el texto prohíbe.</li>\n            <li><b>El costo:</b> no-probados en posiciones de confianza ⇒ daños que tardan años en sanar.</li>\n          </ul>\n        </section>"
+  },
+  {
+   "n": 17,
+   "rotulo": "D17 · B7 aplicación",
+   "html": "<section class=\"diapo centro\" data-bloque=\"Bloque 7\">\n          <div class=\"kicker\">Bloque 7 · Aplicación y adoración</div>\n          <h2 style=\"font-size:42px;max-width:1040px\">«El mundo elige por carisma y por urgencia; Dios exige carácter probado.»</h2>\n          <p class=\"sub\" style=\"max-width:980px;margin-top:14px\">¿Mi «sí» es sí? ¿El dinero me sirve o me gobierna? ¿Mi testimonio está limpio?</p>\n          <p class=\"sub\" style=\"margin-top:18px;color:var(--acento)\">El Dios fiel, veraz y sin doblez forma ese carácter por su Espíritu. Servir con integridad es adorarle.</p>\n        </section>"
+  },
+  {
+   "n": 18,
+   "rotulo": "D18 · B8 transición",
+   "html": "<section class=\"diapo centro\" data-bloque=\"Bloque 8\">\n          <div class=\"kicker\">Bloque 8 · Hacia la Clase 5</div>\n          <h2 style=\"font-size:44px\">Estas cualidades se ven desde afuera…<br>¿qué las sostiene por dentro?</h2>\n          <p class=\"escritura\" style=\"font-size:32px;max-width:1000px\">«…que guarden el misterio de la fe con limpia conciencia. Y estos también sean sometidos a prueba primero…»\n          <span class=\"ref\">1 Timoteo 3:9–10 · RV1960 — Clase 5: El misterio de la fe y la prueba pública</span></p>\n        </section>"
+  }
+ ],
+ "bloques": [
+  {
+   "nombre": "Portada",
+   "diapo_ini": 1,
+   "diapo_fin": 1,
+   "min": 0
+  },
+  {
+   "nombre": "Bloque 1 · Contexto",
+   "diapo_ini": 2,
+   "diapo_fin": 3,
+   "min": 6
+  },
+  {
+   "nombre": "Bloque 2 · Texto ancla",
+   "diapo_ini": 4,
+   "diapo_fin": 6,
+   "min": 4
+  },
+  {
+   "nombre": "Bloque 3 · Exégesis",
+   "diapo_ini": 7,
+   "diapo_fin": 12,
+   "min": 15
+  },
+  {
+   "nombre": "Bloque 4 · Convergencia",
+   "diapo_ini": 13,
+   "diapo_fin": 14,
+   "min": 8
+  },
+  {
+   "nombre": "Bloque 5 · Síntesis",
+   "diapo_ini": 15,
+   "diapo_fin": 15,
+   "min": 3
+  },
+  {
+   "nombre": "Bloque 6 · Confrontación",
+   "diapo_ini": 16,
+   "diapo_fin": 16,
+   "min": 7
+  },
+  {
+   "nombre": "Bloque 7 · Aplicación",
+   "diapo_ini": 17,
+   "diapo_fin": 17,
+   "min": 5
+  },
+  {
+   "nombre": "Bloque 8 · Transición",
+   "diapo_ini": 18,
+   "diapo_fin": 18,
+   "min": 2
+  }
+ ],
+ "notas_resumen": [
+  {
+   "diapo": 1,
+   "rotulo": "Portada · D1",
+   "texto": "Bienvenida. Recordar dónde vamos: hoy abrimos el Tema 2 — el cargo exige carácter intachable. Texto de hoy: 1 Timoteo 3:8."
+  },
+  {
+   "diapo": 2,
+   "rotulo": "Bloque 1 · D2",
+   "texto": "Presentar las tres situaciones como espejo, no acusación: (1) diáconos enviados al pastorado por ser el único cargo conocido; (2) la urgencia que salta la prueba — 'hay que llenar el puesto'; (3) el oficio tan desconocido que no despierta interés. Cierre: las tres convergen en una raíz — no conocemos el oficio, por eso lo llenamos mal o no lo llenamos."
+  },
+  {
+   "diapo": 3,
+   "rotulo": "Bloque 1 · D3",
+   "texto": "Dejar la pregunta ABIERTA: ¿qué busca Dios primero — disponibilidad, habilidad o carácter? NO responderla todavía; el texto la responderá."
+  },
+  {
+   "diapo": 4,
+   "rotulo": "Bloque 2 · D4",
+   "texto": "Lectura I (vv. 8–10) en voz alta, despacio, RV1960. Que sigan en sus Biblias. Aún no explicamos."
+  },
+  {
+   "diapo": 5,
+   "rotulo": "Bloque 2 · D5",
+   "texto": "Lectura II (vv. 11–13). Completar el pasaje entero antes de comentar nada: dejar que el texto hable."
+  },
+  {
+   "diapo": 6,
+   "rotulo": "Bloque 2 · D6",
+   "texto": "Enfocar el v. 8 — el versículo de hoy. Releerlo una vez más."
+  },
+  {
+   "diapo": 7,
+   "rotulo": "Bloque 3 · D7",
+   "texto": "'Asimismo' (hōsautōs) engancha con 3:1–7 (obispos). Pregunta guía: ¿qué escribió Pablo justo antes? Afirma: misma seriedad que el oficio pastoral. Descarta: cargo menor/decorativo. Conecta con Clase 3 y responde a la Situación 3 del gancho."
+  },
+  {
+   "diapo": 8,
+   "rotulo": "Bloque 3 · D8 · esquema",
+   "texto": "LÁMINA-ESQUEMA. Que el grupo cuente los requisitos y note la forma: 1 cualidad positiva arriba + 3 prohibiciones abajo (lengua, vino, dinero) que la protegen. Pregunta guía: ¿por qué ninguna habilidad técnica en la lista? Puede marcar las cajas con el lápiz."
+  },
+  {
+   "diapo": 9,
+   "rotulo": "Bloque 3 · D9",
+   "texto": "Semnos: difícil de traducir (Trench); 'dignos de respeto' (NVI), 'respetables' (DHH). Paralelo: Hch 6:3 'de buen testimonio' + sabiduría (Calvino: discernimiento para distribuir ayuda con justicia). Esteban era respetado por todos. Clave contra la urgencia: nadie es respetable de la noche a la mañana."
+  },
+  {
+   "diapo": 10,
+   "rotulo": "Bloque 3 · D10",
+   "texto": "Dilogos — Kelly: 'decir una cosa a uno y otra a otro'. Detrás de una palabra falsa hay una mente falsa. Su sí es sí (2 Co 1:17–20). Adagio de Strauss: 'un hombre no vale más que su palabra'."
+  },
+  {
+   "diapo": 11,
+   "rotulo": "Bloque 3 · D11",
+   "texto": "Precisión gramatical: 'mucho' vino — no prohibición absoluta, sino del exceso que destruye el testimonio. Leer Prov 31:4–5 en dorado: el que bebe 'pervierte el derecho de los afligidos' — y el diácono atiende afligidos. Tono serio."
+  },
+  {
+   "diapo": 12,
+   "rotulo": "Bloque 3 · D12",
+   "texto": "Aischrokerdēs: ligado a la naturaleza del oficio — dinero + acceso a vulnerables. Contraejemplo: Judas (Jn 12:5–6) — hablaba de los pobres, robaba la bolsa. Positivo: integridad financiera."
+  },
+  {
+   "diapo": 13,
+   "rotulo": "Bloque 4 · D13 · esquema",
+   "texto": "LÁMINA-ESQUEMA de convergencia: cuatro testigos bíblicos apuntan al mismo centro — carácter probado. Hch 6:3 (paralelo exacto), Éx 18:21 (historia redentora), Sal 101:6 (principio permanente), Lc 20:47 (la advertencia de Jesús: lo que haría un diácono corrupto). Pluralidad de pasajes: ninguna doctrina sobre un solo versículo."
+  },
+  {
+   "diapo": 14,
+   "rotulo": "Bloque 4 · D14",
+   "texto": "Jerónimo a Nepotiano (394 d.C.): mármol y oro, pero sin atención a la elección de los ministros — el problema no es nuevo. Calvino en Ginebra: sabiduría probada; el cargo expuesto a dificultades y calumnias. Los testigos confirman el texto, no lo gobiernan."
+  },
+  {
+   "diapo": 15,
+   "rotulo": "Bloque 5 · D15",
+   "texto": "RECIÉN AHORA la síntesis. Pedir primero que el grupo la formule con sus palabras; luego consolidar: Dios califica por carácter probado, no por carisma, urgencia ni capacidad técnica."
+  },
+  {
+   "diapo": 16,
+   "rotulo": "Bloque 6 · D16",
+   "texto": "Presentar el error EN SU MEJOR VERSIÓN (las necesidades son reales, las habilidades útiles). Desmantelar con los textos: (a) 'asimismo' + paralelo con el obispo; (b) 1 Tim 5:22 — la urgencia es justo lo que el texto prohíbe; (c) el costo documentado. Falla exegéticamente, no por tradición."
+  },
+  {
+   "diapo": 17,
+   "rotulo": "Bloque 7 · D17",
+   "texto": "Examen personal en silencio. Aplicación congregacional: los requisitos protegen a las viudas y los recursos (Lc 20:47). Doxología: el carácter exigido refleja al Dios fiel y sin doblez (2 Co 1:20). Advertencia: si sale con ganas de medir a otros, entendió mal la clase."
+  },
+  {
+   "diapo": 18,
+   "rotulo": "Bloque 8 · D18",
+   "texto": "Transición: estas cualidades se ven desde afuera; ¿qué las sostiene por dentro? Leer 3:9–10. Próxima clase: el misterio de la fe y la prueba pública. Oración final."
+  }
+ ],
+ "cuerpo_notas_html": "\n\n<h1>El carácter del siervo: honestos, sin doblez, sobrios, no codiciosos</h1>\n<p class=\"subtitulo\">Clase 4 · Abre el Tema 2 — Un cargo que exige carácter intachable · Patrón 1 · Exegético</p>\n\n<div class=\"ficha\">\n  <table>\n    <tr><td>Enfoque</td><td>Los cuatro requisitos de carácter de 1 Timoteo 3:8, leídos dentro de 3:8–13. Capítulo 7 de la serie (Strauss, requisitos de carácter).</td></tr>\n    <tr><td>Textos principales</td><td>1 Timoteo 3:8–13 (ancla: v. 8) · Hechos 6:3 · Éxodo 18:21 · Salmo 101:6 · Proverbios 31:4–5 · Lucas 20:47 · Juan 12:5–6 · 1 Timoteo 5:22.</td></tr>\n    <tr><td>Objetivo</td><td>Que los hombres descubran en el texto que Dios califica para el servicio oficial por carácter probado —no por carisma, urgencia ni capacidad técnica— y se examinen a sí mismos a la luz de los cuatro requisitos.</td></tr>\n    <tr><td>Idea central</td><td>El mundo elige por carisma y por urgencia; Dios exige carácter probado.</td></tr>\n    <tr><td>Patrón</td><td>1 · Exegético (9 pasos, condensados en 8 bloques para 50 minutos).</td></tr>\n  </table>\n</div>\n\n<!-- ============ BLOQUE 1 ============ -->\n<h2 data-slide=\"2\"><span class=\"num\">Bloque 1</span> Pregunta abierta desde nuestro contexto <span class=\"slide-tag\">Diap. 2–3 · <span class=\"tiempo\">6 min</span></span></h2>\n\n<p>No abrimos con la doctrina; abrimos con la herida. Presente estas tres situaciones como un espejo de nuestra propia historia eclesiástica chilena — sin nombres, sin acusaciones, con honestidad pastoral. Pida que los hermanos reconozcan si han visto alguna.</p>\n\n<h3>Situación 1 — La confusión de oficios</h3>\n<p>Hombres fieles, prácticos, de misericordia y administración — hombres que la Biblia describiría como <em>diáconos</em> — fueron enviados al ministerio pastoral, porque era el único \"cargo\" visible que la iglesia conocía para honrar a un hombre fiel. El resultado: hombres sirviendo fuera de su diseño, y púlpitos ocupados por quienes Dios había equipado para otra cosa.</p>\n\n<h3>Situación 2 — La urgencia que salta la prueba</h3>\n<p>La necesidad apremia: faltan manos, hay cuentas, hay enfermos, hay un templo que mantener. Y ponemos a servir a hombres sin probarlos. \"Hay que llenar el puesto.\" Semanas después de llegar, un desconocido ya administra recursos o atiende a los más vulnerables.</p>\n\n<h3>Situación 3 — La más triste: el oficio desconocido</h3>\n<p>El diaconado es tan desconocido en muchas de nuestras iglesias que ya ni despierta interés. Nadie anhela lo que nadie le ha enseñado a valorar. Donde el oficio no se enseña, o se llena mal… o no se llena.</p>\n\n<p>Observe con el grupo que las tres situaciones convergen en una misma raíz: <strong>no conocemos el oficio, por eso lo llenamos mal o no lo llenamos</strong>. Entonces deje planteada la pregunta que el texto va a responder — no la responda usted todavía:</p>\n\n<div class=\"pregunta\" data-slide=\"3\"><strong>Pregunta abierta de la clase</strong>\n¿Qué busca Dios <em>primero</em> en un hombre que va a servir su casa: disponibilidad, habilidad… o carácter?</div>\n\n<!-- ============ BLOQUE 2 ============ -->\n<h2 data-slide=\"4\"><span class=\"num\">Bloque 2</span> Texto ancla — lectura completa <span class=\"slide-tag\">Diap. 4–6 · <span class=\"tiempo\">4 min</span></span></h2>\n\n<p>Lea el pasaje completo en voz alta, despacio, en RV1960. Pida que los hombres lo sigan en sus Biblias. Aún no explicamos: primero dejamos que el texto hable entero.</p>\n\n<div class=\"escritura\" data-slide=\"5\">«8 Los diáconos asimismo deben ser honestos, sin doblez, no dados a mucho vino, no codiciosos de ganancias deshonestas; 9 que guarden el misterio de la fe con limpia conciencia. 10 Y estos también sean sometidos a prueba primero, y entonces ejerzan el diaconado, si son irreprensibles. 11 Las mujeres asimismo sean honestas, no calumniadoras, sino sobrias, fieles en todo. 12 Los diáconos sean maridos de una sola mujer, y que gobiernen bien sus hijos y sus casas. 13 Porque los que ejerzan bien el diaconado, ganan para sí un grado honroso, y mucha confianza en la fe que es en Cristo Jesús.»\n<span class=\"ref\">1 Timoteo 3:8–13 · RV1960</span></div>\n\n<p data-slide=\"6\">Luego enfoque el versículo de hoy:</p>\n\n<div class=\"escritura\">«Los diáconos asimismo deben ser honestos, sin doblez, no dados a mucho vino, no codiciosos de ganancias deshonestas.»\n<span class=\"ref\">1 Timoteo 3:8 · RV1960 — texto ancla de la clase</span></div>\n\n<!-- ============ BLOQUE 3 ============ -->\n<h2 data-slide=\"7\"><span class=\"num\">Bloque 3</span> Observaciones exegéticas sobre el ancla <span class=\"slide-tag\">Diap. 7–12 · <span class=\"tiempo\">15 min</span></span></h2>\n\n<p>Este es el corazón de la clase. Trabaje el texto con el grupo: que ellos observen antes de que usted concluya.</p>\n\n<h3 data-slide=\"7\">3.1 · \"Asimismo\" (<span class=\"griego\">hōsautōs</span>) — el adverbio que dignifica el oficio</h3>\n<div class=\"pregunta\"><strong>Pregunta guía</strong> ¿Qué acaba de escribir Pablo inmediatamente antes del versículo 8? ¿Qué hace entonces la palabra \"asimismo\"?</div>\n<p>El adverbio engancha 3:8–13 con 3:1–7, los requisitos de los obispos. Lo que Pablo acaba de exigir en seriedad a los obispos, lo exige ahora a los diáconos. <strong>Qué afirma el texto:</strong> el diaconado pide el mismo nivel de seriedad que el oficio pastoral. <strong>Qué descarta:</strong> la idea del diaconado como cargo menor o decorativo. Esto retoma la Clase 3 (un solo oficio pastoral: anciano/obispo/pastor) y responde ya a la Situación 3 del gancho: si el oficio fuera insignificante, Pablo no gastaría tinta inspirada en sus requisitos.</p>\n\n<h3 data-slide=\"8\">3.2 · La estructura del versículo: una cualidad y tres prohibiciones</h3>\n<p>Pida al grupo que cuente los requisitos y note su forma. Hay <strong>una cualidad positiva amplia</strong> (\"honestos\") seguida de <strong>tres prohibiciones</strong> que la protegen: la lengua doble, el alcohol, el dinero. Strauss observa que las tres prohibiciones ilustran precisamente lo que destruye la respetabilidad de un hombre. Piense en cuántos líderes —políticos, empresarios, religiosos— han caído por mentir, beber o robar.</p>\n<div class=\"pregunta\"><strong>Pregunta guía</strong> ¿Por qué Pablo no menciona aquí ninguna habilidad técnica — contabilidad, construcción, administración?</div>\n\n<h3 data-slide=\"9\">3.3 · Honestos (<span class=\"griego\">semnos</span>): dignos de respeto</h3>\n<p>La palabra es difícil de traducir; el arzobispo Richard Trench confesaba buscar sin éxito un término que combinara solemnidad, honestidad y reverencia. Dios Habla Hoy traduce \"hombres respetables\"; la NVI, \"dignos de respeto\". Es el hombre cuyo carácter moral y espiritual <em>evoca la estima de otros</em>: conocido y respetado por la congregación.</p>\n<p>Observación clave para la Situación 2 del gancho: <strong>nadie es \"digno de respeto\" de la noche a la mañana</strong>. Esta cualidad exige tiempo y vida observada. Su paralelo exacto es Hechos 6:3 — \"de buen testimonio\" — y, como nota Strauss, incluye la sabiduría: se requiere mucho discernimiento para distribuir ayuda con justicia. Esteban, uno de los Siete, era honorable y respetado por todos.</p>\n\n<h3 data-slide=\"10\">3.4 · Sin doblez (<span class=\"griego\">dilogos</span>): integridad de palabra</h3>\n<p>J.N.D. Kelly explica el término: \"decirle una cosa a alguien y otra diferente a otro\". Sea cual sea su matiz exacto, prohíbe toda habla manipuladora, insincera o falsa — porque detrás de una palabra falsa hay una mente falsa. Positivamente: el diácono es hombre de una sola palabra; su \"sí\" es sí (2 Corintios 1:17–20). Strauss recuerda el adagio que aprendió de su padre: <em>\"Un hombre no vale más que su palabra.\"</em> Nada destruye tanto a la comunidad cristiana como el engaño — y a un siervo se le confía el cuidado del necesitado.</p>\n\n<h3 data-slide=\"11\">3.5 · No dados a mucho vino: rectos en el uso del alcohol</h3>\n<p><strong>Observación gramatical fina:</strong> Pablo no escribe \"no dados a vino\" sino \"no dados a <em>mucho</em> vino\". No es una prohibición absoluta del vino, sino del exceso que destruye el testimonio y la obra. La Escritura advierte especialmente a los que llevan responsabilidad:</p>\n<div class=\"escritura\">«No es de los reyes beber vino, ni de los príncipes la sidra; no sea que bebiendo olviden la ley, y perviertan el derecho de todos los afligidos.»\n<span class=\"ref\">Proverbios 31:4–5 · RV1960</span></div>\n<p>Note la conexión directa con el oficio: el que bebe \"pervierte el derecho de los <em>afligidos</em>\" — ¡y el diácono atiende afligidos! Quien trabaja con familias golpeadas por el alcohol no hace bromas con su poder destructivo. Un diácono esclavo del vino llevará a otros por mal camino y deshonrará a la iglesia.</p>\n\n<h3 data-slide=\"12\">3.6 · No codiciosos de ganancias deshonestas (<span class=\"griego\">aischrokerdēs</span>)</h3>\n<p>Este requisito está directamente ligado a la naturaleza del oficio: el diácono maneja dinero de la iglesia y tiene acceso privilegiado a los vulnerables — y por eso mismo podría explotarlos. El contraejemplo bíblico perfecto es Judas: como tesorero, <em>hablaba</em> como si le importaran los pobres (\"¿Por qué no fue este perfume vendido… y dado a los pobres?\"), pero Juan revela su corazón: «era ladrón, y teniendo la bolsa, sustraía de lo que se echaba en ella» (Juan 12:5–6). El requisito positivo: aficionado de la integridad financiera, no del dinero.</p>\n\n<!-- ============ BLOQUE 4 ============ -->\n<h2 data-slide=\"13\"><span class=\"num\">Bloque 4</span> Convergencia exegética y testimonio histórico <span class=\"slide-tag\">Diap. 13–14 · <span class=\"tiempo\">8 min</span></span></h2>\n\n<p>Ninguna doctrina sustantiva descansa en un solo versículo. Muestre que toda la Escritura — y la iglesia fiel a lo largo de los siglos — apunta en la misma dirección.</p>\n\n<h3 data-slide=\"13\">4.1 · El testimonio acumulado de la Escritura</h3>\n<div class=\"escritura\">«Buscad, pues, hermanos, de entre vosotros a siete varones de buen testimonio, llenos del Espíritu Santo y de sabiduría, a quienes encarguemos de este trabajo.»\n<span class=\"ref\">Hechos 6:3 · RV1960 — el paralelo exacto de los requisitos de Pablo</span></div>\n<ul>\n  <li><strong>Éxodo 18:21</strong> — ya en la historia redentora, los cargos de confianza exigían \"varones de virtud, temerosos de Dios, varones de verdad, que aborrezcan la avaricia\".</li>\n  <li><strong>Salmo 101:6</strong> — «El que ande en el camino de la perfección, éste me servirá»: el principio permanente del servicio a Dios.</li>\n  <li><strong>Lucas 20:47</strong> — Jesús condena a los que «devoran las casas de las viudas»: exactamente lo que haría un diácono corrupto. El requisito protege a las viudas y al dinero de la iglesia.</li>\n</ul>\n\n<h3 data-slide=\"14\">4.2 · Dos testigos de la historia</h3>\n<p><strong>Jerónimo (394 d.C.)</strong>, en su carta al joven presbítero Nepotiano, reprende a las iglesias de su época: edifican templos con mármol brillante, techos de oro y altares con joyas, \"pero no prestan atención a la elección de los ministros de Dios\". El problema que vimos en el Bloque 1 no es chileno ni moderno: es la vieja tentación de cuidar el edificio más que el carácter.</p>\n<p><strong>Calvino en Ginebra</strong>, con experiencia real atendiendo al pobre, escribió que los diáconos deben estar provistos \"no sólo con las otras gracias del Espíritu, sino también de sabiduría, porque sin ella esa labor no se puede llevar a cabo apropiadamente\" — alertas tanto al engaño de algunos que piden, como a las calumnias injustas contra los que sirven. El cargo está expuesto a dificultades y a quejas: por eso exige hombres probados.</p>\n<p><em>Recordatorio metodológico:</em> los testigos confirman lo que el texto ya dijo; no son autoridad por encima del texto.</p>\n\n<!-- ============ BLOQUE 5 ============ -->\n<h2 data-slide=\"15\"><span class=\"num\">Bloque 5</span> Síntesis doctrinal <span class=\"slide-tag\">Diap. 15 · <span class=\"tiempo\">3 min</span></span></h2>\n\n<p>Recién ahora — después del trabajo en el texto — formulamos la doctrina. Idealmente, pida primero al grupo que la formule con sus palabras; luego consolide:</p>\n\n<div class=\"frase-clave\"><small>Síntesis doctrinal</small>\nDios califica para el servicio oficial de su iglesia por carácter probado — no por carisma, urgencia ni capacidad técnica. Los diáconos deben ser hombres de integridad y dominio propio, controlados por el Espíritu: no por el dinero, el vino o una lengua suelta.</div>\n\n<p>En la terminología de Hechos 6: «varones de buen testimonio, llenos del Espíritu Santo y de sabiduría».</p>\n\n<!-- ============ BLOQUE 6 ============ -->\n<h2 data-slide=\"16\"><span class=\"num\">Bloque 6</span> Exégesis confrontativa <span class=\"slide-tag\">Diap. 16 · <span class=\"tiempo\">7 min</span></span></h2>\n\n<div class=\"confronta\">\n  <h4>La postura contraria, en su mejor versión</h4>\n  <p>«Cualquiera puede servir; lo que urge es llenar el puesto. Las necesidades de la iglesia son reales y apremiantes — y si el hermano sabe de números, de construcción o de negocios, mejor todavía. Exigir tanto requisito paraliza la obra.»</p>\n  <p>Reconozca lo razonable: las necesidades <em>son</em> reales, las habilidades <em>son</em> útiles, y la intención suele ser buena. Por eso esta postura convence a tantas iglesias.</p>\n</div>\n\n<p><strong>Desmantelamiento — con los textos mismos:</strong></p>\n<ul>\n  <li><strong>(a) El \"asimismo\" y el paralelo con el obispo.</strong> Si el diaconado fuera un trabajo menor que cualquiera puede hacer, Pablo no exigiría requisitos paralelos a los del oficio pastoral. El texto mismo desautoriza la premisa.</li>\n  <li><strong>(b) La prohibición explícita del apuro.</strong> «No impongas con ligereza las manos a ninguno» (1 Timoteo 5:22) — y en nuestro mismo pasaje: «sean sometidos a prueba primero» (3:10, que estudiaremos en la Clase 5). La urgencia no es excusa bíblica: es precisamente lo que el texto prohíbe.</li>\n  <li><strong>(c) El costo documentado.</strong> Strauss registra lo que toda generación comprueba: iglesias que colocaron a personas desconocidas y no probadas en posiciones de confianza sufrieron daños que tardan años en sanar. Las habilidades sin carácter no son neutras: son herramientas peligrosas en manos equivocadas.</li>\n</ul>\n<p>Conclusión del bloque: la postura falla <em>exegéticamente</em> — no porque la tradición la rechace, sino porque contradice la letra del texto.</p>\n\n<!-- ============ BLOQUE 7 ============ -->\n<h2 data-slide=\"17\"><span class=\"num\">Bloque 7</span> Aplicación pastoral y doxología <span class=\"slide-tag\">Diap. 17 · <span class=\"tiempo\">5 min</span></span></h2>\n\n<p><strong>Examen personal — no fiscalización del hermano.</strong> Dirija las preguntas hacia adentro, con tono pastoral:</p>\n<div class=\"pregunta\"><strong>Para cada hombre, en silencio</strong>\n¿Soy un hombre cuya palabra vale — mi \"sí\" es sí? ¿Hay un área donde digo una cosa a unos y otra a otros? ¿El dinero me sirve, o me gobierna? ¿Hay algún exceso que está dañando mi testimonio? ¿La congregación que me conoce hablaría bien de mi carácter?</div>\n\n<p><strong>Aplicación congregacional.</strong> Estos requisitos no son burocracia: son la protección de Dios para las viudas, los necesitados y los recursos de la iglesia (Lucas 20:47). Una iglesia que toma en serio 1 Timoteo 3:8 ama mejor a sus miembros más vulnerables.</p>\n\n<p><strong>Doxología.</strong> El carácter exigido al diácono refleja el carácter de Dios mismo: Él es fiel, veraz, sin doblez; sus promesas son «sí» en Cristo (2 Corintios 1:20). Servir con integridad es adorar al Dios íntegro. Termine dando gracias por el Dios que no solo exige carácter — lo forma por su Espíritu en hombres comunes.</p>\n\n<div class=\"frase-clave\"><small>Frase clave de la clase</small>\n«El mundo elige por carisma y por urgencia; Dios exige carácter probado.»</div>\n\n<p><em>Advertencia de siempre, dicha al grupo:</em> «Hermanos, si al estudiar esto usted sale con ganas de medir a otros, entendió mal la clase. Pero si sale con ganas de orar, examinarse, servir y someter su vida a la Escritura, la Palabra está haciendo su obra.»</p>\n\n<!-- ============ BLOQUE 8 ============ -->\n<h2 data-slide=\"18\"><span class=\"num\">Bloque 8</span> Transición a la Clase 5 <span class=\"slide-tag\">Diap. 18 · <span class=\"tiempo\">2 min</span></span></h2>\n\n<p>Cierre dejando abierta la puerta siguiente: estas cuatro cualidades son <em>visibles desde afuera</em> — la congregación puede observarlas. Pero ¿qué las sostiene por dentro? Pablo lo responde en el versículo siguiente: <em>«que guarden el misterio de la fe con limpia conciencia»</em> (3:9), y añade la salvaguarda pública: <em>«sean sometidos a prueba primero»</em> (3:10). El carácter externo se sostiene en una convicción interna — ese es el tema de la <strong>Clase 5: El misterio de la fe y la prueba pública</strong>.</p>\n\n",
+ "cuerpo_hoja_html": "\n\n<h1>El carácter del siervo: honestos, sin doblez, sobrios, no codiciosos</h1>\n<p class=\"subtitulo\">Clase 4 · Tema 2 — Un cargo que exige carácter intachable · 1 Timoteo 3:8</p>\n\n<div class=\"datos\">\n  <span>Nombre: </span>\n  <span>Fecha: </span>\n</div>\n\n<!-- BLOQUE 1 -->\n<h2><span class=\"num\">Bloque 1</span> Pregunta abierta desde nuestro contexto</h2>\n<p>Tres situaciones que conocemos de cerca en nuestras iglesias:</p>\n<ul>\n  <li>La confusión de oficios: hombres que la Biblia describiría como <span class=\"blanco corto\"></span> fueron enviados al ministerio <span class=\"blanco corto\"></span>.</li>\n  <li>La <span class=\"blanco corto\"></span> que salta la prueba: \"hay que llenar el puesto\".</li>\n  <li>La más triste: el oficio es tan <span class=\"blanco corto\"></span> que ya no despierta interés.</li>\n</ul>\n<div class=\"pregunta\"><strong>La pregunta que el texto responderá</strong>\n¿Qué busca Dios <em>primero</em> en un hombre que va a servir su casa: disponibilidad, habilidad… o <span class=\"blanco corto\"></span>?</div>\n\n<!-- BLOQUE 2 -->\n<h2><span class=\"num\">Bloque 2</span> Texto ancla — léalo completo</h2>\n<div class=\"escritura\">«8 Los diáconos asimismo deben ser honestos, sin doblez, no dados a mucho vino, no codiciosos de ganancias deshonestas; 9 que guarden el misterio de la fe con limpia conciencia. 10 Y estos también sean sometidos a prueba primero, y entonces ejerzan el diaconado, si son irreprensibles. 11 Las mujeres asimismo sean honestas, no calumniadoras, sino sobrias, fieles en todo. 12 Los diáconos sean maridos de una sola mujer, y que gobiernen bien sus hijos y sus casas. 13 Porque los que ejerzan bien el diaconado, ganan para sí un grado honroso, y mucha confianza en la fe que es en Cristo Jesús.»\n<span class=\"ref\">1 Timoteo 3:8–13 · RV1960</span></div>\n<p>Subraye en el pasaje los <strong>cuatro requisitos</strong> del versículo 8 mientras se leen en clase.</p>\n\n<!-- BLOQUE 3 -->\n<h2><span class=\"num\">Bloque 3</span> Observaciones exegéticas</h2>\n\n<h3>3.1 · \"Asimismo\"</h3>\n<p>Término griego: <span class=\"blanco corto\"></span> <span style=\"color:#5a7382\">(transliterado)</span></p>\n<p>Conecta los requisitos de los diáconos (3:8–13) con los requisitos de los <span class=\"blanco corto\"></span> (3:1–7).</p>\n<p><strong>Qué afirma:</strong> el diaconado exige la misma <span class=\"blanco corto\"></span> que el oficio pastoral.<br>\n<strong>Qué descarta:</strong> que el diaconado sea un cargo <span class=\"blanco corto\"></span>.</p>\n\n<h3>3.2 · La estructura del versículo</h3>\n<p>Una cualidad positiva amplia (<span class=\"blanco corto\"></span>) protegida por tres prohibiciones, sobre:\nla <span class=\"blanco corto\"></span>, el <span class=\"blanco corto\"></span> y el <span class=\"blanco corto\"></span>.</p>\n<div class=\"pregunta\"><strong>Observe</strong> ¿Cuántas habilidades técnicas aparecen en la lista de Pablo? <span class=\"blanco corto\"></span></div>\n\n<h3>3.3 · Honestos</h3>\n<p>Término griego: <span class=\"blanco corto\"></span> <span style=\"color:#5a7382\">(transliterado)</span></p>\n<p>Traducciones: «dignos de <span class=\"blanco corto\"></span>» (NVI) · «hombres respetables» (DHH).</p>\n<p>Su paralelo exacto en Hechos 6:3: varones «de buen <span class=\"blanco corto\"></span>».</p>\n<p>Nadie llega a ser digno de respeto de la noche a la mañana: esta cualidad exige <span class=\"blanco corto\"></span> y vida observada.</p>\n\n<h3>3.4 · Sin doblez</h3>\n<p>Término griego: <span class=\"blanco corto\"></span> <span style=\"color:#5a7382\">(transliterado)</span></p>\n<p>Significa «decirle una cosa a alguien y otra <span class=\"blanco corto\"></span> a otro» (Kelly).</p>\n<p>Positivamente: hombre de una sola <span class=\"blanco corto\"></span>; su «sí» es <span class=\"blanco corto\"></span> (2 Corintios 1:17–20).</p>\n\n<h3>3.5 · No dados a mucho vino</h3>\n<p>Pablo no prohíbe el vino de manera absoluta: prohíbe el <span class=\"blanco corto\"></span> que destruye el testimonio.</p>\n<div class=\"escritura\">«No es de los reyes beber vino… no sea que bebiendo olviden la ley, y perviertan el derecho de todos los afligidos.»\n<span class=\"ref\">Proverbios 31:4–5 · RV1960</span></div>\n<p>Conexión con el oficio: el que bebe pervierte el derecho de los <span class=\"blanco corto\"></span> — y el diácono atiende precisamente a los <span class=\"blanco corto\"></span>.</p>\n\n<h3>3.6 · No codiciosos de ganancias deshonestas</h3>\n<p>Término griego: <span class=\"blanco largo\"></span></p>\n<p>Este requisito se liga al oficio porque el diácono maneja <span class=\"blanco corto\"></span> y tiene acceso a los <span class=\"blanco corto\"></span>.</p>\n<p>El contraejemplo bíblico: <span class=\"blanco corto\"></span>, que hablaba de los pobres pero «era ladrón» y sustraía de la bolsa (Juan 12:5–6).</p>\n\n<!-- BLOQUE 4 -->\n<h2><span class=\"num\">Bloque 4</span> Convergencia exegética y testimonio histórico</h2>\n<div class=\"escritura\">«Buscad, pues, hermanos, de entre vosotros a siete varones de buen testimonio, llenos del Espíritu Santo y de sabiduría, a quienes encarguemos de este trabajo.»\n<span class=\"ref\">Hechos 6:3 · RV1960</span></div>\n<p>Otros testigos bíblicos (anote la idea central de cada uno):</p>\n<p>Éxodo 18:21: <span class=\"blanco largo\"></span></p>\n<p>Salmo 101:6: <span class=\"blanco largo\"></span></p>\n<p>Lucas 20:47 — Jesús condena a los que «devoran las casas de las <span class=\"blanco corto\"></span>».</p>\n<p>Testigos de la historia: <strong>Jerónimo</strong> (394 d.C.) reprochó a las iglesias cuidar el <span class=\"blanco corto\"></span> del templo más que la elección de sus <span class=\"blanco corto\"></span>. <strong>Calvino</strong> insistió en que el diaconado exige <span class=\"blanco corto\"></span> probada.</p>\n\n<!-- BLOQUE 5 -->\n<h2><span class=\"num\">Bloque 5</span> Síntesis doctrinal</h2>\n<p>Antes de copiar nada, intente formularla con sus propias palabras:</p>\n<div class=\"lineas\"><div></div><div></div><div></div></div>\n<div class=\"frase\"><small>Síntesis de la clase</small>\nDios califica para el servicio oficial por carácter <span class=\"blanco corto\"></span> — no por carisma, <span class=\"blanco corto\"></span> ni capacidad <span class=\"blanco corto\"></span>.</div>\n\n<!-- BLOQUE 6 -->\n<h2><span class=\"num\">Bloque 6</span> Exégesis confrontativa</h2>\n<p><strong>El error que confrontamos (en su mejor versión):</strong> «Cualquiera puede <span class=\"blanco corto\"></span>; lo que urge es llenar el <span class=\"blanco corto\"></span>.»</p>\n<p><strong>Por qué falla, con los textos mismos:</strong></p>\n<ul>\n  <li>El «asimismo»: requisitos paralelos a los del <span class=\"blanco corto\"></span> ⇒ no es trabajo menor.</li>\n  <li>1 Timoteo 5:22: «No impongas con <span class=\"blanco corto\"></span> las manos a ninguno» — la urgencia es justo lo que el texto prohíbe.</li>\n  <li>El costo: poner hombres no <span class=\"blanco corto\"></span> en posiciones de confianza produce daños que tardan años en sanar.</li>\n</ul>\n\n<!-- BLOQUE 7 -->\n<h2><span class=\"num\">Bloque 7</span> Aplicación y adoración</h2>\n<div class=\"pregunta\"><strong>Examen personal — en silencio, delante de Dios</strong>\n¿Mi «sí» es sí? ¿El dinero me sirve o me gobierna? ¿Hay algún exceso dañando mi testimonio? ¿La congregación que me conoce hablaría bien de mi carácter?</div>\n<div class=\"lineas\"><div></div><div></div></div>\n<div class=\"frase\"><small>Frase clave de la clase</small>\n«El mundo elige por <span class=\"blanco corto\"></span> y por <span class=\"blanco corto\"></span>; Dios exige <span class=\"blanco corto\"></span> probado.»</div>\n<p>Doxología: el carácter exigido al diácono refleja el carácter de <span class=\"blanco corto\"></span> mismo — fiel, veraz, sin doblez (2 Corintios 1:20). Servir con integridad es <span class=\"blanco corto\"></span>.</p>\n\n<!-- BLOQUE 8 -->\n<h2><span class=\"num\">Bloque 8</span> Hacia la Clase 5</h2>\n<p>Estas cuatro cualidades se ven desde afuera. ¿Qué las sostiene por dentro? Pablo responde en el versículo 9: «que guarden el <span class=\"blanco corto\"></span> de la fe con limpia <span class=\"blanco corto\"></span>» — el tema de la próxima clase.</p>\n\n<div class=\"sintesis\">\n  <h3>Mi síntesis personal</h3>\n  <p>Con sus propias palabras: ¿qué exige Dios de un hombre que va a servir su casa, y qué le exige hoy a usted este texto?</p>\n  <div class=\"lineas\"><div></div><div></div><div></div><div></div></div>\n</div>\n\n",
+ "titulo": "El carácter del siervo: honestos, sin doblez, sobrios, no codiciosos",
+ "serie": "El diseño divino para los hombres de la iglesia"
+}

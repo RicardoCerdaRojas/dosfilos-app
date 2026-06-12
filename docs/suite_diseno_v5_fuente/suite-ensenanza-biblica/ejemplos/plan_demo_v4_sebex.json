@@ -1,0 +1,257 @@
+{
+  "id": "demo_v4_sebex",
+  "version_contrato": "1.1",
+  "titulo": "La obra de Cristo (I) — demo diseño v4",
+  "serie": "Teología II · TE602",
+  "genero": "doctrina",
+  "marca": "sebex",
+  "artefactos": [
+    "presentacion"
+  ],
+  "bloques": [
+    {
+      "nombre": "Portada y panorama",
+      "diapo_ini": 1,
+      "diapo_fin": 2,
+      "min": 5
+    },
+    {
+      "nombre": "B1 · Oficio profético",
+      "diapo_ini": 3,
+      "diapo_fin": 8,
+      "min": 25
+    },
+    {
+      "nombre": "Cierre",
+      "diapo_ini": 9,
+      "diapo_fin": 9,
+      "min": 5
+    }
+  ],
+  "notas_resumen": [
+    {
+      "diapo": 1,
+      "rotulo": "D1",
+      "texto": "Portada — diseño v4."
+    },
+    {
+      "diapo": 2,
+      "rotulo": "D2",
+      "texto": "Lista editorial con filetes y cierre."
+    },
+    {
+      "diapo": 3,
+      "rotulo": "D3",
+      "texto": "Componente tarjetas: realce en acento, no en color de Escritura."
+    },
+    {
+      "diapo": 4,
+      "rotulo": "D4",
+      "texto": "Escritura centrada — parte 1 de la secuencia."
+    },
+    {
+      "diapo": 5,
+      "rotulo": "D5",
+      "texto": "Escritura anotada con notas como filas editoriales."
+    },
+    {
+      "diapo": 6,
+      "rotulo": "D6",
+      "texto": "Componente pasos: convergencia AT→NT con paso destacado."
+    },
+    {
+      "diapo": 7,
+      "rotulo": "D7",
+      "texto": "Tarjeta de término rediseñada."
+    },
+    {
+      "diapo": 8,
+      "rotulo": "D8",
+      "texto": "Confrontación del error."
+    },
+    {
+      "diapo": 9,
+      "rotulo": "D9",
+      "texto": "Síntesis."
+    }
+  ],
+  "diapositivas": [
+    {
+      "n": 1,
+      "tipo": "portada",
+      "kicker": "Serie · Teología II",
+      "titulo": "La obra de<br>Cristo (I)",
+      "destacado": "Los oficios y la expiación",
+      "meta": "Teología II · TE602 · Módulo II · Viernes 12 de junio"
+    },
+    {
+      "n": 2,
+      "tipo": "lista",
+      "kicker": "Panorama de la noche",
+      "titulo": "Adónde vamos esta noche",
+      "items": [
+        "<b>El marco:</b> los tres oficios — profeta, sacerdote y rey",
+        "<b>Profeta y sacerdote</b> (B1) — luego <b>el Rey</b> (B2)",
+        "<b>El corazón:</b> la cruz — qué logró la muerte de Cristo (B3–B4)",
+        "El arco: persona → obra → los tres oficios → la cruz"
+      ],
+      "cierre": "Al final podrás: decir por qué son tres oficios, mostrarlos cumplidos en Cristo, nombrar qué se pierde al perder cada uno, y defender la cruz como sustitución penal."
+    },
+    {
+      "n": 3,
+      "tipo": "tarjetas",
+      "kicker": "Marco · ¿Por qué tres oficios?",
+      "titulo": "Tres miserias, tres remedios, tres oficios",
+      "intro": "«Cristo» / «Mesías» = el Ungido — y en Israel se ungía a tres",
+      "tarjetas": [
+        {
+          "titulo": "Profeta",
+          "filas": [
+            {
+              "etq": "Miseria",
+              "texto": "ignorancia"
+            }
+          ],
+          "realce": "revela a Dios",
+          "nota": "perderlo: subjetivismo"
+        },
+        {
+          "titulo": "Sacerdote",
+          "filas": [
+            {
+              "etq": "Miseria",
+              "texto": "culpa"
+            }
+          ],
+          "realce": "reconcilia",
+          "nota": "perderlo: legalismo"
+        },
+        {
+          "titulo": "Rey",
+          "filas": [
+            {
+              "etq": "Miseria",
+              "texto": "esclavitud"
+            }
+          ],
+          "realce": "gobierna y libra",
+          "nota": "perderlo: gracia barata"
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "tipo": "escritura",
+      "centro": true,
+      "secuencia": {
+        "etapas": [
+          "La promesa",
+          "Lo que exige",
+          "Cumplimiento"
+        ],
+        "actual": 1
+      },
+      "ref": "Deuteronomio 18:15, 18",
+      "texto": "Profeta de en medio de ti, de tus hermanos, como yo, te levantará Jehová tu Dios; a él oiréis. … Profeta les levantaré de en medio de sus hermanos, como tú; y pondré mis palabras en su boca, y él les hablará todo lo que yo le mandare."
+    },
+    {
+      "n": 5,
+      "tipo": "escritura-anotada",
+      "kicker": "Lo que el texto exige",
+      "secuencia": {
+        "etapas": [
+          "La promesa",
+          "Lo que exige",
+          "Cumplimiento"
+        ],
+        "actual": 2
+      },
+      "ref": "Deuteronomio 18:15, 18",
+      "texto": "Profeta de en medio de ti, de tus hermanos, como yo, te levantará Jehová tu Dios; a él oiréis. … pondré mis palabras en su boca, y él les hablará todo lo que yo le mandare.",
+      "destacados": [
+        {
+          "palabra": "como yo",
+          "nota": "como Moisés: no un profeta cualquiera, sino el mediador del pacto que hablaba con Dios cara a cara (Dt 34:10). El listón es altísimo."
+        },
+        {
+          "palabra": "te levantará",
+          "nota": "verbo singular y futuro: una figura concreta por venir, no solo la sucesión profética. Dt 34:10: aún no había llegado."
+        },
+        {
+          "palabra": "mis palabras en su boca",
+          "nota": "el profeta no inventa: transmite. Marca lo que luego Cristo supera (Jn 1:1)."
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "tipo": "pasos",
+      "kicker": "Convergencia · Oficio profético",
+      "titulo": "Del AT al NT: el profeta como Moisés es Jesús — y más",
+      "secuencia": {
+        "etapas": [
+          "La promesa",
+          "Lo que exige",
+          "Cumplimiento"
+        ],
+        "actual": 3
+      },
+      "pasos": [
+        {
+          "titulo": "Dt 18:15, 18",
+          "sub": "la promesa abierta"
+        },
+        {
+          "titulo": "Hch 3:22",
+          "sub": "<span class=\"esc-inline\">es Jesús</span>"
+        },
+        {
+          "titulo": "más que profeta",
+          "sub": "Lc 24:27 · Mt 5:22",
+          "realce": true
+        }
+      ],
+      "cierre": "Las epístolas evitan llamarlo «profeta»: él es de quien hablaban los profetas, y habla con autoridad propia — <span class=\"esc-inline\">pero yo os digo</span> (Mt 5:22), no <span class=\"esc-inline\">así dice Jehová</span>."
+    },
+    {
+      "n": 7,
+      "tipo": "termino",
+      "kicker": "El griego como herramienta",
+      "lema": "ἐντυγχάνω",
+      "translit": "entynchanō",
+      "morfologia": "verbo · «interceder», «presentar una petición ante alguien»",
+      "glosa": "no es estar presente en silencio representando a otro: es hacer peticiones específicas, concretas, a favor de alguien",
+      "rango": [
+        "presentar demanda (Hch 25:24)",
+        "acusar/rogar ante (Ro 11:2)"
+      ],
+      "usos": [
+        {
+          "ref": "Hebreos 7:25",
+          "matiz": "Cristo <span class=\"esc-inline\">vive siempre para interceder</span> — peticiones concretas por los suyos"
+        },
+        {
+          "ref": "Romanos 8:34",
+          "matiz": "está <span class=\"esc-inline\">a la diestra de Dios</span> e <span class=\"esc-inline\">intercede por nosotros</span>"
+        }
+      ]
+    },
+    {
+      "n": 8,
+      "tipo": "confrontacion",
+      "kicker": "Confrontación",
+      "error": "Jesús fue un gran maestro y modelo moral — un profeta — pero no necesitamos su sacrificio ni su señorío.",
+      "respuestas": [
+        "Los textos donde lo llaman «profeta» (Jn 4:19; 9:17) son de quienes <i>aún no lo conocían</i>: la samaritana lo dice antes de reconocerlo Mesías; el ciego antes de adorarlo.",
+        "Hebreos pudo coronarlo «el mayor profeta» y deliberadamente lo llama <i>sumo sacerdote</i>: un maestro que no muere por ti no te salva.",
+        "Hoy se devalúa por dos flancos: el relativismo lo vuelve un gurú entre muchos; el subjetivismo del «Dios me dijo» destrona su Palabra desde dentro."
+      ]
+    },
+    {
+      "n": 9,
+      "tipo": "sintesis",
+      "kicker": "Síntesis",
+      "texto": "El Ungido reúne en una sola persona lo que Israel repartía en tres: el Profeta que revela, el Sacerdote que reconcilia, el Rey que gobierna — y los tres convergen en la cruz."
+    }
+  ]
+}

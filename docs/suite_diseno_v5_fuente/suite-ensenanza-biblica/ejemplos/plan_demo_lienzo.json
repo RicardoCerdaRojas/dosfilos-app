@@ -1,0 +1,51 @@
+{
+  "id": "demo_lienzo",
+  "version_contrato": "1.3",
+  "titulo": "El diaconado en el tiempo — demo lienzo v5",
+  "serie": "El diseño divino para los hombres de la iglesia",
+  "genero": "exegesis",
+  "marca": "iglesia-1ra-concepcion",
+  "artefactos": [
+    "presentacion"
+  ],
+  "bloques": [
+    {
+      "nombre": "Demo lienzo",
+      "diapo_ini": 1,
+      "diapo_fin": 2,
+      "min": 8
+    }
+  ],
+  "notas_resumen": [
+    {
+      "diapo": 1,
+      "rotulo": "D1",
+      "texto": "Lienzo: línea de tiempo del oficio."
+    },
+    {
+      "diapo": 2,
+      "rotulo": "D2",
+      "texto": "Lienzo: diagrama radial de las tres lealtades."
+    }
+  ],
+  "diapositivas": [
+    {
+      "n": 1,
+      "tipo": "lienzo",
+      "kicker": "El oficio en el Nuevo Testamento",
+      "titulo": "Del servicio a las mesas al oficio reconocido",
+      "alt": "Línea de tiempo con tres hitos: Hechos 6 (la necesidad crea el servicio), Filipenses 1:1 (obispos y diáconos saludados como oficios), 1 Timoteo 3 (los requisitos quedan por escrito)",
+      "css": ".lz { margin-top: 30px; }\n.lz .tl { position: relative; height: 300px; }\n.lz .tl-eje { position: absolute; left: 2%; right: 2%; top: 150px; height: 2px; background: color-mix(in srgb, var(--medio) 70%, transparent); }\n.lz .hito { position: absolute; width: 300px; }\n.lz .hito .punto { position: absolute; left: 50%; transform: translateX(-50%); width: 14px; height: 14px; border-radius: 50%; background: var(--acento); }\n.lz .hito.arriba { top: 8px; height: 134px; }\n.lz .hito.arriba .punto { bottom: -15px; }\n.lz .hito.abajo { top: 172px; }\n.lz .hito.abajo .punto { top: -29px; }\n.lz .hito .tarjeta-tl { border: 1px solid color-mix(in srgb, var(--medio) 60%, transparent); padding: 16px 20px; background: linear-gradient(180deg, var(--panel) 0%, transparent 170%); }\n.lz .hito .ref-tl { font-size: 19px; font-weight: 700; color: var(--acento); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }\n.lz .hito .txt-tl { font-size: 21px; color: var(--claro1); line-height: 1.35; }\n.lz .hito.arriba .tarjeta-tl { position: absolute; bottom: 26px; left: 0; right: 0; }\n.lz .hito.abajo .tarjeta-tl { margin-top: 0; }\n.lz .era { position: absolute; top: 158px; font-size: 18px; color: var(--medio); letter-spacing: .14em; padding-top: 10px; }\n.lz .era.alta { top: 120px; padding-top: 0; }",
+      "html": "<div class=\"tl\">\n  <div class=\"tl-eje\"></div>\n  <div class=\"hito arriba\" style=\"left:3%\">\n    <div class=\"tarjeta-tl\"><div class=\"ref-tl\">Hechos 6:1–7</div><div class=\"txt-tl\">La necesidad crea el servicio: siete varones <span class=\"esc-inline\">de buen testimonio</span></div></div>\n    <div class=\"punto\"></div>\n  </div>\n  <div class=\"hito abajo\" style=\"left:36%\">\n    <div class=\"punto\"></div>\n    <div class=\"tarjeta-tl\"><div class=\"ref-tl\">Filipenses 1:1</div><div class=\"txt-tl\">El oficio ya tiene nombre: <span class=\"esc-inline\">con los obispos y diáconos</span></div></div>\n  </div>\n  <div class=\"hito arriba\" style=\"left:69%\">\n    <div class=\"tarjeta-tl\"><div class=\"ref-tl\">1 Timoteo 3:8–13</div><div class=\"txt-tl\">Los requisitos quedan por escrito: el carácter define el oficio</div></div>\n    <div class=\"punto\"></div>\n  </div>\n  <div class=\"era\" style=\"left:3%\">≈ 33 d.C.</div>\n  <div class=\"era alta\" style=\"left:44%\">≈ 61 d.C.</div>\n  <div class=\"era\" style=\"right:3%\">≈ 63 d.C.</div>\n</div>"
+    },
+    {
+      "n": 2,
+      "tipo": "lienzo",
+      "kicker": "La estructura del versículo 8",
+      "titulo": "Tres lealtades probadas, un solo carácter",
+      "alt": "Diagrama radial: el carácter del siervo al centro, con tres pruebas alrededor — la lengua (sin doblez), el vino (dominio propio) y el dinero (no codicioso)",
+      "css": ".lz { margin-top: 24px; }\n.lz .rad { position: relative; height: 350px; }\n.lz .rad svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }\n.lz .rad svg line { stroke: var(--medio); stroke-width: 1; opacity: .55; }\n.lz .centro-rad { position: absolute; left: 50%; top: 56%; transform: translate(-50%,-50%); width: 300px; text-align: center; border: 1px solid var(--acento); padding: 22px 18px; background: var(--panel); z-index: 1; }\n.lz .centro-rad .t { font-size: 24px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--claro2); }\n.lz .centro-rad .s { font-size: 19px; color: var(--medio); margin-top: 6px; }\n.lz .sat { position: absolute; width: 270px; text-align: center; border: 1px solid color-mix(in srgb, var(--medio) 60%, transparent); padding: 15px; background: var(--panel); z-index: 1; }\n.lz .sat .t { font-size: 21px; font-weight: 700; color: var(--acento); margin-bottom: 4px; }\n.lz .sat .s { font-size: 19px; color: var(--claro1); font-style: italic; }",
+      "html": "<div class=\"rad\">\n  <svg viewBox=\"0 0 1000 350\" preserveAspectRatio=\"none\" aria-hidden=\"true\">\n    <line x1=\"500\" y1=\"196\" x2=\"500\" y2=\"46\"/>\n    <line x1=\"500\" y1=\"196\" x2=\"160\" y2=\"290\"/>\n    <line x1=\"500\" y1=\"196\" x2=\"840\" y2=\"290\"/>\n  </svg>\n  <div class=\"sat\" style=\"left:50%; transform:translateX(-50%); top:0\"><div class=\"t\">La lengua</div><div class=\"s\"><span class=\"esc-inline\">sin doblez</span></div></div>\n  <div class=\"sat\" style=\"left:4%; bottom:0\"><div class=\"t\">El vino</div><div class=\"s\"><span class=\"esc-inline\">no dados a mucho vino</span></div></div>\n  <div class=\"sat\" style=\"right:4%; bottom:0\"><div class=\"t\">El dinero</div><div class=\"s\"><span class=\"esc-inline\">no codiciosos</span></div></div>\n  <div class=\"centro-rad\"><div class=\"t\">El carácter del siervo</div><div class=\"s\">1 Timoteo 3:8 — probado, no improvisado</div></div>\n</div>"
+    }
+  ]
+}

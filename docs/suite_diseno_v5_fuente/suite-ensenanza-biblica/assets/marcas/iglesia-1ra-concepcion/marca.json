@@ -1,0 +1,40 @@
+{
+  "nombre": "La Iglesia · 1ra de Concepción",
+  "tokens": {
+    "oscuro": "#07141A",
+    "panel": "#0F2630",
+    "medio": "#5F828D",
+    "acento": "#3FC4B8",
+    "claro1": "#DAEBEE",
+    "claro2": "#ECF6F7",
+    "escritura": "#D8A848",
+    "escritura_tinta": "#8C6E14",
+    "alerta": "#E0543C"
+  },
+  "fuente": "'Inter','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif",
+  "logo": "logo.png",
+  "fuente_titulos": "'Marcellus', Georgia, serif",
+  "fuentes": [
+    {
+      "archivo": "fonts/marcellus-latin-400-normal.woff2",
+      "familia": "Marcellus",
+      "peso": 400,
+      "estilo": "normal"
+    },
+    {
+      "archivo": "fonts/lora-latin-600-normal.woff2",
+      "familia": "Lora",
+      "peso": 600,
+      "estilo": "normal"
+    },
+    {
+      "archivo": "fonts/lora-latin-600-italic.woff2",
+      "familia": "Lora",
+      "peso": 600,
+      "estilo": "italic"
+    }
+  ],
+  "icono": "icono.png",
+  "fuente_escritura": "'Lora', Georgia, 'Times New Roman', serif",
+  "css_extra": "extra.css"
+}

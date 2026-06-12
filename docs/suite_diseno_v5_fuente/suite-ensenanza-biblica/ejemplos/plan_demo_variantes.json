@@ -1,0 +1,167 @@
+{
+  "id": "demo_variantes",
+  "version_contrato": "1.4",
+  "titulo": "El carácter del siervo — demo variantes v5",
+  "serie": "El diseño divino para los hombres de la iglesia",
+  "genero": "exegesis",
+  "marca": "iglesia-1ra-concepcion",
+  "artefactos": [
+    "presentacion"
+  ],
+  "bloques": [
+    {
+      "nombre": "Apertura",
+      "diapo_ini": 1,
+      "diapo_fin": 2,
+      "min": 6
+    },
+    {
+      "nombre": "El texto",
+      "diapo_ini": 3,
+      "diapo_fin": 6,
+      "min": 22
+    },
+    {
+      "nombre": "Cierre",
+      "diapo_ini": 7,
+      "diapo_fin": 8,
+      "min": 7
+    }
+  ],
+  "notas_resumen": [
+    {
+      "diapo": 1,
+      "rotulo": "D1",
+      "texto": "Portada v-margen: arquitectura editorial."
+    },
+    {
+      "diapo": 2,
+      "rotulo": "D2",
+      "texto": "Lista v-numerada: los cuatro requisitos en orden."
+    },
+    {
+      "diapo": 3,
+      "rotulo": "D3",
+      "texto": "Escritura v-plena: el texto ancla, ceremonial."
+    },
+    {
+      "diapo": 4,
+      "rotulo": "D4",
+      "texto": "Escritura por defecto: lectura de trabajo."
+    },
+    {
+      "diapo": 5,
+      "rotulo": "D5",
+      "texto": "Escritura v-banda: la cita como evidencia."
+    },
+    {
+      "diapo": 6,
+      "rotulo": "D6",
+      "texto": "Tarjetas v-horizontal: dos oficios comparados con texto largo."
+    },
+    {
+      "diapo": 7,
+      "rotulo": "D7",
+      "texto": "Lista v-dos-columnas: textos paralelos breves."
+    },
+    {
+      "diapo": 8,
+      "rotulo": "D8",
+      "texto": "Síntesis v-plena: la declaración mayor sin caja."
+    }
+  ],
+  "diapositivas": [
+    {
+      "n": 1,
+      "tipo": "portada",
+      "variante": "margen",
+      "kicker": "Serie · El diseño divino",
+      "titulo": "El carácter<br>del siervo",
+      "destacado": "honestos · sin doblez · sobrios · no codiciosos",
+      "meta": "Clase 4 · Tema 2 · 1 Timoteo 3:8–13"
+    },
+    {
+      "n": 2,
+      "tipo": "lista",
+      "variante": "numerada",
+      "kicker": "El orden del texto",
+      "titulo": "Cuatro requisitos, en el orden de Pablo",
+      "items": [
+        "<b>Honestos</b> — dignos de respeto ante la congregación",
+        "<b>Sin doblez</b> — una sola lengua, una sola versión",
+        "<b>No dados a mucho vino</b> — dominio propio observable",
+        "<b>No codiciosos</b> — manos limpias con el dinero"
+      ]
+    },
+    {
+      "n": 3,
+      "tipo": "escritura",
+      "variante": "plena",
+      "ref": "1 Timoteo 3:8",
+      "version": "RV1960",
+      "texto": "Los diáconos asimismo deben ser honestos, sin doblez, no dados a mucho vino, no codiciosos de ganancias deshonestas"
+    },
+    {
+      "n": 4,
+      "tipo": "escritura",
+      "kicker": "Texto ancla · Lectura II",
+      "ref": "1 Timoteo 3:9–10",
+      "version": "RV1960",
+      "texto": "que guarden el misterio de la fe con limpia conciencia. Y estos también sean sometidos a prueba primero, y entonces ejerzan el diaconado, si son irreprensibles."
+    },
+    {
+      "n": 5,
+      "tipo": "escritura",
+      "variante": "banda",
+      "kicker": "El paralelo de Hechos",
+      "ref": "Hechos 6:3",
+      "texto": "Buscad, pues, hermanos, de entre vosotros a siete varones de buen testimonio, llenos del Espíritu Santo y de sabiduría"
+    },
+    {
+      "n": 6,
+      "tipo": "tarjetas",
+      "variante": "horizontal",
+      "kicker": "Dos oficios, un mismo carácter",
+      "titulo": "Anciano y diácono: dónde difieren, dónde no",
+      "tarjetas": [
+        {
+          "titulo": "Anciano",
+          "filas": [
+            "Gobierna y enseña: <span class=\"esc-inline\">apto para enseñar</span> (1 Ti 3:2) es su requisito distintivo."
+          ],
+          "nota": "1 Timoteo 3:1–7"
+        },
+        {
+          "titulo": "Diácono",
+          "filas": [
+            "Sirve las mesas para proteger el ministerio de la Palabra (Hch 6:2–4); el texto no le exige enseñar."
+          ],
+          "nota": "1 Timoteo 3:8–13"
+        }
+      ]
+    },
+    {
+      "n": 7,
+      "tipo": "lista",
+      "variante": "dos-columnas",
+      "kicker": "Para estudiar en casa",
+      "titulo": "Textos paralelos",
+      "items": [
+        "Hechos 6:1–7",
+        "Salmo 101:6",
+        "Proverbios 31:4–5",
+        "Lucas 20:46–47",
+        "Juan 12:5–6",
+        "1 Timoteo 5:22"
+      ]
+    },
+    {
+      "n": 8,
+      "tipo": "sintesis",
+      "variante": "plena",
+      "kicker": "Síntesis",
+      "texto": "El mundo elige por carisma y por urgencia; Dios califica por carácter probado."
+    }
+  ],
+  "edicion": "diseno-divino"
+}

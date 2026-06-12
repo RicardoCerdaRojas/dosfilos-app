@@ -1,0 +1,227 @@
+{
+ "id": "demo_componentes",
+ "version_contrato": "1",
+ "titulo": "Despojarse y vestirse — demostración de componentes",
+ "serie": "Demostración de la suite",
+ "genero": "exegesis",
+ "marca": "iglesia-1ra-concepcion",
+ "artefactos": [
+  "presentacion"
+ ],
+ "bloques": [
+  {
+   "nombre": "Portada",
+   "diapo_ini": 1,
+   "diapo_fin": 1,
+   "min": 0
+  },
+  {
+   "nombre": "Componentes",
+   "diapo_ini": 2,
+   "diapo_fin": 8,
+   "min": 20
+  }
+ ],
+ "notas_resumen": [
+  {
+   "diapo": 1,
+   "rotulo": "D1",
+   "texto": "Portada de demostración."
+  },
+  {
+   "diapo": 2,
+   "rotulo": "D2",
+   "texto": "Texto ancla completo."
+  },
+  {
+   "diapo": 3,
+   "rotulo": "D3",
+   "texto": "Escritura anotada: dos verbos con su gramática."
+  },
+  {
+   "diapo": 4,
+   "rotulo": "D4",
+   "texto": "Quiasmo de ejemplo (Mt 6:24)."
+  },
+  {
+   "diapo": 5,
+   "rotulo": "D5",
+   "texto": "Paralelismo antitético (Pr 10:1)."
+  },
+  {
+   "diapo": 6,
+   "rotulo": "D6",
+   "texto": "Flujo del argumento con conectores griegos."
+  },
+  {
+   "diapo": 7,
+   "rotulo": "D7",
+   "texto": "Tarjeta de término: noutheteo."
+  },
+  {
+   "diapo": 8,
+   "rotulo": "D8",
+   "texto": "Síntesis de cierre."
+  }
+ ],
+ "diapositivas": [
+  {
+   "n": 1,
+   "tipo": "portada",
+   "kicker": "Demostración · Componentes exegéticos",
+   "titulo": "Despojarse<br>y vestirse",
+   "destacado": "escritura-anotada · quiasmo · paralelismo · flujo · término",
+   "meta": "Suite de enseñanza · diseño v4 · Efesios 4:22–24"
+  },
+  {
+   "n": 2,
+   "tipo": "escritura",
+   "kicker": "Texto ancla",
+   "ref": "Efesios 4:22–24",
+   "version": "RV1960",
+   "texto": "⁲⁲ En cuanto a la pasada manera de vivir, despojaos del viejo hombre, que está viciado conforme a los deseos engañosos, ²³ y renovaos en el espíritu de vuestra mente, ²⁴ y vestíos del nuevo hombre, creado según Dios en la justicia y santidad de la verdad."
+  },
+  {
+   "n": 3,
+   "tipo": "escritura-anotada",
+   "kicker": "La gramática que interpreta",
+   "ref": "Efesios 4:22–24",
+   "texto": "despojaos del viejo hombre… renovaos en el espíritu de vuestra mente… vestíos del nuevo hombre",
+   "destacados": [
+    {
+     "palabra": "despojaos",
+     "nota": "aoristo medio: acción decisiva que el propio creyente ejecuta"
+    },
+    {
+     "palabra": "renovaos",
+     "nota": "presente pasivo: proceso continuo obrado en la mente por Dios"
+    },
+    {
+     "palabra": "vestíos",
+     "nota": "aoristo medio: el reemplazo positivo — no basta quitar, hay que poner"
+    }
+   ]
+  },
+  {
+   "n": 4,
+   "tipo": "quiasmo",
+   "kicker": "Estructura literaria",
+   "titulo": "Nadie puede servir a dos señores",
+   "ref": "Mateo 6:24",
+   "lineas": [
+    {
+     "etq": "A",
+     "nivel": 0,
+     "texto": "Ninguno puede servir a dos señores"
+    },
+    {
+     "etq": "B",
+     "nivel": 1,
+     "texto": "porque o aborrecerá al uno"
+    },
+    {
+     "etq": "C",
+     "nivel": 2,
+     "texto": "y amará al otro",
+     "centro": true
+    },
+    {
+     "etq": "B'",
+     "nivel": 1,
+     "texto": "o estimará al uno y menospreciará al otro"
+    },
+    {
+     "etq": "A'",
+     "nivel": 0,
+     "texto": "No podéis servir a Dios y a las riquezas"
+    }
+   ]
+  },
+  {
+   "n": 5,
+   "tipo": "paralelismo",
+   "kicker": "Poesía hebrea",
+   "clase": "antitetico",
+   "ref": "Proverbios 10:1",
+   "pares": [
+    {
+     "a": "El hijo sabio alegra al padre",
+     "b": "el hijo necio es tristeza de su madre",
+     "relacion": "pero"
+    }
+   ]
+  },
+  {
+   "n": 6,
+   "tipo": "flujo",
+   "kicker": "El argumento del pasaje",
+   "ref": "Efesios 4:20–24",
+   "proposicion": "Vosotros no habéis aprendido así a Cristo",
+   "nodos": [
+    {
+     "id": 1,
+     "rol": "principal",
+     "ref": "v.20",
+     "texto": "No habéis aprendido así a Cristo",
+     "conecta": null
+    },
+    {
+     "id": 2,
+     "rol": "fundamento",
+     "ref": "v.21",
+     "texto": "si en verdad le habéis oído y enseñado",
+     "conecta": 1,
+     "conector": "si (εἴγε)"
+    },
+    {
+     "id": 3,
+     "rol": "resultado",
+     "ref": "v.22",
+     "texto": "despojaos del viejo hombre",
+     "conecta": 1,
+     "conector": "en cuanto a"
+    },
+    {
+     "id": 4,
+     "rol": "resultado",
+     "ref": "v.24",
+     "texto": "vestíos del nuevo hombre",
+     "conecta": 1,
+     "conector": "y (καί)"
+    }
+   ]
+  },
+  {
+   "n": 7,
+   "tipo": "termino",
+   "kicker": "Estudio de palabra",
+   "lema": "νουθετέω",
+   "translit": "noutheteō",
+   "idioma": "griego",
+   "morfologia": "verbo · de νοῦς (mente) + τίθημι (poner)",
+   "glosa": "poner en la mente: amonestar, advertir, corregir con instrucción",
+   "rango": [
+    "amonestar (Hch 20:31)",
+    "instruir (Ro 15:14)",
+    "advertir (1 Co 4:14)"
+   ],
+   "usos": [
+    {
+     "ref": "Colosenses 1:28",
+     "matiz": "amonestando a todo hombre — meta: presentarlo perfecto en Cristo"
+    },
+    {
+     "ref": "1 Tesalonicenses 5:14",
+     "matiz": "amonestad a los ociosos — corrección dirigida y específica"
+    }
+   ]
+  },
+  {
+   "n": 8,
+   "tipo": "sintesis",
+   "kicker": "Síntesis",
+   "texto": "El cambio bíblico es <b style=\"color:var(--acento)\">reemplazo</b>: un acto decisivo de despojarse, un proceso de renovación en la mente, y el hábito nuevo puesto en su lugar.",
+   "nota": "Este es el corazón del plan despojarse / vestirse de la consejería nouthética."
+  }
+ ]
+}

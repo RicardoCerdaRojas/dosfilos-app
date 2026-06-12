@@ -1,3 +1,6 @@
+// Teaching Suite (módulo nuevo — núcleo determinista F0)
+export * from './teaching-suite';
+
 // Entities
 export * from './entities/User';
 export * from './entities/citationRights';
