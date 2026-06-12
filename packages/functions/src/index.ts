@@ -19,6 +19,8 @@ export { getUserExtractionsSummary } from './faculty/getUserExtractionsSummary';
 export { seedTeachingDemo } from './teaching-suite/seedTeachingDemo';
 export { saveTeachingBrand } from './teaching-suite/saveTeachingBrand';
 export { deleteTeachingBrand } from './teaching-suite/deleteTeachingBrand';
+export { proponerPlanDesdeEstudio } from './teaching-suite/proponerPlanDesdeEstudio';
+export { crearClaseDesdePlan } from './teaching-suite/crearClaseDesdePlan';
 export { getExegesisPapersSummary } from './exegesis/getExegesisPapersSummary';
 export { getSermonsListSummary } from './sermon/getSermonsListSummary';
 export { retrieveChunks } from './library/retrieveChunks';

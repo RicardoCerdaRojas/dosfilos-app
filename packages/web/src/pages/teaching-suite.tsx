@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Presentation, Plus, RefreshCw, FileText, MonitorPlay, ClipboardList, Palette, Pencil, Trash2 } from 'lucide-react';
+import { Presentation, Plus, RefreshCw, FileText, MonitorPlay, ClipboardList, Palette, Pencil, Trash2, Sparkles } from 'lucide-react';
 import type { Artefacto } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
 import { useTeachingClases } from '@/features/teaching-suite/useTeachingClases';
@@ -44,6 +44,10 @@ export function TeachingSuitePage(): JSX.Element {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button size="sm" onClick={() => navigate('/dashboard/teaching-suite/generar')}>
+            <Sparkles className="w-4 h-4 mr-2" />
+            Generar clase
+          </Button>
           <Button
             variant="outline"
             size="sm"
