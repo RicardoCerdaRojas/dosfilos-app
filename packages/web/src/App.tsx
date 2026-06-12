@@ -45,6 +45,7 @@ const DashboardLayout = lazy(() => import('@/components/layout/dashboard-layout'
 const DashboardPage = lazy(() => import('@/pages/dashboard').then(m => ({ default: m.DashboardPage })));
 
 const TeachingSuitePage = lazy(() => import('@/pages/teaching-suite').then(m => ({ default: m.TeachingSuitePage })));
+const TeachingSuiteMarcaPage = lazy(() => import('@/pages/teaching-suite-marca').then(m => ({ default: m.TeachingSuiteMarcaPage })));
 const SermonsPage = lazy(() => import('@/pages/sermons').then(m => ({ default: m.SermonsPage })));
 const SermonNewPage = lazy(() => import('@/pages/sermons/new').then(m => ({ default: m.SermonNewPage })));
 const SermonTutorPage = lazy(() => import('@/pages/sermons/tutor').then(m => ({ default: m.SermonTutorPage })));
@@ -343,6 +344,7 @@ function App() {
 
             {/* Suite de Enseñanza (F1) */}
             <Route path="teaching-suite" element={<TeachingSuitePage />} />
+            <Route path="teaching-suite/marca" element={<TeachingSuiteMarcaPage />} />
 
             {/* Greek Tutor Dashboard - Sessions list with sidebar */}
             <Route path="greek-tutor-dashboard" element={
