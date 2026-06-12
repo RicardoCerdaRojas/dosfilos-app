@@ -2,7 +2,12 @@ import { db, functions } from '@dosfilos/infrastructure';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import type { Artefacto, TeachingPlan } from '@dosfilos/domain';
-import { renderArtifact } from './render';
+import {
+  renderArtifactWithBundle,
+  resolveBundleFromDoc,
+  type MarcaDocLike,
+} from './render';
+import { PREVIEW_PLAN } from './crearMarca';
 
 /**
  * Servicio de la Suite de Enseñanza (F1). Lee clases/planes de Firestore y
@@ -48,6 +53,55 @@ export async function getPlan(planId: string): Promise<TeachingPlan | null> {
   return snap.data() as TeachingPlan;
 }
 
+export interface BrandRow {
+  id: string;
+  nombre: string;
+  source: string; // 'seed' | 'user'
+  assetKey?: string;
+  tokens: Record<string, string>;
+}
+
+export async function listBrands(ownerId: string): Promise<BrandRow[]> {
+  const snap = await getDocs(
+    query(collection(db, 'teachingBrands'), where('ownerId', '==', ownerId)),
+  );
+  const rows = snap.docs.map((d) => {
+    const x = d.data() as Record<string, unknown>;
+    return {
+      id: d.id,
+      nombre: (x.nombre as string) ?? 'Marca',
+      source: (x.source as string) ?? (x.assetKey ? 'seed' : 'user'),
+      assetKey: x.assetKey as string | undefined,
+      tokens: (x.tokens as Record<string, string>) ?? {},
+    } satisfies BrandRow;
+  });
+  return rows.sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+
+export async function getBrandDoc(marcaId: string): Promise<MarcaDocLike | null> {
+  const snap = await getDoc(doc(db, 'teachingBrands', marcaId));
+  if (!snap.exists()) return null;
+  return snap.data() as MarcaDocLike;
+}
+
+/** Renderiza un artefacto de una clase resolviendo su marca por doc. */
+export async function renderClaseArtifact(
+  plan: TeachingPlan,
+  marcaId: string,
+  artefacto: Artefacto,
+): Promise<string> {
+  const marcaDoc = await getBrandDoc(marcaId);
+  if (!marcaDoc) throw new Error('No se encontró la marca de la clase.');
+  return renderArtifactWithBundle(plan, resolveBundleFromDoc(marcaDoc), artefacto);
+}
+
+/** Previsualiza una marca: renderiza el plan demo con su bundle. */
+export async function previewBrand(marcaId: string): Promise<string> {
+  const marcaDoc = await getBrandDoc(marcaId);
+  if (!marcaDoc) throw new Error('No se encontró la marca.');
+  return renderArtifactWithBundle(PREVIEW_PLAN, resolveBundleFromDoc(marcaDoc), 'presentacion');
+}
+
 export interface SeedResult {
   demos: { seedKey: string; claseId: string; created: boolean }[];
 }
@@ -78,16 +132,3 @@ export function openHtml(html: string): void {
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
-/**
- * Renderiza UN artefacto del plan y lo abre en una pestaña nueva (Blob URL).
- * F1 no persiste el HTML en Storage — es un derivado desechable; se re-renderiza
- * a demanda desde el plan.
- */
-export function openArtifact(plan: TeachingPlan, artefacto: Artefacto): void {
-  const html = renderArtifact(plan, artefacto);
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  window.open(url, '_blank', 'noopener');
-  // Revoca tras un margen para que la pestaña alcance a cargar.
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
-}

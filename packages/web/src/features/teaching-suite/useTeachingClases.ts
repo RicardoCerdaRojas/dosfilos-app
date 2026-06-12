@@ -1,18 +1,23 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useFirebase } from '@/context/firebase-context';
 import type { Artefacto } from '@dosfilos/domain';
+import { useFirebase } from '@/context/firebase-context';
 import {
   listClases,
+  listBrands,
   seedDemo,
   getPlan,
-  openArtifact,
+  renderClaseArtifact,
+  previewBrand,
+  openHtml,
   type TeachingClaseRow,
+  type BrandRow,
 } from './teachingSuiteService';
 
-/** Estado + acciones de la lista de clases de la Suite de Enseñanza (F1). */
+/** Estado + acciones de la Suite de Enseñanza (clases + marcas). */
 export function useTeachingClases() {
   const { user } = useFirebase();
   const [clases, setClases] = useState<TeachingClaseRow[]>([]);
+  const [brands, setBrands] = useState<BrandRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,15 +25,18 @@ export function useTeachingClases() {
   const refresh = useCallback(async () => {
     if (!user?.uid) {
       setClases([]);
+      setBrands([]);
       setLoading(false);
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      setClases(await listClases(user.uid));
+      const [cs, bs] = await Promise.all([listClases(user.uid), listBrands(user.uid)]);
+      setClases(cs);
+      setBrands(bs);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al cargar las clases');
+      setError(e instanceof Error ? e.message : 'Error al cargar');
     } finally {
       setLoading(false);
     }
@@ -51,19 +59,28 @@ export function useTeachingClases() {
     }
   };
 
-  const verArtefacto = async (planId: string, artefacto: Artefacto) => {
+  const verArtefacto = async (clase: TeachingClaseRow, artefacto: Artefacto) => {
     setError(null);
     try {
-      const plan = await getPlan(planId);
+      const plan = await getPlan(clase.planId);
       if (!plan) {
         setError('No se encontró el plan de la clase.');
         return;
       }
-      openArtifact(plan, artefacto);
+      openHtml(await renderClaseArtifact(plan, clase.marcaId, artefacto));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo abrir el artefacto');
     }
   };
 
-  return { clases, loading, seeding, error, refresh, sembrarDemo, verArtefacto };
+  const verMarca = async (marcaId: string) => {
+    setError(null);
+    try {
+      openHtml(await previewBrand(marcaId));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo abrir la vista previa de la marca');
+    }
+  };
+
+  return { clases, brands, loading, seeding, error, refresh, sembrarDemo, verArtefacto, verMarca };
 }
