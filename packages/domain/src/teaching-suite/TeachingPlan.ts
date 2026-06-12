@@ -84,13 +84,141 @@ export interface DiapoEscritura extends DiapoBase {
   parte?: string;
 }
 
-/** Cualquier tipo aún no portado a su renderer concreto. Permisivo a propósito. */
-export interface DiapoOtra extends DiapoBase {
-  tipo: Exclude<TipoLamina, 'portada' | 'lista' | 'escritura'>;
-  [key: string]: unknown;
+export interface DiapoEscrituraAnotada extends DiapoBase {
+  tipo: 'escritura-anotada';
+  ref: string;
+  texto: string;
+  destacados: { palabra: string; nota: string }[]; // cada palabra debe existir en texto
 }
 
-export type Diapositiva = DiapoPortada | DiapoLista | DiapoEscritura | DiapoOtra;
+export interface QuiasmoLinea {
+  etq: string;
+  nivel: number;
+  texto: string;
+  centro?: boolean;
+}
+export interface DiapoQuiasmo extends DiapoBase {
+  tipo: 'quiasmo';
+  lineas: QuiasmoLinea[];
+  ref?: string;
+  titulo?: string;
+}
+
+export type ClaseParalelismo = 'sinonimo' | 'antitetico' | 'sintetico';
+export interface DiapoParalelismo extends DiapoBase {
+  tipo: 'paralelismo';
+  clase: ClaseParalelismo;
+  pares: { a: string; b: string; relacion?: string }[];
+  ref?: string;
+  titulo?: string;
+}
+
+export type RolFlujo = 'principal' | 'fundamento' | 'proposito' | 'resultado' | 'contraste';
+export interface FlujoNodo {
+  id: string;
+  rol: RolFlujo;
+  texto: string;
+  conecta: string | null;
+  ref?: string;
+  conector?: string;
+}
+export interface DiapoFlujo extends DiapoBase {
+  tipo: 'flujo';
+  nodos: FlujoNodo[];
+  proposicion?: string;
+  ref?: string;
+  titulo?: string;
+}
+
+export interface DiapoTermino extends DiapoBase {
+  tipo: 'termino';
+  lema: string;
+  glosa: string;
+  translit?: string;
+  idioma?: string; // 'hebreo' ⇒ dir="rtl"
+  morfologia?: string;
+  rango?: string[];
+  usos?: { ref: string; matiz: string }[];
+}
+
+export interface DiapoEsquema extends DiapoBase {
+  tipo: 'esquema';
+  svg: string;
+  alt: string;
+  titulo?: string;
+}
+
+export interface DiapoConfrontacion extends DiapoBase {
+  tipo: 'confrontacion';
+  error: string;
+  respuestas?: string[];
+  respuesta?: string;
+}
+
+export interface DiapoSintesis extends DiapoBase {
+  tipo: 'sintesis';
+  texto: string;
+  nota?: string;
+}
+
+export interface DiapoTransicion extends DiapoBase {
+  tipo: 'transicion';
+  texto: string;
+  texto_escritura?: string;
+  ref?: string;
+}
+
+export type TarjetaFila = string | { etq?: string; texto: string };
+export interface Tarjeta {
+  titulo: string;
+  filas?: TarjetaFila[];
+  realce?: string;
+  nota?: string;
+}
+export interface DiapoTarjetas extends DiapoBase {
+  tipo: 'tarjetas';
+  tarjetas: Tarjeta[]; // 2–4
+  titulo?: string;
+  intro?: string;
+}
+
+export interface Paso {
+  titulo: string;
+  sub?: string;
+  realce?: boolean;
+}
+export interface DiapoPasos extends DiapoBase {
+  tipo: 'pasos';
+  pasos: Paso[]; // 2–5
+  titulo?: string;
+  intro?: string;
+  cierre?: string;
+}
+
+export interface DiapoLienzo extends DiapoBase {
+  tipo: 'lienzo';
+  html: string;
+  alt: string;
+  css?: string;
+  titulo?: string;
+}
+
+export type Diapositiva =
+  | DiapoPortada
+  | DiapoLista
+  | DiapoEscritura
+  | DiapoEscrituraAnotada
+  | DiapoQuiasmo
+  | DiapoParalelismo
+  | DiapoFlujo
+  | DiapoTermino
+  | DiapoEsquema
+  | DiapoConfrontacion
+  | DiapoSintesis
+  | DiapoTransicion
+  | DiapoTarjetas
+  | DiapoPasos
+  | DiapoLienzo;
 
 export interface NotaResumen {
   diapo: number;

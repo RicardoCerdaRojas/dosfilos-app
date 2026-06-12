@@ -4,6 +4,26 @@
  * Sin IA, sin I/O. Ver `docs/teaching-suite/PLAN.md`.
  */
 export * from './TeachingPlan';
+export * from './Brand';
 export * from './validatePlan';
+export { injectArtifacts } from './inject';
 // Superficie pública del render (sin filtrar internos como `I`/`escHtml`/`wrapSection`).
-export { renderSlide, renderPortada, renderLista, renderEscritura, RENDERED_TYPES } from './render';
+export {
+  renderSlide,
+  RENDERED_TYPES,
+  renderPortada,
+  renderLista,
+  renderEscritura,
+  renderSintesis,
+  renderConfrontacion,
+  renderTransicion,
+  renderEsquema,
+  renderEscrituraAnotada,
+  renderQuiasmo,
+  renderParalelismo,
+  renderFlujo,
+  renderTermino,
+  renderTarjetas,
+  renderPasos,
+  renderLienzo,
+} from './render';

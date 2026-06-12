@@ -98,7 +98,7 @@ export function validatePlan(plan: TeachingPlan): ValidationResult {
 
   // ── Reglas por tipo ────────────────────────────────────────────────────────
   for (const d of plan.diapositivas) {
-    const any = d as Record<string, unknown>;
+    const any = d as unknown as Record<string, unknown>;
     if (d.html && d.tipo !== 'lienzo') continue; // vía de escape: no se audita el cuerpo
 
     if (d.tipo === 'escritura' || d.tipo === 'escritura-anotada') {
