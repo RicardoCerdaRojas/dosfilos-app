@@ -170,9 +170,13 @@ export interface ProponerPlanInput {
 
 /** Pide al asistente un plan candidato desde el estudio (no genera artefactos). */
 export async function proponerPlan(input: ProponerPlanInput): Promise<TeachingPlan> {
+  // Generar un plan completo (doctrina: 25–35 láminas) tarda más que el timeout
+  // por defecto del cliente (70s) → `deadline-exceeded`. Lo igualamos al del
+  // callable (120s). El SDK toma el timeout en milisegundos.
   const fn = httpsCallable<ProponerPlanInput, { plan: TeachingPlan }>(
     functions,
     'proponerPlanDesdeEstudio',
+    { timeout: 120_000 },
   );
   return (await fn(input)).data.plan;
 }
