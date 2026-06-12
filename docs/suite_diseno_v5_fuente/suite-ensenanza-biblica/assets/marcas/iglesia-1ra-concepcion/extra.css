@@ -1,0 +1,15 @@
+/* LA IGLESIA · 1ra de Concepción — identidad v2 «Agua viva» (jun-2026):
+   petróleo profundo, aqua vivo (su teal madurado: el agua viva de Jn 4,
+   la acción de la iglesia), oro = la fuente, la Palabra. Paleta con la
+   tipografía anclada al logotipo: Marcellus, heredera abierta de las
+   capitales inscripcionales de «LA IGLESIA». Peso único 400: jamás
+   pedir bold a esta familia (el navegador lo falsificaría). */
+.diapo h1 { font-weight: 400; letter-spacing: .03em; }
+.diapo h2 { font-weight: 400; letter-spacing: .015em; }
+.diapo .kicker { font-weight: 600; letter-spacing: .26em; }
+.diapo .sintesis-texto { font-weight: 400; }
+/* firma: chip delineado en aqua (heredado de C) */
+.diapo.portada .portada-destacado {
+  display: inline-block; color: var(--acento);
+  border: 1.5px solid color-mix(in srgb, var(--acento) 75%, transparent);
+  padding: 12px 30px; letter-spacing: .2em; font-size: 22px; border-radius: 2px; }

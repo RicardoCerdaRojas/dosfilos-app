@@ -1,0 +1,5 @@
+suite-ensenanza-biblica
+diseño:   v5 (2026-06-11) — variantes + lienzo + ediciones por serie + trinquete
+contrato: 1.4 (compatible con 1/1.1/1.2/1.3; añade `variante`, `lienzo`, `edicion`)
+runtime:  plantillas con sello /* runtime diseño v5 */ en la cabecera de <style>
+qa:       scripts/capturar.py — captura headless + detección de desbordes

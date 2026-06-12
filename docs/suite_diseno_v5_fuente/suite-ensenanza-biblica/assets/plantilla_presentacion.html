@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>@@TITULO_PRESENTACION@@</title>
+<style>
+  /* suite-ensenanza-biblica · runtime diseño v5 · 2026-06-11 */
+  /* @@FUENTES@@ */
+  /* =====================================================================
+     TOKENS DE DISEÑO — La Iglesia 1ra de Concepción (bloque canónico)
+     --oscuro      fondo principal de proyección
+     --panel       paneles y cajas sobre oscuro
+     --medio       acentos estructurales, bordes, texto secundario
+     --acento    acento de marca: títulos, estructura, realces NO bíblicos
+     --claro1/2    texto sobre fondo oscuro
+     --escritura      ESCRITURA sobre fondo oscuro (uso exclusivo)
+     --escritura-tinta ESCRITURA sobre fondo claro (uso exclusivo)
+     --alerta      color semántico: error/confrontación + marcado de alto contraste
+     ===================================================================== */
+  :root{
+    --oscuro:#000A16; --panel:#001F34; --medio:#34586E; --acento:#00B8B0;
+    --claro1:#CCE0E7; --claro2:#D6EAF1; --escritura:#C9A227; --escritura-tinta:#8C6E14;
+    --alerta:#FF5A36;
+    --fuente:'Inter','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  }
+  body.alto-contraste{
+    --oscuro:#000000; --panel:#121212; --medio:#B9C9D2; --acento:#1FE9E0;
+    --claro1:#FFFFFF; --claro2:#FFFFFF; --escritura:#FFD24A; --alerta:#FF7A5C;
+  }
+  body.alto-contraste #escenario{background:#000}
+  body.alto-contraste .caja{border-left-width:10px}
+
+  .ic{width:1em;height:1em;display:inline-block;vertical-align:-0.14em;fill:none;
+    stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  button .ic + span{margin-left:.4em}
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:color-mix(in srgb, var(--oscuro) 78%, black);color:var(--claro2);overflow:hidden;font-family:var(--fuente)}
+  body.alto-contraste{background:#000}
+
+  /* ===== Disposición general ===== */
+  #app{display:flex;height:100vh}
+  #zonaEscenario{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+  #panelNotas{width:400px;background:var(--panel);border-left:2px solid var(--medio);
+    display:flex;flex-direction:column}
+  body.modo-proyector #panelNotas{display:none}
+
+  /* ===== Escenario 16:9 ===== */
+  #marco{position:relative}
+  #escenario{width:1280px;height:720px;background:var(--oscuro);position:relative;
+    overflow:hidden;transform-origin:top left;box-shadow:0 0 60px rgba(0,0,0,.6)}
+
+  .diapo{position:absolute;inset:0;padding:70px 90px;display:none;flex-direction:column;justify-content:center}
+  .diapo.activa{display:flex}
+  .kicker{color:var(--acento);font-size:20px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:18px}
+  h1{font-size:64px;line-height:1.12;margin:0 0 14px;color:#fff;letter-spacing:.02em;font-weight:800;text-transform:uppercase}
+  h2{font-size:46px;line-height:1.18;margin:0 0 22px;color:#fff;font-weight:800;letter-spacing:.012em}
+  .sub{font-size:30px;color:var(--claro1);line-height:1.45}
+  .escritura{font-style:italic;color:var(--escritura);font-size:34px;line-height:1.55;margin:18px 0}
+  .escritura.larga{font-size:29px;line-height:1.6}
+  .esc-inline{font-style:italic;color:var(--escritura)} /* Escritura citada dentro de listas/párrafos */
+  .ref{font-style:normal;color:var(--medio);font-size:19px;letter-spacing:.14em;text-transform:uppercase;display:block;margin-top:14px;font-weight:700}
+  .lista{font-size:30px;line-height:1.5;color:var(--claro1);padding-left:0;list-style:none;margin:10px 0}
+  .lista li{margin:16px 0;padding-left:34px;position:relative}
+  .lista li::before{content:"";position:absolute;left:0;top:.55em;width:14px;height:14px;background:var(--acento);border-radius:3px}
+  .lista li b{color:#fff}
+  .griego{font-style:italic;font-weight:800;color:var(--acento)}
+  .caja{background:var(--panel);border-left:8px solid var(--acento);border-radius:10px;padding:26px 34px;margin:14px 0}
+  .caja-error{background:#1d0e08;border-left:8px solid var(--alerta)}
+  body.alto-contraste .caja-error{background:#1a1a1a}
+  .caja-error .titulo-error{color:var(--alerta);font-size:20px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;margin-bottom:10px}
+  .centro{text-align:center;align-items:center}
+  /* Lámina-esquema: el SVG hereda la paleta vía var() */
+  .esquema{display:flex;justify-content:center;margin:10px 0}
+  .esquema svg{max-width:100%;height:auto}
+  .esq-caja{fill:var(--panel);stroke:var(--acento);stroke-width:2.5;rx:12}
+  .esq-caja-suave{fill:var(--panel);stroke:var(--medio);stroke-width:2;rx:12}
+  .esq-linea{stroke:var(--medio);stroke-width:2.5;fill:none}
+  .esq-flecha{stroke:var(--acento);stroke-width:3;fill:none;marker-end:url(#pf)}
+  .esq-titulo{fill:#fff;font-family:var(--fuente);font-weight:800}
+  .esq-texto{fill:var(--claro1);font-family:var(--fuente)}
+  .esq-griego{fill:var(--acento);font-family:var(--fuente);font-style:italic;font-weight:700}
+  .esq-escritura{fill:var(--escritura);font-family:var(--fuente);font-style:italic}
+  .esq-etq{fill:var(--medio);font-family:var(--fuente);font-weight:700;letter-spacing:.14em}
+  .pie-diapo{position:absolute;bottom:18px;right:36px;display:flex;align-items:center;gap:16px}
+  .pie-diapo img{height:34px;opacity:.9}
+  .pie-diapo .npag{color:var(--medio);font-size:17px;font-weight:700;letter-spacing:.08em}
+  .marca-serie{position:absolute;bottom:26px;left:36px;color:var(--medio);font-size:14px;letter-spacing:.1em;text-transform:uppercase}
+
+  /* ===== Capa de marcado ===== */
+  #lienzo{position:absolute;inset:0;z-index:20;pointer-events:none;touch-action:none}
+  body.marcando #lienzo{pointer-events:auto;cursor:crosshair}
+  #foco{position:absolute;inset:0;z-index:18;pointer-events:none;display:none}
+  body.foco-activo #foco{display:block}
+
+  /* ===== Barra de marcado compacta (una sola fila, solo iconos) ===== */
+  #barraHerr{position:absolute;left:50%;transform:translateX(-50%);bottom:10px;z-index:40;
+    display:flex;gap:4px;align-items:center;background:color-mix(in srgb, var(--panel) 94%, transparent);border:1px solid var(--medio);
+    border-radius:12px;padding:6px 10px;transition:opacity .4s;backdrop-filter:blur(4px);white-space:nowrap}
+  body.alto-contraste #barraHerr{background:rgba(10,10,10,.95)}
+  #barraHerr.oculta{opacity:0;pointer-events:none}
+  #barraHerr button{background:transparent;border:1px solid transparent;color:var(--claro2);
+    font-size:17px;border-radius:8px;padding:7px 9px;cursor:pointer;font-family:inherit;
+    display:inline-flex;align-items:center;justify-content:center}
+  #barraHerr button:hover{border-color:var(--medio)}
+  #barraHerr button.act{background:var(--acento);color:#000;font-weight:700}
+  .muestra{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+  .muestra.act{border-color:#fff;transform:scale(1.15)}
+  .sep{width:1px;height:24px;background:var(--medio);margin:0 3px}
+
+  /* ===== Barra superior ===== */
+  #barraSup{position:absolute;top:0;left:0;right:0;z-index:45;display:flex;gap:8px;align-items:center;
+    padding:8px 14px;background:linear-gradient(color-mix(in srgb, var(--oscuro) 92%, transparent),transparent);transition:opacity .4s;flex-wrap:wrap}
+  #barraSup.oculta{opacity:0;pointer-events:none}
+  #barraSup button{background:color-mix(in srgb, var(--panel) 90%, transparent);border:1px solid var(--medio);color:var(--claro2);
+    border-radius:8px;padding:7px 12px;font-size:14px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center}
+  #barraSup button:hover{border-color:var(--acento)}
+  #barraSup button.act{background:var(--acento);color:#000;font-weight:700}
+  #barraSup .info{margin-left:auto;color:var(--medio);font-size:13px;letter-spacing:.06em}
+  body.editando #escenario{outline:3px dashed var(--acento);outline-offset:-3px}
+
+  /* ===== Ayuda: overlay bajo demanda (tecla ?) ===== */
+  #pista{position:absolute;bottom:14px;left:14px;z-index:39;font-size:12px;color:var(--medio);
+    background:color-mix(in srgb, var(--oscuro) 70%, transparent);border-radius:8px;padding:5px 10px;transition:opacity .4s}
+  #pista.oculta{opacity:0}
+  #ayudaOverlay{position:absolute;inset:0;z-index:60;background:color-mix(in srgb, color-mix(in srgb, var(--oscuro) 55%, black) 92%, transparent);display:none;
+    align-items:center;justify-content:center}
+  #ayudaOverlay.activa{display:flex}
+  #ayudaOverlay .tarjeta{background:var(--panel);border:1px solid var(--medio);border-radius:14px;
+    padding:28px 36px;max-width:620px;font-size:15px;line-height:2;color:var(--claro1)}
+  #ayudaOverlay .tarjeta h3{margin:0 0 10px;color:var(--acento);font-size:14px;letter-spacing:.16em;text-transform:uppercase}
+  #ayudaOverlay kbd{background:var(--medio);color:#fff;border-radius:5px;padding:1px 8px;font-family:inherit;font-size:13px;font-weight:700}
+
+  /* ===== Panel de notas (modo presentador) ===== */
+  #panelNotas header{padding:12px 18px;border-bottom:1px solid var(--medio);display:flex;align-items:center;gap:10px}
+  #panelNotas header img{height:30px}
+  #panelNotas header span{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--acento);font-weight:700}
+  #avisoScroll{padding:8px 18px;font-size:12px;color:var(--medio);border-bottom:1px solid color-mix(in srgb, var(--medio) 40%, transparent);line-height:1.5}
+  #notasScroll{flex:1;overflow-y:auto;padding:16px 18px 50vh}
+  .nota-bloque{border:1px solid transparent;border-radius:10px;padding:12px 14px;margin-bottom:12px;cursor:pointer;opacity:.45;transition:all .2s}
+  .nota-bloque:hover{border-color:var(--medio)}
+  .nota-bloque.actual{opacity:1;background:color-mix(in srgb, var(--acento) 8%, transparent);border-color:var(--acento)}
+  .nota-bloque .etq{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--acento);font-weight:800;margin-bottom:5px}
+  .nota-bloque p{margin:0;font-size:14.5px;line-height:1.55;color:var(--claro1)}
+  #controlesNav{padding:12px 18px;border-top:1px solid var(--medio);display:flex;gap:8px}
+  #controlesNav button{flex:1;background:var(--medio);border:none;color:#fff;border-radius:8px;padding:11px;font-size:15px;cursor:pointer;font-family:inherit;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+  #controlesNav button:hover{background:var(--acento);color:#000}
+  body.alto-contraste #controlesNav button{color:#000;background:#dfe9ee}
+
+  /* @@COMPONENTES-FASE2@@ */
+.diapo .esc, .diapo .esc-inline { color: var(--escritura); font-style: italic; }
+.diapo .esc-realce { color: var(--escritura); font-style: italic;
+  text-decoration: underline; text-decoration-color: var(--acento);
+  text-decoration-thickness: 3px; text-underline-offset: 6px; }
+.diapo .esc-num { color: var(--medio); font-size: .62em; font-style: normal;
+  vertical-align: super; }
+.diapo .lexico { color: var(--acento); font-style: normal; font-weight: 700; }
+.diapo .parafrasis { font-style: normal; }
+.diapo .cita-humana { color: var(--claro1); font-style: italic;
+  border-left: 4px solid var(--medio); padding-left: 18px; }
+.diapo .cita-humana .atrib { color: var(--medio); font-style: normal;
+  font-size: .8em; display: block; margin-top: 6px; }
+.diapo .escritura.ea { font-size: 30px; }
+.diapo .ea-num { color: var(--acento); font-style: normal; font-weight: 800;
+  font-size: .58em; vertical-align: super; margin-left: 2px; }
+.diapo .ea-notas { margin-top: 26px; display: grid; gap: 10px; max-width: 1080px; }
+.diapo .ea-nota { display: grid; grid-template-columns: 26px auto 1fr; gap: 12px;
+  align-items: baseline; font-size: 24px; color: var(--claro1);
+  background: var(--panel); border-left: 4px solid var(--acento);
+  padding: 10px 16px; border-radius: 8px; }
+.diapo .ea-nota .ea-num { font-size: 18px; vertical-align: baseline; }
+.diapo .ea-palabra { color: var(--escritura); font-style: italic; font-weight: 700; }
+.diapo .ea-texto { color: var(--claro2); }
+.diapo .quiasmo { display: grid; gap: 8px; margin-top: 10px; max-width: 1100px; }
+.diapo .q-linea { display: grid; grid-template-columns: 52px 1fr; gap: 14px;
+  align-items: baseline; font-size: 28px; padding: 8px 14px;
+  border-left: 3px solid var(--medio); border-radius: 6px; }
+.diapo .q-linea.nivel-1 { margin-left: 70px; }
+.diapo .q-linea.nivel-2 { margin-left: 140px; }
+.diapo .q-linea.nivel-3 { margin-left: 210px; }
+.diapo .q-linea.nivel-4 { margin-left: 280px; }
+.diapo .q-etq { color: var(--acento); font-weight: 800; letter-spacing: .04em; }
+.diapo .q-centro { background: var(--panel); border-left-color: var(--acento);
+  border-left-width: 5px; }
+.diapo .q-centro .q-etq { font-size: 1.1em; }
+.diapo .paralelo { display: grid; gap: 12px; margin-top: 14px; max-width: 1140px; }
+.diapo .par-fila { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px;
+  align-items: center; font-size: 27px; }
+.diapo .par-a, .diapo .par-b { background: var(--panel); padding: 14px 18px;
+  border-radius: 10px; border: 1px solid var(--medio); }
+.diapo .par-rel { color: var(--acento); font-weight: 700; font-size: 22px;
+  white-space: nowrap; }
+.diapo .p-antitetico .par-rel { color: var(--alerta); }
+.diapo .f-prop { color: var(--claro2); font-weight: 700; }
+.diapo .flujo { display: grid; gap: 10px; margin-top: 10px; max-width: 1140px; }
+.diapo .f-nodo { display: grid;
+  grid-template-columns: auto auto auto 1fr; gap: 12px;
+  align-items: baseline; font-size: 26px; padding: 10px 14px;
+  background: var(--panel); border-radius: 8px;
+  border-left: 4px solid var(--medio); }
+.diapo .f-nodo.prof-1 { margin-left: 64px; }
+.diapo .f-nodo.prof-2 { margin-left: 128px; }
+.diapo .f-nodo.prof-3 { margin-left: 192px; }
+.diapo .f-conector { color: var(--acento); font-weight: 700; font-size: 22px; }
+.diapo .f-rol { color: var(--medio); text-transform: uppercase; font-size: 17px;
+  letter-spacing: .06em; }
+.diapo .f-ref { color: var(--medio); font-size: 20px; }
+.diapo .f-nodo.rol-principal { border-left-color: var(--acento); }
+.diapo .f-nodo.rol-contraste { border-left-color: var(--alerta); }
+.diapo .termino { background: var(--panel); border: 1px solid var(--medio);
+  border-radius: 14px; padding: 26px 32px; max-width: 980px;
+  display: grid; gap: 12px; }
+.diapo .t-cab { display: flex; gap: 18px; align-items: baseline; }
+.diapo .t-lema { font-size: 52px; }
+.diapo .t-translit { color: var(--claro2); font-size: 26px; font-style: italic; }
+.diapo .t-morf { color: var(--medio); font-size: 22px; text-transform: uppercase;
+  letter-spacing: .05em; }
+.diapo .t-glosa { font-size: 30px; color: var(--claro1); }
+.diapo .t-rango { color: var(--claro2); font-size: 24px; }
+.diapo .t-usos { list-style: none; padding: 0; margin: 6px 0 0;
+  display: grid; gap: 8px; font-size: 23px; color: var(--claro2); }
+  /* @@FIN-COMPONENTES-FASE2@@ */
+
+  /* @@DISENO-V4@@
+   Sistema común v4 — composición editorial, componentes tarjetas/pasos,
+   riel de secuencia. Cromo 100% por tokens; cero colores de marca cableados. */
+
+/* ---- Composición: cabecera anclada -------------------------------- */
+.diapo { overflow:hidden;
+  background: radial-gradient(120% 95% at 50% 16%, var(--panel) 0%, var(--oscuro) 60%); }
+body.alto-contraste .diapo { background: var(--oscuro); }
+.diapo:not(.centro):not(.portada) {
+  justify-content:flex-start; padding:60px 96px 64px; }
+.diapo h1, .diapo h2, .diapo .sintesis-texto { text-wrap: balance; }
+.diapo .sub, .diapo ul.lista li { text-wrap: pretty; }
+
+.diapo h1 {
+  font-family: var(--fuente-titulos, Georgia, 'Times New Roman', serif);
+  font-weight: 700; letter-spacing: .045em; line-height: 1.04;
+  font-size: 86px; }
+.diapo h2 {
+  font-family: var(--fuente-titulos, Georgia, 'Times New Roman', serif);
+  font-weight: 600; letter-spacing: .008em; line-height: 1.12;
+  font-size: 54px; text-transform: none; }
+.diapo:not(.centro) h2 {
+  padding-bottom: 24px; margin-bottom: 36px;
+  border-bottom: 1px solid color-mix(in srgb, var(--medio) 45%, transparent); }
+.diapo h2 .ref { display:inline-block; margin-left:18px; vertical-align: 6px; }
+.diapo .kicker {
+  display:inline-flex; align-items:center; gap:16px;
+  font-size:18px; letter-spacing:.3em; font-weight:600;
+  margin-bottom:24px; }
+.diapo .kicker::before {
+  content:""; width:44px; height:1px; background:currentColor; opacity:.85; flex:none; }
+
+/* ---- Riel de secuencia (storytelling por partes) ------------------- */
+.diapo .secuencia {
+  display:flex; align-items:center; gap:0; margin:-10px 0 24px;
+  font-size:15px; letter-spacing:.18em; text-transform:uppercase; font-weight:600; }
+.diapo .secuencia .sq { color: color-mix(in srgb, var(--medio) 80%, transparent);
+  display:inline-flex; align-items:center; gap:10px; }
+.diapo .secuencia .sq .sq-n { font-weight:700; }
+.diapo .secuencia .sq + .sq::before {
+  content:""; width:54px; height:1px; margin:0 18px;
+  background: color-mix(in srgb, var(--medio) 50%, transparent); }
+.diapo .secuencia .sq.hecha { color: var(--medio); }
+.diapo .secuencia .sq.act { color: var(--acento); }
+.diapo .secuencia .sq.act .sq-n {
+  display:inline-flex; width:30px; height:30px; border:1px solid var(--acento);
+  border-radius:50%; align-items:center; justify-content:center; }
+
+/* ---- Lista: filas editoriales con filete --------------------------- */
+.diapo ul.lista { margin:0; }
+.diapo ul.lista li {
+  padding:17px 0 17px 56px; margin:0;
+  border-top:1px solid color-mix(in srgb, var(--medio) 30%, transparent); }
+.diapo ul.lista li:first-child { border-top:none; padding-top:4px; }
+.diapo ul.lista li::before {
+  width:28px; height:2px; border-radius:0; top:1.28em; background:var(--acento); }
+.diapo ul.lista li:first-child::before { top:.85em; }
+.diapo ul.lista li b { letter-spacing:.01em; color:#fff; }
+.diapo ul.lista.lista-compacta { font-size:25px; }
+.diapo ul.lista.lista-compacta li { padding-top:14px; padding-bottom:14px; }
+.diapo p.sub.cierre-lista {
+  margin-top:20px; padding-top:16px;
+  border-top:1px solid color-mix(in srgb, var(--medio) 30%, transparent);
+  color: var(--claro1); font-size:25px; line-height:1.45; }
+
+/* ---- Escritura ------------------------------------------------------ */
+.diapo .escritura {
+  font-family: var(--fuente-escritura, var(--fuente-titulos, Georgia, serif));
+  font-weight:600; font-size:40px; line-height:1.5;
+  position:relative; max-width:1080px; }
+.diapo .escritura.larga { font-size:31px; line-height:1.62; }
+.diapo .escritura::before {
+  content:"«"; position:absolute; left:-34px; top:-118px;
+  font-size:240px; line-height:1; color:var(--escritura); opacity:.10;
+  font-family: var(--fuente-escritura, var(--fuente-titulos, Georgia, serif));
+  font-style:normal; pointer-events:none; }
+.diapo.centro .escritura::before, .diapo .escritura.ea::before { display:none; }
+.diapo .escritura .ref {
+  font-family: var(--fuente, sans-serif); font-weight:600;
+  font-size:17px; letter-spacing:.22em; margin-top:22px;
+  padding-top:14px; border-top:1px solid var(--medio); max-width:420px; }
+.diapo.centro .escritura { margin-inline:auto; text-wrap:balance; }
+.diapo.centro .escritura .ref { margin-inline:auto; }
+.diapo .esc, .diapo .esc-inline, .diapo .esc-realce, .diapo .q-texto,
+.diapo .par-a, .diapo .par-b, .diapo .f-texto {
+  font-family: var(--fuente-escritura, var(--fuente-titulos, Georgia, serif)); }
+.diapo .q-texto, .diapo .par-a, .diapo .par-b, .diapo .f-texto {
+  font-style: italic; font-weight:600; }
+
+/* ---- Escritura anotada: notas como filas editoriales --------------- */
+.diapo .ea-notas { margin-top:22px; gap:0; max-width:1100px;
+  border-top:1px solid color-mix(in srgb, var(--medio) 40%, transparent); }
+.diapo .ea-nota {
+  background:none; border-left:none; border-radius:0;
+  border-bottom:1px solid color-mix(in srgb, var(--medio) 25%, transparent);
+  grid-template-columns: 40px 250px 1fr; gap:14px; align-items:start;
+  padding:11px 4px; font-size:22px; line-height:1.4; }
+.diapo .ea-nota .ea-num {
+  display:inline-flex; width:25px; height:25px; margin-top:2px;
+  border:1px solid var(--acento); border-radius:50%;
+  align-items:center; justify-content:center;
+  color:var(--acento); font-size:14px; font-weight:700; vertical-align:baseline; }
+.diapo .ea-palabra { font-size:23px; }
+.diapo .ea-texto { color:var(--claro1); line-height:1.45; }
+
+/* ---- Tarjetas comparativas (2–4 columnas) --------------------------- */
+.diapo .tarjetas { display:grid; gap:30px; margin-top:14px; }
+.diapo .tarjetas.n2 { grid-template-columns:repeat(2,1fr); max-width:980px; }
+.diapo .tarjetas.n3 { grid-template-columns:repeat(3,1fr); }
+.diapo .tarjetas.n4 { grid-template-columns:repeat(4,1fr); }
+.diapo .tarjeta { position:relative;
+  background: linear-gradient(180deg, var(--panel) 0%, rgba(0,0,0,0) 165%);
+  border:1px solid color-mix(in srgb, var(--medio) 70%, transparent);
+  padding:30px 30px 26px; display:flex; flex-direction:column; gap:15px; }
+.diapo .tarjeta::before { /* tic de esquina */
+  content:""; position:absolute; top:-1px; left:-1px; width:22px; height:22px;
+  border-top:2px solid var(--acento); border-left:2px solid var(--acento); }
+.diapo .tj-titulo {
+  font-size:26px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;
+  color:#fff; padding-bottom:14px;
+  border-bottom:1px solid color-mix(in srgb, var(--medio) 45%, transparent); }
+.diapo .tj-fila { font-size:24px; color:var(--claro1); line-height:1.4; }
+.diapo .tj-fila .etq { color:var(--medio); text-transform:uppercase;
+  font-size:16px; letter-spacing:.1em; font-weight:700; display:block; margin-bottom:3px; }
+.diapo .tj-realce { font-size:27px; font-weight:700; color:var(--acento); line-height:1.3; }
+.diapo .tj-nota { font-size:20px; color:var(--medio); margin-top:auto; padding-top:8px; }
+.diapo .tarjetas-intro { font-size:28px; color:var(--claro2); margin:2px 0 26px; font-weight:600; }
+
+/* ---- Pasos (progresión horizontal) ---------------------------------- */
+.diapo .pasos { display:flex; align-items:stretch; gap:0; margin-top:22px; }
+.diapo .paso { flex:1; position:relative;
+  background: linear-gradient(180deg, var(--panel) 0%, rgba(0,0,0,0) 165%);
+  border:1px solid color-mix(in srgb, var(--medio) 70%, transparent);
+  padding:26px 26px 24px; text-align:center;
+  display:flex; flex-direction:column; gap:8px; justify-content:center; }
+.diapo .paso .p-titulo { font-size:27px; font-weight:800; color:var(--acento); }
+.diapo .paso .p-sub { font-size:22px; color:var(--claro1); line-height:1.35; }
+.diapo .paso.p-realce { border-color:var(--acento); }
+.diapo .paso.p-realce::before {
+  content:""; position:absolute; top:-1px; left:-1px; width:22px; height:22px;
+  border-top:2px solid var(--acento); border-left:2px solid var(--acento); }
+.diapo .paso.p-realce .p-titulo { color:#fff; }
+.diapo .paso-con { flex:none; width:64px; position:relative; align-self:center;
+  height:1px; background: color-mix(in srgb, var(--medio) 75%, transparent); }
+.diapo .paso-con::after {
+  content:""; position:absolute; right:0; top:-4.5px; width:9px; height:9px;
+  border-top:1px solid var(--medio); border-right:1px solid var(--medio);
+  transform:rotate(45deg); }
+.diapo p.sub.cierre-pasos { margin-top:36px; text-align:center;
+  font-size:26px; color:var(--claro1); }
+
+/* ---- Cajas, síntesis, confrontación --------------------------------- */
+.diapo .caja { position:relative;
+  border-radius:0; border:1px solid color-mix(in srgb, var(--medio) 70%, transparent);
+  background: linear-gradient(180deg, var(--panel) 0%, rgba(0,0,0,0) 160%);
+  padding:30px 40px; }
+.diapo .caja::before {
+  content:""; position:absolute; top:-1px; left:-1px; width:22px; height:22px;
+  border-top:2px solid var(--acento); border-left:2px solid var(--acento); }
+.diapo .caja-error {
+  border-color: color-mix(in srgb, var(--alerta) 75%, transparent); background:#1a0c07; }
+.diapo .caja-error::before { border-color: var(--alerta); }
+.diapo .titulo-error {
+  font-size:16px; letter-spacing:.3em; text-transform:uppercase;
+  font-weight:700; color:var(--alerta); margin-bottom:14px; }
+.diapo .caja-sintesis { max-width:1020px; }
+.diapo .sintesis-texto {
+  font-family: var(--fuente-titulos, Georgia, serif);
+  font-weight:600; font-style:normal; font-size:40px; line-height:1.42;
+  color:#fff; margin:0; }
+.diapo .transicion-titulo { font-size:56px; max-width:1060px; }
+
+/* ---- Término --------------------------------------------------------- */
+.diapo .termino { background:none; border:none; border-radius:0;
+  border-left:2px solid var(--acento); padding:14px 0 14px 44px;
+  max-width:1060px; gap:14px; }
+.diapo .t-lema { font-size:62px; }
+.diapo .t-translit { font-size:28px;
+  font-family: var(--fuente-titulos, Georgia, serif); }
+.diapo .t-morf { font-size:19px; letter-spacing:.18em;
+  padding-bottom:14px;
+  border-bottom:1px solid color-mix(in srgb, var(--medio) 40%, transparent); }
+.diapo .t-glosa { font-size:31px; color:#fff; line-height:1.4; }
+.diapo .t-rango { font-size:23px; }
+.diapo .t-usos { gap:0; margin-top:8px; }
+.diapo .t-usos li { padding:12px 0;
+  border-top:1px solid color-mix(in srgb, var(--medio) 25%, transparent); }
+.diapo .q-etq { font-family: var(--fuente-titulos, Georgia, serif);
+  font-style:normal; font-size:1.15em; }
+.diapo .ea-nota, .diapo .f-nodo, .diapo .par-a, .diapo .par-b { border-radius:2px; }
+
+/* ---- Portada --------------------------------------------------------- */
+.diapo.portada { overflow:hidden; }
+.diapo.portada .kicker { margin-bottom:40px; }
+.diapo.portada .kicker::after {
+  content:""; width:44px; height:1px; background:currentColor; opacity:.85; flex:none; }
+.diapo.portada h1, .diapo.portada .portada-titulo {
+  font-size:104px; letter-spacing:.05em; line-height:1.02; margin-bottom:30px; }
+.diapo.portada .portada-destacado {
+  font-family: var(--fuente, sans-serif);
+  color:var(--acento); font-weight:700; letter-spacing:.24em;
+  text-transform:uppercase; font-size:23px; margin-top:6px; }
+.diapo.portada .portada-meta {
+  margin-top:38px; font-size:20px; color:var(--medio); letter-spacing:.1em;
+  text-transform:uppercase; }
+.diapo.portada .portada-meta::before {
+  content:""; display:block; width:64px; height:1px; margin:0 auto 22px;
+  background: color-mix(in srgb, var(--medio) 70%, transparent); }
+.diapo.portada::after {
+  content:""; position:absolute; right:-150px; bottom:-190px;
+  width:660px; height:660px;
+  background: var(--icono-marca, none) center/contain no-repeat;
+  opacity:.055; pointer-events:none; }
+body.alto-contraste .diapo.portada::after { display:none; }
+
+/* ---- Movimiento sobrio ----------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .diapo.activa { animation: diapo-aparece .3s ease both; }
+}
+@keyframes diapo-aparece {
+  from { opacity:0; transform: translateY(8px); }
+  to   { opacity:1; transform: none; } }
+
+/* ---- Cromo ------------------------------------------------------------ */
+.diapo ~ .marca-serie, .marca-serie { letter-spacing:.22em; font-size:13px; }
+#progresoClase { position:absolute; left:0; bottom:0; height:3px; z-index:15;
+  width:0; background: var(--acento); opacity:.5; transition:width .35s ease; }
+body.alto-contraste #progresoClase { opacity:.9; }
+#barra button, .barra button {
+  background: rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:8px; letter-spacing:.03em; }
+#barra button:hover, .barra button:hover { background: rgba(255,255,255,.10); }
+
+/* ---- VARIANTES-V5: composiciones alternativas por tipo --------------- */
+/* portada · v-margen: arquitectura editorial alineada a la izquierda */
+.diapo.portada.v-margen { align-items:flex-start; text-align:left;
+  padding:90px 110px; }
+.diapo.portada.v-margen .kicker::after { display:none; }
+.diapo.portada.v-margen h1 { font-size:92px; }
+.diapo.portada.v-margen .portada-meta::before { margin:0 0 22px; }
+.diapo.portada.v-margen::after { opacity:.045; }
+
+/* lista · v-numerada: numerales grandes para puntos con orden real */
+.diapo.v-numerada ul.lista { counter-reset: pto; }
+.diapo.v-numerada ul.lista li { counter-increment: pto; padding-left:92px; }
+.diapo.v-numerada ul.lista li::before {
+  content: counter(pto, decimal-leading-zero);
+  width:auto; height:auto; background:none; top:.5em;
+  font-family: var(--fuente-titulos, Georgia, serif);
+  font-size:30px; line-height:1; color:var(--acento); }
+.diapo.v-numerada ul.lista li:first-child::before { top:.18em; }
+
+/* lista · v-dos-columnas: 4–6 ítems breves en retícula */
+.diapo.v-dos-columnas ul.lista { display:grid;
+  grid-template-columns:1fr 1fr; column-gap:64px; }
+.diapo.v-dos-columnas ul.lista li:nth-child(2) {
+  border-top:none; padding-top:4px; }
+.diapo.v-dos-columnas ul.lista li:nth-child(2)::before { top:.85em; }
+
+/* escritura · v-banda: la cita como evidencia, en banda compacta */
+.diapo.v-banda .escritura { font-size:31px; line-height:1.55;
+  max-width:1100px; padding:32px 44px;
+  background: linear-gradient(180deg, var(--panel) 0%, rgba(0,0,0,0) 165%);
+  border-left:3px solid var(--acento); }
+.diapo.v-banda .escritura::before { display:none; }
+.diapo.v-banda .escritura .ref { border-top:none; padding-top:0; margin-top:16px; }
+
+/* sintesis · v-plena: la declaración sin caja, a escenario completo */
+.diapo.v-plena .caja-sintesis { background:none; border:none; padding:0;
+  outline:none; max-width:1100px; }
+.diapo.v-plena .caja-sintesis::before { display:none; }
+.diapo.v-plena .sintesis-texto { font-size:52px; line-height:1.3; }
+
+/* tarjetas · v-horizontal: tarjetas como filas (2–3 con texto largo) */
+.diapo.v-horizontal .tarjetas { display:flex; flex-direction:column; gap:24px; }
+.diapo.v-horizontal .tarjeta { display:grid;
+  grid-template-columns:260px 1fr; column-gap:34px; row-gap:6px;
+  align-items:start; padding:20px 30px; }
+.diapo.v-horizontal .tj-titulo { grid-column:1; grid-row:1 / span 4;
+  align-self:stretch; display:flex; align-items:center;
+  border-bottom:none; padding:4px 28px 4px 0;
+  border-right:1px solid color-mix(in srgb, var(--medio) 45%, transparent); }
+.diapo.v-horizontal .tj-fila, .diapo.v-horizontal .tj-realce,
+.diapo.v-horizontal .tj-nota { grid-column:2; }
+.diapo.v-horizontal .tj-nota { margin-top:0; padding-top:2px; }
+  /* @@FIN-DISENO-V4@@ */
+</style>
+</head>
+<body class="modo-presentador">
+
+<div id="app">
+  <div id="zonaEscenario">
+    <div id="barraSup">
+      <button onclick="alternarModo()" title="Cambiar modo (P)" aria-label="Cambiar modo"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span id="lblModo">Presentador</span></button>
+      <button onclick="pantallaCompleta()" title="Pantalla completa (F)" aria-label="Pantalla completa"><svg class="ic" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span>Pantalla completa</span></button>
+      <button id="btnContraste" onclick="alternarContraste()" title="Alto contraste (C)" aria-label="Alto contraste"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg><span class="lbl">Alto contraste</span></button>
+      <button onclick="cambiarFuente(-0.1)" title="Letra más pequeña (−)" aria-label="Reducir letra">A−</button>
+      <button onclick="cambiarFuente(0)" title="Restablecer tamaño (0)" aria-label="Tamaño normal">A<span id="lblFuente">100%</span></button>
+      <button onclick="cambiarFuente(0.1)" title="Letra más grande (+)" aria-label="Aumentar letra">A+</button>
+      <button id="btnEditar" onclick="alternarEdicion()" title="Editar el texto de las diapositivas" aria-label="Editar"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg><span class="lbl">Editar</span></button>
+      <button onclick="exportarHTML()" title="Descargar el HTML con sus cambios" aria-label="Exportar"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M5 19h14"/></svg><span>Exportar</span></button>
+      <span class="info">@@INFO_PRESENTACION@@</span>
+    </div>
+
+    <div id="marco">
+      <div id="escenario">
+
+        @@DIAPOSITIVAS@@
+
+        <!-- Capas -->
+        <canvas id="lienzo" width="1280" height="720"></canvas>
+        <div id="foco"></div>
+        <div id="progresoClase" aria-hidden="true"></div>
+        <div class="marca-serie">@@PIE_SERIE@@</div>
+        <div class="pie-diapo">
+          <span class="npag" id="numPag">1 / @@TOTAL_DIAPOS@@</span>
+          <img src="data:image/png;base64,@@LOGO_B64@@" alt="La Iglesia">
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de marcado: compacta, solo iconos -->
+    <div id="barraHerr">
+      <button id="hLapiz" onclick="setHerr('lapiz')" title="Lápiz (D)" aria-label="Lápiz"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg></button>
+      <button id="hResalt" onclick="setHerr('resalt')" title="Resaltador (H)" aria-label="Resaltador"><svg class="ic" viewBox="0 0 24 24"><path d="M5 18l3 3 9-9-3-3-9 9z"/><path d="M14 7l3 3"/><path d="M4 21h6"/></svg></button>
+      <div class="sep"></div>
+      <button class="muestra act" style="background:var(--acento)" onclick="setColorTok('--acento',this)" title="Acento" aria-label="Color de acento"></button>
+      <button class="muestra" style="background:var(--escritura)" onclick="setColorTok('--escritura',this)" title="Escritura" aria-label="Color de Escritura"></button>
+      <button class="muestra" style="background:var(--claro2)" onclick="setColorTok('--claro2',this)" title="Claro" aria-label="Color claro"></button>
+      <button class="muestra" style="background:var(--alerta)" onclick="setColorTok('--alerta',this)" title="Alerta" aria-label="Color de alerta"></button>
+      <div class="sep"></div>
+      <button id="hFino" class="act" onclick="setGrosor(4,this)" title="Trazo fino" aria-label="Trazo fino"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12h16" stroke-width="1.6"/></svg></button>
+      <button id="hGrueso" onclick="setGrosor(10,this)" title="Trazo grueso" aria-label="Trazo grueso"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12h16" stroke-width="4.5"/></svg></button>
+      <div class="sep"></div>
+      <button onclick="limpiarDiapo()" title="Borrar marcas (E)" aria-label="Borrar marcas"><svg class="ic" viewBox="0 0 24 24"><path d="M8 6V4h8v2"/><path d="M5 6h14l-1 14H6L5 6z"/><path d="M10 11v5M14 11v5"/></svg></button>
+      <button id="hFoco" onclick="alternarFoco()" title="Foco (S)" aria-label="Foco"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></button>
+      <button onclick="alternarBarra()" title="Ocultar barra (B)" aria-label="Ocultar barra"><svg class="ic" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    </div>
+
+    <div id="pista">Pulse <b>?</b> para los atajos</div>
+
+    <div id="ayudaOverlay" onclick="this.classList.remove('activa')">
+      <div class="tarjeta">
+        <h3>Atajos de teclado</h3>
+        <kbd>→</kbd> / <kbd>Espacio</kbd> avanzar · <kbd>←</kbd> retroceder · <kbd>F</kbd> pantalla completa · <kbd>P</kbd> modo presentador/proyector<br>
+        <kbd>C</kbd> alto contraste · <kbd>+</kbd>/<kbd>−</kbd>/<kbd>0</kbd> tamaño de letra<br>
+        <kbd>D</kbd> lápiz · <kbd>H</kbd> resaltador · <kbd>E</kbd> borrar marcas · <kbd>S</kbd> foco · <kbd>B</kbd> ocultar barra<br>
+        <kbd>?</kbd> esta ayuda · <kbd>Esc</kbd> salir del modo activo<br><br>
+        Si abre las <b>notas docentes</b> en otra ventana del mismo navegador, el scroll de las notas mueve esta presentación y sus marcas llegan aquí.
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de notas (modo presentador) -->
+  <aside id="panelNotas">
+    <header><img src="data:image/png;base64,@@LOGO_B64@@" alt=""><span>Notas del presentador</span></header>
+    <div id="avisoScroll">Desplácese por las notas: la diapositiva avanza sola al cruzar cada bloque. También puede hacer clic en un bloque.</div>
+    <div id="notasScroll"></div>
+    <div id="controlesNav">
+      <button onclick="ir(-1)" aria-label="Diapositiva anterior"><svg class="ic" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>Anterior</span></button>
+      <button onclick="ir(1)" aria-label="Diapositiva siguiente"><span>Siguiente</span><svg class="ic" viewBox="0 0 24 24" style="margin-left:.4em"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+  </aside>
+</div>
+
+<script>
+/* ============ Notas por diapositiva (1:1 con las 18 diapositivas) ============ */
+const NOTAS = @@NOTAS_RESUMEN_JS@@;
+
+/* ============ Estado ============ */
+const diapos = [...document.querySelectorAll('.diapo')];
+const TOTAL = diapos.length;
+let actual = 0, modo = 'presentador', editando = false;
+function tok(n){return getComputedStyle(document.body).getPropertyValue(n).trim();}
+function setColorTok(n, btn){ setColor(tok(n), btn); }
+let herr = null, color = '', grosor = 4, focoOn = false;
+window.addEventListener('DOMContentLoaded', ()=>{ if(!color) color = tok('--acento'); });
+let factorFuente = 1, contraste = false;
+const trazos = Array.from({length: TOTAL}, () => []);
+
+/* ============ Canal de sincronización ============ */
+let canal = null, recibiendo = false;
+try{ canal = new BroadcastChannel('laiglesia_@@ID@@'); }catch(e){}
+function emitir(msj){ if(canal && !recibiendo){ try{ canal.postMessage(msj); }catch(e){} } }
+if(canal){
+  canal.onmessage = ev=>{
+    const m = ev.data; if(!m) return;
+    recibiendo = true;
+    if(m.tipo==='diapo' && typeof m.n==='number') mostrar(m.n, 'canal');
+    else if(m.tipo==='contraste') aplicarContraste(!!m.on);
+    else if(m.tipo==='fuente' && typeof m.f==='number') aplicarFuente(m.f);
+    else if(m.tipo==='trazo-remoto' && m.t && typeof m.d==='number'){ trazos[m.d] = trazos[m.d]||[]; trazos[m.d].push(m.t); if(m.d===actual) redibujar(); }
+    else if(m.tipo==='borrar-remoto' && typeof m.d==='number'){ trazos[m.d]=[]; if(m.d===actual) redibujar(); }
+    else if(m.tipo==='ping'){ recibiendo=false; try{ canal.postMessage({tipo:'pong', n:actual}); }catch(e){} }
+    recibiendo = false;
+  };
+}
+
+/* ============ Escalado 16:9 (reserva margen para la barra en modo presentador) ============ */
+function escalar(){
+  const zona = document.getElementById('zonaEscenario');
+  const margenInf = (modo==='presentador') ? 56 : 0;
+  const esc = Math.min(zona.clientWidth/1280, (zona.clientHeight - margenInf)/720) * (modo==='proyector' ? 1 : 0.97);
+  const e = document.getElementById('escenario');
+  e.style.transform = `scale(${esc})`;
+  document.getElementById('marco').style.width = (1280*esc)+'px';
+  document.getElementById('marco').style.height = (720*esc)+'px';
+}
+window.addEventListener('resize', escalar);
+
+/* ============ Navegación en lockstep ============ */
+let scrollProgramatico = false;
+function mostrar(n, origen){
+  actual = Math.max(0, Math.min(TOTAL-1, n));
+  diapos.forEach((d,i)=>d.classList.toggle('activa', i===actual));
+  document.getElementById('numPag').textContent = (actual+1)+' / '+TOTAL;
+  const _pb = document.getElementById('progresoClase');
+  if(_pb) _pb.style.width = (((actual+1)/TOTAL)*100) + '%';
+  document.querySelectorAll('.nota-bloque').forEach((nb,i)=>{
+    nb.classList.toggle('actual', i===actual);
+  });
+  if(origen!=='scroll'){
+    const nb = document.querySelectorAll('.nota-bloque')[actual];
+    if(nb){ scrollProgramatico = true; nb.scrollIntoView({block:'start', behavior:'smooth'});
+      setTimeout(()=>scrollProgramatico=false, 600); }
+  }
+  redibujar();
+  if(origen!=='canal') emitir({tipo:'diapo', n:actual});
+}
+function ir(d){ mostrar(actual + d); }
+
+/* ============ Panel de notas + sincronización por scroll ============ */
+const cont = document.getElementById('notasScroll');
+NOTAS.forEach((n,i)=>{
+  const div = document.createElement('div');
+  div.className = 'nota-bloque'; div.dataset.idx = i;
+  div.innerHTML = `<div class="etq">${n.b}</div><p>${n.t}</p>`;
+  div.onclick = ()=>mostrar(i);
+  cont.appendChild(div);
+});
+cont.addEventListener('scroll', ()=>{
+  if(scrollProgramatico) return;
+  const linea = cont.getBoundingClientRect().top + 90;
+  let candidato = 0;
+  cont.querySelectorAll('.nota-bloque').forEach(nb=>{
+    if(nb.getBoundingClientRect().top <= linea) candidato = +nb.dataset.idx;
+  });
+  if(candidato !== actual) mostrar(candidato, 'scroll');
+});
+
+/* ============ Modos ============ */
+function alternarModo(){
+  modo = modo==='presentador' ? 'proyector' : 'presentador';
+  document.body.classList.toggle('modo-proyector', modo==='proyector');
+  document.body.classList.toggle('modo-presentador', modo==='presentador');
+  document.getElementById('lblModo').textContent = modo==='presentador' ? 'Presentador' : 'Proyector';
+  setTimeout(escalar, 50);
+}
+function pantallaCompleta(){
+  if(!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+}
+document.addEventListener('fullscreenchange', ()=>setTimeout(escalar,100));
+
+/* ============ Tamaño de letra ============ */
+const textosBase = [];
+document.querySelectorAll('.diapo, .diapo *').forEach(el=>{
+  if(el.tagName==='CANVAS' || el.closest('svg')) return;
+  textosBase.push([el, parseFloat(getComputedStyle(el).fontSize)]);
+});
+function aplicarFuente(f){
+  factorFuente = Math.max(0.8, Math.min(1.6, Math.round(f*10)/10));
+  textosBase.forEach(([el, base])=>{ el.style.fontSize = (base*factorFuente)+'px'; });
+  document.getElementById('lblFuente').textContent = Math.round(factorFuente*100)+'%';
+}
+function cambiarFuente(d){
+  const f = d===0 ? 1 : factorFuente + d;
+  aplicarFuente(f);
+  emitir({tipo:'fuente', f:factorFuente});
+}
+
+/* ============ Alto contraste ============ */
+function aplicarContraste(on){
+  contraste = on;
+  document.body.classList.toggle('alto-contraste', on);
+  document.getElementById('btnContraste').classList.toggle('act', on);
+}
+function alternarContraste(){
+  aplicarContraste(!contraste);
+  emitir({tipo:'contraste', on:contraste});
+}
+
+/* ============ Marcado (canvas) ============ */
+const lienzo = document.getElementById('lienzo');
+const ctx = lienzo.getContext('2d');
+let dibujando = false, trazoAct = null;
+
+function setHerr(h){
+  herr = (herr===h) ? null : h;
+  document.body.classList.toggle('marcando', !!herr);
+  document.getElementById('hLapiz').classList.toggle('act', herr==='lapiz');
+  document.getElementById('hResalt').classList.toggle('act', herr==='resalt');
+}
+function setColor(c, btn){
+  color = c;
+  document.querySelectorAll('.muestra').forEach(m=>m.classList.remove('act'));
+  btn.classList.add('act');
+}
+function setGrosor(g, btn){
+  grosor = g;
+  document.getElementById('hFino').classList.toggle('act', g===4);
+  document.getElementById('hGrueso').classList.toggle('act', g===10);
+}
+function posLienzo(ev){
+  const r = lienzo.getBoundingClientRect();
+  return {x:(ev.clientX-r.left)/r.width*1280, y:(ev.clientY-r.top)/r.height*720};
+}
+lienzo.addEventListener('pointerdown', ev=>{
+  if(!herr || editando) return;
+  dibujando = true;
+  trazoAct = {color, w: herr==='resalt' ? grosor*3 : grosor, a: herr==='resalt' ? 0.35 : 1, pts:[posLienzo(ev)]};
+  lienzo.setPointerCapture(ev.pointerId);
+});
+lienzo.addEventListener('pointermove', ev=>{
+  if(!dibujando) return;
+  trazoAct.pts.push(posLienzo(ev));
+  redibujar(); pintar(trazoAct);
+});
+lienzo.addEventListener('pointerup', ()=>{
+  if(dibujando && trazoAct && trazoAct.pts.length>1) trazos[actual].push(trazoAct);
+  dibujando = false; trazoAct = null; redibujar();
+});
+function pintar(t){
+  ctx.globalAlpha = t.a; ctx.strokeStyle = t.color; ctx.lineWidth = t.w;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  t.pts.forEach((p,i)=> i? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y));
+  ctx.stroke(); ctx.globalAlpha = 1;
+}
+function redibujar(){
+  ctx.clearRect(0,0,1280,720);
+  trazos[actual].forEach(pintar);
+}
+function limpiarDiapo(){ trazos[actual] = []; redibujar(); }
+
+/* ============ Foco / puntero ============ */
+function alternarFoco(){
+  focoOn = !focoOn;
+  document.body.classList.toggle('foco-activo', focoOn);
+  document.getElementById('hFoco').classList.toggle('act', focoOn);
+}
+document.getElementById('escenario').addEventListener('mousemove', ev=>{
+  if(!focoOn) return;
+  const r = document.getElementById('escenario').getBoundingClientRect();
+  const x = (ev.clientX-r.left)/r.width*100, y = (ev.clientY-r.top)/r.height*100;
+  document.getElementById('foco').style.background =
+    `radial-gradient(circle 170px at ${x}% ${y}%, transparent 0%, transparent 60%, rgba(0,4,10,.85) 100%)`;
+});
+
+/* ============ Edición en vivo (bloqueada por defecto) ============ */
+function alternarEdicion(){
+  editando = !editando;
+  diapos.forEach(d=>d.contentEditable = editando ? 'true':'false');
+  document.body.classList.toggle('editando', editando);
+  document.querySelector('#btnEditar .lbl').textContent = editando ? 'Bloquear' : 'Editar';
+  if(editando && herr) setHerr(herr);
+}
+function exportarHTML(){
+  const clon = document.documentElement.cloneNode(true);
+  clon.querySelectorAll('.diapo').forEach(d=>d.removeAttribute('contenteditable'));
+  const blob = new Blob(['<!DOCTYPE html>\n'+clon.outerHTML], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'clase4_presentacion_editada.html';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ============ Ayuda y autoocultar ============ */
+function alternarAyuda(){ document.getElementById('ayudaOverlay').classList.toggle('activa'); }
+let timerOcultar;
+function despertarBarras(){
+  document.getElementById('barraHerr').classList.remove('oculta');
+  document.getElementById('barraSup').classList.remove('oculta');
+  document.getElementById('pista').classList.remove('oculta');
+  clearTimeout(timerOcultar);
+  timerOcultar = setTimeout(()=>{
+    if(modo==='proyector' && !editando){
+      document.getElementById('barraHerr').classList.add('oculta');
+      document.getElementById('barraSup').classList.add('oculta');
+      document.getElementById('pista').classList.add('oculta');
+    }
+  }, 3000);
+}
+document.addEventListener('mousemove', despertarBarras);
+function alternarBarra(){ document.getElementById('barraHerr').classList.toggle('oculta'); }
+
+/* ============ Teclado global ============ */
+document.addEventListener('keydown', ev=>{
+  if(editando && ev.key!=='Escape') return;
+  const k = ev.key.toLowerCase();
+  if(ev.key==='ArrowRight' || ev.key===' '){ ev.preventDefault(); ir(1); }
+  else if(ev.key==='ArrowLeft'){ ev.preventDefault(); ir(-1); }
+  else if(ev.key==='?'){ alternarAyuda(); }
+  else if(k==='f'){ pantallaCompleta(); }
+  else if(k==='p'){ alternarModo(); }
+  else if(k==='c'){ alternarContraste(); }
+  else if(ev.key==='+' || ev.key==='='){ cambiarFuente(0.1); }
+  else if(ev.key==='-'){ cambiarFuente(-0.1); }
+  else if(ev.key==='0'){ cambiarFuente(0); }
+  else if(k==='d'){ setHerr('lapiz'); }
+  else if(k==='h'){ setHerr('resalt'); }
+  else if(k==='e'){ limpiarDiapo(); }
+  else if(k==='s'){ alternarFoco(); }
+  else if(k==='b'){ alternarBarra(); }
+  else if(ev.key==='Escape'){
+    const ay = document.getElementById('ayudaOverlay');
+    if(ay.classList.contains('activa')) ay.classList.remove('activa');
+    else if(editando) alternarEdicion();
+    else if(herr) setHerr(herr);
+    else if(focoOn) alternarFoco();
+  }
+});
+
+/* Avance por clic en la diapositiva */
+document.getElementById('escenario').addEventListener('click', ev=>{
+  if(herr || editando || focoOn) return;
+  if(ev.target.closest('#barraHerr,#barraSup')) return;
+  ir(1);
+});
+
+/* Inicio */
+mostrar(0); escalar(); despertarBarras();
+</script>
+</body>
+</html>

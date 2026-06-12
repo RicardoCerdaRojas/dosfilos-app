@@ -1,0 +1,11 @@
+/* Edición «El diseño divino» (serie de escuela dominical, iglesia v2)
+   Gesto único de la serie: el rombo — eco geométrico del oficio probado.
+   Constitución de ediciones: solo tokens, ámbito .diapo, sin tamaños <13px. */
+.diapo .kicker::before {
+  width: 10px; height: 10px; background: none;
+  border: 1.5px solid currentColor; transform: rotate(45deg); opacity: .95; }
+.diapo.portada .kicker::after {
+  width: 10px; height: 10px; background: none;
+  border: 1.5px solid currentColor; transform: rotate(45deg); opacity: .95; }
+.diapo .secuencia .sq.act .sq-n { border-radius: 0; transform: rotate(45deg); }
+.diapo .secuencia .sq.act .sq-n { width: 26px; height: 26px; }
