@@ -57,6 +57,27 @@ export async function seedDemo(): Promise<SeedResult> {
   return (await fn({})).data;
 }
 
+export interface SaveBrandInput {
+  nombre: string;
+  tokens: Record<string, string>;
+  fuenteTitulosKey: string;
+  fuenteEscrituraKey: string;
+  logoB64: string;
+}
+
+export async function saveBrand(input: SaveBrandInput): Promise<{ marcaId: string }> {
+  const fn = httpsCallable<SaveBrandInput, { marcaId: string }>(functions, 'saveTeachingBrand');
+  return (await fn(input)).data;
+}
+
+/** Abre el HTML de un artefacto/preview en una pestaña nueva (Blob URL). */
+export function openHtml(html: string): void {
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
 /**
  * Renderiza UN artefacto del plan y lo abre en una pestaña nueva (Blob URL).
  * F1 no persiste el HTML en Storage — es un derivado desechable; se re-renderiza

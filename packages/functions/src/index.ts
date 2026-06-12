@@ -17,6 +17,7 @@ export { getGreekDashboardSessions } from './greek-tutor/getGreekDashboardSessio
 export { getFacultyDashboardSessions } from './faculty/getFacultyDashboardSessions';
 export { getUserExtractionsSummary } from './faculty/getUserExtractionsSummary';
 export { seedTeachingDemo } from './teaching-suite/seedTeachingDemo';
+export { saveTeachingBrand } from './teaching-suite/saveTeachingBrand';
 export { getExegesisPapersSummary } from './exegesis/getExegesisPapersSummary';
 export { getSermonsListSummary } from './sermon/getSermonsListSummary';
 export { retrieveChunks } from './library/retrieveChunks';

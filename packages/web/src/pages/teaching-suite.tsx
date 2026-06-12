@@ -1,4 +1,5 @@
-import { Presentation, Plus, RefreshCw, FileText, MonitorPlay, ClipboardList } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Presentation, Plus, RefreshCw, FileText, MonitorPlay, ClipboardList, Palette } from 'lucide-react';
 import type { Artefacto } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
 import { useTeachingClases } from '@/features/teaching-suite/useTeachingClases';
@@ -17,6 +18,7 @@ const ARTEFACTO_META: Record<Artefacto, { label: string; Icon: typeof Presentati
  * desechable, no se almacena).
  */
 export function TeachingSuitePage(): JSX.Element {
+  const navigate = useNavigate();
   const { clases, loading, seeding, error, refresh, sembrarDemo, verArtefacto } =
     useTeachingClases();
 
@@ -31,10 +33,20 @@ export function TeachingSuitePage(): JSX.Element {
             plan. La identidad visual la aporta la marca de la institución.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Actualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/dashboard/teaching-suite/marca')}
+          >
+            <Palette className="w-4 h-4 mr-2" />
+            Crear marca
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Actualizar
+          </Button>
+        </div>
       </header>
 
       {error && (
