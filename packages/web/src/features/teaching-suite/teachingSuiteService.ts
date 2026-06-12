@@ -112,6 +112,7 @@ export async function seedDemo(): Promise<SeedResult> {
 }
 
 export interface SaveBrandInput {
+  marcaId?: string; // presente ⇒ edita
   nombre: string;
   tokens: Record<string, string>;
   fuenteTitulosKey: string;
@@ -122,6 +123,14 @@ export interface SaveBrandInput {
 export async function saveBrand(input: SaveBrandInput): Promise<{ marcaId: string }> {
   const fn = httpsCallable<SaveBrandInput, { marcaId: string }>(functions, 'saveTeachingBrand');
   return (await fn(input)).data;
+}
+
+export async function deleteBrand(marcaId: string): Promise<{ deleted: boolean }> {
+  const fn = httpsCallable<{ marcaId: string }, { deleted: boolean }>(
+    functions,
+    'deleteTeachingBrand',
+  );
+  return (await fn({ marcaId })).data;
 }
 
 /** Abre el HTML de un artefacto/preview en una pestaña nueva (Blob URL). */

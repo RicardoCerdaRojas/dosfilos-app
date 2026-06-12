@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Upload, Eye, Save, ArrowLeft, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { validateBrandTokens } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import {
   renderPreviewHtml,
   type BrandDraft,
 } from '@/features/teaching-suite/crearMarca';
-import { saveBrand, openHtml } from '@/features/teaching-suite/teachingSuiteService';
+import { saveBrand, openHtml, getBrandDoc } from '@/features/teaching-suite/teachingSuiteService';
 
 const TOKEN_LABELS: { key: string; label: string }[] = [
   { key: 'oscuro', label: 'Oscuro (fondo)' },
@@ -37,6 +37,7 @@ const DEFAULT_TOKENS: Record<string, string> = {
 
 export function TeachingSuiteMarcaPage(): JSX.Element {
   const navigate = useNavigate();
+  const { id } = useParams<{ id?: string }>();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [nombre, setNombre] = useState('');
@@ -47,6 +48,27 @@ export function TeachingSuiteMarcaPage(): JSX.Element {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+
+  // Modo editar: carga la marca existente.
+  useEffect(() => {
+    if (!id) return;
+    void (async () => {
+      try {
+        const m = await getBrandDoc(id);
+        if (!m) {
+          setError('No se encontró la marca.');
+          return;
+        }
+        setNombre(m.nombre ?? '');
+        if (m.tokens) setTokens(m.tokens);
+        if (m.fuenteTitulosKey) setTitulosKey(m.fuenteTitulosKey);
+        if (m.fuenteEscrituraKey) setEscrituraKey(m.fuenteEscrituraKey);
+        if (m.logoB64) setLogoB64(m.logoB64);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'No se pudo cargar la marca');
+      }
+    })();
+  }, [id]);
 
   const validation = useMemo(() => validateBrandTokens(tokens), [tokens]);
   const draft = (): BrandDraft => ({
@@ -78,7 +100,7 @@ export function TeachingSuiteMarcaPage(): JSX.Element {
     setBusy(true);
     setError(null);
     try {
-      await saveBrand(draft());
+      await saveBrand({ ...(id ? { marcaId: id } : {}), ...draft() });
       setSaved(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo guardar la marca');
@@ -94,7 +116,7 @@ export function TeachingSuiteMarcaPage(): JSX.Element {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Volver
         </Button>
-        <h1 className="text-xl font-semibold flex-1">Crear marca</h1>
+        <h1 className="text-xl font-semibold flex-1">{id ? 'Editar marca' : 'Crear marca'}</h1>
       </header>
 
       {error && (

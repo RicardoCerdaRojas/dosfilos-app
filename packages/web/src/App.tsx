@@ -345,6 +345,7 @@ function App() {
             {/* Suite de Enseñanza (F1) */}
             <Route path="teaching-suite" element={<TeachingSuitePage />} />
             <Route path="teaching-suite/marca" element={<TeachingSuiteMarcaPage />} />
+            <Route path="teaching-suite/marca/:id" element={<TeachingSuiteMarcaPage />} />
 
             {/* Greek Tutor Dashboard - Sessions list with sidebar */}
             <Route path="greek-tutor-dashboard" element={

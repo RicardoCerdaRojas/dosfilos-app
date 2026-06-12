@@ -13,6 +13,7 @@ import { appCheckCallableOptions } from '../config/appCheckOptions';
  */
 
 interface SaveBrandInput {
+  marcaId?: string; // presente ⇒ actualiza una marca existente del usuario
   nombre: string;
   tokens: Record<string, string>;
   fuenteTitulosKey: string;
@@ -56,8 +57,7 @@ export const saveTeachingBrand = onCall(appCheckCallableOptions(), async (reques
   }
 
   const db = getFirestore();
-  const ref = db.collection('teachingBrands').doc();
-  await ref.set({
+  const campos = {
     nombre: input.nombre,
     tokens: input.tokens,
     fuenteTitulosKey: input.fuenteTitulosKey,
@@ -65,8 +65,23 @@ export const saveTeachingBrand = onCall(appCheckCallableOptions(), async (reques
     logoB64: input.logoB64,
     source: 'user',
     ownerId,
-    createdAt: FieldValue.serverTimestamp(),
-  });
+  };
 
+  if (input.marcaId) {
+    // Actualización: verifica propiedad y que sea una marca de usuario.
+    const ref = db.collection('teachingBrands').doc(input.marcaId);
+    const snap = await ref.get();
+    if (!snap.exists || snap.data()?.ownerId !== ownerId) {
+      throw new HttpsError('permission-denied', 'Marca no encontrada o no es tuya');
+    }
+    if (snap.data()?.source !== 'user') {
+      throw new HttpsError('failed-precondition', 'Las marcas semilla no se editan');
+    }
+    await ref.set({ ...campos, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return { marcaId: ref.id };
+  }
+
+  const ref = db.collection('teachingBrands').doc();
+  await ref.set({ ...campos, createdAt: FieldValue.serverTimestamp() });
   return { marcaId: ref.id };
 });

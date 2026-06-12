@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Presentation, Plus, RefreshCw, FileText, MonitorPlay, ClipboardList, Palette } from 'lucide-react';
+import { Presentation, Plus, RefreshCw, FileText, MonitorPlay, ClipboardList, Palette, Pencil, Trash2 } from 'lucide-react';
 import type { Artefacto } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
 import { useTeachingClases } from '@/features/teaching-suite/useTeachingClases';
@@ -19,8 +19,18 @@ const ARTEFACTO_META: Record<Artefacto, { label: string; Icon: typeof Presentati
  */
 export function TeachingSuitePage(): JSX.Element {
   const navigate = useNavigate();
-  const { clases, brands, loading, seeding, error, refresh, sembrarDemo, verArtefacto, verMarca } =
-    useTeachingClases();
+  const {
+    clases,
+    brands,
+    loading,
+    seeding,
+    error,
+    refresh,
+    sembrarDemo,
+    verArtefacto,
+    verMarca,
+    eliminarMarca,
+  } = useTeachingClases();
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -144,10 +154,32 @@ export function TeachingSuitePage(): JSX.Element {
                     {b.source === 'user' ? 'creada por ti' : 'semilla'}
                   </p>
                 </div>
-                <Button size="sm" variant="secondary" onClick={() => void verMarca(b.id)}>
-                  <Presentation className="w-4 h-4 mr-2" />
-                  Vista previa
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="secondary" onClick={() => void verMarca(b.id)}>
+                    <Presentation className="w-4 h-4 mr-2" />
+                    Vista previa
+                  </Button>
+                  {b.source === 'user' && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => navigate(`/dashboard/teaching-suite/marca/${b.id}`)}
+                      title="Editar"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      if (window.confirm(`¿Eliminar la marca «${b.nombre}»?`)) void eliminarMarca(b.id);
+                    }}
+                    title="Eliminar"
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>
