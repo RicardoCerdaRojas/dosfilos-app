@@ -133,6 +133,62 @@ export async function deleteBrand(marcaId: string): Promise<{ deleted: boolean }
   return (await fn({ marcaId })).data;
 }
 
+// ── F3 — generar plan desde un estudio (IA) ─────────────────────────────────
+
+export interface EstudioRow {
+  id: string;
+  titulo: string;
+  tipo: string;
+}
+
+interface SummaryExtraction {
+  id: string;
+  title: string;
+  type: string;
+}
+
+/** Lista los estudios del usuario (extractions) como origen para generar clase. */
+export async function listEstudios(): Promise<EstudioRow[]> {
+  const fn = httpsCallable<Record<string, never>, { extractions: SummaryExtraction[] }>(
+    functions,
+    'getUserExtractionsSummary',
+  );
+  const { extractions } = (await fn({})).data;
+  return extractions.map((e) => ({
+    id: e.id,
+    titulo: e.title?.trim() || 'Estudio sin título',
+    tipo: e.type ?? '',
+  }));
+}
+
+export interface ProponerPlanInput {
+  estudioId: string;
+  genero: 'exegesis' | 'doctrina';
+  marcaId: string;
+  erroresPrevios?: string[];
+}
+
+/** Pide al asistente un plan candidato desde el estudio (no genera artefactos). */
+export async function proponerPlan(input: ProponerPlanInput): Promise<TeachingPlan> {
+  const fn = httpsCallable<ProponerPlanInput, { plan: TeachingPlan }>(
+    functions,
+    'proponerPlanDesdeEstudio',
+  );
+  return (await fn(input)).data.plan;
+}
+
+/** Persiste el plan aprobado y crea la clase con la marca elegida. */
+export async function crearClaseDesdePlan(
+  plan: TeachingPlan,
+  marcaId: string,
+): Promise<{ claseId: string; planId: string }> {
+  const fn = httpsCallable<{ plan: TeachingPlan; marcaId: string }, { claseId: string; planId: string }>(
+    functions,
+    'crearClaseDesdePlan',
+  );
+  return (await fn({ plan, marcaId })).data;
+}
+
 /** Abre el HTML de un artefacto/preview en una pestaña nueva (Blob URL). */
 export function openHtml(html: string): void {
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
