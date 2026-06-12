@@ -8,6 +8,7 @@ import {
   getPlan,
   renderClaseArtifact,
   previewBrand,
+  deleteBrand,
   openHtml,
   type TeachingClaseRow,
   type BrandRow,
@@ -82,5 +83,26 @@ export function useTeachingClases() {
     }
   };
 
-  return { clases, brands, loading, seeding, error, refresh, sembrarDemo, verArtefacto, verMarca };
+  const eliminarMarca = async (marcaId: string) => {
+    setError(null);
+    try {
+      await deleteBrand(marcaId);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo eliminar la marca');
+    }
+  };
+
+  return {
+    clases,
+    brands,
+    loading,
+    seeding,
+    error,
+    refresh,
+    sembrarDemo,
+    verArtefacto,
+    verMarca,
+    eliminarMarca,
+  };
 }
