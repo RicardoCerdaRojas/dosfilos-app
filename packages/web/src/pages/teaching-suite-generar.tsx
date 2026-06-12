@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGenerarPlan } from '@/features/teaching-suite/useGenerarPlan';
 import { ConfigForm } from '@/features/teaching-suite/generar/ConfigForm';
@@ -52,21 +52,29 @@ export function TeachingSuiteGenerarPage(): JSX.Element {
           setGenero={g.setGenero}
           marcaId={g.marcaId}
           setMarcaId={g.setMarcaId}
-          proponiendo={g.proponiendo}
+          generando={g.generando}
           onProponer={() => void g.proponer()}
         />
-      ) : g.plan && g.validacion ? (
+      ) : g.generando || !g.plan || !g.validacion ? (
+        <div className="rounded-lg border border-dashed p-10 text-center space-y-3">
+          <Loader2 className="w-8 h-8 text-primary mx-auto animate-spin" />
+          <p className="text-sm text-muted-foreground">
+            Preparando el plan de la clase. Esto puede tardar un momento; puedes dejar la pestaña
+            abierta.
+          </p>
+        </div>
+      ) : (
         <PlanReview
           plan={g.plan}
           validacion={g.validacion}
-          proponiendo={g.proponiendo}
+          generando={g.generando}
           creando={g.creando}
           claseId={g.claseId}
           onReintentar={g.reintentar}
           onVolver={g.volverAConfig}
           onAprobar={() => void g.aprobar()}
         />
-      ) : null}
+      )}
     </div>
   );
 }

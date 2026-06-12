@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 interface PlanReviewProps {
   plan: TeachingPlan;
   validacion: ValidationResult;
-  proponiendo: boolean;
+  generando: boolean;
   creando: boolean;
   claseId: string | null;
   onReintentar: () => void;
@@ -29,7 +29,7 @@ function etiquetaDiapo(d: Record<string, unknown>): string {
 export function PlanReview({
   plan,
   validacion,
-  proponiendo,
+  generando,
   creando,
   claseId,
   onReintentar,
@@ -137,11 +137,11 @@ export function PlanReview({
           {creando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
           {creando ? 'Creando…' : 'Aprobar y crear clase'}
         </Button>
-        <Button variant="outline" onClick={onReintentar} disabled={proponiendo || creando}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${proponiendo ? 'animate-spin' : ''}`} />
+        <Button variant="outline" onClick={onReintentar} disabled={generando || creando}>
+          <RefreshCw className={`w-4 h-4 mr-2 ${generando ? 'animate-spin' : ''}`} />
           {validacion.ok ? 'Proponer otra versión' : 'Reintentar'}
         </Button>
-        <Button variant="ghost" onClick={onVolver} disabled={proponiendo || creando}>
+        <Button variant="ghost" onClick={onVolver} disabled={generando || creando}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Cambiar estudio
         </Button>

@@ -48,6 +48,12 @@ service cloud.firestore {
       allow read: if isOwner(resource.data.ownerId) || isSuperAdmin();
       allow write: if false;
     }
+    // Jobs de generación de plan (F3) — el cliente solo LEE su job (onSnapshot);
+    // crear/actualizar va por callable + trigger (Admin SDK, bypassa reglas).
+    match /teachingPlanJobs/{id} {
+      allow read: if isOwner(resource.data.ownerId) || isSuperAdmin();
+      allow write: if false;
+    }
 
     // Sermons collection
     match /sermons/{sermonId} {

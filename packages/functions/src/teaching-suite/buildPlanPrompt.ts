@@ -36,6 +36,12 @@ export interface BuildPlanPromptInput {
   /** Identificador base sugerido para `plan.id` ([a-z0-9_-]+). */
   idSugerido: string;
   artefactos: string[];
+  /**
+   * Recorte de esta sesión dentro de un curso (Eje 2): qué porción/subtema del
+   * estudio cubre. Si está presente, el plan se ciñe a ese alcance; si no, el
+   * plan cubre el estudio como una sesión única.
+   */
+  alcance?: string;
   /** Errores de validatePlan del intento anterior (bucle de corrección). */
   erroresPrevios?: string[];
 }
@@ -53,7 +59,7 @@ const ROL =
   'convierte en HTML después. Tu salida es EXCLUSIVAMENTE el objeto plan.';
 
 export function buildPlanPrompt(input: BuildPlanPromptInput): BuiltPrompt {
-  const { refs, estudio, genero, marcaId, idSugerido, artefactos, erroresPrevios } = input;
+  const { refs, estudio, genero, marcaId, idSugerido, artefactos, alcance, erroresPrevios } = input;
 
   const system = [
     ROL,
@@ -74,6 +80,7 @@ export function buildPlanPrompt(input: BuildPlanPromptInput): BuiltPrompt {
     'Responde con UN solo objeto JSON `plan`, sin texto alrededor. Requisitos duros:',
     `- "genero": "${genero}"; "marca": "${marcaId}"; "id": "${idSugerido}" (o una variante [a-z0-9_-]+).`,
     `- "artefactos": ${JSON.stringify(artefactos)}.`,
+    '- ESTA ES UNA SOLA SESIÓN de clase (~45 min): apunta a 12–20 diapositivas. NO exceder: si el material da para más, prioriza el núcleo de esta sesión; el resto es otra sesión.',
     '- "version_contrato" coherente con los features usados (tarjetas/pasos/secuencia ⇒ ≥1.1; variante ⇒ ≥1.2; lienzo ⇒ ≥1.3; edicion ⇒ ≥1.4).',
     '- "diapositivas": "n" correlativo 1..N sin huecos ni duplicados.',
     '- "bloques": cubren 1..N sin huecos ni solapes (cada uno con "min" realista).',
@@ -92,6 +99,15 @@ export function buildPlanPrompt(input: BuildPlanPromptInput): BuiltPrompt {
     '',
     'Redacta el objeto JSON `plan` completo para esta clase.',
   ];
+
+  if (alcance && alcance.trim()) {
+    partesPrompt.push(
+      '',
+      'Esta sesión es parte de un curso. Cíñete EXCLUSIVAMENTE a este alcance ' +
+        '(el resto del estudio se cubre en otras sesiones):',
+      alcance.trim(),
+    );
+  }
 
   if (erroresPrevios && erroresPrevios.length > 0) {
     partesPrompt.push(

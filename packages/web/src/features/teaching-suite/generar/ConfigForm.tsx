@@ -17,7 +17,7 @@ interface ConfigFormProps {
   setGenero: (v: GeneroSoportado) => void;
   marcaId: string;
   setMarcaId: (v: string) => void;
-  proponiendo: boolean;
+  generando: boolean;
   onProponer: () => void;
 }
 
@@ -32,12 +32,12 @@ export function ConfigForm({
   setGenero,
   marcaId,
   setMarcaId,
-  proponiendo,
+  generando,
   onProponer,
 }: ConfigFormProps): JSX.Element {
   const sinEstudios = estudios.length === 0;
   const sinMarcas = brands.length === 0;
-  const puede = !!estudioId && !!marcaId && !proponiendo;
+  const puede = !!estudioId && !!marcaId && !generando;
 
   return (
     <div className="space-y-5">
@@ -110,12 +110,12 @@ export function ConfigForm({
       </div>
 
       <Button onClick={onProponer} disabled={!puede}>
-        {proponiendo ? (
+        {generando ? (
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
         ) : (
           <Sparkles className="w-4 h-4 mr-2" />
         )}
-        {proponiendo ? 'Preparando el plan…' : 'Proponer plan'}
+        {generando ? 'Preparando el plan…' : 'Proponer plan'}
       </Button>
     </div>
   );

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { validatePlan, type TeachingPlan, type ValidationResult } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import {
   listEstudios,
   listBrands,
-  proponerPlan,
+  encolarPlanSesion,
+  subscribeJob,
   crearClaseDesdePlan,
   type EstudioRow,
   type BrandRow,
@@ -14,13 +15,13 @@ export type GeneroSoportado = 'exegesis' | 'doctrina';
 export type GenerarPaso = 'config' | 'revision';
 
 /**
- * Estado + acciones del flujo «generar clase desde un estudio» (F3, Slice A).
+ * Estado + acciones del flujo «generar clase desde un estudio» (F3, Slice B).
  *
- * El asistente propone un `plan`; la validación dura corre AQUÍ con el
- * `validatePlan` de @dosfilos/domain (oráculo único). Si el plan es inválido, la
- * pantalla de revisión muestra los errores y se puede reintentar manualmente
- * (el bucle automático con `erroresPrevios` es Slice B). Aprobar solo procede si
- * la validación pasó.
+ * La generación es ASÍNCRONA: encola un job y escucha su doc por onSnapshot
+ * (sin timeout de cliente). Cuando el job queda 'listo', la validación dura
+ * corre AQUÍ con `validatePlan` de @dosfilos/domain (oráculo único) y se pasa a
+ * la pantalla de revisión. Reintentar encola un nuevo job. Aprobar solo procede
+ * si la validación pasó.
  */
 export function useGenerarPlan() {
   const { user } = useFirebase();
@@ -35,11 +36,17 @@ export function useGenerarPlan() {
   const [genero, setGenero] = useState<GeneroSoportado>('exegesis');
   const [marcaId, setMarcaId] = useState('');
 
-  const [proponiendo, setProponiendo] = useState(false);
+  const [generando, setGenerando] = useState(false);
   const [creando, setCreando] = useState(false);
   const [plan, setPlan] = useState<TeachingPlan | null>(null);
   const [validacion, setValidacion] = useState<ValidationResult | null>(null);
   const [claseId, setClaseId] = useState<string | null>(null);
+
+  const unsubRef = useRef<(() => void) | null>(null);
+  const limpiarSub = useCallback(() => {
+    unsubRef.current?.();
+    unsubRef.current = null;
+  }, []);
 
   useEffect(() => {
     let activo = true;
@@ -66,31 +73,54 @@ export function useGenerarPlan() {
     };
   }, [user?.uid]);
 
-  const proponer = useCallback(
-    async (erroresPrevios?: string[]) => {
-      if (!estudioId || !marcaId) {
-        setError('Elige un estudio y una marca');
-        return;
-      }
-      setProponiendo(true);
-      setError(null);
-      try {
-        const candidato = await proponerPlan({ estudioId, genero, marcaId, erroresPrevios });
-        setPlan(candidato);
-        setValidacion(validatePlan(candidato));
-        setPaso('revision');
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'No se pudo proponer el plan');
-      } finally {
-        setProponiendo(false);
-      }
-    },
-    [estudioId, marcaId, genero],
-  );
+  // Cancelar la suscripción al desmontar.
+  useEffect(() => () => limpiarSub(), [limpiarSub]);
+
+  const proponer = useCallback(async () => {
+    if (!estudioId || !marcaId) {
+      setError('Elige un estudio y una marca');
+      return;
+    }
+    limpiarSub();
+    setGenerando(true);
+    setError(null);
+    setPaso('revision');
+    setPlan(null);
+    setValidacion(null);
+    try {
+      const jobId = await encolarPlanSesion({ estudioId, genero, marcaId });
+      unsubRef.current = subscribeJob(
+        jobId,
+        (job) => {
+          if (job.estado === 'listo' && job.plan) {
+            setPlan(job.plan);
+            setValidacion(validatePlan(job.plan));
+            setGenerando(false);
+            limpiarSub();
+          } else if (job.estado === 'error') {
+            setError(job.error ?? 'No se pudo generar el plan');
+            setGenerando(false);
+            setPaso('config');
+            limpiarSub();
+          }
+        },
+        (e) => {
+          setError(e.message);
+          setGenerando(false);
+          setPaso('config');
+          limpiarSub();
+        },
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo iniciar la generación');
+      setGenerando(false);
+      setPaso('config');
+    }
+  }, [estudioId, marcaId, genero, limpiarSub]);
 
   const reintentar = useCallback(() => {
-    void proponer(validacion?.errores);
-  }, [proponer, validacion]);
+    void proponer();
+  }, [proponer]);
 
   const aprobar = useCallback(async () => {
     if (!plan || !validacion?.ok) return;
@@ -107,10 +137,12 @@ export function useGenerarPlan() {
   }, [plan, validacion, marcaId]);
 
   const volverAConfig = useCallback(() => {
+    limpiarSub();
+    setGenerando(false);
     setPaso('config');
     setPlan(null);
     setValidacion(null);
-  }, []);
+  }, [limpiarSub]);
 
   return {
     estudios,
@@ -124,7 +156,7 @@ export function useGenerarPlan() {
     setGenero,
     marcaId,
     setMarcaId,
-    proponiendo,
+    generando,
     creando,
     plan,
     validacion,

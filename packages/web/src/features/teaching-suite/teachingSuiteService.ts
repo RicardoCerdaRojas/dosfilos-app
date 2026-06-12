@@ -1,5 +1,5 @@
 import { db, functions } from '@dosfilos/infrastructure';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import type { Artefacto, TeachingPlan } from '@dosfilos/domain';
 import {
@@ -161,24 +161,51 @@ export async function listEstudios(): Promise<EstudioRow[]> {
   }));
 }
 
-export interface ProponerPlanInput {
+export interface EncolarPlanInput {
   estudioId: string;
   genero: 'exegesis' | 'doctrina';
   marcaId: string;
-  erroresPrevios?: string[];
+  /** Sesión dentro de un curso (Eje 2); vacío en sesión suelta. */
+  alcance?: string;
+  serie?: string;
+  cursoId?: string;
 }
 
-/** Pide al asistente un plan candidato desde el estudio (no genera artefactos). */
-export async function proponerPlan(input: ProponerPlanInput): Promise<TeachingPlan> {
-  // Generar un plan completo (doctrina: 25–35 láminas) tarda más que el timeout
-  // por defecto del cliente (70s) → `deadline-exceeded`. Lo igualamos al del
-  // callable (120s). El SDK toma el timeout en milisegundos.
-  const fn = httpsCallable<ProponerPlanInput, { plan: TeachingPlan }>(
-    functions,
-    'proponerPlanDesdeEstudio',
-    { timeout: 120_000 },
+/**
+ * Encola la generación del plan (no espera el resultado). La generación corre en
+ * un trigger; sigue el progreso con `subscribeJob(jobId)`. Evita el timeout de
+ * cliente en generaciones largas.
+ */
+export async function encolarPlanSesion(input: EncolarPlanInput): Promise<string> {
+  const fn = httpsCallable<EncolarPlanInput, { jobId: string }>(functions, 'encolarPlanSesion');
+  return (await fn(input)).data.jobId;
+}
+
+export interface PlanJob {
+  estado: 'generando' | 'listo' | 'error';
+  plan?: TeachingPlan;
+  error?: string;
+}
+
+/** Escucha el job de generación; llama `onUpdate` en cada cambio de estado. */
+export function subscribeJob(
+  jobId: string,
+  onUpdate: (job: PlanJob) => void,
+  onError: (e: Error) => void,
+): () => void {
+  return onSnapshot(
+    doc(db, 'teachingPlanJobs', jobId),
+    (snap) => {
+      if (!snap.exists()) return;
+      const x = snap.data() as Record<string, unknown>;
+      onUpdate({
+        estado: (x.estado as PlanJob['estado']) ?? 'generando',
+        plan: x.plan as TeachingPlan | undefined,
+        error: x.error as string | undefined,
+      });
+    },
+    (e) => onError(e instanceof Error ? e : new Error('Error al seguir la generación')),
   );
-  return (await fn(input)).data.plan;
 }
 
 /** Persiste el plan aprobado y crea la clase con la marca elegida. */
