@@ -2,6 +2,7 @@ import { CheckCircle2, AlertTriangle, RefreshCw, ArrowLeft, Loader2, Check, Recy
 import { useNavigate } from 'react-router-dom';
 import type { TeachingPlan, ValidationResult } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import type { CanvasCandidata, CanvasComponentRow } from '../teachingSuiteService';
 
 interface PlanReviewProps {
@@ -147,8 +148,11 @@ export function PlanReview({
             className={`${INPUT} flex-1`}
             aria-label="Serie"
           />
+          <Badge variant="secondary" className="whitespace-nowrap capitalize">
+            {plan.genero}
+          </Badge>
           <span className="text-xs text-muted-foreground whitespace-nowrap">
-            {plan.genero} · {plan.diapositivas.length} diapositivas
+            {plan.diapositivas.length} diapositivas
           </span>
         </div>
       </div>
@@ -223,7 +227,7 @@ export function PlanReview({
           {plan.diapositivas.map((d) => (
             <li key={d.n} className="flex items-center gap-2 rounded border px-3 py-1.5 text-sm bg-background">
               <span className="w-6 text-right text-xs text-muted-foreground">{d.n}</span>
-              <span className="rounded bg-muted px-1.5 py-0.5 text-xs">{d.tipo}</span>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{d.tipo}</Badge>
               <span className="flex-1 truncate">
                 {vistaPreviaDiapo(d as unknown as Record<string, unknown>)}
               </span>

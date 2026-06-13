@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGenerarPlan } from '@/features/teaching-suite/useGenerarPlan';
 import { ConfigForm } from '@/features/teaching-suite/generar/ConfigForm';
 import { PlanReview } from '@/features/teaching-suite/generar/PlanReview';
@@ -43,20 +44,27 @@ export function TeachingSuiteGenerarPage(): JSX.Element {
       {g.loading ? (
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : g.paso === 'config' ? (
-        <ConfigForm
-          estudios={g.estudios}
-          brands={g.brands}
-          estudioId={g.estudioId}
-          setEstudioId={g.setEstudioId}
-          genero={g.genero}
-          setGenero={g.setGenero}
-          modalidad={g.modalidad}
-          setModalidad={g.setModalidad}
-          marcaId={g.marcaId}
-          setMarcaId={g.setMarcaId}
-          generando={g.generando}
-          onProponer={() => void g.proponer()}
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Configura la clase</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ConfigForm
+              estudios={g.estudios}
+              brands={g.brands}
+              estudioId={g.estudioId}
+              setEstudioId={g.setEstudioId}
+              genero={g.genero}
+              setGenero={g.setGenero}
+              modalidad={g.modalidad}
+              setModalidad={g.setModalidad}
+              marcaId={g.marcaId}
+              setMarcaId={g.setMarcaId}
+              generando={g.generando}
+              onProponer={() => void g.proponer()}
+            />
+          </CardContent>
+        </Card>
       ) : g.generando || !g.plan || !g.validacion ? (
         <div className="rounded-lg border border-dashed p-10 text-center space-y-3">
           <Loader2 className="w-8 h-8 text-primary mx-auto animate-spin" />
