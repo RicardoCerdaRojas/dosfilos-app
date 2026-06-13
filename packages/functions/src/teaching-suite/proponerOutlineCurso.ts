@@ -5,6 +5,7 @@ import { join } from 'path';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { AnthropicLlmClient } from '../llm/AnthropicLlmClient';
 import { buildOutlinePrompt, type GeneroSoportado } from './buildOutlinePrompt';
+import { MENSAJE_NO_DISPONIBLE } from './planGeneration';
 
 /**
  * Teaching Suite F3 (curso) — propone el OUTLINE de un curso desde un estudio.
@@ -102,13 +103,19 @@ export const proponerOutlineCurso = onCall(
     });
 
     const llm = new AnthropicLlmClient(anthropicKey);
-    const raw = await llm.generate({
-      system,
-      prompt,
-      responseMimeType: 'application/json',
-      temperature: 0.4,
-      maxOutputTokens: 2000,
-    });
+    let raw: string;
+    try {
+      raw = await llm.generate({
+        system,
+        prompt,
+        responseMimeType: 'application/json',
+        temperature: 0.4,
+        maxOutputTokens: 2000,
+      });
+    } catch (err) {
+      console.error('[teaching-suite] fallo del proveedor (outline):', err);
+      throw new HttpsError('unavailable', MENSAJE_NO_DISPONIBLE);
+    }
 
     return { sesiones: coerceOutline(raw) };
   },
