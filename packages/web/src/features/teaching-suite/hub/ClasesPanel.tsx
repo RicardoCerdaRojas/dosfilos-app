@@ -10,6 +10,7 @@ import {
 import type { Artefacto } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import type { TeachingClaseRow } from '../teachingSuiteService';
@@ -39,7 +40,7 @@ interface ClasesPanelProps {
   onVerArtefacto: (clase: TeachingClaseRow, artefacto: Artefacto) => void;
 }
 
-function ClaseRow({
+function ClaseCard({
   clase,
   conOrden,
   onVerArtefacto,
@@ -50,24 +51,24 @@ function ClaseRow({
 }): JSX.Element {
   const estado = ESTADO_BADGE[clase.estado] ?? { label: clase.estado, variant: 'secondary' as const };
   return (
-    <li className="flex items-center gap-3 rounded-lg border px-3 py-2 bg-background">
-      {conOrden && clase.orden != null && (
-        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-muted text-xs font-medium flex items-center justify-center text-muted-foreground">
-          {clase.orden}
-        </span>
-      )}
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-sm truncate">{clase.titulo}</p>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          {GENERO_LABEL[clase.genero] && (
-            <span className="text-xs text-muted-foreground">{GENERO_LABEL[clase.genero]}</span>
-          )}
-          <Badge variant={estado.variant} className="text-[10px] px-1.5 py-0">
-            {estado.label}
-          </Badge>
-        </div>
+    <Card className="gap-2 py-4 px-4">
+      <div className="flex items-start gap-2">
+        {conOrden && clase.orden != null && (
+          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-muted text-xs font-medium flex items-center justify-center text-muted-foreground">
+            {clase.orden}
+          </span>
+        )}
+        <p className="font-medium text-sm leading-snug flex-1 min-w-0">{clase.titulo}</p>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
+        {GENERO_LABEL[clase.genero] && (
+          <span className="text-xs text-muted-foreground">{GENERO_LABEL[clase.genero]}</span>
+        )}
+        <Badge variant={estado.variant} className="text-[10px] px-1.5 py-0">
+          {estado.label}
+        </Badge>
+      </div>
+      <div className="flex items-center gap-1 pt-1 border-t mt-1">
         {clase.artefactos.map((a) => {
           const meta = ARTEFACTO_META[a];
           if (!meta) return null;
@@ -88,7 +89,7 @@ function ClaseRow({
           );
         })}
       </div>
-    </li>
+    </Card>
   );
 }
 
@@ -102,20 +103,21 @@ function CursoGroup({
   onVerArtefacto: ClasesPanelProps['onVerArtefacto'];
 }): JSX.Element {
   const [abierto, setAbierto] = useState(true);
+  const grid = 'grid gap-3 sm:grid-cols-2 2xl:grid-cols-3';
 
   // Las clases sueltas (sin serie) no necesitan cabecera de curso.
   if (!serie) {
     return (
-      <ul className="space-y-2">
+      <div className={grid}>
         {clases.map((c) => (
-          <ClaseRow key={c.id} clase={c} conOrden={false} onVerArtefacto={onVerArtefacto} />
+          <ClaseCard key={c.id} clase={c} conOrden={false} onVerArtefacto={onVerArtefacto} />
         ))}
-      </ul>
+      </div>
     );
   }
 
   return (
-    <Collapsible open={abierto} onOpenChange={setAbierto} className="space-y-2">
+    <Collapsible open={abierto} onOpenChange={setAbierto} className="space-y-3">
       <CollapsibleTrigger className="flex w-full items-center gap-2 text-left">
         <ChevronDown
           className={cn('w-4 h-4 text-muted-foreground transition-transform', !abierto && '-rotate-90')}
@@ -125,20 +127,20 @@ function CursoGroup({
         <span className="text-xs text-muted-foreground">{clases.length} sesiones</span>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <ul className="space-y-2 pl-6">
+        <div className={grid}>
           {clases.map((c) => (
-            <ClaseRow key={c.id} clase={c} conOrden onVerArtefacto={onVerArtefacto} />
+            <ClaseCard key={c.id} clase={c} conOrden onVerArtefacto={onVerArtefacto} />
           ))}
-        </ul>
+        </div>
       </CollapsibleContent>
     </Collapsible>
   );
 }
 
-/** Panel principal del hub: clases agrupadas por curso, colapsables. */
+/** Panel principal del hub: clases agrupadas por curso (grid de cards), colapsables. */
 export function ClasesPanel({ clases, onVerArtefacto }: ClasesPanelProps): JSX.Element {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {agruparPorSerie(clases).map((grupo) => (
         <CursoGroup
           key={grupo.serie ?? '__sueltas__'}

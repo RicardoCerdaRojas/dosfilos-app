@@ -6,9 +6,10 @@ import { ClasesPanel } from '@/features/teaching-suite/hub/ClasesPanel';
 import { RecursosPanel } from '@/features/teaching-suite/hub/RecursosPanel';
 
 /**
- * Suite de Enseñanza — hub del docente (layout de dos paneles).
- * Izquierda: las clases agrupadas por curso (foco). Derecha: recursos
- * reutilizables (marcas + láminas guardadas). El render de los artefactos es
+ * Suite de Enseñanza — hub del docente. Adopta el shell del sistema (contenedor
+ * ancho `max-w-7xl` + header editorial, como Biblioteca/Exégesis) con un layout
+ * de dos paneles: izquierda las clases por curso (grid de cards), derecha los
+ * recursos reutilizables (marcas + láminas). El render de los artefactos es
  * client-side desde el plan; el HTML es un derivado desechable, no se almacena.
  */
 export function TeachingSuitePage(): JSX.Element {
@@ -30,30 +31,41 @@ export function TeachingSuitePage(): JSX.Element {
 
   const go = (ruta: string) => navigate(`/dashboard/teaching-suite${ruta}`);
 
+  const meta = [
+    `${clases.length} ${clases.length === 1 ? 'clase' : 'clases'}`,
+    `${brands.length} ${brands.length === 1 ? 'marca' : 'marcas'}`,
+  ].join(' · ');
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-      <header className="flex flex-wrap items-start gap-3">
-        <Presentation className="w-6 h-6 text-primary mt-0.5 flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-semibold">Suite de Enseñanza</h1>
-          <p className="text-sm text-muted-foreground">
-            Genera los artefactos de una clase desde su plan. La identidad visual la aporta la marca.
-          </p>
+    <div className="w-full max-w-7xl mx-auto px-6 lg:px-10 py-5 lg:py-6 space-y-6">
+      {/* Header editorial (idioma del sistema) */}
+      <div className="pb-3 border-b border-border/60 space-y-1">
+        <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.18em] font-medium text-primary">
+          <Presentation className="h-3 w-3" />
+          <span>Tu entorno · Suite de Enseñanza</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Button size="sm" onClick={() => go('/generar')}>
-            <Sparkles className="w-4 h-4 mr-2" />
-            Generar clase
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => go('/curso')}>
-            <Library className="w-4 h-4 mr-2" />
-            Generar curso
-          </Button>
-          <Button size="icon" variant="ghost" onClick={() => void refresh()} disabled={loading} title="Actualizar">
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
+        <div className="flex items-baseline justify-between gap-4 flex-wrap">
+          <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-3">
+            <h1 className="font-reading text-[24px] md:text-[28px] leading-tight tracking-[-0.01em] text-foreground">
+              Suite de Enseñanza
+            </h1>
+            <p className="text-[13px] leading-snug text-muted-foreground">{meta}</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button size="sm" onClick={() => go('/generar')}>
+              <Sparkles className="w-4 h-4 mr-2" />
+              Generar clase
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => go('/curso')}>
+              <Library className="w-4 h-4 mr-2" />
+              Generar curso
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => void refresh()} disabled={loading} title="Actualizar">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </div>
-      </header>
+      </div>
 
       {error && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -61,7 +73,7 @@ export function TeachingSuitePage(): JSX.Element {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
         {/* Panel principal — clases */}
         <main className="min-w-0 space-y-4">
           {loading ? (
