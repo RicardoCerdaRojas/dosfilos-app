@@ -148,6 +148,11 @@ export function TeachingSuitePage(): JSX.Element {
                     key={c.id}
                     className="flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 bg-background"
                   >
+                    {grupo.serie && c.orden != null && (
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-muted text-xs font-medium flex items-center justify-center text-muted-foreground">
+                        {c.orden}
+                      </span>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{c.titulo}</p>
                       <p className="text-xs text-muted-foreground">
