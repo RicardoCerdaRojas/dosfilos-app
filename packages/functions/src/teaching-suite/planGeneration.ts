@@ -17,6 +17,15 @@ import { buildPlanPrompt, type GeneroSoportado, type Modalidad, type PromptRefs 
  */
 
 export const ARTEFACTOS_CLASE = ['presentacion', 'notas', 'hoja'];
+
+/**
+ * Mensaje genérico para el usuario cuando la llamada al proveedor de generación
+ * falla (cuota/créditos, rate-limit, red, 5xx). NUNCA exponer el error crudo del
+ * proveedor: filtra el nombre del servicio, saldo de créditos, request_id, etc.
+ * (regla del proyecto: no exponer IA/proveedor en UI). El detalle real va a logs.
+ */
+export const MENSAJE_NO_DISPONIBLE =
+  'El asistente no está disponible en este momento. Inténtalo de nuevo en unos minutos.';
 /** Consejería 1-a-1: guía de sesión + hoja del aconsejado (sin presentación/notas). */
 export const ARTEFACTOS_SESION = ['guia_sesion', 'hoja'];
 
@@ -112,15 +121,22 @@ export async function generarPlan(args: GenerarPlanArgs): Promise<Record<string,
   });
 
   const llm = new AnthropicLlmClient(anthropicKey);
-  const raw = await llm.generate({
-    system,
-    prompt,
-    responseMimeType: 'application/json',
-    temperature: 0.4,
-    // Una sesión acotada (12–20 láminas) cabe holgada; tope generoso para no
-    // truncar el JSON con los cuerpos HTML.
-    maxOutputTokens: 16000,
-  });
+  let raw: string;
+  try {
+    raw = await llm.generate({
+      system,
+      prompt,
+      responseMimeType: 'application/json',
+      temperature: 0.4,
+      // Una sesión acotada (12–20 láminas) cabe holgada; tope generoso para no
+      // truncar el JSON con los cuerpos HTML.
+      maxOutputTokens: 16000,
+    });
+  } catch (err) {
+    // Log crudo para ops; al usuario solo el mensaje genérico (sin proveedor).
+    console.error('[teaching-suite] fallo del proveedor de generación:', err);
+    throw new Error(MENSAJE_NO_DISPONIBLE);
+  }
 
   return coerceCandidate(raw, genero, marcaId, idSugerido, modalidad);
 }
