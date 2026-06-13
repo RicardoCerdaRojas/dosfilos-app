@@ -1,11 +1,17 @@
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { EstudioRow, BrandRow } from '../teachingSuiteService';
-import type { GeneroSoportado } from '../useGenerarPlan';
+import type { GeneroSoportado, ModalidadSoportada } from '../useGenerarPlan';
 
 const GENERO_OPCIONES: { value: GeneroSoportado; label: string }[] = [
   { value: 'exegesis', label: 'Exégesis (estudio de un pasaje)' },
   { value: 'doctrina', label: 'Doctrina (tema con varios pasajes)' },
+  { value: 'consejeria', label: 'Consejería bíblica' },
+];
+
+const MODALIDAD_OPCIONES: { value: ModalidadSoportada; label: string }[] = [
+  { value: 'sesion', label: 'Sesión 1-a-1 (guía + hoja del aconsejado)' },
+  { value: 'clase', label: 'Clase grupal (enseñar consejería al grupo)' },
 ];
 
 interface ConfigFormProps {
@@ -15,6 +21,8 @@ interface ConfigFormProps {
   setEstudioId: (v: string) => void;
   genero: GeneroSoportado;
   setGenero: (v: GeneroSoportado) => void;
+  modalidad: ModalidadSoportada;
+  setModalidad: (v: ModalidadSoportada) => void;
   marcaId: string;
   setMarcaId: (v: string) => void;
   generando: boolean;
@@ -30,6 +38,8 @@ export function ConfigForm({
   setEstudioId,
   genero,
   setGenero,
+  modalidad,
+  setModalidad,
   marcaId,
   setMarcaId,
   generando,
@@ -83,6 +93,35 @@ export function ConfigForm({
           ))}
         </select>
       </div>
+
+      {genero === 'consejeria' && (
+        <>
+          <div className="space-y-1">
+            <label htmlFor="ts-modalidad" className="text-sm font-medium">
+              Modalidad
+            </label>
+            <select
+              id="ts-modalidad"
+              value={modalidad}
+              onChange={(e) => setModalidad(e.target.value as ModalidadSoportada)}
+              className={SELECT_CLS}
+            >
+              {MODALIDAD_OPCIONES.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex gap-2 rounded-md border border-warning/30 bg-warning-subtle px-3 py-2 text-sm text-warning-subtle-foreground">
+            <ShieldAlert className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>
+              Confidencialidad: el asistente anonimiza nombres y datos identificables del aconsejado
+              (código de caso) en todos los artefactos. Revisa el resultado antes de usarlo.
+            </span>
+          </div>
+        </>
+      )}
 
       <div className="space-y-1">
         <label htmlFor="ts-marca" className="text-sm font-medium">

@@ -1,7 +1,7 @@
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { generarPlan, slugify } from './planGeneration';
-import type { GeneroSoportado } from './buildPlanPrompt';
+import type { GeneroSoportado, Modalidad } from './buildPlanPrompt';
 
 /**
  * Teaching Suite F3 (Slice B) — trigger que genera el plan de un job encolado.
@@ -31,6 +31,7 @@ export const generarPlanJob = onDocumentCreated(
       estudioId?: string;
       estudioTitulo?: string;
       genero?: string;
+      modalidad?: string | null;
       marcaId?: string;
       alcance?: string | null;
       estado?: string;
@@ -69,6 +70,7 @@ export const generarPlanJob = onDocumentCreated(
         anthropicKey,
         estudio: material,
         genero,
+        modalidad: (job.modalidad as Modalidad | null) ?? undefined,
         marcaId,
         idSugerido: slugify(job.estudioTitulo ?? '', 'clase'),
         alcance: job.alcance ?? undefined,

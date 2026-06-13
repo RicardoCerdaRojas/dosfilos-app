@@ -50,6 +50,8 @@ export function TeachingSuiteGenerarPage(): JSX.Element {
           setEstudioId={g.setEstudioId}
           genero={g.genero}
           setGenero={g.setGenero}
+          modalidad={g.modalidad}
+          setModalidad={g.setModalidad}
           marcaId={g.marcaId}
           setMarcaId={g.setMarcaId}
           generando={g.generando}

@@ -163,9 +163,14 @@ export async function listEstudios(): Promise<EstudioRow[]> {
   }));
 }
 
+export type GeneroTeaching = 'exegesis' | 'doctrina' | 'consejeria';
+export type ModalidadTeaching = 'clase' | 'sesion';
+
 export interface EncolarPlanInput {
   estudioId: string;
-  genero: 'exegesis' | 'doctrina';
+  genero: GeneroTeaching;
+  /** Solo consejería. */
+  modalidad?: ModalidadTeaching;
   marcaId: string;
   /** Sesión dentro de un curso (Eje 2); vacío en sesión suelta. */
   alcance?: string;

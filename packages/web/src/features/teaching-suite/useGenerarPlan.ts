@@ -11,7 +11,8 @@ import {
   type BrandRow,
 } from './teachingSuiteService';
 
-export type GeneroSoportado = 'exegesis' | 'doctrina';
+export type GeneroSoportado = 'exegesis' | 'doctrina' | 'consejeria';
+export type ModalidadSoportada = 'clase' | 'sesion';
 export type GenerarPaso = 'config' | 'revision';
 
 /**
@@ -34,6 +35,7 @@ export function useGenerarPlan() {
   const [paso, setPaso] = useState<GenerarPaso>('config');
   const [estudioId, setEstudioId] = useState('');
   const [genero, setGenero] = useState<GeneroSoportado>('exegesis');
+  const [modalidad, setModalidad] = useState<ModalidadSoportada>('sesion');
   const [marcaId, setMarcaId] = useState('');
 
   const [generando, setGenerando] = useState(false);
@@ -88,7 +90,12 @@ export function useGenerarPlan() {
     setPlan(null);
     setValidacion(null);
     try {
-      const jobId = await encolarPlanSesion({ estudioId, genero, marcaId });
+      const jobId = await encolarPlanSesion({
+        estudioId,
+        genero,
+        marcaId,
+        modalidad: genero === 'consejeria' ? modalidad : undefined,
+      });
       unsubRef.current = subscribeJob(
         jobId,
         (job) => {
@@ -116,7 +123,7 @@ export function useGenerarPlan() {
       setGenerando(false);
       setPaso('config');
     }
-  }, [estudioId, marcaId, genero, limpiarSub]);
+  }, [estudioId, marcaId, genero, modalidad, limpiarSub]);
 
   const reintentar = useCallback(() => {
     void proponer();
@@ -154,6 +161,8 @@ export function useGenerarPlan() {
     setEstudioId,
     genero,
     setGenero,
+    modalidad,
+    setModalidad,
     marcaId,
     setMarcaId,
     generando,
