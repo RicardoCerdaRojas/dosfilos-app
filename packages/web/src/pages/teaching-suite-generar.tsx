@@ -50,6 +50,8 @@ export function TeachingSuiteGenerarPage(): JSX.Element {
           setEstudioId={g.setEstudioId}
           genero={g.genero}
           setGenero={g.setGenero}
+          modalidad={g.modalidad}
+          setModalidad={g.setModalidad}
           marcaId={g.marcaId}
           setMarcaId={g.setMarcaId}
           generando={g.generando}
@@ -59,8 +61,9 @@ export function TeachingSuiteGenerarPage(): JSX.Element {
         <div className="rounded-lg border border-dashed p-10 text-center space-y-3">
           <Loader2 className="w-8 h-8 text-primary mx-auto animate-spin" />
           <p className="text-sm text-muted-foreground">
-            Preparando el plan de la clase. Esto puede tardar un momento; puedes dejar la pestaña
-            abierta.
+            {g.intento > 0
+              ? `Corrigiendo el plan (intento ${g.intento + 1})…`
+              : 'Preparando el plan de la clase. Esto puede tardar un momento; puedes dejar la pestaña abierta.'}
           </p>
         </div>
       ) : (
@@ -73,6 +76,7 @@ export function TeachingSuiteGenerarPage(): JSX.Element {
           onReintentar={g.reintentar}
           onVolver={g.volverAConfig}
           onAprobar={() => void g.aprobar()}
+          onEditar={g.editarPlan}
         />
       )}
     </div>

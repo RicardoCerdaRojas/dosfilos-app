@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { AnthropicLlmClient } from '../llm/AnthropicLlmClient';
-import { buildPlanPrompt, type GeneroSoportado, type PromptRefs } from './buildPlanPrompt';
+import { buildPlanPrompt, type GeneroSoportado, type Modalidad, type PromptRefs } from './buildPlanPrompt';
 
 /**
  * Teaching Suite F3 — núcleo de generación de un `plan` desde un estudio.
@@ -17,6 +17,13 @@ import { buildPlanPrompt, type GeneroSoportado, type PromptRefs } from './buildP
  */
 
 export const ARTEFACTOS_CLASE = ['presentacion', 'notas', 'hoja'];
+/** Consejería 1-a-1: guía de sesión + hoja del aconsejado (sin presentación/notas). */
+export const ARTEFACTOS_SESION = ['guia_sesion', 'hoja'];
+
+/** Artefactos según género/modalidad (consejería-sesión es el único caso especial). */
+export function artefactosPara(genero: GeneroSoportado, modalidad?: Modalidad): string[] {
+  return genero === 'consejeria' && modalidad === 'sesion' ? [...ARTEFACTOS_SESION] : [...ARTEFACTOS_CLASE];
+}
 
 function readPromptAsset(rel: string): string {
   return readFileSync(join(__dirname, 'assets', 'prompts', rel), 'utf-8');
@@ -48,6 +55,7 @@ export function coerceCandidate(
   genero: GeneroSoportado,
   marcaId: string,
   idSugerido: string,
+  modalidad?: Modalidad,
 ): Record<string, unknown> {
   let parsed: unknown;
   try {
@@ -66,12 +74,14 @@ export function coerceCandidate(
   // respete). El render resuelve la marca por `clase.marcaId`.
   plan.genero = genero;
   plan.marca = marcaId;
+  if (genero === 'consejeria') {
+    plan.modalidad = modalidad ?? 'sesion';
+  }
   if (typeof plan.id !== 'string' || !/^[a-z0-9_-]+$/.test(plan.id)) {
     plan.id = idSugerido;
   }
-  if (!Array.isArray(plan.artefactos) || plan.artefactos.length === 0) {
-    plan.artefactos = [...ARTEFACTOS_CLASE];
-  }
+  // Los artefactos los fija el género/modalidad (no se confía en el modelo).
+  plan.artefactos = artefactosPara(genero, modalidad);
   return plan;
 }
 
@@ -79,6 +89,7 @@ export interface GenerarPlanArgs {
   anthropicKey: string;
   estudio: string;
   genero: GeneroSoportado;
+  modalidad?: Modalidad;
   marcaId: string;
   idSugerido: string;
   alcance?: string;
@@ -87,14 +98,15 @@ export interface GenerarPlanArgs {
 
 /** Genera un candidato a `plan` (una sesión). Lanza Error plano si falla. */
 export async function generarPlan(args: GenerarPlanArgs): Promise<Record<string, unknown>> {
-  const { anthropicKey, estudio, genero, marcaId, idSugerido, alcance, erroresPrevios } = args;
+  const { anthropicKey, estudio, genero, modalidad, marcaId, idSugerido, alcance, erroresPrevios } = args;
   const { system, prompt } = buildPlanPrompt({
     refs: loadRefs(genero),
     estudio,
     genero,
+    modalidad,
     marcaId,
     idSugerido,
-    artefactos: [...ARTEFACTOS_CLASE],
+    artefactos: artefactosPara(genero, modalidad),
     alcance,
     erroresPrevios,
   });
@@ -110,5 +122,5 @@ export async function generarPlan(args: GenerarPlanArgs): Promise<Record<string,
     maxOutputTokens: 16000,
   });
 
-  return coerceCandidate(raw, genero, marcaId, idSugerido);
+  return coerceCandidate(raw, genero, marcaId, idSugerido, modalidad);
 }

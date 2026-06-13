@@ -15,15 +15,19 @@ import { appCheckCallableOptions } from '../config/appCheckOptions';
  * va vacío y el plan cubre el estudio como una sola sesión.
  */
 
-const GENEROS_SOPORTADOS = ['exegesis', 'doctrina'];
+const GENEROS_SOPORTADOS = ['exegesis', 'doctrina', 'consejeria'];
+const MODALIDADES = ['clase', 'sesion'];
 
 interface EncolarInput {
   estudioId?: string;
   genero?: string;
+  modalidad?: string;
   marcaId?: string;
   alcance?: string;
   serie?: string;
   cursoId?: string;
+  /** Errores de validatePlan del intento anterior (bucle de corrección). */
+  erroresPrevios?: string[];
 }
 
 export const encolarPlanSesion = onCall(appCheckCallableOptions(), async (request) => {
@@ -37,7 +41,12 @@ export const encolarPlanSesion = onCall(appCheckCallableOptions(), async (reques
   if (!estudioId) throw new HttpsError('invalid-argument', 'estudioId requerido');
   if (!marcaId) throw new HttpsError('invalid-argument', 'marcaId requerido');
   if (!GENEROS_SOPORTADOS.includes(genero)) {
-    throw new HttpsError('invalid-argument', 'genero no soportado (exegesis | doctrina)');
+    throw new HttpsError('invalid-argument', 'genero no soportado (exegesis | doctrina | consejeria)');
+  }
+  // Consejería requiere modalidad (sesión 1-a-1 vs clase grupal).
+  const modalidad = String(input.modalidad ?? '').trim();
+  if (genero === 'consejeria' && !MODALIDADES.includes(modalidad)) {
+    throw new HttpsError('invalid-argument', 'consejería requiere modalidad (clase | sesion)');
   }
 
   const db = getFirestore();
@@ -65,6 +74,10 @@ export const encolarPlanSesion = onCall(appCheckCallableOptions(), async (reques
     estudioId,
     estudioTitulo: estudio.title ?? '',
     genero,
+    modalidad: genero === 'consejeria' ? modalidad : null,
+    erroresPrevios: Array.isArray(input.erroresPrevios)
+      ? input.erroresPrevios.filter((e) => typeof e === 'string').slice(0, 40)
+      : null,
     marcaId,
     alcance: input.alcance ? String(input.alcance) : null,
     serie: input.serie ? String(input.serie) : null,

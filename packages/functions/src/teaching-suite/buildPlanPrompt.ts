@@ -13,7 +13,8 @@
  * manual (un intento + botón «Reintentar»).
  */
 
-export type GeneroSoportado = 'exegesis' | 'doctrina';
+export type GeneroSoportado = 'exegesis' | 'doctrina' | 'consejeria';
+export type Modalidad = 'clase' | 'sesion';
 
 export interface PromptRefs {
   /** SKILL.md — flujo + reglas editoriales transversales. */
@@ -31,6 +32,8 @@ export interface BuildPlanPromptInput {
   /** Material de estudio del docente (markdown/texto). */
   estudio: string;
   genero: GeneroSoportado;
+  /** Solo consejería: 'sesion' (1-a-1, guía+hoja) o 'clase' (grupal, suite). */
+  modalidad?: Modalidad;
   /** Identificador de la marca elegida (va en `plan.marca`). */
   marcaId: string;
   /** Identificador base sugerido para `plan.id` ([a-z0-9_-]+). */
@@ -59,7 +62,8 @@ const ROL =
   'convierte en HTML después. Tu salida es EXCLUSIVAMENTE el objeto plan.';
 
 export function buildPlanPrompt(input: BuildPlanPromptInput): BuiltPrompt {
-  const { refs, estudio, genero, marcaId, idSugerido, artefactos, alcance, erroresPrevios } = input;
+  const { refs, estudio, genero, modalidad, marcaId, idSugerido, artefactos, alcance, erroresPrevios } =
+    input;
 
   const system = [
     ROL,
@@ -80,7 +84,21 @@ export function buildPlanPrompt(input: BuildPlanPromptInput): BuiltPrompt {
     'Responde con UN solo objeto JSON `plan`, sin texto alrededor. Requisitos duros:',
     `- "genero": "${genero}"; "marca": "${marcaId}"; "id": "${idSugerido}" (o una variante [a-z0-9_-]+).`,
     `- "artefactos": ${JSON.stringify(artefactos)}.`,
-    '- ESTA ES UNA SOLA SESIÓN de clase (~45 min): apunta a 12–20 diapositivas. NO exceder: si el material da para más, prioriza el núcleo de esta sesión; el resto es otra sesión.',
+    ...(genero === 'consejeria'
+      ? [
+          `- "modalidad": "${modalidad ?? 'sesion'}".`,
+          ...(modalidad === 'sesion'
+            ? [
+                '- Modalidad SESIÓN (1-a-1): SIN presentación/notas. Redacta "cuerpo_guia_html" con la estructura nouthética (repaso de tareas → recolección de datos con preguntas literales → esperanza bíblica → confrontación DESDE EL TEXTO con `escritura-anotada` → plan despojarse/vestirse `dv` con conductas concretas → tareas verificables; señales de alerta si el caso lo amerita). Y "cuerpo_hoja_html" (hoja del aconsejado, tipo aplicación: pasajes para meditar, autoexamen con `lineas`, plan `dv`, `tareas` con casillas, `memorizar` con el versículo). Las diapositivas pueden ser mínimas (la guía es el artefacto central).',
+              ]
+            : [
+                '- Modalidad CLASE (grupal): enseña consejería al grupo con la suite completa, como una clase de doctrina.',
+              ]),
+          '- CONFIDENCIALIDAD (obligatorio): anonimiza TODO nombre real o dato identificable del aconsejado usando un código de caso ("H-02"). En TODOS los artefactos, también borradores. No inventes datos.',
+        ]
+      : [
+          '- ESTA ES UNA SOLA SESIÓN de clase (~45 min): apunta a 12–20 diapositivas. NO exceder: si el material da para más, prioriza el núcleo de esta sesión; el resto es otra sesión.',
+        ]),
     '- "version_contrato" coherente con los features usados (tarjetas/pasos/secuencia ⇒ ≥1.1; variante ⇒ ≥1.2; lienzo ⇒ ≥1.3; edicion ⇒ ≥1.4).',
     '- "diapositivas": "n" correlativo 1..N sin huecos ni duplicados.',
     '- "bloques": cubren 1..N sin huecos ni solapes (cada uno con "min" realista).',

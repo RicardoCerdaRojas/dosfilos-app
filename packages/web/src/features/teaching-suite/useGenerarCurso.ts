@@ -16,6 +16,9 @@ import {
 export type GeneroSoportado = 'exegesis' | 'doctrina';
 export type CursoPaso = 'config' | 'outline' | 'generando' | 'resumen';
 
+/** Reintentos automáticos por sesión con los errores antes de darla por fallida. */
+const MAX_INTENTOS = 3;
+
 export interface SesionEstado {
   titulo: string;
   alcance: string;
@@ -54,6 +57,8 @@ export function useGenerarCurso() {
 
   const cursoIdRef = useRef<string>('');
   const unsubsRef = useRef<Array<() => void>>([]);
+  const intentosRef = useRef<number[]>([]);
+  const lanzarSesionRef = useRef<(i: number, alcance: string, errores?: string[]) => void>(() => {});
   const limpiarSubs = useCallback(() => {
     unsubsRef.current.forEach((u) => u());
     unsubsRef.current = [];
@@ -115,33 +120,32 @@ export function useGenerarCurso() {
     }
   }, [estudioId, marcaId, genero, sesionesSugeridas, serieNombre, estudios]);
 
-  const generarCurso = useCallback(async () => {
-    if (outline.length === 0) return;
-    limpiarSubs();
-    setError(null);
-    cursoIdRef.current = crypto.randomUUID();
-    setSesiones(outline.map((s) => ({ ...s, estado: 'generando' as const })));
-    setPaso('generando');
-    try {
-      await Promise.all(
-        outline.map(async (s, i) => {
+  // Lanza una sesión; si sale inválida, re-encola con los errores hasta
+  // MAX_INTENTOS (bucle de corrección por sesión).
+  const lanzarSesion = useCallback(
+    (i: number, alcance: string, erroresPrevios?: string[]) => {
+      void (async () => {
+        try {
           const jobId = await encolarPlanSesion({
             estudioId,
             genero,
             marcaId,
-            alcance: s.alcance,
+            alcance,
             serie: serieNombre,
             cursoId: cursoIdRef.current,
+            erroresPrevios,
           });
           const unsub = subscribeJob(
             jobId,
             (job) => {
               if (job.estado === 'listo' && job.plan) {
-                actualizarSesion(i, {
-                  estado: 'listo',
-                  plan: job.plan,
-                  validacion: validatePlan(job.plan),
-                });
+                const v = validatePlan(job.plan);
+                if (!v.ok && (intentosRef.current[i] ?? 0) < MAX_INTENTOS) {
+                  intentosRef.current[i] = (intentosRef.current[i] ?? 0) + 1;
+                  lanzarSesionRef.current(i, alcance, v.errores);
+                  return;
+                }
+                actualizarSesion(i, { estado: 'listo', plan: job.plan, validacion: v });
               } else if (job.estado === 'error') {
                 actualizarSesion(i, { estado: 'error', error: job.error ?? 'Error' });
               }
@@ -149,12 +153,31 @@ export function useGenerarCurso() {
             () => actualizarSesion(i, { estado: 'error', error: 'Error al seguir la sesión' }),
           );
           unsubsRef.current.push(unsub);
-        }),
-      );
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudieron encolar las sesiones');
-    }
-  }, [outline, estudioId, genero, marcaId, serieNombre, limpiarSubs, actualizarSesion]);
+        } catch (e) {
+          actualizarSesion(i, {
+            estado: 'error',
+            error: e instanceof Error ? e.message : 'No se pudo encolar la sesión',
+          });
+        }
+      })();
+    },
+    [estudioId, genero, marcaId, serieNombre, actualizarSesion],
+  );
+
+  useEffect(() => {
+    lanzarSesionRef.current = lanzarSesion;
+  }, [lanzarSesion]);
+
+  const generarCurso = useCallback(() => {
+    if (outline.length === 0) return;
+    limpiarSubs();
+    setError(null);
+    cursoIdRef.current = crypto.randomUUID();
+    intentosRef.current = outline.map(() => 0);
+    setSesiones(outline.map((s) => ({ ...s, estado: 'generando' as const })));
+    setPaso('generando');
+    outline.forEach((s, i) => lanzarSesion(i, s.alcance));
+  }, [outline, limpiarSubs, lanzarSesion]);
 
   // Cuando ninguna sesión queda 'generando', pasar a resumen.
   useEffect(() => {
