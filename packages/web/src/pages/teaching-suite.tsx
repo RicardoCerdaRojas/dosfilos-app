@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Presentation, Plus, RefreshCw, FileText, MonitorPlay, ClipboardList, Palette, Pencil, Trash2, Sparkles } from 'lucide-react';
+import { Presentation, Plus, RefreshCw, FileText, MonitorPlay, ClipboardList, Palette, Pencil, Trash2, Sparkles, Library } from 'lucide-react';
 import type { Artefacto } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
 import { useTeachingClases } from '@/features/teaching-suite/useTeachingClases';
@@ -10,6 +10,43 @@ const ARTEFACTO_META: Record<Artefacto, { label: string; Icon: typeof Presentati
   hoja: { label: 'Hoja', Icon: ClipboardList },
   guia_sesion: { label: 'Guía', Icon: FileText },
 };
+
+interface ClaseLike {
+  serie?: string;
+  orden?: number;
+  titulo: string;
+}
+
+/** Ordena por índice de sesión (si lo hay); cae a orden por título. */
+function ordenarSesiones<T extends ClaseLike>(clases: T[]): T[] {
+  return [...clases].sort((a, b) => {
+    if (a.orden != null && b.orden != null) return a.orden - b.orden;
+    if (a.orden != null) return -1;
+    if (b.orden != null) return 1;
+    return a.titulo.localeCompare(b.titulo);
+  });
+}
+
+/** Agrupa las clases por serie (cursos primero, sueltas al final). */
+function agruparPorSerie<T extends ClaseLike>(clases: T[]): { serie: string | null; clases: T[] }[] {
+  const conSerie = new Map<string, T[]>();
+  const sueltas: T[] = [];
+  for (const c of clases) {
+    if (c.serie) {
+      const arr = conSerie.get(c.serie) ?? [];
+      arr.push(c);
+      conSerie.set(c.serie, arr);
+    } else {
+      sueltas.push(c);
+    }
+  }
+  const grupos = [...conSerie.entries()].map(([serie, cs]) => ({
+    serie,
+    clases: ordenarSesiones(cs),
+  }));
+  if (sueltas.length > 0) grupos.push({ serie: null, clases: ordenarSesiones(sueltas) });
+  return grupos;
+}
 
 /**
  * Suite de Enseñanza — F1 (sin IA aún).
@@ -44,7 +81,11 @@ export function TeachingSuitePage(): JSX.Element {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" onClick={() => navigate('/dashboard/teaching-suite/generar')}>
+          <Button size="sm" onClick={() => navigate('/dashboard/teaching-suite/curso')}>
+            <Library className="w-4 h-4 mr-2" />
+            Generar curso
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => navigate('/dashboard/teaching-suite/generar')}>
             <Sparkles className="w-4 h-4 mr-2" />
             Generar clase
           </Button>
@@ -89,40 +130,60 @@ export function TeachingSuitePage(): JSX.Element {
           </p>
         </div>
       ) : (
-        <ul className="space-y-2">
-          {clases.map((c) => (
-            <li
-              key={c.id}
-              className="flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 bg-background"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{c.titulo}</p>
-                <p className="text-xs text-muted-foreground">
-                  {[c.serie, c.genero, c.estado].filter(Boolean).join(' · ')}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {c.artefactos.map((a) => {
-                  const meta = ARTEFACTO_META[a];
-                  if (!meta) return null;
-                  const { label, Icon } = meta;
-                  return (
-                    <Button
-                      key={a}
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => void verArtefacto(c, a)}
-                      disabled={!c.planId}
-                    >
-                      <Icon className="w-4 h-4 mr-2" />
-                      {label}
-                    </Button>
-                  );
-                })}
-              </div>
-            </li>
+        <div className="space-y-4">
+          {agruparPorSerie(clases).map((grupo) => (
+            <div key={grupo.serie ?? '__sueltas__'} className="space-y-2">
+              {grupo.serie && (
+                <div className="flex items-center gap-2 pt-1">
+                  <Library className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="text-sm font-semibold">{grupo.serie}</h3>
+                  <span className="text-xs text-muted-foreground">
+                    {grupo.clases.length} sesiones
+                  </span>
+                </div>
+              )}
+              <ul className="space-y-2">
+                {grupo.clases.map((c) => (
+                  <li
+                    key={c.id}
+                    className="flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 bg-background"
+                  >
+                    {grupo.serie && c.orden != null && (
+                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-muted text-xs font-medium flex items-center justify-center text-muted-foreground">
+                        {c.orden}
+                      </span>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{c.titulo}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {[c.genero, c.estado].filter(Boolean).join(' · ')}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {c.artefactos.map((a) => {
+                        const meta = ARTEFACTO_META[a];
+                        if (!meta) return null;
+                        const { label, Icon } = meta;
+                        return (
+                          <Button
+                            key={a}
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => void verArtefacto(c, a)}
+                            disabled={!c.planId}
+                          >
+                            <Icon className="w-4 h-4 mr-2" />
+                            {label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
 
       {/* Marcas */}

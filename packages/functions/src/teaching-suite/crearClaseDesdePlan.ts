@@ -20,6 +20,11 @@ const ARTEFACTOS_VALIDOS = ['presentacion', 'notas', 'hoja', 'guia_sesion'];
 interface CrearClaseInput {
   plan?: Record<string, unknown>;
   marcaId?: string;
+  /** Curso (Eje 2): agrupa varias clases bajo una serie. */
+  serie?: string;
+  cursoId?: string;
+  /** Índice de la sesión dentro del curso (para ordenar la serie). */
+  orden?: number;
 }
 
 function sanitizeArtefactos(value: unknown): string[] {
@@ -51,18 +56,37 @@ export const crearClaseDesdePlan = onCall(appCheckCallableOptions(), async (requ
     throw new HttpsError('permission-denied', 'Marca no encontrada o no es tuya');
   }
 
+  // Curso: la serie/cursoId del input mandan (agrupan las clases); si no vienen,
+  // se cae a la serie del propio plan (clase suelta).
+  const serie =
+    typeof input.serie === 'string' && input.serie.trim()
+      ? input.serie.trim()
+      : typeof plan.serie === 'string'
+        ? plan.serie
+        : null;
+  const cursoId = typeof input.cursoId === 'string' && input.cursoId.trim() ? input.cursoId.trim() : null;
+  const orden = Number.isFinite(Number(input.orden)) ? Math.round(Number(input.orden)) : null;
+
   const artefactos = sanitizeArtefactos(plan.artefactos);
   const batch = db.batch();
 
   const planRef = db.collection('teachingPlans').doc();
-  batch.set(planRef, { ...plan, marca: marcaId, ownerId, createdAt: FieldValue.serverTimestamp() });
+  batch.set(planRef, {
+    ...plan,
+    marca: marcaId,
+    ...(serie ? { serie } : {}),
+    ownerId,
+    createdAt: FieldValue.serverTimestamp(),
+  });
 
   const claseRef = db.collection('teachingClasses').doc();
   batch.set(claseRef, {
     planId: planRef.id,
     marcaId,
     titulo: typeof plan.titulo === 'string' ? plan.titulo : 'Clase',
-    serie: typeof plan.serie === 'string' ? plan.serie : null,
+    serie,
+    cursoId,
+    orden,
     genero: typeof plan.genero === 'string' ? plan.genero : 'exegesis',
     modalidad: typeof plan.modalidad === 'string' ? plan.modalidad : null,
     artefactos,

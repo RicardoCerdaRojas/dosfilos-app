@@ -21,6 +21,7 @@ export { saveTeachingBrand } from './teaching-suite/saveTeachingBrand';
 export { deleteTeachingBrand } from './teaching-suite/deleteTeachingBrand';
 export { encolarPlanSesion } from './teaching-suite/encolarPlanSesion';
 export { generarPlanJob } from './teaching-suite/generarPlanJob';
+export { proponerOutlineCurso } from './teaching-suite/proponerOutlineCurso';
 export { crearClaseDesdePlan } from './teaching-suite/crearClaseDesdePlan';
 export { getExegesisPapersSummary } from './exegesis/getExegesisPapersSummary';
 export { getSermonsListSummary } from './sermon/getSermonsListSummary';
