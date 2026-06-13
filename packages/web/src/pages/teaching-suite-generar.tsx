@@ -73,6 +73,7 @@ export function TeachingSuiteGenerarPage(): JSX.Element {
           generando={g.generando}
           creando={g.creando}
           claseId={g.claseId}
+          canvasCandidatas={g.canvasCandidatas}
           onReintentar={g.reintentar}
           onVolver={g.volverAConfig}
           onAprobar={() => void g.aprobar()}

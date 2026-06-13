@@ -6,6 +6,7 @@
 export * from './TeachingPlan';
 export * from './Brand';
 export * from './validatePlan';
+export * from './canvasForm';
 export { injectArtifacts } from './inject';
 export * from './brand/color';
 export * from './brand/validateBrand';

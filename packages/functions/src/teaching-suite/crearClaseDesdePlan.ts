@@ -1,6 +1,8 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
+import { extractCanvasForms } from './canvasForm';
 
 /**
  * Teaching Suite F3 (Slice A) — persiste un `plan` aprobado y crea la clase.
@@ -98,5 +100,88 @@ export const crearClaseDesdePlan = onCall(appCheckCallableOptions(), async (requ
   });
 
   await batch.commit();
-  return { claseId: claseRef.id, planId: planRef.id };
+
+  // F4 «trinquete»: registra las formas de lienzo de esta clase y detecta las que
+  // ya aparecían en OTRA clase del docente (candidatas a componente reutilizable).
+  // Es best-effort: jamás debe tumbar la creación de la clase.
+  const canvasCandidatas = await registrarFormasLienzo(db, plan, {
+    ownerId,
+    claseId: claseRef.id,
+    planId: planRef.id,
+  });
+
+  return { claseId: claseRef.id, planId: planRef.id, canvasCandidatas };
 });
+
+interface CanvasCandidata {
+  fingerprint: string;
+  alt?: string;
+  titulo?: string;
+  /** Total de clases (incl. esta) que comparten la forma. */
+  vecesUsada: number;
+}
+
+/**
+ * Persiste cada forma de lienzo del plan en `teachingCanvasForms` y devuelve las
+ * que ya estaban en otra clase del mismo dueño. La colección es server-internal:
+ * solo la escribe/consulta este callable (Admin SDK), el cliente recibe las
+ * candidatas en la respuesta y no lee la colección directamente.
+ */
+async function registrarFormasLienzo(
+  db: FirebaseFirestore.Firestore,
+  plan: Record<string, unknown>,
+  ref: { ownerId: string; claseId: string; planId: string },
+): Promise<CanvasCandidata[]> {
+  try {
+    const formas = extractCanvasForms(plan as { diapositivas?: unknown });
+    if (formas.length === 0) return [];
+
+    const col = db.collection('teachingCanvasForms');
+    const candidatas: CanvasCandidata[] = [];
+    const batch = db.batch();
+
+    for (const forma of formas) {
+      // Clases ANTERIORES del dueño con esta misma forma (la nueva aún no está
+      // escrita). Dos filtros de igualdad ⇒ sin índice compuesto requerido.
+      const prevSnap = await col
+        .where('ownerId', '==', ref.ownerId)
+        .where('fingerprint', '==', forma.fingerprint)
+        .get();
+      const clasesPrevias = new Set(
+        prevSnap.docs.map((d) => d.data()?.claseId).filter((c): c is string => typeof c === 'string'),
+      );
+      clasesPrevias.delete(ref.claseId);
+      const repetida = clasesPrevias.size > 0;
+
+      batch.set(col.doc(), {
+        fingerprint: forma.fingerprint,
+        claseId: ref.claseId,
+        planId: ref.planId,
+        diapoN: forma.diapoN,
+        ...(forma.alt ? { alt: forma.alt } : {}),
+        ...(forma.titulo ? { titulo: forma.titulo } : {}),
+        estado: repetida ? 'candidata' : 'unica',
+        ownerId: ref.ownerId,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      if (repetida) {
+        candidatas.push({
+          fingerprint: forma.fingerprint,
+          ...(forma.alt ? { alt: forma.alt } : {}),
+          ...(forma.titulo ? { titulo: forma.titulo } : {}),
+          vecesUsada: clasesPrevias.size + 1,
+        });
+      }
+    }
+
+    await batch.commit();
+    return candidatas;
+  } catch (e) {
+    logger.warn('trinquete: no se pudieron registrar las formas de lienzo', {
+      claseId: ref.claseId,
+      error: e instanceof Error ? e.message : String(e),
+    });
+    return [];
+  }
+}

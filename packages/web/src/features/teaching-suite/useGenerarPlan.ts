@@ -9,6 +9,7 @@ import {
   crearClaseDesdePlan,
   type EstudioRow,
   type BrandRow,
+  type CanvasCandidata,
 } from './teachingSuiteService';
 
 export type GeneroSoportado = 'exegesis' | 'doctrina' | 'consejeria';
@@ -47,6 +48,7 @@ export function useGenerarPlan() {
   const [plan, setPlan] = useState<TeachingPlan | null>(null);
   const [validacion, setValidacion] = useState<ValidationResult | null>(null);
   const [claseId, setClaseId] = useState<string | null>(null);
+  const [canvasCandidatas, setCanvasCandidatas] = useState<CanvasCandidata[]>([]);
 
   const unsubRef = useRef<(() => void) | null>(null);
   const intentoRef = useRef(0);
@@ -177,7 +179,8 @@ export function useGenerarPlan() {
     setCreando(true);
     setError(null);
     try {
-      const { claseId: nuevo } = await crearClaseDesdePlan(plan, marcaId);
+      const { claseId: nuevo, canvasCandidatas: cand } = await crearClaseDesdePlan(plan, marcaId);
+      setCanvasCandidatas(cand ?? []);
       setClaseId(nuevo);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo crear la clase');
@@ -214,6 +217,7 @@ export function useGenerarPlan() {
     plan,
     validacion,
     claseId,
+    canvasCandidatas,
     proponer,
     reintentar,
     aprobar,

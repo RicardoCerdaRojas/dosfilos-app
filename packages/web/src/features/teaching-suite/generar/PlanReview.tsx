@@ -1,7 +1,8 @@
-import { CheckCircle2, AlertTriangle, RefreshCw, ArrowLeft, Loader2, Check } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, RefreshCw, ArrowLeft, Loader2, Check, Recycle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { TeachingPlan, ValidationResult } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
+import type { CanvasCandidata } from '../teachingSuiteService';
 
 interface PlanReviewProps {
   plan: TeachingPlan;
@@ -9,6 +10,7 @@ interface PlanReviewProps {
   generando: boolean;
   creando: boolean;
   claseId: string | null;
+  canvasCandidatas?: CanvasCandidata[];
   onReintentar: () => void;
   onVolver: () => void;
   onAprobar: () => void;
@@ -38,6 +40,7 @@ export function PlanReview({
   generando,
   creando,
   claseId,
+  canvasCandidatas = [],
   onReintentar,
   onVolver,
   onAprobar,
@@ -47,12 +50,40 @@ export function PlanReview({
 
   if (claseId) {
     return (
-      <div className="rounded-lg border border-success/30 bg-success-subtle p-6 text-center space-y-3">
-        <Check className="w-8 h-8 text-success mx-auto" />
-        <p className="text-sm text-success-subtle-foreground">
-          Clase creada. Ya puedes abrir sus artefactos desde la lista.
-        </p>
-        <Button onClick={() => navigate('/dashboard/teaching-suite')}>Ir a mis clases</Button>
+      <div className="space-y-4">
+        <div className="rounded-lg border border-success/30 bg-success-subtle p-6 text-center space-y-3">
+          <Check className="w-8 h-8 text-success mx-auto" />
+          <p className="text-sm text-success-subtle-foreground">
+            Clase creada. Ya puedes abrir sus artefactos desde la lista.
+          </p>
+          <Button onClick={() => navigate('/dashboard/teaching-suite')}>Ir a mis clases</Button>
+        </div>
+
+        {canvasCandidatas.length > 0 && (
+          <div className="rounded-md border border-primary/30 bg-primary/5 px-4 py-3 text-sm space-y-1.5">
+            <div className="flex items-center gap-2 font-medium text-primary">
+              <Recycle className="w-4 h-4" />
+              {canvasCandidatas.length === 1
+                ? 'Reutilizas una lámina de diseño libre'
+                : `Reutilizas ${canvasCandidatas.length} láminas de diseño libre`}
+            </div>
+            <p className="text-muted-foreground">
+              Esta{canvasCandidatas.length === 1 ? '' : 's'} lámina
+              {canvasCandidatas.length === 1 ? '' : 's'} ya aparece
+              {canvasCandidatas.length === 1 ? '' : 'n'} en otra clase tuya. Considera convertirla
+              {canvasCandidatas.length === 1 ? '' : 's'} en un componente reutilizable para mantener
+              un diseño consistente.
+            </p>
+            <ul className="list-disc pl-6 text-muted-foreground space-y-0.5">
+              {canvasCandidatas.map((c) => (
+                <li key={c.fingerprint}>
+                  {c.titulo || c.alt || 'Lámina de diseño libre'}{' '}
+                  <span className="text-xs opacity-70">· usada en {c.vecesUsada} clases</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     );
   }
