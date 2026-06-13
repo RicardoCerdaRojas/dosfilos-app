@@ -1,8 +1,8 @@
-import { CheckCircle2, AlertTriangle, RefreshCw, ArrowLeft, Loader2, Check, Recycle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, RefreshCw, ArrowLeft, Loader2, Check, Recycle, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { TeachingPlan, ValidationResult } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
-import type { CanvasCandidata } from '../teachingSuiteService';
+import type { CanvasCandidata, CanvasComponentRow } from '../teachingSuiteService';
 
 interface PlanReviewProps {
   plan: TeachingPlan;
@@ -11,10 +11,14 @@ interface PlanReviewProps {
   creando: boolean;
   claseId: string | null;
   canvasCandidatas?: CanvasCandidata[];
+  componentes?: CanvasComponentRow[];
+  promoviendo?: string | null;
   onReintentar: () => void;
   onVolver: () => void;
   onAprobar: () => void;
   onEditar: (updater: (p: TeachingPlan) => TeachingPlan) => void;
+  onPromover?: (fingerprint: string, nombre: string) => void;
+  onInsertarLamina?: (comp: CanvasComponentRow) => void;
 }
 
 const INPUT = 'rounded-md border bg-background px-2 py-1 text-sm';
@@ -41,10 +45,14 @@ export function PlanReview({
   creando,
   claseId,
   canvasCandidatas = [],
+  componentes = [],
+  promoviendo = null,
   onReintentar,
   onVolver,
   onAprobar,
   onEditar,
+  onPromover,
+  onInsertarLamina,
 }: PlanReviewProps): JSX.Element {
   const navigate = useNavigate();
 
@@ -74,13 +82,43 @@ export function PlanReview({
               {canvasCandidatas.length === 1 ? '' : 's'} en un componente reutilizable para mantener
               un diseño consistente.
             </p>
-            <ul className="list-disc pl-6 text-muted-foreground space-y-0.5">
-              {canvasCandidatas.map((c) => (
-                <li key={c.fingerprint}>
-                  {c.titulo || c.alt || 'Lámina de diseño libre'}{' '}
-                  <span className="text-xs opacity-70">· usada en {c.vecesUsada} clases</span>
-                </li>
-              ))}
+            <ul className="space-y-1.5 pt-1">
+              {canvasCandidatas.map((c) => {
+                const etiqueta = c.titulo || c.alt || 'Lámina de diseño libre';
+                const yaGuardada = componentes.some((comp) => comp.fingerprint === c.fingerprint);
+                return (
+                  <li key={c.fingerprint} className="flex items-center gap-2">
+                    <span className="flex-1 min-w-0 truncate text-muted-foreground">
+                      {etiqueta} <span className="text-xs opacity-70">· usada en {c.vecesUsada} clases</span>
+                    </span>
+                    {yaGuardada ? (
+                      <span className="flex items-center gap-1 text-xs text-success">
+                        <Check className="w-3.5 h-3.5" /> Guardada
+                      </span>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={!onPromover || promoviendo === c.fingerprint}
+                        onClick={() => {
+                          const nombre = window.prompt(
+                            'Nombre para guardar esta lámina en tu biblioteca:',
+                            etiqueta,
+                          );
+                          if (nombre?.trim()) onPromover?.(c.fingerprint, nombre.trim());
+                        }}
+                      >
+                        {promoviendo === c.fingerprint ? (
+                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <Recycle className="w-3.5 h-3.5 mr-1.5" />
+                        )}
+                        Guardar para reusar
+                      </Button>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}
@@ -192,6 +230,31 @@ export function PlanReview({
             </li>
           ))}
         </ul>
+
+        {/* Insertar una lámina de diseño libre guardada (F4 «trinquete»). */}
+        {onInsertarLamina && componentes.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <Plus className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Insertar lámina guardada:</span>
+            <select
+              className={INPUT}
+              aria-label="Insertar lámina guardada"
+              value=""
+              onChange={(e) => {
+                const comp = componentes.find((c) => c.id === e.target.value);
+                if (comp) onInsertarLamina(comp);
+                e.currentTarget.value = '';
+              }}
+            >
+              <option value="">Elige una lámina…</option>
+              {componentes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </section>
 
       {/* Acciones */}

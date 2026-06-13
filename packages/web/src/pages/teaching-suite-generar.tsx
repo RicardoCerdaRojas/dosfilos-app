@@ -74,10 +74,14 @@ export function TeachingSuiteGenerarPage(): JSX.Element {
           creando={g.creando}
           claseId={g.claseId}
           canvasCandidatas={g.canvasCandidatas}
+          componentes={g.componentes}
+          promoviendo={g.promoviendo}
           onReintentar={g.reintentar}
           onVolver={g.volverAConfig}
           onAprobar={() => void g.aprobar()}
           onEditar={g.editarPlan}
+          onPromover={(fp, nombre) => void g.promover(fp, nombre)}
+          onInsertarLamina={g.insertarLamina}
         />
       )}
     </div>

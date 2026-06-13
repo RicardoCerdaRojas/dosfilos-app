@@ -1,15 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { validatePlan, type TeachingPlan, type ValidationResult } from '@dosfilos/domain';
+import {
+  validatePlan,
+  insertCanvasSlide,
+  type TeachingPlan,
+  type ValidationResult,
+} from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import {
   listEstudios,
   listBrands,
+  listCanvasComponents,
+  promoteCanvasForm,
   encolarPlanSesion,
   subscribeJob,
   crearClaseDesdePlan,
   type EstudioRow,
   type BrandRow,
   type CanvasCandidata,
+  type CanvasComponentRow,
 } from './teachingSuiteService';
 
 export type GeneroSoportado = 'exegesis' | 'doctrina' | 'consejeria';
@@ -49,6 +57,8 @@ export function useGenerarPlan() {
   const [validacion, setValidacion] = useState<ValidationResult | null>(null);
   const [claseId, setClaseId] = useState<string | null>(null);
   const [canvasCandidatas, setCanvasCandidatas] = useState<CanvasCandidata[]>([]);
+  const [componentes, setComponentes] = useState<CanvasComponentRow[]>([]);
+  const [promoviendo, setPromoviendo] = useState<string | null>(null);
 
   const unsubRef = useRef<(() => void) | null>(null);
   const intentoRef = useRef(0);
@@ -68,10 +78,15 @@ export function useGenerarPlan() {
       setLoading(true);
       setError(null);
       try {
-        const [es, bs] = await Promise.all([listEstudios(), listBrands(user.uid)]);
+        const [es, bs, cs] = await Promise.all([
+          listEstudios(),
+          listBrands(user.uid),
+          listCanvasComponents(user.uid),
+        ]);
         if (!activo) return;
         setEstudios(es);
         setBrands(bs);
+        setComponentes(cs);
       } catch (e) {
         if (activo) setError(e instanceof Error ? e.message : 'No se pudieron cargar los datos');
       } finally {
@@ -174,6 +189,40 @@ export function useGenerarPlan() {
     [plan],
   );
 
+  // Promueve una forma de lienzo repetida a la biblioteca reutilizable y recarga
+  // los componentes para que quede disponible al insertar.
+  const promover = useCallback(
+    async (fingerprint: string, nombre: string) => {
+      if (!user?.uid || !nombre.trim()) return;
+      setPromoviendo(fingerprint);
+      setError(null);
+      try {
+        await promoteCanvasForm(fingerprint, nombre.trim());
+        setComponentes(await listCanvasComponents(user.uid));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'No se pudo guardar la lámina');
+      } finally {
+        setPromoviendo(null);
+      }
+    },
+    [user?.uid],
+  );
+
+  // Inserta una lámina guardada como nueva diapositiva del plan en revisión.
+  const insertarLamina = useCallback(
+    (comp: CanvasComponentRow) => {
+      editarPlan((p) =>
+        insertCanvasSlide(p, {
+          html: comp.html,
+          css: comp.css,
+          alt: comp.alt,
+          titulo: comp.titulo,
+        }),
+      );
+    },
+    [editarPlan],
+  );
+
   const aprobar = useCallback(async () => {
     if (!plan || !validacion?.ok) return;
     setCreando(true);
@@ -218,10 +267,14 @@ export function useGenerarPlan() {
     validacion,
     claseId,
     canvasCandidatas,
+    componentes,
+    promoviendo,
     proponer,
     reintentar,
     aprobar,
     editarPlan,
+    promover,
+    insertarLamina,
     volverAConfig,
   };
 }

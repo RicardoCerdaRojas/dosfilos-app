@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { canvasFormFingerprint, extractCanvasForms } from '../canvasForm';
+import { canvasFormFingerprint, extractCanvasForms, insertCanvasSlide } from '../canvasForm';
+import { validatePlan } from '../validatePlan';
 import type { TeachingPlan } from '../TeachingPlan';
 
 describe('canvasFormFingerprint', () => {
@@ -96,5 +97,57 @@ describe('extractCanvasForms', () => {
 
   it('plan sin diapositivas → arreglo vacío', () => {
     expect(extractCanvasForms({ diapositivas: [] } as never)).toEqual([]);
+  });
+});
+
+describe('insertCanvasSlide', () => {
+  const comp = {
+    html: '<div class="lz">Diagrama</div>',
+    css: '.lz{display:grid}',
+    alt: 'Diagrama cronológico',
+    titulo: 'Cronología',
+  };
+
+  it('inserta la lámina como n=N+1 y deja el plan válido', () => {
+    const plan = planConDiapos([
+      { n: 1, tipo: 'portada', titulo: 'T' },
+      { n: 2, tipo: 'lista', titulo: 'L', items: ['a', 'b'] },
+    ]);
+    const next = insertCanvasSlide(plan, comp);
+
+    expect(next.diapositivas).toHaveLength(3);
+    const nueva = next.diapositivas[2];
+    expect(nueva).toMatchObject({ n: 3, tipo: 'lienzo', html: comp.html, alt: comp.alt });
+    // El plan resultante cumple el contrato (numeración, cobertura de bloques y notas).
+    expect(validatePlan(next).ok).toBe(true);
+  });
+
+  it('extiende el bloque que cubre la última diapositiva', () => {
+    const plan = planConDiapos([
+      { n: 1, tipo: 'portada', titulo: 'T' },
+      { n: 2, tipo: 'lista', titulo: 'L', items: ['a'] },
+    ]);
+    const next = insertCanvasSlide(plan, comp);
+    const ultimo = next.bloques[next.bloques.length - 1];
+    expect(ultimo.diapo_fin).toBe(3);
+  });
+
+  it('sube version_contrato a 1.3 si era menor (lienzo lo exige)', () => {
+    const plan = { ...planConDiapos([{ n: 1, tipo: 'portada', titulo: 'T' }]), version_contrato: '1' as const };
+    const next = insertCanvasSlide(plan, comp);
+    expect(next.version_contrato).toBe('1.3');
+    expect(validatePlan(next).ok).toBe(true);
+  });
+
+  it('respeta una version_contrato ya superior', () => {
+    const plan = { ...planConDiapos([{ n: 1, tipo: 'portada', titulo: 'T' }]), version_contrato: '1.4' as const };
+    expect(insertCanvasSlide(plan, comp).version_contrato).toBe('1.4');
+  });
+
+  it('no muta el plan original', () => {
+    const plan = planConDiapos([{ n: 1, tipo: 'portada', titulo: 'T' }]);
+    const antes = plan.diapositivas.length;
+    insertCanvasSlide(plan, comp);
+    expect(plan.diapositivas).toHaveLength(antes);
   });
 });

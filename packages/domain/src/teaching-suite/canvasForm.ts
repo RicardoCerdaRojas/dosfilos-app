@@ -13,7 +13,7 @@
  * copia local fiel — cualquier cambio aqui debe reflejarse alla.
  */
 
-import type { TeachingPlan, DiapoLienzo } from './TeachingPlan';
+import type { TeachingPlan, DiapoLienzo, VersionContrato } from './TeachingPlan';
 
 /** Colapsa corridas de espacios a uno solo y recorta. Insensible a sangria/saltos. */
 function normalizeWhitespace(s: string): string {
@@ -76,4 +76,63 @@ export function extractCanvasForms(plan: Pick<TeachingPlan, 'diapositivas'>): Ca
     });
   }
   return formas;
+}
+
+/** Forma de lienzo promovida y guardada para reusar (biblioteca, F4). */
+export interface CanvasComponent {
+  html: string;
+  css?: string;
+  alt: string;
+  titulo?: string;
+}
+
+function versionNum(v: string): number {
+  return v === '1' ? 1.0 : parseFloat(v);
+}
+
+/**
+ * Inserta una lámina de diseño libre guardada como NUEVA diapositiva al final del
+ * plan, manteniendo los invariantes de `validatePlan`:
+ *  - numeración 1..N sin huecos (la nueva es n = N+1),
+ *  - bloques cubren 1..N (extiende el bloque que llega hasta N, o crea uno),
+ *  - `notas_resumen` cubre todas las diapositivas (añade la entrada de la nueva),
+ *  - `version_contrato` ≥ 1.3 (lienzo lo exige).
+ * Función pura: devuelve un plan nuevo, no muta el recibido.
+ */
+export function insertCanvasSlide(plan: TeachingPlan, comp: CanvasComponent): TeachingPlan {
+  const nuevoN = plan.diapositivas.length + 1;
+  const etiqueta = comp.titulo || comp.alt || 'Lámina';
+
+  const nueva: DiapoLienzo = {
+    n: nuevoN,
+    tipo: 'lienzo',
+    html: comp.html,
+    alt: comp.alt,
+    ...(comp.css ? { css: comp.css } : {}),
+    ...(comp.titulo ? { titulo: comp.titulo } : {}),
+  };
+
+  // Extiende el bloque que llega más lejos (el que cubre la última diapositiva).
+  // Si no hay bloques, crea uno para la nueva lámina.
+  let bloques = plan.bloques;
+  if (bloques.length === 0) {
+    bloques = [{ nombre: etiqueta, diapo_ini: nuevoN, diapo_fin: nuevoN, min: 5 }];
+  } else {
+    const idxUltimo = bloques.reduce(
+      (best, b, i, arr) => (b.diapo_fin > arr[best].diapo_fin ? i : best),
+      0,
+    );
+    bloques = bloques.map((b, i) => (i === idxUltimo ? { ...b, diapo_fin: nuevoN } : b));
+  }
+
+  const version: VersionContrato =
+    versionNum(plan.version_contrato) < 1.3 ? '1.3' : plan.version_contrato;
+
+  return {
+    ...plan,
+    version_contrato: version,
+    diapositivas: [...plan.diapositivas, nueva],
+    bloques,
+    notas_resumen: [...plan.notas_resumen, { diapo: nuevoN, rotulo: etiqueta, texto: etiqueta }],
+  };
 }

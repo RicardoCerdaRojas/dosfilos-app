@@ -276,6 +276,60 @@ export async function proponerOutlineCurso(input: {
   return (await fn(input)).data.sesiones;
 }
 
+// ── F4 «trinquete» — biblioteca de láminas reutilizables ────────────────────
+
+/** Lámina de diseño libre guardada (promovida) para reusar en otras clases. */
+export interface CanvasComponentRow {
+  id: string;
+  nombre: string;
+  fingerprint: string;
+  html: string;
+  css?: string;
+  alt: string;
+  titulo?: string;
+}
+
+/** Lista las láminas guardadas del docente (lectura client-side, owner-scoped). */
+export async function listCanvasComponents(ownerId: string): Promise<CanvasComponentRow[]> {
+  const snap = await getDocs(
+    query(collection(db, 'teachingCanvasComponents'), where('ownerId', '==', ownerId)),
+  );
+  const rows = snap.docs.map((d) => {
+    const x = d.data() as Record<string, unknown>;
+    return {
+      id: d.id,
+      nombre: (x.nombre as string) ?? 'Lámina',
+      fingerprint: (x.fingerprint as string) ?? '',
+      html: (x.html as string) ?? '',
+      css: (x.css as string) ?? undefined,
+      alt: (x.alt as string) ?? '',
+      titulo: (x.titulo as string) ?? undefined,
+    } satisfies CanvasComponentRow;
+  });
+  return rows.sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+
+/** Promueve una forma de lienzo (por fingerprint) a la biblioteca, con un nombre. */
+export async function promoteCanvasForm(
+  fingerprint: string,
+  nombre: string,
+): Promise<{ componentId: string }> {
+  const fn = httpsCallable<{ fingerprint: string; nombre: string }, { componentId: string }>(
+    functions,
+    'promoteCanvasForm',
+  );
+  return (await fn({ fingerprint, nombre })).data;
+}
+
+/** Elimina una lámina guardada de la biblioteca. */
+export async function deleteCanvasComponent(componentId: string): Promise<{ deleted: boolean }> {
+  const fn = httpsCallable<{ componentId: string }, { deleted: boolean }>(
+    functions,
+    'deleteCanvasComponent',
+  );
+  return (await fn({ componentId })).data;
+}
+
 /** Abre el HTML de un artefacto/preview en una pestaña nueva (Blob URL). */
 export function openHtml(html: string): void {
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
