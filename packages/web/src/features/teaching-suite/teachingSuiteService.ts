@@ -225,15 +225,34 @@ export interface CrearClaseOpts {
   orden?: number;
 }
 
+/**
+ * Forma de lienzo (F4 «trinquete») que ya se usaba en otra clase del docente:
+ * el sistema la sugiere como candidata a componente reutilizable.
+ */
+export interface CanvasCandidata {
+  fingerprint: string;
+  alt?: string;
+  titulo?: string;
+  /** Total de clases (incl. la recién creada) que comparten la forma. */
+  vecesUsada: number;
+}
+
+export interface CrearClaseResult {
+  claseId: string;
+  planId: string;
+  /** Formas de lienzo repetidas detectadas al crear (puede venir vacío). */
+  canvasCandidatas?: CanvasCandidata[];
+}
+
 /** Persiste el plan aprobado y crea la clase con la marca elegida. */
 export async function crearClaseDesdePlan(
   plan: TeachingPlan,
   marcaId: string,
   opts: CrearClaseOpts = {},
-): Promise<{ claseId: string; planId: string }> {
+): Promise<CrearClaseResult> {
   const fn = httpsCallable<
     { plan: TeachingPlan; marcaId: string; serie?: string; cursoId?: string; orden?: number },
-    { claseId: string; planId: string }
+    CrearClaseResult
   >(functions, 'crearClaseDesdePlan');
   return (await fn({ plan, marcaId, ...opts })).data;
 }
