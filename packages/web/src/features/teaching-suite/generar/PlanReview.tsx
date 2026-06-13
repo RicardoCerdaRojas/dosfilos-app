@@ -12,19 +12,10 @@ interface PlanReviewProps {
   onReintentar: () => void;
   onVolver: () => void;
   onAprobar: () => void;
+  onEditar: (updater: (p: TeachingPlan) => TeachingPlan) => void;
 }
 
-/** Etiqueta corta de una diapositiva para la lista de revisión. */
-function etiquetaDiapo(d: Record<string, unknown>): string {
-  return (
-    (d.rotulo as string) ||
-    (d.kicker as string) ||
-    (d.titulo as string) ||
-    (d.ref as string) ||
-    (d.lema as string) ||
-    ''
-  );
-}
+const INPUT = 'rounded-md border bg-background px-2 py-1 text-sm';
 
 export function PlanReview({
   plan,
@@ -35,6 +26,7 @@ export function PlanReview({
   onReintentar,
   onVolver,
   onAprobar,
+  onEditar,
 }: PlanReviewProps): JSX.Element {
   const navigate = useNavigate();
 
@@ -50,23 +42,43 @@ export function PlanReview({
     );
   }
 
+  const setBloque = (i: number, patch: Partial<{ nombre: string; min: number }>) =>
+    onEditar((p) => ({ ...p, bloques: p.bloques.map((b, j) => (j === i ? { ...b, ...patch } : b)) }));
+  const setRotulo = (i: number, rotulo: string) =>
+    onEditar((p) => ({
+      ...p,
+      diapositivas: p.diapositivas.map((d, j) => (j === i ? { ...d, rotulo } : d)),
+    }));
+
   return (
     <div className="space-y-5">
-      {/* Cabecera del plan */}
-      <div>
-        <h2 className="text-lg font-semibold">{plan.titulo}</h2>
-        <p className="text-xs text-muted-foreground">
-          {[plan.serie, plan.genero, `${plan.diapositivas.length} diapositivas`]
-            .filter(Boolean)
-            .join(' · ')}
-        </p>
+      {/* Cabecera editable */}
+      <div className="space-y-2">
+        <input
+          value={plan.titulo}
+          onChange={(e) => onEditar((p) => ({ ...p, titulo: e.target.value }))}
+          className={`${INPUT} w-full text-lg font-semibold`}
+          aria-label="Título de la clase"
+        />
+        <div className="flex items-center gap-2">
+          <input
+            value={plan.serie ?? ''}
+            onChange={(e) => onEditar((p) => ({ ...p, serie: e.target.value || undefined }))}
+            placeholder="Serie (opcional)"
+            className={`${INPUT} flex-1`}
+            aria-label="Serie"
+          />
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            {plan.genero} · {plan.diapositivas.length} diapositivas
+          </span>
+        </div>
       </div>
 
       {/* Estado de validación */}
       {validacion.ok ? (
         <div className="flex items-center gap-2 rounded-md border border-success/30 bg-success-subtle px-3 py-2 text-sm text-success-subtle-foreground">
           <CheckCircle2 className="w-4 h-4 text-success" />
-          El plan cumple el contrato. Revísalo y apruébalo.
+          El plan cumple el contrato. Revísalo, ajústalo y apruébalo.
         </div>
       ) : (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm">
@@ -92,42 +104,52 @@ export function PlanReview({
         </div>
       )}
 
-      {/* Bloques + minutos */}
+      {/* Bloques + minutos (editables) */}
       <section className="space-y-2">
         <h3 className="text-sm font-semibold">Bloques</h3>
         <ul className="space-y-1">
           {plan.bloques.map((b, i) => (
-            <li
-              key={i}
-              className="flex items-center gap-3 rounded border px-3 py-1.5 text-sm bg-background"
-            >
-              <span className="flex-1 truncate">{b.nombre}</span>
-              <span className="text-xs text-muted-foreground">
+            <li key={i} className="flex items-center gap-2 rounded border px-3 py-1.5 bg-background">
+              <input
+                value={b.nombre}
+                onChange={(e) => setBloque(i, { nombre: e.target.value })}
+                className={`${INPUT} flex-1`}
+                aria-label={`Nombre del bloque ${i + 1}`}
+              />
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
                 diap. {b.diapo_ini}–{b.diapo_fin}
               </span>
-              <span className="text-xs font-medium">{b.min} min</span>
+              <input
+                type="number"
+                min={1}
+                value={b.min}
+                onChange={(e) => setBloque(i, { min: Number(e.target.value) || 0 })}
+                className={`${INPUT} w-16`}
+                aria-label={`Minutos del bloque ${i + 1}`}
+              />
+              <span className="text-xs text-muted-foreground">min</span>
             </li>
           ))}
         </ul>
       </section>
 
-      {/* Diapositivas */}
+      {/* Diapositivas (rótulo editable) */}
       <section className="space-y-2">
         <h3 className="text-sm font-semibold">Diapositivas</h3>
         <ul className="space-y-1">
-          {plan.diapositivas.map((d) => {
-            const etq = etiquetaDiapo(d as unknown as Record<string, unknown>);
-            return (
-              <li
-                key={d.n}
-                className="flex items-center gap-3 rounded border px-3 py-1.5 text-sm bg-background"
-              >
-                <span className="w-6 text-right text-xs text-muted-foreground">{d.n}</span>
-                <span className="rounded bg-muted px-1.5 py-0.5 text-xs">{d.tipo}</span>
-                <span className="flex-1 truncate text-muted-foreground">{etq}</span>
-              </li>
-            );
-          })}
+          {plan.diapositivas.map((d, i) => (
+            <li key={d.n} className="flex items-center gap-2 rounded border px-3 py-1.5 bg-background">
+              <span className="w-6 text-right text-xs text-muted-foreground">{d.n}</span>
+              <span className="rounded bg-muted px-1.5 py-0.5 text-xs">{d.tipo}</span>
+              <input
+                value={d.rotulo ?? ''}
+                onChange={(e) => setRotulo(i, e.target.value)}
+                placeholder="rótulo"
+                className={`${INPUT} flex-1`}
+                aria-label={`Rótulo de la diapositiva ${d.n}`}
+              />
+            </li>
+          ))}
         </ul>
       </section>
 

@@ -176,6 +176,8 @@ export interface EncolarPlanInput {
   alcance?: string;
   serie?: string;
   cursoId?: string;
+  /** Errores de validatePlan del intento anterior (bucle de corrección). */
+  erroresPrevios?: string[];
 }
 
 /**

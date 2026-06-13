@@ -34,6 +34,7 @@ export const generarPlanJob = onDocumentCreated(
       modalidad?: string | null;
       marcaId?: string;
       alcance?: string | null;
+      erroresPrevios?: string[] | null;
       estado?: string;
     };
     const jobId = event.params.jobId;
@@ -74,6 +75,7 @@ export const generarPlanJob = onDocumentCreated(
         marcaId,
         idSugerido: slugify(job.estudioTitulo ?? '', 'clase'),
         alcance: job.alcance ?? undefined,
+        erroresPrevios: job.erroresPrevios ?? undefined,
       });
 
       await snap.ref.set(

@@ -26,6 +26,8 @@ interface EncolarInput {
   alcance?: string;
   serie?: string;
   cursoId?: string;
+  /** Errores de validatePlan del intento anterior (bucle de corrección). */
+  erroresPrevios?: string[];
 }
 
 export const encolarPlanSesion = onCall(appCheckCallableOptions(), async (request) => {
@@ -73,6 +75,9 @@ export const encolarPlanSesion = onCall(appCheckCallableOptions(), async (reques
     estudioTitulo: estudio.title ?? '',
     genero,
     modalidad: genero === 'consejeria' ? modalidad : null,
+    erroresPrevios: Array.isArray(input.erroresPrevios)
+      ? input.erroresPrevios.filter((e) => typeof e === 'string').slice(0, 40)
+      : null,
     marcaId,
     alcance: input.alcance ? String(input.alcance) : null,
     serie: input.serie ? String(input.serie) : null,
