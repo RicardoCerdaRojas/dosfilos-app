@@ -23,6 +23,8 @@ export { encolarPlanSesion } from './teaching-suite/encolarPlanSesion';
 export { generarPlanJob } from './teaching-suite/generarPlanJob';
 export { proponerOutlineCurso } from './teaching-suite/proponerOutlineCurso';
 export { crearClaseDesdePlan } from './teaching-suite/crearClaseDesdePlan';
+export { promoteCanvasForm } from './teaching-suite/promoteCanvasForm';
+export { deleteCanvasComponent } from './teaching-suite/deleteCanvasComponent';
 export { getExegesisPapersSummary } from './exegesis/getExegesisPapersSummary';
 export { getSermonsListSummary } from './sermon/getSermonsListSummary';
 export { retrieveChunks } from './library/retrieveChunks';

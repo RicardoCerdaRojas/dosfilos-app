@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Presentation, Plus, RefreshCw, FileText, MonitorPlay, ClipboardList, Palette, Pencil, Trash2, Sparkles, Library } from 'lucide-react';
+import { Presentation, Plus, RefreshCw, FileText, MonitorPlay, ClipboardList, Palette, Pencil, Trash2, Sparkles, Library, Recycle } from 'lucide-react';
 import type { Artefacto } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
 import { useTeachingClases } from '@/features/teaching-suite/useTeachingClases';
@@ -67,6 +67,8 @@ export function TeachingSuitePage(): JSX.Element {
     verArtefacto,
     verMarca,
     eliminarMarca,
+    componentes,
+    eliminarLamina,
   } = useTeachingClases();
 
   return (
@@ -250,6 +252,44 @@ export function TeachingSuitePage(): JSX.Element {
           </ul>
         )}
       </section>
+
+      {/* Láminas guardadas (F4 «trinquete») */}
+      {componentes.length > 0 && (
+        <section className="space-y-2 pt-2">
+          <div className="flex items-center gap-2">
+            <Recycle className="w-4 h-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold">Láminas guardadas</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Láminas de diseño libre que reutilizas entre clases. Insértalas al revisar el plan de
+            una clase nueva.
+          </p>
+          <ul className="space-y-2">
+            {componentes.map((c) => (
+              <li
+                key={c.id}
+                className="flex items-center gap-3 rounded-lg border px-4 py-2.5 bg-background"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{c.nombre}</p>
+                  {c.alt && <p className="text-xs text-muted-foreground truncate">{c.alt}</p>}
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    if (window.confirm(`¿Eliminar la lámina guardada «${c.nombre}»?`))
+                      void eliminarLamina(c.id);
+                  }}
+                  title="Eliminar"
+                >
+                  <Trash2 className="w-4 h-4 text-destructive" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

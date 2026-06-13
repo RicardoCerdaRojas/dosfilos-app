@@ -4,14 +4,17 @@ import { useFirebase } from '@/context/firebase-context';
 import {
   listClases,
   listBrands,
+  listCanvasComponents,
   seedDemo,
   getPlan,
   renderClaseArtifact,
   previewBrand,
   deleteBrand,
+  deleteCanvasComponent,
   openHtml,
   type TeachingClaseRow,
   type BrandRow,
+  type CanvasComponentRow,
 } from './teachingSuiteService';
 
 /** Estado + acciones de la Suite de Enseñanza (clases + marcas). */
@@ -19,6 +22,7 @@ export function useTeachingClases() {
   const { user } = useFirebase();
   const [clases, setClases] = useState<TeachingClaseRow[]>([]);
   const [brands, setBrands] = useState<BrandRow[]>([]);
+  const [componentes, setComponentes] = useState<CanvasComponentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,15 +31,21 @@ export function useTeachingClases() {
     if (!user?.uid) {
       setClases([]);
       setBrands([]);
+      setComponentes([]);
       setLoading(false);
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      const [cs, bs] = await Promise.all([listClases(user.uid), listBrands(user.uid)]);
+      const [cs, bs, comps] = await Promise.all([
+        listClases(user.uid),
+        listBrands(user.uid),
+        listCanvasComponents(user.uid),
+      ]);
       setClases(cs);
       setBrands(bs);
+      setComponentes(comps);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al cargar');
     } finally {
@@ -93,9 +103,20 @@ export function useTeachingClases() {
     }
   };
 
+  const eliminarLamina = async (componentId: string) => {
+    setError(null);
+    try {
+      await deleteCanvasComponent(componentId);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo eliminar la lámina');
+    }
+  };
+
   return {
     clases,
     brands,
+    componentes,
     loading,
     seeding,
     error,
@@ -104,5 +125,6 @@ export function useTeachingClases() {
     verArtefacto,
     verMarca,
     eliminarMarca,
+    eliminarLamina,
   };
 }
