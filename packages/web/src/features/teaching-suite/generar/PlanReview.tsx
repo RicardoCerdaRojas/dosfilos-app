@@ -17,6 +17,21 @@ interface PlanReviewProps {
 
 const INPUT = 'rounded-md border bg-background px-2 py-1 text-sm';
 
+/** Etiqueta legible de una diapositiva (para entender qué es, sin abrir el artefacto). */
+function vistaPreviaDiapo(d: Record<string, unknown>): string {
+  const texto = (d.texto as string) ?? '';
+  return (
+    (d.titulo as string) ||
+    (d.ref as string) ||
+    (d.lema as string) ||
+    (d.error as string) ||
+    (d.rotulo as string) ||
+    (d.kicker as string) ||
+    (texto ? texto.slice(0, 80) : '') ||
+    '—'
+  );
+}
+
 export function PlanReview({
   plan,
   validacion,
@@ -44,11 +59,6 @@ export function PlanReview({
 
   const setBloque = (i: number, patch: Partial<{ nombre: string; min: number }>) =>
     onEditar((p) => ({ ...p, bloques: p.bloques.map((b, j) => (j === i ? { ...b, ...patch } : b)) }));
-  const setRotulo = (i: number, rotulo: string) =>
-    onEditar((p) => ({
-      ...p,
-      diapositivas: p.diapositivas.map((d, j) => (j === i ? { ...d, rotulo } : d)),
-    }));
 
   return (
     <div className="space-y-5">
@@ -133,21 +143,21 @@ export function PlanReview({
         </ul>
       </section>
 
-      {/* Diapositivas (rótulo editable) */}
+      {/* Diapositivas (vista previa — el contenido completo va en los artefactos) */}
       <section className="space-y-2">
         <h3 className="text-sm font-semibold">Diapositivas</h3>
+        <p className="text-xs text-muted-foreground">
+          Vista general del plan. El contenido completo de cada lámina se ve en los artefactos
+          (presentación, notas, hoja) al aprobar.
+        </p>
         <ul className="space-y-1">
-          {plan.diapositivas.map((d, i) => (
-            <li key={d.n} className="flex items-center gap-2 rounded border px-3 py-1.5 bg-background">
+          {plan.diapositivas.map((d) => (
+            <li key={d.n} className="flex items-center gap-2 rounded border px-3 py-1.5 text-sm bg-background">
               <span className="w-6 text-right text-xs text-muted-foreground">{d.n}</span>
               <span className="rounded bg-muted px-1.5 py-0.5 text-xs">{d.tipo}</span>
-              <input
-                value={d.rotulo ?? ''}
-                onChange={(e) => setRotulo(i, e.target.value)}
-                placeholder="rótulo"
-                className={`${INPUT} flex-1`}
-                aria-label={`Rótulo de la diapositiva ${d.n}`}
-              />
+              <span className="flex-1 truncate">
+                {vistaPreviaDiapo(d as unknown as Record<string, unknown>)}
+              </span>
             </li>
           ))}
         </ul>
