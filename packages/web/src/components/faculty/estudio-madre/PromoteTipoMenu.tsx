@@ -1,8 +1,9 @@
 import { type ReactNode } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTranslation } from '@/i18n';
+import { useFirebase } from '@/context/firebase-context';
 import { TIPOS_BASICOS, TIPOS_AVANZADOS } from '@/features/estudio-madre/tipos';
-import { getTopTipos } from '@/features/estudio-madre/tipoUsageStore';
+import { useTipoUsage } from '@/features/estudio-madre/useTipoUsage';
 import type { ElementoTipo } from '@dosfilos/domain';
 
 /**
@@ -23,8 +24,9 @@ export function PromoteTipoMenu({
     children: ReactNode;
 }) {
     const { t } = useTranslation('faculty');
-    // Sugerencia aprendida: los más usados arriba (atajo; también siguen en su grupo).
-    const masUsados = getTopTipos(3);
+    const { user } = useFirebase();
+    const { topTipos: masUsados, record } = useTipoUsage(user?.uid);
+    // Sugerencia aprendida (cross-device): los más usados arriba (atajo; también siguen en su grupo).
     const grupos: { label: string; tipos: ElementoTipo[] }[] = [
         ...(masUsados.length > 0 ? [{ label: t('estudioMadre.grupoMasUsados'), tipos: masUsados }] : []),
         { label: t('estudioMadre.grupoBasicos'), tipos: TIPOS_BASICOS },
@@ -46,7 +48,10 @@ export function PromoteTipoMenu({
                             <button
                                 key={tipo}
                                 type="button"
-                                onClick={() => onPick(tipo)}
+                                onClick={() => {
+                                    record(tipo);
+                                    onPick(tipo);
+                                }}
                                 className="w-full text-left px-2 py-1.5 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
                             >
                                 {t(`estudioMadre.tipos.${tipo}`)}

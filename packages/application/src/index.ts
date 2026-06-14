@@ -10,6 +10,7 @@ export * from './services/FacultyService';
 export * from './services/SeriesService';
 export * from './services/LibraryService';
 export * from './services/CategoryService';
+export * from './services/EstudioTipoUsageService';
 export * from './services/PlannerChatService';
 export * from './services/GeneratorChatService';
 export * from './services/AIService';

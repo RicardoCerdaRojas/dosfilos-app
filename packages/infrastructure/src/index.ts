@@ -6,6 +6,7 @@ export * from './firebase/FirebaseSermonRepository';
 export * from './firebase/FirebaseSeriesRepository';
 export * from './firebase/FirebaseLibraryRepository';
 export * from './firebase/FirebaseLibraryCategoryRepository';
+export * from './firebase/FirebaseEstudioTipoUsageRepository';
 export * from './firebase/FirebaseChunkRepository';
 export * from './firebase/FirestoreVectorRepository';
 export * from './firebase/FirebaseUserProfileRepository';

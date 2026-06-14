@@ -1,36 +1,60 @@
+import { estudioTipoUsageService } from '@dosfilos/application';
 import type { ElementoTipo } from '@dosfilos/domain';
 
 /**
- * Frecuencia de uso de cada tipo de elemento al promover, para sugerir los más
- * usados arriba del picker ("Más usados"). localStorage per-browser (cross-device
- * sería Firestore más adelante). Aprendizaje pasivo: se incrementa en cada
- * promoción, sin que el usuario configure nada.
+ * Frecuencia de uso de tipos de elemento al promover, CROSS-DEVICE (Firestore
+ * vía estudioTipoUsageService). Store externo para useSyncExternalStore: se
+ * carga una vez por usuario, se actualiza optimista al promover (+ escribe a
+ * Firestore en background). Aprendizaje pasivo — sin configurar nada.
  */
-const KEY = 'estudioTipoUsage';
+let counts: Record<string, number> = {};
+let loadedFor: string | null = null;
+let loading = false;
+const listeners = new Set<() => void>();
 
-function load(): Record<string, number> {
-    try {
-        const raw = localStorage.getItem(KEY);
-        const parsed = raw ? JSON.parse(raw) : {};
-        return parsed && typeof parsed === 'object' ? (parsed as Record<string, number>) : {};
-    } catch {
-        return {};
-    }
+function notify() {
+    listeners.forEach((l) => l());
 }
 
-export function recordTipoUsage(tipo: ElementoTipo): void {
-    try {
-        const counts = load();
-        counts[tipo] = (counts[tipo] ?? 0) + 1;
-        localStorage.setItem(KEY, JSON.stringify(counts));
-    } catch {
-        /* localStorage no disponible */
-    }
+export function subscribe(listener: () => void): () => void {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
 }
 
-/** Top tipos por uso (desc), solo con uso > 0. */
+/** Snapshot estable para useSyncExternalStore. */
+export function getCounts(): Record<string, number> {
+    return counts;
+}
+
+/** Carga una vez los contadores del usuario desde Firestore. */
+export function ensureLoaded(userId: string): void {
+    if (loadedFor === userId || loading) return;
+    loading = true;
+    estudioTipoUsageService
+        .getUsage(userId)
+        .then((remote) => {
+            counts = remote ?? {};
+            loadedFor = userId;
+            notify();
+        })
+        .catch(() => {
+            /* deja counts como está; reintenta en el próximo mount */
+        })
+        .finally(() => {
+            loading = false;
+        });
+}
+
+/** Incrementa optimista + persiste en Firestore (fire-and-forget). */
+export function recordTipoUsage(userId: string, tipo: ElementoTipo): void {
+    counts = { ...counts, [tipo]: (counts[tipo] ?? 0) + 1 };
+    notify();
+    void estudioTipoUsageService.recordUsage(userId, tipo).catch(() => {
+        /* el optimista ya se mostró; la próxima carga reconcilia */
+    });
+}
+
 export function getTopTipos(limit: number): ElementoTipo[] {
-    const counts = load();
     return (Object.entries(counts) as [ElementoTipo, number][])
         .filter(([, n]) => n > 0)
         .sort((a, b) => b[1] - a[1])

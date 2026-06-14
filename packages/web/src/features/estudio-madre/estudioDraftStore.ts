@@ -1,5 +1,4 @@
 import type { ElementoEstudio, ElementoTipo } from '@dosfilos/domain';
-import { recordTipoUsage } from './tipoUsageStore';
 
 /**
  * Borrador del "Estudio en construcción" — los elementos que el docente promueve
@@ -107,7 +106,6 @@ export function addElemento(
     sessionId: string,
     input: { tipo: ElementoTipo; contenido: string; autoria: DraftElemento['autoria']; mensajeId?: string },
 ): void {
-    recordTipoUsage(input.tipo); // aprendizaje pasivo para "Más usados"
     update(sessionId, (d) => {
         const elemento: DraftElemento = {
             id: genId(),
