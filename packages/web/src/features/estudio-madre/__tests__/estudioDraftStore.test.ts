@@ -7,6 +7,7 @@ import {
     removeElemento,
     setContenido,
     setRespaldo,
+    setRespuesta,
     setTipo,
     setReferencia,
     setTitulo,
@@ -75,16 +76,27 @@ describe('estudioDraftStore', () => {
         expect(e.respaldoTestigos).toEqual(['t1', 't2']);
     });
 
-    it('referencia/titulo se persisten y clear limpia todo', () => {
+    it('respuestas a testigos persisten en el borrador', () => {
+        const s = freshSession();
+        setRespuesta(s, 'centralIdea', 'Reconozco la tensión y reformulo: ...');
+        expect(getDraft(s).respuestas).toEqual({ centralIdea: 'Reconozco la tensión y reformulo: ...' });
+        // sobrevive en localStorage (la "recarga" relee desde ahí)
+        expect(localStorage.getItem(`estudioDraft:${s}`)).toBeTruthy();
+    });
+
+    it('referencia/titulo/respuestas se persisten y clear limpia todo', () => {
         const s = freshSession();
         addElemento(s, { tipo: 'marco', contenido: 'A', autoria: 'docente' });
         setReferencia(s, 'Juan 1:1-3');
         setTitulo(s, 'El Verbo eterno');
+        setRespuesta(s, 'e1', 'mi respuesta');
         expect(getDraft(s)).toMatchObject({ referencia: 'Juan 1:1-3', titulo: 'El Verbo eterno' });
+        expect(getDraft(s).respuestas.e1).toBe('mi respuesta');
         expect(localStorage.getItem(`estudioDraft:${s}`)).toBeTruthy();
         clearDraft(s);
         expect(getDraft(s).elementos).toHaveLength(0);
         expect(getDraft(s).referencia).toBe('');
+        expect(getDraft(s).respuestas).toEqual({});
         expect(localStorage.getItem(`estudioDraft:${s}`)).toBeNull();
     });
 

@@ -46,7 +46,6 @@ export function EstudioEnConstruccionPanel({
     const { validar, loading } = useValidarEstudioMadre();
     const [resultado, setResultado] = useState<EstudioFidelidadResult | null>(null);
     const [persisted, setPersisted] = useState(false);
-    const [respuestas, setRespuestas] = useState<Record<string, string>>({});
 
     /** Persiste el estudio una vez que las puertas están en verde. */
     const persistir = async (result: EstudioFidelidadResult) => {
@@ -98,7 +97,7 @@ export function EstudioEnConstruccionPanel({
             toast.error(t('estudioMadre.needReference'));
             return;
         }
-        const resolutions = Object.entries(respuestas)
+        const resolutions = Object.entries(estudio.respuestas)
             .map(([claimKey, response]) => ({ claimKey, response }))
             .filter((r) => r.response.trim().length > 0);
         const result = await validar({
@@ -126,7 +125,6 @@ export function EstudioEnConstruccionPanel({
         estudio.limpiar();
         setResultado(null);
         setPersisted(false);
-        setRespuestas({});
     };
 
     const pendiente = !!resultado && resultado.estadoFidelidad !== 'verde';
@@ -238,7 +236,7 @@ export function EstudioEnConstruccionPanel({
                                 c.escalation === 'hard-block'
                                     ? WITNESS_THRESHOLDS.hardBlockResponseMinChars
                                     : WITNESS_THRESHOLDS.softBlockResponseMinChars;
-                            const val = respuestas[c.key] ?? '';
+                            const val = estudio.respuestas[c.key] ?? '';
                             return (
                                 <div key={c.key} className="space-y-1">
                                     <p className="text-sm font-medium text-foreground">{c.text}</p>
@@ -251,7 +249,7 @@ export function EstudioEnConstruccionPanel({
                                         ))}
                                     <textarea
                                         value={val}
-                                        onChange={(ev) => setRespuestas((p) => ({ ...p, [c.key]: ev.target.value }))}
+                                        onChange={(ev) => estudio.cambiarRespuesta(c.key, ev.target.value)}
                                         rows={2}
                                         placeholder={t('estudioMadre.responsePlaceholder')}
                                         className="w-full text-sm rounded-md border border-border bg-background px-2 py-1.5 resize-y text-foreground"

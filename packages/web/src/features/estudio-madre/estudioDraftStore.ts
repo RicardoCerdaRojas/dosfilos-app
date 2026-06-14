@@ -25,9 +25,11 @@ export interface EstudioDraft {
     elementos: DraftElemento[];
     referencia: string;
     titulo: string;
+    /** Respuestas del docente a testigos que disienten, por claimKey. */
+    respuestas: Record<string, string>;
 }
 
-const EMPTY: EstudioDraft = { elementos: [], referencia: '', titulo: '' };
+const EMPTY: EstudioDraft = { elementos: [], referencia: '', titulo: '', respuestas: {} };
 const STORAGE_PREFIX = 'estudioDraft:';
 
 const cache = new Map<string, EstudioDraft>();
@@ -46,6 +48,10 @@ function load(sessionId: string): EstudioDraft {
             elementos: Array.isArray(parsed.elementos) ? parsed.elementos : [],
             referencia: typeof parsed.referencia === 'string' ? parsed.referencia : '',
             titulo: typeof parsed.titulo === 'string' ? parsed.titulo : '',
+            respuestas:
+                parsed.respuestas && typeof parsed.respuestas === 'object'
+                    ? (parsed.respuestas as Record<string, string>)
+                    : {},
         };
     } catch {
         return EMPTY;
@@ -66,7 +72,12 @@ export function subscribe(listener: () => void): () => void {
 function commit(sessionId: string, next: EstudioDraft): void {
     cache.set(sessionId, next);
     try {
-        if (next.elementos.length === 0 && !next.referencia && !next.titulo) {
+        if (
+            next.elementos.length === 0 &&
+            !next.referencia &&
+            !next.titulo &&
+            Object.keys(next.respuestas).length === 0
+        ) {
             localStorage.removeItem(storageKey(sessionId));
         } else {
             localStorage.setItem(storageKey(sessionId), JSON.stringify(next));
@@ -154,6 +165,10 @@ export function setReferencia(sessionId: string, referencia: string): void {
 
 export function setTitulo(sessionId: string, titulo: string): void {
     update(sessionId, (d) => ({ ...d, titulo }));
+}
+
+export function setRespuesta(sessionId: string, claimKey: string, response: string): void {
+    update(sessionId, (d) => ({ ...d, respuestas: { ...d.respuestas, [claimKey]: response } }));
 }
 
 export function clearDraft(sessionId: string): void {
