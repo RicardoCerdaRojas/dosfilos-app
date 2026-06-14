@@ -148,7 +148,13 @@ export function setTipo(sessionId: string, id: string, tipo: ElementoTipo): void
 export function setContenido(sessionId: string, id: string, contenido: string): void {
     update(sessionId, (d) => ({
         ...d,
-        elementos: d.elementos.map((e) => (e.id === id ? { ...e, contenido } : e)),
+        elementos: d.elementos.map((e) =>
+            e.id === id
+                // Editar contenido de origen `sistema` = revisión del docente ⇒ `mixto`
+                // (spec §2.4: "promueve lo que pidió y revisó"). docente/mixto no cambian.
+                ? { ...e, contenido, autoria: e.autoria === 'sistema' ? 'mixto' : e.autoria }
+                : e,
+        ),
     }));
 }
 

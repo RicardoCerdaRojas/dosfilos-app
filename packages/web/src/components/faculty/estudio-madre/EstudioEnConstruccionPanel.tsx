@@ -138,9 +138,21 @@ export function EstudioEnConstruccionPanel({
                         bloqueos={resultado.bloqueos}
                         autoriaPct={resultado.autoria.docentePct}
                     />
-                    <Button variant="outline" size="sm" onClick={nuevoEstudio} className="w-full">
-                        {t('estudioMadre.newStudy')}
-                    </Button>
+                    {persisted ? (
+                        // Estudio cerrado en verde + guardado → arrancar otro.
+                        <Button variant="outline" size="sm" onClick={nuevoEstudio} className="w-full">
+                            {t('estudioMadre.newStudy')}
+                        </Button>
+                    ) : (
+                        // En progreso: resolver, no descartar. Discreto, no primario.
+                        <button
+                            type="button"
+                            onClick={nuevoEstudio}
+                            className="text-xs text-muted-foreground hover:text-foreground"
+                        >
+                            {t('estudioMadre.discard')}
+                        </button>
+                    )}
                 </div>
             )}
             {estudio.elementos.length === 0 ? (
@@ -227,9 +239,17 @@ export function EstudioEnConstruccionPanel({
                     <div className="rounded-lg border border-warning/40 bg-warning/5 p-3 space-y-3">
                         <p className="text-sm font-medium text-foreground">{t('estudioMadre.witnessGateTitle')}</p>
                         {claimsBlockingAbsolutely(resultado.testigos).map((c) => (
-                            <p key={c.key} className="text-xs text-destructive">
-                                ⚠ {c.text} — {t('estudioMadre.absoluteBlock')}
-                            </p>
+                            <div key={c.key} className="space-y-1">
+                                <p className="text-xs font-medium text-destructive">⚠ {c.text}</p>
+                                {c.verdicts
+                                    .filter((v) => v.dissents)
+                                    .map((v, i) => (
+                                        <p key={i} className="text-xs text-destructive">
+                                            {v.reasoning}
+                                        </p>
+                                    ))}
+                                <p className="text-xs text-muted-foreground">{t('estudioMadre.absoluteBlockHelp')}</p>
+                            </div>
                         ))}
                         {claimsRequiringResponse(resultado.testigos).map((c) => {
                             const min =
