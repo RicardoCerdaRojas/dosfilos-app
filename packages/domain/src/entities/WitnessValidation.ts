@@ -35,13 +35,23 @@ export type WitnessId = 'context' | 'parallels' | 'confession';
 
 export const WITNESS_IDS: WitnessId[] = ['context', 'parallels', 'confession'];
 
-/** Which seed field a validated claim came from. */
-export type ClaimKind =
+/** Which seed field a validated claim came from (sermon pipeline). */
+export type SeedClaimKind =
     | 'centralIdea'
     | 'observation'
     | 'doxologicalApplication'
     /** Phase 1.6 (ADR-023) — the timeless principle (Step 7). */
     | 'principle';
+
+/**
+ * Provenance label carried through the escalation pipeline. The escalation
+ * math NEVER switches on `kind` (it's a label only — see `escalateClaim`,
+ * which takes only `detectedLevel` + `dissentCount`), so the type stays OPEN:
+ * other sources reusing the same engine (e.g. `estudio_madre` element kinds)
+ * pass their own kind strings without coupling this entity to their vocabulary.
+ * The `(string & {})` keeps autocomplete for the seed kinds.
+ */
+export type ClaimKind = SeedClaimKind | (string & {});
 
 /**
  * Escalation outcome for a claim, ordered by severity. `absolute-block`
