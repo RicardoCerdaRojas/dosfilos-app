@@ -73,6 +73,8 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
             version: data.version ?? 1,
             sourceSessionDeleted: data.sourceSessionDeleted ?? false,
             publishedRefs,
+            // Sobre Estudio Madre: passthrough aditivo. Ausente ⇒ estudio legacy.
+            ...(data.estudioMadre ? { estudioMadre: data.estudioMadre } : {}),
         };
     }
 
@@ -92,6 +94,8 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
             derivedFromMessageIds: input.derivedFromMessageIds,
             externalRef: input.externalRef ?? null,
             version: 1,
+            // Solo se incluye si el llamador lo provee (Firestore rechaza undefined).
+            ...(input.estudioMadre ? { estudioMadre: input.estudioMadre } : {}),
         };
         try {
             await setDoc(docRef, {
@@ -233,6 +237,24 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
         await updateDoc(docRef, {
             markdown,
             version: increment(1),
+            updatedAt: Timestamp.fromDate(new Date()),
+        });
+    }
+
+    async updateEstudioMadre(
+        userId: string,
+        extractionId: string,
+        estudioMadre: import('@dosfilos/domain').EstudioMadre,
+    ): Promise<void> {
+        const docRef = this.getDocRef(extractionId);
+        const snap = await getDoc(docRef);
+        if (!snap.exists() || snap.data().userId !== userId) {
+            throw new Error('Extraction not found or not owned by user');
+        }
+        // Aditivo: solo escribe el sobre + updatedAt. No toca markdown ni version
+        // (el bump de version del cuerpo es responsabilidad de updateMarkdown).
+        await updateDoc(docRef, {
+            estudioMadre,
             updatedAt: Timestamp.fromDate(new Date()),
         });
     }
