@@ -14,6 +14,7 @@ import {
     assertAiAssistAllowed,
     buildDoubtRoutingNote,
     detectRaisedDoubt,
+    evaluatePastoralSeed,
     isLastStep,
     makeRaisedDoubt,
     PASTORAL_SEED_STEP_ORDER,
@@ -184,12 +185,18 @@ export class RunSocraticTurnUseCase {
             const patch = policy.persistTo(seed, output.pastorTextToPersist);
             await this.seedRepo.update(seed.id, patch);
             nextState = advance(gss);
-            sermonReady = nextState.status === 'completed';
-            // Mark the seed itself complete so downstream readers (sermons list,
-            // wizard gate, badges) see the canonical flag — the state machine only
-            // flips the session status.
-            if (sermonReady) {
-                await this.seedRepo.update(seed.id, { completed: true, completedAt: new Date() });
+            // Una sola fuente de verdad: el estudio está completo ⟺ los 8
+            // validadores pasan sobre el estado fusionado, NO solo porque el
+            // state-machine avanzó. Evita marcar `completed: true` con un paso
+            // vacío (p.ej. Insight) — el bug que dejaba semillas en 7/8 con
+            // badge "Listo para borrador" y rompía el handoff al wizard.
+            const fullyValid = evaluatePastoralSeed({ ...seed, ...patch }).completed;
+            sermonReady = nextState.status === 'completed' && fullyValid;
+            if (nextState.status === 'completed') {
+                await this.seedRepo.update(seed.id, {
+                    completed: fullyValid,
+                    ...(fullyValid ? { completedAt: new Date() } : {}),
+                });
             }
             assistType = 'socraticGuidance';
             pastorTextPersisted = output.pastorTextToPersist;

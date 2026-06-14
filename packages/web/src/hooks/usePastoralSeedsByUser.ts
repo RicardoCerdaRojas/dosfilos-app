@@ -52,7 +52,10 @@ export function usePastoralSeedsByUser(): UsePastoralSeedsByUserResult {
                     passage: seed.passage,
                     completedSteps: evaluation.completedSteps.length,
                     totalSteps: PASTORAL_SEED_STEP_ORDER.length,
-                    completed: seed.completed,
+                    // Fuente única de verdad: los 8 validadores, NO el flag
+                    // almacenado `seed.completed` (que puede quedar `true` con un
+                    // paso vacío y mostrar "Listo para borrador" en 7/8).
+                    completed: evaluation.completed,
                     updatedAt: seed.updatedAt,
                 } satisfies PastoralSeedSummary;
             });

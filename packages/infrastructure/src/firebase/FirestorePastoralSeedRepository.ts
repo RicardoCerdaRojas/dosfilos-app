@@ -195,9 +195,16 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
         assign('recognition', seed.recognition ? this.dateOptionalStepToFirestore(seed.recognition) : seed.recognition);
         assign('function', seed.function ? this.dateOptionalStepToFirestore(seed.function) : seed.function);
         assign('timelessPrinciple', seed.timelessPrinciple ? this.timelessPrincipleToFirestore(seed.timelessPrinciple) : seed.timelessPrinciple);
-        assign('insight', this.insightToFirestore(seed.insight));
+        // BUG FIX: en update PARCIAL, si el patch no incluye el paso, hay que
+        // pasar `undefined` (que `assign` omite) — NO `null`. `insightToFirestore`
+        // devuelve `null` para insight ausente, y `assign` solo omite `undefined`,
+        // así que la versión anterior escribía `insight: null` y BORRABA el
+        // insight ya guardado por un update previo (p.ej. el 2º update que marca
+        // `completed`). Mismo guard que el resto de los pasos. Igual `toolsConsulted`
+        // (que se vaciaba a [] en cada update parcial → "0 herramientas consultadas").
+        assign('insight', seed.insight ? this.insightToFirestore(seed.insight) : seed.insight);
         assign('totalTimeSeconds', seed.totalTimeSeconds);
-        assign('toolsConsulted', (seed.toolsConsulted ?? []).map(this.toolToFirestore));
+        assign('toolsConsulted', seed.toolsConsulted ? seed.toolsConsulted.map(this.toolToFirestore) : seed.toolsConsulted);
         assign('completed', seed.completed);
         assign('completedAt', seed.completedAt ? Timestamp.fromDate(seed.completedAt) : null);
         // ADR-034 — routed doubts (plain, no Dates).
