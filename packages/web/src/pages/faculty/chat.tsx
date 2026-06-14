@@ -628,10 +628,8 @@ export function FacultyChatPage() {
                     onRefreshExtractions={() => refetchExtractions()}
                     sessionId={isNewSession ? undefined : effectiveSessionId}
                     userId={user?.uid}
-                    onEstudioCreated={(extraction) => {
-                        refetchExtractions();
-                        openExtractionInEditor(extraction);
-                    }}
+                    onEstudioCreated={() => refetchExtractions()}
+                    onEstudioOpen={(extraction) => openExtractionInEditor(extraction)}
                 />
             </div>
 

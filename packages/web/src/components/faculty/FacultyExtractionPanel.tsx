@@ -57,8 +57,10 @@ interface FacultyExtractionPanelProps {
     /** Sesión + dueño activos: habilitan el tab "Estudio" (cristalización). */
     sessionId?: string;
     userId?: string;
-    /** Tras cristalizar: refrescar la lista de generados / abrir el estudio. */
-    onEstudioCreated?: (extraction: Extraction) => void;
+    /** Tras cristalizar en verde: refrescar la lista de generados (sin abrir). */
+    onEstudioCreated?: () => void;
+    /** Abrir el borrador del estudio en el editor (desde el diálogo de éxito). */
+    onEstudioOpen?: (extraction: Extraction) => void;
 }
 
 /**
@@ -92,6 +94,7 @@ export function FacultyExtractionPanel({
     sessionId,
     userId,
     onEstudioCreated,
+    onEstudioOpen,
 }: FacultyExtractionPanelProps) {
     const { t } = useTranslation('faculty');
     const [tab, setTab] = useState<Tab>('tools');
@@ -180,7 +183,8 @@ export function FacultyExtractionPanel({
                 <EstudioEnConstruccionPanel
                     sessionId={sessionId!}
                     userId={userId!}
-                    onCreated={onEstudioCreated}
+                    onRefetch={onEstudioCreated}
+                    onOpenBorrador={onEstudioOpen}
                 />
             ) : (
                 <FacultyExtractionsList

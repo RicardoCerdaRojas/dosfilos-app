@@ -3,6 +3,14 @@ import { toast } from 'sonner';
 import { ChevronUp, ChevronDown, X, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { facultyService } from '@dosfilos/application';
@@ -35,17 +43,23 @@ const TIPOS_FORMATIVOS: ElementoTipo[] = [
 export function EstudioEnConstruccionPanel({
     sessionId,
     userId,
-    onCreated,
+    onRefetch,
+    onOpenBorrador,
 }: {
     sessionId: string;
     userId: string;
-    onCreated?: (extraction: Extraction) => void;
+    /** Refresca la lista de Recursos tras cristalizar (sin abrir el borrador). */
+    onRefetch?: () => void;
+    /** Abre el borrador en el editor (desde el diálogo de confirmación). */
+    onOpenBorrador?: (extraction: Extraction) => void;
 }) {
     const { t } = useTranslation('faculty');
     const estudio = useEstudioEnConstruccion(sessionId);
     const { validar, loading } = useValidarEstudioMadre();
     const [resultado, setResultado] = useState<EstudioFidelidadResult | null>(null);
     const [persisted, setPersisted] = useState(false);
+    /** Estudio recién cristalizado en verde → diálogo de confirmación. */
+    const [successExtraction, setSuccessExtraction] = useState<Extraction | null>(null);
 
     /** Persiste el estudio una vez que las puertas están en verde. */
     const persistir = async (result: EstudioFidelidadResult) => {
@@ -77,10 +91,10 @@ export function EstudioEnConstruccionPanel({
                 .filter((id): id is string => !!id),
         });
         setPersisted(true);
-        toast.success(t('estudioMadre.created'), {
-            action: { label: t('estudioMadre.view'), onClick: () => onCreated?.(extraction) },
-        });
-        onCreated?.(extraction);
+        onRefetch?.();
+        // En vez de saltar de golpe al borrador: confirmar el logro (verde) y dejar
+        // que el docente decida cuándo abrir el borrador.
+        setSuccessExtraction(extraction);
     };
 
     /**
@@ -314,6 +328,30 @@ export function EstudioEnConstruccionPanel({
             </div>
               </>
             )}
+
+            <Dialog open={!!successExtraction} onOpenChange={(o) => { if (!o) setSuccessExtraction(null); }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('estudioMadre.successTitle')}</DialogTitle>
+                        <DialogDescription>
+                            {t('estudioMadre.successBody', { pct: resultado?.autoria.docentePct ?? 0 })}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setSuccessExtraction(null)}>
+                            {t('estudioMadre.successStay')}
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                if (successExtraction) onOpenBorrador?.(successExtraction);
+                                setSuccessExtraction(null);
+                            }}
+                        >
+                            {t('estudioMadre.successView')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
