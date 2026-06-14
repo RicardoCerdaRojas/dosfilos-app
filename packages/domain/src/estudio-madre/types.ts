@@ -79,6 +79,17 @@ export interface ElementoEstudio {
     razon?: string;
     /** IDs de elementos testigo que respaldan una afirmación de peso (puerta 2/5). */
     respaldoTestigos?: string[];
+    /**
+     * Solo para `tipo: 'cita'` — procedencia de la cita (puerta 4). En MVP el
+     * estado se deriva de aquí sin correr el verificador del paper: `corpusId`
+     * presente ⇒ la cita vino de una fuente RAG con corpus (verificable).
+     */
+    citaFuente?: {
+        /** Referencia citada (p.ej. "Calcedonia, Definición" o "Wallace p.47"). */
+        referencia?: string;
+        /** Id del recurso RAG si la cita salió del corpus; null/ausente si no. */
+        corpusId?: string | null;
+    };
 }
 
 /** Agregado de autoría derivado de los elementos (puerta 7, la demo). */

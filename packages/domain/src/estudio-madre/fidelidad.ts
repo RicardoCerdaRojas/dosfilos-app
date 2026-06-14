@@ -36,14 +36,17 @@ import type {
     ElementoTipo,
     EstadoFidelidad,
     ProofTexting,
+    VerificacionCitas,
 } from './types';
 
 /**
- * Tipos de elemento que son "afirmación de peso" (sujetas a las puertas de
- * testigos y al anti proof-texting). El resto (`testigo`, `testigo_historico`,
- * `cita`, `ilustracion`) son evidencia/soporte, no afirmaciones a validar.
+ * Tipos de elemento que se VALIDAN como claim contra los tres testigos
+ * (puertas 1–3). El resto (`testigo`, `testigo_historico`, `cita`,
+ * `ilustracion`) son evidencia/soporte, no afirmaciones a validar.
+ * Incluye `aplicacion` (espejo de `doxologicalApplication` del seed: una
+ * aplicación puede malusar el contexto y debe verse contra los testigos).
  */
-const TIPOS_DE_PESO: ReadonlySet<ElementoTipo> = new Set<ElementoTipo>([
+const TIPOS_CLAIM: ReadonlySet<ElementoTipo> = new Set<ElementoTipo>([
     // formativo
     'idea_central',
     'observacion',
@@ -56,9 +59,25 @@ const TIPOS_DE_PESO: ReadonlySet<ElementoTipo> = new Set<ElementoTipo>([
     'conclusion',
 ]);
 
+/**
+ * Tipos que exigen ≥2 testigos de respaldo propio (anti proof-texting, puerta 2).
+ * = afirmaciones doctrinales independientes. EXCLUYE `aplicacion`: una aplicación
+ * pastoral se deriva de la idea central ya probada (hereda su respaldo, no exige
+ * el propio). Decisión del fundador en Capa 2b.
+ */
+const TIPOS_DE_PESO: ReadonlySet<ElementoTipo> = new Set<ElementoTipo>(
+    [...TIPOS_CLAIM].filter((t) => t !== 'aplicacion'),
+);
+
 /** Mínimo de testigos de respaldo por afirmación de peso (anti proof-texting). */
 export const MIN_RESPALDO_TESTIGOS = 2;
 
+/** ¿Se valida contra los tres testigos? (puertas 1–3) */
+export function esClaimValidable(tipo: ElementoTipo): boolean {
+    return TIPOS_CLAIM.has(tipo);
+}
+
+/** ¿Exige respaldo propio ≥2? (puerta 2, anti proof-texting) */
 export function esAfirmacionDePeso(tipo: ElementoTipo): boolean {
     return TIPOS_DE_PESO.has(tipo);
 }
@@ -80,7 +99,7 @@ export interface EstudioClaim {
  */
 export function collectEstudioClaims(elementos: ElementoEstudio[]): EstudioClaim[] {
     return elementos
-        .filter((e) => esAfirmacionDePeso(e.tipo) && e.contenido.trim().length > 0)
+        .filter((e) => esClaimValidable(e.tipo) && e.contenido.trim().length > 0)
         .sort((a, b) => a.orden - b.orden)
         .map((e) => ({ key: e.id, kind: e.tipo, text: e.contenido.trim() }));
 }
@@ -131,6 +150,40 @@ export function evaluarCitas(elementos: ElementoEstudio[]): CitasResult {
         else if (e.verificacionCitas !== 'ok') sinVerificar.push(e.id);
     }
     return { fallidas, sinVerificar };
+}
+
+/**
+ * Puerta 4 — verificación MVP (spec §8, alcance acotado por el fundador).
+ *
+ * NO corre el `ICitationVerifier` del paper ni mapea a `VerifierSource` (eso es
+ * v1): deriva el estado de lo que el propio elemento `cita` SÍ tiene.
+ *   - `corpusId` presente ⇒ vino de una fuente RAG con corpus ⇒ `ok`.
+ *   - solo `referencia` (sin corpus) ⇒ `parcial` (afirmada, no RAG-anclada).
+ *   - nada ⇒ `undefined` (sin_verificar; por el gating NO bloquea `verde`).
+ *
+ * Devuelve `undefined` para no-citas. NUNCA produce `'no'` en MVP (no hay
+ * verificador real que pueda refutar): ese estado queda reservado a marca
+ * manual del docente o al verificador real de v1, y `evaluarCitas` lo respeta.
+ */
+export function derivarVerificacionCitaMvp(elemento: ElementoEstudio): VerificacionCitas | undefined {
+    if (elemento.tipo !== 'cita') return undefined;
+    const fuente = elemento.citaFuente;
+    if (fuente?.corpusId) return 'ok';
+    if (fuente?.referencia && fuente.referencia.trim().length > 0) return 'parcial';
+    return undefined;
+}
+
+/**
+ * Aplica la puerta 4 MVP a una lista de elementos: rellena `verificacionCitas`
+ * de las citas SIN estado previo (respeta una marca explícita del docente, p.ej.
+ * `'no'`). Pura — devuelve una copia nueva, no muta. Se corre en la cristalización.
+ */
+export function aplicarVerificacionCitasMvp(elementos: ElementoEstudio[]): ElementoEstudio[] {
+    return elementos.map((e) => {
+        if (e.tipo !== 'cita' || e.verificacionCitas !== undefined) return e;
+        const derivado = derivarVerificacionCitaMvp(e);
+        return derivado === undefined ? e : { ...e, verificacionCitas: derivado };
+    });
 }
 
 // ── Puerta 7: métrica de autoría ────────────────────────────────────────────

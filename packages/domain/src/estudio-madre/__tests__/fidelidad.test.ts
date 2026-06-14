@@ -5,6 +5,8 @@ import {
     evaluarCitas,
     calcularAutoriaResumen,
     validarEstudioMadre,
+    derivarVerificacionCitaMvp,
+    aplicarVerificacionCitasMvp,
     MIN_RESPALDO_TESTIGOS,
     type EstudioWitnessVerdicts,
 } from '../fidelidad';
@@ -57,6 +59,42 @@ describe('evaluarProofTexting', () => {
         expect(r.porElemento).toEqual({ a: 'sospechoso', b: 'limpio', c: 'sospechoso' });
         expect(r.sospechosos.sort()).toEqual(['a', 'c']);
         expect(MIN_RESPALDO_TESTIGOS).toBe(2);
+    });
+});
+
+describe('aplicacion (decisión Capa 2b)', () => {
+    it('aplicacion ES claim validable pero NO exige respaldo propio (no es afirmación de peso)', () => {
+        const elementos: ElementoEstudio[] = [
+            el({ id: 'ap', tipo: 'aplicacion', orden: 1, contenido: 'Vive con esperanza' }), // sin respaldo
+        ];
+        // entra como claim a los testigos...
+        expect(collectEstudioClaims(elementos).map((c) => c.key)).toEqual(['ap']);
+        // ...pero NO aparece como sospechosa de proof-texting.
+        const pt = evaluarProofTexting(elementos);
+        expect(pt.porElemento.ap).toBeUndefined();
+        expect(pt.sospechosos).toEqual([]);
+    });
+});
+
+describe('derivarVerificacionCitaMvp / aplicarVerificacionCitasMvp (puerta 4 MVP)', () => {
+    it('cita con corpus RAG ⇒ ok; solo referencia ⇒ parcial; nada ⇒ sin_verificar', () => {
+        expect(derivarVerificacionCitaMvp(el({ id: 'c1', tipo: 'cita', orden: 1, contenido: 'x', citaFuente: { referencia: 'r', corpusId: 'lib-7' } }))).toBe('ok');
+        expect(derivarVerificacionCitaMvp(el({ id: 'c2', tipo: 'cita', orden: 1, contenido: 'x', citaFuente: { referencia: 'r' } }))).toBe('parcial');
+        expect(derivarVerificacionCitaMvp(el({ id: 'c3', tipo: 'cita', orden: 1, contenido: 'x' }))).toBeUndefined();
+    });
+
+    it('no-cita ⇒ undefined; nunca produce "no" en MVP', () => {
+        expect(derivarVerificacionCitaMvp(el({ id: 'a', tipo: 'argumento', orden: 1, contenido: 'a' }))).toBeUndefined();
+    });
+
+    it('respeta una marca explícita previa del docente (no la sobreescribe)', () => {
+        const elementos: ElementoEstudio[] = [
+            el({ id: 'c1', tipo: 'cita', orden: 1, contenido: 'mal', verificacionCitas: 'no', citaFuente: { corpusId: 'lib-7' } }),
+            el({ id: 'c2', tipo: 'cita', orden: 2, contenido: 'ok', citaFuente: { corpusId: 'lib-7' } }),
+        ];
+        const out = aplicarVerificacionCitasMvp(elementos);
+        expect(out[0].verificacionCitas).toBe('no'); // respetada
+        expect(out[1].verificacionCitas).toBe('ok'); // derivada
     });
 });
 
