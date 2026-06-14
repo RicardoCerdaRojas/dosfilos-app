@@ -57,7 +57,7 @@
   },
   "insight": {
     "helperTitle": "Arma tu insight (ayuda)",
-    "helperHint": "Llena las 5 partes con tus palabras. Lo armamos en el formato correcto y lo pones en el chat para revisar y enviar.",
+    "helperHint": "Llena las 5 partes con tus palabras. Al enviar se guardan tal cual las escribiste.",
     "centralIdea": "Idea central",
     "centralIdeaPlaceholder": "La afirmación central de tu sermón, en una frase.",
     "observations": "Observaciones (mínimo 3)",
@@ -72,6 +72,10 @@
     "anecdotePlaceholder": "Una ilustración o anécdota pastoral (un par de frases).",
     "doxological": "Aplicación doxológica",
     "doxologicalPlaceholder": "Cómo esto te lleva a adorar y responder a Dios (un par de frases).",
-    "useInAnswer": "Poner en mi respuesta"
+    "useInAnswer": "Poner en mi respuesta",
+    "submit": "Enviar mi insight",
+    "submitting": "Guardando…",
+    "missing": "Falta para cerrar el paso:",
+    "affirmation": "Recibido. Tu insight quedó guardado tal cual lo escribiste — es tu trabajo, no del asistente. Con esto cierras tu estudio; continúa en el editor para redactar el sermón."
   }
 }

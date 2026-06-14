@@ -57,7 +57,7 @@
   },
   "insight": {
     "helperTitle": "Build your insight (helper)",
-    "helperHint": "Fill the 5 parts in your own words. We assemble them in the right format and drop it in the chat to review and send.",
+    "helperHint": "Fill the 5 parts in your own words. On submit they're saved exactly as you wrote them.",
     "centralIdea": "Central idea",
     "centralIdeaPlaceholder": "Your sermon's central claim, in one sentence.",
     "observations": "Observations (at least 3)",
@@ -72,6 +72,10 @@
     "anecdotePlaceholder": "A pastoral illustration or anecdote (a couple of sentences).",
     "doxological": "Doxological application",
     "doxologicalPlaceholder": "How this leads you to worship and respond to God (a couple of sentences).",
-    "useInAnswer": "Put in my answer"
+    "useInAnswer": "Put in my answer",
+    "submit": "Submit my insight",
+    "submitting": "Saving…",
+    "missing": "Still needed to close the step:",
+    "affirmation": "Received. Your insight was saved exactly as you wrote it — it's your work, not the assistant's. That closes your study; continue in the editor to write the sermon."
   }
 }

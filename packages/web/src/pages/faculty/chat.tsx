@@ -490,7 +490,7 @@ export function FacultyChatPage() {
                                                     {guidedIntegration.isGuidedActive
                                                         && session?.guidedSermonSession?.currentStep === 'insight' && (
                                                         <GuidedInsightHelper
-                                                            onInsert={(text) => setInput(text)}
+                                                            onSubmit={(args) => guidedIntegration.submitInsight(args)}
                                                             busy={guidedIntegration.isProcessing}
                                                             seedId={session.guidedSermonSession.seedId}
                                                         />
