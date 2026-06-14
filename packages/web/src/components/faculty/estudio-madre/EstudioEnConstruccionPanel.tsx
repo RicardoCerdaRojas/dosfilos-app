@@ -333,8 +333,13 @@ export function EstudioEnConstruccionPanel({
             <Dialog open={!!successExtraction} onOpenChange={(o) => { if (!o) setSuccessExtraction(null); }}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{t('estudioMadre.successTitle')}</DialogTitle>
-                        <DialogDescription>
+                        <DialogTitle>
+                            <span className="inline-flex items-center gap-2 rounded-md bg-success/10 text-success px-2.5 py-1">
+                                <ShieldCheck className="w-4 h-4" />
+                                {t('estudioMadre.successTitle')}
+                            </span>
+                        </DialogTitle>
+                        <DialogDescription className="pt-1">
                             {t('estudioMadre.successBody', { pct: resultado?.autoria.docentePct ?? 0 })}
                         </DialogDescription>
                     </DialogHeader>
