@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTranslation } from '@/i18n';
 import { TIPOS_BASICOS, TIPOS_AVANZADOS } from '@/features/estudio-madre/tipos';
+import { getTopTipos } from '@/features/estudio-madre/tipoUsageStore';
 import type { ElementoTipo } from '@dosfilos/domain';
 
 /**
@@ -22,7 +23,10 @@ export function PromoteTipoMenu({
     children: ReactNode;
 }) {
     const { t } = useTranslation('faculty');
+    // Sugerencia aprendida: los más usados arriba (atajo; también siguen en su grupo).
+    const masUsados = getTopTipos(3);
     const grupos: { label: string; tipos: ElementoTipo[] }[] = [
+        ...(masUsados.length > 0 ? [{ label: t('estudioMadre.grupoMasUsados'), tipos: masUsados }] : []),
         { label: t('estudioMadre.grupoBasicos'), tipos: TIPOS_BASICOS },
         { label: t('estudioMadre.grupoAvanzados'), tipos: TIPOS_AVANZADOS },
     ];

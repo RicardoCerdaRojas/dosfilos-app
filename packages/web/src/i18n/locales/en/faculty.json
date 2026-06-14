@@ -40,6 +40,7 @@
         "error": "We couldn't crystallize the study. Try again.",
         "whatsMissing": "What's missing before closing:",
         "authorship": "{{pct}}% authored by you",
+        "grupoMasUsados": "Most used",
         "grupoBasicos": "Basic",
         "grupoAvanzados": "Advanced",
         "tipos": {
