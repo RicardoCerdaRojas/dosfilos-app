@@ -467,6 +467,7 @@ export function FacultyChatPage() {
                                                         agentNameForNew={agentNameForNew}
                                                         onRequestDeleteMessage={requestDeleteMessage}
                                                         onCopyMessage={(content, messageId) => copyMessageToClipboard(content, messageId, t)}
+                                                        sessionId={isNewSession ? undefined : effectiveSessionId}
                                                     />
                                                     {guidedIntegration.isGuidedActive
                                                         && session?.guidedSermonSession?.currentStep === 'wordStudies'
@@ -625,6 +626,12 @@ export function FacultyChatPage() {
                     onPublishToWordpress={setWpDialogExtraction}
                     extractionsError={extractionsError}
                     onRefreshExtractions={() => refetchExtractions()}
+                    sessionId={isNewSession ? undefined : effectiveSessionId}
+                    userId={user?.uid}
+                    onEstudioCreated={(extraction) => {
+                        refetchExtractions();
+                        openExtractionInEditor(extraction);
+                    }}
                 />
             </div>
 

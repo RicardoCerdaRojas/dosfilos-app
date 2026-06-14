@@ -1,4 +1,44 @@
 {
+    "estudioMadre": {
+        "promote": "Promote to element",
+        "promoteAs": "Promote as…",
+        "tabResources": "Resources",
+        "tabStudy": "Study",
+        "panelTitle": "Study in progress",
+        "panelEmpty": "Promote chat messages to build your study. Nothing enters on its own: you choose what stays.",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "remove": "Remove",
+        "support": "support {{count}}/{{min}}",
+        "supportPick": "Pick witnesses that back this claim",
+        "noWitnesses": "You haven't promoted any witnesses yet.",
+        "reference": "Passage",
+        "referencePlaceholder": "John 1:1-3",
+        "title": "Title",
+        "titlePlaceholder": "Class title",
+        "crystallize": "This is the class content",
+        "crystallizing": "Running the gates…",
+        "needElements": "Promote at least one element before crystallizing.",
+        "needReference": "Set the passage before crystallizing.",
+        "created": "Study crystallized",
+        "view": "View",
+        "error": "We couldn't crystallize the study. Try again.",
+        "whatsMissing": "What's missing before closing:",
+        "authorship": "{{pct}}% authored by you",
+        "tipos": {
+            "idea_central": "Central idea",
+            "observacion": "Observation",
+            "testigo": "Witness",
+            "testigo_historico": "Historical witness",
+            "error_confrontado": "Confronted error",
+            "aplicacion": "Application"
+        },
+        "estado": {
+            "verde": "Green",
+            "en_progreso": "In progress",
+            "sin_auditar": "Unaudited"
+        }
+    },
     "header": {
         "title": "My Tutors",
         "orchestratorFallbackName": "Tutor Orchestrator",

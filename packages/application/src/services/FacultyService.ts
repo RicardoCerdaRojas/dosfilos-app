@@ -49,6 +49,7 @@ import {
     AddExtractionToProjectUseCase,
     RemoveExtractionFromProjectUseCase,
     SaveSermonExtractionUseCase,
+    CreateEstudioMadreExtractionUseCase,
     OrphanExtractionsBySermonUseCase,
     BuildSermonFromFacultyOutlineUseCase,
 } from '../use-cases/faculty';
@@ -93,6 +94,7 @@ class FacultyService {
     public addExtractionToProject: AddExtractionToProjectUseCase;
     public removeExtractionFromProject: RemoveExtractionFromProjectUseCase;
     public saveSermonExtraction: SaveSermonExtractionUseCase;
+    public crearEstudioMadre: CreateEstudioMadreExtractionUseCase;
     public orphanExtractionsBySermon: OrphanExtractionsBySermonUseCase;
     // Faculty → Wizard convergence: produces a Sermon with
     // wizardProgress pre-populated from a Faculty outline + optional
@@ -150,6 +152,7 @@ class FacultyService {
         this.addExtractionToProject = new AddExtractionToProjectUseCase(extractionRepository);
         this.removeExtractionFromProject = new RemoveExtractionFromProjectUseCase(extractionRepository);
         this.saveSermonExtraction = new SaveSermonExtractionUseCase(extractionRepository);
+        this.crearEstudioMadre = new CreateEstudioMadreExtractionUseCase(extractionRepository);
         this.orphanExtractionsBySermon = new OrphanExtractionsBySermonUseCase(extractionRepository);
         // Sermon repo is wired here so Faculty can persist full Sermon
         // docs with wizardProgress. Same singleton FirebaseSermonRepository
