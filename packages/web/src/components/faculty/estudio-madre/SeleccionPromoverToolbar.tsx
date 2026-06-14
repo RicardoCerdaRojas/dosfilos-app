@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { BookmarkPlus, Copy } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useEstudioEnConstruccion } from '@/features/estudio-madre/useEstudioEnConstruccion';
-import { useTextSelection } from '@/features/estudio-madre/useTextSelection';
+import { useTextSelection, type SelectionInfo } from '@/features/estudio-madre/useTextSelection';
 import { PromoteTipoMenu } from './PromoteTipoMenu';
 
 /**
@@ -20,15 +20,20 @@ export function SeleccionPromoverToolbar({ sessionId }: { sessionId: string }) {
     const { selection, clear } = useTextSelection();
     const { promover } = useEstudioEnConstruccion(sessionId);
     const [menuOpen, setMenuOpen] = useState(false);
+    // Mientras el menú está abierto, congelar la selección: al elegir un tipo el
+    // click puede colapsar la selección del texto, pero el toolbar debe seguir
+    // anclado y conservar el fragmento.
+    const [frozen, setFrozen] = useState<SelectionInfo | null>(null);
 
-    if (!selection) return null;
+    const active = menuOpen ? frozen : selection;
+    if (!active) return null;
 
-    const top = Math.max(8, selection.rect.top - 8);
-    const left = selection.rect.left + selection.rect.width / 2;
+    const top = Math.max(8, active.rect.top - 8);
+    const left = active.rect.left + active.rect.width / 2;
 
     const copiar = async () => {
         try {
-            await navigator.clipboard.writeText(selection.text);
+            await navigator.clipboard.writeText(active.text);
             toast.success(t('estudioMadre.copied'));
         } catch {
             /* clipboard no disponible */
@@ -44,11 +49,15 @@ export function SeleccionPromoverToolbar({ sessionId }: { sessionId: string }) {
         >
             <PromoteTipoMenu
                 open={menuOpen}
-                onOpenChange={setMenuOpen}
+                onOpenChange={(o) => {
+                    if (o) setFrozen(selection);
+                    setMenuOpen(o);
+                }}
                 align="start"
                 onPick={(tipo) => {
-                    promover({ tipo, contenido: selection.text, autoria: 'sistema' });
+                    promover({ tipo, contenido: active.text, autoria: 'sistema' });
                     setMenuOpen(false);
+                    setFrozen(null);
                     clear();
                     toast.success(t('estudioMadre.promoted'));
                 }}

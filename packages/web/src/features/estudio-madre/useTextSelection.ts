@@ -8,11 +8,14 @@ export interface SelectionInfo {
 /**
  * Rastrea la selección de texto del usuario DENTRO de un mensaje del chat
  * (ancestro con `[data-message-id]`). Devuelve el texto + el rect (para anclar
- * un toolbar flotante), o null. Se limpia al deseleccionar, hacer scroll (el
- * rect queda obsoleto), o click fuera del toolbar / del menú de Radix.
+ * un toolbar flotante), o null.
  *
- * Se detecta por el atributo `data-message-id` (que ya llevan los mensajes), no
- * por un contenedor wrapper, para no alterar el layout (space-y) de la lista.
+ * Usa `selectionchange` (debounced con rAF), el patrón robusto: el toolbar sigue
+ * la selección en vivo y PERSISTE tras soltar el mouse; se limpia solo cuando la
+ * selección realmente se colapsa (click fuera). No usa mousedown/scroll (que
+ * causaban que el toolbar parpadeara y desapareciera). La detección por
+ * `[data-message-id]` (que ya llevan los mensajes) evita un wrapper que altere
+ * el layout (space-y) de la lista.
  */
 export function useTextSelection(): {
     selection: SelectionInfo | null;
@@ -21,6 +24,7 @@ export function useTextSelection(): {
     const [selection, setSelection] = useState<SelectionInfo | null>(null);
 
     useEffect(() => {
+        let raf = 0;
         const read = () => {
             const sel = window.getSelection();
             if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
@@ -41,28 +45,17 @@ export function useTextSelection(): {
             }
             setSelection({ text, rect });
         };
-
-        // Leer tras el mouseup (selección completa). El timeout deja que el
-        // navegador asiente la selección antes de leerla.
-        const onMouseUp = () => window.setTimeout(read, 0);
-        const onMouseDown = (e: MouseEvent) => {
-            const target = e.target as HTMLElement;
-            // No cerrar si el click es dentro del toolbar o del menú (portal Radix).
-            if (target.closest('[data-seleccion-toolbar]') || target.closest('[data-radix-popper-content-wrapper]')) {
-                return;
-            }
-            setSelection(null);
+        // Debounce a un frame: durante el drag selectionchange dispara mucho, y
+        // diferir a rAF deja que los onClick síncronos (elegir tipo / copiar) se
+        // ejecuten ANTES de que un colapso de selección desmonte el toolbar.
+        const onChange = () => {
+            cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(read);
         };
-        // Scroll (en cualquier ancestro, capture=true) invalida el rect.
-        const onScroll = () => setSelection(null);
-
-        document.addEventListener('mouseup', onMouseUp);
-        document.addEventListener('mousedown', onMouseDown);
-        window.addEventListener('scroll', onScroll, true);
+        document.addEventListener('selectionchange', onChange);
         return () => {
-            document.removeEventListener('mouseup', onMouseUp);
-            document.removeEventListener('mousedown', onMouseDown);
-            window.removeEventListener('scroll', onScroll, true);
+            document.removeEventListener('selectionchange', onChange);
+            cancelAnimationFrame(raf);
         };
     }, []);
 
