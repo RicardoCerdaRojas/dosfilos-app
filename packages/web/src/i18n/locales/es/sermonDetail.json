@@ -1,5 +1,10 @@
 {
     "loading": "Cargando sermón...",
+    "noDraft": {
+        "title": "Este sermón aún no tiene borrador",
+        "body": "Tu estudio está listo. Continúa en el editor para generar y redactar el sermón.",
+        "cta": "Continuar en el editor"
+    },
     "notFound": {
         "title": "Sermón no encontrado",
         "button": "Volver a sermones"

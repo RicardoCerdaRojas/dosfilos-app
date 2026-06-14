@@ -1,5 +1,10 @@
 {
     "loading": "Loading sermon...",
+    "noDraft": {
+        "title": "This sermon has no draft yet",
+        "body": "Your study is ready. Continue in the editor to generate and write the sermon.",
+        "cta": "Continue in the editor"
+    },
     "notFound": {
         "title": "Sermon not found",
         "button": "Back to sermons"

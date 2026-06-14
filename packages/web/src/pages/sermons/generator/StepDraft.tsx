@@ -33,7 +33,7 @@ import { SermonBibliographySection } from '@/components/sermons/SermonBibliograp
 import { SermonCitationVerificationDialog } from '@/components/sermons/SermonCitationVerificationDialog';
 import { ContraScanModal } from '@/components/sermons/ContraScanModal';
 import { useSermonContraScan } from '@/hooks/useSermonContraScan';
-import { WorkflowPhase, CoachingStyle, formatPassageReference, aggregateRagSourcesFlat, type GenerationRules, type Sermon } from '@dosfilos/domain';
+import { WorkflowPhase, CoachingStyle, formatPassageReference, aggregateRagSourcesFlat, evaluatePastoralSeed, type GenerationRules, type Sermon } from '@dosfilos/domain';
 import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
 import {
     AlertDialog,
@@ -785,7 +785,8 @@ async function augmentRulesWithPastoralSeed(
     if (!sermonId) return rules;
     try {
         const seed = await pastoralSeedService.getBySermonId(sermonId);
-        if (!seed?.completed) return rules;
+        // Fuente única de verdad: validadores, no el flag almacenado.
+        if (!seed || !evaluatePastoralSeed(seed).completed) return rules;
         return {
             ...rules,
             pastoralSeed: {

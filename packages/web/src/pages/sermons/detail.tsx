@@ -531,6 +531,17 @@ export function SermonDetailPage() {
                {sermon.versionOf && (
                  <SermonVersionBanner versionOf={sermon.versionOf} versionLabel={sermon.versionLabel} />
                )}
+               {!sermon.content?.trim() && !sermon.wizardProgress?.draft && (
+                 <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                   <div className="flex-1">
+                     <p className="font-medium text-foreground">{t('noDraft.title')}</p>
+                     <p className="text-sm text-muted-foreground">{t('noDraft.body')}</p>
+                   </div>
+                   <Button onClick={() => navigate(`/dashboard/sermons/generate?id=${sermon.id}`)}>
+                     {t('noDraft.cta')}
+                   </Button>
+                 </div>
+               )}
                <SermonPreview
                 title={sermon.title}
                 content={sermon.content}
