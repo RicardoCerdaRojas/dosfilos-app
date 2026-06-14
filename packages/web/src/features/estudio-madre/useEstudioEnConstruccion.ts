@@ -54,7 +54,12 @@ export function useEstudioEnConstruccion(sessionId: string): UseEstudioEnConstru
         referencia: draft.referencia,
         titulo: draft.titulo,
         respuestas: draft.respuestas,
-        testigos: draft.elementos.filter((e) => e.tipo === 'testigo' || e.tipo === 'testigo_historico'),
+        // Elementos de soporte elegibles como respaldo de una afirmación de peso
+        // (puerta 2). Incluye `cita` para que las afirmaciones experto
+        // (argumento/contraargumento/…) puedan respaldarse, no solo las formativas.
+        testigos: draft.elementos.filter(
+            (e) => e.tipo === 'testigo' || e.tipo === 'testigo_historico' || e.tipo === 'cita',
+        ),
         promover: useCallback((input) => addElemento(sessionId, input), [sessionId]),
         quitar: useCallback((id) => removeElemento(sessionId, id), [sessionId]),
         mover: useCallback((id, dir) => moveElemento(sessionId, id, dir), [sessionId]),

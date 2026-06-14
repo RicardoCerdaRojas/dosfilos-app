@@ -36,13 +36,21 @@
         "error": "No pudimos cristalizar el estudio. Intenta de nuevo.",
         "whatsMissing": "Qué falta antes de cerrar:",
         "authorship": "autoría {{pct}}% tuya",
+        "grupoBasicos": "Básicos",
+        "grupoAvanzados": "Avanzados",
         "tipos": {
             "idea_central": "Idea central",
             "observacion": "Observación",
-            "testigo": "Testigo",
-            "testigo_historico": "Testigo histórico",
+            "testigo": "Respaldo bíblico",
+            "testigo_historico": "Respaldo histórico",
             "error_confrontado": "Error confrontado",
-            "aplicacion": "Aplicación"
+            "aplicacion": "Aplicación",
+            "marco": "Marco",
+            "argumento": "Argumento",
+            "contraargumento": "Contraargumento",
+            "cita": "Cita",
+            "ilustracion": "Ilustración",
+            "conclusion": "Conclusión"
         },
         "estado": {
             "verde": "Verde",

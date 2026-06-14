@@ -36,13 +36,21 @@
         "error": "We couldn't crystallize the study. Try again.",
         "whatsMissing": "What's missing before closing:",
         "authorship": "{{pct}}% authored by you",
+        "grupoBasicos": "Basic",
+        "grupoAvanzados": "Advanced",
         "tipos": {
             "idea_central": "Central idea",
             "observacion": "Observation",
-            "testigo": "Witness",
-            "testigo_historico": "Historical witness",
+            "testigo": "Scriptural support",
+            "testigo_historico": "Historical support",
             "error_confrontado": "Confronted error",
-            "aplicacion": "Application"
+            "aplicacion": "Application",
+            "marco": "Frame",
+            "argumento": "Argument",
+            "contraargumento": "Counter-argument",
+            "cita": "Quote",
+            "ilustracion": "Illustration",
+            "conclusion": "Conclusion"
         },
         "estado": {
             "verde": "Green",
