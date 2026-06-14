@@ -10,12 +10,17 @@ import {
     PastoralSeedStepKey,
 } from '@dosfilos/domain';
 
+// Las 8 etapas del spine actual (PASTORAL_SEED_STEP_ORDER). El mapa estaba
+// desactualizado con keys legacy (syntax/morphology) → 4 pasos se renderizaban
+// con ✓ pero SIN nombre. Mantener en sync con PASTORAL_SEED_STEP_ORDER.
 const STEP_LABELS: Record<PastoralSeedStepKey, string> = {
     reading: 'Lectura',
-    syntax: 'Sintaxis',
-    morphology: 'Morfología',
+    contextGenre: 'Contexto y género',
+    structuralAnalysis: 'Análisis estructural',
+    wordStudies: 'Estudio de palabras',
     recognition: 'Reconocimiento',
     function: 'Función',
+    timelessPrinciple: 'Principio atemporal',
     insight: 'Insight',
 };
 
