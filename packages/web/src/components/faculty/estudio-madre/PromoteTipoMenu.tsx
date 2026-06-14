@@ -30,7 +30,9 @@ export function PromoteTipoMenu({
         <Popover open={open} onOpenChange={onOpenChange}>
             <PopoverTrigger asChild>{children}</PopoverTrigger>
             <PopoverContent align={align} className="w-56 p-1 max-h-80 overflow-y-auto">
-                <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground">{t('estudioMadre.promoteAs')}</p>
+                <p className="mb-1 px-2 py-1.5 text-xs font-semibold text-foreground bg-muted rounded-md">
+                    {t('estudioMadre.promoteAs')}
+                </p>
                 {grupos.map((grupo, gi) => (
                     <div key={grupo.label} className={gi > 0 ? 'mt-1 border-t border-border pt-1' : ''}>
                         <p className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground/70">
