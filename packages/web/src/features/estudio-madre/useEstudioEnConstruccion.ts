@@ -6,6 +6,7 @@ import {
     getDraft,
     moveElemento,
     removeElemento,
+    setContenido,
     setReferencia,
     setRespaldo,
     setTipo,
@@ -30,6 +31,7 @@ export interface UseEstudioEnConstruccion {
     quitar: (id: string) => void;
     mover: (id: string, dir: 'up' | 'down') => void;
     cambiarTipo: (id: string, tipo: ElementoTipo) => void;
+    cambiarContenido: (id: string, contenido: string) => void;
     cambiarRespaldo: (id: string, respaldoTestigos: string[]) => void;
     cambiarReferencia: (referencia: string) => void;
     cambiarTitulo: (titulo: string) => void;
@@ -52,6 +54,7 @@ export function useEstudioEnConstruccion(sessionId: string): UseEstudioEnConstru
         quitar: useCallback((id) => removeElemento(sessionId, id), [sessionId]),
         mover: useCallback((id, dir) => moveElemento(sessionId, id, dir), [sessionId]),
         cambiarTipo: useCallback((id, tipo) => setTipo(sessionId, id, tipo), [sessionId]),
+        cambiarContenido: useCallback((id, contenido) => setContenido(sessionId, id, contenido), [sessionId]),
         cambiarRespaldo: useCallback((id, ids) => setRespaldo(sessionId, id, ids), [sessionId]),
         cambiarReferencia: useCallback((r) => setReferencia(sessionId, r), [sessionId]),
         cambiarTitulo: useCallback((t) => setTitulo(sessionId, t), [sessionId]),

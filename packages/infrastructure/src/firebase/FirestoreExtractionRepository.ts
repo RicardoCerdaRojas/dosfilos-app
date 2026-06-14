@@ -197,6 +197,12 @@ export class FirestoreExtractionRepository implements IExtractionRepository {
             externalRef: e.externalRef ?? null,
             version: typeof e.version === 'number' ? e.version : 1,
             sourceSessionDeleted: e.sourceSessionDeleted ?? false,
+            // Summary trimmed: solo el estado de fidelidad para el badge de la
+            // lista (el sobre completo carga vía getById al abrir). Por eso el
+            // cast — es un Extraction recortado, igual que markdown:''.
+            estudioMadre: e.estadoFidelidad
+                ? ({ estadoFidelidad: e.estadoFidelidad } as unknown as Extraction['estudioMadre'])
+                : undefined,
             publishedRefs: Array.isArray(e.publishedRefs)
                 ? e.publishedRefs.map((r: any) => ({
                       platform: r.platform,

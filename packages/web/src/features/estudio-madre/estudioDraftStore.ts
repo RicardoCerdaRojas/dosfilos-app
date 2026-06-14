@@ -134,6 +134,13 @@ export function setTipo(sessionId: string, id: string, tipo: ElementoTipo): void
     }));
 }
 
+export function setContenido(sessionId: string, id: string, contenido: string): void {
+    update(sessionId, (d) => ({
+        ...d,
+        elementos: d.elementos.map((e) => (e.id === id ? { ...e, contenido } : e)),
+    }));
+}
+
 export function setRespaldo(sessionId: string, id: string, respaldoTestigos: string[]): void {
     update(sessionId, (d) => ({
         ...d,

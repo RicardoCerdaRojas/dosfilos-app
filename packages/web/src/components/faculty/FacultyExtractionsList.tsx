@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from 'react';
-import { BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, MoreHorizontal, Trash2, ExternalLink, Pencil, Pin, Mail, Globe } from 'lucide-react';
+import { BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, MoreHorizontal, Trash2, ExternalLink, Pencil, Pin, Mail, Globe, ShieldCheck, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -269,6 +269,27 @@ export function FacultyExtractionsList({
                                 <span>{t(TYPE_LABEL_KEY[item.type])}</span>
                                 <span aria-hidden>·</span>
                                 <span>{formatRelative(item.updatedAt, locale)}</span>
+                                {item.type === 'BIBLE_STUDY' && (() => {
+                                    // Contraste de la tesis: el estudio cristalizado por
+                                    // elementos llega a `verde`; el legacy (auto-resumen,
+                                    // sin sobre) queda `sin_auditar`.
+                                    const estado = item.estudioMadre?.estadoFidelidad ?? 'sin_auditar';
+                                    const cls = estado === 'verde'
+                                        ? 'text-success'
+                                        : estado === 'en_progreso'
+                                            ? 'text-warning'
+                                            : 'text-muted-foreground';
+                                    const Icon = estado === 'verde' ? ShieldCheck : Shield;
+                                    return (
+                                        <>
+                                            <span aria-hidden>·</span>
+                                            <span className={cn('inline-flex items-center gap-0.5', cls)}>
+                                                <Icon className="w-3 h-3" />
+                                                {t(`estudioMadre.estado.${estado}`)}
+                                            </span>
+                                        </>
+                                    );
+                                })()}
                                 {item.projectIds.length > 0 && (
                                     <>
                                         <span aria-hidden>·</span>

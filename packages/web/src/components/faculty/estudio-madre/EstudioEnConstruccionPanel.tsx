@@ -100,7 +100,8 @@ export function EstudioEnConstruccionPanel({
                 bloqueos: result.bloqueos,
                 autoriaPct: result.autoria.docentePct,
             });
-            estudio.limpiar();
+            // No se limpia el borrador: el docente ve qué construyó + el resultado,
+            // e itera o arranca uno nuevo con "Nuevo estudio".
             toast.success(t('estudioMadre.created'), {
                 action: { label: t('estudioMadre.view'), onClick: () => onCreated?.(extraction) },
             });
@@ -110,21 +111,30 @@ export function EstudioEnConstruccionPanel({
         }
     };
 
-    if (estudio.elementos.length === 0) {
-        return (
-            <div className="p-4 space-y-4">
-                {ultimo && (
-                    <div className="rounded-lg border border-border p-3">
-                        <EstadoFidelidadBadge estado={ultimo.estado} bloqueos={ultimo.bloqueos} autoriaPct={ultimo.autoriaPct} />
-                    </div>
-                )}
-                <p className="text-sm text-muted-foreground">{t('estudioMadre.panelEmpty')}</p>
-            </div>
-        );
-    }
-
     return (
         <div className="flex flex-col h-full">
+            {ultimo && (
+                <div className="border-b border-border p-3 space-y-2">
+                    <EstadoFidelidadBadge estado={ultimo.estado} bloqueos={ultimo.bloqueos} autoriaPct={ultimo.autoriaPct} />
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            estudio.limpiar();
+                            setUltimo(null);
+                        }}
+                        className="w-full"
+                    >
+                        {t('estudioMadre.newStudy')}
+                    </Button>
+                </div>
+            )}
+            {estudio.elementos.length === 0 ? (
+                <div className="p-4">
+                    <p className="text-sm text-muted-foreground">{t('estudioMadre.panelEmpty')}</p>
+                </div>
+            ) : (
+              <>
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {estudio.elementos.map((e, i) => {
                     const respaldos = e.respaldoTestigos?.length ?? 0;
@@ -172,7 +182,13 @@ export function EstudioEnConstruccionPanel({
                                     </button>
                                 </div>
                             </div>
-                            <p className="text-sm text-foreground line-clamp-3">{e.contenido}</p>
+                            <textarea
+                                value={e.contenido}
+                                onChange={(ev) => estudio.cambiarContenido(e.id, ev.target.value)}
+                                rows={3}
+                                aria-label={t('estudioMadre.contentLabel')}
+                                className="w-full text-sm rounded-md border border-border bg-background px-2 py-1.5 resize-y text-foreground"
+                            />
                             {necesitaRespaldo && (
                                 <RespaldoControl
                                     valido={respaldos >= MIN_RESPALDO_TESTIGOS}
@@ -213,6 +229,8 @@ export function EstudioEnConstruccionPanel({
                     {loading ? t('estudioMadre.crystallizing') : t('estudioMadre.crystallize')}
                 </Button>
             </div>
+              </>
+            )}
         </div>
     );
 }

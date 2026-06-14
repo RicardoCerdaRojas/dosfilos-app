@@ -5,6 +5,7 @@ import {
     getDraft,
     moveElemento,
     removeElemento,
+    setContenido,
     setRespaldo,
     setTipo,
     setReferencia,
@@ -61,14 +62,16 @@ describe('estudioDraftStore', () => {
         expect(after[0]).toMatchObject({ contenido: 'B', orden: 1 });
     });
 
-    it('cambiar tipo y respaldo', () => {
+    it('cambiar tipo, contenido y respaldo', () => {
         const s = freshSession();
         addElemento(s, { tipo: 'observacion', contenido: 'X', autoria: 'docente' });
         const id = getDraft(s).elementos[0].id;
         setTipo(s, id, 'idea_central');
+        setContenido(s, id, 'El Verbo es Dios (editado, sin preámbulo)');
         setRespaldo(s, id, ['t1', 't2']);
         const e = getDraft(s).elementos[0];
         expect(e.tipo).toBe('idea_central');
+        expect(e.contenido).toBe('El Verbo es Dios (editado, sin preámbulo)');
         expect(e.respaldoTestigos).toEqual(['t1', 't2']);
     });
 
