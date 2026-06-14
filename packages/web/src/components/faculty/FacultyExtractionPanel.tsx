@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Download, BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, Loader2, Sparkles, FolderOpen } from 'lucide-react';
+import { Download, BookOpen, Briefcase, MessageSquareQuote, Newspaper, FileText, PenLine, Sunrise, Loader2, Sparkles, FolderOpen, Sprout } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/i18n';
 import type { Extraction, ExtractionType, AIProject } from '@dosfilos/domain';
 import { FacultyExtractionsList } from './FacultyExtractionsList';
+import { EstudioEnConstruccionPanel } from './estudio-madre/EstudioEnConstruccionPanel';
 
 interface ExtractionButton {
     type: ExtractionType;
@@ -25,7 +26,7 @@ const EXTRACTION_BUTTONS: ExtractionButton[] = [
     { type: 'SYSTEMATIC_THEOLOGY_PAPER', icon: FileText, iconColor: 'text-purple-600', labelKey: 'extraction.theologyPaper', descKey: 'extraction.theologyPaperDesc' },
 ];
 
-type Tab = 'tools' | 'generated';
+type Tab = 'tools' | 'generated' | 'study';
 
 interface FacultyExtractionPanelProps {
     isOpen: boolean;
@@ -53,6 +54,13 @@ interface FacultyExtractionPanelProps {
     onPublishToWordpress?: (extraction: Extraction) => void;
     extractionsError?: unknown;
     onRefreshExtractions?: () => void;
+    /** Sesión + dueño activos: habilitan el tab "Estudio" (cristalización). */
+    sessionId?: string;
+    userId?: string;
+    /** Tras cristalizar en verde: refrescar la lista de generados (sin abrir). */
+    onEstudioCreated?: () => void;
+    /** Abrir el borrador del estudio en el editor (desde el diálogo de éxito). */
+    onEstudioOpen?: (extraction: Extraction) => void;
 }
 
 /**
@@ -83,9 +91,14 @@ export function FacultyExtractionPanel({
     onPublishToWordpress,
     extractionsError,
     onRefreshExtractions,
+    sessionId,
+    userId,
+    onEstudioCreated,
+    onEstudioOpen,
 }: FacultyExtractionPanelProps) {
     const { t } = useTranslation('faculty');
     const [tab, setTab] = useState<Tab>('tools');
+    const estudioEnabled = !!sessionId && !!userId;
 
     return (
         <aside
@@ -117,6 +130,12 @@ export function FacultyExtractionPanel({
                             </Badge>
                         )}
                     </TabButton>
+                    {estudioEnabled && (
+                        <TabButton active={tab === 'study'} onClick={() => setTab('study')}>
+                            <Sprout className="w-3.5 h-3.5" />
+                            {t('estudioMadre.tabStudy')}
+                        </TabButton>
+                    )}
                 </div>
             </div>
 
@@ -160,6 +179,13 @@ export function FacultyExtractionPanel({
                         })}
                     </div>
                 </>
+            ) : tab === 'study' && estudioEnabled ? (
+                <EstudioEnConstruccionPanel
+                    sessionId={sessionId!}
+                    userId={userId!}
+                    onRefetch={onEstudioCreated}
+                    onOpenBorrador={onEstudioOpen}
+                />
             ) : (
                 <FacultyExtractionsList
                     extractions={extractions}

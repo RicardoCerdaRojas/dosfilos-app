@@ -10,6 +10,8 @@ import { resolveLocalized } from '@dosfilos/domain';
 import { extractCitations, CitationSup, Bibliography, wrapLanguageRuns, transformCallouts, Callout, wrapScriptureRefs, ScriptureRef, normalizeAssistantMarkdown } from '@/lib/citations';
 import { useModeMeta } from './FacultyChatHeader';
 import { useAuthorization } from '@/hooks/useAuthorization';
+import { PromoverElementoButton } from './estudio-madre/PromoverElementoButton';
+import { SeleccionPromoverToolbar } from './estudio-madre/SeleccionPromoverToolbar';
 
 interface AttachmentMeta {
     filename: string;
@@ -157,6 +159,12 @@ interface FacultyChatMessagesProps {
      * message id (used to look up the rendered DOM for rich-text paste).
      */
     onCopyMessage: (content: string, messageId: string) => void;
+    /**
+     * Sesión activa. Cuando está presente, cada mensaje gana el gesto de
+     * "promover a elemento" del Estudio Madre (spec v1.3 §2.4). Ausente en el
+     * estado nuevo/sin sesión materializada.
+     */
+    sessionId?: string;
 }
 
 export function FacultyChatMessages({
@@ -170,6 +178,7 @@ export function FacultyChatMessages({
     agentNameForNew,
     onRequestDeleteMessage,
     onCopyMessage,
+    sessionId,
 }: FacultyChatMessagesProps) {
     const { t, language } = useTranslation('faculty');
     const activeLanguage: SupportedLanguage = language === 'en' ? 'en' : 'es';
@@ -214,6 +223,7 @@ export function FacultyChatMessages({
 
     return (
         <>
+            {sessionId && <SeleccionPromoverToolbar sessionId={sessionId} />}
             {/* New-session blank state */}
             {isNewSession && !isStreaming && !isSending && (
                 <div className="text-center py-20 text-muted-foreground">
@@ -310,6 +320,14 @@ export function FacultyChatMessages({
                                         ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                         : <Trash2 className="w-3.5 h-3.5" />}
                                 </button>
+                                {sessionId && (
+                                    <PromoverElementoButton
+                                        sessionId={sessionId}
+                                        mensajeId={msg.id}
+                                        contenido={msg.content}
+                                        role={msg.role === 'user' ? 'user' : 'model'}
+                                    />
+                                )}
                             </div>
                         )}
                     </div>

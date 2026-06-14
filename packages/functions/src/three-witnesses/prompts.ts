@@ -17,10 +17,18 @@
  */
 export const WITNESS_PROMPT_VERSION = 'v1';
 
+/** Claim kinds del seed del sermón. */
+export type SeedPromptClaimKind = 'centralIdea' | 'observation' | 'doxologicalApplication' | 'principle';
+
 export interface PromptClaim {
-    /** Stable key from `collectSeedClaims`. */
+    /** Stable key from `collectSeedClaims` (o del colector del estudio). */
     key: string;
-    kind: 'centralIdea' | 'observation' | 'doxologicalApplication' | 'principle';
+    /**
+     * Etiqueta de procedencia. ABIERTA: el mismo motor sirve a otras fuentes
+     * (estudio_madre pasa sus tipos de elemento). La escalación nunca hace
+     * switch sobre `kind` — solo se usa como rótulo en el prompt.
+     */
+    kind: SeedPromptClaimKind | (string & {});
     text: string;
 }
 
@@ -32,16 +40,27 @@ export interface SeedContext {
     originalAudienceFunction: string;
 }
 
-const CLAIM_KIND_LABEL: Record<PromptClaim['kind'], string> = {
+const CLAIM_KIND_LABEL: Record<string, string> = {
+    // seed del sermón
     centralIdea: 'idea central',
     observation: 'observación',
     doxologicalApplication: 'aplicación doxológica',
     principle: 'principio teológico atemporal',
+    // elementos del estudio_madre (mismo motor, otra fuente)
+    idea_central: 'idea central',
+    observacion: 'observación',
+    error_confrontado: 'error confrontado',
+    aplicacion: 'aplicación',
+    marco: 'marco',
+    argumento: 'argumento',
+    contraargumento: 'contraargumento',
+    conclusion: 'conclusión',
 };
 
 function renderClaims(claims: PromptClaim[]): string {
     return claims
-        .map((c, i) => `[${i}] (${CLAIM_KIND_LABEL[c.kind]}) "${c.text}"`)
+        // Fallback al propio `kind` para rótulos no catalogados (motor abierto).
+        .map((c, i) => `[${i}] (${CLAIM_KIND_LABEL[c.kind] ?? c.kind}) "${c.text}"`)
         .join('\n');
 }
 

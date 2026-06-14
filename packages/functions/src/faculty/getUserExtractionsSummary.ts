@@ -38,6 +38,13 @@ interface SummaryExtraction {
     externalRef: { collection: string; id: string } | null;
     version: number;
     sourceSessionDeleted: boolean;
+    /**
+     * Estado de fidelidad del Estudio Madre (solo BIBLE_STUDY con sobre). Se
+     * incluye en el resumen para que la lista de Recursos muestre el badge
+     * verde/en_progreso/sin_auditar sin cargar el sobre completo. Ausente en
+     * estudios legacy (auto-resumen) y en otros tipos.
+     */
+    estadoFidelidad?: 'sin_auditar' | 'en_progreso' | 'verde';
     publishedRefs: Array<{
         platform: string;
         externalId: string;
@@ -113,6 +120,7 @@ export const getUserExtractionsSummary = onCall(
                 externalRef: d.externalRef ?? null,
                 version: typeof d.version === 'number' ? d.version : 1,
                 sourceSessionDeleted: d.sourceSessionDeleted ?? false,
+                estadoFidelidad: d.estudioMadre?.estadoFidelidad,
                 publishedRefs,
             };
         });

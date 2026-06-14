@@ -1,6 +1,9 @@
 // Teaching Suite (módulo nuevo — núcleo determinista F0)
 export * from './teaching-suite';
 
+// Estudio Madre (upstream del markdown — sobre aditivo en extractions/{id})
+export * from './estudio-madre';
+
 // Entities
 export * from './entities/User';
 export * from './entities/citationRights';

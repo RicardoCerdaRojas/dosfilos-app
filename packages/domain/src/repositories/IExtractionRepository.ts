@@ -1,4 +1,5 @@
 import { Extraction, ExtractionExternalRef, ExtractionType } from '../entities/Extraction';
+import type { EstudioMadre } from '../estudio-madre/types';
 
 /**
  * Payload accepted by `create()`. Caller supplies everything except the
@@ -20,6 +21,8 @@ export interface CreateExtractionInput {
     derivedFromMessageIds: string[];
     externalRef?: ExtractionExternalRef | null;
     projectIds?: string[];
+    /** Sobre Estudio Madre opcional (aditivo). Ausente ⇒ estudio sin_auditar. */
+    estudioMadre?: EstudioMadre;
 }
 
 /**
@@ -66,6 +69,14 @@ export interface IExtractionRepository {
 
     /** Replaces the markdown body, bumps version, updates updatedAt. */
     updateMarkdown(userId: string, extractionId: string, markdown: string): Promise<void>;
+
+    /**
+     * Cristalización (spec §2.4): escribe/actualiza el sobre `estudioMadre` de
+     * una extraction existente. Aditivo — no toca `markdown` ni otros campos.
+     * El llamador serializa los elementos a `markdown` por separado cuando
+     * corresponde (`serializarEstudio`). Owner-scoped.
+     */
+    updateEstudioMadre(userId: string, extractionId: string, estudioMadre: EstudioMadre): Promise<void>;
 
     /** Renames the artifact (does not bump version). */
     rename(userId: string, extractionId: string, title: string): Promise<void>;

@@ -1,3 +1,5 @@
+import type { EstudioMadre } from '../estudio-madre/types';
+
 /**
  * Type of artifact produced by the Faculty extraction tools. Mirrors the
  * union in ExtractTheologicalContentUseCase but lives in domain so other
@@ -119,4 +121,14 @@ export interface Extraction {
      * The doc itself is preserved.
      */
     sourceSessionDeleted?: boolean;
+    /**
+     * Estudio Madre — sobre estructurado ADITIVO y OPCIONAL (spec
+     * `docs/spec-asistentes-preparacion-estudio-v1.3.md` §2.3). Solo lo llevan
+     * los estudios cristalizados (typically `type === 'BIBLE_STUDY'`).
+     *
+     * Ausencia ⇒ estudio legacy `sin_auditar`: sigue funcionando igual (su
+     * `markdown` alimenta la suite sin cambios). No altera ningún otro campo ni
+     * afecta a SERMON/DEVOTIONAL/NEWSLETTER que comparten esta colección.
+     */
+    estudioMadre?: EstudioMadre;
 }
