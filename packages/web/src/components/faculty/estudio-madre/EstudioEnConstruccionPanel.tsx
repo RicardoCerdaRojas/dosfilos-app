@@ -280,6 +280,11 @@ export function EstudioEnConstruccionPanel({
                                 </div>
                             );
                         })}
+                        {/* Acción en contexto: tras editar arriba o responder, revalidar
+                            sin tener que bajar al pie del panel. */}
+                        <Button onClick={cristalizar} disabled={loading} size="sm" className="w-full">
+                            {loading ? t('estudioMadre.crystallizing') : t('estudioMadre.revalidate')}
+                        </Button>
                     </div>
                 )}
             </div>
