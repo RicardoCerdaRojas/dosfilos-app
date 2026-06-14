@@ -1,6 +1,10 @@
 {
     "estudioMadre": {
         "promote": "Promover a elemento",
+        "promoteShort": "Promover",
+        "copy": "Copiar",
+        "copied": "Copiado al portapapeles",
+        "promoted": "Promovido al estudio",
         "promoteAs": "Promover como…",
         "tabResources": "Recursos",
         "tabStudy": "Estudio",

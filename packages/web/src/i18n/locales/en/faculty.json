@@ -1,6 +1,10 @@
 {
     "estudioMadre": {
         "promote": "Promote to element",
+        "promoteShort": "Promote",
+        "copy": "Copy",
+        "copied": "Copied to clipboard",
+        "promoted": "Promoted to study",
         "promoteAs": "Promote as…",
         "tabResources": "Resources",
         "tabStudy": "Study",

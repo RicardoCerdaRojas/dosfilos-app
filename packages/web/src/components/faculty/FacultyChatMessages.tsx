@@ -11,6 +11,7 @@ import { extractCitations, CitationSup, Bibliography, wrapLanguageRuns, transfor
 import { useModeMeta } from './FacultyChatHeader';
 import { useAuthorization } from '@/hooks/useAuthorization';
 import { PromoverElementoButton } from './estudio-madre/PromoverElementoButton';
+import { SeleccionPromoverToolbar } from './estudio-madre/SeleccionPromoverToolbar';
 
 interface AttachmentMeta {
     filename: string;
@@ -222,6 +223,7 @@ export function FacultyChatMessages({
 
     return (
         <>
+            {sessionId && <SeleccionPromoverToolbar sessionId={sessionId} />}
             {/* New-session blank state */}
             {isNewSession && !isStreaming && !isSending && (
                 <div className="text-center py-20 text-muted-foreground">
