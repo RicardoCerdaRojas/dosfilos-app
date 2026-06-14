@@ -8,10 +8,14 @@ import { cn } from '@/lib/utils';
 import { facultyService } from '@dosfilos/application';
 import {
     aplicarVerificacionCitasMvp,
+    claimsBlockingAbsolutely,
+    claimsRequiringResponse,
     esAfirmacionDePeso,
     serializarEstudio,
     MIN_RESPALDO_TESTIGOS,
+    WITNESS_THRESHOLDS,
     type ElementoTipo,
+    type EstudioFidelidadResult,
     type EstudioMadre,
     type Extraction,
 } from '@dosfilos/domain';
@@ -28,12 +32,6 @@ const TIPOS_FORMATIVOS: ElementoTipo[] = [
     'aplicacion',
 ];
 
-interface UltimoResultado {
-    estado: EstudioMadre['estadoFidelidad'];
-    bloqueos: string[];
-    autoriaPct: number;
-}
-
 export function EstudioEnConstruccionPanel({
     sessionId,
     userId,
@@ -46,28 +44,13 @@ export function EstudioEnConstruccionPanel({
     const { t } = useTranslation('faculty');
     const estudio = useEstudioEnConstruccion(sessionId);
     const { validar, loading } = useValidarEstudioMadre();
-    const [ultimo, setUltimo] = useState<UltimoResultado | null>(null);
+    const [resultado, setResultado] = useState<EstudioFidelidadResult | null>(null);
+    const [persisted, setPersisted] = useState(false);
+    const [respuestas, setRespuestas] = useState<Record<string, string>>({});
 
-    const cristalizar = async () => {
-        if (estudio.elementos.length === 0) {
-            toast.error(t('estudioMadre.needElements'));
-            return;
-        }
-        if (!estudio.referencia.trim()) {
-            toast.error(t('estudioMadre.needReference'));
-            return;
-        }
-        const result = await validar({
-            estudioId: sessionId,
-            referencia: estudio.referencia.trim(),
-            elementos: estudio.elementos,
-        });
-        if (!result) {
-            toast.error(t('estudioMadre.error'));
-            return;
-        }
-        // El sobre persiste elementos con la puerta 4 ya aplicada (sin mensajeId,
-        // que es solo metadato del borrador).
+    /** Persiste el estudio una vez que las puertas están en verde. */
+    const persistir = async (result: EstudioFidelidadResult) => {
+        // Elementos con la puerta 4 ya aplicada (sin mensajeId, metadato del borrador).
         const elementosConCitas = aplicarVerificacionCitasMvp(estudio.elementos).map(
             ({ mensajeId: _omit, ...e }) => e,
         );
@@ -84,47 +67,80 @@ export function EstudioEnConstruccionPanel({
             proyectosVinculados: [],
             historialConfrontacion: [],
         };
-        try {
-            const extraction = await facultyService.crearEstudioMadre.execute({
-                userId,
-                sessionId,
-                title: estudio.titulo.trim() || estudio.referencia.trim(),
-                markdown: serializarEstudio(estudio.elementos),
-                estudioMadre: sobre,
-                derivedFromMessageIds: estudio.elementos
-                    .map((e) => e.mensajeId)
-                    .filter((id): id is string => !!id),
-            });
-            setUltimo({
-                estado: result.estadoFidelidad,
-                bloqueos: result.bloqueos,
-                autoriaPct: result.autoria.docentePct,
-            });
-            // No se limpia el borrador: el docente ve qué construyó + el resultado,
-            // e itera o arranca uno nuevo con "Nuevo estudio".
-            toast.success(t('estudioMadre.created'), {
-                action: { label: t('estudioMadre.view'), onClick: () => onCreated?.(extraction) },
-            });
-            onCreated?.(extraction);
-        } catch {
+        const extraction = await facultyService.crearEstudioMadre.execute({
+            userId,
+            sessionId,
+            title: estudio.titulo.trim() || estudio.referencia.trim(),
+            markdown: serializarEstudio(estudio.elementos),
+            estudioMadre: sobre,
+            derivedFromMessageIds: estudio.elementos
+                .map((e) => e.mensajeId)
+                .filter((id): id is string => !!id),
+        });
+        setPersisted(true);
+        toast.success(t('estudioMadre.created'), {
+            action: { label: t('estudioMadre.view'), onClick: () => onCreated?.(extraction) },
+        });
+        onCreated?.(extraction);
+    };
+
+    /**
+     * Cristaliza: corre las puertas con las respuestas a testigos actuales. Si
+     * queda en verde, persiste; si no, muestra el gate de resolución y NO cierra
+     * (spec §2.4: "el sistema dice qué falta antes de dejar cerrar").
+     */
+    const cristalizar = async () => {
+        if (estudio.elementos.length === 0) {
+            toast.error(t('estudioMadre.needElements'));
+            return;
+        }
+        if (!estudio.referencia.trim()) {
+            toast.error(t('estudioMadre.needReference'));
+            return;
+        }
+        const resolutions = Object.entries(respuestas)
+            .map(([claimKey, response]) => ({ claimKey, response }))
+            .filter((r) => r.response.trim().length > 0);
+        const result = await validar({
+            estudioId: sessionId,
+            referencia: estudio.referencia.trim(),
+            elementos: estudio.elementos,
+            resolutions,
+        });
+        if (!result) {
             toast.error(t('estudioMadre.error'));
+            return;
+        }
+        setResultado(result);
+        setPersisted(false);
+        if (result.estadoFidelidad === 'verde') {
+            try {
+                await persistir(result);
+            } catch {
+                toast.error(t('estudioMadre.error'));
+            }
         }
     };
 
+    const nuevoEstudio = () => {
+        estudio.limpiar();
+        setResultado(null);
+        setPersisted(false);
+        setRespuestas({});
+    };
+
+    const pendiente = !!resultado && resultado.estadoFidelidad !== 'verde';
+
     return (
         <div className="flex flex-col h-full">
-            {ultimo && (
+            {resultado && (
                 <div className="border-b border-border p-3 space-y-2">
-                    <EstadoFidelidadBadge estado={ultimo.estado} bloqueos={ultimo.bloqueos} autoriaPct={ultimo.autoriaPct} />
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                            estudio.limpiar();
-                            setUltimo(null);
-                        }}
-                        className="w-full"
-                    >
+                    <EstadoFidelidadBadge
+                        estado={resultado.estadoFidelidad}
+                        bloqueos={resultado.bloqueos}
+                        autoriaPct={resultado.autoria.docentePct}
+                    />
+                    <Button variant="outline" size="sm" onClick={nuevoEstudio} className="w-full">
                         {t('estudioMadre.newStudy')}
                     </Button>
                 </div>
@@ -208,6 +224,46 @@ export function EstudioEnConstruccionPanel({
                         </div>
                     );
                 })}
+
+                {resultado && resultado.estadoFidelidad !== 'verde' && resultado.testigos && (
+                    <div className="rounded-lg border border-warning/40 bg-warning/5 p-3 space-y-3">
+                        <p className="text-sm font-medium text-foreground">{t('estudioMadre.witnessGateTitle')}</p>
+                        {claimsBlockingAbsolutely(resultado.testigos).map((c) => (
+                            <p key={c.key} className="text-xs text-destructive">
+                                ⚠ {c.text} — {t('estudioMadre.absoluteBlock')}
+                            </p>
+                        ))}
+                        {claimsRequiringResponse(resultado.testigos).map((c) => {
+                            const min =
+                                c.escalation === 'hard-block'
+                                    ? WITNESS_THRESHOLDS.hardBlockResponseMinChars
+                                    : WITNESS_THRESHOLDS.softBlockResponseMinChars;
+                            const val = respuestas[c.key] ?? '';
+                            return (
+                                <div key={c.key} className="space-y-1">
+                                    <p className="text-sm font-medium text-foreground">{c.text}</p>
+                                    {c.verdicts
+                                        .filter((v) => v.dissents)
+                                        .map((v, i) => (
+                                            <p key={i} className="text-xs text-warning">
+                                                {v.reasoning}
+                                            </p>
+                                        ))}
+                                    <textarea
+                                        value={val}
+                                        onChange={(ev) => setRespuestas((p) => ({ ...p, [c.key]: ev.target.value }))}
+                                        rows={2}
+                                        placeholder={t('estudioMadre.responsePlaceholder')}
+                                        className="w-full text-sm rounded-md border border-border bg-background px-2 py-1.5 resize-y text-foreground"
+                                    />
+                                    <span className="text-xs text-muted-foreground">
+                                        {val.trim().length}/{min}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             <div className="border-t border-border p-3 space-y-2">
@@ -226,7 +282,11 @@ export function EstudioEnConstruccionPanel({
                     className="w-full text-sm rounded-md border border-border bg-background px-2 py-1.5"
                 />
                 <Button onClick={cristalizar} disabled={loading} className="w-full">
-                    {loading ? t('estudioMadre.crystallizing') : t('estudioMadre.crystallize')}
+                    {loading
+                        ? t('estudioMadre.crystallizing')
+                        : pendiente
+                            ? t('estudioMadre.revalidate')
+                            : t('estudioMadre.crystallize')}
                 </Button>
             </div>
               </>
