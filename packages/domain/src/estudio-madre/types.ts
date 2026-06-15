@@ -69,6 +69,24 @@ export type ProofTexting = 'limpio' | 'sospechoso';
 export type SubtipoAplicacion = 'mente' | 'corazon' | 'conducta';
 
 /**
+ * Traza estructurada de la conducción del corazón (manifiesto v1.3 §3.2, pasos
+ * C1–C5). Solo en `aplicacion` subtipo `corazon`. La AFECCIÓN que el docente
+ * formula (C5) vive en `contenido`; esta traza guarda los pasos que la anclan al
+ * texto para que el examen del corazón (cristalización, PR C) la confronte sin
+ * re-elicitar. El sistema NUNCA escribe estos campos — los escribe el docente.
+ */
+export interface ConduccionCorazonTrace {
+    /** C1 — id del elemento `idea_central` (proposición exegética) que ancla el afecto. */
+    proposicionElementoId: string;
+    /** C2 — qué buscaba mover el autor en el corazón de su audiencia original. */
+    caraAfectiva: string;
+    /** C3 — la verdad sobre Dios, revelada en el texto, de la que cuelga el afecto. */
+    raizTeocentrica: string;
+    /** C4 — cómo aterriza ese mismo afecto en la congregación de hoy (tramo libre). */
+    puenteCongregacion: string;
+}
+
+/**
  * Un elemento cristalizado del estudio. Tipado + ordenado. Diseñado para
  * soportar confrontación (`aceptadoPorDocente`/`razon`) desde el schema aunque
  * en MVP esos campos se llenen mínimo (spec §2.3, opción 3).
@@ -108,6 +126,13 @@ export interface ElementoEstudio {
      * produce (`mente`/`corazon`/`conducta`), no el estado de fidelidad.
      */
     subtipo?: SubtipoAplicacion;
+    /**
+     * Solo para `aplicacion` subtipo `corazon` — la traza de la conducción C1–C5
+     * que ancla la afección al texto. Aditiva: una `corazon` sin traza (legacy o
+     * clasificada a mano) no la trae; el examen del corazón la tratará como
+     * `sin_auditar`.
+     */
+    conduccionCorazon?: ConduccionCorazonTrace;
 }
 
 /** Agregado de autoría derivado de los elementos (puerta 7, la demo). */

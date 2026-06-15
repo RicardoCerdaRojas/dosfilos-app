@@ -64,6 +64,47 @@
             "corazon": "Corazón (sentir)",
             "conducta": "Conducta (hacer)"
         },
+        "ideaCentralHint": "Aquí va lo que el texto AFIRMA en la intención del autor, no tu aplicación para hoy. Ej.: «Dios justifica al impío por la fe, no por sus obras» (afirmación del texto). NO: «debemos confiar más en Dios esta semana» (eso ya es aplicación; el puente a tu gente llega después).",
+        "corazon": {
+            "boton": "Conducir el corazón",
+            "title": "Conducir el corazón",
+            "incompleto": "Faltan pasos por responder antes de cerrar la afección.",
+            "listo": "Afección añadida al estudio.",
+            "cancelar": "Cancelar",
+            "atras": "Atrás",
+            "siguiente": "Siguiente",
+            "finalizar": "Añadir afección",
+            "c1": {
+                "pregunta": "¿Sobre qué proposición vas a trabajar el afecto?",
+                "pista": "El corazón no parte de cero: parte de lo que la mente ya estableció. Elige la idea central (la afirmación exegética del texto).",
+                "confronta": "El afecto se desprenderá de esta proposición, no de tu reacción.",
+                "sinIdea": "Primero promueve una idea central al estudio: el afecto se ancla a ella."
+            },
+            "c2": {
+                "pregunta": "¿Qué buscaba mover el autor en el corazón de sus primeros oyentes con esta verdad?",
+                "pista": "Apóyate en el texto: ¿hay un imperativo, una doxología, un lamento? ¿El autor expresa su deseo por ellos? ¿Qué género es? Los marcadores ayudan a preguntar; no son el afecto.",
+                "placeholder": "El autor buscaba mover…",
+                "confronta": "Esto es exégesis: se valida contra el texto, no contra tu congregación todavía."
+            },
+            "c3": {
+                "pregunta": "¿De qué verdad sobre Dios, revelada en este texto, cuelga este afecto?",
+                "pista": "El afecto no tiene que terminar en Dios; puede terminar en el creyente (seguridad, contrición, esperanza). Lo que se exige es que su RAÍZ sea el Dios del texto.",
+                "placeholder": "Este afecto cuelga de que Dios…",
+                "confronta": "Un afecto que no nombra su raíz en el Dios revelado por el texto es huérfano y se confronta."
+            },
+            "c4": {
+                "pregunta": "¿Cómo aterriza ese mismo afecto en tu congregación de hoy?",
+                "pista": "Aquí eres libre en el CÓMO: usa lo que sabes de tu gente —su dureza, su quebranto—. Pero no eres libre para sustituir el afecto del texto por otro más conveniente.",
+                "placeholder": "En mi gente, este afecto aterriza…",
+                "confronta": "El examen valida continuidad, no uniformidad: el afecto de hoy debe ser el mismo que el texto buscaba ayer."
+            },
+            "c5": {
+                "pregunta": "Formula la afección en una oración, con tus palabras.",
+                "pista": "Una afección es una disposición asentada del corazón hacia Dios, no una emoción del momento. «Que se emocionen» no es validable; «que reposen con seguridad filial en un amor que los precede» sí.",
+                "placeholder": "Que mi gente…",
+                "confronta": "Si formulas una reacción pasajera, tendrás que reformular la disposición que esa reacción debería asentar."
+            }
+        },
         "estado": {
             "verde": "Verde",
             "en_progreso": "En progreso",

@@ -119,6 +119,25 @@ export function addElemento(
     });
 }
 
+/**
+ * Añade un elemento ya construido (p.ej. el `aplicacion:corazon` que produce la
+ * conducción C1–C5). El store solo asigna `id`/`orden`; los demás campos —
+ * subtipo, autoría, traza — vienen resueltos del dominio.
+ */
+export function addElementoConducido(
+    sessionId: string,
+    fields: Pick<DraftElemento, 'tipo' | 'subtipo' | 'autoria' | 'contenido' | 'conduccionCorazon'>,
+): void {
+    update(sessionId, (d) => {
+        const elemento: DraftElemento = {
+            id: genId(),
+            orden: d.elementos.length + 1,
+            ...fields,
+        };
+        return { ...d, elementos: [...d.elementos, elemento] };
+    });
+}
+
 export function removeElemento(sessionId: string, id: string): void {
     update(sessionId, (d) => ({
         ...d,
