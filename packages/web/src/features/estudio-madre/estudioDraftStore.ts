@@ -1,4 +1,4 @@
-import type { ElementoEstudio, ElementoTipo } from '@dosfilos/domain';
+import type { ElementoEstudio, ElementoTipo, SubtipoAplicacion } from '@dosfilos/domain';
 
 /**
  * Borrador del "Estudio en construcción" — los elementos que el docente promueve
@@ -141,7 +141,27 @@ export function moveElemento(sessionId: string, id: string, dir: 'up' | 'down'):
 export function setTipo(sessionId: string, id: string, tipo: ElementoTipo): void {
     update(sessionId, (d) => ({
         ...d,
-        elementos: d.elementos.map((e) => (e.id === id ? { ...e, tipo } : e)),
+        elementos: d.elementos.map((e) => {
+            if (e.id !== id) return e;
+            const next = { ...e, tipo };
+            // El subtipo solo vive en `aplicacion`; al cambiar de tipo se descarta
+            // para no arrastrar una dimensión huérfana.
+            if (tipo !== 'aplicacion') delete next.subtipo;
+            return next;
+        }),
+    }));
+}
+
+export function setSubtipo(sessionId: string, id: string, subtipo: SubtipoAplicacion | undefined): void {
+    update(sessionId, (d) => ({
+        ...d,
+        elementos: d.elementos.map((e) => {
+            if (e.id !== id) return e;
+            const next = { ...e };
+            if (subtipo) next.subtipo = subtipo;
+            else delete next.subtipo;
+            return next;
+        }),
     }));
 }
 

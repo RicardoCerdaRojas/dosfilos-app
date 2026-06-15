@@ -28,12 +28,12 @@
         "witnessGateTitle": "Respond to the witnesses to close",
         "absoluteBlockHelp": "This claim can't close as-is. Edit the idea above to address what the witness flags, then re-validate.",
         "responsePlaceholder": "Acknowledge or reformulate your claim…",
-        "crystallizing": "Running the gates…",
+        "crystallizing": "Running the exams…",
         "needElements": "Promote at least one element before crystallizing.",
         "needReference": "Set the passage before crystallizing.",
         "created": "Study crystallized",
         "successTitle": "Study validated",
-        "successBody": "It passed the fidelity gates and is green. {{pct}}% authored by you. Open the draft now?",
+        "successBody": "It passed the fidelity exams and is green. {{pct}}% authored by you. Open the draft now?",
         "successStay": "Stay here",
         "successView": "Open draft",
         "view": "View",
@@ -56,6 +56,13 @@
             "cita": "Quote",
             "ilustracion": "Illustration",
             "conclusion": "Conclusion"
+        },
+        "subtipoLabel": "Application dimension",
+        "subtipoNinguno": "No dimension",
+        "subtipos": {
+            "mente": "Mind (know)",
+            "corazon": "Heart (feel)",
+            "conducta": "Conduct (do)"
         },
         "estado": {
             "verde": "Green",

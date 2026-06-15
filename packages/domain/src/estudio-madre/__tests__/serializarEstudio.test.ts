@@ -67,6 +67,27 @@ describe('serializarEstudio', () => {
         expect(elementos).toEqual(copia); // sin mutación
     });
 
+    it('una `aplicacion` con subtipo lo anexa al encabezado', () => {
+        const elementos: ElementoEstudio[] = [
+            el({ id: 'e1', tipo: 'aplicacion', orden: 1, contenido: 'Reposa en su amor', subtipo: 'corazon' }),
+        ];
+        expect(serializarEstudio(elementos)).toBe('## Aplicación · Corazón\n\nReposa en su amor');
+    });
+
+    it('una `aplicacion` legacy sin subtipo se serializa igual que antes (back-compat)', () => {
+        const elementos: ElementoEstudio[] = [
+            el({ id: 'e1', tipo: 'aplicacion', orden: 1, contenido: 'Vela y confía' }),
+        ];
+        expect(serializarEstudio(elementos)).toBe('## Aplicación\n\nVela y confía');
+    });
+
+    it('un subtipo extraviado en un tipo que no es `aplicacion` no se renderiza', () => {
+        const elementos: ElementoEstudio[] = [
+            el({ id: 'e1', tipo: 'observacion', orden: 1, contenido: 'Pedro habla en serio', subtipo: 'corazon' }),
+        ];
+        expect(serializarEstudio(elementos)).toBe('## Observación\n\nPedro habla en serio');
+    });
+
     it('estudio vacío → markdown vacío', () => {
         expect(serializarEstudio([])).toBe('');
     });

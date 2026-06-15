@@ -1,4 +1,4 @@
-import type { ElementoTipo } from '@dosfilos/domain';
+import type { ElementoTipo, SubtipoAplicacion } from '@dosfilos/domain';
 
 /**
  * Tipos de elemento ofrecidos en el picker de promoción + el dropdown del panel.
@@ -26,3 +26,10 @@ export const TIPOS_AVANZADOS: ElementoTipo[] = [
     'ilustracion',
     'conclusion',
 ];
+
+/**
+ * Subtipos de `aplicacion` ofrecidos en el panel (manifiesto §5). Una aplicación
+ * sin subtipo es legacy `sin_auditar`; estos la clasifican por dimensión
+ * (mente→saber, corazon→sentir, conducta→hacer).
+ */
+export const SUBTIPOS_APLICACION: SubtipoAplicacion[] = ['mente', 'corazon', 'conducta'];

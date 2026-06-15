@@ -1,4 +1,4 @@
-import type { ElementoEstudio, ElementoTipo } from './types';
+import type { ElementoEstudio, ElementoTipo, SubtipoAplicacion } from './types';
 
 /**
  * `serializarEstudio(elementos, orden) → markdown` (spec §4.1).
@@ -29,6 +29,13 @@ const ETIQUETA: Record<ElementoTipo, string> = {
     cita: 'Cita',
     ilustracion: 'Ilustración',
     conclusion: 'Conclusión',
+};
+
+/** Sufijo humano del subtipo de `aplicacion` (manifiesto §5). */
+const ETIQUETA_SUBTIPO: Record<SubtipoAplicacion, string> = {
+    mente: 'Mente',
+    corazon: 'Corazón',
+    conducta: 'Conducta',
 };
 
 /**
@@ -67,7 +74,13 @@ export function serializarEstudio(elementos: ElementoEstudio[], orden?: string[]
         .map((el) => {
             const contenido = el.contenido.trim();
             if (!contenido) return '';
-            const etiqueta = ETIQUETA[el.tipo] ?? el.tipo;
+            const base = ETIQUETA[el.tipo] ?? el.tipo;
+            // El subtipo solo aplica a `aplicacion`; un subtipo extraviado en otro
+            // tipo no se renderiza (defensa: el campo es opcional en el contrato).
+            const etiqueta =
+                el.tipo === 'aplicacion' && el.subtipo
+                    ? `${base} · ${ETIQUETA_SUBTIPO[el.subtipo]}`
+                    : base;
             return `## ${etiqueta}\n\n${contenido}`;
         })
         .filter((b) => b.length > 0);

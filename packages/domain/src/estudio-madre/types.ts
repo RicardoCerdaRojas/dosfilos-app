@@ -57,6 +57,18 @@ export type VerificacionCitas = 'ok' | 'no' | 'parcial';
 export type ProofTexting = 'limpio' | 'sospechoso';
 
 /**
+ * Subtipo de una `aplicacion` — la facultad que la aplicación atiende
+ * (manifiesto de conducción formativa v1.3 §5). Mapeo 1:1 a la dimensión que
+ * produce el objetivo: `mente→saber`, `corazon→sentir`, `conducta→hacer`.
+ *
+ * ADITIVO y backward-compatible: una `aplicacion` legacy SIN subtipo se trata
+ * como `sin_auditar` — no la elicita la conducción del corazón ni la confronta
+ * el examen, y sigue contando como `hacer` hasta que se subtipe. Solo tiene
+ * sentido sobre `tipo: 'aplicacion'`.
+ */
+export type SubtipoAplicacion = 'mente' | 'corazon' | 'conducta';
+
+/**
  * Un elemento cristalizado del estudio. Tipado + ordenado. Diseñado para
  * soportar confrontación (`aceptadoPorDocente`/`razon`) desde el schema aunque
  * en MVP esos campos se llenen mínimo (spec §2.3, opción 3).
@@ -90,6 +102,12 @@ export interface ElementoEstudio {
         /** Id del recurso RAG si la cita salió del corpus; null/ausente si no. */
         corpusId?: string | null;
     };
+    /**
+     * Solo para `tipo: 'aplicacion'` — la facultad que atiende la aplicación
+     * (manifiesto §5). Ausente = legacy `sin_auditar`. Marca qué dimensión
+     * produce (`mente`/`corazon`/`conducta`), no el estado de fidelidad.
+     */
+    subtipo?: SubtipoAplicacion;
 }
 
 /** Agregado de autoría derivado de los elementos (puerta 7, la demo). */

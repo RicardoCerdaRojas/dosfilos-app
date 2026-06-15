@@ -24,12 +24,13 @@ import {
     MIN_RESPALDO_TESTIGOS,
     WITNESS_THRESHOLDS,
     type ElementoTipo,
+    type SubtipoAplicacion,
     type EstudioFidelidadResult,
     type EstudioMadre,
     type Extraction,
 } from '@dosfilos/domain';
 import { useEstudioEnConstruccion } from '@/features/estudio-madre/useEstudioEnConstruccion';
-import { TIPOS_BASICOS, TIPOS_AVANZADOS } from '@/features/estudio-madre/tipos';
+import { TIPOS_BASICOS, TIPOS_AVANZADOS, SUBTIPOS_APLICACION } from '@/features/estudio-madre/tipos';
 import { useValidarEstudioMadre } from '@/hooks/useValidarEstudioMadre';
 import { EstadoFidelidadBadge } from './EstadoFidelidadBadge';
 
@@ -198,6 +199,26 @@ export function EstudioEnConstruccionPanel({
                                         ))}
                                     </optgroup>
                                 </select>
+                                {e.tipo === 'aplicacion' && (
+                                    <select
+                                        value={e.subtipo ?? ''}
+                                        onChange={(ev) =>
+                                            estudio.cambiarSubtipo(
+                                                e.id,
+                                                (ev.target.value || undefined) as SubtipoAplicacion | undefined,
+                                            )
+                                        }
+                                        aria-label={t('estudioMadre.subtipoLabel')}
+                                        className="text-xs rounded-md border border-border bg-background px-1.5 py-1 text-foreground"
+                                    >
+                                        <option value="">{t('estudioMadre.subtipoNinguno')}</option>
+                                        {SUBTIPOS_APLICACION.map((st) => (
+                                            <option key={st} value={st}>
+                                                {t(`estudioMadre.subtipos.${st}`)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
                                 <div className="ml-auto flex items-center gap-0.5">
                                     <button
                                         type="button"
