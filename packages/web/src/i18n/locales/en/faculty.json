@@ -64,6 +64,47 @@
             "corazon": "Heart (feel)",
             "conducta": "Conduct (do)"
         },
+        "ideaCentralHint": "This is what the text AFFIRMS in the author's intent, not your application for today. E.g.: “God justifies the ungodly by faith, not by works” (the text's claim). NOT: “we should trust God more this week” (that's already application; the bridge to your people comes later).",
+        "corazon": {
+            "boton": "Conduct the heart",
+            "title": "Conduct the heart",
+            "incompleto": "Some steps are still unanswered before closing the affection.",
+            "listo": "Affection added to the study.",
+            "cancelar": "Cancel",
+            "atras": "Back",
+            "siguiente": "Next",
+            "finalizar": "Add affection",
+            "c1": {
+                "pregunta": "Which proposition will you work the affect on?",
+                "pista": "The heart doesn't start from scratch: it starts from what the mind already established. Pick the central idea (the text's exegetical claim).",
+                "confronta": "The affect will derive from this proposition, not from your reaction.",
+                "sinIdea": "First promote a central idea to the study: the affect anchors to it."
+            },
+            "c2": {
+                "pregunta": "What did the author seek to move in his first hearers' hearts with this truth?",
+                "pista": "Lean on the text: is there an imperative, a doxology, a lament? Does the author express his longing for them? What genre is it? Markers help you ask; they aren't the affect.",
+                "placeholder": "The author sought to move…",
+                "confronta": "This is exegesis: validated against the text, not against your congregation yet."
+            },
+            "c3": {
+                "pregunta": "What truth about God, revealed in this text, does this affect hang from?",
+                "pista": "The affect need not end in God; it may end in the believer (assurance, contrition, hope). What's required is that its ROOT be the God of the text.",
+                "placeholder": "This affect hangs from the fact that God…",
+                "confronta": "An affect that can't name its root in the God revealed by the text is orphaned and gets confronted."
+            },
+            "c4": {
+                "pregunta": "How does that same affect land in your congregation today?",
+                "pista": "Here you're free in the HOW: use what you know of your people — their hardness, their brokenness. But you're not free to swap the text's affect for a more convenient one.",
+                "placeholder": "In my people, this affect lands…",
+                "confronta": "The exam validates continuity, not uniformity: today's affect must be the same the text sought yesterday."
+            },
+            "c5": {
+                "pregunta": "Formulate the affection in one sentence, in your own words.",
+                "pista": "An affection is a settled disposition of the heart toward God, not a passing emotion. “Let them be moved” isn't validable; “let them rest in filial assurance in a love that precedes them” is.",
+                "placeholder": "Let my people…",
+                "confronta": "If you formulate a passing reaction, you'll have to reformulate the disposition that reaction should settle."
+            }
+        },
         "estado": {
             "verde": "Green",
             "en_progreso": "In progress",

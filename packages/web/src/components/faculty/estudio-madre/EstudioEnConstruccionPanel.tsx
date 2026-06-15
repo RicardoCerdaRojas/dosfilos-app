@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { ChevronUp, ChevronDown, X, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { ChevronUp, ChevronDown, X, ShieldAlert, ShieldCheck, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -32,7 +32,9 @@ import {
 import { useEstudioEnConstruccion } from '@/features/estudio-madre/useEstudioEnConstruccion';
 import { TIPOS_BASICOS, TIPOS_AVANZADOS, SUBTIPOS_APLICACION } from '@/features/estudio-madre/tipos';
 import { useValidarEstudioMadre } from '@/hooks/useValidarEstudioMadre';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { EstadoFidelidadBadge } from './EstadoFidelidadBadge';
+import { ConducirCorazonModal } from './ConducirCorazonModal';
 
 export function EstudioEnConstruccionPanel({
     sessionId,
@@ -50,8 +52,13 @@ export function EstudioEnConstruccionPanel({
     const { t } = useTranslation('faculty');
     const estudio = useEstudioEnConstruccion(sessionId);
     const { validar, loading } = useValidarEstudioMadre();
+    const conduccionCorazon = useFeatureFlag('conduccion_corazon');
+    const [corazonOpen, setCorazonOpen] = useState(false);
     const [resultado, setResultado] = useState<EstudioFidelidadResult | null>(null);
     const [persisted, setPersisted] = useState(false);
+    const ideasCentrales = estudio.elementos
+        .filter((e) => e.tipo === 'idea_central' && e.contenido.trim().length > 0)
+        .map((e) => ({ id: e.id, contenido: e.contenido.trim() }));
     /** Estudio recién cristalizado en verde → diálogo de confirmación. */
     const [successExtraction, setSuccessExtraction] = useState<Extraction | null>(null);
 
@@ -255,6 +262,11 @@ export function EstudioEnConstruccionPanel({
                                 aria-label={t('estudioMadre.contentLabel')}
                                 className="w-full text-sm rounded-md border border-border bg-background px-2 py-1.5 resize-y text-foreground"
                             />
+                            {e.tipo === 'idea_central' && (
+                                // C1 (manifiesto §3.1): la idea central es la proposición
+                                // EXEGÉTICA — lo que el texto afirma, no su aplicación para hoy.
+                                <p className="text-xs text-muted-foreground">{t('estudioMadre.ideaCentralHint')}</p>
+                            )}
                             {necesitaRespaldo && (
                                 <RespaldoControl
                                     valido={respaldos >= MIN_RESPALDO_TESTIGOS}
@@ -344,6 +356,16 @@ export function EstudioEnConstruccionPanel({
                     aria-label={t('estudioMadre.title')}
                     className="w-full text-sm rounded-md border border-border bg-background px-2 py-1.5"
                 />
+                {conduccionCorazon.enabled && (
+                    <Button
+                        variant="outline"
+                        onClick={() => setCorazonOpen(true)}
+                        className="w-full"
+                    >
+                        <Heart className="w-4 h-4 mr-1.5 text-accent" />
+                        {t('estudioMadre.corazon.boton')}
+                    </Button>
+                )}
                 <Button onClick={cristalizar} disabled={loading} className="w-full">
                     {loading
                         ? t('estudioMadre.crystallizing')
@@ -383,6 +405,15 @@ export function EstudioEnConstruccionPanel({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {conduccionCorazon.enabled && (
+                <ConducirCorazonModal
+                    open={corazonOpen}
+                    onOpenChange={setCorazonOpen}
+                    ideasCentrales={ideasCentrales}
+                    onConducir={estudio.agregarCorazon}
+                />
+            )}
         </div>
     );
 }

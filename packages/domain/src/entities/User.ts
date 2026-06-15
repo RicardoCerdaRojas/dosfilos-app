@@ -193,6 +193,18 @@ export const FEATURE_FLAG_NAMES = [
      * also be on. Default off → legacy publish, blast radius 0.
      */
     'contra_scan',
+
+    /**
+     * Conducción afectiva (manifiesto de conducción formativa v1.3) — gatea el
+     * botón "Conducir el corazón" en el panel de construcción del Estudio Madre:
+     * la conducción guiada C1–C5 que elicita la dimensión afectiva (`aplicacion`
+     * subtipo `corazon`) anclada a la intención autoral del texto. Independiente
+     * de `pastoral_fidelity_flow` (el Estudio Madre vive en Faculty, no en el
+     * wizard del sermón). Default off → blast radius 0. SE MANTIENE off hasta que
+     * el examen del corazón (cristalización) despliegue: no se puede crear +
+     * cristalizar un afecto sin validación en producción.
+     */
+    'conduccion_corazon',
 ] as const;
 
 export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];

@@ -469,6 +469,10 @@
                 "contra_scan": {
                     "label": "Contra-scan",
                     "description": "Pre-publish confrontation: surfaces library chunks that dissent from the sermon's central idea and requires the pastor to consider at least one before publishing (Phase 4, ADR-033, Acts 20:27). Requires pastoral_fidelity_flow."
+                },
+                "conduccion_corazon": {
+                    "label": "Heart conduction",
+                    "description": "\"Conduct the heart\" button in the Master Study: guided C1–C5 conduction that elicits the affective application anchored to the text (formative conduction manifesto). Keep off until the heart exam ships."
                 }
             }
         },

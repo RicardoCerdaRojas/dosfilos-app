@@ -8,3 +8,4 @@ export * from './types';
 export * from './serializarEstudio';
 export * from './fidelidad';
 export * from './derivarObjetivos';
+export * from './conduccionCorazon';

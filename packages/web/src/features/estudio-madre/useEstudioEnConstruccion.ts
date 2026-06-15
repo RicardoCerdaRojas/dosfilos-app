@@ -1,7 +1,13 @@
 import { useCallback, useSyncExternalStore } from 'react';
-import type { ElementoTipo, SubtipoAplicacion } from '@dosfilos/domain';
+import {
+    construirAplicacionCorazon,
+    type ConduccionCorazonRespuestas,
+    type ElementoTipo,
+    type SubtipoAplicacion,
+} from '@dosfilos/domain';
 import {
     addElemento,
+    addElementoConducido,
     clearDraft,
     getDraft,
     moveElemento,
@@ -36,6 +42,8 @@ export interface UseEstudioEnConstruccion {
     mover: (id: string, dir: 'up' | 'down') => void;
     cambiarTipo: (id: string, tipo: ElementoTipo) => void;
     cambiarSubtipo: (id: string, subtipo: SubtipoAplicacion | undefined) => void;
+    /** Añade el `aplicacion:corazon` que produce la conducción C1–C5 (manifiesto §3.2). */
+    agregarCorazon: (respuestas: ConduccionCorazonRespuestas) => void;
     cambiarContenido: (id: string, contenido: string) => void;
     cambiarRespaldo: (id: string, respaldoTestigos: string[]) => void;
     cambiarRespuesta: (claimKey: string, response: string) => void;
@@ -67,6 +75,10 @@ export function useEstudioEnConstruccion(sessionId: string): UseEstudioEnConstru
         mover: useCallback((id, dir) => moveElemento(sessionId, id, dir), [sessionId]),
         cambiarTipo: useCallback((id, tipo) => setTipo(sessionId, id, tipo), [sessionId]),
         cambiarSubtipo: useCallback((id, subtipo) => setSubtipo(sessionId, id, subtipo), [sessionId]),
+        agregarCorazon: useCallback(
+            (respuestas) => addElementoConducido(sessionId, construirAplicacionCorazon(respuestas)),
+            [sessionId],
+        ),
         cambiarContenido: useCallback((id, contenido) => setContenido(sessionId, id, contenido), [sessionId]),
         cambiarRespaldo: useCallback((id, ids) => setRespaldo(sessionId, id, ids), [sessionId]),
         cambiarRespuesta: useCallback((claimKey, response) => setRespuesta(sessionId, claimKey, response), [sessionId]),

@@ -11,6 +11,7 @@ const ALLOWED_FLAGS = new Set<string>([
     'study_depth',
     'fidelity_pass',
     'contra_scan',
+    'conduccion_corazon',
 ]);
 
 /**

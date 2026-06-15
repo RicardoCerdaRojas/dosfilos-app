@@ -469,6 +469,10 @@
                 "contra_scan": {
                     "label": "Contra-scan",
                     "description": "Confrontación pre-publicación: surface fragmentos de la biblioteca que disienten de la idea central del sermón y exige al pastor considerar al menos uno antes de publicar (Fase 4, ADR-033, Hechos 20:27). Requiere pastoral_fidelity_flow."
+                },
+                "conduccion_corazon": {
+                    "label": "Conducción del corazón",
+                    "description": "Botón \"Conducir el corazón\" en el Estudio Madre: conducción guiada C1–C5 que elicita la aplicación afectiva anclada al texto (manifiesto de conducción formativa). Mantener off hasta que el examen del corazón despliegue."
                 }
             }
         },
