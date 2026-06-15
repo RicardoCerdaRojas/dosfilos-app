@@ -30,6 +30,7 @@ import {
     type WitnessVerdict,
 } from '../entities/WitnessValidation';
 import type { DoctrineLevel } from '../entities/Confession';
+import { evaluarExamenCorazon, type AfectoVerdicts, type ExamenCorazonResult } from './examenCorazon';
 import type {
     AutoriaResumen,
     ElementoEstudio,
@@ -99,7 +100,16 @@ export interface EstudioClaim {
  */
 export function collectEstudioClaims(elementos: ElementoEstudio[]): EstudioClaim[] {
     return elementos
-        .filter((e) => esClaimValidable(e.tipo) && e.contenido.trim().length > 0)
+        .filter(
+            (e) =>
+                esClaimValidable(e.tipo) &&
+                // El afecto (`aplicacion:corazon`) NO se confronta con el testigo de
+                // contexto neutro: tiene su propio examen del corazón (ejes textual +
+                // temporal, manifiesto §4.1). Excluirlo evita doble confrontación en
+                // el eje equivocado.
+                !(e.tipo === 'aplicacion' && e.subtipo === 'corazon') &&
+                e.contenido.trim().length > 0,
+        )
         .sort((a, b) => a.orden - b.orden)
         .map((e) => ({ key: e.id, kind: e.tipo, text: e.contenido.trim() }));
 }
@@ -228,7 +238,18 @@ export interface ValidarEstudioInput {
      * el estudio no puede ser `verde`.
      */
     witnessVerdicts?: EstudioWitnessVerdicts[] | null;
-    /** Respuestas del docente a los bloqueos de testigos (cristalización). */
+    /**
+     * Verdicts del examen del corazón por afecto (manifiesto §4): Cond 4
+     * admisibilidad + Cond 1/2/3 reapuntadas. Inyectados por el callable
+     * `examenCorazon`. Ausente ⇒ el examen del corazón no se corrió (solo importa
+     * si hay `aplicacion:corazon` con traza).
+     */
+    afectoVerdicts?: AfectoVerdicts[] | null;
+    /**
+     * Respuestas del docente a los bloqueos de testigos (cristalización). La
+     * misma lista alimenta los soft/hard-block de afectos (las keys son ids de
+     * elemento, no colisionan).
+     */
     resolutions?: ReadonlyArray<{ claimKey: string; response: string }>;
     /** Identificadores para componer el WitnessResult reusado. */
     estudioId: string;
@@ -242,6 +263,8 @@ export interface EstudioFidelidadResult {
     proofTexting: ProofTextingResult;
     citas: CitasResult;
     autoria: AutoriaResumen;
+    /** Examen del corazón (manifiesto §4): reformular / huérfanos / testigos / herencia. */
+    corazon: ExamenCorazonResult;
     /** Razones legibles por las que el estudio no es `verde` ("qué falta"). */
     bloqueos: string[];
 }
@@ -252,11 +275,12 @@ export interface EstudioFidelidadResult {
  * autoría). No persiste nada (eso es del llamador / `updateEstudioMadre`).
  */
 export function validarEstudioMadre(input: ValidarEstudioInput): EstudioFidelidadResult {
-    const { elementos, witnessVerdicts, resolutions = [], estudioId } = input;
+    const { elementos, witnessVerdicts, afectoVerdicts, resolutions = [], estudioId } = input;
 
     const proofTexting = evaluarProofTexting(elementos);
     const citas = evaluarCitas(elementos);
     const autoria = calcularAutoriaResumen(elementos);
+    const corazon = evaluarExamenCorazon({ elementos, afectoVerdicts, resolutions, estudioId });
 
     let testigos: WitnessResult | null = null;
     let proceed: ProceedDecision | null = null;
@@ -302,10 +326,38 @@ export function validarEstudioMadre(input: ValidarEstudioInput): EstudioFidelida
         bloqueos.push(`${citas.fallidas.length} cita(s) no verifican; no pueden entrar a los artefactos.`);
     }
 
+    // Examen del corazón (manifiesto §4) — tres estados distintos, no colapsados.
+    if (corazon.huerfanos.length > 0) {
+        bloqueos.push(
+            `${corazon.huerfanos.length} afecto(s) huérfano(s): no se trazan a una proposición. Condúcelos desde el texto.`,
+        );
+    }
+    if (corazon.reformular.length > 0) {
+        bloqueos.push(
+            `${corazon.reformular.length} afecto(s) son una emoción del momento, no una afección: reformúlalos.`,
+        );
+    }
+    if (corazon.sinExaminar.length > 0) {
+        bloqueos.push(`${corazon.sinExaminar.length} afecto(s) aún no han pasado el examen del corazón.`);
+    }
+    if (corazon.proceed && !corazon.proceed.allowed) {
+        if (corazon.proceed.hasAbsoluteBlock) {
+            bloqueos.push('Un afecto no cuelga del Dios del texto (huérfano de raíz): revísalo antes de cerrar.');
+        }
+        if (corazon.proceed.pendingKeys.length > 0) {
+            bloqueos.push(`${corazon.proceed.pendingKeys.length} afecto(s) marcado(s) por el examen necesitan tu respuesta.`);
+        }
+    }
+    if (corazon.herencia.length > 0) {
+        bloqueos.push(
+            `${corazon.herencia.length} conducta(s) no se fundan en un afecto validado (moralismo): vincúlalas.`,
+        );
+    }
+
     let estadoFidelidad: EstadoFidelidad;
     if (!testigos) estadoFidelidad = 'sin_auditar';
     else if (bloqueos.length === 0) estadoFidelidad = 'verde';
     else estadoFidelidad = 'en_progreso';
 
-    return { estadoFidelidad, testigos, proceed, proofTexting, citas, autoria, bloqueos };
+    return { estadoFidelidad, testigos, proceed, proofTexting, citas, autoria, corazon, bloqueos };
 }
