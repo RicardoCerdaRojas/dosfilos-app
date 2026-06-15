@@ -61,7 +61,8 @@ export const generarPlanJob = onDocumentCreated(
         await fail('Estudio no encontrado.');
         return;
       }
-      const material = String((estudioSnap.data() as { markdown?: string }).markdown ?? '').trim();
+      const estudioData = estudioSnap.data() as { markdown?: string; estudioMadre?: { objetivos?: unknown } };
+      const material = String(estudioData.markdown ?? '').trim();
       if (material.length < 40) {
         await fail('El estudio no tiene contenido suficiente.');
         return;
@@ -77,6 +78,14 @@ export const generarPlanJob = onDocumentCreated(
         alcance: job.alcance ?? undefined,
         erroresPrevios: job.erroresPrevios ?? undefined,
       });
+
+      // Gap 1: los objetivos los DERIVA el cliente del Estudio Madre (single-source
+      // en domain) y viven en el sobre; aquí solo se COPIAN al plan (functions no
+      // importa @dosfilos/domain). Si el estudio no tiene sobre/objetivos, el plan
+      // queda sin objetivos — el modelo NO los inventa.
+      if (estudioData.estudioMadre?.objetivos) {
+        plan.objetivos = estudioData.estudioMadre.objetivos;
+      }
 
       await snap.ref.set(
         { estado: 'listo', plan, error: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() },

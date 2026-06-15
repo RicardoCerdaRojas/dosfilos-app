@@ -99,6 +99,24 @@ export interface AutoriaResumen {
 }
 
 /**
+ * Objetivos de aprendizaje del estudio (Gap 1 de la spec §10): saber / sentir /
+ * hacer. Se DERIVAN de los elementos cristalizados por el docente (no los inventa
+ * el LLM); cada dimensión es la lista VERBATIM de los contenidos que aportan, o
+ * vacía si no hay material. Campo neutro (string[] por dimensión), NO acoplado a
+ * modo/género: cuando exista la transposición (Nivel 4), el perfil de audiencia
+ * podrá calibrarlos sin romper el contrato.
+ *
+ * DEUDA conocida: el orden teológico (saber→sentir→hacer que hereda) y la puerta
+ * de medibilidad (T1) NO se aplican aún; `sentir` deriva de `error_confrontado`
+ * como parche hasta que la conducción formativa elicite el afecto anclado al texto.
+ */
+export interface Objetivos {
+    saber: string[];
+    sentir: string[];
+    hacer: string[];
+}
+
+/**
  * El sobre del Estudio Madre dentro de `extractions/{id}`. Todo es opcional
  * desde el punto de vista de Firestore: un doc sin este sobre es un estudio
  * legacy `sin_auditar`.
@@ -117,6 +135,8 @@ export interface EstudioMadre {
     elementos: ElementoEstudio[];
     /** Derivado de `elementos[].autoria`. */
     autoriaResumen?: AutoriaResumen;
+    /** Objetivos derivados de los elementos (Gap 1). Aditivo. */
+    objetivos?: Objetivos;
     proyectosVinculados?: string[];
     historialConfrontacion?: unknown[];
 }

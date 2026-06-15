@@ -187,6 +187,37 @@ export function PlanReview({
         </div>
       )}
 
+      {/* Objetivos derivados del estudio (Gap 1). Read-only: salen de los
+          elementos que el docente cristalizó, no se editan aquí. */}
+      {plan.objetivos &&
+        (plan.objetivos.saber.length > 0 ||
+          plan.objetivos.sentir.length > 0 ||
+          plan.objetivos.hacer.length > 0) && (
+        <section className="space-y-2">
+          <h3 className="text-sm font-semibold">Objetivos</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {([
+              { label: 'Saber', items: plan.objetivos.saber },
+              { label: 'Sentir', items: plan.objetivos.sentir },
+              { label: 'Hacer', items: plan.objetivos.hacer },
+            ] as { label: string; items: string[] }[]).map((dim) => (
+              <div key={dim.label} className="rounded-md border border-border bg-card p-2">
+                <p className="text-xs font-semibold text-foreground mb-1">{dim.label}</p>
+                {dim.items.length > 0 ? (
+                  <ul className="list-disc pl-4 space-y-0.5 text-xs text-muted-foreground">
+                    {dim.items.map((it, i) => (
+                      <li key={i}>{it}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-muted-foreground/60 italic">—</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Bloques + minutos (editables) */}
       <section className="space-y-2">
         <h3 className="text-sm font-semibold">Bloques</h3>

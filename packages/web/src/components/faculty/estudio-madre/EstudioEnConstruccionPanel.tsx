@@ -18,6 +18,7 @@ import {
     aplicarVerificacionCitasMvp,
     claimsBlockingAbsolutely,
     claimsRequiringResponse,
+    derivarObjetivos,
     esAfirmacionDePeso,
     serializarEstudio,
     MIN_RESPALDO_TESTIGOS,
@@ -69,6 +70,9 @@ export function EstudioEnConstruccionPanel({
             clonadoDe: null,
             elementos: elementosConCitas,
             autoriaResumen: result.autoria,
+            // Objetivos derivados de los elementos del docente (Gap 1). El plan
+            // los copia en la generación; vacíos si no hay material que derive.
+            objetivos: derivarObjetivos(estudio.elementos),
             proyectosVinculados: [],
             historialConfrontacion: [],
         };
