@@ -2,8 +2,10 @@ import { useCallback, useState } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
     aplicarVerificacionCitasMvp,
+    collectAfectoClaims,
     collectEstudioClaims,
     validarEstudioMadre,
+    type AfectoVerdicts,
     type DoctrineLevel,
     type ElementoEstudio,
     type EstudioFidelidadResult,
@@ -67,6 +69,32 @@ function toVerdict(witness: WitnessVerdict['witness'], raw: RawVerdict | undefin
     };
 }
 
+/** Verdict crudo del examen del corazón (sin `index`; el callable los entrega por clave). */
+interface RawHeartVerdict {
+    dissents: boolean;
+    confidence: number;
+    reasoning: string;
+    evidence: string[];
+}
+interface RawHeartExamen {
+    key: string;
+    admisible: boolean;
+    detectedLevel: DoctrineLevel | null;
+    textual: RawHeartVerdict | null;
+    temporal: RawHeartVerdict | null;
+    root: (RawHeartVerdict & { detectedLevel: DoctrineLevel | null }) | null;
+}
+
+function heartVerdict(witness: WitnessVerdict['witness'], raw: RawHeartVerdict | null): WitnessVerdict {
+    return {
+        witness,
+        dissents: raw?.dissents ?? false,
+        reasoning: raw?.reasoning ?? '',
+        evidence: raw?.evidence ?? [],
+        confidence: raw?.confidence ?? 0,
+    };
+}
+
 export function useValidarEstudioMadre(): UseValidarEstudioMadreResult {
     const [result, setResult] = useState<EstudioFidelidadResult | null>(null);
     const [loading, setLoading] = useState(false);
@@ -92,10 +120,16 @@ export function useValidarEstudioMadre(): UseValidarEstudioMadreResult {
             return r;
         }
 
+        // Examen del corazón (manifiesto §4): los afecto claims (corazón con traza
+        // y proposición resuelta) van al callable `examenCorazon`; los huérfanos NO
+        // llegan aquí (el dominio los confronta estructuralmente).
+        const afectoClaims = collectAfectoClaims(elementos).claims;
+
         setLoading(true);
         setError(null);
         try {
-            const callable = httpsCallable(getFunctions(), 'validateSeedWitnesses');
+            const fns = getFunctions();
+            const callable = httpsCallable(fns, 'validateSeedWitnesses');
             // Los elementos `testigo` del estudio entran como paralelos sugeridos.
             const seedParallels = elementos
                 .filter((e) => e.tipo === 'testigo' || e.tipo === 'testigo_historico')
@@ -119,7 +153,22 @@ export function useValidarEstudioMadre(): UseValidarEstudioMadreResult {
                 crossRefs: [],
                 seedParallels,
             };
-            const response = await callable(payload);
+            // Doctrina (testigos del sermón reusados) + examen del corazón, en paralelo.
+            const heartCall = afectoClaims.length > 0
+                ? httpsCallable(fns, 'examenCorazon')({
+                      estudioId,
+                      afectos: afectoClaims.map((c) => ({
+                          key: c.key,
+                          afeccion: c.afeccion,
+                          proposicionText: c.proposicionText,
+                          caraAfectiva: c.caraAfectiva,
+                          raizTeocentrica: c.raizTeocentrica,
+                          puenteCongregacion: c.puenteCongregacion,
+                      })),
+                  })
+                : Promise.resolve(null);
+
+            const [response, heartResponse] = await Promise.all([callable(payload), heartCall]);
             const data = response.data as { witnesses: WitnessesPayload; cacheHit: boolean };
             const w = data.witnesses;
 
@@ -136,10 +185,29 @@ export function useValidarEstudioMadre(): UseValidarEstudioMadreResult {
                 };
             });
 
+            let afectoVerdicts: AfectoVerdicts[] | undefined;
+            if (heartResponse) {
+                const hd = heartResponse.data as { examenes: RawHeartExamen[] };
+                afectoVerdicts = (hd.examenes ?? []).map((e) => ({
+                    claimKey: e.key,
+                    admisible: e.admisible,
+                    detectedLevel: e.detectedLevel ?? null,
+                    // textual→context, temporal→parallels, raíz→confession (reusa el motor).
+                    verdicts: e.admisible
+                        ? [
+                              heartVerdict('context', e.textual),
+                              heartVerdict('parallels', e.temporal),
+                              heartVerdict('confession', e.root),
+                          ]
+                        : [],
+                }));
+            }
+
             const composed = validarEstudioMadre({
                 estudioId,
                 elementos: elementosConCitas,
                 witnessVerdicts,
+                afectoVerdicts,
                 resolutions,
             });
             setResult(composed);

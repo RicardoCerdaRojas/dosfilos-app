@@ -179,6 +179,22 @@ export function setSubtipo(sessionId: string, id: string, subtipo: SubtipoAplica
             const next = { ...e };
             if (subtipo) next.subtipo = subtipo;
             else delete next.subtipo;
+            // Cambiar de subtipo descarta el vínculo de herencia (solo vale en `conducta`).
+            if (subtipo !== 'conducta') delete next.derivaDeElementoId;
+            return next;
+        }),
+    }));
+}
+
+/** Declara de qué `aplicacion:corazon` se desprende una `aplicacion:conducta` (herencia). */
+export function setDerivaDe(sessionId: string, id: string, corazonId: string | undefined): void {
+    update(sessionId, (d) => ({
+        ...d,
+        elementos: d.elementos.map((e) => {
+            if (e.id !== id) return e;
+            const next = { ...e };
+            if (corazonId) next.derivaDeElementoId = corazonId;
+            else delete next.derivaDeElementoId;
             return next;
         }),
     }));

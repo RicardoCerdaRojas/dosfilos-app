@@ -74,6 +74,18 @@
             "atras": "Back",
             "siguiente": "Next",
             "finalizar": "Add affection",
+            "vinculoLabel": "Springs from:",
+            "vinculoNinguno": "— choose the affection —",
+            "examen": {
+                "title": "Heart exam",
+                "reformular": "This is a passing emotion or a moral improvement without God, not an affection. Reformulate it as a disposition of the heart toward God.",
+                "huerfano": "This affect doesn't trace to a proposition of the text. Conduct it from the central idea (the “Conduct the heart” button).",
+                "herencia": {
+                    "sin_vinculo": "This conduct doesn't declare which affect it springs from. Link it to a heart above.",
+                    "vinculo_invalido": "The link doesn't point to an affect in the study. Choose a valid heart.",
+                    "afecto_no_validado": "The affect it springs from hasn't passed the exam yet. Resolve it first."
+                }
+            },
             "c1": {
                 "pregunta": "Which proposition will you work the affect on?",
                 "pista": "The heart doesn't start from scratch: it starts from what the mind already established. Pick the central idea (the text's exegetical claim).",

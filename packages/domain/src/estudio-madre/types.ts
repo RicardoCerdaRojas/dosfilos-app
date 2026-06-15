@@ -130,9 +130,18 @@ export interface ElementoEstudio {
      * Solo para `aplicacion` subtipo `corazon` — la traza de la conducción C1–C5
      * que ancla la afección al texto. Aditiva: una `corazon` sin traza (legacy o
      * clasificada a mano) no la trae; el examen del corazón la tratará como
-     * `sin_auditar`.
+     * huérfana (no se puede trazar) y la confronta.
      */
     conduccionCorazon?: ConduccionCorazonTrace;
+    /**
+     * Solo para `aplicacion` subtipo `conducta` — id del `aplicacion:corazon` del
+     * que esta conducta se desprende (la piedad es el afecto en movimiento,
+     * manifiesto §3.3). Aditiva: una conducta sin vínculo declarado es moralismo
+     * y el examen la confronta a declararlo. NO afirma que la conducta esté
+     * validada — solo de qué afecto dice desprenderse (la sustancia del vínculo
+     * es deuda v1).
+     */
+    derivaDeElementoId?: string;
 }
 
 /** Agregado de autoría derivado de los elementos (puerta 7, la demo). */

@@ -74,6 +74,18 @@
             "atras": "Atrás",
             "siguiente": "Siguiente",
             "finalizar": "Añadir afección",
+            "vinculoLabel": "Se desprende de:",
+            "vinculoNinguno": "— elige el afecto —",
+            "examen": {
+                "title": "Examen del corazón",
+                "reformular": "Esto es una emoción del momento o una mejora moral sin Dios, no una afección. Reformúlala como una disposición del corazón hacia Dios.",
+                "huerfano": "Este afecto no se traza a una proposición del texto. Condúcelo desde la idea central (botón «Conducir el corazón»).",
+                "herencia": {
+                    "sin_vinculo": "Esta conducta no declara de qué afecto se desprende. Vincúlala a un corazón arriba.",
+                    "vinculo_invalido": "El vínculo no apunta a un afecto del estudio. Elige un corazón válido.",
+                    "afecto_no_validado": "El afecto del que se desprende aún no pasó el examen. Resuélvelo primero."
+                }
+            },
             "c1": {
                 "pregunta": "¿Sobre qué proposición vas a trabajar el afecto?",
                 "pista": "El corazón no parte de cero: parte de lo que la mente ya estableció. Elige la idea central (la afirmación exegética del texto).",
