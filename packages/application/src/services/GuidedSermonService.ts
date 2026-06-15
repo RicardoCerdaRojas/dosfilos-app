@@ -42,6 +42,16 @@ import {
     RunSocraticTurnUseCase,
     type RunSocraticTurnInput,
 } from '../use-cases/guided-sermon/RunSocraticTurnUseCase';
+import {
+    SubmitGuidedInsightUseCase,
+    type SubmitGuidedInsightInput,
+    type SubmitGuidedInsightResult,
+} from '../use-cases/guided-sermon/SubmitGuidedInsightUseCase';
+import {
+    SubmitGuidedWordStudiesUseCase,
+    type SubmitGuidedWordStudiesInput,
+    type SubmitGuidedWordStudiesResult,
+} from '../use-cases/guided-sermon/SubmitGuidedWordStudiesUseCase';
 import { CallableLlmClient } from './CallableLlmClient';
 
 export interface GuidedSermonServiceDeps {
@@ -60,6 +70,8 @@ export interface ActivateGuidedSermonResult {
 export class GuidedSermonService {
     private readonly activateUC: ActivateGuidedSermonUseCase;
     private readonly runTurnUC: RunSocraticTurnUseCase;
+    private readonly submitInsightUC: SubmitGuidedInsightUseCase;
+    private readonly submitWordStudiesUC: SubmitGuidedWordStudiesUseCase;
     private readonly pauseUC: PauseGuidedSermonUseCase;
     private readonly resumeUC: ResumeGuidedSermonUseCase;
 
@@ -71,6 +83,8 @@ export class GuidedSermonService {
             deps.llmClient,
             deps.registry,
         );
+        this.submitInsightUC = new SubmitGuidedInsightUseCase(deps.chatRepo, deps.seedRepo);
+        this.submitWordStudiesUC = new SubmitGuidedWordStudiesUseCase(deps.chatRepo, deps.seedRepo);
         this.pauseUC = new PauseGuidedSermonUseCase(deps.chatRepo);
         this.resumeUC = new ResumeGuidedSermonUseCase(deps.chatRepo);
     }
@@ -81,6 +95,16 @@ export class GuidedSermonService {
 
     runTurn(input: RunSocraticTurnInput): Promise<SocraticTurnResult> {
         return this.runTurnUC.execute(input);
+    }
+
+    /** Paso 8 estructurado: persiste el Insight desde el formulario (sin LLM/parse). */
+    submitInsight(input: SubmitGuidedInsightInput): Promise<SubmitGuidedInsightResult> {
+        return this.submitInsightUC.execute(input);
+    }
+
+    /** Paso 4 estructurado: persiste los Estudios de Palabras desde el formulario. */
+    submitWordStudies(input: SubmitGuidedWordStudiesInput): Promise<SubmitGuidedWordStudiesResult> {
+        return this.submitWordStudiesUC.execute(input);
     }
 
     pause(input: PauseGuidedSermonInput): Promise<void> {

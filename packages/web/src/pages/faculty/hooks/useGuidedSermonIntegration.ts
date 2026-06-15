@@ -2,8 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams, type NavigateFunction } from 'react-router-dom';
 import type { AIChatSession, AIAgent } from '@dosfilos/domain';
 import { pastoralSeedService, sermonService } from '@dosfilos/application';
-import { useGuidedSermon } from '@/hooks/useGuidedSermon';
+import { useGuidedSermon, type SubmitInsightArgs, type SubmitWordStudiesArgs } from '@/hooks/useGuidedSermon';
 import { useStudyDepthGate } from '@/hooks/usePastoralFidelityGate';
+import { useTranslation } from '@/i18n';
 
 interface Params {
     session: AIChatSession | null | undefined;
@@ -43,6 +44,14 @@ interface Result {
      * returns `false` so the caller falls back to the normal send pipeline.
      */
     trySocraticSubmit: (message: string) => Promise<boolean>;
+    /** Paso 8 estructurado: envía los campos del formulario de Insight. */
+    submitInsight: (
+        args: Pick<SubmitInsightArgs, 'insight' | 'renderedInsightText'>,
+    ) => Promise<import('@dosfilos/application').SubmitGuidedInsightResult | null>;
+    /** Paso 4 estructurado: envía la lista de estudios de palabras. */
+    submitWordStudies: (
+        args: Pick<SubmitWordStudiesArgs, 'studies' | 'renderedText'>,
+    ) => Promise<import('@dosfilos/application').SubmitGuidedWordStudiesResult | null>;
 }
 
 /**
@@ -62,6 +71,7 @@ export function useGuidedSermonIntegration({
 }: Params): Result {
     const { enabled: isFlagEnabled } = useStudyDepthGate();
     const guidedSermon = useGuidedSermon();
+    const { t } = useTranslation('guidedSermon');
     const [activationPromptOpen, setActivationPromptOpen] = useState(false);
     const [searchParams, setSearchParams] = useSearchParams();
     const autoOpenedRef = useRef(false);
@@ -174,6 +184,34 @@ export function useGuidedSermonIntegration({
         [effectiveSessionId, guidedSermon, isGuidedActive, setInput],
     );
 
+    /** Paso 8 estructurado: el formulario de Insight envía sus campos directo. */
+    const submitInsight = useCallback(
+        async (args: Pick<SubmitInsightArgs, 'insight' | 'renderedInsightText'>) => {
+            if (!effectiveSessionId) return null;
+            return guidedSermon.submitInsight({
+                sessionId: effectiveSessionId,
+                insight: args.insight,
+                renderedInsightText: args.renderedInsightText,
+                affirmationText: t('insight.affirmation'),
+            });
+        },
+        [effectiveSessionId, guidedSermon, t],
+    );
+
+    /** Paso 4 estructurado: la lista de estudios de palabras se envía directo. */
+    const submitWordStudies = useCallback(
+        async (args: Pick<SubmitWordStudiesArgs, 'studies' | 'renderedText'>) => {
+            if (!effectiveSessionId) return null;
+            return guidedSermon.submitWordStudies({
+                sessionId: effectiveSessionId,
+                studies: args.studies,
+                renderedText: args.renderedText,
+                affirmationText: t('wordStudy.affirmation'),
+            });
+        },
+        [effectiveSessionId, guidedSermon, t],
+    );
+
     return {
         isFlagEnabled,
         isGuidedActive,
@@ -187,5 +225,7 @@ export function useGuidedSermonIntegration({
         resume,
         openCompletedWizard,
         trySocraticSubmit,
+        submitInsight,
+        submitWordStudies,
     };
 }

@@ -474,7 +474,7 @@ export function FacultyChatPage() {
                                                         && session.guidedSermonSession.passage && (
                                                         <GuidedWordStudyHelper
                                                             passage={session.guidedSermonSession.passage}
-                                                            onInsert={(text) => setInput(input ? `${input}\n${text}` : text)}
+                                                            onSubmit={(args) => guidedIntegration.submitWordStudies(args)}
                                                             busy={guidedIntegration.isProcessing}
                                                         />
                                                     )}
@@ -490,7 +490,7 @@ export function FacultyChatPage() {
                                                     {guidedIntegration.isGuidedActive
                                                         && session?.guidedSermonSession?.currentStep === 'insight' && (
                                                         <GuidedInsightHelper
-                                                            onInsert={(text) => setInput(text)}
+                                                            onSubmit={(args) => guidedIntegration.submitInsight(args)}
                                                             busy={guidedIntegration.isProcessing}
                                                             seedId={session.guidedSermonSession.seedId}
                                                         />

@@ -20,8 +20,20 @@ function Meter({ value, min }: { value: string; min: number }) {
 }
 
 interface Props {
-    /** Inserts the assembled, labelled insight into the chat input. */
-    onInsert: (text: string) => void;
+    /**
+     * Envía el Insight ESTRUCTURADO (campos del formulario, sin pasar por texto
+     * + re-parseo). Devuelve el resultado de la validación determinista.
+     */
+    onSubmit: (args: {
+        insight: {
+            centralIdea: string;
+            observations: string[];
+            openQuestion: string;
+            pastoralAnecdote: string;
+            doxologicalApplication: string;
+        };
+        renderedInsightText: string;
+    }) => Promise<{ accepted: boolean; reasons: string[]; sermonReady: boolean } | null>;
     /** True while a turn is being sent — collapses the helper out of the way. */
     busy?: boolean;
     /** Seed under study — used to resurface the doubts the pastor raised. */
@@ -37,7 +49,7 @@ const MIN_OBSERVATIONS = 3;
  * `Aplicación doxológica:`), then drops it in the chat to review + send. The
  * content is 100% the pastor's — this only structures it (manifesto-safe).
  */
-export function GuidedInsightHelper({ onInsert, busy, seedId }: Props) {
+export function GuidedInsightHelper({ onSubmit, busy, seedId }: Props) {
     const { t } = useTranslation('guidedSermon');
     const { data: doubts = [] } = useGuidedSeedDoubts(seedId);
     const [open, setOpen] = useState(true);
@@ -46,6 +58,8 @@ export function GuidedInsightHelper({ onInsert, busy, seedId }: Props) {
     const [openQuestion, setOpenQuestion] = useState('');
     const [anecdote, setAnecdote] = useState('');
     const [doxological, setDoxological] = useState('');
+    const [reasons, setReasons] = useState<string[]>([]);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         if (busy) setOpen(false);
@@ -67,6 +81,27 @@ export function GuidedInsightHelper({ onInsert, busy, seedId }: Props) {
             `Anécdota: ${anecdote.trim()}`,
             `Aplicación doxológica: ${doxological.trim()}`,
         ].join('\n');
+    };
+
+    const handleSubmit = async () => {
+        setSubmitting(true);
+        setReasons([]);
+        try {
+            const result = await onSubmit({
+                insight: {
+                    centralIdea: centralIdea.trim(),
+                    observations: observations.map((o) => o.trim()).filter(Boolean),
+                    openQuestion: openQuestion.trim(),
+                    pastoralAnecdote: anecdote.trim(),
+                    doxologicalApplication: doxological.trim(),
+                },
+                renderedInsightText: build(),
+            });
+            // Si la validación determinista rechaza, mostrar qué falta (no se envió).
+            if (result && !result.accepted) setReasons(result.reasons);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const labelClass = 'text-[11px] font-semibold text-foreground';
@@ -178,14 +213,24 @@ export function GuidedInsightHelper({ onInsert, busy, seedId }: Props) {
                         />
                     </div>
 
+                    {reasons.length > 0 && (
+                        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-[11px] text-destructive space-y-0.5">
+                            <p className="font-medium">{t('insight.missing')}</p>
+                            <ul className="list-disc pl-4">
+                                {reasons.map((r, i) => (
+                                    <li key={i}>{r}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                     <Button
                         size="sm"
-                        variant="outline"
-                        className="w-full h-8 gap-1.5 text-xs border-info/30 text-info hover:bg-info/10"
-                        onClick={() => onInsert(build())}
+                        className="w-full h-8 gap-1.5 text-xs"
+                        disabled={submitting || busy}
+                        onClick={handleSubmit}
                     >
                         <ArrowDownToLine className="h-3.5 w-3.5" />
-                        {t('insight.useInAnswer')}
+                        {submitting ? t('insight.submitting') : t('insight.submit')}
                     </Button>
                 </div>
             )}
