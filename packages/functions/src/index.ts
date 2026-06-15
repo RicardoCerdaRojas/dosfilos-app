@@ -145,6 +145,8 @@ export { suggestCanonicalParallels } from './pastoral-word-study/suggestCanonica
 
 // 🌱 Pastoral Fidelity Phase 2 — three-witnesses validation (ADR-011)
 export { validateSeedWitnesses } from './three-witnesses/validateSeedWitnesses';
+// ❤️ Examen del corazón — conducción afectiva (manifiesto v1.3 §4)
+export { examenCorazon } from './three-witnesses/examenCorazon';
 // 🌱 Pastoral Fidelity Phase 1.6 — timeless-principle verifier (ADR-023)
 export { verifyTimelessPrinciple } from './three-witnesses/verifyTimelessPrinciple';
 // 🌱 Pastoral Fidelity Phase 2.5 — Study Companion step orientation (ADR-026)
