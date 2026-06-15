@@ -13,6 +13,7 @@ import {
     moveElemento,
     removeElemento,
     setContenido,
+    setDerivaDe,
     setReferencia,
     setRespaldo,
     setRespuesta,
@@ -42,6 +43,8 @@ export interface UseEstudioEnConstruccion {
     mover: (id: string, dir: 'up' | 'down') => void;
     cambiarTipo: (id: string, tipo: ElementoTipo) => void;
     cambiarSubtipo: (id: string, subtipo: SubtipoAplicacion | undefined) => void;
+    /** Declara de qué `aplicacion:corazon` se desprende una `conducta` (herencia). */
+    cambiarVinculo: (id: string, corazonId: string | undefined) => void;
     /** Añade el `aplicacion:corazon` que produce la conducción C1–C5 (manifiesto §3.2). */
     agregarCorazon: (respuestas: ConduccionCorazonRespuestas) => void;
     cambiarContenido: (id: string, contenido: string) => void;
@@ -75,6 +78,7 @@ export function useEstudioEnConstruccion(sessionId: string): UseEstudioEnConstru
         mover: useCallback((id, dir) => moveElemento(sessionId, id, dir), [sessionId]),
         cambiarTipo: useCallback((id, tipo) => setTipo(sessionId, id, tipo), [sessionId]),
         cambiarSubtipo: useCallback((id, subtipo) => setSubtipo(sessionId, id, subtipo), [sessionId]),
+        cambiarVinculo: useCallback((id, corazonId) => setDerivaDe(sessionId, id, corazonId), [sessionId]),
         agregarCorazon: useCallback(
             (respuestas) => addElementoConducido(sessionId, construirAplicacionCorazon(respuestas)),
             [sessionId],

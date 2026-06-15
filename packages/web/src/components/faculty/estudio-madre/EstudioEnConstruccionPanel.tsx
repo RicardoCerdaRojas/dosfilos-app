@@ -59,6 +59,10 @@ export function EstudioEnConstruccionPanel({
     const ideasCentrales = estudio.elementos
         .filter((e) => e.tipo === 'idea_central' && e.contenido.trim().length > 0)
         .map((e) => ({ id: e.id, contenido: e.contenido.trim() }));
+    const corazones = estudio.elementos
+        .filter((e) => e.tipo === 'aplicacion' && e.subtipo === 'corazon' && e.contenido.trim().length > 0)
+        .map((e) => ({ id: e.id, contenido: e.contenido.trim() }));
+    const textoEl = (id: string) => estudio.elementos.find((x) => x.id === id)?.contenido.trim() ?? '';
     /** Estudio recién cristalizado en verde → diálogo de confirmación. */
     const [successExtraction, setSuccessExtraction] = useState<Extraction | null>(null);
 
@@ -267,6 +271,28 @@ export function EstudioEnConstruccionPanel({
                                 // EXEGÉTICA — lo que el texto afirma, no su aplicación para hoy.
                                 <p className="text-xs text-muted-foreground">{t('estudioMadre.ideaCentralHint')}</p>
                             )}
+                            {e.tipo === 'aplicacion' && e.subtipo === 'conducta' && (
+                                // Herencia (manifiesto §3.3): la conducta declara de qué afecto
+                                // validado se desprende. Sin vínculo = moralismo.
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                        {t('estudioMadre.corazon.vinculoLabel')}
+                                    </span>
+                                    <select
+                                        value={e.derivaDeElementoId ?? ''}
+                                        onChange={(ev) => estudio.cambiarVinculo(e.id, ev.target.value || undefined)}
+                                        aria-label={t('estudioMadre.corazon.vinculoLabel')}
+                                        className="flex-1 text-xs rounded-md border border-border bg-background px-1.5 py-1 text-foreground"
+                                    >
+                                        <option value="">{t('estudioMadre.corazon.vinculoNinguno')}</option>
+                                        {corazones.map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.contenido.slice(0, 60)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                             {necesitaRespaldo && (
                                 <RespaldoControl
                                     valido={respaldos >= MIN_RESPALDO_TESTIGOS}
@@ -339,6 +365,101 @@ export function EstudioEnConstruccionPanel({
                         </Button>
                     </div>
                 )}
+
+                {/* Examen del corazón — tres estados distintos, sin colapsar (manifiesto §4). */}
+                {resultado &&
+                    (resultado.corazon.reformular.length > 0 ||
+                        resultado.corazon.huerfanos.length > 0 ||
+                        resultado.corazon.herencia.length > 0 ||
+                        (resultado.corazon.proceed != null && !resultado.corazon.proceed.allowed)) && (
+                        <div className="rounded-lg border border-accent/40 bg-accent/5 p-3 space-y-3">
+                            <p className="text-sm font-medium text-foreground inline-flex items-center gap-1.5">
+                                <Heart className="w-3.5 h-3.5 text-accent" />
+                                {t('estudioMadre.corazon.examen.title')}
+                            </p>
+
+                            {/* Reformular (emoción / disposición secular) — redirige, NO objeción. */}
+                            {resultado.corazon.reformular.map((id) => (
+                                <div key={id} className="space-y-0.5">
+                                    <p className="text-xs font-medium text-foreground">{textoEl(id)}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {t('estudioMadre.corazon.examen.reformular')}
+                                    </p>
+                                </div>
+                            ))}
+
+                            {/* Huérfano — hard-block: no se traza a una proposición. */}
+                            {resultado.corazon.huerfanos.map((id) => (
+                                <div key={id} className="space-y-0.5">
+                                    <p className="text-xs font-medium text-destructive">⚠ {textoEl(id)}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {t('estudioMadre.corazon.examen.huerfano')}
+                                    </p>
+                                </div>
+                            ))}
+
+                            {/* Testigos del afecto: bloqueo absoluto (raíz huérfana). */}
+                            {resultado.corazon.testigos &&
+                                claimsBlockingAbsolutely(resultado.corazon.testigos).map((c) => (
+                                    <div key={c.key} className="space-y-1">
+                                        <p className="text-xs font-medium text-destructive">⚠ {c.text}</p>
+                                        {c.verdicts
+                                            .filter((v) => v.dissents)
+                                            .map((v, i) => (
+                                                <p key={i} className="text-xs text-destructive">
+                                                    {v.reasoning}
+                                                </p>
+                                            ))}
+                                    </div>
+                                ))}
+
+                            {/* Testigos del afecto: soft/hard — objeción al historial. */}
+                            {resultado.corazon.testigos &&
+                                claimsRequiringResponse(resultado.corazon.testigos).map((c) => {
+                                    const min =
+                                        c.escalation === 'hard-block'
+                                            ? WITNESS_THRESHOLDS.hardBlockResponseMinChars
+                                            : WITNESS_THRESHOLDS.softBlockResponseMinChars;
+                                    const val = estudio.respuestas[c.key] ?? '';
+                                    return (
+                                        <div key={c.key} className="space-y-1">
+                                            <p className="text-sm font-medium text-foreground">{c.text}</p>
+                                            {c.verdicts
+                                                .filter((v) => v.dissents)
+                                                .map((v, i) => (
+                                                    <p key={i} className="text-xs text-warning">
+                                                        {v.reasoning}
+                                                    </p>
+                                                ))}
+                                            <textarea
+                                                value={val}
+                                                onChange={(ev) => estudio.cambiarRespuesta(c.key, ev.target.value)}
+                                                rows={2}
+                                                placeholder={t('estudioMadre.responsePlaceholder')}
+                                                className="w-full text-sm rounded-md border border-border bg-background px-2 py-1.5 resize-y text-foreground"
+                                            />
+                                            <span className="text-xs text-muted-foreground">
+                                                {val.trim().length}/{min}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+
+                            {/* Herencia — conducta sin afecto validado detrás (moralismo). */}
+                            {resultado.corazon.herencia.map((h) => (
+                                <div key={h.id} className="space-y-0.5">
+                                    <p className="text-xs font-medium text-foreground">{textoEl(h.id)}</p>
+                                    <p className="text-xs text-warning">
+                                        {t(`estudioMadre.corazon.examen.herencia.${h.razon}`)}
+                                    </p>
+                                </div>
+                            ))}
+
+                            <Button onClick={cristalizar} disabled={loading} size="sm" className="w-full">
+                                {loading ? t('estudioMadre.crystallizing') : t('estudioMadre.revalidate')}
+                            </Button>
+                        </div>
+                    )}
             </div>
 
             <div className="border-t border-border p-3 space-y-2">
