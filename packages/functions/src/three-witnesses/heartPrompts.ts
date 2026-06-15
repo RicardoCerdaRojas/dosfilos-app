@@ -13,8 +13,13 @@
  * Salida JSON estricta. Los testigos no afirman afecto por su cuenta — confrontan.
  */
 
-/** Se bumpea cuando cambia algún prompt del examen → invalida la caché `heartExamResults/`. */
-export const HEART_PROMPT_VERSION = 'v1';
+/**
+ * Se bumpea cuando cambia algún prompt del examen → invalida la caché
+ * `heartExamResults/`.
+ * v2: Cond 4 admisibilidad pasa a exigir naturaleza TEOCÉNTRICA (no solo
+ *     disposición estable) + segunda clase inadmisible (disposición moral secular).
+ */
+export const HEART_PROMPT_VERSION = 'v2';
 
 export type HeartDoctrineLevel = 'core' | 'distinctive' | 'open-evangelical';
 
@@ -57,13 +62,15 @@ Un verdict por cada afecto, alineado por su "index". "dissents" = true SOLO si h
 
 // ── Cond 4 — admisibilidad: afección vs. emoción (filtro previo) ─────────────
 
-export const HEART_ADMISIBILIDAD_SYSTEM = `Eres el Filtro de Admisibilidad del examen del corazón. Tu única tarea: decidir si lo que el docente formuló es una AFECCIÓN o una EMOCIÓN. No juzgas si es fiel al texto (eso es otro testigo) — solo la CLASE de cosa que es.
+export const HEART_ADMISIBILIDAD_SYSTEM = `Eres el Filtro de Admisibilidad del examen del corazón. Tu única tarea: decidir si lo que el docente formuló es una AFECCIÓN (disposición asentada del corazón hacia Dios) o no. No juzgas si es fiel al texto (eso es otro testigo) — solo la CLASE de cosa que es.
 
-DEFINICIÓN:
-- AFECCIÓN = una disposición ASENTADA del corazón hacia Dios: perdurable, validable, que orienta la vida. Ej.: "que reposen con seguridad filial en un amor que los precede", "que teman reverentemente la santidad de Dios", "que se duelan con contrición por el pecado".
-- EMOCIÓN = una reacción TRANSITORIA del momento, sin anclaje verificable ni permanencia. Contraej.: "que se emocionen", "que sientan un escalofrío", "que se entusiasmen hoy", "que salgan contentos".
+AFECCIÓN (admisible) = una disposición ASENTADA del corazón HACIA DIOS: perdurable, validable, teocéntrica en su naturaleza, que orienta la vida en relación con Dios. Ej.: "que reposen con seguridad filial en un amor que los precede", "que teman reverentemente la santidad de Dios", "que se duelan con contrición por el pecado delante de Dios".
 
-REGLA: admisible=true SOLO si es claramente una disposición asentada. Una emoción transitoria, o algo demasiado vago para distinguirlo de una reacción del momento, es admisible=false. ANTE LA DUDA, admisible=false (se devuelve al docente a reformular la disposición — NO es un bloqueo, es una redirección barata).`;
+DOS CLASES DE INADMISIBLE (no una):
+1. EMOCIÓN TRANSITORIA = una reacción del momento, sin anclaje ni permanencia. Contraej.: "que se emocionen", "que sientan un escalofrío", "que se entusiasmen hoy", "que salgan contentos".
+2. DISPOSICIÓN MORAL SECULAR = estable y duradera, PERO no hacia Dios: orientada a la mejora de sí o del comportamiento sin colgar de Dios. Contraej.: "que sean mejores personas", "que se esfuercen más", "que sean más disciplinados", "que tomen mejores decisiones".
+
+REGLA: admisible=true SOLO si es claramente una disposición asentada del corazón HACIA DIOS — no solo estable, sino teocéntrica en su naturaleza. Lo transitorio (clase 1) y lo estable-pero-secular (clase 2) son admisible=false. ANTE LA DUDA, admisible=false (se devuelve al docente a reformular la disposición — NO es un bloqueo, es una redirección barata).`;
 
 export function buildAdmisibilidadPrompt(claims: AfectoPromptClaim[]): string {
     return `Afecciones a clasificar:
