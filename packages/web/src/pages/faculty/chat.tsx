@@ -474,7 +474,7 @@ export function FacultyChatPage() {
                                                         && session.guidedSermonSession.passage && (
                                                         <GuidedWordStudyHelper
                                                             passage={session.guidedSermonSession.passage}
-                                                            onInsert={(text) => setInput(input ? `${input}\n${text}` : text)}
+                                                            onSubmit={(args) => guidedIntegration.submitWordStudies(args)}
                                                             busy={guidedIntegration.isProcessing}
                                                         />
                                                     )}

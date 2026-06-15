@@ -36,7 +36,7 @@
   },
   "wordStudy": {
     "helperTitle": "Palabras clave del pasaje (ayuda)",
-    "helperHint": "Elige una palabra para ver su forma original y significado. Luego escribe TU descubrimiento en el chat: qué aporta al mensaje del pasaje.",
+    "helperHint": "Elige una palabra para ver su forma original y significado. Escribe TU descubrimiento, agrégalo a la lista, y cuando tengas suficientes, envíalos.",
     "identifying": "Identificando palabras clave…",
     "analyzing": "Analizando la palabra…",
     "gloss": "Significado",
@@ -45,7 +45,16 @@
     "resonances": "Resuena con",
     "discoveryPrompt": "El dato es del léxico, no tu respuesta. Escribe con tus palabras qué aporta esta palabra a ESTE pasaje.",
     "useInAnswer": "Usar en mi respuesta",
-    "backToList": "Volver a las palabras"
+    "backToList": "Volver a las palabras",
+    "discoveryLabel": "Tu descubrimiento",
+    "discoveryPlaceholder": "Qué aporta esta palabra al mensaje de ESTE pasaje (con tus palabras).",
+    "addStudy": "Agregar estudio",
+    "removeStudy": "Quitar estudio",
+    "listTitle": "Estudios agregados: {{count}} (mínimo {{min}})",
+    "missing": "Falta para cerrar el paso:",
+    "submit": "Enviar estudios",
+    "submitting": "Guardando…",
+    "affirmation": "Recibido. Tus estudios de palabras quedaron guardados tal cual los escribiste — el dato es del léxico, el descubrimiento es tuyo. Avancemos al siguiente paso."
   },
   "crossRef": {
     "helperTitle": "Pasajes paralelos sugeridos (ayuda)",

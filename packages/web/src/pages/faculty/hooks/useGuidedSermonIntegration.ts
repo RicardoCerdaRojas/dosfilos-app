@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams, type NavigateFunction } from 'react-router-dom';
 import type { AIChatSession, AIAgent } from '@dosfilos/domain';
 import { pastoralSeedService, sermonService } from '@dosfilos/application';
-import { useGuidedSermon, type SubmitInsightArgs } from '@/hooks/useGuidedSermon';
+import { useGuidedSermon, type SubmitInsightArgs, type SubmitWordStudiesArgs } from '@/hooks/useGuidedSermon';
 import { useStudyDepthGate } from '@/hooks/usePastoralFidelityGate';
 import { useTranslation } from '@/i18n';
 
@@ -48,6 +48,10 @@ interface Result {
     submitInsight: (
         args: Pick<SubmitInsightArgs, 'insight' | 'renderedInsightText'>,
     ) => Promise<import('@dosfilos/application').SubmitGuidedInsightResult | null>;
+    /** Paso 4 estructurado: envía la lista de estudios de palabras. */
+    submitWordStudies: (
+        args: Pick<SubmitWordStudiesArgs, 'studies' | 'renderedText'>,
+    ) => Promise<import('@dosfilos/application').SubmitGuidedWordStudiesResult | null>;
 }
 
 /**
@@ -194,6 +198,20 @@ export function useGuidedSermonIntegration({
         [effectiveSessionId, guidedSermon, t],
     );
 
+    /** Paso 4 estructurado: la lista de estudios de palabras se envía directo. */
+    const submitWordStudies = useCallback(
+        async (args: Pick<SubmitWordStudiesArgs, 'studies' | 'renderedText'>) => {
+            if (!effectiveSessionId) return null;
+            return guidedSermon.submitWordStudies({
+                sessionId: effectiveSessionId,
+                studies: args.studies,
+                renderedText: args.renderedText,
+                affirmationText: t('wordStudy.affirmation'),
+            });
+        },
+        [effectiveSessionId, guidedSermon, t],
+    );
+
     return {
         isFlagEnabled,
         isGuidedActive,
@@ -208,5 +226,6 @@ export function useGuidedSermonIntegration({
         openCompletedWizard,
         trySocraticSubmit,
         submitInsight,
+        submitWordStudies,
     };
 }

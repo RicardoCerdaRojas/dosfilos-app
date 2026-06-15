@@ -36,7 +36,7 @@
   },
   "wordStudy": {
     "helperTitle": "Passage key words (helper)",
-    "helperHint": "Pick a word to see its original form and meaning. Then write YOUR discovery in the chat: what it contributes to the passage's message.",
+    "helperHint": "Pick a word to see its original form and meaning. Write YOUR discovery, add it to the list, and when you have enough, submit them.",
     "identifying": "Identifying key words…",
     "analyzing": "Analyzing the word…",
     "gloss": "Meaning",
@@ -45,7 +45,16 @@
     "resonances": "Resonates with",
     "discoveryPrompt": "This data is from the lexicon, not your answer. In your own words, write what this word contributes to THIS passage.",
     "useInAnswer": "Use in my answer",
-    "backToList": "Back to words"
+    "backToList": "Back to words",
+    "discoveryLabel": "Your discovery",
+    "discoveryPlaceholder": "What this word contributes to THIS passage's message (in your own words).",
+    "addStudy": "Add study",
+    "removeStudy": "Remove study",
+    "listTitle": "Studies added: {{count}} (minimum {{min}})",
+    "missing": "Still needed to close the step:",
+    "submit": "Submit studies",
+    "submitting": "Saving…",
+    "affirmation": "Received. Your word studies were saved exactly as you wrote them — the data is from the lexicon, the discovery is yours. Let's move to the next step."
   },
   "crossRef": {
     "helperTitle": "Suggested parallel passages (helper)",

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { guidedSermonService, type ActivateGuidedSermonResult, type SubmitGuidedInsightResult } from '@dosfilos/application';
+import { guidedSermonService, type ActivateGuidedSermonResult, type SubmitGuidedInsightResult, type SubmitGuidedWordStudiesResult } from '@dosfilos/application';
 import type { SocraticTurnResult, AIChatSession, AIChatMessage } from '@dosfilos/domain';
 
 export interface SubmitInsightArgs {
@@ -16,6 +16,13 @@ export interface SubmitInsightArgs {
     renderedInsightText: string;
     affirmationText: string;
 }
+
+export interface SubmitWordStudiesArgs {
+    sessionId: string;
+    studies: Array<{ word: string; reference: string; pastorDiscovery: string }>;
+    renderedText: string;
+    affirmationText: string;
+}
 import { useFirebase } from '@/context/firebase-context';
 import { useTranslation } from '@/i18n';
 
@@ -28,6 +35,8 @@ interface UseGuidedSermonResult {
     runTurn: (sessionId: string, pastorMessage: string) => Promise<SocraticTurnResult | null>;
     /** Paso 8 estructurado: persiste el Insight desde el formulario (sin LLM/parse). */
     submitInsight: (args: SubmitInsightArgs) => Promise<SubmitGuidedInsightResult | null>;
+    /** Paso 4 estructurado: persiste los Estudios de Palabras desde el formulario. */
+    submitWordStudies: (args: SubmitWordStudiesArgs) => Promise<SubmitGuidedWordStudiesResult | null>;
     /** Pause the agent on the session (resumable). */
     pause: (sessionId: string) => Promise<void>;
     /** Resume a paused agent session. */
@@ -168,6 +177,47 @@ export function useGuidedSermon(): UseGuidedSermonResult {
         [user?.uid, t, refreshSession, queryClient],
     );
 
+    const submitWordStudies = useCallback(
+        async (args: SubmitWordStudiesArgs) => {
+            if (!user?.uid) return null;
+            setIsProcessing(true);
+            const sessionKey = ['faculty', 'sessions', user.uid, args.sessionId];
+            const optimisticId = `optimistic_${Date.now()}`;
+            queryClient.setQueryData<AIChatSession | null>(sessionKey, (prev) =>
+                prev
+                    ? {
+                          ...prev,
+                          messages: [
+                              ...prev.messages,
+                              { id: optimisticId, role: 'user', content: args.renderedText, timestamp: new Date() } as AIChatMessage,
+                          ],
+                      }
+                    : prev,
+            );
+            try {
+                const result = await guidedSermonService.submitWordStudies({
+                    userId: user.uid,
+                    sessionId: args.sessionId,
+                    studies: args.studies,
+                    renderedText: args.renderedText,
+                    affirmationText: args.affirmationText,
+                });
+                refreshSession();
+                return result;
+            } catch (err) {
+                console.error('[useGuidedSermon] submitWordStudies failed', err);
+                queryClient.setQueryData<AIChatSession | null>(sessionKey, (prev) =>
+                    prev ? { ...prev, messages: prev.messages.filter((m) => m.id !== optimisticId) } : prev,
+                );
+                toast.error(t('error.runTurn'));
+                return null;
+            } finally {
+                setIsProcessing(false);
+            }
+        },
+        [user?.uid, t, refreshSession, queryClient],
+    );
+
     const pause = useCallback(
         async (sessionId: string) => {
             if (!user?.uid) return;
@@ -194,5 +244,5 @@ export function useGuidedSermon(): UseGuidedSermonResult {
         [user?.uid, refreshSession],
     );
 
-    return { isProcessing, activate, runTurn, submitInsight, pause, resume };
+    return { isProcessing, activate, runTurn, submitInsight, submitWordStudies, pause, resume };
 }

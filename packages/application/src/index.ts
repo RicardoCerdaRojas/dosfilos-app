@@ -4,6 +4,7 @@ export * from './services/GuidedSermonService'; // 🌱 Pastoral Fidelity Phase 
 export * from './use-cases/guided-sermon/ActivateGuidedSermonUseCase';
 export * from './use-cases/guided-sermon/RunSocraticTurnUseCase';
 export * from './use-cases/guided-sermon/SubmitGuidedInsightUseCase';
+export * from './use-cases/guided-sermon/SubmitGuidedWordStudiesUseCase';
 export * from './use-cases/guided-sermon/PauseGuidedSermonUseCase';
 export * from './use-cases/guided-sermon/ResumeGuidedSermonUseCase';
 export * from './services/AuthService';
