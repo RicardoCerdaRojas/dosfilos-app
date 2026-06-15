@@ -28,12 +28,12 @@
         "witnessGateTitle": "Responde a los testigos para cerrar",
         "absoluteBlockHelp": "No se puede cerrar con esta afirmación. Edita la idea arriba para corregir lo que el testigo señala y vuelve a validar.",
         "responsePlaceholder": "Reconoce o reformula tu afirmación…",
-        "crystallizing": "Corriendo las puertas…",
+        "crystallizing": "Corriendo los exámenes…",
         "needElements": "Promueve al menos un elemento antes de cristalizar.",
         "needReference": "Indica el pasaje antes de cristalizar.",
         "created": "Estudio cristalizado",
         "successTitle": "Estudio validado",
-        "successBody": "Pasó las puertas de fidelidad y quedó en verde. Autoría {{pct}}% tuya. ¿Quieres abrir el borrador ahora?",
+        "successBody": "Pasó los exámenes de fidelidad y quedó en verde. Autoría {{pct}}% tuya. ¿Quieres abrir el borrador ahora?",
         "successStay": "Seguir aquí",
         "successView": "Ver borrador",
         "view": "Ver",
@@ -56,6 +56,13 @@
             "cita": "Cita",
             "ilustracion": "Ilustración",
             "conclusion": "Conclusión"
+        },
+        "subtipoLabel": "Dimensión de la aplicación",
+        "subtipoNinguno": "Sin dimensión",
+        "subtipos": {
+            "mente": "Mente (saber)",
+            "corazon": "Corazón (sentir)",
+            "conducta": "Conducta (hacer)"
         },
         "estado": {
             "verde": "Verde",

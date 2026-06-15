@@ -1,5 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react';
-import type { ElementoTipo } from '@dosfilos/domain';
+import type { ElementoTipo, SubtipoAplicacion } from '@dosfilos/domain';
 import {
     addElemento,
     clearDraft,
@@ -10,6 +10,7 @@ import {
     setReferencia,
     setRespaldo,
     setRespuesta,
+    setSubtipo,
     setTipo,
     setTitulo,
     subscribe,
@@ -34,6 +35,7 @@ export interface UseEstudioEnConstruccion {
     quitar: (id: string) => void;
     mover: (id: string, dir: 'up' | 'down') => void;
     cambiarTipo: (id: string, tipo: ElementoTipo) => void;
+    cambiarSubtipo: (id: string, subtipo: SubtipoAplicacion | undefined) => void;
     cambiarContenido: (id: string, contenido: string) => void;
     cambiarRespaldo: (id: string, respaldoTestigos: string[]) => void;
     cambiarRespuesta: (claimKey: string, response: string) => void;
@@ -64,6 +66,7 @@ export function useEstudioEnConstruccion(sessionId: string): UseEstudioEnConstru
         quitar: useCallback((id) => removeElemento(sessionId, id), [sessionId]),
         mover: useCallback((id, dir) => moveElemento(sessionId, id, dir), [sessionId]),
         cambiarTipo: useCallback((id, tipo) => setTipo(sessionId, id, tipo), [sessionId]),
+        cambiarSubtipo: useCallback((id, subtipo) => setSubtipo(sessionId, id, subtipo), [sessionId]),
         cambiarContenido: useCallback((id, contenido) => setContenido(sessionId, id, contenido), [sessionId]),
         cambiarRespaldo: useCallback((id, ids) => setRespaldo(sessionId, id, ids), [sessionId]),
         cambiarRespuesta: useCallback((claimKey, response) => setRespuesta(sessionId, claimKey, response), [sessionId]),
