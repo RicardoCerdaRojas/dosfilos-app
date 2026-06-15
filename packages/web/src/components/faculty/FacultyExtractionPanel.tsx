@@ -180,12 +180,20 @@ export function FacultyExtractionPanel({
                     </div>
                 </>
             ) : tab === 'study' && estudioEnabled ? (
-                <EstudioEnConstruccionPanel
-                    sessionId={sessionId!}
-                    userId={userId!}
-                    onRefetch={onEstudioCreated}
-                    onOpenBorrador={onEstudioOpen}
-                />
+                // `flex-1 min-h-0` da al panel la altura RESTANTE del aside (no la
+                // total): su `h-full` interno resuelve contra esta caja y el scroll
+                // de la lista de elementos funciona, dejando el footer (cristalizar)
+                // siempre alcanzable. Sin esto, `h-full` = altura completa del aside
+                // y el footer queda fuera de viewport (igual que la rama `tools`,
+                // que ya usa flex-1).
+                <div className="flex-1 min-h-0">
+                    <EstudioEnConstruccionPanel
+                        sessionId={sessionId!}
+                        userId={userId!}
+                        onRefetch={onEstudioCreated}
+                        onOpenBorrador={onEstudioOpen}
+                    />
+                </div>
             ) : (
                 <FacultyExtractionsList
                     extractions={extractions}
