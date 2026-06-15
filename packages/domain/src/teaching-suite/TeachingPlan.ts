@@ -12,6 +12,8 @@
  * renderers. No inventar campos: el contrato es exhaustivo.
  */
 
+import type { Objetivos } from '../estudio-madre/types';
+
 export type Genero = 'exegesis' | 'doctrina' | 'consejeria';
 export type Modalidad = 'clase' | 'sesion'; // solo consejería
 export type Artefacto = 'presentacion' | 'notas' | 'hoja' | 'guia_sesion';
@@ -237,6 +239,13 @@ export interface TeachingPlan {
   edicion?: string;
   artefactos: Artefacto[];
   version_contrato: VersionContrato;
+  /**
+   * Objetivos de aprendizaje {saber, sentir, hacer} (Gap 1). ADITIVO y opcional:
+   * se DERIVAN del Estudio Madre (no los inventa el modelo); se copian al plan en
+   * la generación. Cuando exista la transposición (Nivel 4), el perfil de
+   * audiencia los calibrará. validatePlan NO los valida (opcional ⇒ sin regla).
+   */
+  objetivos?: Objetivos;
   textos?: Record<string, string>;
   // Cuerpo
   bloques: Bloque[]; // cubren 1..N sin huecos ni solapes
