@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,6 +26,7 @@ import {
 } from '@dosfilos/domain';
 import { useWitnessValidation } from '@/hooks/useWitnessValidation';
 import { useCrossReferences } from '@/hooks/useCrossReferences';
+import { logDoxologicalShadow } from '@/lib/doxologicalShadow';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -205,11 +206,31 @@ function ClaimCard({
  * claim is resolved (and no absolute block remains).
  */
 export function WitnessGate({ seed, confessionalWitnessesEnabled, onProceed, onReviseClaim, onBack }: Props) {
-    const { result, loading, error, cacheHit, validate } = useWitnessValidation();
+    const { result, loading, error, cacheHit, latencyMs, validate } = useWitnessValidation();
     const { parallels } = useCrossReferences(seed.passage);
     const [responses, setResponses] = useState<Record<string, string>>({});
     const [facultyConsulted, setFacultyConsulted] = useState<Record<string, boolean>>({});
     const [ran, setRan] = useState(false);
+    const shadowLoggedRef = useRef(false);
+
+    // Grieta doxológica — Capa 1 (modo sombra). WitnessGate solo monta cuando
+    // `three_witnesses` está on, así que el gate doxológico ya corrió como
+    // parte del one-shot. Reusamos ese `WitnessResult` (cero llamadas nuevas)
+    // y registramos su veredicto en paralelo SIN tocar el bloqueo del one-shot.
+    // `oneShotVerdict` = stance del one-shot sobre todos los claims (sin
+    // overrides aún) → da el delta cross-flow contra el guiado.
+    useEffect(() => {
+        if (!result || shadowLoggedRef.current) return;
+        shadowLoggedRef.current = true;
+        const oneShot = canProceedFromWitnesses(result, []).allowed ? 'pass' : 'block';
+        void logDoxologicalShadow({
+            result,
+            flow: 'wizard',
+            witnessLatencyMs: latencyMs ?? 0,
+            cacheHit,
+            oneShotVerdict: oneShot,
+        });
+    }, [result, latencyMs, cacheHit]);
 
     const crossRefs = useMemo(
         () => parallels.map((p) => `${p.book} ${p.chapter}:${p.verse}${p.topic ? ` [${p.topic}]` : ''}`),

@@ -4,6 +4,9 @@ import type { AIChatSession, AIAgent } from '@dosfilos/domain';
 import { pastoralSeedService, sermonService } from '@dosfilos/application';
 import { useGuidedSermon, type SubmitInsightArgs, type SubmitWordStudiesArgs } from '@/hooks/useGuidedSermon';
 import { useStudyDepthGate } from '@/hooks/usePastoralFidelityGate';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
+import { useWitnessValidation } from '@/hooks/useWitnessValidation';
+import { logDoxologicalShadow, logDoxologicalShadowFailure } from '@/lib/doxologicalShadow';
 import { useTranslation } from '@/i18n';
 
 interface Params {
@@ -70,6 +73,8 @@ export function useGuidedSermonIntegration({
     navigate,
 }: Params): Result {
     const { enabled: isFlagEnabled } = useStudyDepthGate();
+    const { enabled: threeWitnessesEnabled } = useFeatureFlag('three_witnesses');
+    const witnessValidation = useWitnessValidation();
     const guidedSermon = useGuidedSermon();
     const { t } = useTranslation('guidedSermon');
     const [activationPromptOpen, setActivationPromptOpen] = useState(false);
@@ -184,18 +189,75 @@ export function useGuidedSermonIntegration({
         [effectiveSessionId, guidedSermon, isGuidedActive, setInput],
     );
 
+    /**
+     * Grieta doxológica — Capa 1 (modo sombra), flujo guiado.
+     *
+     * El guiado es el hueco real: hoy NO corre gate de testigos. Tras un Insight
+     * aceptado (único punto donde se autora el texto doxológico), disparamos los
+     * tres testigos y registramos el veredicto del gate doxológico — DESACOPLADO
+     * y fail-open: el pastor ya avanzó cuando esto corre, y un fallo se traga
+     * (registrándolo como fila de fallo). Cero cambio de UX. Solo cuando
+     * `three_witnesses` está on.
+     */
+    const runGuidedDoxologicalShadow = useCallback(
+        async (seedId: string) => {
+            try {
+                const seed = await pastoralSeedService.getById(seedId);
+                if (!seed) return;
+                const outcome = await witnessValidation.validate({
+                    seed,
+                    confessionalWitnessesEnabled: true,
+                    // El gate degrada a los paralelos del propio pastor cuando el
+                    // motor de cross-refs está vacío (mismo contrato que el wizard).
+                    crossRefs: [],
+                });
+                if (!outcome.result) {
+                    await logDoxologicalShadowFailure({
+                        seedId,
+                        sermonId: seed.sermonId,
+                        flow: 'guided-insight',
+                        failure: 'witness validation returned no result',
+                    });
+                    return;
+                }
+                await logDoxologicalShadow({
+                    result: outcome.result,
+                    flow: 'guided-insight',
+                    witnessLatencyMs: outcome.latencyMs,
+                    cacheHit: outcome.cacheHit,
+                    oneShotVerdict: null,
+                });
+            } catch (err) {
+                await logDoxologicalShadowFailure({
+                    seedId,
+                    sermonId: '',
+                    flow: 'guided-insight',
+                    failure: err instanceof Error ? err.message : 'unknown shadow error',
+                });
+            }
+        },
+        [witnessValidation],
+    );
+
     /** Paso 8 estructurado: el formulario de Insight envía sus campos directo. */
     const submitInsight = useCallback(
         async (args: Pick<SubmitInsightArgs, 'insight' | 'renderedInsightText'>) => {
             if (!effectiveSessionId) return null;
-            return guidedSermon.submitInsight({
+            const result = await guidedSermon.submitInsight({
                 sessionId: effectiveSessionId,
                 insight: args.insight,
                 renderedInsightText: args.renderedInsightText,
                 affirmationText: t('insight.affirmation'),
             });
+            // Shadow desacoplado: NO se await-ea antes de devolver → el avance del
+            // pastor no espera a los testigos. Solo con flag on + Insight aceptado.
+            const seedId = guidedSermonSession?.seedId;
+            if (result?.accepted && threeWitnessesEnabled && seedId) {
+                void runGuidedDoxologicalShadow(seedId);
+            }
+            return result;
         },
-        [effectiveSessionId, guidedSermon, t],
+        [effectiveSessionId, guidedSermon, t, threeWitnessesEnabled, guidedSermonSession?.seedId, runGuidedDoxologicalShadow],
     );
 
     /** Paso 4 estructurado: la lista de estudios de palabras se envía directo. */

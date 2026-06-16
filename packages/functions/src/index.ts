@@ -145,6 +145,8 @@ export { suggestCanonicalParallels } from './pastoral-word-study/suggestCanonica
 
 // 🌱 Pastoral Fidelity Phase 2 — three-witnesses validation (ADR-011)
 export { validateSeedWitnesses } from './three-witnesses/validateSeedWitnesses';
+// 🛡️ Grieta doxológica — Capa 1 (modo sombra): telemetría del gate doxológico
+export { recordDoxologicalGateShadow } from './three-witnesses/recordDoxologicalGateShadow';
 // ❤️ Examen del corazón — conducción afectiva (manifiesto v1.3 §4)
 export { examenCorazon } from './three-witnesses/examenCorazon';
 // 🌱 Pastoral Fidelity Phase 1.6 — timeless-principle verifier (ADR-023)
