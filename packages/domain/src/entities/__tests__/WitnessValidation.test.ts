@@ -6,8 +6,10 @@ import {
     collectCoreTripwireClaims,
     collectSeedClaims,
     countDissents,
+    DOXOLOGICAL_CLAIM_KEY,
     escalateClaim,
     escalateWitnessedClaim,
+    evaluateDoxologicalGate,
     maxEscalation,
     WITNESS_THRESHOLDS,
     type WitnessVerdict,
@@ -170,5 +172,79 @@ describe('aggregate + proceed', () => {
         ]);
         expect(decision.allowed).toBe(false);
         expect(decision.hasAbsoluteBlock).toBe(true);
+    });
+});
+
+describe('evaluateDoxologicalGate (scoped collector, Capa 0)', () => {
+    function dox(level: WitnessedClaim['detectedLevel'], dissents: number): WitnessedClaim {
+        return escalateWitnessedClaim({
+            key: DOXOLOGICAL_CLAIM_KEY,
+            kind: 'doxologicalApplication',
+            text: 'Adoramos al Verbo encarnado.',
+            detectedLevel: level,
+            verdicts: Array.from({ length: 3 }, (_, i) =>
+                verdict({
+                    dissents: i < dissents,
+                    confidence: 0.9,
+                    witness: (['context', 'parallels', 'confession'] as const)[i],
+                }),
+            ),
+        });
+    }
+
+    function resultWith(claims: WitnessedClaim[]) {
+        return aggregateWitnessResult({
+            seedId: 's', sermonId: 'sm', claims, confessionalWitnessesEnabled: true,
+        });
+    }
+
+    it('returns "absent" when no doxological claim is present', () => {
+        const result = resultWith([
+            escalateWitnessedClaim({
+                key: 'centralIdea', kind: 'centralIdea', text: 'x', detectedLevel: 'distinctive',
+                verdicts: Array.from({ length: 3 }, () => verdict({})),
+            }),
+        ]);
+        expect(evaluateDoxologicalGate(result)).toEqual({ status: 'absent' });
+    });
+
+    it('folds pass + note into "pass"', () => {
+        const passGate = evaluateDoxologicalGate(resultWith([dox('distinctive', 0)]));
+        expect(passGate.status).toBe('pass');
+        if (passGate.status !== 'absent') expect(passGate.escalation).toBe('pass');
+
+        const noteGate = evaluateDoxologicalGate(resultWith([dox('open-evangelical', 1)]));
+        expect(noteGate.status).toBe('pass');
+        if (noteGate.status !== 'absent') expect(noteGate.escalation).toBe('note');
+    });
+
+    it('maps soft-block to "soft"', () => {
+        const gate = evaluateDoxologicalGate(resultWith([dox('distinctive', 2)]));
+        expect(gate.status).toBe('soft');
+        if (gate.status !== 'absent') expect(gate.escalation).toBe('soft-block');
+    });
+
+    it('folds hard-block + absolute-block into "hard", preserving raw escalation', () => {
+        const hardGate = evaluateDoxologicalGate(resultWith([dox('distinctive', 3)]));
+        expect(hardGate.status).toBe('hard');
+        if (hardGate.status !== 'absent') expect(hardGate.escalation).toBe('hard-block');
+
+        const absGate = evaluateDoxologicalGate(resultWith([dox('core', 1)]));
+        expect(absGate.status).toBe('hard');
+        if (absGate.status !== 'absent') expect(absGate.escalation).toBe('absolute-block');
+    });
+
+    it('reads only the doxological claim, ignoring other dissenting claims', () => {
+        const result = resultWith([
+            escalateWitnessedClaim({
+                key: 'centralIdea', kind: 'centralIdea', text: 'x', detectedLevel: 'distinctive',
+                verdicts: Array.from({ length: 3 }, () =>
+                    verdict({ dissents: true, confidence: 0.9 }),
+                ),
+            }),
+            dox('distinctive', 0),
+        ]);
+        // centralIdea is hard-blocked, but the doxological gate is pass.
+        expect(evaluateDoxologicalGate(result).status).toBe('pass');
     });
 });

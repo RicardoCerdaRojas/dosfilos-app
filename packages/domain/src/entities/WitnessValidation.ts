@@ -364,3 +364,50 @@ export function canProceedFromWitnesses(
         hasAbsoluteBlock: absolute.length > 0,
     };
 }
+
+/**
+ * Stable claim key for the doxological (affective) application — the one
+ * application field the sermon seed carries. Mirrors the key produced by
+ * `collectSeedClaims`.
+ */
+export const DOXOLOGICAL_CLAIM_KEY = 'doxologicalApplication';
+
+/**
+ * Three-way gate outcome for the doxological claim, narrowed from a full
+ * `WitnessResult`. This is the *scoped collector* for the doxological gate
+ * (the affective-leak fix): it does NOT re-run any witness, build any new
+ * threshold, or touch the escalation math — it reads the escalation the single
+ * motor already computed for the `doxologicalApplication` claim and folds it
+ * into the gate's three states.
+ *
+ * Folding (reuses `EscalationLevel`, no new threshold):
+ * - `pass`  ← `pass` | `note`            (no response needed)
+ * - `soft`  ← `soft-block`               (override response ≥50, see WITNESS_THRESHOLDS)
+ * - `hard`  ← `hard-block` | `absolute-block` (response ≥100 / unoverridable)
+ *
+ * `absent` means the result carried no doxological claim (empty field) — the
+ * caller decides what that means per flow; the gate itself stays silent.
+ *
+ * The raw `escalation` is preserved so shadow-mode logging can distinguish
+ * `absolute-block` from `hard-block` without a second pass.
+ */
+export type DoxologicalGate =
+    | { status: 'absent' }
+    | {
+          status: 'pass' | 'soft' | 'hard';
+          escalation: EscalationLevel;
+          claim: WitnessedClaim;
+      };
+
+export function evaluateDoxologicalGate(result: WitnessResult): DoxologicalGate {
+    const claim = result.claims.find((c) => c.key === DOXOLOGICAL_CLAIM_KEY);
+    if (!claim) return { status: 'absent' };
+    const e = claim.escalation;
+    const status: 'pass' | 'soft' | 'hard' =
+        e === 'pass' || e === 'note'
+            ? 'pass'
+            : e === 'soft-block'
+              ? 'soft'
+              : 'hard'; // hard-block | absolute-block
+    return { status, escalation: e, claim };
+}
