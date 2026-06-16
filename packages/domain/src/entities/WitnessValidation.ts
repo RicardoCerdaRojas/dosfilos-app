@@ -364,3 +364,135 @@ export function canProceedFromWitnesses(
         hasAbsoluteBlock: absolute.length > 0,
     };
 }
+
+/**
+ * Stable claim key for the doxological (affective) application — the one
+ * application field the sermon seed carries. Mirrors the key produced by
+ * `collectSeedClaims`.
+ */
+export const DOXOLOGICAL_CLAIM_KEY = 'doxologicalApplication';
+
+/**
+ * Three-way gate outcome for the doxological claim, narrowed from a full
+ * `WitnessResult`. This is the *scoped collector* for the doxological gate
+ * (the affective-leak fix): it does NOT re-run any witness, build any new
+ * threshold, or touch the escalation math — it reads the escalation the single
+ * motor already computed for the `doxologicalApplication` claim and folds it
+ * into the gate's three states.
+ *
+ * Folding (reuses `EscalationLevel`, no new threshold):
+ * - `pass`  ← `pass` | `note`            (no response needed)
+ * - `soft`  ← `soft-block`               (override response ≥50, see WITNESS_THRESHOLDS)
+ * - `hard`  ← `hard-block` | `absolute-block` (response ≥100 / unoverridable)
+ *
+ * `absent` means the result carried no doxological claim (empty field) — the
+ * caller decides what that means per flow; the gate itself stays silent.
+ *
+ * The raw `escalation` is preserved so shadow-mode logging can distinguish
+ * `absolute-block` from `hard-block` without a second pass.
+ */
+export type DoxologicalGate =
+    | { status: 'absent' }
+    | {
+          status: 'pass' | 'soft' | 'hard';
+          escalation: EscalationLevel;
+          claim: WitnessedClaim;
+      };
+
+export function evaluateDoxologicalGate(result: WitnessResult): DoxologicalGate {
+    const claim = result.claims.find((c) => c.key === DOXOLOGICAL_CLAIM_KEY);
+    if (!claim) return { status: 'absent' };
+    const e = claim.escalation;
+    const status: 'pass' | 'soft' | 'hard' =
+        e === 'pass' || e === 'note'
+            ? 'pass'
+            : e === 'soft-block'
+              ? 'soft'
+              : 'hard'; // hard-block | absolute-block
+    return { status, escalation: e, claim };
+}
+
+/**
+ * Normalización compartida del texto doxológico — Capa 2.B.
+ *
+ * DEBE ser idéntica en compute-time (al persistir `DoxologicalGate.fingerprint`)
+ * y en check-time (enforce en el chokepoint). Una divergencia produce stale
+ * falsos: el gate re-dispararía sin que el texto cambie de fondo. NFC + colapso
+ * de espacios + trim. Función única; nadie normaliza por su cuenta.
+ */
+export function normalizeDoxological(text: string): string {
+    return text.normalize('NFC').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Fingerprint determinista del texto doxológico normalizado (dos carriles
+ * FNV-1a → 16 hex). NO criptográfico — solo detecta cambios de contenido para
+ * invalidar veredicto + override cuando el pastor edita la aplicación. Puro y
+ * portable (sin `crypto`), corre igual en dominio/web/functions.
+ */
+export function doxologicalFingerprint(text: string): string {
+    const norm = normalizeDoxological(text);
+    let h1 = 0x811c9dc5;
+    let h2 = 0xc59d1c81;
+    for (let i = 0; i < norm.length; i++) {
+        const c = norm.charCodeAt(i);
+        h1 = Math.imul(h1 ^ c, 0x01000193);
+        h2 = Math.imul(h2 ^ c, 0x85ebca77);
+    }
+    const hex = (h: number) => (h >>> 0).toString(16).padStart(8, '0');
+    return hex(h1) + hex(h2);
+}
+
+/** Override del pastor a un bloqueo doxológico, LIGADO a su fingerprint. Si el
+ * texto cambia (nuevo fingerprint), el override viejo deja de aplicar — hay que
+ * re-justificar contra el veredicto nuevo. */
+export interface DoxologicalGateOverride {
+    /** Respuesta escrita (≥50 soft, ≥100 hard — umbral existente). */
+    response: string;
+    facultyConsulted: boolean;
+    /** Fingerprint para el que se escribió este override. */
+    fingerprint: string;
+    resolvedAt: Date;
+}
+
+/**
+ * Estado AUTORITATIVO del gate doxológico persistido en el seed (Capa 2.B).
+ * El shadow loguea a telemetría; ESTO vive en el seed para que el enforce
+ * (C/D) lo lea en el chokepoint. Aditivo + inerte hasta que `doxological_enforce`
+ * flipee.
+ */
+export interface DoxologicalGateRecord {
+    /** Fingerprint del texto doxológico validado (normalizado). */
+    fingerprint: string;
+    /** Veredicto plegado, o 'sin_auditar' para seeds legacy pre-B grandfathered (C/D). */
+    status: 'pass' | 'soft' | 'hard' | 'sin_auditar';
+    /** Banda cruda del único motor; null para legacy sin_auditar. */
+    escalation: EscalationLevel | null;
+    validatedAt: Date;
+    /** Override ligado a su fingerprint; SIEMPRE null al (re)correr el gate. */
+    override: DoxologicalGateOverride | null;
+    /** True para seeds pre-B grandfathered (lo estampa C/D, no B). */
+    legacy?: boolean;
+}
+
+/**
+ * Construye el `DoxologicalGate` autoritativo desde un `WitnessResult` ya
+ * escalado (Capa 2.B). Reusa `evaluateDoxologicalGate` (único motor) — sin
+ * re-thresholdear. `override` SIEMPRE null: cada (re)corrida limpia el override
+ * viejo, que el pastor re-adquiere contra el fingerprint nuevo. Devuelve null
+ * cuando no hay claim doxológico (texto vacío/ausente → nada que persistir).
+ */
+export function buildDoxologicalGate(
+    result: WitnessResult,
+    validatedAt: Date,
+): DoxologicalGateRecord | null {
+    const gate = evaluateDoxologicalGate(result);
+    if (gate.status === 'absent') return null;
+    return {
+        fingerprint: doxologicalFingerprint(gate.claim.text),
+        status: gate.status,
+        escalation: gate.escalation,
+        validatedAt,
+        override: null,
+    };
+}

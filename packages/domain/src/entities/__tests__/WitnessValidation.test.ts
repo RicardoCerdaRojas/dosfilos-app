@@ -6,9 +6,14 @@ import {
     collectCoreTripwireClaims,
     collectSeedClaims,
     countDissents,
+    buildDoxologicalGate,
+    DOXOLOGICAL_CLAIM_KEY,
+    doxologicalFingerprint,
     escalateClaim,
     escalateWitnessedClaim,
+    evaluateDoxologicalGate,
     maxEscalation,
+    normalizeDoxological,
     WITNESS_THRESHOLDS,
     type WitnessVerdict,
     type WitnessedClaim,
@@ -170,5 +175,147 @@ describe('aggregate + proceed', () => {
         ]);
         expect(decision.allowed).toBe(false);
         expect(decision.hasAbsoluteBlock).toBe(true);
+    });
+});
+
+describe('evaluateDoxologicalGate (scoped collector, Capa 0)', () => {
+    function dox(level: WitnessedClaim['detectedLevel'], dissents: number): WitnessedClaim {
+        return escalateWitnessedClaim({
+            key: DOXOLOGICAL_CLAIM_KEY,
+            kind: 'doxologicalApplication',
+            text: 'Adoramos al Verbo encarnado.',
+            detectedLevel: level,
+            verdicts: Array.from({ length: 3 }, (_, i) =>
+                verdict({
+                    dissents: i < dissents,
+                    confidence: 0.9,
+                    witness: (['context', 'parallels', 'confession'] as const)[i],
+                }),
+            ),
+        });
+    }
+
+    function resultWith(claims: WitnessedClaim[]) {
+        return aggregateWitnessResult({
+            seedId: 's', sermonId: 'sm', claims, confessionalWitnessesEnabled: true,
+        });
+    }
+
+    it('returns "absent" when no doxological claim is present', () => {
+        const result = resultWith([
+            escalateWitnessedClaim({
+                key: 'centralIdea', kind: 'centralIdea', text: 'x', detectedLevel: 'distinctive',
+                verdicts: Array.from({ length: 3 }, () => verdict({})),
+            }),
+        ]);
+        expect(evaluateDoxologicalGate(result)).toEqual({ status: 'absent' });
+    });
+
+    it('folds pass + note into "pass"', () => {
+        const passGate = evaluateDoxologicalGate(resultWith([dox('distinctive', 0)]));
+        expect(passGate.status).toBe('pass');
+        if (passGate.status !== 'absent') expect(passGate.escalation).toBe('pass');
+
+        const noteGate = evaluateDoxologicalGate(resultWith([dox('open-evangelical', 1)]));
+        expect(noteGate.status).toBe('pass');
+        if (noteGate.status !== 'absent') expect(noteGate.escalation).toBe('note');
+    });
+
+    it('maps soft-block to "soft"', () => {
+        const gate = evaluateDoxologicalGate(resultWith([dox('distinctive', 2)]));
+        expect(gate.status).toBe('soft');
+        if (gate.status !== 'absent') expect(gate.escalation).toBe('soft-block');
+    });
+
+    it('folds hard-block + absolute-block into "hard", preserving raw escalation', () => {
+        const hardGate = evaluateDoxologicalGate(resultWith([dox('distinctive', 3)]));
+        expect(hardGate.status).toBe('hard');
+        if (hardGate.status !== 'absent') expect(hardGate.escalation).toBe('hard-block');
+
+        const absGate = evaluateDoxologicalGate(resultWith([dox('core', 1)]));
+        expect(absGate.status).toBe('hard');
+        if (absGate.status !== 'absent') expect(absGate.escalation).toBe('absolute-block');
+    });
+
+    it('reads only the doxological claim, ignoring other dissenting claims', () => {
+        const result = resultWith([
+            escalateWitnessedClaim({
+                key: 'centralIdea', kind: 'centralIdea', text: 'x', detectedLevel: 'distinctive',
+                verdicts: Array.from({ length: 3 }, () =>
+                    verdict({ dissents: true, confidence: 0.9 }),
+                ),
+            }),
+            dox('distinctive', 0),
+        ]);
+        // centralIdea is hard-blocked, but the doxological gate is pass.
+        expect(evaluateDoxologicalGate(result).status).toBe('pass');
+    });
+});
+
+describe('normalizeDoxological + doxologicalFingerprint (Capa 2.B, precisión 3)', () => {
+    it('normalization is identical regardless of whitespace/unicode form', () => {
+        const a = '  Adoramos   al\tVerbo\nencarnado.  ';
+        const b = 'Adoramos al Verbo encarnado.';
+        expect(normalizeDoxological(a)).toBe(b);
+    });
+
+    it('same normalized text → same fingerprint (no stale-false on cosmetic edits)', () => {
+        expect(doxologicalFingerprint('Adoramos al Verbo.')).toBe(
+            doxologicalFingerprint('  Adoramos    al  Verbo.  '),
+        );
+    });
+
+    it('different content → different fingerprint (detects real edits)', () => {
+        expect(doxologicalFingerprint('Adoramos al Verbo encarnado.')).not.toBe(
+            doxologicalFingerprint('Adoramos al Verbo, que nos llama a temer al Padre.'),
+        );
+    });
+
+    it('fingerprint is 16 hex chars', () => {
+        expect(doxologicalFingerprint('cualquier cosa')).toMatch(/^[0-9a-f]{16}$/);
+    });
+});
+
+describe('buildDoxologicalGate (Capa 2.B)', () => {
+    function doxClaim(level: WitnessedClaim['detectedLevel'], dissents: number): WitnessedClaim {
+        return escalateWitnessedClaim({
+            key: DOXOLOGICAL_CLAIM_KEY,
+            kind: 'doxologicalApplication',
+            text: 'Adoramos al Verbo encarnado.',
+            detectedLevel: level,
+            verdicts: Array.from({ length: 3 }, (_, i) =>
+                verdict({ dissents: i < dissents, witness: (['context', 'parallels', 'confession'] as const)[i] }),
+            ),
+        });
+    }
+    function resultWith(claims: WitnessedClaim[]) {
+        return aggregateWitnessResult({ seedId: 's', sermonId: 'sm', claims, confessionalWitnessesEnabled: true });
+    }
+    const when = new Date('2026-06-16T00:00:00Z');
+
+    it('builds an authoritative gate with fingerprint, status, escalation, override:null', () => {
+        const gate = buildDoxologicalGate(resultWith([doxClaim('distinctive', 2)]), when);
+        expect(gate).toEqual({
+            fingerprint: doxologicalFingerprint('Adoramos al Verbo encarnado.'),
+            status: 'soft',
+            escalation: 'soft-block',
+            validatedAt: when,
+            override: null,
+        });
+    });
+
+    it('override is ALWAYS null on (re)build — a re-run clears the old override', () => {
+        const gate = buildDoxologicalGate(resultWith([doxClaim('distinctive', 0)]), when);
+        expect(gate?.override).toBeNull();
+    });
+
+    it('returns null when there is no doxological claim (empty/absent → nothing to persist)', () => {
+        const noDox = resultWith([
+            escalateWitnessedClaim({
+                key: 'centralIdea', kind: 'centralIdea', text: 'x', detectedLevel: 'distinctive',
+                verdicts: Array.from({ length: 3 }, () => verdict({})),
+            }),
+        ]);
+        expect(buildDoxologicalGate(noDox, when)).toBeNull();
     });
 });

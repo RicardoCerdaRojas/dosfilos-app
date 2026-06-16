@@ -34,13 +34,25 @@ interface ValidateArgs {
     crossRefs: string[];
 }
 
+/** Rich outcome of a single `validate` run — used by fire-and-forget callers
+ * (e.g. the doxological shadow gate) that need latency + cache without reading
+ * the racy hook state after the await. */
+export interface WitnessValidateOutcome {
+    result: WitnessResult | null;
+    cacheHit: boolean;
+    /** Wall-clock latency of the witness callable, in ms. */
+    latencyMs: number;
+}
+
 interface UseWitnessValidationResult {
     result: WitnessResult | null;
     loading: boolean;
     error: string | null;
     cacheHit: boolean;
+    /** Latency of the last witness callable, in ms (`null` until first run). */
+    latencyMs: number | null;
     /** Runs the three witnesses + composes the escalated result. */
-    validate: (args: ValidateArgs) => Promise<WitnessResult | null>;
+    validate: (args: ValidateArgs) => Promise<WitnessValidateOutcome>;
     reset: () => void;
 }
 
@@ -65,21 +77,24 @@ export function useWitnessValidation(): UseWitnessValidationResult {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [cacheHit, setCacheHit] = useState(false);
+    const [latencyMs, setLatencyMs] = useState<number | null>(null);
 
     const reset = useCallback(() => {
         setResult(null);
         setError(null);
         setCacheHit(false);
+        setLatencyMs(null);
     }, []);
 
-    const validate = useCallback(async ({ seed, confessionalWitnessesEnabled, crossRefs }: ValidateArgs) => {
+    const validate = useCallback(async ({ seed, confessionalWitnessesEnabled, crossRefs }: ValidateArgs): Promise<WitnessValidateOutcome> => {
         const claims = collectSeedClaims(seed);
         if (claims.length === 0) {
             setError('No hay afirmaciones que validar — completa el Paso 6 (Insight).');
-            return null;
+            return { result: null, cacheHit: false, latencyMs: 0 };
         }
         setLoading(true);
         setError(null);
+        const startedAt = Date.now();
         try {
             const callable = httpsCallable(getFunctions(), 'validateSeedWitnesses');
             const payload = {
@@ -131,17 +146,20 @@ export function useWitnessValidation(): UseWitnessValidationResult {
                 claims: witnessedClaims,
                 confessionalWitnessesEnabled,
             });
+            const latency = Date.now() - startedAt;
+            const hit = Boolean(data.cacheHit);
             setResult(composed);
-            setCacheHit(Boolean(data.cacheHit));
-            return composed;
+            setCacheHit(hit);
+            setLatencyMs(latency);
+            return { result: composed, cacheHit: hit, latencyMs: latency };
         } catch (err: any) {
             console.error('[useWitnessValidation]', err);
             setError(err?.message ?? 'No pudimos validar tu estudio con los tres testigos.');
-            return null;
+            return { result: null, cacheHit: false, latencyMs: Date.now() - startedAt };
         } finally {
             setLoading(false);
         }
     }, []);
 
-    return { result, loading, error, cacheHit, validate, reset };
+    return { result, loading, error, cacheHit, latencyMs, validate, reset };
 }

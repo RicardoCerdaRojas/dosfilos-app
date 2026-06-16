@@ -342,6 +342,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Grieta doxológica — Capa 1 (modo sombra). Telemetría del gate doxológico
+    // (texto completo del pastor + veredicto + latencia) escrita SOLO por el
+    // callable `recordDoxologicalGateShadow` (admin SDK, server-only). Lectura
+    // restringida a super_admin para adjudicar la tasa de falsos positivos
+    // antes del flip a enforce. TTL nativo de 30 días sobre `expiresAt`.
+    match /doxologicalGateShadow/{shadowId} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
     // Pastoral Fidelity — confession change audit log (ADR-007, PR 0.7).
     // Each row records a single declaredConfession transition (onboarding
     // declaration + later edits in /settings/confession). Owners may

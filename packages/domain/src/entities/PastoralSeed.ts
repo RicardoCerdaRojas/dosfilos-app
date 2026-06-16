@@ -281,6 +281,16 @@ export interface PastoralSeed {
     witnessReview?: import('./WitnessValidation').WitnessReview;
 
     /**
+     * Grieta doxológica — Capa 2.B (puente de compat). Estado autoritativo del
+     * gate doxológico {fingerprint, status, escalation, validatedAt, override}.
+     * Aditivo + inerte: lo persiste el gate en cada autoría doxológica para que
+     * el enforce (C/D, `doxological_enforce`) lo lea en el chokepoint. NO
+     * participa en `evaluatePastoralSeed`. Ausente ⇒ seed pre-B (legacy):
+     * en enforce pasa como `sin_auditar`, no se bloquea retroactivamente.
+     */
+    doxologicalGate?: import('./WitnessValidation').DoxologicalGateRecord;
+
+    /**
      * ADR-034 — doubts the pastor raised mid-study, captured + routed to the
      * step that resolves them (never answered). Additive + optional; does NOT
      * participate in `evaluatePastoralSeed`. Resurfaced at Paso 8 / wizard.
