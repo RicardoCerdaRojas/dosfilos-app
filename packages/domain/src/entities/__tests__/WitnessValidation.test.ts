@@ -6,11 +6,14 @@ import {
     collectCoreTripwireClaims,
     collectSeedClaims,
     countDissents,
+    buildDoxologicalGate,
     DOXOLOGICAL_CLAIM_KEY,
+    doxologicalFingerprint,
     escalateClaim,
     escalateWitnessedClaim,
     evaluateDoxologicalGate,
     maxEscalation,
+    normalizeDoxological,
     WITNESS_THRESHOLDS,
     type WitnessVerdict,
     type WitnessedClaim,
@@ -246,5 +249,73 @@ describe('evaluateDoxologicalGate (scoped collector, Capa 0)', () => {
         ]);
         // centralIdea is hard-blocked, but the doxological gate is pass.
         expect(evaluateDoxologicalGate(result).status).toBe('pass');
+    });
+});
+
+describe('normalizeDoxological + doxologicalFingerprint (Capa 2.B, precisión 3)', () => {
+    it('normalization is identical regardless of whitespace/unicode form', () => {
+        const a = '  Adoramos   al\tVerbo\nencarnado.  ';
+        const b = 'Adoramos al Verbo encarnado.';
+        expect(normalizeDoxological(a)).toBe(b);
+    });
+
+    it('same normalized text → same fingerprint (no stale-false on cosmetic edits)', () => {
+        expect(doxologicalFingerprint('Adoramos al Verbo.')).toBe(
+            doxologicalFingerprint('  Adoramos    al  Verbo.  '),
+        );
+    });
+
+    it('different content → different fingerprint (detects real edits)', () => {
+        expect(doxologicalFingerprint('Adoramos al Verbo encarnado.')).not.toBe(
+            doxologicalFingerprint('Adoramos al Verbo, que nos llama a temer al Padre.'),
+        );
+    });
+
+    it('fingerprint is 16 hex chars', () => {
+        expect(doxologicalFingerprint('cualquier cosa')).toMatch(/^[0-9a-f]{16}$/);
+    });
+});
+
+describe('buildDoxologicalGate (Capa 2.B)', () => {
+    function doxClaim(level: WitnessedClaim['detectedLevel'], dissents: number): WitnessedClaim {
+        return escalateWitnessedClaim({
+            key: DOXOLOGICAL_CLAIM_KEY,
+            kind: 'doxologicalApplication',
+            text: 'Adoramos al Verbo encarnado.',
+            detectedLevel: level,
+            verdicts: Array.from({ length: 3 }, (_, i) =>
+                verdict({ dissents: i < dissents, witness: (['context', 'parallels', 'confession'] as const)[i] }),
+            ),
+        });
+    }
+    function resultWith(claims: WitnessedClaim[]) {
+        return aggregateWitnessResult({ seedId: 's', sermonId: 'sm', claims, confessionalWitnessesEnabled: true });
+    }
+    const when = new Date('2026-06-16T00:00:00Z');
+
+    it('builds an authoritative gate with fingerprint, status, escalation, override:null', () => {
+        const gate = buildDoxologicalGate(resultWith([doxClaim('distinctive', 2)]), when);
+        expect(gate).toEqual({
+            fingerprint: doxologicalFingerprint('Adoramos al Verbo encarnado.'),
+            status: 'soft',
+            escalation: 'soft-block',
+            validatedAt: when,
+            override: null,
+        });
+    });
+
+    it('override is ALWAYS null on (re)build — a re-run clears the old override', () => {
+        const gate = buildDoxologicalGate(resultWith([doxClaim('distinctive', 0)]), when);
+        expect(gate?.override).toBeNull();
+    });
+
+    it('returns null when there is no doxological claim (empty/absent → nothing to persist)', () => {
+        const noDox = resultWith([
+            escalateWitnessedClaim({
+                key: 'centralIdea', kind: 'centralIdea', text: 'x', detectedLevel: 'distinctive',
+                verdicts: Array.from({ length: 3 }, () => verdict({})),
+            }),
+        ]);
+        expect(buildDoxologicalGate(noDox, when)).toBeNull();
     });
 });

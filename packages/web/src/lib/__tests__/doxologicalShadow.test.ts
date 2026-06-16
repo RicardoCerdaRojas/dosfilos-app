@@ -16,7 +16,18 @@ vi.mock('firebase/functions', () => ({
     httpsCallable: () => callableSpy,
 }));
 
-import { logDoxologicalShadow, logDoxologicalShadowFailure } from '../doxologicalShadow';
+const persistGateSpy = vi.fn().mockResolvedValue(undefined);
+vi.mock('@dosfilos/application', () => ({
+    pastoralSeedService: { persistDoxologicalGate: (...args: unknown[]) => persistGateSpy(...args) },
+}));
+
+import {
+    classifyShadowFailure,
+    logDoxologicalShadow,
+    logDoxologicalShadowFailure,
+    persistDoxologicalGateForResult,
+} from '../doxologicalShadow';
+import { doxologicalFingerprint } from '@dosfilos/domain';
 
 function verdict(over: Partial<WitnessVerdict>): WitnessVerdict {
     return { witness: 'context', dissents: false, reasoning: '', evidence: [], confidence: 0.9, ...over };
@@ -120,25 +131,83 @@ describe('logDoxologicalShadow', () => {
 describe('logDoxologicalShadowFailure', () => {
     beforeEach(() => callableSpy.mockClear());
 
-    it('records a fail-open row with the failure reason and no verdict', async () => {
+    it('records a fail-open row with the failure reason + cause and no verdict', async () => {
         await logDoxologicalShadowFailure({
             seedId: 'seed-9',
             sermonId: 'sermon-9',
             flow: 'guided-insight',
             failure: 'witness validation returned no result',
+            failureCause: 'error-callable',
         });
         expect(callableSpy).toHaveBeenCalledWith({
             seedId: 'seed-9',
             sermonId: 'sermon-9',
             flow: 'guided-insight',
             failure: 'witness validation returned no result',
+            failureCause: 'error-callable',
         });
     });
 
     it('never throws', async () => {
         callableSpy.mockRejectedValueOnce(new Error('boom'));
         await expect(
-            logDoxologicalShadowFailure({ seedId: 's', sermonId: 'sm', flow: 'wizard', failure: 'x' }),
+            logDoxologicalShadowFailure({ seedId: 's', sermonId: 'sm', flow: 'wizard', failure: 'x', failureCause: 'otro' }),
+        ).resolves.toBeUndefined();
+    });
+});
+
+describe('classifyShadowFailure (enum de causa)', () => {
+    it('maps deadline/timeout', () => {
+        expect(classifyShadowFailure({ code: 'functions/deadline-exceeded' })).toBe('timeout');
+        expect(classifyShadowFailure(new Error('request timeout'))).toBe('timeout');
+    });
+    it('maps app-check / unauthenticated', () => {
+        expect(classifyShadowFailure({ code: 'functions/unauthenticated' })).toBe('app-check');
+        expect(classifyShadowFailure(new Error('App Check token invalid'))).toBe('app-check');
+    });
+    it('maps generic callable errors', () => {
+        expect(classifyShadowFailure({ code: 'functions/internal' })).toBe('error-callable');
+    });
+    it('falls back to otro', () => {
+        expect(classifyShadowFailure(new Error('something weird'))).toBe('otro');
+    });
+});
+
+describe('persistDoxologicalGateForResult (Capa 2.B)', () => {
+    beforeEach(() => persistGateSpy.mockClear());
+
+    it('persists the authoritative gate (fingerprint, status, escalation, override:null) on the seed', async () => {
+        await persistDoxologicalGateForResult(resultWith([doxClaim('distinctive', 2)]));
+        expect(persistGateSpy).toHaveBeenCalledTimes(1);
+        const [seedId, gate] = persistGateSpy.mock.calls[0];
+        expect(seedId).toBe('seed-1');
+        expect(gate).toMatchObject({
+            fingerprint: doxologicalFingerprint('Adoramos al Verbo encarnado que se hizo carne por nosotros.'),
+            status: 'soft',
+            escalation: 'soft-block',
+            override: null,
+        });
+        expect(gate.validatedAt).toBeInstanceOf(Date);
+    });
+
+    it('skips persist when there is no doxological claim (absent)', async () => {
+        const noDox = resultWith([
+            escalateWitnessedClaim({
+                key: 'centralIdea',
+                kind: 'centralIdea',
+                text: 'El Verbo es Dios.',
+                detectedLevel: 'distinctive',
+                verdicts: Array.from({ length: 3 }, () => verdict({})),
+            }),
+        ]);
+        await persistDoxologicalGateForResult(noDox);
+        expect(persistGateSpy).not.toHaveBeenCalled();
+    });
+
+    it('best-effort: never throws if persist rejects', async () => {
+        persistGateSpy.mockRejectedValueOnce(new Error('firestore down'));
+        await expect(
+            persistDoxologicalGateForResult(resultWith([doxClaim('distinctive', 0)])),
         ).resolves.toBeUndefined();
     });
 });

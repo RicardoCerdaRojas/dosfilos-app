@@ -4,6 +4,7 @@ import {
     computeStudyDepthFromSeed,
     createEmptyPastoralSeed,
     DimensionOverrides,
+    DoxologicalGateRecord,
     evaluatePastoralSeed,
     IPastoralSeedRepository,
     PASTORAL_SEED_STEP_ORDER,
@@ -153,6 +154,17 @@ export class PastoralSeedService {
             ...completedAtPatch,
         });
         return { completed: evaluation.completed, evaluation };
+    }
+
+    /**
+     * Grieta doxológica — Capa 2.B (puente de compat). Persiste el estado
+     * autoritativo del gate doxológico en el seed. Aditivo + INERTE: no toca
+     * `completed` ni el flujo; el enforce (C/D, `doxological_enforce`) lo leerá
+     * en el chokepoint. Cada (re)corrida del gate sobrescribe el registro con
+     * fingerprint + status frescos y `override:null`.
+     */
+    async persistDoxologicalGate(seedId: string, gate: DoxologicalGateRecord): Promise<void> {
+        await this.repo.update(seedId, { doxologicalGate: gate });
     }
 
     /**

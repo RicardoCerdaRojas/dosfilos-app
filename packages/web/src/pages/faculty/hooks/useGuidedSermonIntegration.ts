@@ -6,7 +6,12 @@ import { useGuidedSermon, type SubmitInsightArgs, type SubmitWordStudiesArgs } f
 import { useStudyDepthGate } from '@/hooks/usePastoralFidelityGate';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useWitnessValidation } from '@/hooks/useWitnessValidation';
-import { logDoxologicalShadow, logDoxologicalShadowFailure } from '@/lib/doxologicalShadow';
+import {
+    classifyShadowFailure,
+    logDoxologicalShadow,
+    logDoxologicalShadowFailure,
+    persistDoxologicalGateForResult,
+} from '@/lib/doxologicalShadow';
 import { useTranslation } from '@/i18n';
 
 interface Params {
@@ -206,6 +211,7 @@ export function useGuidedSermonIntegration({
                         sermonId: seed.sermonId,
                         flow,
                         failure: 'witness validation returned no result',
+                        failureCause: 'error-callable',
                     });
                     return;
                 }
@@ -216,12 +222,15 @@ export function useGuidedSermonIntegration({
                     cacheHit: outcome.cacheHit,
                     oneShotVerdict: null,
                 });
+                // Capa 2.B (puente de compat): persiste el veredicto en el seed.
+                await persistDoxologicalGateForResult(outcome.result);
             } catch (err) {
                 await logDoxologicalShadowFailure({
                     seedId,
                     sermonId: '',
                     flow,
                     failure: err instanceof Error ? err.message : 'unknown shadow error',
+                    failureCause: classifyShadowFailure(err),
                 });
             }
         },

@@ -35,6 +35,9 @@ type GateStatus = 'pass' | 'soft' | 'hard';
 type EscalationBand = 'pass' | 'note' | 'soft-block' | 'hard-block' | 'absolute-block';
 type ShadowFlow = 'wizard' | 'guided-insight' | 'guided-socratic' | 'guided-wordstudies';
 type OneShotVerdict = 'pass' | 'block' | null;
+/** Causa del fallo del gate (fail-open en sombra). Informa si fail-closed es
+ * vivible en enforce o si hay una falla concreta del callable que arreglar. */
+type FailureCause = 'timeout' | 'error-callable' | 'app-check' | 'otro';
 
 const STATUSES: ReadonlyArray<GateStatus> = ['pass', 'soft', 'hard'];
 const BANDS: ReadonlyArray<EscalationBand> = [
@@ -69,7 +72,16 @@ interface RecordShadowRequest {
     oneShotVerdict?: string | null;
     /** Si la llamada a testigos falló (fail-open): mensaje del fallo. */
     failure?: string | null;
+    /** Causa clasificada del fallo (enum, no boolean). */
+    failureCause?: string | null;
 }
+
+const FAILURE_CAUSES: ReadonlyArray<FailureCause> = [
+    'timeout',
+    'error-callable',
+    'app-check',
+    'otro',
+];
 
 export const recordDoxologicalGateShadow = onCall(
     { ...appCheckCallableOptions() },
@@ -93,6 +105,11 @@ export const recordDoxologicalGateShadow = onCall(
             data.failure != null && String(data.failure).trim()
                 ? String(data.failure).trim().slice(0, 2000)
                 : null;
+        const failureCause: FailureCause | null = failure
+            ? FAILURE_CAUSES.includes(data.failureCause as FailureCause)
+                ? (data.failureCause as FailureCause)
+                : 'otro'
+            : null;
 
         const status = STATUSES.includes(data.status as GateStatus)
             ? (data.status as GateStatus)
@@ -134,6 +151,7 @@ export const recordDoxologicalGateShadow = onCall(
                 witnessLatencyMs: latency,
                 cacheHit: data.cacheHit === true,
                 failure,
+                failureCause,
                 createdAt: FieldValue.serverTimestamp(),
                 expiresAt,
             });

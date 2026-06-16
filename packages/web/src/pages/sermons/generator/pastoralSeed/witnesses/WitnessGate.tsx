@@ -26,7 +26,7 @@ import {
 } from '@dosfilos/domain';
 import { useWitnessValidation } from '@/hooks/useWitnessValidation';
 import { useCrossReferences } from '@/hooks/useCrossReferences';
-import { logDoxologicalShadow } from '@/lib/doxologicalShadow';
+import { logDoxologicalShadow, persistDoxologicalGateForResult } from '@/lib/doxologicalShadow';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -230,6 +230,9 @@ export function WitnessGate({ seed, confessionalWitnessesEnabled, onProceed, onR
             cacheHit,
             oneShotVerdict: oneShot,
         });
+        // Capa 2.B (puente de compat): persiste el veredicto autoritativo en el
+        // seed. Aditivo + inerte — no toca el bloqueo del one-shot.
+        void persistDoxologicalGateForResult(result);
     }, [result, latencyMs, cacheHit]);
 
     const crossRefs = useMemo(
