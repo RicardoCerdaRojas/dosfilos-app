@@ -158,9 +158,13 @@ export interface AutoriaResumen {
  * modo/género: cuando exista la transposición (Nivel 4), el perfil de audiencia
  * podrá calibrarlos sin romper el contrato.
  *
- * DEUDA conocida: el orden teológico (saber→sentir→hacer que hereda) y la puerta
- * de medibilidad (T1) NO se aplican aún; `sentir` deriva de `error_confrontado`
- * como parche hasta que la conducción formativa elicite el afecto anclado al texto.
+ * Mapeo (manifiesto v1.3 §5): saber ← idea_central + observacion; sentir ←
+ * aplicacion:corazon (afecto validado por el examen del corazón); hacer ←
+ * aplicacion:conducta + aplicacion legacy sin subtipo. El parche
+ * `sentir ← error_confrontado` quedó RETIRADO al llegar la conducción afectiva.
+ *
+ * DEUDA conocida: la puerta de medibilidad (T1) NO se aplica aún — un objetivo
+ * blando ("valorar más a Cristo") pasa sin confrontar su medibilidad.
  */
 export interface Objetivos {
     saber: string[];
