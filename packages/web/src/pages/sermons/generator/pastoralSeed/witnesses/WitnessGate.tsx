@@ -26,6 +26,7 @@ import {
 } from '@dosfilos/domain';
 import { useWitnessValidation } from '@/hooks/useWitnessValidation';
 import { useCrossReferences } from '@/hooks/useCrossReferences';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { logDoxologicalShadow, persistDoxologicalGateForResult } from '@/lib/doxologicalShadow';
 import { cn } from '@/lib/utils';
 
@@ -212,6 +213,12 @@ export function WitnessGate({ seed, confessionalWitnessesEnabled, onProceed, onR
     const [facultyConsulted, setFacultyConsulted] = useState<Record<string, boolean>>({});
     const [ran, setRan] = useState(false);
     const shadowLoggedRef = useRef(false);
+    // Defensa en profundidad: WitnessGate hoy solo monta con `three_witnesses`
+    // on, pero el gate de sombra (log + persist + callable) lleva el flag en su
+    // PROPIA guarda — no depende solo del gating estructural del padre. Flag
+    // off ⇒ el efecto retorna sin correr código nuevo, sobreviva cualquier
+    // refactor que monte WitnessGate sin el flag.
+    const { enabled: threeWitnessesEnabled } = useFeatureFlag('three_witnesses');
 
     // Grieta doxológica — Capa 1 (modo sombra). WitnessGate solo monta cuando
     // `three_witnesses` está on, así que el gate doxológico ya corrió como
@@ -220,7 +227,7 @@ export function WitnessGate({ seed, confessionalWitnessesEnabled, onProceed, onR
     // `oneShotVerdict` = stance del one-shot sobre todos los claims (sin
     // overrides aún) → da el delta cross-flow contra el guiado.
     useEffect(() => {
-        if (!result || shadowLoggedRef.current) return;
+        if (!result || shadowLoggedRef.current || !threeWitnessesEnabled) return;
         shadowLoggedRef.current = true;
         const oneShot = canProceedFromWitnesses(result, []).allowed ? 'pass' : 'block';
         void logDoxologicalShadow({
@@ -233,7 +240,7 @@ export function WitnessGate({ seed, confessionalWitnessesEnabled, onProceed, onR
         // Capa 2.B (puente de compat): persiste el veredicto autoritativo en el
         // seed. Aditivo + inerte — no toca el bloqueo del one-shot.
         void persistDoxologicalGateForResult(result);
-    }, [result, latencyMs, cacheHit]);
+    }, [result, latencyMs, cacheHit, threeWitnessesEnabled]);
 
     const crossRefs = useMemo(
         () => parallels.map((p) => `${p.book} ${p.chapter}:${p.verse}${p.topic ? ` [${p.topic}]` : ''}`),

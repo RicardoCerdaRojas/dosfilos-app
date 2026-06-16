@@ -34,6 +34,9 @@ vi.mock('@/hooks/useWitnessValidation', () => ({
 vi.mock('@/hooks/useCrossReferences', () => ({
     useCrossReferences: () => ({ parallels: [], loading: false, error: null, refresh: vi.fn() }),
 }));
+vi.mock('@/hooks/useFeatureFlag', () => ({
+    useFeatureFlag: () => ({ enabled: true, loading: false }),
+}));
 
 function verdict(over: Partial<WitnessVerdict>): WitnessVerdict {
     return { witness: 'context', dissents: false, reasoning: '', evidence: [], confidence: 0.9, ...over };
