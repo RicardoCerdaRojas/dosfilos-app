@@ -14,15 +14,22 @@ import { appCheckCallableOptions } from '../config/appCheckOptions';
  *
  * El registro guarda el texto doxológico COMPLETO del pastor → acceso
  * restringido a super_admin (Firestore rules) + TTL nativo de Firestore sobre
- * `expiresAt` (30 días, cubre el piso ≥7d + adjudicación de FP + decisión de
- * flip, sin retención indefinida).
+ * `expiresAt`.
+ *
+ * Retención: la purga REAL es manual tras la DECISIÓN de flip (requisito del
+ * fundador). El TTL de 90 días es solo un backstop anti-"para siempre": a
+ * volumen per-usuario bajo, juntar el piso de ≥20 Insights puede tomar semanas,
+ * así que 90d supera con margen la ventana de acumulación + adjudicación sin que
+ * los registros del día 1 expiren antes de adjudicar.
  *
  * El shadow NO bloquea ni decide nada — solo registra para adjudicar la lógica
  * del gate + la tasa de falsos positivos antes de flipear a enforce (Capa 2).
  */
 
-/** Días de retención antes de la purga automática (TTL nativo). */
-const SHADOW_TTL_DAYS = 30;
+/** Backstop de retención (días) antes de la purga automática (TTL nativo).
+ * La purga real es manual al decidir el flip; esto solo evita retención
+ * indefinida si la decisión se demora. */
+const SHADOW_TTL_DAYS = 90;
 
 type GateStatus = 'pass' | 'soft' | 'hard';
 type EscalationBand = 'pass' | 'note' | 'soft-block' | 'hard-block' | 'absolute-block';

@@ -177,30 +177,19 @@ export function useGuidedSermonIntegration({
         await guidedSermon.resume(effectiveSessionId);
     }, [effectiveSessionId, guidedSermon]);
 
-    const trySocraticSubmit = useCallback(
-        async (message: string): Promise<boolean> => {
-            if (!isGuidedActive || !effectiveSessionId) return false;
-            const trimmed = message.trim();
-            if (!trimmed) return true; // claim "handled" so caller skips fallback
-            setInput('');
-            await guidedSermon.runTurn(effectiveSessionId, trimmed);
-            return true;
-        },
-        [effectiveSessionId, guidedSermon, isGuidedActive, setInput],
-    );
-
     /**
-     * Grieta doxológica — Capa 1 (modo sombra), flujo guiado.
+     * Grieta doxológica — modo sombra, flujo guiado.
      *
-     * El guiado es el hueco real: hoy NO corre gate de testigos. Tras un Insight
-     * aceptado (único punto donde se autora el texto doxológico), disparamos los
-     * tres testigos y registramos el veredicto del gate doxológico — DESACOPLADO
-     * y fail-open: el pastor ya avanzó cuando esto corre, y un fallo se traga
-     * (registrándolo como fila de fallo). Cero cambio de UX. Solo cuando
+     * El guiado es el hueco real: hoy NO corre gate de testigos. El texto
+     * doxológico se autora por DOS rutas guiadas — el formulario estructurado
+     * (`submitInsight`) y el texto socrático libre en el paso Insight
+     * (`runTurn` → InsightStepPolicy.persistTo). Ambas disparan este shadow,
+     * DESACOPLADO y fail-open: el pastor ya avanzó cuando corre, y un fallo se
+     * traga (registrándolo como fila de fallo). Cero cambio de UX. Solo cuando
      * `three_witnesses` está on.
      */
     const runGuidedDoxologicalShadow = useCallback(
-        async (seedId: string) => {
+        async (seedId: string, flow: 'guided-insight' | 'guided-socratic') => {
             try {
                 const seed = await pastoralSeedService.getById(seedId);
                 if (!seed) return;
@@ -215,14 +204,14 @@ export function useGuidedSermonIntegration({
                     await logDoxologicalShadowFailure({
                         seedId,
                         sermonId: seed.sermonId,
-                        flow: 'guided-insight',
+                        flow,
                         failure: 'witness validation returned no result',
                     });
                     return;
                 }
                 await logDoxologicalShadow({
                     result: outcome.result,
-                    flow: 'guided-insight',
+                    flow,
                     witnessLatencyMs: outcome.latencyMs,
                     cacheHit: outcome.cacheHit,
                     oneShotVerdict: null,
@@ -231,12 +220,41 @@ export function useGuidedSermonIntegration({
                 await logDoxologicalShadowFailure({
                     seedId,
                     sermonId: '',
-                    flow: 'guided-insight',
+                    flow,
                     failure: err instanceof Error ? err.message : 'unknown shadow error',
                 });
             }
         },
         [witnessValidation],
+    );
+
+    const trySocraticSubmit = useCallback(
+        async (message: string): Promise<boolean> => {
+            if (!isGuidedActive || !effectiveSessionId) return false;
+            const trimmed = message.trim();
+            if (!trimmed) return true; // claim "handled" so caller skips fallback
+            // El paso ANTES del turno: si era Insight, el texto socrático libre
+            // puede autorar la aplicación doxológica vía InsightStepPolicy →
+            // ruta de autoría que también debe observarse en sombra.
+            const stepBefore = guidedSermonSession?.currentStep;
+            const seedId = guidedSermonSession?.seedId;
+            setInput('');
+            await guidedSermon.runTurn(effectiveSessionId, trimmed);
+            if (stepBefore === 'insight' && threeWitnessesEnabled && seedId) {
+                void runGuidedDoxologicalShadow(seedId, 'guided-socratic');
+            }
+            return true;
+        },
+        [
+            effectiveSessionId,
+            guidedSermon,
+            isGuidedActive,
+            setInput,
+            guidedSermonSession?.currentStep,
+            guidedSermonSession?.seedId,
+            threeWitnessesEnabled,
+            runGuidedDoxologicalShadow,
+        ],
     );
 
     /** Paso 8 estructurado: el formulario de Insight envía sus campos directo. */
@@ -253,7 +271,7 @@ export function useGuidedSermonIntegration({
             // pastor no espera a los testigos. Solo con flag on + Insight aceptado.
             const seedId = guidedSermonSession?.seedId;
             if (result?.accepted && threeWitnessesEnabled && seedId) {
-                void runGuidedDoxologicalShadow(seedId);
+                void runGuidedDoxologicalShadow(seedId, 'guided-insight');
             }
             return result;
         },
