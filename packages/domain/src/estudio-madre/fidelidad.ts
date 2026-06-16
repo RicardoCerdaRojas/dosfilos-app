@@ -342,7 +342,10 @@ export function validarEstudioMadre(input: ValidarEstudioInput): EstudioFidelida
     }
     if (corazon.proceed && !corazon.proceed.allowed) {
         if (corazon.proceed.hasAbsoluteBlock) {
-            bloqueos.push('Un afecto no cuelga del Dios del texto (huérfano de raíz): revísalo antes de cerrar.');
+            // El bloqueo absoluto puede venir de CUALQUIER eje (textual/temporal/raíz)
+            // a nivel core, no solo de una raíz huérfana — no presumas la causa aquí
+            // (el detalle por-eje lo da el bloque del examen). Mensaje genérico.
+            bloqueos.push('Un afecto fue confrontado al nivel más alto por el examen: revísalo antes de cerrar.');
         }
         if (corazon.proceed.pendingKeys.length > 0) {
             bloqueos.push(`${corazon.proceed.pendingKeys.length} afecto(s) marcado(s) por el examen necesitan tu respuesta.`);
