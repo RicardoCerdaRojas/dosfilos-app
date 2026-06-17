@@ -450,7 +450,13 @@
         },
         "featureFlags": {
             "title": "Feature flags",
-            "description": "Enable or disable experimental features for this user. Each change is recorded in the audit log.",
+            "description": "Enable or disable experimental features for this user. Each change is recorded in the audit log. Enabling a flag also enables its prerequisites.",
+            "dormantBadge": "Dormant",
+            "dormantNote": "Not enable-able — relocated to the paper in Phase 7 (ADR-032).",
+            "disableTitle": "Disable {{flag}}?",
+            "disableDescription": "{{flag}} has {{count}} active sub-flag(s) that depend on it: {{dependents}}. Disabling it disables them too. Disable all or cancel?",
+            "disableConfirm": "Disable all",
+            "cancel": "Cancel",
             "flags": {
                 "pastoral_fidelity_flow": {
                     "description": "Activates the reformed pastoral fidelity flow (six-step spine, three witnesses). Requires the user to have declared a confession."
