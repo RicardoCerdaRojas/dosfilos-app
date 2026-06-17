@@ -31,6 +31,37 @@ import { appCheckCallableOptions } from '../config/appCheckOptions';
  * indefinida si la decisión se demora. */
 const SHADOW_TTL_DAYS = 90;
 
+/**
+ * Segmento de la cuenta, derivado SERVER-SIDE (no client-passed) para que sea
+ * confiable. A 12 usuarios usamos allowlist de uids en vez de un campo en el
+ * doc del usuario (sobre-ingeniería a esta escala — migrar a campo real cuando
+ * crezca a cientos). Segmentar el DATO permite leer el delta oneShotVerdict solo
+ * sobre `real` (el input de superadmin/embajador no representa la población).
+ *
+ * Precedencia: super_admin (role) → ambassador (allowlist) → team (allowlist) → real.
+ */
+type AccountSegment = 'super_admin' | 'ambassador' | 'team' | 'real';
+
+// TODO(fundador): poblar con los uids reales antes de encender la sombra.
+const AMBASSADOR_UIDS: ReadonlySet<string> = new Set<string>([
+    // '<uid embajador 1>', '<uid embajador 2>', '<uid embajador 3>',
+]);
+const TEAM_UIDS: ReadonlySet<string> = new Set<string>([
+    // '<uid equipo>',
+]);
+
+async function deriveSegment(uid: string): Promise<AccountSegment> {
+    try {
+        const snap = await admin.firestore().collection('users').doc(uid).get();
+        if (snap.exists && snap.data()?.role === 'super_admin') return 'super_admin';
+    } catch {
+        // Si la lectura falla, caemos a la clasificación por allowlist / real.
+    }
+    if (AMBASSADOR_UIDS.has(uid)) return 'ambassador';
+    if (TEAM_UIDS.has(uid)) return 'team';
+    return 'real';
+}
+
 type GateStatus = 'pass' | 'soft' | 'hard';
 type EscalationBand = 'pass' | 'note' | 'soft-block' | 'hard-block' | 'absolute-block';
 type ShadowFlow = 'wizard' | 'guided-insight' | 'guided-socratic' | 'guided-wordstudies';
@@ -135,12 +166,14 @@ export const recordDoxologicalGateShadow = onCall(
                 : null;
 
         const expiresAt = Timestamp.fromMillis(Date.now() + SHADOW_TTL_DAYS * 24 * 60 * 60 * 1000);
+        const segment = await deriveSegment(userId);
 
         await admin
             .firestore()
             .collection('doxologicalGateShadow')
             .add({
                 userId,
+                segment,
                 seedId,
                 sermonId: sermonId || null,
                 flow,
