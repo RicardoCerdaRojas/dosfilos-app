@@ -450,7 +450,13 @@
         },
         "featureFlags": {
             "title": "Feature flags",
-            "description": "Habilita o deshabilita features experimentales para este usuario. Cada cambio queda registrado en el audit log.",
+            "description": "Habilita o deshabilita features experimentales para este usuario. Cada cambio queda registrado en el audit log. Encender un flag enciende también sus prerequisitos.",
+            "dormantBadge": "Dormante",
+            "dormantNote": "No activable — se reubica al paper en Fase 7 (ADR-032).",
+            "disableTitle": "¿Apagar {{flag}}?",
+            "disableDescription": "{{flag}} tiene {{count}} sub-flag(s) activos que dependen de él: {{dependents}}. Apagarlo los apaga también. ¿Apagar todos o cancelar?",
+            "disableConfirm": "Apagar todos",
+            "cancel": "Cancelar",
             "flags": {
                 "pastoral_fidelity_flow": {
                     "description": "Activa el flujo reformado de fidelidad pastoral (six-step spine, tres testigos). Requiere que el usuario haya declarado confesión."
