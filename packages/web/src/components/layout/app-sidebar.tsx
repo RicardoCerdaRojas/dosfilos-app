@@ -175,6 +175,7 @@ export function AppSidebar() {
     { name: 'Catálogo CORE Confesiones', href: '/dashboard/admin/confessions', icon: ScrollText },
     { name: 'Cross-references (TSK)', href: '/dashboard/admin/cross-references', icon: Book },
     { name: 'LlamaParse Monitor', href: '/dashboard/admin/llamaparse-monitoring', icon: Gauge },
+    { name: 'Sombra Doxológica', href: '/dashboard/admin/doxological-shadow', icon: Gauge },
     { name: 'Audit Log', href: '/dashboard/admin/audit-log', icon: ScrollText },
   ];
 
