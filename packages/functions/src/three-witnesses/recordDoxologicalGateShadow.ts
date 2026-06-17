@@ -42,13 +42,14 @@ const SHADOW_TTL_DAYS = 90;
  */
 type AccountSegment = 'super_admin' | 'ambassador' | 'team' | 'real';
 
-// TODO(fundador): poblar con los uids reales antes de encender la sombra.
+// 3 embajadores activos (personas distintas). El uid del fundador NO va aquí:
+// su segment sale de role==='super_admin' (verificado en prod 2026-06-17).
 const AMBASSADOR_UIDS: ReadonlySet<string> = new Set<string>([
-    // '<uid embajador 1>', '<uid embajador 2>', '<uid embajador 3>',
+    'VdXKk1KdKQcV1lxwYMJ8u2IsQ1V2',
+    '8K4l0BTAp9MRbmOrYws5gvDedpD2',
+    'dgPRVkueyShc3nJvs50f3UYv6oa2',
 ]);
-const TEAM_UIDS: ReadonlySet<string> = new Set<string>([
-    // '<uid equipo>',
-]);
+const TEAM_UIDS: ReadonlySet<string> = new Set<string>([]);
 
 async function deriveSegment(uid: string): Promise<AccountSegment> {
     try {
