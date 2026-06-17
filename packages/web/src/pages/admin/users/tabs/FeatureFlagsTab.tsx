@@ -130,7 +130,7 @@ export function FeatureFlagsTab({ user }: Props) {
                                         })}
                                     </p>
                                     {dormant && (
-                                        <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">
+                                        <p className="text-xs text-warning mt-1">
                                             {t('users.featureFlags.dormantNote')}
                                         </p>
                                     )}
