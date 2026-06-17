@@ -147,6 +147,8 @@ export { suggestCanonicalParallels } from './pastoral-word-study/suggestCanonica
 export { validateSeedWitnesses } from './three-witnesses/validateSeedWitnesses';
 // 🛡️ Grieta doxológica — Capa 1 (modo sombra): telemetría del gate doxológico
 export { recordDoxologicalGateShadow } from './three-witnesses/recordDoxologicalGateShadow';
+// 🛡️ Grieta doxológica — lectura super_admin de la sombra (vista de monitoreo)
+export { listDoxologicalShadow } from './three-witnesses/listDoxologicalShadow';
 // ❤️ Examen del corazón — conducción afectiva (manifiesto v1.3 §4)
 export { examenCorazon } from './three-witnesses/examenCorazon';
 // 🌱 Pastoral Fidelity Phase 1.6 — timeless-principle verifier (ADR-023)
