@@ -212,6 +212,68 @@ export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];
 export type FeatureFlags = Partial<Record<FeatureFlagName, boolean>>;
 
 /**
+ * Prerequisitos DIRECTOS de cada flag (el flag no funciona — queda activo pero
+ * inerte — si su prerequisito está off). Fuente única de la topología de flags;
+ * la UI de admin la consume para encender hacia arriba (cierre transitivo) y
+ * avisar hacia abajo (descendientes activos) — nunca cascada silenciosa.
+ *
+ * Es un ÁRBOL de 2 niveles: `pastoral_fidelity_flow` es la raíz; el resto son
+ * hijos directos (hermanos, ninguno depende del otro). Cuando se agregue
+ * `doxological_enforce`, su prereq será `three_witnesses` (2 saltos: enforce →
+ * three_witnesses → pastoral_fidelity_flow) — la baranda anti-fail-open horneada
+ * en la topología: el gate NO puede bloquear sin estar corriendo antes.
+ */
+export const FEATURE_FLAG_PREREQUISITES: Record<FeatureFlagName, readonly FeatureFlagName[]> = {
+    pastoral_fidelity_flow: [],
+    pastoral_word_study: ['pastoral_fidelity_flow'],
+    three_witnesses: ['pastoral_fidelity_flow'],
+    study_depth: ['pastoral_fidelity_flow'],
+    fidelity_pass: ['pastoral_fidelity_flow'],
+    contra_scan: ['pastoral_fidelity_flow'],
+    conduccion_corazon: ['pastoral_fidelity_flow'],
+};
+
+/**
+ * Flags que NUNCA deben activarse (dormantes). La UI los hace INACTIVABLES, no
+ * solo "no recomendados". `fidelity_pass` queda dormante per ADR-032 (se reubica
+ * al paper en Fase 7; flipearlo no hace nada útil y confunde).
+ */
+export const DORMANT_FEATURE_FLAGS: readonly FeatureFlagName[] = ['fidelity_pass'];
+
+export function isDormantFeatureFlag(flag: FeatureFlagName): boolean {
+    return DORMANT_FEATURE_FLAGS.includes(flag);
+}
+
+/**
+ * Prerequisitos TRANSITIVOS (ancestros) de un flag — todo lo que debe estar ON
+ * para que funcione. Encender el flag implica encender este conjunto (up auto).
+ */
+export function getFlagPrerequisites(flag: FeatureFlagName): FeatureFlagName[] {
+    const out = new Set<FeatureFlagName>();
+    const walk = (f: FeatureFlagName) => {
+        for (const p of FEATURE_FLAG_PREREQUISITES[f] ?? []) {
+            if (!out.has(p)) {
+                out.add(p);
+                walk(p);
+            }
+        }
+    };
+    walk(flag);
+    return [...out];
+}
+
+/**
+ * Dependientes TRANSITIVOS (descendientes) — flags que requieren `flag` directa
+ * o transitivamente. Apagar `flag` los deja activos-pero-inertes → la UI avisa
+ * y pide confirmación antes de apagar (nunca cascada silenciosa).
+ */
+export function getFlagDependents(flag: FeatureFlagName): FeatureFlagName[] {
+    return FEATURE_FLAG_NAMES.filter(
+        (f) => f !== flag && getFlagPrerequisites(f).includes(flag),
+    );
+}
+
+/**
  * @deprecated Per [ADR-010](docs/pastoral-fidelity/decisions/ADR-010-confessional-witnesses-default-on.md)
  * the single-anchor model is replaced by multi-witness default-on. The
  * field stays on `User` for historical data preservation but is NOT
