@@ -27,7 +27,7 @@
         "leadMagnetPrefix": "¿No estás listo?",
         "leadMagnetText": "Descarga el manual de predicación gratis",
         "footerLead": "Una herramienta seria para quienes trabajan con la Palabra.",
-        "footerBody": "Biblioteca personal, tutores especializados, idiomas bíblicos y producción ministerial en un solo entorno —para predicación expositiva, estudios académicos, preparación de clases y consejería pastoral."
+        "footerBody": "Biblioteca personal, tutores especializados, idiomas bíblicos y producción ministerial en un solo entorno —para predicación expositiva, estudios académicos, preparación de clases y consejería bíblica."
     },
     "heroCarousel": {
         "panelAriaLabel": "Panel {{number}}",
@@ -147,7 +147,7 @@
                 "Tutor de Hebreo Bíblico · Análisis morfológico y sintáctico del AT",
                 "Tutor de Griego del NT · Koiné con análisis sintáctico y léxico",
                 "Tutor de Teología Sistemática · Doctrina con respaldo bíblico",
-                "Tutor de Consejería Pastoral · Casos pastorales con fundamento bíblico"
+                "Tutor de Consejería Bíblica · Casos pastorales con fundamento bíblico"
             ]
         },
         "produccion": {
@@ -227,11 +227,11 @@
                 "outcome": "Reúne décadas de notas dispersas en un corpus consultable, no en una pila de PDFs sin abrir."
             },
             {
-                "persona": "Consejero pastoral",
+                "persona": "Consejero bíblico",
                 "headline": "Caso pastoral con fundamento bíblico, no opinión personal.",
                 "steps": [
                     "Sube material de consejería bíblica (Adams, Tripp, Welch).",
-                    "El Tutor de Consejería Pastoral aplica principios a un caso específico.",
+                    "El Tutor de Consejería Bíblica aplica principios a un caso específico.",
                     "Cruza pasajes pertinentes con las fuentes consultadas.",
                     "Estructura un plan de consejería con base bíblica trazable."
                 ],
@@ -404,7 +404,7 @@
             "questionAfter": "a la luz del griego original?",
             "available": "Tutores disponibles",
             "routed": "Enrutado",
-            "areas": ["Exégesis", "Hebreo · AT", "Griego · NT", "Consejería", "Teología sistemática"]
+            "areas": ["Exégesis", "Hebreo · AT", "Griego · NT", "Consejería bíblica", "Teología sistemática"]
         },
         "chat": {
             "sessionsTitle": "Sesiones",

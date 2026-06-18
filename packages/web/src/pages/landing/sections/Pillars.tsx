@@ -1,6 +1,6 @@
 import { useTranslation } from '@/i18n';
 import { LibraryMock } from '../mocks/LibraryMock';
-import { HebrewMock } from '../mocks/HebrewMock';
+import { LanguageMockCarousel } from '../mocks/LanguageMockCarousel';
 import { TutorsMock } from '../mocks/TutorsMock';
 import { SermonMock } from '../mocks/SermonMock';
 import { PillarSection } from './PillarSection';
@@ -41,7 +41,7 @@ export function PillarLenguas() {
             title={t('pillars.lenguas.title')}
             description={t('pillars.lenguas.description')}
             bullets={t('pillars.lenguas.bullets', { returnObjects: true }) as string[]}
-            mockup={<HebrewMock />}
+            mockup={<LanguageMockCarousel />}
             reversed
             dark
         />

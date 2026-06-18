@@ -27,7 +27,7 @@
         "leadMagnetPrefix": "Not ready yet?",
         "leadMagnetText": "Download the free preaching manual",
         "footerLead": "A serious tool for those who handle the Word.",
-        "footerBody": "Personal library, specialized tutors, biblical languages, and ministry production in one place — for expository preaching, academic study, lesson prep, and pastoral counseling."
+        "footerBody": "Personal library, specialized tutors, biblical languages, and ministry production in one place — for expository preaching, academic study, lesson prep, and biblical counseling."
     },
     "heroCarousel": {
         "panelAriaLabel": "Panel {{number}}",
@@ -147,7 +147,7 @@
                 "Biblical Hebrew Tutor · Morphological and syntactic analysis of the OT",
                 "NT Greek Tutor · Koine, with syntactic and lexical analysis",
                 "Systematic Theology Tutor · Doctrine with biblical backing",
-                "Pastoral Counseling Tutor · Pastoral cases grounded in Scripture"
+                "Biblical Counseling Tutor · Pastoral cases grounded in Scripture"
             ]
         },
         "produccion": {
@@ -227,11 +227,11 @@
                 "outcome": "Pulls decades of scattered notes into one searchable corpus — instead of a pile of unopened PDFs."
             },
             {
-                "persona": "Pastoral counselor",
+                "persona": "Biblical counselor",
                 "headline": "A pastoral case grounded in Scripture, not personal opinion.",
                 "steps": [
                     "Upload your biblical-counseling material (Adams, Tripp, Welch).",
-                    "Have the Pastoral Counseling Tutor apply the principles to a specific case.",
+                    "Have the Biblical Counseling Tutor apply the principles to a specific case.",
                     "Cross-reference the relevant passages with the sources you consulted.",
                     "Build a counseling plan with traceable biblical grounding."
                 ],
@@ -404,7 +404,7 @@
             "questionAfter": "be interpreted exegetically in light of the original Greek?",
             "available": "Available tutors",
             "routed": "Routed",
-            "areas": ["Exegesis", "Hebrew · OT", "Greek · NT", "Counseling", "Systematic theology"]
+            "areas": ["Exegesis", "Hebrew · OT", "Greek · NT", "Biblical counseling", "Systematic theology"]
         },
         "chat": {
             "sessionsTitle": "Sessions",
