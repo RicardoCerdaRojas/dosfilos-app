@@ -25,6 +25,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Base layer — mirror de packages/web/src/index.css (el preflight resetea los
+   headings a font-weight: inherit; el app los vuelve semibold). Sin esto los
+   títulos se ven más finos que en la landing React. */
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+}
+
 /* OpenType para te'amim correctos en hebreo (mark/mkmk/kern). */
 .font-hebrew {
   font-feature-settings: "mark" 1, "mkmk" 1, "kern" 1;
