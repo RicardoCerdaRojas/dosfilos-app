@@ -1,0 +1,131 @@
+---
+import { Check, Wand2, Sparkles, BookOpen } from 'lucide-react';
+import { STUDY_UNIT_USD, type MarketingPlan } from '@/config/plans';
+import type { Lang } from '@/lib/i18n';
+
+interface Props {
+    plan: MarketingPlan;
+    lang: Lang;
+    ctaLabel: string;
+}
+const { plan, lang, ctaLabel } = Astro.props;
+
+const APP = 'https://app.preach.dosfilos.com';
+const isPopular = plan.isPopular;
+
+// Split price into integer + decimal parts for editorial typography.
+const priceInt = Math.floor(plan.priceMonthly);
+const priceDecRaw = (plan.priceMonthly % 1) * 100;
+const priceDec = priceDecRaw > 0 ? priceDecRaw.toFixed(0).padStart(2, '0') : null;
+
+const standard = plan.standardPagesPerMonth;
+const premium = plan.premiumPagesPerMonth;
+const studies = plan.exegesisUsdPerMonth > 0 ? Math.round(plan.exegesisUsdPerMonth / STUDY_UNIT_USD) : 0;
+const showQuota = standard > 0 || premium > 0 || studies > 0;
+
+// "primary" in the app theme maps to the landing's indigo accent.
+---
+<div
+    class={`relative flex flex-col h-full py-5 gap-3 rounded-xl border transition-all ${
+        isPopular
+            ? 'border-indigo-600/40 shadow-xl shadow-indigo-600/10 bg-gradient-to-b from-indigo-600/[0.04] via-white to-white'
+            : 'border-slate-200 bg-white shadow-sm hover:shadow-md'
+    }`}
+>
+    <div class="px-5">
+        <div class="flex items-center justify-between gap-2">
+            <div class="font-reading text-[22px] leading-none font-bold text-slate-900">
+                {plan.name[lang]}
+            </div>
+            {isPopular && (
+                <span class="inline-flex items-center gap-1 rounded-full bg-indigo-600/10 text-indigo-600 border border-indigo-600/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]">
+                    {lang === 'es' ? 'Más popular' : 'Most popular'}
+                </span>
+            )}
+        </div>
+
+        <div class="text-[12.5px] text-slate-600 mt-1.5 leading-snug">
+            {plan.description[lang]}
+        </div>
+
+        <div class="mt-3 flex items-baseline gap-0.5">
+            <span class="text-[16px] font-medium text-slate-400 self-start mt-1.5">$</span>
+            <span class="font-reading text-[40px] leading-none font-bold text-slate-900 tabular-nums">
+                {priceInt}
+            </span>
+            {priceDec && (
+                <span class="text-[15px] font-medium text-slate-500 tabular-nums self-start mt-1.5">
+                    .{priceDec}
+                </span>
+            )}
+            <span class="text-[12px] text-slate-500 ml-1.5 self-end mb-0.5">{lang === 'es' ? '/ mes' : '/ mo'}</span>
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col px-5 pt-1">
+        {showQuota && (
+            <div class="mb-4">
+                <div class="rounded-lg border border-indigo-600/20 bg-indigo-600/5 p-3">
+                    <p class="text-[10px] font-semibold uppercase tracking-wider text-indigo-600/80 mb-2">
+                        {lang === 'es' ? 'Incluye cada mes' : 'Included each month'}
+                    </p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="flex items-baseline gap-1.5">
+                            <Wand2 className="h-3 w-3 text-indigo-600 self-center shrink-0" />
+                            <span class="text-base font-bold tabular-nums text-slate-900">{standard.toLocaleString()}</span>
+                            <span class="text-[11px] text-slate-500">{lang === 'es' ? 'págs. estándar' : 'std pages'}</span>
+                        </div>
+                        <div class="flex items-baseline gap-1.5">
+                            <Sparkles className="h-3 w-3 text-indigo-600 self-center shrink-0" />
+                            <span class="text-base font-bold tabular-nums text-slate-900">{premium.toLocaleString()}</span>
+                            <span class="text-[11px] text-slate-500">{lang === 'es' ? 'págs. premium' : 'premium pages'}</span>
+                        </div>
+                        {studies > 0 && (
+                            <div class="flex items-baseline gap-1.5 col-span-2">
+                                <BookOpen className="h-3 w-3 text-indigo-600 self-center shrink-0" />
+                                <span class="text-base font-bold tabular-nums text-slate-900">{studies.toLocaleString()}</span>
+                                <span class="text-[11px] text-slate-500">
+                                    {lang === 'es'
+                                        ? (studies === 1 ? 'estudio' : 'estudios')
+                                        : (studies === 1 ? 'study' : 'studies')}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                    <p class="text-[10.5px] text-slate-500 mt-2 leading-snug">
+                        {lang === 'es'
+                            ? '¿Necesitas más? Compra packs prepago desde $3.'
+                            : 'Need more? Buy prepaid packs from $3.'}
+                    </p>
+                </div>
+            </div>
+        )}
+
+        <ul class="space-y-2 flex-1 mb-4">
+            {plan.features.map((feature) => (
+                <li class="flex items-start gap-2">
+                    <span class={`flex-shrink-0 mt-[3px] flex h-3.5 w-3.5 items-center justify-center rounded-full ${isPopular ? 'bg-indigo-600/15' : 'bg-slate-100'}`}>
+                        <Check className={`h-2 w-2 ${isPopular ? 'text-indigo-600' : 'text-slate-700'}`} strokeWidth={4} />
+                    </span>
+                    <span class="text-[13px] text-slate-700 leading-snug">
+                        {feature[lang]}
+                    </span>
+                </li>
+            ))}
+        </ul>
+
+        <a
+            href={`${APP}/register?plan=${plan.id}`}
+            data-track="cta_pricing_click"
+            data-track-plan-id={plan.id}
+            data-track-plan-name={plan.name[lang]}
+            class={`w-full h-10 inline-flex items-center justify-center rounded-md font-medium text-[13.5px] transition-all ${
+                isPopular
+                    ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-600/25 hover:shadow-lg hover:shadow-indigo-600/30'
+                    : 'bg-slate-900 text-white hover:bg-slate-800'
+            }`}
+        >
+            {ctaLabel}
+        </a>
+    </div>
+</div>

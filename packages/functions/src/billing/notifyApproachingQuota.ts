@@ -5,10 +5,11 @@ import {
     getQuotaWarningTemplate,
     getQuotaWarningSubject,
 } from '../emails/templates/quotaWarning';
+import { APP_URL } from '../config/urls';
 
 const db = admin.firestore();
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
-const DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard';
+const DASHBOARD_URL = `${APP_URL}/dashboard`;
 
 const WARNING_THRESHOLD = 0.8; // 80%
 

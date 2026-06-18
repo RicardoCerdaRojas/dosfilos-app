@@ -1,0 +1,23 @@
+---
+import { createT, type Lang } from '@/lib/i18n';
+import { buildMockProps } from '@/lib/mockProps';
+import PillarSection from '@/components/PillarSection.astro';
+import { LanguageMockCarousel } from '@/components/islands/LanguageMockCarousel';
+
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = createT(lang);
+const mocks = buildMockProps(lang);
+---
+<PillarSection
+    id="pilar-2"
+    number="02"
+    eyebrow={t('pillars.lenguas.eyebrow')}
+    title={t('pillars.lenguas.title')}
+    description={t('pillars.lenguas.description')}
+    bullets={t('pillars.lenguas.bullets')}
+    reversed
+    dark
+>
+    <LanguageMockCarousel slot="mockup" client:visible hebrew={mocks.hebrew} greek={mocks.greek} />
+</PillarSection>

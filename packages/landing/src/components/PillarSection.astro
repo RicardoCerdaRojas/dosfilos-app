@@ -1,0 +1,56 @@
+---
+import Reveal from '@/components/Reveal.astro';
+
+interface Props {
+    id: string;
+    number: string;
+    eyebrow: string;
+    title: string;
+    description: string;
+    bullets: string[];
+    reversed?: boolean;
+    dark?: boolean;
+}
+const { id, number, eyebrow, title, description, bullets, reversed = false, dark = false } = Astro.props;
+---
+<section
+    id={id}
+    class={`py-24 md:py-32 px-6 lg:px-10 ${dark ? 'bg-slate-950 text-white' : 'bg-white text-slate-900'}`}
+>
+    <div class="max-w-[1280px] mx-auto">
+        <div
+            class={`grid lg:grid-cols-12 gap-12 lg:gap-16 items-center ${reversed ? 'lg:[&>*:first-child]:order-2' : ''}`}
+        >
+            <div class="lg:col-span-5">
+                <Reveal>
+                    <div class={`flex items-center gap-3 mb-8 ${dark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        <span class="font-reading text-[48px] md:text-[64px] leading-none tabular-nums font-light">{number}</span>
+                        <div class="flex-1 h-px bg-current opacity-20" />
+                    </div>
+                    <div class={`text-[11px] uppercase tracking-[0.2em] font-medium mb-4 ${dark ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                        {eyebrow}
+                    </div>
+                    <h2 class={`font-reading text-[36px] md:text-[44px] leading-[1.05] tracking-[-0.02em] mb-6 ${dark ? 'text-white' : 'text-slate-900'}`}>
+                        {title}
+                    </h2>
+                    <p class={`text-[17px] leading-[1.65] mb-8 ${dark ? 'text-slate-400' : 'text-slate-600'}`}>
+                        {description}
+                    </p>
+                    <ul class="space-y-3">
+                        {bullets.map(b => (
+                            <li class={`flex gap-3 text-[14.5px] leading-relaxed ${dark ? 'text-slate-300' : 'text-slate-700'}`}>
+                                <span class={`shrink-0 mt-1 h-1 w-1 rounded-full ${dark ? 'bg-indigo-400' : 'bg-indigo-600'}`} />
+                                <span>{b}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </Reveal>
+            </div>
+            <div class="lg:col-span-7">
+                <Reveal delay={120}>
+                    <slot name="mockup" />
+                </Reveal>
+            </div>
+        </div>
+    </div>
+</section>

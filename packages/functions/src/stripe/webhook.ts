@@ -12,6 +12,7 @@ import {
 import { getPackById } from './creditPackCatalog';
 import { resend } from '../emails/resendClient';
 import { getPaymentFailedTemplate, getPaymentFailedSubject } from '../emails/templates/paymentFailed';
+import { APP_URL } from '../config/urls';
 
 /**
  * Reverse-resolves a Stripe Price ID to the matching plan doc id by iterating
@@ -436,7 +437,7 @@ async function handlePaymentFailed(
     if (currentAttempts === 0 && userData?.email) {
         const locale: 'es' | 'en' = userData?.preferredLanguage === 'en' ? 'en' : 'es';
         const name = userData?.displayName || (locale === 'en' ? 'Preacher' : 'Predicador');
-        const dashboardUrl = 'https://preach.dosfilos.com/dashboard';
+        const dashboardUrl = `${APP_URL}/dashboard`;
 
         try {
             await resend.emails.send({

@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@400;700&family=Crimson+Pro:wght@400;500;600;700&display=swap');
+
+/* ── Biblical Hebrew: Ezra SIL (SIL Open Font License) ──────────────────────
+   Full BHS/WLC Hebrew block + cantillation (te'amim). Mirror de packages/web. */
+@font-face {
+  font-family: 'Ezra SIL';
+  src: url('/fonts/SILEOT.woff2') format('woff2'),
+       url('/fonts/SILEOT.ttf')  format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0590-05FF, U+FB1D-FB4F;
+}
+@font-face {
+  font-family: 'Ezra SIL SR';
+  src: url('/fonts/SILEOTSR.woff2') format('woff2'),
+       url('/fonts/SILEOTSR.ttf')  format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0590-05FF, U+FB1D-FB4F;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base layer — mirror de packages/web/src/index.css (el preflight resetea los
+   headings a font-weight: inherit; el app los vuelve semibold). Sin esto los
+   títulos se ven más finos que en la landing React. */
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+}
+
+/* OpenType para te'amim correctos en hebreo (mark/mkmk/kern). */
+.font-hebrew {
+  font-feature-settings: "mark" 1, "mkmk" 1, "kern" 1;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Hero fade-up (port de landingStyles.ts) ──────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  opacity: 0;
+  animation: fadeUp 800ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* ── Reveal scroll-in (port de Reveal.tsx, sin React) ─────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 900ms ease-out, transform 900ms ease-out;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up { animation: none; opacity: 1; transform: none; }
+  .reveal { opacity: 1 !important; transform: none !important; transition: none; }
+}

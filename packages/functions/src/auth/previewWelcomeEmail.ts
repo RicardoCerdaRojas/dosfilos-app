@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { render } from '@react-email/render';
 import { WelcomeEmail, getWelcomeEmailSubject } from '../emails/templates/WelcomeEmail';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
+import { APP_URL } from '../config/urls';
 
 type Flow = 'free' | 'paid';
 type Locale = 'es' | 'en';
@@ -14,9 +15,9 @@ interface PreviewRequest {
 
 const SUPER_ADMIN_EMAIL = 'rdocerda@gmail.com';
 
-const SAMPLE_DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard';
-const SAMPLE_VERIFY_URL = 'https://preach.dosfilos.com/__sample__/verify';
-const SAMPLE_SET_PASSWORD_URL = 'https://preach.dosfilos.com/__sample__/set-password';
+const SAMPLE_DASHBOARD_URL = `${APP_URL}/dashboard`;
+const SAMPLE_VERIFY_URL = `${APP_URL}/__sample__/verify`;
+const SAMPLE_SET_PASSWORD_URL = `${APP_URL}/__sample__/set-password`;
 
 /**
  * Renders the welcome email with sample inputs and returns the

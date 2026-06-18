@@ -26,7 +26,7 @@ jobs:
         # exact and dev environments often run newer; matches the
         # leniency npm had before the migration.
         run: yarn install --frozen-lockfile --ignore-engines
-      
+
       - name: Run linter
         run: npm run lint
       
@@ -86,10 +86,18 @@ jobs:
         # exact and dev environments often run newer; matches the
         # leniency npm had before the migration.
         run: yarn install --frozen-lockfile --ignore-engines
-      
+
       - name: Build web app
         run: npm run build
-      
+
+      # La landing (Astro) se instala + construye DESPUÉS del web: sus deps (npm,
+      # fuera de yarn.lock) no deben contaminar node_modules antes del build del
+      # web. El root `npm run build` no toca la landing (su script es build:site).
+      - name: Install + build landing (Astro)
+        run: |
+          npm install --prefix packages/landing --no-workspaces --no-audit --no-fund
+          npm run build:site --prefix packages/landing
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:

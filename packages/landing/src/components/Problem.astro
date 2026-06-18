@@ -1,0 +1,74 @@
+---
+import { createT, type Lang } from '@/lib/i18n';
+import Reveal from '@/components/Reveal.astro';
+import { FolderTree, Clock, ShieldAlert, Languages, Target, Sprout } from 'lucide-react';
+
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = createT(lang);
+
+const PAIN_POINT_ICONS = [FolderTree, Clock, ShieldAlert, Languages, Target, Sprout];
+const painPoints = t<Array<{ title: string; text: string }>>('problem.painPoints');
+---
+<section
+    id="problema"
+    class="relative bg-slate-950 text-white py-28 md:py-36 px-6 lg:px-10 overflow-hidden"
+>
+    <div
+        aria-hidden
+        class="absolute inset-0 opacity-50 pointer-events-none"
+        style="background: radial-gradient(ellipse 1000px 500px at 70% -50px, rgba(99,102,241,0.10), transparent 60%)"
+    />
+    <div
+        aria-hidden
+        class="absolute inset-0 pointer-events-none opacity-[0.04]"
+        style="background-image: linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px); background-size: 56px 56px; -webkit-mask-image: radial-gradient(ellipse 60% 80% at 50% 50%, black 30%, transparent 85%); mask-image: radial-gradient(ellipse 60% 80% at 50% 50%, black 30%, transparent 85%)"
+    />
+
+    <div class="relative max-w-[1200px] mx-auto">
+        <Reveal>
+            <div class="max-w-3xl mb-16">
+                <div class="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-indigo-300 font-medium mb-6">
+                    <span class="h-1 w-1 rounded-full bg-indigo-400" />
+                    {t('problem.eyebrow')}
+                </div>
+                <h2 class="font-reading text-[36px] md:text-[52px] lg:text-[60px] leading-[1.05] tracking-[-0.02em] text-white mb-8">
+                    {t('problem.heading')}
+                </h2>
+                <p class="text-[17px] md:text-[19px] text-slate-300 leading-[1.65] max-w-2xl">
+                    {t('problem.intro')}
+                </p>
+            </div>
+        </Reveal>
+
+        <div class="grid md:grid-cols-2 gap-px bg-white/10 border border-white/10 rounded-xl overflow-hidden">
+            {PAIN_POINT_ICONS.map((Icon, idx) => {
+                const { title, text } = painPoints[idx];
+                return (
+                    <Reveal delay={idx * 60}>
+                        <div class="bg-slate-950 p-8 md:p-10 h-full">
+                            <Icon className="h-5 w-5 text-indigo-300 mb-5" strokeWidth={1.5} />
+                            <h3 class="font-reading text-[22px] text-white mb-3 tracking-tight">
+                                {title}
+                            </h3>
+                            <p class="text-[14.5px] text-slate-400 leading-[1.65]">
+                                {text}
+                            </p>
+                        </div>
+                    </Reveal>
+                );
+            })}
+        </div>
+
+        <Reveal delay={400}>
+            <div class="mt-20 md:mt-24 pt-12 border-t border-white/10 max-w-3xl">
+                <p class="font-reading text-[20px] md:text-[24px] leading-[1.5] text-white">
+                    {t('problem.closingLead')}{' '}
+                    <span class="text-slate-400">
+                        {t('problem.closingEmphasis')}
+                    </span>
+                </p>
+            </div>
+        </Reveal>
+    </div>
+</section>

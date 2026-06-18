@@ -1,0 +1,103 @@
+---
+import '../styles/global.css';
+import { createT, type Lang } from '../lib/i18n';
+import Analytics from '../components/Analytics.astro';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  description: string;
+  /** Ruta sin prefijo de idioma, p.ej. '/' o '/precios/'. */
+  path?: string;
+}
+const { lang, title, description, path = '/' } = Astro.props;
+const t = createT(lang);
+
+const SITE = 'https://preach.dosfilos.com';
+const APP = 'https://app.preach.dosfilos.com';
+const canonical = `${SITE}/${lang}${path}`;
+const altEs = `${SITE}/es${path}`;
+const altEn = `${SITE}/en${path}`;
+
+// JSON-LD — movido desde packages/web/index.html. FAQPage se genera desde el
+// copy real para no desincronizar con el acordeón visible.
+const faqItems = t<Array<{ q: string; a: string }>>('faq.items');
+const orgSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'DosFilos.Preach',
+  url: `${SITE}/`,
+  logo: `${SITE}/logo_dfp.png`,
+  description:
+    'Plataforma de estudio bíblico y preparación de sermones: exégesis, idiomas originales, biblioteca teológica y tutores especializados con fuentes trazables.',
+};
+const softwareSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'DosFilos.Preach',
+  applicationCategory: 'EducationApplication',
+  operatingSystem: 'Web',
+  url: `${SITE}/`,
+  description,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+};
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: (faqItems ?? []).map((it) => ({
+    '@type': 'Question',
+    name: it.q,
+    acceptedAnswer: { '@type': 'Answer', text: it.a },
+  })),
+};
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="es" href={altEs} />
+    <link rel="alternate" hreflang="en" href={altEn} />
+    <link rel="alternate" hreflang="x-default" href={altEs} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={`${SITE}/og-preview.png`} />
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonical} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={`${SITE}/og-preview.png`} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(orgSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(softwareSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+  </head>
+  <body class="bg-white text-slate-900 antialiased overflow-x-hidden" style="color-scheme: light">
+    <Analytics />
+    <slot />
+
+    <!-- Reveal observer global (reemplaza Reveal.tsx; cero hidratación React) -->
+    <script is:inline>
+      (function () {
+        var els = document.querySelectorAll('.reveal');
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          els.forEach(function (e) { e.classList.add('is-visible'); });
+          return;
+        }
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) { en.target.classList.add('is-visible'); io.unobserve(en.target); }
+          });
+        }, { threshold: 0.1, rootMargin: '0px 0px -80px 0px' });
+        els.forEach(function (e) { io.observe(e); });
+      })();
+    </script>
+  </body>
+</html>

@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { render } from '@react-email/render';
 import { ShareEmail } from '../emails/templates/extractionShare/ShareEmail';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
+import { APP_URL } from '../config/urls';
 
 const SUPER_ADMIN_EMAIL = 'rdocerda@gmail.com';
 
@@ -27,7 +28,7 @@ Una lista de ejemplo para mostrar el formato de bullets:
 
 Otro párrafo de cierre. Cuando lees una prohibición en imperativo presente (μή + presente), el autor está pidiendo que **ceses** una acción ya en curso. Ejemplo: "no temas más" (μὴ φοβοῦ).
 
-Para más detalle, abre cualquier pasaje en [Preach](https://preach.dosfilos.com) y pregúntale al tutor de griego.
+Para más detalle, abre cualquier pasaje en [Preach](${APP_URL}) y pregúntale al tutor de griego.
 `;
 
 interface PreviewShareRequest {

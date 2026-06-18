@@ -1,0 +1,53 @@
+---
+import { createT, type Lang } from '@/lib/i18n';
+import Reveal from '@/components/Reveal.astro';
+
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = createT(lang);
+
+const principles = t<Array<{ title: string; text: string }>>('philosophy.principles');
+---
+<section id="filosofia" class="bg-white py-32 md:py-40 px-6 lg:px-10">
+    <div class="max-w-[1100px] mx-auto">
+        <Reveal>
+            <div class="text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium mb-8">
+                {t('philosophy.eyebrow')}
+            </div>
+
+            <h2 class="font-reading text-[36px] md:text-[52px] lg:text-[64px] leading-[1.05] tracking-[-0.02em] text-slate-900 mb-12 max-w-3xl">
+                {t('philosophy.heading')}
+            </h2>
+
+            <div class="max-w-2xl text-[17px] md:text-[19px] text-slate-600 leading-[1.65] mb-16">
+                <p>{t('philosophy.intro')}</p>
+            </div>
+        </Reveal>
+
+        <div class="grid md:grid-cols-2 gap-px bg-slate-200 border border-slate-200 rounded-xl overflow-hidden mb-16">
+            {principles.map(({ title, text }, idx) => (
+                <Reveal delay={idx * 80}>
+                    <div class="bg-white p-8 h-full">
+                        <h3 class="font-reading text-[22px] text-slate-900 mb-3 tracking-tight">
+                            {title}
+                        </h3>
+                        <p class="text-[14.5px] text-slate-600 leading-[1.65]">
+                            {text}
+                        </p>
+                    </div>
+                </Reveal>
+            ))}
+        </div>
+
+        <Reveal>
+            <div class="border-t border-slate-200 pt-10 max-w-2xl">
+                <blockquote class="font-reading text-[22px] md:text-[28px] leading-[1.35] tracking-tight text-slate-900 italic">
+                    {t('philosophy.quote')}
+                </blockquote>
+                <cite class="not-italic block mt-4 text-[12px] uppercase tracking-[0.2em] text-slate-500 font-medium">
+                    {t('philosophy.quoteCite')}
+                </cite>
+            </div>
+        </Reveal>
+    </div>
+</section>

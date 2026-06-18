@@ -4,6 +4,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { render } from '@react-email/render';
 import { resend } from './resendClient';
 import { WelcomeEmail, getWelcomeEmailSubject } from './templates/WelcomeEmail';
+import { APP_URL } from '../config/urls';
 
 interface WelcomeEmailOptions {
     verifyEmailUrl?: string;
@@ -11,8 +12,8 @@ interface WelcomeEmailOptions {
 }
 
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
-const DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard';
-const LOGIN_URL = 'https://preach.dosfilos.com/login';
+const DASHBOARD_URL = `${APP_URL}/dashboard`;
+const LOGIN_URL = `${APP_URL}/login`;
 
 type Locale = 'es' | 'en';
 
