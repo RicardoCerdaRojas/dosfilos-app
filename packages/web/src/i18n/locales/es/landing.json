@@ -78,18 +78,18 @@
         "steps": [
             {
                 "n": "01",
-                "title": "Sube tus recursos",
-                "text": "Importa tus libros y comentarios. El sistema extrae el contenido con páginas reales preservadas y lo indexa para consulta semántica."
+                "title": "Reúne y organiza tu trabajo",
+                "text": "Sube tu biblioteca —libros, comentarios, notas— y organiza tu estudio en proyectos, series de predicación y planes. Preach conserva las páginas reales y lo deja todo listo para consultar."
             },
             {
                 "n": "02",
-                "title": "Consulta a los tutores",
-                "text": "Pregunta en lenguaje natural. El sistema enruta al especialista adecuado y usa tu biblioteca como respaldo. Las respuestas citan fuentes precisas."
+                "title": "Estudia con profundidad",
+                "text": "Más que respuestas: forma tu criterio. Consulta a los tutores especializados, trabaja griego y hebreo con apoyo gramatical, y deja que el método histórico-gramatical y el chequeo socrático afinen tu lectura del texto. Cada respuesta cita sus fuentes."
             },
             {
                 "n": "03",
-                "title": "Produce y exporta",
-                "text": "Produce sermones, notas y material ministerial con respaldo exegético. Exporta en los formatos que necesites para el uso pastoral."
+                "title": "Da forma y exporta",
+                "text": "Organiza tus hallazgos en sermones, notas y material ministerial, con estructura y fuentes trazables. Tú escribes; Preach ordena y respalda. Exporta en los formatos que uses."
             }
         ]
     },
