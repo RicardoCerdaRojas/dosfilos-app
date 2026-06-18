@@ -26,7 +26,11 @@ jobs:
         # exact and dev environments often run newer; matches the
         # leniency npm had before the migration.
         run: yarn install --frozen-lockfile --ignore-engines
-      
+
+      # La landing (Astro) se instala con npm aparte (deps fuera de yarn.lock).
+      - name: Install landing (Astro) dependencies
+        run: npm install --prefix packages/landing --no-workspaces --no-audit --no-fund
+
       - name: Run linter
         run: npm run lint
       
@@ -86,8 +90,12 @@ jobs:
         # exact and dev environments often run newer; matches the
         # leniency npm had before the migration.
         run: yarn install --frozen-lockfile --ignore-engines
-      
-      - name: Build web app
+
+      # La landing (Astro) se instala con npm aparte (deps fuera de yarn.lock).
+      - name: Install landing (Astro) dependencies
+        run: npm install --prefix packages/landing --no-workspaces --no-audit --no-fund
+
+      - name: Build web app + landing
         run: npm run build
       
       - name: Upload build artifacts
