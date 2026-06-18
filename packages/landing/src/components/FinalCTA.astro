@@ -1,0 +1,40 @@
+---
+import { createT, type Lang } from '@/lib/i18n';
+import Reveal from '@/components/Reveal.astro';
+import { ArrowRight } from 'lucide-react';
+
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = createT(lang);
+
+const APP = 'https://app.preach.dosfilos.com';
+---
+<section class="relative bg-slate-950 text-white py-28 md:py-36 px-6 lg:px-10 overflow-hidden">
+    <div
+        aria-hidden
+        class="absolute inset-0 pointer-events-none opacity-50"
+        style="background: radial-gradient(ellipse 1000px 500px at 50% 100%, rgba(99,102,241,0.15), transparent 60%)"
+    />
+    <div class="relative max-w-3xl mx-auto text-center">
+        <Reveal>
+            <h2 class="font-reading text-[40px] md:text-[56px] lg:text-[64px] leading-[1.05] tracking-[-0.02em] mb-8">
+                {t('finalCta.heading')}
+            </h2>
+            <p class="text-[16.5px] text-slate-400 leading-relaxed mb-10 max-w-xl mx-auto">
+                {t('finalCta.description')}
+            </p>
+            <a
+                href={`${APP}/register?plan=free`}
+                data-track="cta_finalcta_click"
+                data-track-dest="register_free"
+                class="inline-flex items-center justify-center bg-white text-slate-900 hover:bg-slate-200 h-12 px-7 rounded-md text-[14px] font-medium gap-1.5 transition-colors"
+            >
+                {t('finalCta.cta')}
+                <ArrowRight className="h-3.5 w-3.5" />
+            </a>
+            <p class="text-[12px] text-slate-500 mt-6">
+                {t('finalCta.disclaimer')}
+            </p>
+        </Reveal>
+    </div>
+</section>

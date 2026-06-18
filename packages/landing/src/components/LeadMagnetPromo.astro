@@ -1,0 +1,88 @@
+---
+import { createT, type Lang } from '@/lib/i18n';
+import Reveal from '@/components/Reveal.astro';
+import { ArrowRight, BookOpen, CheckCircle2 } from 'lucide-react';
+
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = createT(lang);
+
+const APP = 'https://app.preach.dosfilos.com';
+const manualHref = `${APP}/recursos/manual-para-predicadores?utm_source=landing&utm_medium=promo_section&utm_campaign=manual_predicacion`;
+
+const bullets = t<string[]>('leadMagnet.bullets');
+const coverBullets = t<string[]>('leadMagnet.coverBullets');
+---
+<section class="bg-slate-50 py-20 md:py-28 px-6 lg:px-10 border-t border-slate-200">
+    <div class="max-w-[1100px] mx-auto">
+        <Reveal>
+            <div class="rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
+                <div class="grid md:grid-cols-2 gap-0">
+                    <div class="p-10 md:p-14">
+                        <div class="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium mb-6">
+                            <span class="h-1 w-1 rounded-full bg-indigo-600" />
+                            {t('leadMagnet.badge')}
+                        </div>
+
+                        <h2 class="font-reading text-[28px] md:text-[36px] lg:text-[40px] leading-[1.1] tracking-[-0.02em] text-slate-900 mb-5">
+                            {t('leadMagnet.heading')}
+                        </h2>
+
+                        <p class="text-[15.5px] text-slate-600 leading-[1.65] mb-6 max-w-md">
+                            {t('leadMagnet.description')}
+                        </p>
+
+                        <ul class="space-y-2 mb-8 max-w-md">
+                            {bullets.map(item => (
+                                <li class="flex items-start gap-2.5 text-[14px] text-slate-600">
+                                    <CheckCircle2 className="h-4 w-4 text-indigo-600 mt-0.5 shrink-0" />
+                                    <span>{item}</span>
+                                </li>
+                            ))}
+                        </ul>
+
+                        <a
+                            href={manualHref}
+                            data-track="cta_secondary_click"
+                            data-track-dest="lead_magnet_manual"
+                            data-track-source="promo_section"
+                            class="inline-flex items-center justify-center bg-slate-900 hover:bg-slate-800 text-white h-11 px-6 rounded-md text-[14px] font-medium gap-1.5 transition-colors"
+                        >
+                            {t('leadMagnet.cta')}
+                            <ArrowRight className="h-3.5 w-3.5" />
+                        </a>
+
+                        <p class="text-[11.5px] text-slate-500 mt-4">
+                            {t('leadMagnet.disclaimer')}
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-950 text-white p-10 md:p-14 flex flex-col justify-center relative overflow-hidden">
+                        <div
+                            aria-hidden
+                            class="absolute inset-0 opacity-50 pointer-events-none"
+                            style="background: radial-gradient(ellipse 600px 400px at 80% 20%, rgba(99,102,241,0.14), transparent 60%)"
+                        />
+                        <div class="relative">
+                            <BookOpen className="h-14 w-14 text-indigo-300 mb-6" strokeWidth={1.2} />
+                            <div class="font-reading text-[24px] md:text-[28px] leading-[1.15] text-white mb-3">
+                                {t('leadMagnet.coverTitle')}
+                            </div>
+                            <div class="text-[12px] text-slate-400 uppercase tracking-[0.15em] mb-6">
+                                {t('leadMagnet.coverBrand')}
+                            </div>
+                            <ul class="space-y-1.5 text-[13.5px] text-slate-400 leading-relaxed">
+                                {coverBullets.map(item => (
+                                    <li>{item}</li>
+                                ))}
+                            </ul>
+                            <div class="mt-8 pt-6 border-t border-white/10 text-[11px] text-slate-500 uppercase tracking-[0.15em]">
+                                {t('leadMagnet.coverFooter')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Reveal>
+    </div>
+</section>

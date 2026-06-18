@@ -1,0 +1,53 @@
+---
+import { createT, type Lang } from '@/lib/i18n';
+import { Nav } from '@/components/islands/Nav';
+import Hero from '@/components/Hero.astro';
+import TrustStrip from '@/components/TrustStrip.astro';
+import Problem from '@/components/Problem.astro';
+import HowItWorks from '@/components/HowItWorks.astro';
+import ForWhom from '@/components/ForWhom.astro';
+import PillarBiblioteca from '@/components/PillarBiblioteca.astro';
+import PillarLenguas from '@/components/PillarLenguas.astro';
+import PillarTutores from '@/components/PillarTutores.astro';
+import PillarProduccion from '@/components/PillarProduccion.astro';
+import StatsBand from '@/components/StatsBand.astro';
+import Philosophy from '@/components/Philosophy.astro';
+import UseCases from '@/components/UseCases.astro';
+import Pricing from '@/components/Pricing.astro';
+import LeadMagnetPromo from '@/components/LeadMagnetPromo.astro';
+import { FAQ } from '@/components/islands/FAQ';
+import FinalCTA from '@/components/FinalCTA.astro';
+import Footer from '@/components/Footer.astro';
+
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = createT(lang);
+
+const navLabels = t<string[]>('nav.links');
+const faqItems = t<Array<{ q: string; a: string }>>('faq.items');
+---
+<Nav
+    client:load
+    lang={lang}
+    navLabels={navLabels}
+    signIn={t('nav.signIn')}
+    startFree={t('nav.startFree')}
+    menu={t('nav.menu')}
+/>
+<Hero lang={lang} />
+<TrustStrip lang={lang} />
+<Problem lang={lang} />
+<HowItWorks lang={lang} />
+<ForWhom lang={lang} />
+<PillarBiblioteca lang={lang} />
+<PillarLenguas lang={lang} />
+<PillarTutores lang={lang} />
+<PillarProduccion lang={lang} />
+<StatsBand lang={lang} />
+<Philosophy lang={lang} />
+<UseCases lang={lang} />
+<Pricing lang={lang} />
+<LeadMagnetPromo lang={lang} />
+<FAQ client:visible eyebrow={t('faq.eyebrow')} heading={t('faq.heading')} items={faqItems} />
+<FinalCTA lang={lang} />
+<Footer lang={lang} />

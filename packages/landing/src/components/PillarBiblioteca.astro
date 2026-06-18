@@ -1,0 +1,21 @@
+---
+import { createT, type Lang } from '@/lib/i18n';
+import { buildMockProps } from '@/lib/mockProps';
+import PillarSection from '@/components/PillarSection.astro';
+import { LibraryMock } from '@/components/mocks/LibraryMock';
+
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = createT(lang);
+const mocks = buildMockProps(lang);
+---
+<PillarSection
+    id="pilar-1"
+    number="01"
+    eyebrow={t('pillars.biblioteca.eyebrow')}
+    title={t('pillars.biblioteca.title')}
+    description={t('pillars.biblioteca.description')}
+    bullets={t('pillars.biblioteca.bullets')}
+>
+    <LibraryMock slot="mockup" {...mocks.library} />
+</PillarSection>
