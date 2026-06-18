@@ -3,20 +3,54 @@
         "rules": "firestore.rules",
         "indexes": "firestore.indexes.json"
     },
-    "hosting": {
-        "public": "packages/web/dist",
-        "ignore": [
-            "firebase.json",
-            "**/.*",
-            "**/node_modules/**"
-        ],
-        "rewrites": [
-            {
-                "source": "**",
-                "destination": "/index.html"
-            }
-        ]
-    },
+    "hosting": [
+        {
+            "target": "app",
+            "public": "packages/web/dist",
+            "ignore": [
+                "firebase.json",
+                "**/.*",
+                "**/node_modules/**"
+            ],
+            "rewrites": [
+                {
+                    "source": "**",
+                    "destination": "/index.html"
+                }
+            ]
+        },
+        {
+            "target": "marketing",
+            "public": "packages/landing/dist",
+            "ignore": [
+                "firebase.json",
+                "**/.*",
+                "**/node_modules/**"
+            ],
+            "redirects": [
+                {
+                    "source": "/login",
+                    "destination": "https://app.preach.dosfilos.com/login",
+                    "type": 301
+                },
+                {
+                    "source": "/register",
+                    "destination": "https://app.preach.dosfilos.com/register",
+                    "type": 301
+                },
+                {
+                    "source": "/dashboard",
+                    "destination": "https://app.preach.dosfilos.com/dashboard",
+                    "type": 301
+                },
+                {
+                    "source": "/dashboard/:rest*",
+                    "destination": "https://app.preach.dosfilos.com/dashboard/:rest*",
+                    "type": 301
+                }
+            ]
+        }
+    ],
     "functions": [
         {
             "source": "packages/functions",

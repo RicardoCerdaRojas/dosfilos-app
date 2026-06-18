@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://DosFilos.Preach
-    
+      url: https://preach.dosfilos.com
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -25,8 +25,18 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile --ignore-engines
-      
-      - name: Build web app
+
+      # La landing (paquete Astro) se instala con npm aparte: sus deps NO viven
+      # en yarn.lock (aislamiento intencional; ver docs/Preach_SEO_descubribilidad.md §8.1).
+      - name: Install landing (Astro) dependencies
+        run: npm install --prefix packages/landing --no-workspaces --no-audit --no-fund
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      # `npm run build` (root, --workspaces) construye el web app Y la landing
+      # Astro (deps ya instaladas en el paso anterior).
+      - name: Build web app + landing
         run: npm run build
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
@@ -38,19 +48,23 @@ jobs:
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_GEMINI_MODEL_ID: "gemini-2.5-flash"
           VITE_RECAPTCHA_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
-      
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
-          channelId: live
+
+      # Mapear los targets de hosting a sus sitios (.firebaserc está gitignored,
+      # así que se aplican en el runner). El sitio `dosfilos-preach-marketing`
+      # debe existir en el proyecto (paso de consola del fundador) ANTES del
+      # primer deploy, o este paso/deploy falla por sitio inexistente.
+      - name: Configure Hosting targets
+        run: |
+          firebase target:apply hosting app dosfilosapp --project ${{ secrets.FIREBASE_PROJECT_ID }}
+          firebase target:apply hosting marketing dosfilos-preach-marketing --project ${{ secrets.FIREBASE_PROJECT_ID }}
         env:
-          FIREBASE_CLI_EXPERIMENTS: webframeworks
-      
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+      # Deploy multi-site (CLI). Reemplaza action-hosting-deploy (single-site).
+      - name: Deploy Hosting (app + marketing)
+        run: firebase deploy --only hosting --project ${{ secrets.FIREBASE_PROJECT_ID }}
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
       - name: Deploy Firebase Functions
         run: firebase deploy --only functions --project ${{ secrets.FIREBASE_PROJECT_ID }}
