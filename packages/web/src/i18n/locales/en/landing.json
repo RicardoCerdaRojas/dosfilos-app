@@ -198,8 +198,8 @@
                 "headline": "Sunday's expository sermon, without skipping steps.",
                 "steps": [
                     "Upload this week's commentaries on the passage.",
-                    "Ask the Exegesis Tutor about the Greek behind the key verse.",
-                    "Cross-reference your sources and build an outline with traceable citations.",
+                    "Consult the Exegesis Tutor to understand the Greek of the key verse.",
+                    "Cross-reference your sources and build your outline with traceable citations.",
                     "Export to Markdown or PDF to take into the pulpit."
                 ],
                 "outcome": "Walks into Sunday with exegetical backing and a clear plan — not a blank document and a ticking clock."
@@ -210,8 +210,8 @@
                 "steps": [
                     "Set the passage and your professor's brief.",
                     "Cross-reference your uploaded material with the specialized library.",
-                    "Let the Hebrew Tutor untangle a tricky morphological construction.",
-                    "Generate the paper's structure with author, title, and page for every citation."
+                    "Consult the Hebrew Tutor to clear up your doubts about a tricky morphological construction.",
+                    "Structure your paper with author, title, and page for every citation."
                 ],
                 "outcome": "Turns in serious work backed by verifiable sources — not a patchwork any professor spots in seconds."
             },
@@ -220,8 +220,8 @@
                 "headline": "Structured teaching material for the whole semester.",
                 "steps": [
                     "Index notes from past courses into your personal library.",
-                    "Have the Systematic Theology Tutor compare Berkhof, Bavinck, and Grudem.",
-                    "Generate study guides with discussion questions and assigned readings.",
+                    "Consult the Systematic Theology Tutor to understand the positions and interpretations of Berkhof, Bavinck, and Grudem.",
+                    "Build study guides with discussion questions and assigned readings.",
                     "Export material that's ready for the seminary LMS."
                 ],
                 "outcome": "Pulls decades of scattered notes into one searchable corpus — instead of a pile of unopened PDFs."
@@ -231,9 +231,9 @@
                 "headline": "A pastoral case grounded in Scripture, not personal opinion.",
                 "steps": [
                     "Upload your biblical-counseling material (Adams, Tripp, Welch).",
-                    "Have the Biblical Counseling Tutor apply the principles to a specific case.",
+                    "Consult the Biblical Counseling Tutor to learn the model and process of biblical counseling.",
                     "Cross-reference the relevant passages with the sources you consulted.",
-                    "Build a counseling plan with traceable biblical grounding."
+                    "Build your counseling plan with traceable biblical grounding."
                 ],
                 "outcome": "Comes alongside real cases with serious backing — not lines improvised on the spot."
             }
