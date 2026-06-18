@@ -58,12 +58,12 @@ export function PillarSection({
                             <div className={cn('text-[11px] uppercase tracking-[0.2em] font-medium mb-4', dark ? 'text-indigo-400' : 'text-indigo-600')}>
                                 {eyebrow}
                             </div>
-                            <h3 className={cn(
+                            <h2 className={cn(
                                 'font-reading text-[36px] md:text-[44px] leading-[1.05] tracking-[-0.02em] mb-6',
                                 dark ? 'text-white' : 'text-slate-900'
                             )}>
                                 {title}
-                            </h3>
+                            </h2>
                             <p className={cn(
                                 'text-[17px] leading-[1.65] mb-8',
                                 dark ? 'text-slate-400' : 'text-slate-600'
