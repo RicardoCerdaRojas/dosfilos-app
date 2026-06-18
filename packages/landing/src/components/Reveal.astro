@@ -1,0 +1,12 @@
+---
+// Fade-up al entrar en viewport. Sin React: clase .reveal + observer global
+// (ver src/layouts/Layout.astro). Respeta prefers-reduced-motion vía CSS/JS.
+interface Props {
+  delay?: number;
+  class?: string;
+}
+const { delay = 0, class: className = '' } = Astro.props;
+---
+<div class={`reveal ${className}`} style={delay ? `transition-delay:${delay}ms` : undefined}>
+  <slot />
+</div>
