@@ -67,23 +67,23 @@ OG + Twitter cards presentes (`index.html`). H1 existe. Bilingüe funciona a niv
 | 2 | B3 — robots.txt + sitemap.xml | 🟠 alto | trivial | ☑ PR #362 |
 | 3 | §1 — host `preach.dosfilos.com` conectado + SSL ✅. (True 301 del `.web.app` no existe en Firebase; dedup vía `rel=canonical` → item 5) | 🟠 alto | bajo | ◑ host ✅ / canonical en item 5 |
 | 4 | I1 — Headings semánticos (h2 pilares / h3 FAQ) | 🟡 medio | bajo | ☑ PR #362 |
-| 5 | **Bloque prerender** — B1 prerender landing+rutas públicas **+ B4 i18n por URL (`/es/` `/en/`) + hreflang + B5 canonical + B6 head por-ruta/idioma** (acoplados → una sola pasada) | 🔴 máx | alto | ☐ |
+| 5 | **Landing Astro** (paquete nuevo) — SSG + B4 i18n por URL (`/es/` `/en/`) + hreflang + B5 canonical + B6 head por-página, todo NATIVO de Astro. Ver §8. | 🔴 máx | alto | ☐ (plan listo) |
 | 6 | I2 — Imágenes WebP + lazy + carousel diferido | 🟡 medio | medio | ☐ |
 
 **Quick wins (esta semana):** items 1-4. Bajo esfuerzo, mueven aguja sin tocar arquitectura.
-**El grande:** item 5 (bloque prerender). Sin esto las IAs siguen ciegas — es la pelea principal. i18n-por-URL, hreflang, canonical y head dinámico se hacen **junto** con el prerender (todos tocan el HTML emitido por ruta/idioma; separarlos = repetir la pasada).
-**Diferido:** migrar landing a Astro (post-prerender). **Otra tanda:** blog en `dosfilos.com` raíz (Astro, SSR/SSG).
+**El grande:** item 5. Pivot de "prerender" a **landing Astro nativa** (ver §8): el prerender era desechable y obligaba a i18n-por-URL a mano; Astro da i18n/hreflang/canonical/SSG gratis. Sin esto las IAs siguen ciegas — pelea principal.
+**Otra tanda / fuera de repo:** blog en `dosfilos.com` (familia de productos), proyecto aparte.
 
 ---
 
 ## 6. Decisiones cerradas (fundador, 18-jun-2026)
 
-1. ✅ **Host oficial del producto:** `preach.dosfilos.com`. 301 desde `dosfilosapp.web.app` (item 3 del plan).
-2. ✅ **Prerender ahora** sobre el Vite actual (primera versión indexable sin reescribir). **Migrar landing a Astro = diferido** (estratégico, post-prerender).
-3. ✅ **i18n por URL ahora**, acoplado al bloque de prerender (item 5).
-4. ✅ **Blog raíz = otra tanda.** Primero descubribilidad del producto. Será paquete nuevo del monorepo en Astro.
+1. ✅ **Host de marketing:** `preach.dosfilos.com` (landing Astro). **App React se muda a `app.preach.dosfilos.com`** (auth-gated, sin SEO).
+2. ✅ **Camino item 5 = landing Astro nativa** (paquete nuevo `packages/landing`), NO prerender. El prerender era desechable; Astro da i18n/SEO gratis.
+3. ✅ **i18n por URL** (`/es/` `/en/`) vía Astro nativo. Precios **estáticos** en config/i18n (mata acople `usePlans`).
+4. ✅ **`dosfilos.com` = paraguas de familia** (preach/church/seminary). Blog vive ahí, habla de toda la familia → **proyecto aparte**, fuera de este monorepo.
 
-Pendiente operativo: ninguna decisión bloquea los quick wins. Para el item 3 (301) hace falta acceso a DNS/hosting del dominio cuando se ejecute.
+Pendiente operativo: la mudanza de la app a `app.preach.dosfilos.com` requiere pasos de consola/DNS del fundador (ver §8.5).
 
 ---
 
@@ -93,3 +93,54 @@ Pendiente operativo: ninguna decisión bloquea los quick wins. Para el item 3 (3
 - **Visibilidad IA:** consultas de control en Perplexity/ChatGPT/Claude sobre "asistente exégesis/predicación" antes y después de B1+B2.
 - **Orgánico:** GA4 canal Organic Search, antes/después.
 - **Técnico:** Lighthouse SEO + Core Web Vitals antes/después de B1 e I2.
+
+---
+
+## 8. Item 5 — plan detallado (landing Astro)
+
+**Arquitectura final:**
+- `preach.dosfilos.com` = landing Astro (`packages/landing`, paquete nuevo), marketing indexable.
+- `app.preach.dosfilos.com` = app React (`packages/web` actual), auth-gated.
+- CTAs de la landing → absolutos a `app.preach.dosfilos.com/register|login`. `preach.dosfilos.com/dashboard` → 301 a la app.
+
+### 8.1 Paquete
+`packages/landing`, nombre `@dosfilos/landing` (el workspace globbea `packages/*`, no hay `apps/`). Astro 4 + `@astrojs/react` + `@astrojs/tailwind` + `@astrojs/sitemap`. React fijado a `18.3.1` (override del root, evita doble React en islands). **Gotcha yarn/BYBLOS_NPM_TOKEN:** instalar deps con npm en root / o con token; build vía `npm run build --workspace=@dosfilos/landing` (resuelve `.bin/astro`), nunca `yarn build`.
+
+### 8.2 i18n + head
+`i18n` nativo: `locales: ['es','en']`, `defaultLocale: 'es'`, `prefixDefaultLocale: true` → `/es/` `/en/` explícitos. `/` → redirect a `/es/`. `Layout.astro` emite title/description/**canonical** (siempre a `preach.dosfilos.com`, resuelve B5 + dedup `.web.app`)/**hreflang** recíproco/OG + los **3 bloques JSON-LD** (se MUEVEN desde `packages/web/index.html`; FAQPage se genera desde `faq.items` de `landing.json` para no desincronizar). `@astrojs/sitemap` genera sitemap con hreflang.
+
+### 8.3 Port de componentes (27 archivos)
+- **19 estáticos** → `.astro` (o `.tsx` sin `client:`, render server-side). Mocks incluidos (solo usan strings).
+- **Islands** (`client:*`): `Nav` (`client:load`), `HeroCarousel` (`client:visible`), `LanguageMockCarousel` (`client:visible`), `FAQ` (`client:visible`).
+- **`Reveal`** (envuelve ~11 secciones): NO island (forzaría hidratar todo). Reemplazar por componente Astro + 1 IntersectionObserver inline global. **Decisión de port más importante** para mantener SSG.
+- **Islands reciben strings ya resueltos como props** (build-time `t()`), NO usan `useTranslation` → cero `i18next` en bundles.
+- **3 acoples eliminados:** Firebase auth (la landing es logged-out) / `react-router Link`→`<a>` absolutos / `usePlans()`→ **precios estáticos** en `src/config/plans.ts` + labels en `landing.json` (capturar valores de prod al codear).
+
+### 8.4 Compartido
+- **Tailwind/tokens/fonts:** DUPLICAR ahora (no extraer paquete shared — tocaría la app viva). Copiar subset de `tailwind.config.cjs` (fontFamily incl. hebrew/greek) + fonts SIL a `packages/landing/public/fonts` + `@font-face` a `global.css`. Copiar assets (`logo_dfp.png`, `og-preview.png`, `favicon.png`).
+- **`landing.json`:** import directo relativo desde `packages/web/...` (1 sola copia). Acople conocido; promover a `@dosfilos/locales` si molesta.
+- **Analytics:** portar `init/config/utm` (IDs públicos) + `track()` TRIMMED (sin el mirror Firebase Functions). Eventos vía delegación `data-track` en `Layout.astro` (secciones quedan estáticas).
+
+### 8.5 Infra (Firebase multi-site)
+- `.firebaserc`: targets `marketing`→sitio nuevo, `app`→sitio existente.
+- `firebase.json`: `hosting` pasa a ARRAY de 2 sitios. `marketing`=`packages/landing/dist` + 301s (`/dashboard`,`/login`,`/register`→app). `app`=`packages/web/dist` + rewrite SPA.
+- CI `deploy-production.yml`: build landing + deploy 2 targets (`firebase deploy --only hosting:marketing,hosting:app`).
+- **Fundador (consola/DNS):** (1) crear sitio Hosting `marketing`; (2) `app.preach.dosfilos.com` custom domain en sitio app (ADITIVO, no rompe); (3) provisión SSL; (4) **recién luego** re-apuntar `preach.dosfilos.com`→marketing; (5) autorizar `app.preach.dosfilos.com` en Firebase Auth domains (si no, login OAuth rompe); (6) alta en Search Console.
+- **Cutover seguro:** app responde en AMBOS hosts antes del flip → el flip solo cambia qué bundle responde el ápex; app nunca cae. **Rollback:** re-apuntar `preach`→app (bundle intacto, sin rebuild).
+
+### 8.6 Secuencia — 1 PR (consola primero)
+Colapsado de 3 PRs a 1 (decisión fundador, eficiencia). El split de 3 era conservador; el gate de consola va ANTES del merge, no en el medio.
+- **[Fundador, consola — ANTES del merge]:** crear sitio Hosting `marketing` + targets; `app.preach.dosfilos.com` custom domain en sitio app (ADITIVO, no rompe); SSL; autorizar `app.preach` en Firebase Auth domains. Necesario antes de mergear el `firebase.json` multi-site (si no, el deploy de prod falla por target inexistente).
+- **1 PR [código, en paralelo a la consola]:** `packages/landing` completo + `.firebaserc` targets + `firebase.json` multi-site + CI 2 targets.
+- **Merge** (tras consola lista) → deploya ambos sitios. Ápex `preach.dosfilos.com` sigue sirviendo la app (sin cambio) hasta el flip.
+- **[Fundador, DNS — paso irreversible-ish]:** smoke en `*.web.app`/`app.preach` → flip `preach.dosfilos.com`→marketing. Rollback = flip de vuelta (bundle app intacto, sin rebuild).
+- **PR aparte [opcional]:** WebP + carousel lazy (item 6).
+
+La validación pre-flip se mantiene: el flip del ápex es manual y va al final → se prueba todo en las URLs live antes del paso irreversible. Lo único que se pierde vs 3-PR: preview-channel pre-merge (se valida post-merge en live).
+
+### 8.7 Riesgos top
+- Auth origin-scoped: mudar a `app.preach` = nuevo origen → usuarios se deslogean 1 vez. Verificar `firebaseapp`/`identitytoolkit` AUSENTE en `landing/dist`. Autorizar `app.preach` en Auth domains.
+- Multi-site rewrite/redirect: `curl -I` los 3 301 + landing 200 + sin loops.
+- Bundle bloat i18n en islands: props, no hook. Verificar chunks sin `i18next`.
+- Paridad visual: screenshot diff es/en móvil+desktop (ojo fonts hebreo/griego + `prefers-reduced-motion`).
+- Precios estáticos: drift; link "ver detalles"→app `/pricing` (autoritativo) + comentario en código.
