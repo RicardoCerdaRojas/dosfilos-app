@@ -63,10 +63,10 @@ OG + Twitter cards presentes (`index.html`). H1 existe. Bilingüe funciona a niv
 
 | Orden | Item | Impacto | Esfuerzo | Estado |
 |-------|------|---------|----------|--------|
-| 1 | B2 — JSON-LD (Org + SoftwareApp + FAQ) | 🔴 alto | bajo | ☐ |
-| 2 | B3 — robots.txt + sitemap.xml | 🟠 alto | trivial | ☐ |
-| 3 | §1 — 301 `dosfilosapp.web.app` → `preach.dosfilos.com` | 🟠 alto | bajo | ☐ |
-| 4 | I1 — Headings semánticos (h3 pilares/FAQ) | 🟡 medio | bajo | ☐ |
+| 1 | B2 — JSON-LD (Org + SoftwareApp + FAQ) | 🔴 alto | bajo | ☑ PR #362 |
+| 2 | B3 — robots.txt + sitemap.xml | 🟠 alto | trivial | ☑ PR #362 |
+| 3 | §1 — 301 `dosfilosapp.web.app` → `preach.dosfilos.com` | 🟠 alto | bajo | ☐ (necesita DNS) |
+| 4 | I1 — Headings semánticos (h2 pilares / h3 FAQ) | 🟡 medio | bajo | ☑ PR #362 |
 | 5 | **Bloque prerender** — B1 prerender landing+rutas públicas **+ B4 i18n por URL (`/es/` `/en/`) + hreflang + B5 canonical + B6 head por-ruta/idioma** (acoplados → una sola pasada) | 🔴 máx | alto | ☐ |
 | 6 | I2 — Imágenes WebP + lazy + carousel diferido | 🟡 medio | medio | ☐ |
 
