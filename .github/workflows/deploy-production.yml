@@ -26,17 +26,12 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile --ignore-engines
 
-      # La landing (paquete Astro) se instala con npm aparte: sus deps NO viven
-      # en yarn.lock (aislamiento intencional; ver docs/Preach_SEO_descubribilidad.md §8.1).
-      - name: Install landing (Astro) dependencies
-        run: npm install --prefix packages/landing --no-workspaces --no-audit --no-fund
-
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      # `npm run build` (root, --workspaces) construye el web app Y la landing
-      # Astro (deps ya instaladas en el paso anterior).
-      - name: Build web app + landing
+      # Build del web PRIMERO, con node_modules limpio. El root `npm run build`
+      # NO toca la landing (su script es build:site, no build).
+      - name: Build web app
         run: npm run build
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
@@ -48,6 +43,14 @@ jobs:
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_GEMINI_MODEL_ID: "gemini-2.5-flash"
           VITE_RECAPTCHA_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
+
+      # La landing se instala + construye DESPUÉS del web (deps npm fuera de
+      # yarn.lock; no deben contaminar node_modules antes del build del web).
+      # Ver docs/Preach_SEO_descubribilidad.md §8.1.
+      - name: Install + build landing (Astro)
+        run: |
+          npm install --prefix packages/landing --no-workspaces --no-audit --no-fund
+          npm run build:site --prefix packages/landing
 
       # Mapear los targets de hosting a sus sitios (.firebaserc está gitignored,
       # así que se aplican en el runner). El sitio `dosfilos-preach-marketing`
