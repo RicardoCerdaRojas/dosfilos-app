@@ -1,3 +1,5 @@
+import { useTranslation } from '@/i18n';
+
 /** Author marquee — curated authors trusted by the platform's library. */
 const AUTHORS = [
     'Juan Calvino',
@@ -11,11 +13,12 @@ const AUTHORS = [
 ];
 
 export function TrustStrip() {
+    const { t } = useTranslation('landing');
     return (
         <section className="border-y border-slate-200 bg-white py-10">
             <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
                 <div className="text-center text-[11px] uppercase tracking-[0.18em] text-slate-500 mb-6">
-                    Biblioteca especializada — dominio público y material licenciado
+                    {t('trustStrip.heading')}
                 </div>
                 <div className="flex flex-wrap justify-center items-center gap-x-10 gap-y-3">
                     {AUTHORS.map(a => (

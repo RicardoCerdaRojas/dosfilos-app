@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from '@/i18n';
 
 interface FooterColProps {
     title: string;
@@ -28,27 +29,30 @@ function FooterCol({ title, links }: FooterColProps) {
     );
 }
 
-const PRODUCT_LINKS: Array<[string, string]> = [
-    ['Filosofía', '#filosofia'],
-    ['Pilares', '#pilar-1'],
-    ['Cómo funciona', '#como-funciona'],
-    ['Precios', '/pricing'],
-    ['FAQ', '#faq'],
-];
+const PRODUCT_HREFS = ['#filosofia', '#pilar-1', '#como-funciona', '/pricing', '#faq'];
+const LEGAL_HREFS = ['/terms', '/privacy', '/dmca'];
+const ACCOUNT_HREFS = ['/login', '/pricing'];
 
-const LEGAL_LINKS: Array<[string, string]> = [
-    ['Términos de uso', '/terms'],
-    ['Privacidad', '/privacy'],
-    ['Política DMCA', '/dmca'],
-];
-
-const ACCOUNT_LINKS: Array<[string, string]> = [
-    ['Iniciar sesión', '/login'],
-    ['Registrarse', '/pricing'],
-];
+/** Zip translated labels with hard-coded routes/anchors into `[label, href]` tuples. */
+function zipLinks(labels: string[], hrefs: string[]): Array<[string, string]> {
+    return hrefs.map((href, i) => [labels[i] ?? '', href]);
+}
 
 /** Landing page footer — logo, three link columns, copyright, and tagline. */
 export function Footer() {
+    const { t } = useTranslation('landing');
+    const productLinks = zipLinks(
+        t('footer.productLinks', { returnObjects: true }) as string[],
+        PRODUCT_HREFS,
+    );
+    const legalLinks = zipLinks(
+        t('footer.legalLinks', { returnObjects: true }) as string[],
+        LEGAL_HREFS,
+    );
+    const accountLinks = zipLinks(
+        t('footer.accountLinks', { returnObjects: true }) as string[],
+        ACCOUNT_HREFS,
+    );
     return (
         <footer className="bg-slate-950 text-slate-400 border-t border-white/5 py-14 px-6 lg:px-10">
             <div className="max-w-[1400px] mx-auto">
@@ -70,40 +74,39 @@ export function Footer() {
                             }}
                         />
                         <p className="text-[13.5px] leading-relaxed max-w-sm text-slate-400">
-                            Sistema de gestión del conocimiento para el ministerio pastoral.
-                            Estudio profundo. Exposición fiel. Aplicación clara.
+                            {t('footer.tagline')}
                         </p>
                     </div>
-                    <FooterCol title="Producto" links={PRODUCT_LINKS} />
-                    <FooterCol title="Legal" links={LEGAL_LINKS} />
-                    <FooterCol title="Cuenta" links={ACCOUNT_LINKS} />
+                    <FooterCol title={t('footer.productTitle')} links={productLinks} />
+                    <FooterCol title={t('footer.legalTitle')} links={legalLinks} />
+                    <FooterCol title={t('footer.accountTitle')} links={accountLinks} />
                 </div>
                 <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-[12px]">
-                    <div>© {new Date().getFullYear()} Preach.DosFilos. Todos los derechos reservados.</div>
+                    <div>© {new Date().getFullYear()} Preach.DosFilos. {t('footer.rightsReserved')}</div>
                     <div className="font-reading italic text-slate-500">
-                        "Enteramente preparados para toda buena obra" · 2 Timoteo 3:17
+                        {t('footer.scriptureTagline')}
                     </div>
                 </div>
                 <div className="mt-4 text-[11px] text-slate-500 leading-relaxed">
-                    Este sitio está protegido por reCAPTCHA y aplican la{' '}
+                    {t('footer.recaptchaPre')}{' '}
                     <a
                         href="https://policies.google.com/privacy"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline hover:text-slate-300 transition-colors"
                     >
-                        Política de privacidad
+                        {t('footer.recaptchaPrivacy')}
                     </a>{' '}
-                    y los{' '}
+                    {t('footer.recaptchaMid')}{' '}
                     <a
                         href="https://policies.google.com/terms"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline hover:text-slate-300 transition-colors"
                     >
-                        Términos de servicio
+                        {t('footer.recaptchaTerms')}
                     </a>{' '}
-                    de Google.
+                    {t('footer.recaptchaPost')}
                 </div>
             </div>
         </footer>

@@ -87,13 +87,18 @@ export function Landing() {
                 visitor needs to feel the pain in order for the four
                 pillars to read as relief instead of as a feature list. */}
             <Problem />
+            {/* Para el visitante frío, "cómo funciona" + "para quién es"
+                van ANTES del tour técnico de los pilares: primero entiende
+                qué es y si es para él, luego ve la prueba profunda. Esto
+                además empuja el demo de lenguas (griego/hebreo) más abajo,
+                donde no intimida en los primeros segundos. */}
+            <HowItWorks />
+            <ForWhom />
             <PillarBiblioteca />
             <PillarLenguas />
             <PillarTutores />
             <PillarProduccion />
-            <HowItWorks />
             <StatsBand />
-            <ForWhom />
             {/* Principios (antes "Filosofía") sale después de que el
                 visitante entendió qué hace el producto + para quién es.
                 El orden narrativo importa: hablar de responsabilidad

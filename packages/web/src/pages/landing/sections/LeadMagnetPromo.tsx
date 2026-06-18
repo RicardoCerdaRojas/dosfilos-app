@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { track } from '@/lib/analytics';
+import { useTranslation } from '@/i18n';
 import { Reveal } from '../shared/Reveal';
 
 /**
@@ -23,6 +24,9 @@ import { Reveal } from '../shared/Reveal';
  *     landing vs which came directly from Meta ads.
  */
 export function LeadMagnetPromo() {
+    const { t } = useTranslation('landing');
+    const bullets = t('leadMagnet.bullets', { returnObjects: true }) as string[];
+    const coverBullets = t('leadMagnet.coverBullets', { returnObjects: true }) as string[];
     return (
         <section className="bg-slate-50 py-20 md:py-28 px-6 lg:px-10 border-t border-slate-200">
             <div className="max-w-[1100px] mx-auto">
@@ -32,26 +36,19 @@ export function LeadMagnetPromo() {
                             <div className="p-10 md:p-14">
                                 <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium mb-6">
                                     <span className="h-1 w-1 rounded-full bg-indigo-600" />
-                                    Recurso gratuito · PDF
+                                    {t('leadMagnet.badge')}
                                 </div>
 
                                 <h2 className="font-reading text-[28px] md:text-[36px] lg:text-[40px] leading-[1.1] tracking-[-0.02em] text-slate-900 mb-5">
-                                    ¿No estás listo? Empieza por el manual.
+                                    {t('leadMagnet.heading')}
                                 </h2>
 
                                 <p className="text-[15.5px] text-slate-600 leading-[1.65] mb-6 max-w-md">
-                                    Si todavía no quieres registrarte, descarga gratis nuestro
-                                    manual de predicación expositiva. Una guía práctica para
-                                    preparar sermones con metodología histórico-gramatical,
-                                    fidelidad al texto y orden en el estudio.
+                                    {t('leadMagnet.description')}
                                 </p>
 
                                 <ul className="space-y-2 mb-8 max-w-md">
-                                    {[
-                                        'Cómo pasar del texto bíblico a una estructura predicable',
-                                        'Errores frecuentes en la preparación expositiva',
-                                        'Checklist semanal del predicador serio',
-                                    ].map(item => (
+                                    {bullets.map(item => (
                                         <li key={item} className="flex items-start gap-2.5 text-[14px] text-slate-600">
                                             <CheckCircle2 className="h-4 w-4 text-indigo-600 mt-0.5 shrink-0" />
                                             <span>{item}</span>
@@ -64,13 +61,13 @@ export function LeadMagnetPromo() {
                                     onClick={() => track('cta_secondary_click', { destination: 'lead_magnet_manual', source: 'promo_section' })}
                                 >
                                     <Button className="bg-slate-900 hover:bg-slate-800 text-white h-11 px-6 rounded-md text-[14px] font-medium gap-1.5">
-                                        Descargar el manual gratis
+                                        {t('leadMagnet.cta')}
                                         <ArrowRight className="h-3.5 w-3.5" />
                                     </Button>
                                 </Link>
 
                                 <p className="text-[11.5px] text-slate-500 mt-4">
-                                    Sin compromiso. Solo te pedimos tu email para enviártelo.
+                                    {t('leadMagnet.disclaimer')}
                                 </p>
                             </div>
 
@@ -86,19 +83,18 @@ export function LeadMagnetPromo() {
                                 <div className="relative">
                                     <BookOpen className="h-14 w-14 text-indigo-300 mb-6" strokeWidth={1.2} />
                                     <div className="font-reading text-[24px] md:text-[28px] leading-[1.15] text-white mb-3">
-                                        Manual de predicación expositiva
+                                        {t('leadMagnet.coverTitle')}
                                     </div>
                                     <div className="text-[12px] text-slate-400 uppercase tracking-[0.15em] mb-6">
-                                        Preach · DosFilos
+                                        {t('leadMagnet.coverBrand')}
                                     </div>
                                     <ul className="space-y-1.5 text-[13.5px] text-slate-400 leading-relaxed">
-                                        <li>— Metodología histórico-gramatical</li>
-                                        <li>— Estructura del sermón expositivo</li>
-                                        <li>— Cómo preparar la introducción y la aplicación</li>
-                                        <li>— Checklist semanal del predicador</li>
+                                        {coverBullets.map(item => (
+                                            <li key={item}>{item}</li>
+                                        ))}
                                     </ul>
                                     <div className="mt-8 pt-6 border-t border-white/10 text-[11px] text-slate-500 uppercase tracking-[0.15em]">
-                                        PDF · gratuito · entrega inmediata
+                                        {t('leadMagnet.coverFooter')}
                                     </div>
                                 </div>
                             </div>
