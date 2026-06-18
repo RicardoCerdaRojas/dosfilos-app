@@ -30,8 +30,22 @@ export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
     const navLabels = t('nav.links', { returnObjects: true }) as string[];
     const navLinks: Array<[string, string]> = NAV_HREFS.map((href, i) => [navLabels[i], href]);
     const [scrolled, setScrolled] = useState(false);
+    const [activeHref, setActiveHref] = useState('');
     useEffect(() => {
-        const onScroll = () => setScrolled(window.scrollY > 8);
+        // Scroll-spy: the active link is the last section whose top has
+        // crossed below the nav. Pillars 2–4 aren't in the menu, so
+        // "Pilares" (#pilar-1) stays active across the whole pillar run
+        // until the next linked section (#como-funciona) reaches the top.
+        const THRESHOLD = 140; // fixed nav height (80px) + breathing room
+        const onScroll = () => {
+            setScrolled(window.scrollY > 8);
+            let current = '';
+            for (const href of NAV_HREFS) {
+                const el = document.getElementById(href.slice(1));
+                if (el && el.getBoundingClientRect().top <= THRESHOLD) current = href;
+            }
+            setActiveHref(current);
+        };
         onScroll();
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
@@ -71,8 +85,14 @@ export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
                             <a
                                 key={href}
                                 href={href}
+                                aria-current={activeHref === href ? 'true' : undefined}
                                 onClick={() => track('nav_link_click', { label, href })}
-                                className="px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition-colors"
+                                className={cn(
+                                    'px-3 py-1.5 rounded-md transition-colors',
+                                    activeHref === href
+                                        ? 'text-white bg-white/5'
+                                        : 'text-slate-400 hover:text-white'
+                                )}
                             >
                                 {label}
                             </a>
@@ -112,8 +132,12 @@ export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
                             <a
                                 key={href}
                                 href={href}
+                                aria-current={activeHref === href ? 'true' : undefined}
                                 onClick={() => setMobileOpen(false)}
-                                className="block py-2.5 text-slate-300 text-sm"
+                                className={cn(
+                                    'block py-2.5 text-sm',
+                                    activeHref === href ? 'text-white font-medium' : 'text-slate-300'
+                                )}
                             >
                                 {label}
                             </a>

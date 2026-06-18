@@ -197,9 +197,9 @@
                 "persona": "Pastor predicador",
                 "headline": "Sermón expositivo del domingo, sin saltarse pasos.",
                 "steps": [
-                    "Sube los comentarios que tiene esta semana al pasaje.",
-                    "Consulta al Tutor de Exégesis sobre el griego del verso clave.",
-                    "Cruza fuentes y arma bosquejo con citas trazables.",
+                    "Sube los comentarios de esta semana sobre el pasaje.",
+                    "Consulta al Tutor de Exégesis para entender el griego del verso clave.",
+                    "Cruza fuentes y arma tu bosquejo con citas trazables.",
                     "Exporta a Markdown o PDF para usar desde el púlpito."
                 ],
                 "outcome": "Llega al domingo con respaldo exegético y orden, no con un Word vacío y la presión del reloj."
@@ -209,9 +209,9 @@
                 "headline": "Ensayo exegético entregable, con citas que el profesor puede verificar.",
                 "steps": [
                     "Define el pasaje y el brief del profesor.",
-                    "Cruza su material subido con la biblioteca especializada.",
-                    "El Tutor de Hebreo desambigua una construcción morfológica difícil.",
-                    "Genera estructura del trabajo con autor, título y página por cita."
+                    "Cruza tu material subido con la biblioteca especializada.",
+                    "Consulta al Tutor de Hebreo para aclarar tus dudas sobre una construcción morfológica difícil.",
+                    "Estructura tu trabajo con autor, título y página por cita."
                 ],
                 "outcome": "Entrega un trabajo serio, con fuentes verificables, no un collage de internet que cualquier profesor detecta a la primera."
             },
@@ -219,9 +219,9 @@
                 "persona": "Profesor de teología",
                 "headline": "Material didáctico estructurado para el curso del semestre.",
                 "steps": [
-                    "Indexa apuntes de cursos pasados a su biblioteca personal.",
-                    "El Tutor de Teología Sistemática cruza posiciones de Berkhof, Bavinck y Grudem.",
-                    "Genera guías de estudio con preguntas + lecturas asignadas.",
+                    "Indexa apuntes de cursos pasados a tu biblioteca personal.",
+                    "Consulta al Tutor de Teología Sistemática para entender posturas e interpretaciones de Berkhof, Bavinck y Grudem.",
+                    "Arma guías de estudio con preguntas y lecturas asignadas.",
                     "Exporta material listo para el LMS del seminario."
                 ],
                 "outcome": "Reúne décadas de notas dispersas en un corpus consultable, no en una pila de PDFs sin abrir."
@@ -231,9 +231,9 @@
                 "headline": "Caso pastoral con fundamento bíblico, no opinión personal.",
                 "steps": [
                     "Sube material de consejería bíblica (Adams, Tripp, Welch).",
-                    "El Tutor de Consejería Bíblica aplica principios a un caso específico.",
+                    "Consulta al Tutor de Consejería Bíblica para conocer el modelo y los procesos de la consejería bíblica.",
                     "Cruza pasajes pertinentes con las fuentes consultadas.",
-                    "Estructura un plan de consejería con base bíblica trazable."
+                    "Estructura tu plan de consejería con base bíblica trazable."
                 ],
                 "outcome": "Acompaña casos reales con respaldo serio, no con frases armadas en el momento."
             }
