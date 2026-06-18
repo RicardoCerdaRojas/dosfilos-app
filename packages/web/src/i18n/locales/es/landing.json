@@ -333,5 +333,96 @@
         "recaptchaMid": "y los",
         "recaptchaTerms": "Términos de servicio",
         "recaptchaPost": "de Google."
+    },
+    "mocks": {
+        "hebrew": {
+            "header": "Entrenador Hebreo · Génesis 1:1",
+            "source": "BHS · Morfología",
+            "gloss": "en el principio creó Dios",
+            "analysisOf": "Análisis de",
+            "morphology": [
+                { "label": "Raíz", "value": "ברא" },
+                { "label": "Binyan", "value": "Qal" },
+                { "label": "Aspecto", "value": "Perfecto" },
+                { "label": "Persona", "value": "3ms" }
+            ]
+        },
+        "greek": {
+            "header": "Tutor Griego · Juan 1:14",
+            "morphologyLabel": "NA28 · Morfología",
+            "analysisOf": "Análisis de",
+            "gloss": "\"y el Verbo se hizo carne\"",
+            "morphology": [
+                { "label": "Lexema", "value": "γίνομαι" },
+                { "label": "Tiempo", "value": "Aoristo" },
+                { "label": "Voz", "value": "Media" },
+                { "label": "Modo", "value": "Indicativo" }
+            ]
+        },
+        "library": {
+            "title": "Mi biblioteca",
+            "searchPlaceholder": "Buscar en mi biblioteca…",
+            "upload": "Subir",
+            "books": [
+                { "title": "Institución de la Religión Cristiana", "author": "Juan Calvino", "pages": "1,462 págs" },
+                { "title": "Comentario Bíblico", "author": "Matthew Henry", "pages": "6 tomos" },
+                { "title": "Teología Sistemática", "author": "Wayne Grudem", "pages": "1,264 págs" },
+                { "title": "Gramática del Hebreo Bíblico", "author": "Gesenius-Kautzsch", "pages": "622 págs" },
+                { "title": "Treasury of David", "author": "Charles Spurgeon", "pages": "7 tomos" },
+                { "title": "La Ciudad de Dios", "author": "Agustín de Hipona", "pages": "1,097 págs" }
+            ]
+        },
+        "sermon": {
+            "header": "Sermón · Romanos 12:1-2",
+            "export": "Exportar ↓",
+            "titleLabel": "Título",
+            "title": "El culto racional: vidas transformadas como sacrificio vivo",
+            "propositionLabel": "Proposición",
+            "proposition": "El creyente ofrece su vida entera a Dios como un acto racional de adoración, renovado por el entendimiento transformador de la Palabra.",
+            "outlineLabel": "Bosquejo",
+            "outline": [
+                "El llamado: presentar los cuerpos",
+                "La naturaleza: sacrificio vivo, santo, agradable",
+                "El medio: renovación del entendimiento"
+            ],
+            "sourcesLabel": "Fuentes consultadas",
+            "source1Author": "Calvino",
+            "source1Book": "Comentario a Romanos",
+            "source2Author": "Moo",
+            "source2Book": "The Epistle to the Romans"
+        },
+        "tutors": {
+            "title": "Enrutamiento automático",
+            "active": "Activo",
+            "questionLabel": "Tu pregunta",
+            "questionBefore": "¿Cómo se interpreta exegéticamente",
+            "questionRef": "Juan 1:1",
+            "questionAfter": "a la luz del griego original?",
+            "available": "Tutores disponibles",
+            "routed": "Enrutado",
+            "areas": ["Exégesis", "Hebreo · AT", "Griego · NT", "Consejería", "Teología sistemática"]
+        },
+        "chat": {
+            "sessionsTitle": "Sesiones",
+            "sessions": [
+                "Aspecto verbal en hebreo",
+                "El aoristo en Jn 1:14",
+                "Pastoral — Rom 12:1-2",
+                "Imagen de Dios",
+                "Kenosis en Fil 2"
+            ],
+            "userMessage": "¿Qué es el aspecto perfecto en hebreo bíblico?",
+            "author": "Dr. Berith · Hebreo",
+            "answerTitle": "El aspecto perfecto (qatal) en hebreo bíblico",
+            "para1pre": "El hebreo bíblico, a diferencia del español, no marca primariamente el tiempo cronológico del verbo sino su",
+            "para1emphasis": "aspecto",
+            "para2pre": "En",
+            "para2ref": "Gén 1:1",
+            "para2mid": ", el verbo",
+            "para2post": "presenta la creación como un hecho completo",
+            "bibliographyTitle": "Bibliografía",
+            "bibBook": "Gramática Hebreo",
+            "continuePlaceholder": "Continúa la conversación..."
+        }
     }
 }

@@ -333,5 +333,96 @@
         "recaptchaMid": "and",
         "recaptchaTerms": "Terms of Service",
         "recaptchaPost": "apply."
+    },
+    "mocks": {
+        "hebrew": {
+            "header": "Hebrew Trainer · Genesis 1:1",
+            "source": "BHS · Morphology",
+            "gloss": "in the beginning God created",
+            "analysisOf": "Analysis of",
+            "morphology": [
+                { "label": "Root", "value": "ברא" },
+                { "label": "Binyan", "value": "Qal" },
+                { "label": "Aspect", "value": "Perfect" },
+                { "label": "Person", "value": "3ms" }
+            ]
+        },
+        "greek": {
+            "header": "Greek Tutor · John 1:14",
+            "morphologyLabel": "NA28 · Morphology",
+            "analysisOf": "Analysis of",
+            "gloss": "\"and the Word became flesh\"",
+            "morphology": [
+                { "label": "Lexeme", "value": "γίνομαι" },
+                { "label": "Tense", "value": "Aorist" },
+                { "label": "Voice", "value": "Middle" },
+                { "label": "Mood", "value": "Indicative" }
+            ]
+        },
+        "library": {
+            "title": "My library",
+            "searchPlaceholder": "Search my library…",
+            "upload": "Upload",
+            "books": [
+                { "title": "Institutes of the Christian Religion", "author": "John Calvin", "pages": "1,462 pp" },
+                { "title": "Commentary on the Whole Bible", "author": "Matthew Henry", "pages": "6 vols" },
+                { "title": "Systematic Theology", "author": "Wayne Grudem", "pages": "1,264 pp" },
+                { "title": "Hebrew Grammar", "author": "Gesenius-Kautzsch", "pages": "622 pp" },
+                { "title": "Treasury of David", "author": "Charles Spurgeon", "pages": "7 vols" },
+                { "title": "The City of God", "author": "Augustine of Hippo", "pages": "1,097 pp" }
+            ]
+        },
+        "sermon": {
+            "header": "Sermon · Romans 12:1-2",
+            "export": "Export ↓",
+            "titleLabel": "Title",
+            "title": "Rational worship: transformed lives as a living sacrifice",
+            "propositionLabel": "Proposition",
+            "proposition": "The believer offers his whole life to God as a rational act of worship, renewed by the transforming understanding of the Word.",
+            "outlineLabel": "Outline",
+            "outline": [
+                "The call: present your bodies",
+                "The nature: a living, holy, pleasing sacrifice",
+                "The means: the renewing of the mind"
+            ],
+            "sourcesLabel": "Sources consulted",
+            "source1Author": "Calvin",
+            "source1Book": "Commentary on Romans",
+            "source2Author": "Moo",
+            "source2Book": "The Epistle to the Romans"
+        },
+        "tutors": {
+            "title": "Automatic routing",
+            "active": "Active",
+            "questionLabel": "Your question",
+            "questionBefore": "How should",
+            "questionRef": "John 1:1",
+            "questionAfter": "be interpreted exegetically in light of the original Greek?",
+            "available": "Available tutors",
+            "routed": "Routed",
+            "areas": ["Exegesis", "Hebrew · OT", "Greek · NT", "Counseling", "Systematic theology"]
+        },
+        "chat": {
+            "sessionsTitle": "Sessions",
+            "sessions": [
+                "Verbal aspect in Hebrew",
+                "The aorist in Jn 1:14",
+                "Pastoral — Rom 12:1-2",
+                "Image of God",
+                "Kenosis in Phil 2"
+            ],
+            "userMessage": "What is the perfect aspect in Biblical Hebrew?",
+            "author": "Dr. Berith · Hebrew",
+            "answerTitle": "The perfect aspect (qatal) in Biblical Hebrew",
+            "para1pre": "Biblical Hebrew, unlike English, does not primarily mark the verb's chronological tense but its",
+            "para1emphasis": "aspect",
+            "para2pre": "In",
+            "para2ref": "Gen 1:1",
+            "para2mid": ", the verb",
+            "para2post": "presents creation as a completed act",
+            "bibliographyTitle": "Bibliography",
+            "bibBook": "Hebrew Grammar",
+            "continuePlaceholder": "Continue the conversation..."
+        }
     }
 }
