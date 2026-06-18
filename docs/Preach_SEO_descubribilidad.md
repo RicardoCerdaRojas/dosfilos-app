@@ -67,7 +67,7 @@ OG + Twitter cards presentes (`index.html`). H1 existe. Bilingüe funciona a niv
 | 2 | B3 — robots.txt + sitemap.xml | 🟠 alto | trivial | ☑ PR #362 |
 | 3 | §1 — host `preach.dosfilos.com` conectado + SSL ✅. (True 301 del `.web.app` no existe en Firebase; dedup vía `rel=canonical` → item 5) | 🟠 alto | bajo | ◑ host ✅ / canonical en item 5 |
 | 4 | I1 — Headings semánticos (h2 pilares / h3 FAQ) | 🟡 medio | bajo | ☑ PR #362 |
-| 5 | **Landing Astro** (paquete nuevo) — SSG + B4 i18n por URL (`/es/` `/en/`) + hreflang + B5 canonical + B6 head por-página, todo NATIVO de Astro. Ver §8. | 🔴 máx | alto | ☐ (plan listo) |
+| 5 | **Landing Astro** (paquete nuevo) — SSG + B4 i18n por URL (`/es/` `/en/`) + hreflang + B5 canonical + B6 head por-página, todo NATIVO de Astro. Ver §8. | 🔴 máx | alto | ◑ **PR #363 (draft)** — código completo + build verde; bloqueado por pasos de consola (§8.5) |
 | 6 | I2 — Imágenes WebP + lazy + carousel diferido | 🟡 medio | medio | ☐ |
 
 **Quick wins (esta semana):** items 1-4. Bajo esfuerzo, mueven aguja sin tocar arquitectura.
@@ -137,6 +137,12 @@ Colapsado de 3 PRs a 1 (decisión fundador, eficiencia). El split de 3 era conse
 - **PR aparte [opcional]:** WebP + carousel lazy (item 6).
 
 La validación pre-flip se mantiene: el flip del ápex es manual y va al final → se prueba todo en las URLs live antes del paso irreversible. Lo único que se pierde vs 3-PR: preview-channel pre-merge (se valida post-merge en live).
+
+### 8.6b Gotchas confirmados en build (PR #363)
+- **No instalar Astro con yarn** (roto por `BYBLOS_NPM_TOKEN` en `~/.npmrc` global). Local + CI: `npm install --prefix packages/landing --no-workspaces`. El `yarn install --frozen-lockfile` del root NO se rompe con la landing presente (verificado), pero NO instala astro → por eso el step npm aparte.
+- **`@astrojs/sitemap` 3.x incompat con astro 4.16** (i18n routing → `_routes` undefined). Quitado; sitemap a mano en `public/sitemap.xml` con hreflang.
+- **`.firebaserc` está gitignored** → no se commitea. Los targets de hosting se aplican en el runner con `firebase target:apply` antes del deploy.
+- Build loop local: `cd packages/landing && node_modules/.bin/astro build`.
 
 ### 8.7 Riesgos top
 - Auth origin-scoped: mudar a `app.preach` = nuevo origen → usuarios se deslogean 1 vez. Verificar `firebaseapp`/`identitytoolkit` AUSENTE en `landing/dist`. Autorizar `app.preach` en Auth domains.
