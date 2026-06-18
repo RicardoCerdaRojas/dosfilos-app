@@ -32,12 +32,12 @@ export function TutorsMock() {
                 </div>
 
                 <div className="text-[11px] uppercase tracking-wider text-slate-500 mb-3">{t('mocks.tutors.available')}</div>
-                {tutors.map(t => (
+                {tutors.map(tutor => (
                     <div
-                        key={t.name}
+                        key={tutor.name}
                         className={cn(
                             'flex items-center justify-between rounded-lg border px-4 py-3 transition-colors',
-                            t.active
+                            tutor.active
                                 ? 'border-indigo-300 bg-indigo-50/60 ring-1 ring-indigo-200/50'
                                 : 'border-slate-200 bg-white'
                         )}
@@ -45,16 +45,16 @@ export function TutorsMock() {
                         <div className="flex items-center gap-3">
                             <div className={cn(
                                 'h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-semibold tracking-tight',
-                                t.active ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'
+                                tutor.active ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'
                             )}>
-                                {t.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
+                                {tutor.name.split(' ').map(w => w[0]).slice(0, 2).join('')}
                             </div>
                             <div>
-                                <div className={cn('text-[13px] font-medium', t.active ? 'text-slate-900' : 'text-slate-700')}>{t.name}</div>
-                                <div className="text-[11px] text-slate-500">{t.area}</div>
+                                <div className={cn('text-[13px] font-medium', tutor.active ? 'text-slate-900' : 'text-slate-700')}>{tutor.name}</div>
+                                <div className="text-[11px] text-slate-500">{tutor.area}</div>
                             </div>
                         </div>
-                        {t.active && (
+                        {tutor.active && (
                             <div className="text-[11px] font-medium text-indigo-700 bg-white border border-indigo-200 rounded-full px-2 py-0.5">
                                 {t('mocks.tutors.routed')}
                             </div>
