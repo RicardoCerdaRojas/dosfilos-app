@@ -1,0 +1,87 @@
+---
+// Analytics de la landing Astro — port de packages/web/src/lib/analytics (init.ts).
+// Mismos IDs públicos (GA4 / Clarity / Meta Pixel). Sin el mirror de Firebase
+// Functions (la landing no tiene Firebase). Eventos vía delegación: cada CTA
+// lleva data-track="<evento>" + data-track-* (los emite el port de componentes).
+// Solo se renderiza en build de producción.
+const isProd = import.meta.env.PROD;
+---
+{isProd && (
+  <script is:inline>
+    {`
+    (function () {
+      var GA4 = 'G-PTSFDMZ2BJ', CLARITY = 'wq1p4ret6r', META = '860436937085301';
+
+      // ── first-touch UTM ──
+      try {
+        var qs = new URLSearchParams(location.search), utm = {};
+        ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'].forEach(function (k) {
+          var v = qs.get(k); if (v) utm[k] = v;
+        });
+        if (Object.keys(utm).length && !localStorage.getItem('utm_first_touch')) {
+          localStorage.setItem('utm_first_touch', JSON.stringify(utm));
+        }
+      } catch (e) {}
+
+      // ── GA4 ──
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      window.gtag('config', GA4, { send_page_view: true });
+      var g = document.createElement('script');
+      g.async = true; g.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA4;
+      document.head.appendChild(g);
+
+      // ── Microsoft Clarity ──
+      (function (c, l, a, r, i) {
+        c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
+        var t = l.createElement(r); t.async = 1; t.src = 'https://www.clarity.ms/tag/' + i;
+        var y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+      })(window, document, 'clarity', 'script', CLARITY);
+
+      // ── Meta Pixel ──
+      (function () {
+        if (window.fbq) return;
+        var n = window.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
+        if (!window._fbq) window._fbq = n;
+        n.push = n; n.loaded = true; n.version = '2.0'; n.queue = [];
+        var s = document.createElement('script');
+        s.async = true; s.src = 'https://connect.facebook.net/en_US/fbevents.js';
+        document.head.appendChild(s);
+        window.fbq('init', META); window.fbq('track', 'PageView');
+      })();
+
+      function fire(name, params) {
+        if (window.gtag) window.gtag('event', name, params || {});
+        if (window.fbq) window.fbq('trackCustom', name, params || {});
+      }
+
+      // landing_view (una vez)
+      fire('landing_view', { authenticated: false });
+
+      // ── click delegado: cualquier [data-track] ──
+      document.addEventListener('click', function (ev) {
+        var el = ev.target && ev.target.closest ? ev.target.closest('[data-track]') : null;
+        if (!el) return;
+        var name = el.getAttribute('data-track'); if (!name) return;
+        var params = {};
+        for (var i = 0; i < el.attributes.length; i++) {
+          var at = el.attributes[i];
+          if (at.name.indexOf('data-track-') === 0) {
+            params[at.name.slice('data-track-'.length).replace(/-/g, '_')] = at.value;
+          }
+        }
+        fire(name, params);
+      });
+
+      // ── scroll depth 25/50/75/100 ──
+      var marks = [25, 50, 75, 100], seen = {};
+      window.addEventListener('scroll', function () {
+        var h = document.documentElement;
+        var pct = (h.scrollTop + window.innerHeight) / h.scrollHeight * 100;
+        marks.forEach(function (m) { if (!seen[m] && pct >= m) { seen[m] = 1; fire('scroll_depth', { percent: String(m) }); } });
+      }, { passive: true });
+    })();
+    `}
+  </script>
+)}
