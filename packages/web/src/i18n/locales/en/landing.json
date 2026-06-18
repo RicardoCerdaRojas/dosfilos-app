@@ -195,7 +195,7 @@
         "personas": [
             {
                 "persona": "Preaching pastor",
-                "headline": "Sunday's expository sermon, without skipping steps.",
+                "headline": "Expository sermons, without skipping steps.",
                 "steps": [
                     "Upload this week's commentaries on the passage.",
                     "Consult the Exegesis Tutor to understand the Greek of the key verse.",
@@ -206,7 +206,7 @@
             },
             {
                 "persona": "Seminary student",
-                "headline": "A submission-ready exegetical paper, with citations your professor can actually check.",
+                "headline": "Papers with sound method, validated against your rubric.",
                 "steps": [
                     "Set the passage and your professor's brief.",
                     "Cross-reference your uploaded material with the specialized library.",
@@ -217,7 +217,7 @@
             },
             {
                 "persona": "Theology professor",
-                "headline": "Structured teaching material for the whole semester.",
+                "headline": "Plan, prepare, and author your own teaching material.",
                 "steps": [
                     "Index notes from past courses into your personal library.",
                     "Consult the Systematic Theology Tutor to understand the positions and interpretations of Berkhof, Bavinck, and Grudem.",
@@ -228,7 +228,7 @@
             },
             {
                 "persona": "Biblical counselor",
-                "headline": "A pastoral case grounded in Scripture, not personal opinion.",
+                "headline": "Resources and biblical method to prepare your sessions.",
                 "steps": [
                     "Upload your biblical-counseling material (Adams, Tripp, Welch).",
                     "Consult the Biblical Counseling Tutor to learn the model and process of biblical counseling.",

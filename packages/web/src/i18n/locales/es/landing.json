@@ -195,7 +195,7 @@
         "personas": [
             {
                 "persona": "Pastor predicador",
-                "headline": "Sermón expositivo del domingo, sin saltarse pasos.",
+                "headline": "Sermón expositivo, sin saltarse pasos.",
                 "steps": [
                     "Sube los comentarios de esta semana sobre el pasaje.",
                     "Consulta al Tutor de Exégesis para entender el griego del verso clave.",
@@ -206,7 +206,7 @@
             },
             {
                 "persona": "Seminarista",
-                "headline": "Ensayo exegético entregable, con citas que el profesor puede verificar.",
+                "headline": "Ensayos con metodología y validación de tu rúbrica.",
                 "steps": [
                     "Define el pasaje y el brief del profesor.",
                     "Cruza tu material subido con la biblioteca especializada.",
@@ -217,7 +217,7 @@
             },
             {
                 "persona": "Profesor de teología",
-                "headline": "Material didáctico estructurado para el curso del semestre.",
+                "headline": "Planifica, prepara y genera material didáctico de tu autoría.",
                 "steps": [
                     "Indexa apuntes de cursos pasados a tu biblioteca personal.",
                     "Consulta al Tutor de Teología Sistemática para entender posturas e interpretaciones de Berkhof, Bavinck y Grudem.",
@@ -228,7 +228,7 @@
             },
             {
                 "persona": "Consejero bíblico",
-                "headline": "Caso pastoral con fundamento bíblico, no opinión personal.",
+                "headline": "Ayuda con recursos y metodología bíblica para preparar tus sesiones.",
                 "steps": [
                     "Sube material de consejería bíblica (Adams, Tripp, Welch).",
                     "Consulta al Tutor de Consejería Bíblica para conocer el modelo y los procesos de la consejería bíblica.",
