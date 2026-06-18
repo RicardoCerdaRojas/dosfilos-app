@@ -4,6 +4,7 @@ import {
     ShieldAlert,
     Languages,
     Target,
+    Sprout,
 } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { Reveal } from '../shared/Reveal';
@@ -26,7 +27,7 @@ import { Reveal } from '../shared/Reveal';
  *     product directly addresses in a downstream pillar — the
  *     payoff structure stays coherent.
  */
-const PAIN_POINT_ICONS = [FolderTree, Clock, ShieldAlert, Languages, Target];
+const PAIN_POINT_ICONS = [FolderTree, Clock, ShieldAlert, Languages, Target, Sprout];
 
 export function Problem() {
     const { t } = useTranslation('landing');
