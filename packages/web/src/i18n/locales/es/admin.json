@@ -478,7 +478,7 @@
                 },
                 "conduccion_corazon": {
                     "label": "Conducción del corazón",
-                    "description": "Botón \"Conducir el corazón\" en el Estudio Madre: conducción guiada C1–C5 que elicita la aplicación afectiva anclada al texto (manifiesto de conducción formativa). Mantener off hasta que el examen del corazón despliegue."
+                    "description": "Botón \"Conducir el corazón\" en el Estudio Madre: conducción guiada C1–C5 que elicita la aplicación afectiva anclada al texto (manifiesto de conducción formativa). Validado en prod — el examen del corazón ya está desplegado."
                 }
             }
         },

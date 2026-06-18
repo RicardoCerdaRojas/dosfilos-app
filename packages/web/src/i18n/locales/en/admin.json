@@ -478,7 +478,7 @@
                 },
                 "conduccion_corazon": {
                     "label": "Heart conduction",
-                    "description": "\"Conduct the heart\" button in the Master Study: guided C1–C5 conduction that elicits the affective application anchored to the text (formative conduction manifesto). Keep off until the heart exam ships."
+                    "description": "\"Conduct the heart\" button in the Master Study: guided C1–C5 conduction that elicits the affective application anchored to the text (formative conduction manifesto). Validated in prod — the heart exam is already deployed."
                 }
             }
         },
