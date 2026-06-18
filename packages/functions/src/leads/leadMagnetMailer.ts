@@ -1,5 +1,6 @@
 import { getStorage } from 'firebase-admin/storage';
 import { Resend } from 'resend';
+import { APP_URL, MARKETING_URL } from '../config/urls';
 
 /**
  * Shared mailer for the lead-magnet flow. Both `captureLead` (visitor
@@ -12,7 +13,8 @@ const FROM_ADDRESS = 'Preach <hola@dosfilos.com>';
 const STORAGE_BUCKET = 'dosfilosapp.firebasestorage.app';
 const LEAD_MAGNET_STORAGE_PATH = 'public-assets/manual-para-predicadores.pdf';
 const SIGNED_URL_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
-const SITE_URL = 'https://dosfilosapp.web.app';
+const SITE_URL = APP_URL;
+const MARKETING_HOST = MARKETING_URL.replace(/^https?:\/\//, '');
 
 /**
  * Generates a fresh signed URL pointing at the lead-magnet PDF in
@@ -133,7 +135,7 @@ function renderEmailHtml({ greeting, downloadUrl }: { greeting: string; download
           <tr>
             <td style="padding:24px 36px;background:#f8fafc;border-top:1px solid #e2e8f0;">
               <p style="font-size:12px;color:#94a3b8;line-height:1.6;margin:0;">
-                Te enviamos este correo porque solicitaste el manual desde dosfilosapp.web.app.
+                Te enviamos este correo porque solicitaste el manual desde ${MARKETING_HOST}.
                 Si no fuiste tú, puedes ignorar este mensaje.
               </p>
             </td>

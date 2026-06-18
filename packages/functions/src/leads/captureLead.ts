@@ -3,6 +3,7 @@ import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { sendDeliveryEmail } from './leadMagnetMailer';
 import { dispatchToMetaCapi, hashEmail } from '../analytics/metaCapi';
+import { APP_URL } from '../config/urls';
 
 interface CaptureLeadRequest {
     email: string;
@@ -172,7 +173,7 @@ export const captureLead = onCall<CaptureLeadRequest, Promise<CaptureLeadRespons
             eventName: 'lead_magnet_submitted',
             eventId: `capi_lead_${leadId}_${Date.now()}`,
             timestampMs: Date.now(),
-            sourceUrl: 'https://dosfilosapp.web.app/recursos/manual-para-predicadores',
+            sourceUrl: `${APP_URL}/recursos/manual-para-predicadores`,
             ip: request.rawRequest?.headers['x-forwarded-for'] as string | undefined ?? null,
             userAgent: request.rawRequest?.headers['user-agent'] as string | undefined ?? null,
             customData: {

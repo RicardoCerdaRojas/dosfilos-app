@@ -6,10 +6,11 @@ import { getDay7LibraryTemplate, getDay7LibrarySubject } from './templates/nurtu
 import { getDay14UpgradeTemplate, getDay14UpgradeSubject } from './templates/nurture/day14Upgrade';
 import { getTrialEnding5dTemplate, getTrialEnding5dSubject } from './templates/nurture/trialEnding5d';
 import { getTrialEnding1dTemplate, getTrialEnding1dSubject } from './templates/nurture/trialEnding1d';
+import { APP_URL } from '../config/urls';
 
 const db = admin.firestore();
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
-const DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard';
+const DASHBOARD_URL = `${APP_URL}/dashboard`;
 
 type Locale = 'es' | 'en';
 

@@ -4,9 +4,10 @@ import { render } from '@react-email/render';
 import { resend } from '../emails/resendClient';
 import { WelcomeEmail, getWelcomeEmailSubject } from '../emails/templates/WelcomeEmail';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
+import { APP_URL } from '../config/urls';
 
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
-const DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard';
+const DASHBOARD_URL = `${APP_URL}/dashboard`;
 
 export const resendWelcomeEmail = onCall(appCheckCallableOptions(), async (request) => {
     // 1. Verify Authentication

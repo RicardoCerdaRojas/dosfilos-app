@@ -1,6 +1,7 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { resend } from '../emails/resendClient';
+import { APP_URL } from '../config/urls';
 
 const ADMIN_EMAIL = 'rdocerda@gmail.com';
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
@@ -114,7 +115,7 @@ function renderAlertEmail(
         <tbody>${rows}</tbody>
     </table>
     <p style="margin:24px 0 0 0;">
-        <a href="https://preach.dosfilos.com/dashboard/admin/llamaparse-monitoring"
+        <a href="${APP_URL}/dashboard/admin/llamaparse-monitoring"
            style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">
             Abrir panel de monitoring
         </a>

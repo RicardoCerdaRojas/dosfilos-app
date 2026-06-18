@@ -6,10 +6,11 @@ import {
     getEmailVerificationSubject,
 } from '../emails/templates/emailVerification';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
+import { APP_URL } from '../config/urls';
 
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
-const DASHBOARD_URL = 'https://preach.dosfilos.com/dashboard';
-const CONTINUE_URL = 'https://preach.dosfilos.com/auth/verify-email';
+const DASHBOARD_URL = `${APP_URL}/dashboard`;
+const CONTINUE_URL = `${APP_URL}/auth/verify-email`;
 
 /**
  * Custom email-verification send. Replaces Firebase Auth's default

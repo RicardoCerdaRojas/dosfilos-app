@@ -8,6 +8,8 @@
  *   - Px units (no rem — Outlook ignores root font-size).
  *   - System font stack (no @import — strips in Gmail).
  */
+import { MARKETING_URL } from '../../config/urls';
+
 export const emailTheme = {
     palette: {
         brandPrimary: '#D97706',         // amber-600 (matches logo)
@@ -49,7 +51,7 @@ export const emailTheme = {
         lg: '8px',
     },
     assets: {
-        logoUrl: 'https://preach.dosfilos.com/logo_dfp.png',
-        homeUrl: 'https://preach.dosfilos.com',
+        logoUrl: `${MARKETING_URL}/logo_dfp.png`,
+        homeUrl: MARKETING_URL,
     },
 };
