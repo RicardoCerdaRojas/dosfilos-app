@@ -144,6 +144,9 @@ La validación pre-flip se mantiene: el flip del ápex es manual y va al final �
 - **`.firebaserc` está gitignored** → no se commitea. Los targets de hosting se aplican en el runner con `firebase target:apply` antes del deploy.
 - Build loop local: `cd packages/landing && node_modules/.bin/astro build`.
 
+### 8.6c Follow-up — portar el manual (lead magnet) a la marketing Astro
+La página `/recursos/manual-para-predicadores` (PDF gratis + captura de lead) es un **activo de marketing/SEO** pero hoy vive en la app React → el CTA de la landing apunta a `app.preach.dosfilos.com/recursos/...` (no indexable). **Otra tanda:** portarla a la landing Astro (`preach.dosfilos.com/{es,en}/recursos/...`) para que sea indexable. Requiere un island que llame al callable `captureLead` (tiene formulario de email) → más que una página estática. No bloquea el PR #363; el link funciona post-DNS.
+
 ### 8.7 Riesgos top
 - Auth origin-scoped: mudar a `app.preach` = nuevo origen → usuarios se deslogean 1 vez. Verificar `firebaseapp`/`identitytoolkit` AUSENTE en `landing/dist`. Autorizar `app.preach` en Auth domains.
 - Multi-site rewrite/redirect: `curl -I` los 3 301 + landing 200 + sin loops.
