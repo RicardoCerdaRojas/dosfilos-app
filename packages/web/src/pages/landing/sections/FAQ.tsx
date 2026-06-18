@@ -13,21 +13,23 @@ function FAQItem({ q, a }: FAQItemProps) {
     const [open, setOpen] = useState(false);
     return (
         <div>
-            <button
-                type="button"
-                onClick={() => setOpen(!open)}
-                className="w-full flex items-start justify-between gap-6 py-6 text-left group"
-            >
-                <span className="font-reading text-[19px] md:text-[21px] text-slate-900 tracking-tight leading-snug">
-                    {q}
-                </span>
-                <ChevronDown
-                    className={cn(
-                        'h-5 w-5 shrink-0 text-slate-400 mt-1 transition-transform',
-                        open && 'rotate-180'
-                    )}
-                />
-            </button>
+            <h3 className="m-0">
+                <button
+                    type="button"
+                    onClick={() => setOpen(!open)}
+                    className="w-full flex items-start justify-between gap-6 py-6 text-left group"
+                >
+                    <span className="font-reading text-[19px] md:text-[21px] text-slate-900 tracking-tight leading-snug">
+                        {q}
+                    </span>
+                    <ChevronDown
+                        className={cn(
+                            'h-5 w-5 shrink-0 text-slate-400 mt-1 transition-transform',
+                            open && 'rotate-180'
+                        )}
+                    />
+                </button>
+            </h3>
             <div
                 className={cn(
                     'overflow-hidden transition-all',

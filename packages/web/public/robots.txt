@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Áreas privadas (requieren cuenta) — sin valor para indexación
+Disallow: /dashboard
+Disallow: /auth/
+
+Sitemap: https://preach.dosfilos.com/sitemap.xml

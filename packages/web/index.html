@@ -5,25 +5,133 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DosFilos.Preach | Asistente de Predicación</title>
+  <title>DosFilos.Preach — Estudio bíblico y preparación de sermones</title>
   <meta name="description"
-    content="Plataforma de inteligencia artificial para exégesis, homilética y redacción de sermones." />
+    content="Estudia con rigor y predica con fidelidad: exégesis, idiomas bíblicos, biblioteca teológica y preparación de sermones con fuentes trazables." />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://dosfilosapp.web.app/" />
-  <meta property="og:title" content="DosFilos.Preach | Asistente de Predicación" />
+  <meta property="og:url" content="https://preach.dosfilos.com/" />
+  <meta property="og:title" content="DosFilos.Preach — Estudio bíblico y preparación de sermones" />
   <meta property="og:description"
-    content="Tu copiloto teológico. Exégesis profunda, bosquejos homiléticos y redacción asistida por IA." />
-  <meta property="og:image" content="https://dosfilosapp.web.app/og-preview.png" />
+    content="Reúne tu biblioteca, los idiomas bíblicos y tutores especializados para estudiar mejor y predicar con fidelidad." />
+  <meta property="og:image" content="https://preach.dosfilos.com/og-preview.png" />
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://dosfilosapp.web.app/" />
-  <meta property="twitter:title" content="DosFilos.Preach | Asistente de Predicación" />
+  <meta property="twitter:url" content="https://preach.dosfilos.com/" />
+  <meta property="twitter:title" content="DosFilos.Preach — Estudio bíblico y preparación de sermones" />
   <meta property="twitter:description"
-    content="Tu copiloto teológico. Exégesis profunda, bosquejos homiléticos y redacción asistida por IA." />
-  <meta property="twitter:image" content="https://dosfilosapp.web.app/og-preview.png" />
+    content="Reúne tu biblioteca, los idiomas bíblicos y tutores especializados para estudiar mejor y predicar con fidelidad." />
+  <meta property="twitter:image" content="https://preach.dosfilos.com/og-preview.png" />
+
+  <!-- Structured data (schema.org JSON-LD) — estático para que los crawlers/IAs sin JS lo lean -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "DosFilos.Preach",
+    "url": "https://preach.dosfilos.com/",
+    "logo": "https://preach.dosfilos.com/logo_dfp.png",
+    "description": "Plataforma de estudio bíblico y preparación de sermones: exégesis, idiomas originales, biblioteca teológica y tutores especializados con fuentes trazables."
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "DosFilos.Preach",
+    "applicationCategory": "EducationApplication",
+    "operatingSystem": "Web",
+    "url": "https://preach.dosfilos.com/",
+    "description": "Estudia con rigor y predica con fidelidad: exégesis histórico-gramatical, griego y hebreo, biblioteca teológica especializada y preparación de sermones con citas trazables (autor, título y página).",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "¿Preach escribe el sermón por mí?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Preach está diseñado para acompañar tu proceso de estudio, no para reemplazarlo. Puede ayudarte a organizar observaciones, consultar fuentes, estructurar bosquejos y preparar notas, pero el discernimiento, la evaluación teológica y la predicación siguen siendo responsabilidad del ministro."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Puedo confiar en las respuestas?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Preach responde con referencias trazables cada vez que consulta tu biblioteca o los recursos disponibles: autor, título y página. Aun así, toda respuesta debe ser revisada por el usuario, especialmente en temas doctrinales, exegéticos o pastoralmente sensibles."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Qué significa que el sistema tiene citas con estándar académico?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cada respuesta del tutor cita sus fuentes indicando autor, título y página exacta. La referencia es rastreable al documento original que tú subiste o que vive en la biblioteca especializada. La bibliografía completa aparece al pie de cada consulta."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Pueden usar mi contenido para entrenar modelos?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Tu biblioteca personal es privada, aislada por usuario y nunca se usa para entrenar modelos. El modelo que consulta tu contenido lo hace solo en el momento de responder tu pregunta; no persiste esa información fuera de tu cuenta."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Qué puedo subir a mi biblioteca personal?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Material del que poseas los derechos legales: libros que hayas comprado (incluyendo ediciones digitales), material de dominio público, o texto con licencia que permita uso personal. Al subir declaras que tienes el derecho de usar ese material para tu estudio personal."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Qué incluye la biblioteca especializada?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Obras de dominio público y material con licencia explícita: comentarios clásicos (Calvino, Henry, Spurgeon, Agustín), léxicos académicos (Gesenius, Thayer, Strong), gramáticas y tratados patrísticos. Todo este material es citable públicamente."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Cómo funciona el enrutamiento de tutores?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cuando haces una pregunta, un enrutador analiza el contenido y elige automáticamente al especialista adecuado. Si detecta una pregunta interdisciplinaria, puede consultar a varios tutores y sintetizar la respuesta manteniendo la atribución."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Qué pasa cuando termina el trial de 30 días?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Si no cancelas antes del día 30, se cobra automáticamente el primer mes del plan que elegiste. Puedes cancelar en cualquier momento desde tu cuenta sin letra chica. Si cancelas durante el trial, no se cobra nada."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Hay material gratuito para empezar a usar mejor el tiempo de estudio?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sí. Puedes descargar gratis el manual de predicación expositiva en /recursos/manual-para-predicadores: una guía práctica para preparar sermones con metodología histórico-gramatical, fidelidad al texto y orden en el proceso de estudio."
+        }
+      }
+    ]
+  }
+  </script>
 </head>
 
 <body>
