@@ -4,7 +4,9 @@ import {
     ShieldAlert,
     Languages,
     Target,
+    Sprout,
 } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 import { Reveal } from '../shared/Reveal';
 
 /**
@@ -25,35 +27,16 @@ import { Reveal } from '../shared/Reveal';
  *     product directly addresses in a downstream pillar — the
  *     payoff structure stays coherent.
  */
-const PAIN_POINTS = [
-    {
-        icon: FolderTree,
-        title: 'Fuentes dispersas',
-        text: 'Tus libros, PDFs, notas, subrayados y comentarios viven en carpetas, apps y dispositivos distintos. Cuando los necesitas, los buscas más que los consultas.',
-    },
-    {
-        icon: Clock,
-        title: 'Tiempo limitado',
-        text: 'Nunca alcanza para revisar todas las fuentes que un estudio serio merece. Terminas decidiendo qué dejar fuera —y eso pesa cada domingo, cada entrega, cada clase.',
-    },
-    {
-        icon: ShieldAlert,
-        title: 'IA sin trazabilidad',
-        text: 'Las herramientas de IA generalistas afirman cosas sobre el texto bíblico sin mostrar de dónde vienen. Difícil confiar en una respuesta que no puedes verificar contra el autor original.',
-    },
-    {
-        icon: Languages,
-        title: 'Lenguas originales sin superficialidad',
-        text: 'Quieres consultar griego o hebreo sin caer en conclusiones lingüísticas apresuradas. Necesitas análisis morfológico, sintáctico y léxico —no solo palabras transliteradas.',
-    },
-    {
-        icon: Target,
-        title: 'Entregar con claridad y respaldo',
-        text: 'Sermones, ensayos, clases y consejos que sean fieles al texto, claros en la exposición y trazables en sus fuentes. El estándar lo exige; el tiempo, no siempre lo permite.',
-    },
-];
+const PAIN_POINT_ICONS = [FolderTree, Clock, ShieldAlert, Languages, Target, Sprout];
 
 export function Problem() {
+    const { t } = useTranslation('landing');
+
+    const painPoints = t('problem.painPoints', { returnObjects: true }) as Array<{
+        title: string;
+        text: string;
+    }>;
+
     return (
         <section
             id="problema"
@@ -86,45 +69,42 @@ export function Problem() {
                     <div className="max-w-3xl mb-16">
                         <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-indigo-300 font-medium mb-6">
                             <span className="h-1 w-1 rounded-full bg-indigo-400" />
-                            El problema
+                            {t('problem.eyebrow')}
                         </div>
                         <h2 className="font-reading text-[36px] md:text-[52px] lg:text-[60px] leading-[1.05] tracking-[-0.02em] text-white mb-8">
-                            Estudiar bien la Palabra exige más que abrir comentarios.
+                            {t('problem.heading')}
                         </h2>
                         <p className="text-[17px] md:text-[19px] text-slate-300 leading-[1.65] max-w-2xl">
-                            Pastores que predican cada semana, seminaristas que entregan
-                            exégesis cada mes, profesores que preparan clases con rigor,
-                            consejeros que aplican la teología a casos reales —todos enfrentan
-                            el mismo desafío de fondo: integrar fuentes dispersas, lenguas
-                            originales, biblioteca propia y producción ministerial sin perder
-                            fidelidad al texto.
+                            {t('problem.intro')}
                         </p>
                     </div>
                 </Reveal>
 
                 <div className="grid md:grid-cols-2 gap-px bg-white/10 border border-white/10 rounded-xl overflow-hidden">
-                    {PAIN_POINTS.map(({ icon: Icon, title, text }, idx) => (
-                        <Reveal key={title} delay={idx * 60}>
-                            <div className="bg-slate-950 p-8 md:p-10 h-full">
-                                <Icon className="h-5 w-5 text-indigo-300 mb-5" strokeWidth={1.5} />
-                                <h3 className="font-reading text-[22px] text-white mb-3 tracking-tight">
-                                    {title}
-                                </h3>
-                                <p className="text-[14.5px] text-slate-400 leading-[1.65]">
-                                    {text}
-                                </p>
-                            </div>
-                        </Reveal>
-                    ))}
+                    {PAIN_POINT_ICONS.map((Icon, idx) => {
+                        const { title, text } = painPoints[idx];
+                        return (
+                            <Reveal key={title} delay={idx * 60}>
+                                <div className="bg-slate-950 p-8 md:p-10 h-full">
+                                    <Icon className="h-5 w-5 text-indigo-300 mb-5" strokeWidth={1.5} />
+                                    <h3 className="font-reading text-[22px] text-white mb-3 tracking-tight">
+                                        {title}
+                                    </h3>
+                                    <p className="text-[14.5px] text-slate-400 leading-[1.65]">
+                                        {text}
+                                    </p>
+                                </div>
+                            </Reveal>
+                        );
+                    })}
                 </div>
 
                 <Reveal delay={400}>
                     <div className="mt-20 md:mt-24 pt-12 border-t border-white/10 max-w-3xl">
                         <p className="font-reading text-[20px] md:text-[24px] leading-[1.5] text-white">
-                            Preach fue diseñado para acompañar ese proceso completo:{' '}
+                            {t('problem.closingLead')}{' '}
                             <span className="text-slate-400">
-                                del texto bíblico al material ministerial, del estudio personal
-                                a la entrega pública.
+                                {t('problem.closingEmphasis')}
                             </span>
                         </p>
                     </div>

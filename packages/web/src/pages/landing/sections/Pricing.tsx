@@ -4,6 +4,7 @@ import { PlanCard } from '@/components/subscription/PlanCard';
 import { FreeTierBanner } from '@/components/subscription/FreeTierBanner';
 import { getPlanPriceId } from '@/hooks/usePlans';
 import { track } from '@/lib/analytics';
+import { useTranslation } from '@/i18n';
 import { Reveal } from '../shared/Reveal';
 
 interface PricingProps {
@@ -14,26 +15,26 @@ interface PricingProps {
 
 /** Pricing section — fetches plans via hook in parent and shows public ones. */
 export function Pricing({ plans, loading, onPlanSelect }: PricingProps) {
+    const { t } = useTranslation('landing');
     return (
         <section id="precios" className="bg-slate-50 py-16 md:py-20 px-6 lg:px-10 border-t border-slate-200">
             <div className="max-w-[1200px] mx-auto">
                 <Reveal>
                     <div className="text-center max-w-2xl mx-auto mb-8">
                         <div className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] uppercase tracking-[0.2em] text-indigo-600 font-medium mb-3">
-                            <span>Precios</span>
+                            <span>{t('pricing.eyebrow')}</span>
                         </div>
                         <h2 className="font-reading text-[32px] md:text-[42px] leading-[1.05] tracking-[-0.02em] text-slate-900 mb-4">
-                            Elige cómo quieres empezar.
+                            {t('pricing.heading')}
                         </h2>
                         <p className="text-[15px] text-slate-600 leading-snug">
-                            Puedes probar Preach gratis sin tarjeta, o activar 30 días gratis
-                            en cualquier plan pagado. Cancelas cuando quieras.
+                            {t('pricing.subtitle')}
                         </p>
                     </div>
                 </Reveal>
 
                 {loading ? (
-                    <div className="text-center text-slate-500 mt-10">Cargando planes...</div>
+                    <div className="text-center text-slate-500 mt-10">{t('pricing.loading')}</div>
                 ) : (
                     <>
                         <div className="grid md:grid-cols-3 gap-4 mt-6">
@@ -57,7 +58,7 @@ export function Pricing({ plans, loading, onPlanSelect }: PricingProps) {
                                         premiumPagesPerMonth={plan.limits?.premiumPagesPerMonth}
                                         exegesisUsdPerMonth={plan.limits?.exegesisUsdPerMonth}
                                         isPopular={plan.highlightText === 'Más Popular'}
-                                        ctaLabel="Empezar 30 días gratis sin tarjeta"
+                                        ctaLabel={t('pricing.ctaLabel')}
                                         onCtaClick={() => {
                                             track('cta_pricing_click', { planId: plan.id, planName: plan.name });
                                             track('plan_selected', { planId: plan.id, planName: plan.name });
@@ -67,10 +68,23 @@ export function Pricing({ plans, loading, onPlanSelect }: PricingProps) {
                                 ))}
                         </div>
 
-                        <FreeTierBanner onCtaClick={() => {
-                            track('cta_pricing_free_click', { planId: 'free' });
-                            onPlanSelect('free');
-                        }} />
+                        {/* Honest trial framing: the paid trial runs through
+                            Stripe and DOES require a card; it just doesn't
+                            charge until day 30. "Sin tarjeta" belongs only to
+                            the Free door below. */}
+                        <p className="text-center text-[12px] text-slate-500 mt-4">
+                            {t('pricing.honestMicrocopy')}
+                        </p>
+
+                        <FreeTierBanner
+                            onCtaClick={() => {
+                                track('cta_pricing_free_click', { planId: 'free' });
+                                onPlanSelect('free');
+                            }}
+                            prompt={t('pricing.freeTier.prompt')}
+                            label={t('pricing.freeTier.label')}
+                            hint={t('pricing.freeTier.hint')}
+                        />
                     </>
                 )}
 
@@ -79,7 +93,7 @@ export function Pricing({ plans, loading, onPlanSelect }: PricingProps) {
                         to="/pricing"
                         className="inline-flex items-center gap-1 text-[12.5px] text-slate-500 hover:text-indigo-700 transition-colors"
                     >
-                        Ver detalle completo de planes
+                        {t('pricing.fullDetailsLink')}
                         <ChevronRight className="h-3.5 w-3.5" />
                     </Link>
                 </div>

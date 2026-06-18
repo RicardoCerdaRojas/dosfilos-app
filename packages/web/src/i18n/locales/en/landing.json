@@ -1,414 +1,432 @@
 {
-    "hero": {
-        "badge": "Your Personal Exegetical Trainer",
-        "title": {
-            "part1": "Deep exegesis.",
-            "part2": "Faithful preaching."
-        },
-        "subtitle": {
-            "main": "Prepare your sermons with the guidance of an expert in original languages and hermeneutics.",
-            "distinction": "Not a general AI: it's your specialized assistant in expository preaching with",
-            "methodology": "historical-grammatical-literal methodology.",
-            "tagline": "You do the work. AI trains you."
-        },
-        "badges": {
-            "hermeneutics": "Historical-Literal Hermeneutics",
-            "languages": "Hebrew/Greek Analysis",
-            "approach": "Expository Approach"
-        },
-        "cta": {
-            "primary": "Get Started Free",
-            "secondary": "Watch Demo (2 min)"
-        },
-        "socialProof": {
-            "pastors": "10+ pastors",
-            "trusting": "trusting us",
-            "rating": "4.8/5"
-        },
-        "floatingCards": {
-            "greekAnalysis": {
-                "title": "Greek Analysis",
-                "subtitle": "χάρις - Ephesians 2:8"
-            },
-            "trainer": {
-                "title": "Your Trainer",
-                "subtitle": "Expert guidance 24/7"
-            }
-        }
+    "nav": {
+        "links": ["Problem", "Pillars", "How it works", "Principles", "Use cases", "Pricing", "FAQ"],
+        "signIn": "Sign in",
+        "startFree": "Start free",
+        "menu": "Menu"
     },
-    "metrics": {
-        "timeSaved": {
-            "value": "5+",
-            "label": "Hours saved per sermon"
-        },
-        "depth": {
-            "value": "85%",
-            "label": "Greater exegetical depth"
-        },
-        "pastors": {
-            "value": "10+",
-            "label": "Active pastors"
-        },
-        "satisfaction": {
-            "value": "9.8",
-            "label": "Average satisfaction"
-        }
+    "trustStrip": {
+        "heading": "A specialized library — public-domain and licensed sources"
     },
-    "transformation": {
-        "badge": "Transform your preparation",
-        "title": {
-            "part1": "From hours of frustration to",
-            "part2": "deep and efficient study"
-        },
-        "subtitle": {
-            "main": "AI doesn't preach for you.",
-            "emphasis": "It trains you to preach better.",
-            "detail": "You do the spiritual work, we enhance your study capacity."
-        },
-        "before": {
-            "title": "Without DosFilos",
-            "subtitle": "The long way",
-            "timeLabel": "8-12 hours",
-            "points": [
-                {
-                    "title": "Multiple sources",
-                    "description": "Books, commentaries, dictionaries... hard to coordinate"
-                },
-                {
-                    "title": "No clear direction",
-                    "description": "You don't know if you're going deep enough"
-                },
-                {
-                    "title": "Exegetical uncertainty",
-                    "description": "Am I interpreting the original text correctly?"
-                },
-                {
-                    "title": "Limited access",
-                    "description": "Hebrew and Greek require years of study"
-                }
-            ]
-        },
-        "after": {
-            "title": "With DosFilos",
-            "subtitle": "Your expert trainer",
-            "timeLabel": "3-5 hours",
-            "points": [
-                {
-                    "title": "Clear hermeneutical framework",
-                    "description": "Guides you step by step with proven methodology"
-                },
-                {
-                    "title": "Your personal trainer",
-                    "description": "Expert assistant accompanying you in each study"
-                },
-                {
-                    "title": "Theological confidence",
-                    "description": "Know your interpretation is well-founded"
-                },
-                {
-                    "title": "Accessible original languages",
-                    "description": "Hebrew and Greek explained, not just shown"
-                }
-            ]
-        },
-        "analogy": {
-            "emoji": "🏋️",
-            "title": "Think of it as having a personal trainer",
-            "description": "A trainer doesn't lift weights for you.",
-            "emphasis": "They guide you, correct your form, suggest exercises, and push you to give more.",
-            "conclusion": "DosFilos is your exegetical trainer: you do the spiritual work, we enhance your study capacity."
-        }
-    },
-    "notChatGPT": {
-        "title": "Not ChatGPT. Your Theological Mentor.",
-        "subtitle": "Generic AIs don't understand hermeneutics, theological traditions, or the weight of preaching the Word. DosFilos was designed",
-        "emphasis": "by pastors, for pastors.",
-        "generic": {
-            "title": "Generic AIs",
-            "points": [
-                "Generic responses without theological supervision",
-                "Doesn't distinguish between interpretive traditions",
-                "Can invent quotes or references",
-                "No clear hermeneutical methodology",
-                "Treats the Bible like any other book",
-                "Doesn't understand the weight of preaching"
-            ]
-        },
-        "dosfilos": {
-            "title": "DosFilos.Preach",
-            "points": [
-                "Specialized in biblical hermeneutics",
-                "Configurable to your theological tradition",
-                "Verified academic sources",
-                "Historical-literal-grammatical methodology",
-                "Respects the authority of Scripture",
-                "Designed for faithful preaching"
-            ]
-        }
-    },
-    "notLibrary": {
-        "title": "Not Just a Digital Library",
-        "subtitle": "Logos, e-Sword and others have thousands of books. But",
-        "question": "who has time to navigate all that?",
-        "capability": "DosFilos can process the equivalent of 1,000+ pages of context to give you what you need, when you need it.",
-        "traditional": {
-            "title": "Traditional Libraries",
-            "points": [
-                "Thousands of books impossible to review in parallel",
-                "You do all the search work",
-                "No guidance on what's relevant for your passage",
-                "Hours lost navigating indexes",
-                "Fragmented information across multiple sources"
-            ]
-        },
-        "assistant": {
-            "title": "Expert Assistant",
-            "points": [
-                "1,000+ pages of context processed instantly",
-                "Guides you step by step to what's relevant",
-                "Finds connections that would take hours to discover",
-                "Intelligent synthesis of multiple commentaries",
-                "Like having a theologian assistant 24/7"
-            ]
-        }
-    },
-    "grammarProfessor": {
-        "badge": "More than static morphology",
-        "title": {
-            "part1": "Your grammar professor",
-            "part2": "sitting next to you"
-        },
-        "subtitle": "There are tools that show you that χάρις is a feminine singular noun.",
-        "emphasis": "DosFilos explains why it matters",
-        "detail": ", how it works in the sentence, and what it means for your preaching.",
-        "traditional": {
-            "title": "Traditional tools (Logos, e-Sword)",
-            "description": "\"This verb is an",
-            "emphasis": "aorist passive participle",
-            "continuation": "\" — and you must figure out what that means."
-        },
-        "dosfilos": {
-            "title": "DosFilos.Preach",
-            "description": "\"This",
-            "emphasis": "aorist passive participle",
-            "explanation": "indicates a completed action received by the subject. In Ephesians 2:8, Paul uses this form to emphasize that salvation is something we have",
-            "italicEmphasis": "received",
-            "conclusion": ", not achieved. Here are three ways to explain this to your congregation...\""
-        },
-        "demo": {
-            "title": "Analysis of Ephesians 2:8",
-            "subtitle": "Your grammar professor explains:",
-            "verse": {
-                "greek": "τῇ γὰρ χάριτί ἐστε",
-                "highlight": "σεσῳσμένοι",
-                "translation": "\"For by grace you are saved\""
-            },
-            "points": [
-                {
-                    "title": "σεσῳσμένοι = Perfect Passive Participle",
-                    "description": "Indicates a completed action in the past with results that continue"
-                },
-                {
-                    "title": "The passive voice is theologically significant",
-                    "description": "God is the one who acts; we receive the action"
-                }
-            ]
-        }
-    },
-    "features": {
-        "title": "Your Expert Assistants",
-        "subtitle": "Work with specialized assistants in each area of biblical study. Each designed to enhance your preparation.",
-        "experts": [
-            {
-                "title": "Original Languages Expert",
-                "description": "Deep analysis of biblical Hebrew and Greek. Morphology, syntax, and theological meaning of key words.",
-                "features": [
-                    "Biblical Hebrew",
-                    "Koine Greek",
-                    "Morphological analysis",
-                    "Semantic fields"
-                ]
-            },
-            {
-                "title": "Hermeneutics Expert",
-                "description": "Guidance in historical-literal-grammatical interpretation. Context, structure, and original meaning of the text.",
-                "features": [
-                    "Historical context",
-                    "Grammatical analysis",
-                    "Literary structure",
-                    "Biblical theology"
-                ]
-            },
-            {
-                "title": "Homiletics Expert",
-                "description": "Helps structure your sermon clearly and faithfully to the text. Practical and relevant applications.",
-                "features": [
-                    "Expository structure",
-                    "Contextual applications",
-                    "Illustrations",
-                    "Transitions"
-                ]
-            }
+    "statsBand": {
+        "stats": [
+            { "value": "Unlimited", "label": "Tutor consultations", "sub": "on the Team plan" },
+            { "value": "5", "label": "Trained specialists", "sub": "one for every area of ministry" },
+            { "value": "0", "label": "Training on your content", "sub": "privacy guaranteed" },
+            { "value": "Page-level", "label": "Citation precision", "sub": "author, title, exact page" }
         ]
+    },
+    "hero": {
+        "eyebrow": "Bible study and sermon preparation",
+        "title": "Study with rigor. Preach with faithfulness.",
+        "subtitle": "Your library, the biblical languages, and specialized tutors — together in one place.",
+        "disclaimer": "Preach won't preach for you or write your thesis. It helps you study deeper — so you can preach, teach, and counsel with faithfulness.",
+        "ctaPrimary": "Start free",
+        "ctaSecondary": "See how it works",
+        "noCommitment": "No card · No commitment.",
+        "leadMagnetPrefix": "Not ready yet?",
+        "leadMagnetText": "Download the free preaching manual",
+        "footerLead": "A serious tool for those who handle the Word.",
+        "footerBody": "Personal library, specialized tutors, biblical languages, and ministry production in one place — for expository preaching, academic study, lesson prep, and biblical counseling."
+    },
+    "heroCarousel": {
+        "panelAriaLabel": "Panel {{number}}",
+        "panels": [
+            { "label": "01 · Biblical Hebrew", "sub": "Trainer with morphological analysis" },
+            { "label": "02 · Koine Greek", "sub": "Tutor with NT morphology" },
+            { "label": "03 · Cited answers", "sub": "Expert tutors by field" },
+            { "label": "04 · Your library", "sub": "Personal and specialized corpus" },
+            { "label": "05 · Ministry production", "sub": "Sermons with exegetical backing" }
+        ]
+    },
+    "problem": {
+        "eyebrow": "The problem",
+        "heading": "Studying the Word well takes more than opening a commentary.",
+        "intro": "Pastors preaching every week. Seminary students turning in exegesis every month. Professors preparing classes with rigor. Counselors applying theology to real cases. They all face the same underlying challenge: pulling together scattered sources, the original languages, their own library, and ministry output — without losing faithfulness to the text.",
+        "painPoints": [
+            {
+                "title": "Scattered sources",
+                "text": "Your books, PDFs, notes, highlights, and commentaries are spread across folders, apps, and devices. When you need them, you spend more time hunting than studying."
+            },
+            {
+                "title": "Never enough time",
+                "text": "There's never enough to work through every source a serious study deserves. So you cut corners — and it shows every Sunday, every paper, every class."
+            },
+            {
+                "title": "Answers you can't verify",
+                "text": "Too many tools make claims about the biblical text without showing their work. It's hard to trust an answer you can't trace back to the original author."
+            },
+            {
+                "title": "Original languages, done right",
+                "text": "You want to consult Greek or Hebrew without jumping to shaky conclusions. That takes real morphological, syntactic, and lexical analysis — not just transliterated words."
+            },
+            {
+                "title": "Delivering with clarity and backing",
+                "text": "Sermons, essays, lessons, and counsel that stay faithful to the text, clear in exposition, and traceable to their sources. The standard demands it; the clock doesn't always allow it."
+            },
+            {
+                "title": "Tools that replace instead of equip",
+                "text": "Most promise to do the work for you. But pastoral formation can't be outsourced — you need a tool that deepens your study, not one that replaces it."
+            }
+        ],
+        "closingLead": "Preach was built to walk through that whole process:",
+        "closingEmphasis": "from the biblical text to ministry material, from personal study to public delivery."
     },
     "howItWorks": {
-        "title": "Your Preparation Workflow",
-        "subtitle": "From text to pulpit, guided at every step",
+        "eyebrow": "How it works",
+        "title": "Up and running in minutes. Useful for years.",
         "steps": [
             {
-                "number": "1",
-                "title": "Deep Exegesis",
-                "description": "Text analysis in original languages with historical-cultural context"
+                "n": "01",
+                "title": "Bring it together and plan",
+                "text": "Upload your library —books, commentaries, notes— and organize your study into projects, preaching series, and plans. Preach keeps the real pages intact and makes everything ready to consult."
             },
             {
-                "number": "2",
-                "title": "Homiletical Approaches",
-                "description": "Multiple perspectives to preach the passage faithfully"
+                "n": "02",
+                "title": "Study with depth",
+                "text": "More than answers — it sharpens your judgment. Consult the specialized tutors, work through Greek and Hebrew with grammatical support, and let the historical-grammatical method and Socratic checks refine how you read the text. Every answer cites its sources."
             },
             {
-                "number": "3",
-                "title": "Expert Assistants",
-                "description": "Greek, Hebrew, homiletics and expository preaching at your service"
-            },
-            {
-                "number": "4",
-                "title": "Canvas + Chat",
-                "description": "Refine ideas, deepen concepts with your intelligent editor"
-            },
-            {
-                "number": "5",
-                "title": "Preach and Share",
-                "description": "Preaching mode, export and share with your congregation"
+                "n": "03",
+                "title": "Shape and export",
+                "text": "Organize your findings into sermons, notes, and ministry material, with structure and traceable sources. You write; Preach orders and backs you up. Export in the formats you use."
             }
         ]
     },
-    "comparisonTable": {
-        "title": "Why DosFilos.Preach?",
-        "headers": {
-            "feature": "Feature",
-            "genericAI": "Generic AIs",
-            "dosfilos": "DosFilos.Preach"
+    "forWhom": {
+        "eyebrow": "Who it's for",
+        "title": "Built for those who serve through the Word.",
+        "personas": [
+            {
+                "title": "Pastors and preachers",
+                "text": "Prepare expository sermons week after week — with biblical backing, an orderly study process, and traceable sources."
+            },
+            {
+                "title": "Seminary students",
+                "text": "Exegetical papers, academic research, biblical languages, and your sources kept in order."
+            },
+            {
+                "title": "Theology professors",
+                "text": "Build classes, notes, guides, and teaching material with structure and depth."
+            },
+            {
+                "title": "Biblical counselors",
+                "text": "Work through cases from Scripture, practical theology, and responsible pastoral application."
+            }
+        ]
+    },
+    "pillars": {
+        "biblioteca": {
+            "eyebrow": "Pillar 01 · Library",
+            "title": "Your theological corpus — organized and searchable.",
+            "description": "Upload your books, commentaries, lexicons, and articles. Preach processes them with real pages intact and indexes them for semantic search. Every query comes back with citations: author, title, exact page.",
+            "bullets": [
+                "Structured PDF extraction with real page numbers",
+                "RAG-style semantic search with an automatic bibliography",
+                "A specialized public-domain library, plus your own private material",
+                "Your content never trains AI models"
+            ]
         },
-        "features": [
-            "Specialized exegetical trainer",
-            "Respects your theological tradition",
-            "Clear hermeneutical methodology",
-            "1000+ pages context",
-            "Expert assistants by area",
-            "Canvas + Chat for refinement",
-            "Integrated preaching mode"
+        "lenguas": {
+            "eyebrow": "Pillar 02 · Original languages",
+            "title": "Biblical Hebrew and Koine Greek for real exegetical work.",
+            "description": "Work through the biblical text with morphological, syntactic, and lexical support. Preach helps you see the text more clearly — without replacing your study or turning the languages into push-button conclusions.",
+            "bullets": [
+                "Hebrew tutor with BHS + morphological analysis",
+                "Greek tutor with NA28 + syntactic analysis",
+                "Interactive inline Bible references",
+                "Academic typography: Ezra SIL, SBL Hebrew, SBL Greek"
+            ]
+        },
+        "tutores": {
+            "eyebrow": "Pillar 03 · Tutors",
+            "title": "The right specialist for every question.",
+            "description": "Preach reads the kind of question you're asking and routes it to the best-suited tutor. Get answers in academic, pastoral, concise, or plain-language mode.",
+            "bullets": [
+                "Exegesis Tutor · Historical-grammatical interpretation",
+                "Biblical Hebrew Tutor · Morphological and syntactic analysis of the OT",
+                "NT Greek Tutor · Koine, with syntactic and lexical analysis",
+                "Systematic Theology Tutor · Doctrine with biblical backing",
+                "Biblical Counseling Tutor · Pastoral cases grounded in Scripture"
+            ]
+        },
+        "produccion": {
+            "eyebrow": "Pillar 04 · Ministry production",
+            "title": "From the study to the pulpit — with exegetical backing.",
+            "description": "Turn your findings into outlines, propositions, study notes, preaching series, and exportable material. Every piece keeps its references to the sources you consulted, so traceability reaches the final document.",
+            "bullets": [
+                "Assistant for structuring expository sermons",
+                "Planner for expository series across whole books",
+                "Research projects on books, passages, and topics",
+                "Export to Markdown, PDF, and plain text"
+            ]
+        }
+    },
+    "philosophy": {
+        "eyebrow": "Principles",
+        "heading": "Built on the principles serious Bible study demands.",
+        "intro": "Preach isn't a general-purpose AI dressed up for Christianity. It was built from the ground up to support biblical, theological, and pastoral work to verifiable standards.",
+        "principles": [
+            {
+                "title": "Historical-grammatical method",
+                "text": "Answers, tutors, and prompts are aligned with serious exegesis: historical context, the grammar of the original text, authorial intent, and responsible application. No hermeneutical relativism."
+            },
+            {
+                "title": "Traceable citations, by default",
+                "text": "Every answer drawn from your library or the specialized corpus comes with author, title, and exact page. It never claims a source stands behind a statement without letting you check it."
+            },
+            {
+                "title": "Honest about the use of AI",
+                "text": "When a tutor answers from the model rather than from a document, it tells you. We don't dress up generated opinions as academic citations. The difference matters."
+            },
+            {
+                "title": "Pastoral responsibility stays with you",
+                "text": "Doctrinal discernment, exegetical judgment, and preaching remain the minister's. The platform supports the process; it never replaces your formation, your study, or your calling."
+            }
+        ],
+        "quote": "\"to equip his people for works of service, so that the body of Christ may be built up.\"",
+        "quoteCite": "Ephesians 4:12"
+    },
+    "useCases": {
+        "eyebrow": "Use cases",
+        "title": "How a serious minister actually works inside Preach.",
+        "intro": "Four real workflows — one for each audience Preach serves. These aren't testimonials. They're the concrete ways people use the tool once they sit down to work.",
+        "footnote": "Real usage patterns. As the first full testimonials come in, they'll take their place here.",
+        "personas": [
+            {
+                "persona": "Preaching pastor",
+                "headline": "Sunday's expository sermon, without skipping steps.",
+                "steps": [
+                    "Upload this week's commentaries on the passage.",
+                    "Ask the Exegesis Tutor about the Greek behind the key verse.",
+                    "Cross-reference your sources and build an outline with traceable citations.",
+                    "Export to Markdown or PDF to take into the pulpit."
+                ],
+                "outcome": "Walks into Sunday with exegetical backing and a clear plan — not a blank document and a ticking clock."
+            },
+            {
+                "persona": "Seminary student",
+                "headline": "A submission-ready exegetical paper, with citations your professor can actually check.",
+                "steps": [
+                    "Set the passage and your professor's brief.",
+                    "Cross-reference your uploaded material with the specialized library.",
+                    "Let the Hebrew Tutor untangle a tricky morphological construction.",
+                    "Generate the paper's structure with author, title, and page for every citation."
+                ],
+                "outcome": "Turns in serious work backed by verifiable sources — not a patchwork any professor spots in seconds."
+            },
+            {
+                "persona": "Theology professor",
+                "headline": "Structured teaching material for the whole semester.",
+                "steps": [
+                    "Index notes from past courses into your personal library.",
+                    "Have the Systematic Theology Tutor compare Berkhof, Bavinck, and Grudem.",
+                    "Generate study guides with discussion questions and assigned readings.",
+                    "Export material that's ready for the seminary LMS."
+                ],
+                "outcome": "Pulls decades of scattered notes into one searchable corpus — instead of a pile of unopened PDFs."
+            },
+            {
+                "persona": "Biblical counselor",
+                "headline": "A pastoral case grounded in Scripture, not personal opinion.",
+                "steps": [
+                    "Upload your biblical-counseling material (Adams, Tripp, Welch).",
+                    "Have the Biblical Counseling Tutor apply the principles to a specific case.",
+                    "Cross-reference the relevant passages with the sources you consulted.",
+                    "Build a counseling plan with traceable biblical grounding."
+                ],
+                "outcome": "Comes alongside real cases with serious backing — not lines improvised on the spot."
+            }
         ]
     },
     "pricing": {
-        "title": "Choose Your Plan",
-        "subtitle": "Start free. Scale when ready. No credit card required.",
-        "monthly": "Monthly",
-        "yearly": "Yearly",
-        "save": "Save 20%",
-        "plans": {
-            "free": {
-                "name": "Free",
-                "price": "$0",
-                "period": "forever",
-                "description": "Perfect to start and test the platform",
-                "features": [
-                    "2 sermons per month",
-                    "Access to 3 expert assistants",
-                    "Basic library access",
-                    "Community support"
-                ],
-                "cta": "Start Free"
-            },
-            "pro": {
-                "name": "Pro",
-                "price": "$9.99",
-                "period": "per month",
-                "description": "For pastors who preach regularly",
-                "popular": "Most Popular",
-                "features": [
-                    "Unlimited sermons",
-                    "All expert assistants",
-                    "Full library access",
-                    "Priority support",
-                    "Export in multiple formats",
-                    "Advanced customization"
-                ],
-                "cta": "Subscribe"
-            },
-            "team": {
-                "name": "Team",
-                "price": "$24.9",
-                "period": "per month",
-                "description": "For pastoral teams and churches",
-                "features": [
-                    "Everything in Pro",
-                    "Up to 5 team members",
-                    "Shared sermon library",
-                    "Team collaboration",
-                    "Advanced analytics",
-                    "Dedicated support"
-                ],
-                "cta": "Subscribe"
-            }
-        },
-        "scholarship": {
-            "title": "Scholarship Program",
-            "description": "If cost is a barrier to using DosFilos, we want to help.",
-            "cta": "Apply for Scholarship"
+        "eyebrow": "Pricing",
+        "heading": "Choose how you want to start.",
+        "subtitle": "Try Preach free, no card required — or start a 30-day free trial on any paid plan. Cancel anytime.",
+        "loading": "Loading plans...",
+        "ctaLabel": "Start 30-day free trial",
+        "honestMicrocopy": "Paid plans require a card to start the 30-day free trial. You won't be charged today — cancel before day 30 and you pay nothing.",
+        "fullDetailsLink": "See full plan details",
+        "freeTier": {
+            "prompt": "Just want to try it out?",
+            "label": "Start free · no card",
+            "hint": "50 queries/month"
         }
     },
+    "leadMagnet": {
+        "badge": "Free resource · PDF",
+        "heading": "Not ready yet? Start with the manual.",
+        "description": "Not ready to sign up? Download our expository preaching manual, free. A practical guide to preparing sermons with the historical-grammatical method, fidelity to the text, and an orderly study process.",
+        "bullets": [
+            "How to move from the biblical text to a preachable structure",
+            "Common pitfalls in expository preparation",
+            "A weekly checklist for the serious preacher"
+        ],
+        "cta": "Download the free manual",
+        "disclaimer": "No strings attached. We just need your email to send it over.",
+        "coverTitle": "Expository Preaching Manual",
+        "coverBrand": "Preach · DosFilos",
+        "coverBullets": [
+            "— Historical-grammatical method",
+            "— Structure of an expository sermon",
+            "— Preparing the introduction and the application",
+            "— The preacher's weekly checklist"
+        ],
+        "coverFooter": "PDF · free · instant delivery"
+    },
     "faq": {
-        "title": "Frequently Asked Questions",
-        "subtitle": "Everything you need to know about DosFilos.Preach",
-        "questions": [
+        "eyebrow": "Frequently asked questions",
+        "heading": "What you're probably wondering.",
+        "items": [
             {
-                "q": "Isn't using AI to preach cheating?",
-                "a": "You don't use AI to preach - you use it to study better. It's like having a personal trainer: you do the spiritual work, AI guides and enhances your study. You maintain full control of the message."
+                "q": "Does Preach write the sermon for me?",
+                "a": "No. Preach is built to support your study, not replace it. It can help you organize observations, consult sources, structure outlines, and prepare notes — but discernment, theological judgment, and preaching stay your responsibility as the minister."
             },
             {
-                "q": "Will I lose my unique voice as a preacher?",
-                "a": "On the contrary. By saving time on basic research, you have more time for prayer and personal reflection. DosFilos suggests, but you decide and personalize every aspect of the sermon."
+                "q": "Can I trust the answers?",
+                "a": "Preach cuts through the opacity common to AI tools: whenever it draws on your library or available resources, it answers with traceable references — author, title, page. Even so, you should review every answer, especially on doctrinal, exegetical, or pastorally sensitive matters."
             },
             {
-                "q": "What about my specific theology?",
-                "a": "You configure your interpretive tradition (reformed, wesleyan, pentecostal, etc.). DosFilos respects your theological framework and suggests content aligned with your convictions."
+                "q": "What do \"academic-standard citations\" mean?",
+                "a": "Every tutor answer cites its sources with author, title, and exact page, traceable back to the original document you uploaded or to the specialized library. The full bibliography appears at the bottom of each query."
             },
             {
-                "q": "Can I cancel anytime?",
-                "a": "Yes, no questions asked. Cancel whenever you want and keep access until the end of your billing period."
+                "q": "Will you use my content to train AI models?",
+                "a": "No. Your personal library is private, isolated per user, and never used for training. The model only reads your content in the moment it answers your question; nothing is kept outside your account."
             },
             {
-                "q": "Are my sermons private?",
-                "a": "Absolutely. Your sermons are 100% private and never shared. We comply with all data privacy regulations."
+                "q": "What can I upload to my personal library?",
+                "a": "Anything you hold the legal rights to: books you've bought (digital editions included), public-domain works, or licensed text that allows personal use. By uploading, you confirm you have the right to use it for your own study."
+            },
+            {
+                "q": "What's in the specialized library?",
+                "a": "Public-domain works and explicitly licensed material: classic commentaries (Calvin, Henry, Spurgeon, Augustine), academic lexicons (Gesenius, Thayer, Strong), grammars, and patristic treatises — all publicly citable."
+            },
+            {
+                "q": "How does tutor routing work?",
+                "a": "When you ask a question, a router reads it and automatically picks the right specialist. For an interdisciplinary question, it can consult several tutors and synthesize the answer while keeping each attribution."
+            },
+            {
+                "q": "What happens when the 30-day trial ends?",
+                "a": "If you don't cancel before day 30, your plan's first month is charged automatically. You can cancel anytime from your account — no fine print. Cancel during the trial and you're never charged."
+            },
+            {
+                "q": "Is there free material to make better use of my study time?",
+                "a": "Yes. Download the expository preaching manual free at /recursos/manual-para-predicadores — a practical guide to preparing sermons with the historical-grammatical method, fidelity to the text, and an orderly study process. We'll email it the moment you leave your address."
             }
         ]
     },
     "finalCta": {
-        "title": "Ready to Transform Your Sermon Preparation?",
-        "subtitle": "Join hundreds of pastors already preaching with greater depth and confidence.",
-        "cta": "Start Free Today",
-        "note": "No credit card required. Cancel anytime."
+        "heading": "Study with rigor. Preach with faithfulness.",
+        "description": "Preach brings your library, the biblical languages, specialized tutors, and ministry production together — so you can prepare sermons and studies with more faithfulness, traceability, and depth.",
+        "cta": "Start free",
+        "disclaimer": "No card required to get started."
     },
     "footer": {
-        "tagline": "Your expert assistant for faithful expository preaching.",
-        "product": {
-            "title": "Product",
-            "features": "Features",
-            "pricing": "Pricing",
-            "howItWorks": "How It Works"
+        "tagline": "A knowledge platform for pastoral ministry. Deep study. Faithful exposition. Clear application.",
+        "productTitle": "Product",
+        "legalTitle": "Legal",
+        "accountTitle": "Account",
+        "productLinks": ["Philosophy", "Pillars", "How it works", "Pricing", "FAQ"],
+        "legalLinks": ["Terms of use", "Privacy", "DMCA policy"],
+        "accountLinks": ["Sign in", "Sign up"],
+        "rightsReserved": "All rights reserved.",
+        "scriptureTagline": "\"Thoroughly equipped for every good work\" · 2 Timothy 3:17",
+        "recaptchaPre": "This site is protected by reCAPTCHA and the Google",
+        "recaptchaPrivacy": "Privacy Policy",
+        "recaptchaMid": "and",
+        "recaptchaTerms": "Terms of Service",
+        "recaptchaPost": "apply."
+    },
+    "mocks": {
+        "hebrew": {
+            "header": "Hebrew Trainer · Genesis 1:1",
+            "source": "BHS · Morphology",
+            "gloss": "in the beginning God created",
+            "analysisOf": "Analysis of",
+            "morphology": [
+                { "label": "Root", "value": "ברא" },
+                { "label": "Binyan", "value": "Qal" },
+                { "label": "Aspect", "value": "Perfect" },
+                { "label": "Person", "value": "3ms" }
+            ]
         },
-        "resources": {
-            "title": "Resources",
-            "blog": "Blog",
-            "documentation": "Documentation",
-            "support": "Support"
+        "greek": {
+            "header": "Greek Tutor · John 1:14",
+            "morphologyLabel": "NA28 · Morphology",
+            "analysisOf": "Analysis of",
+            "gloss": "\"and the Word became flesh\"",
+            "morphology": [
+                { "label": "Lexeme", "value": "γίνομαι" },
+                { "label": "Tense", "value": "Aorist" },
+                { "label": "Voice", "value": "Middle" },
+                { "label": "Mood", "value": "Indicative" }
+            ]
         },
-        "company": {
-            "title": "Company",
-            "about": "About Us",
-            "contact": "Contact",
-            "privacy": "Privacy Policy"
+        "library": {
+            "title": "My library",
+            "searchPlaceholder": "Search my library…",
+            "upload": "Upload",
+            "books": [
+                { "title": "Institutes of the Christian Religion", "author": "John Calvin", "pages": "1,462 pp" },
+                { "title": "Commentary on the Whole Bible", "author": "Matthew Henry", "pages": "6 vols" },
+                { "title": "Systematic Theology", "author": "Wayne Grudem", "pages": "1,264 pp" },
+                { "title": "Hebrew Grammar", "author": "Gesenius-Kautzsch", "pages": "622 pp" },
+                { "title": "Treasury of David", "author": "Charles Spurgeon", "pages": "7 vols" },
+                { "title": "The City of God", "author": "Augustine of Hippo", "pages": "1,097 pp" }
+            ]
         },
-        "rights": "All rights reserved."
+        "sermon": {
+            "header": "Sermon · Romans 12:1-2",
+            "export": "Export ↓",
+            "titleLabel": "Title",
+            "title": "Rational worship: transformed lives as a living sacrifice",
+            "propositionLabel": "Proposition",
+            "proposition": "The believer offers his whole life to God as a rational act of worship, renewed by the transforming understanding of the Word.",
+            "outlineLabel": "Outline",
+            "outline": [
+                "The call: present your bodies",
+                "The nature: a living, holy, pleasing sacrifice",
+                "The means: the renewing of the mind"
+            ],
+            "sourcesLabel": "Sources consulted",
+            "source1Author": "Calvin",
+            "source1Book": "Commentary on Romans",
+            "source2Author": "Moo",
+            "source2Book": "The Epistle to the Romans"
+        },
+        "tutors": {
+            "title": "Automatic routing",
+            "active": "Active",
+            "questionLabel": "Your question",
+            "questionBefore": "How should",
+            "questionRef": "John 1:1",
+            "questionAfter": "be interpreted exegetically in light of the original Greek?",
+            "available": "Available tutors",
+            "routed": "Routed",
+            "areas": ["Exegesis", "Hebrew · OT", "Greek · NT", "Biblical counseling", "Systematic theology"]
+        },
+        "chat": {
+            "sessionsTitle": "Sessions",
+            "sessions": [
+                "Verbal aspect in Hebrew",
+                "The aorist in Jn 1:14",
+                "Pastoral — Rom 12:1-2",
+                "Image of God",
+                "Kenosis in Phil 2"
+            ],
+            "userMessage": "What is the perfect aspect in Biblical Hebrew?",
+            "author": "Dr. Berith · Hebrew",
+            "answerTitle": "The perfect aspect (qatal) in Biblical Hebrew",
+            "para1pre": "Biblical Hebrew, unlike English, does not primarily mark the verb's chronological tense but its",
+            "para1emphasis": "aspect",
+            "para2pre": "In",
+            "para2ref": "Gen 1:1",
+            "para2mid": ", the verb",
+            "para2post": "presents creation as a completed act",
+            "bibliographyTitle": "Bibliography",
+            "bibBook": "Hebrew Grammar",
+            "continuePlaceholder": "Continue the conversation..."
+        }
     }
 }

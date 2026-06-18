@@ -41,7 +41,7 @@ export function ProcessingQuotaBlock({
                     <QuotaRow icon={BookOpen} value={studies} unit="" label={studies === 1 ? 'estudio' : 'estudios'} span2 />
                 )}
             </div>
-            <p className="text-[10.5px] text-muted-foreground mt-2 leading-snug">
+            <p className="text-[10.5px] text-slate-500 mt-2 leading-snug">
                 ¿Necesitas más? Compra packs prepago desde $3.
             </p>
         </div>
@@ -52,10 +52,10 @@ function QuotaRow({ icon: Icon, value, unit, label, span2 }: { icon: typeof Wand
     return (
         <div className={`flex items-baseline gap-1.5${span2 ? ' col-span-2' : ''}`}>
             <Icon className="h-3 w-3 text-primary self-center shrink-0" />
-            <span className="text-base font-bold tabular-nums text-foreground">
+            <span className="text-base font-bold tabular-nums text-slate-900">
                 {value.toLocaleString()}
             </span>
-            <span className="text-[11px] text-muted-foreground">{unit ? `${unit} ` : ''}{label}</span>
+            <span className="text-[11px] text-slate-500">{unit ? `${unit} ` : ''}{label}</span>
         </div>
     );
 }

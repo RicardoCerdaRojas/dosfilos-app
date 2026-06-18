@@ -150,11 +150,22 @@ export function RegisterPage() {
     }
   };
 
+  // Header must reflect the plan the visitor actually picked — otherwise a
+  // Free signup reads "Comienza tu prueba de 30 días" right next to a
+  // "Gratis · sin tarjeta" plan card, the most expensive contradiction on
+  // the page (one click from the activation event).
+  const headerTitle = isFree
+    ? t('register.titleFree')
+    : t('register.titleTrial');
+  const headerSubtitle = isFree
+    ? t('register.subtitleFree')
+    : t('register.subtitleTrial', { plan: selectedPlan?.name ?? '' });
+
   return (
     <AuthLayout
       eyebrow={selectedPlan ? t('register.eyebrow') : undefined}
-      title={t('register.title')}
-      subtitle={t('register.subtitle')}
+      title={headerTitle}
+      subtitle={headerSubtitle}
     >
       <div className="space-y-6">
         {/* Plan card — minimal, editorial */}

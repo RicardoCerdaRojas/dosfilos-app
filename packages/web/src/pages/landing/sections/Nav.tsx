@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { LanguageSwitcher } from '@/i18n';
+import { LanguageSwitcher, useTranslation } from '@/i18n';
 import { track } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 
@@ -11,14 +11,14 @@ interface NavProps {
     setMobileOpen: (v: boolean) => void;
 }
 
-const NAV_LINKS: Array<[string, string]> = [
-    ['Problema', '#problema'],
-    ['Pilares', '#pilar-1'],
-    ['Cómo funciona', '#como-funciona'],
-    ['Principios', '#filosofia'],
-    ['Casos de uso', '#casos-de-uso'],
-    ['Precios', '#precios'],
-    ['FAQ', '#faq'],
+const NAV_HREFS = [
+    '#problema',
+    '#pilar-1',
+    '#como-funciona',
+    '#filosofia',
+    '#casos-de-uso',
+    '#precios',
+    '#faq',
 ];
 
 /**
@@ -26,6 +26,9 @@ const NAV_LINKS: Array<[string, string]> = [
  * past the hero. On mobile, opens a full-width menu drawer.
  */
 export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
+    const { t } = useTranslation('landing');
+    const navLabels = t('nav.links', { returnObjects: true }) as string[];
+    const navLinks: Array<[string, string]> = NAV_HREFS.map((href, i) => [navLabels[i], href]);
     const [scrolled, setScrolled] = useState(false);
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 8);
@@ -64,7 +67,7 @@ export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
                     </Link>
 
                     <div className="hidden md:flex items-center gap-1 text-[13px]">
-                        {NAV_LINKS.map(([label, href]) => (
+                        {navLinks.map(([label, href]) => (
                             <a
                                 key={href}
                                 href={href}
@@ -78,7 +81,7 @@ export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
                         <LanguageSwitcher variant="ghost" showLabel={false} className="text-slate-400 hover:text-white" />
                         <Link to="/login">
                             <Button variant="ghost" className="text-slate-400 hover:text-white hover:bg-white/5 text-[13px] font-normal h-8">
-                                Iniciar sesión
+                                {t('nav.signIn')}
                             </Button>
                         </Link>
                         <Link
@@ -86,7 +89,7 @@ export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
                             onClick={() => track('cta_hero_click', { source: 'nav', destination: 'register_free' })}
                         >
                             <Button className="bg-white text-slate-900 hover:bg-slate-200 text-[13px] font-medium h-8 rounded-md ml-1 px-3.5">
-                                Empezar gratis
+                                {t('nav.startFree')}
                             </Button>
                         </Link>
                     </div>
@@ -95,7 +98,7 @@ export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
                         type="button"
                         className="md:hidden p-2 -mr-2 text-white"
                         onClick={() => setMobileOpen(!mobileOpen)}
-                        aria-label="Menu"
+                        aria-label={t('nav.menu')}
                     >
                         {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                     </button>
@@ -105,7 +108,7 @@ export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
             {mobileOpen && (
                 <div className="md:hidden bg-slate-950 border-t border-white/5">
                     <div className="px-6 py-4 space-y-1">
-                        {NAV_LINKS.map(([label, href]) => (
+                        {navLinks.map(([label, href]) => (
                             <a
                                 key={href}
                                 href={href}
@@ -117,10 +120,10 @@ export function Nav({ mobileOpen, setMobileOpen }: NavProps) {
                         ))}
                         <div className="pt-3 flex gap-2">
                             <Link to="/login" className="flex-1">
-                                <Button variant="ghost" className="w-full text-slate-300">Iniciar sesión</Button>
+                                <Button variant="ghost" className="w-full text-slate-300">{t('nav.signIn')}</Button>
                             </Link>
                             <Link to="/register?plan=free" className="flex-1">
-                                <Button className="w-full bg-white text-slate-900">Empezar gratis</Button>
+                                <Button className="w-full bg-white text-slate-900">{t('nav.startFree')}</Button>
                             </Link>
                         </div>
                     </div>

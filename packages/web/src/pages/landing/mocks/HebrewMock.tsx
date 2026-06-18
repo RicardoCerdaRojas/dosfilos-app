@@ -2,30 +2,28 @@
  * Decorative Hebrew-tutor mockup. See `LibraryMock` for notes on the landing
  * page colour palette as documented exception.
  */
+import { useTranslation } from '@/i18n';
+
 export function HebrewMock() {
-    const morphology = [
-        { label: 'Raíz', value: 'ברא' },
-        { label: 'Binyan', value: 'Qal' },
-        { label: 'Tiempo', value: 'Perfecto' },
-        { label: 'Persona', value: '3ms' },
-    ];
+    const { t } = useTranslation('landing');
+    const morphology = t('mocks.hebrew.morphology', { returnObjects: true }) as Array<{ label: string; value: string }>;
     return (
         <div className="rounded-xl border border-white/10 bg-[#0f1428] shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)] overflow-hidden">
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-[#0a0f1f]">
-                <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">Entrenador Hebreo · Génesis 1:1</div>
-                <div className="text-[10px] font-mono text-slate-500">BHS · Morfología</div>
+                <div className="text-[11px] font-medium uppercase tracking-wider text-slate-400">{t('mocks.hebrew.header')}</div>
+                <div className="text-[10px] font-mono text-slate-500">{t('mocks.hebrew.source')}</div>
             </div>
             <div className="p-8">
                 <div dir="rtl" lang="he" className="font-hebrew text-center text-[44px] md:text-[56px] leading-[1.5] text-white mb-6 tracking-wide">
                     בְּרֵאשִׁ֖ית בָּרָ֣א אֱלֹהִ֑ים
                 </div>
                 <div className="text-center font-reading italic text-slate-400 text-[14px] mb-8">
-                    bereshit bara elohim — "en el principio creó Dios"
+                    bereshit bara elohim — "{t('mocks.hebrew.gloss')}"
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 border-t border-white/5 pt-6">
                     <div className="col-span-2 mb-2">
-                        <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-2">Análisis de</div>
+                        <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-2">{t('mocks.hebrew.analysisOf')}</div>
                         <div dir="rtl" lang="he" className="font-hebrew text-2xl text-white">בָּרָ֣א</div>
                     </div>
                     {morphology.map(m => (
