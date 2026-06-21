@@ -178,6 +178,34 @@ describe('ContextGenre validation — empty-genre fallback', () => {
     });
 });
 
+describe('ContextGenre — genre recognized from the pastor prose (fix C)', () => {
+    const policy = registry.get('contextGenre');
+    const ctxNoGenre = (): TurnContext => ({ ...ctxFor('contextGenre'), genre: undefined });
+    // Single genre named in the prose; long enough to pass length.
+    const namesEpistle =
+        'Esto es una epístola dirigida a una congregación concreta; la leo como instrucción y corrección para la iglesia.';
+
+    it('accepts a single-genre prose even with no book-inferred genre', () => {
+        // "epístola" present, no other genre word → recognized as epistle.
+        const single = 'Es una epístola: documento de enseñanza enviado a una comunidad para instruir y ordenar la vida de los creyentes con argumentos.';
+        expect(policy.validatePastorInput(single, ctxNoGenre()).valid).toBe(true);
+    });
+
+    it('persists the prose-named genre when the seed had none', () => {
+        const seed = { contextGenre: { genre: '', genreConfirmed: false, genreImplication: '', bookLocationNote: '', historicalContextConsulted: false, timeSpentSeconds: 0 } } as never;
+        const patch = policy.persistTo(seed, namesEpistle) as { contextGenre: { genre: string; genreConfirmed: boolean } };
+        expect(patch.contextGenre.genre).toBe('epistle');
+        expect(patch.contextGenre.genreConfirmed).toBe(true);
+    });
+
+    it('does NOT overwrite a book-inferred genre with a prose mention', () => {
+        const seed = { contextGenre: { genre: 'gospel', genreConfirmed: true, genreImplication: '', bookLocationNote: '', historicalContextConsulted: false, timeSpentSeconds: 0 } } as never;
+        // Prose mentions "carta" but the book genre stays authoritative.
+        const patch = policy.persistTo(seed, 'Lo leo como si fuera una carta personal.') as { contextGenre: { genre: string } };
+        expect(patch.contextGenre.genre).toBe('gospel');
+    });
+});
+
 describe('StructuralAnalysis method-error heuristic (lexical leakage)', () => {
     it('flags morphological vocabulary in the structural step', () => {
         const policy = registry.get('structuralAnalysis');
