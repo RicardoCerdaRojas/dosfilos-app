@@ -22,6 +22,7 @@
     "passageLabel": "Passage to study",
     "passagePlaceholder": "e.g. John 1:1",
     "passageHint": "Full passage (book + chapter + verse). The rest of the study builds on it.",
+    "invalidPassage": "I don't recognize that passage. Check the book name, chapter and verse (e.g. John 1:1).",
     "activate": "Start guide",
     "activating": "Activating…",
     "cancel": "Cancel"

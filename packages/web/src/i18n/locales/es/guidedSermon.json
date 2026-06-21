@@ -22,6 +22,7 @@
     "passageLabel": "Pasaje a estudiar",
     "passagePlaceholder": "Ej. Juan 1:1",
     "passageHint": "Pasaje completo (libro + capítulo + verso). El resto del estudio se construye sobre este.",
+    "invalidPassage": "No reconozco ese pasaje. Revisa el nombre del libro, capítulo y verso (ej. Juan 1:1).",
     "activate": "Empezar guía",
     "activating": "Activando…",
     "cancel": "Cancelar"

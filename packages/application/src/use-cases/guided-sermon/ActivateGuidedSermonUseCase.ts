@@ -39,6 +39,15 @@ export interface ActivateGuidedSermonOutput {
     welcomeMessage: AIChatMessage;
 }
 
+/**
+ * Stable code thrown when the passage can't be resolved against the canon
+ * (typo in the book name, missing chapter, etc). The UI matches on this code
+ * to show a specific "no reconozco el pasaje" message instead of the generic
+ * activation failure — and matters because an unparseable passage leaves the
+ * Context/Genre step (paso 2) with no inferred genre, dead-ending the study.
+ */
+export const GUIDED_SERMON_INVALID_PASSAGE = 'GUIDED_SERMON_INVALID_PASSAGE';
+
 /** Generates an id when the repo expects the caller to provide one. */
 function generateId(prefix: string): string {
     if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -65,22 +74,31 @@ export class ActivateGuidedSermonUseCase {
             throw new Error('Guided sermon is already active on this session.');
         }
 
+        // Validate the passage against the canon up front. An unrecognized
+        // book (e.g. the typo "1 Cotintios") would otherwise create a seed with
+        // no inferred genre, and the Context/Genre step (paso 2) can never pass
+        // — the conversational flow has no genre-confirm UI. Fail fast with a
+        // stable code the UI turns into a "revisa el pasaje" message.
+        const passage = input.passage.trim();
+        const parsed = parsePassageReference(passage);
+        if (!parsed.ok) {
+            const hint = 'hint' in parsed ? parsed.hint : '';
+            throw new Error(`${GUIDED_SERMON_INVALID_PASSAGE}: ${passage} — ${hint}`);
+        }
+
         // Mint the seed with a placeholder sermonId — when the seed completes
         // the wizard mints the real sermon doc with the same id (one-to-one).
         const sermonId = generateId('srm');
         // Deterministically infer the literary genre from the passage's book so
         // the Context/Genre step (step 2) has a confirmed genre to validate
-        // against. Without this the genre stays empty and that step can never
-        // pass (the conversational flow has no genre-confirm UI). The pastor
-        // still writes the interpretive implication himself.
-        const parsed = parsePassageReference(input.passage.trim());
-        const genre: LiteraryGenre | undefined = parsed.ok ? inferGenreFromBook(parsed.ref.bookId) : undefined;
+        // against. The pastor still writes the interpretive implication himself.
+        const genre: LiteraryGenre = inferGenreFromBook(parsed.ref.bookId);
         const empty = createEmptyPastoralSeed({
             id: '', // repo assigns the doc id
             sermonId,
             userId: input.userId,
-            passage: input.passage.trim(),
-            ...(genre ? { genre } : {}),
+            passage,
+            genre,
         });
         const seed = await this.seedRepo.create(empty);
 

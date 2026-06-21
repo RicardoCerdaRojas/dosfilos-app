@@ -83,7 +83,12 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                 return result;
             } catch (err) {
                 console.error('[useGuidedSermon] activate failed', err);
-                toast.error(t('error.activate'));
+                const msg = err instanceof Error ? err.message : '';
+                toast.error(
+                    msg.includes('GUIDED_SERMON_INVALID_PASSAGE')
+                        ? t('activation.invalidPassage')
+                        : t('error.activate'),
+                );
                 return null;
             } finally {
                 setIsProcessing(false);

@@ -149,6 +149,35 @@ describe('ContextGenre method-error heuristic (UC3)', () => {
     });
 });
 
+describe('ContextGenre validation — empty-genre fallback', () => {
+    const policy = registry.get('contextGenre');
+    // When activation could not infer a genre (unrecognized book / legacy seed),
+    // the step must still be passable on the implication length alone — the
+    // conversational flow has no genre-confirm UI to satisfy.
+    const ctxNoGenre = (): TurnContext => ({ ...ctxFor('contextGenre'), genre: undefined });
+    const longImplication =
+        'Es una Epístola, lo que significa que es una carta a una iglesia: la leo como instrucción pastoral concreta, no como narrativa.';
+
+    it('accepts a sufficiently long implication when no genre was inferred', () => {
+        expect(policy.validatePastorInput(longImplication, ctxNoGenre()).valid).toBe(true);
+    });
+
+    it('still rejects a too-short implication when no genre was inferred', () => {
+        const res = policy.validatePastorInput('Es una carta.', ctxNoGenre());
+        expect(res.valid).toBe(false);
+        expect(res.reasons.join(' ')).toContain('caracteres');
+    });
+
+    it('does not emit a "falta confirmar el género" reason in the fallback', () => {
+        const res = policy.validatePastorInput('corto', ctxNoGenre());
+        expect(res.reasons.join(' ')).not.toContain('género literario');
+    });
+
+    it('accepts when a genre WAS inferred and the implication is long enough', () => {
+        expect(policy.validatePastorInput(longImplication, ctxFor('contextGenre')).valid).toBe(true);
+    });
+});
+
 describe('StructuralAnalysis method-error heuristic (lexical leakage)', () => {
     it('flags morphological vocabulary in the structural step', () => {
         const policy = registry.get('structuralAnalysis');

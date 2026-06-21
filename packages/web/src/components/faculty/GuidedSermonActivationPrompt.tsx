@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Sprout, Loader2 } from 'lucide-react';
+import { parsePassageReference } from '@dosfilos/domain';
 import { useTranslation } from '@/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,11 +43,15 @@ export function GuidedSermonActivationPrompt({
 }: Props) {
     const { t } = useTranslation('guidedSermon');
     const [passage, setPassage] = useState(suggestedPassage?.trim() ?? '');
+    const [error, setError] = useState<string | null>(null);
 
     // Reset the field each time the modal opens so a cancelled+reopened prompt
     // starts clean (or re-seeds from the suggested passage).
     useEffect(() => {
-        if (open) setPassage(suggestedPassage?.trim() ?? '');
+        if (open) {
+            setPassage(suggestedPassage?.trim() ?? '');
+            setError(null);
+        }
     }, [open, suggestedPassage]);
 
     const canActivate = passage.trim().length > 0 && !isProcessing;
@@ -54,7 +59,17 @@ export function GuidedSermonActivationPrompt({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!canActivate) return;
-        await onActivate(passage.trim());
+        // Validate against the canon before activating: an unrecognized book
+        // (e.g. the typo "1 Cotintios") would create a study whose genre step
+        // can never pass. Keep the pastor in the dialog to fix the reference
+        // instead of failing server-side with a transient toast.
+        const trimmed = passage.trim();
+        if (!parsePassageReference(trimmed).ok) {
+            setError(t('activation.invalidPassage'));
+            return;
+        }
+        setError(null);
+        await onActivate(trimmed);
     };
 
     return (
@@ -77,12 +92,17 @@ export function GuidedSermonActivationPrompt({
                             id="guided-sermon-passage"
                             type="text"
                             value={passage}
-                            onChange={(e) => setPassage(e.target.value)}
+                            onChange={(e) => { setPassage(e.target.value); if (error) setError(null); }}
                             placeholder={t('activation.passagePlaceholder')}
                             disabled={isProcessing}
+                            aria-invalid={error ? true : undefined}
                             autoFocus
                         />
-                        <p className="text-[10px] text-muted-foreground">{t('activation.passageHint')}</p>
+                        {error ? (
+                            <p className="text-[10px] text-destructive">{error}</p>
+                        ) : (
+                            <p className="text-[10px] text-muted-foreground">{t('activation.passageHint')}</p>
+                        )}
                     </div>
 
                     <DialogFooter>
