@@ -60,3 +60,44 @@ export const LITERARY_GENRE_LABELS_ES: Record<LiteraryGenre, string> = {
 export function inferGenreFromBook(bookId: BibleBookId): LiteraryGenre {
     return GENRE_BY_BOOK[bookId] ?? 'mixed';
 }
+
+/**
+ * Words a pastor uses to NAME a literary genre in his own prose, mapped to the
+ * canonical genre. Accent-stripped, matched as whole words (so "ley" does not
+ * fire on "leyendo"). `mixed` is intentionally absent — it's a contested-genre
+ * fallback, not something a pastor names to confirm a step.
+ */
+const GENRE_NAME_KEYWORDS: Record<Exclude<LiteraryGenre, 'mixed'>, string[]> = {
+    epistle: ['epistola', 'epistolas', 'epistolar', 'carta', 'cartas'],
+    gospel: ['evangelio', 'evangelios'],
+    prophecy: ['profecia', 'profecias', 'profetico', 'profetica', 'oraculo', 'oraculos'],
+    poetry: ['poesia', 'poetico', 'poetica', 'salmo', 'salmos', 'himno', 'himnos', 'canto', 'cantico'],
+    wisdom: ['sabiduria', 'sapiencial', 'proverbio', 'proverbios'],
+    narrative: ['narrativa', 'narrativo', 'narracion', 'relato', 'relatos', 'cronica', 'cronicas', 'historico', 'historica'],
+    law: ['ley', 'leyes', 'legal', 'mandamiento', 'mandamientos', 'levitico'],
+    apocalypse: ['apocalipsis', 'apocaliptico', 'apocaliptica'],
+};
+
+function stripAccents(value: string): string {
+    return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
+ * Pastoral Fidelity (paso 2, fix C) — recognizes the literary genre the pastor
+ * NAMES in his own prose so the conversational flow can honor it instead of
+ * re-asking. Returns the genre only when the prose names exactly ONE genre;
+ * if it names several (e.g. "no es profecía sino epístola") the result is
+ * ambiguous and we return `null` rather than guess.
+ */
+export function detectGenreInText(text: string): Exclude<LiteraryGenre, 'mixed'> | null {
+    const normalized = stripAccents(text ?? '');
+    if (!normalized.trim()) return null;
+    const hits = new Set<Exclude<LiteraryGenre, 'mixed'>>();
+    for (const genre of Object.keys(GENRE_NAME_KEYWORDS) as Array<Exclude<LiteraryGenre, 'mixed'>>) {
+        const matched = GENRE_NAME_KEYWORDS[genre].some((word) =>
+            new RegExp(`\\b${word}\\b`).test(normalized),
+        );
+        if (matched) hits.add(genre);
+    }
+    return hits.size === 1 ? [...hits][0] : null;
+}

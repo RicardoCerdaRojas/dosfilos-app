@@ -8,11 +8,13 @@
  * genre (the UC3 scenario from the Phase 1.6 smoke).
  */
 
+import { detectGenreInText } from '../../bible/inferGenreFromBook';
 import {
     PASTORAL_SEED_THRESHOLDS,
     validateContextGenre,
     type PastoralSeed,
 } from '../../entities/PastoralSeed';
+import type { LiteraryGenre } from '../../exegesis/expository/BookPanorama';
 import type {
     MethodErrorReport,
     SocraticTurnOutput,
@@ -68,13 +70,14 @@ Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 
     validatePastorInput(pastorMessage: string, ctx: TurnContext): StepValidationResult {
-        const genre = (ctx.genre as never) || '';
+        // Fix C: the deterministic book genre is authoritative when present;
+        // when it is missing (unrecognized book / legacy seed) the pastor's own
+        // prose IS the source — recognize the genre he names.
+        const genre = resolveEffectiveGenre(ctx.genre, pastorMessage);
         if (!genre) {
-            // Fallback: no deterministic genre on the seed (e.g. an unrecognized
-            // book slipped past activation, or a legacy seed). The guided flow
-            // has no genre-confirm UI, so requiring `genreConfirmed` here would
-            // dead-end the step. Gate only on the implication length — the
-            // pastor names the genre in his own prose.
+            // Safety net (fix A): no genre anywhere — book inference failed AND
+            // the prose names none. The guided flow has no genre-confirm UI, so
+            // don't dead-end the step; gate on the implication length alone.
             const len = pastorMessage.trim().length;
             return len >= MIN
                 ? { valid: true, reasons: [] }
@@ -82,6 +85,8 @@ Intento ${ctx.attemptIndex + 1} en este paso.`;
         }
         return validateContextGenre({
             genre,
+            // Present genre (book-inferred or prose-named) counts as confirmed:
+            // the guided flow has no genre-confirm UI to satisfy.
             genreConfirmed: true,
             genreImplication: pastorMessage,
             bookLocationNote: '',
@@ -108,12 +113,30 @@ Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 
     persistTo(seed: PastoralSeed, pastorMessage: string): Partial<PastoralSeed> {
+        const existingGenre = seed.contextGenre?.genre ?? '';
+        // Fix C: if the seed had no book-inferred genre, persist the one the
+        // pastor named in his prose so it sticks for downstream steps and the
+        // record reflects what was actually confirmed.
+        const namedGenre = existingGenre ? '' : detectGenreInText(pastorMessage);
+        const resolvedGenre = existingGenre || namedGenre || '';
         return {
             contextGenre: {
                 ...seed.contextGenre,
+                genre: resolvedGenre,
+                genreConfirmed: Boolean(resolvedGenre),
                 genreImplication: pastorMessage.trim(),
                 completedAt: new Date(),
             },
         };
     }
+}
+
+/**
+ * The genre to validate against: the deterministic book genre when the seed has
+ * one, otherwise the genre the pastor names in his prose (fix C). Returns ''
+ * when neither is available.
+ */
+function resolveEffectiveGenre(ctxGenre: string | undefined, pastorMessage: string): LiteraryGenre | '' {
+    if (ctxGenre) return ctxGenre as LiteraryGenre;
+    return detectGenreInText(pastorMessage) ?? '';
 }
