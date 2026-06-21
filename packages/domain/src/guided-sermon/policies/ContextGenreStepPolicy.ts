@@ -68,9 +68,21 @@ Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 
     validatePastorInput(pastorMessage: string, ctx: TurnContext): StepValidationResult {
+        const genre = (ctx.genre as never) || '';
+        if (!genre) {
+            // Fallback: no deterministic genre on the seed (e.g. an unrecognized
+            // book slipped past activation, or a legacy seed). The guided flow
+            // has no genre-confirm UI, so requiring `genreConfirmed` here would
+            // dead-end the step. Gate only on the implication length — the
+            // pastor names the genre in his own prose.
+            const len = pastorMessage.trim().length;
+            return len >= MIN
+                ? { valid: true, reasons: [] }
+                : { valid: false, reasons: [`Implicancia del género requiere ≥${MIN} caracteres (actual: ${len}).`] };
+        }
         return validateContextGenre({
-            genre: (ctx.genre as never) || '',
-            genreConfirmed: Boolean(ctx.genre),
+            genre,
+            genreConfirmed: true,
             genreImplication: pastorMessage,
             bookLocationNote: '',
             historicalContextConsulted: false,
