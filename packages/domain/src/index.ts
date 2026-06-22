@@ -47,6 +47,7 @@ export * from './entities/ContraScanReport'; // 🌱 Pastoral Fidelity Phase 4 P
 export * from './services/evaluateContraScanGate'; // 🌱 Pastoral Fidelity Phase 4 PR 1 — contra-scan gate decision (ADR-033)
 export * from './ports/ILlmClient'; // 🌱 Pastoral Fidelity Phase 2.5 — thin LLM provider port (Q7/ADR-025)
 export * from './ports/IFidelityEvaluator'; // 🌱 Pastoral Fidelity Phase 3 PR 1 — claim/source evaluator port (ADR-029)
+export * from './ports/ICoverageEngagementJudge'; // 🌱 Pastoral Fidelity ADR-035 CA1 — engagement judge port (D)
 // 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent
 export * from './guided-sermon/SocraticTurn';
 export * from './guided-sermon/GuidedSermonSession';

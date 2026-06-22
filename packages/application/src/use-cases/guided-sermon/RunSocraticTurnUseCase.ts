@@ -23,6 +23,7 @@ import {
     type AiAssistType,
     type GuidedSermonSession,
     type IAIChatRepository,
+    type ICoverageEngagementJudge,
     type ILlmClient,
     type IPastoralSeedRepository,
     type IStepPolicyRegistry,
@@ -37,6 +38,12 @@ export interface RunSocraticTurnInput {
     userId: string;
     sessionId: string;
     pastorMessage: string;
+    /**
+     * ADR-035 enforce (D) — lo pasa el web desde `usePassageProfileEnforceGate`.
+     * Default/ausente = false = clásico. Gatea nudges + confront de lectura
+     * errónea. Inerte hasta el commit del dispatch (D commit 3).
+     */
+    enforceCoverage?: boolean;
 }
 
 /** Heuristic confidence threshold for short-circuiting to a confrontation. */
@@ -89,6 +96,12 @@ export class RunSocraticTurnUseCase {
         private readonly seedRepo: IPastoralSeedRepository,
         private readonly llmClient: ILlmClient,
         private readonly registry: IStepPolicyRegistry,
+        /**
+         * ADR-035 CA1 (D) — juez de engagement (opcional). Ausente ⇒ el confront
+         * de lectura errónea no corre (no-op). Lo consume el dispatch (D commit
+         * 3); aquí solo se inyecta.
+         */
+        private readonly coverageJudge?: ICoverageEngagementJudge,
     ) {}
 
     async execute(input: RunSocraticTurnInput): Promise<SocraticTurnResult> {
@@ -119,6 +132,9 @@ export class RunSocraticTurnUseCase {
             // ADR-035 B — perfil cristalizado (si existe). El enforce (D) lo usa;
             // sin él el flujo es clásico (no-op). Solo transporte aquí.
             passageProfile: seed.passageProfile,
+            // ADR-035 enforce (D) — gatea nudges + confront del perfil. Inerte
+            // hasta el dispatch (commit 3).
+            enforceCoverage: input.enforceCoverage === true,
         };
 
         // Persist the pastor's user message FIRST so it always appears in chat

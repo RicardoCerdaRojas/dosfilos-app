@@ -47,6 +47,12 @@ export interface TurnContext {
      * sombra sin perfil ⇒ flujo clásico (no-op). Aquí solo se transporta.
      */
     passageProfile?: PassageProfile;
+    /**
+     * ADR-035 enforce (D) — true solo con `passage_profile_enforce` on. Gatea los
+     * nudges + el confront de lectura errónea. Ausente/false ⇒ clásico (las
+     * policies y el dispatch no aplican nada del perfil).
+     */
+    enforceCoverage?: boolean;
 }
 
 /**

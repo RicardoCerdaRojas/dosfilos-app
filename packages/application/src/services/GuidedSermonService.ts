@@ -17,6 +17,7 @@
 import type {
     GuidedSermonSession,
     IAIChatRepository,
+    ICoverageEngagementJudge,
     ILlmClient,
     IPastoralSeedRepository,
     IStepPolicyRegistry,
@@ -60,6 +61,9 @@ export interface GuidedSermonServiceDeps {
     seedRepo: IPastoralSeedRepository;
     llmClient: ILlmClient;
     registry: IStepPolicyRegistry;
+    /** ADR-035 CA1 (D) — juez de engagement opcional. Ausente ⇒ confront de
+     * lectura errónea no corre. */
+    coverageJudge?: ICoverageEngagementJudge;
 }
 
 export interface ActivateGuidedSermonResult {
@@ -85,6 +89,7 @@ export class GuidedSermonService {
             deps.seedRepo,
             deps.llmClient,
             deps.registry,
+            deps.coverageJudge,
         );
         this.submitInsightUC = new SubmitGuidedInsightUseCase(deps.chatRepo, deps.seedRepo);
         this.submitWordStudiesUC = new SubmitGuidedWordStudiesUseCase(deps.chatRepo, deps.seedRepo);
