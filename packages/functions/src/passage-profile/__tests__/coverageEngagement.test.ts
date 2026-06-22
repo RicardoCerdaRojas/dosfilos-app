@@ -99,6 +99,8 @@ describe('coverageEngagement — plumbing determinista (sin LLM real)', () => {
  */
 describe.runIf(Boolean(process.env.ANTHROPIC_API_KEY))('coverageEngagement — eval vivo (Sonnet)', () => {
     const client = new AnthropicLlmClient(process.env.ANTHROPIC_API_KEY as string);
+
+    // Una corrida por fila — barrido base.
     for (const r of ROWS.filter((x) => x.expect.substantive)) {
         it(`fila ${r.row}: Sonnet adjudica engagement correctamente`, async () => {
             const judgment = await judgeEngagement(client, { ...BASE, pastorMessage: r.pastorMessage });
@@ -106,4 +108,24 @@ describe.runIf(Boolean(process.env.ANTHROPIC_API_KEY))('coverageEngagement — e
             expect(judgment.contradictsAnchor).toBe(r.expect.contradictsAnchor);
         }, 30000);
     }
+
+    // Fila D × N corridas — REPRODUCIBILIDAD (Sonnet no es determinista; un acierto
+    // único no prueba estabilidad). Si oscila (mismo input, a veces true/false) ya
+    // es señal de escalar a Pro o endurecer el prompt, aunque pase en promedio.
+    // Override de N: PROFILE_EVAL_RUNS=10 yarn workspace @dosfilos/functions test
+    const D_RUNS = Number(process.env.PROFILE_EVAL_RUNS ?? 5);
+    const D = ROWS.find((x) => x.row.startsWith('D'))!;
+    it(`fila D × ${D_RUNS}: enganchó a fondo + discrepa → engagedAnchor=true CONSISTENTE`, async () => {
+        const results: Array<{ engaged: boolean; contradicts: boolean }> = [];
+        for (let i = 0; i < D_RUNS; i++) {
+            const j = await judgeEngagement(client, { ...BASE, pastorMessage: D.pastorMessage });
+            results.push({ engaged: j.engagedAnchor, contradicts: j.contradictsAnchor });
+        }
+        // Log para que el founder vea la distribución de las corridas.
+        // eslint-disable-next-line no-console
+        console.log('[eval fila D] corridas:', JSON.stringify(results));
+        // TODAS deben acertar: engaged=true (la garantía) y contradicts=true.
+        expect(results.every((r) => r.engaged === true)).toBe(true);
+        expect(results.every((r) => r.contradicts === true)).toBe(true);
+    }, 30000 * Math.max(1, D_RUNS));
 });
