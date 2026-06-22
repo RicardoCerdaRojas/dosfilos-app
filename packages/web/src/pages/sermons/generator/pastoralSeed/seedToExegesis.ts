@@ -36,6 +36,13 @@ export function seedToExegesis(seed: PastoralSeed): ExegeticalStudy {
         seed.insight?.doxologicalApplication,
     ].filter((s): s is string => !!s && s.trim().length > 0);
 
+    // ADR-035 R3 — antes se descartaban; ahora viajan en la entidad para que el
+    // bosquejo Y el borrador los consuman (el sermón ya no sale ciego a las
+    // alusiones del pastor).
+    const canonicalParallels = (seed.recognition?.parallels ?? [])
+        .filter((p) => p.reference?.trim())
+        .map((p) => ({ reference: p.reference.trim(), relevanceNote: p.relevanceNote ?? '' }));
+
     return {
         passage: seed.passage,
         context: {
@@ -46,5 +53,6 @@ export function seedToExegesis(seed: PastoralSeed): ExegeticalStudy {
         keyWords,
         exegeticalProposition: seed.insight?.centralIdea ?? '',
         pastoralInsights,
+        ...(canonicalParallels.length > 0 ? { canonicalParallels } : {}),
     };
 }

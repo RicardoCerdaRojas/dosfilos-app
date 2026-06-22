@@ -115,6 +115,17 @@ Tu especialidad es desarrollar proposiciones homiléticas y bosquejos detallados
             .map(kw => `- ${kw.original}: ${kw.significance}`)
             .join('\n');
 
+        // ADR-035 R3 — paralelos canónicos que marcó el pastor. Van en el BOSQUEJO
+        // (no solo en el borrador): el esqueleto debe preferirlos en los
+        // scriptureReferences de cada punto, en vez de inventar otros.
+        const parallels = exegesis.canonicalParallels ?? [];
+        const parallelsBlock = parallels.length > 0
+            ? `
+
+**Paralelos canónicos marcados por el pastor (PRIORÍZALOS en los scriptureReferences de los puntos; no inventes otros en su lugar):**
+${parallels.map(p => `- ${p.reference}${p.relevanceNote ? `: ${p.relevanceNote}` : ''}`).join('\n')}`
+            : '';
+
         return `
 ## ESTUDIO EXEGÉTICO COMPLETO
 
@@ -136,7 +147,7 @@ ${exegesis.context.audience}
 ${keyWordsText}
 
 **Insights Pastorales:**
-${exegesis.pastoralInsights.map((insight, i) => `${i + 1}. ${insight}`).join('\n')}
+${exegesis.pastoralInsights.map((insight, i) => `${i + 1}. ${insight}`).join('\n')}${parallelsBlock}
 `.trim();
     }
 

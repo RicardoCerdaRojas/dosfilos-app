@@ -481,7 +481,14 @@ Palabras Clave (úsalas para notas exegéticas):
 ${analysis.exegeticalStudy.keyWords.map(kw => `  - ${kw.original} (${kw.transliteration}): ${kw.significance}`).join('\n')}
 
 Insights Pastorales:
-${analysis.exegeticalStudy.pastoralInsights.map(insight => `  • ${insight}`).join('\n')}
+${analysis.exegeticalStudy.pastoralInsights.map(insight => `  • ${insight}`).join('\n')}${
+    (analysis.exegeticalStudy.canonicalParallels?.length ?? 0) > 0
+        ? `
+
+Paralelos canónicos marcados por el pastor (CÍTALOS en el cuerpo donde correspondan; son PRIMARIOS, no los reemplaces por otros):
+${analysis.exegeticalStudy.canonicalParallels!.map(p => `  • ${p.reference}${p.relevanceNote ? `: ${p.relevanceNote}` : ''}`).join('\n')}`
+        : ''
+}
 ` : '';
 
   const personalizationBlock = formatSermonPersonalizationBlock(rules.personalization);

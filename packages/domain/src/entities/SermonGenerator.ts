@@ -111,6 +111,14 @@ export interface ExegeticalStudy {
     exegeticalProposition: string;
     pastoralInsights: string[];
     ragSources?: RAGSource[];  // Sources used from library
+    /**
+     * ADR-035 R3 — paralelos canónicos / alusiones AT que el pastor marcó en el
+     * estudio guiado (paso Reconocimiento). Opcional/aditivo. Se lleva EN LA
+     * ENTIDAD para que lo consuman TANTO el bosquejo como el borrador (antes
+     * moría en `seedToExegesis` y solo resucitaba tarde/blando en el draft). Sin
+     * esto el sermón salía ciego a las alusiones del pastor (dolor original).
+     */
+    canonicalParallels?: { reference: string; relevanceNote: string }[];
 }
 
 import { HomileticalApproach } from './HomileticalApproach';
