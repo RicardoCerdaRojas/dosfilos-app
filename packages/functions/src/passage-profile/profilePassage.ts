@@ -45,7 +45,32 @@ interface RawIllustration {
     summary: string;
 }
 
-type RawFeature = RawOtAllusion | RawCommonMisreading | RawIllustration;
+interface RawParallelism {
+    typeKey: 'parallelism';
+    verseRef: string;
+    summary: string;
+}
+
+interface RawNamedEntity {
+    typeKey: 'named-entity';
+    verseRef: string;
+    name: string;
+    note?: string;
+}
+
+interface RawTextualCrux {
+    typeKey: 'textual-crux';
+    verseRef: string;
+    summary: string;
+}
+
+type RawFeature =
+    | RawOtAllusion
+    | RawCommonMisreading
+    | RawIllustration
+    | RawParallelism
+    | RawNamedEntity
+    | RawTextualCrux;
 
 interface RawProfile {
     passage: string;
@@ -81,7 +106,16 @@ Analiza el TEXTO y devuelve un objeto JSON con esta forma EXACTA:
     // Ilustraciones/metáforas DIRECTAS del texto (ej. "el perro que vuelve a su
     // vómito", "fuentes sin agua"). SOLO las que están explícitamente en el texto;
     // no inventes imágenes que no aparecen.
-    { "typeKey": "illustration", "verseRef": "<vers. donde aparece>", "summary": "<la imagen tal cual la usa el texto>" }
+    { "typeKey": "illustration", "verseRef": "<vers. donde aparece>", "summary": "<la imagen tal cual la usa el texto>" },
+    // Paralelismos poéticos (poesía/sabiduría): pares que dicen lo mismo con
+    // palabras distintas, o quiasmos. SOLO si el texto es poético y el par está.
+    { "typeKey": "parallelism", "verseRef": "<vers.>", "summary": "<el par, ej. 'delicados pastos // aguas de reposo'>" },
+    // Personas/lugares nombrados que piden trasfondo histórico-cultural (ej.
+    // Balaam, Sodoma). SOLO los nombrados explícitamente en el texto.
+    { "typeKey": "named-entity", "verseRef": "<vers.>", "name": "<el nombre tal cual>", "note": "<por qué pide trasfondo, opcional>" },
+    // Cruces/variantes textuales relevantes para la interpretación. SOLO si hay
+    // una variante real conocida; no inventes crítica textual.
+    { "typeKey": "textual-crux", "verseRef": "<vers.>", "summary": "<la variante y su efecto>" }
   ]
 }
 
@@ -89,7 +123,7 @@ Reglas:
 - Divide el pasaje en sus movimientos reales (1 si es corto; varios si es un argumento largo).
 - NO inventes alusiones AT: si el texto no remite a un pasaje concreto del AT, deja "features" sin esa entrada.
 - NO inventes lecturas erróneas: solo las recurrentes y peligrosas, y siempre con ancla correctiva.
-- NO inventes ilustraciones: solo las imágenes/metáforas que el texto usa explícitamente.
+- NO inventes ilustraciones, paralelismos, personas/lugares ni variantes: solo lo que el texto contiene explícitamente.
 - Devuelve SOLO el JSON, sin texto adicional.`;
 }
 
@@ -149,6 +183,24 @@ function shapeFeature(raw: unknown): RawFeature | null {
         const verseRef = str(r.verseRef);
         if (!summary || !verseRef) return null; // anti-alucinación: sin imagen+verso, fuera
         return { typeKey: 'illustration', verseRef, summary };
+    }
+    if (r?.typeKey === 'parallelism') {
+        const summary = str(r.summary);
+        const verseRef = str(r.verseRef);
+        if (!summary || !verseRef) return null;
+        return { typeKey: 'parallelism', verseRef, summary };
+    }
+    if (r?.typeKey === 'named-entity') {
+        const name = str(r.name);
+        const verseRef = str(r.verseRef);
+        if (!name || !verseRef) return null;
+        return { typeKey: 'named-entity', verseRef, name, note: str(r.note) || undefined };
+    }
+    if (r?.typeKey === 'textual-crux') {
+        const summary = str(r.summary);
+        const verseRef = str(r.verseRef);
+        if (!summary || !verseRef) return null;
+        return { typeKey: 'textual-crux', verseRef, summary };
     }
     return null;
 }

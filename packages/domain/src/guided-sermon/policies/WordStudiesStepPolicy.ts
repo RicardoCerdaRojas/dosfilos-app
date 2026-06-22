@@ -26,7 +26,7 @@ import type {
     StepValidationResult,
     TurnContext,
 } from '../SocraticTurn';
-import { BASE_SYSTEM_GUARDS, parseStandardLlmReply, priorStepsBlock } from './_shared';
+import { BASE_SYSTEM_GUARDS, buildInformationalFeatureNudge, parseStandardLlmReply, priorStepsBlock } from './_shared';
 import type { IStepPolicy } from './IStepPolicy';
 
 const T = PASTORAL_SEED_THRESHOLDS.wordStudies;
@@ -119,7 +119,14 @@ Trabajo previo del pastor:
 ${priorStepsBlock(ctx)}
 
 AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): un descubrimiento exegético propio gobernado por el contexto (no copia de diccionario) — nombrá la palabra. Nada genérico.
-
+${buildInformationalFeatureNudge(
+            ctx,
+            'wordStudies',
+            'textual-crux',
+            'DATO DEL PERFIL — cruces/variantes textuales en este pasaje:',
+            (f) => (f.typeKey === 'textual-crux' ? `- "${f.summary}" (${f.verseRef})` : ''),
+            'Surfacealo como dato si es relevante; no fuerces crítica textual. El pastor decide si lo trabaja.',
+        )}
 Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 

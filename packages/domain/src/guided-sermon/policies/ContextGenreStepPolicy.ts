@@ -21,7 +21,7 @@ import type {
     StepValidationResult,
     TurnContext,
 } from '../SocraticTurn';
-import { BASE_SYSTEM_GUARDS, parseStandardLlmReply, priorStepsBlock } from './_shared';
+import { BASE_SYSTEM_GUARDS, buildInformationalFeatureNudge, parseStandardLlmReply, priorStepsBlock } from './_shared';
 import type { IStepPolicy } from './IStepPolicy';
 
 const MIN = PASTORAL_SEED_THRESHOLDS.contextGenre.genreImplicationMinChars;
@@ -61,7 +61,14 @@ Trabajo previo del pastor:
 ${priorStepsBlock(ctx)}
 
 AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): que conectó el género con una regla de lectura coherente — citá cómo cambia su forma de leer el pasaje. Nada genérico.
-
+${buildInformationalFeatureNudge(
+            ctx,
+            'contextGenre',
+            'named-entity',
+            'DATO DEL PERFIL — personas/lugares que piden trasfondo:',
+            (f) => (f.typeKey === 'named-entity' ? `- ${f.name} (${f.verseRef})${f.note ? `: ${f.note}` : ''}` : ''),
+            'Si el pastor no los ubica, recordale consultar su trasfondo histórico-cultural; él escribe qué aportan.',
+        )}
 Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 
