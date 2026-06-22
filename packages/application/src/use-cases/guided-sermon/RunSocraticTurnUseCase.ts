@@ -116,6 +116,9 @@ export class RunSocraticTurnUseCase {
             // Step 4 accumulates word studies across turns — the policy merges
             // the saved set with the current message before validating.
             existingWordStudies: seed.wordStudies?.studies ?? [],
+            // ADR-035 B — perfil cristalizado (si existe). El enforce (D) lo usa;
+            // sin él el flujo es clásico (no-op). Solo transporte aquí.
+            passageProfile: seed.passageProfile,
         };
 
         // Persist the pastor's user message FIRST so it always appears in chat

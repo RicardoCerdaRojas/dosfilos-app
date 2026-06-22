@@ -9,6 +9,7 @@
  */
 
 import type { PastoralSeedStepKey, StepValidationResult, WordStudy } from '../entities/PastoralSeed';
+import type { PassageProfile } from '../entities/PassageProfile';
 
 /**
  * Context passed to a step policy when building prompts / parsing replies
@@ -39,6 +40,13 @@ export interface TurnContext {
      * persists the merged set instead of just the current message.
      */
     existingWordStudies?: WordStudy[];
+    /**
+     * ADR-035 — perfil del pasaje cristalizado en el seed (B). Lo consume el
+     * enforce (D): nudges por paso + confront de lectura errónea condicionados
+     * por las features ruteadas a `currentStep`. Ausente ⇒ seed legacy / flag de
+     * sombra sin perfil ⇒ flujo clásico (no-op). Aquí solo se transporta.
+     */
+    passageProfile?: PassageProfile;
 }
 
 /**
