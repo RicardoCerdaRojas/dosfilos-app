@@ -30,7 +30,14 @@ export type FeatureKind = 'hard' | 'soft';
 export type CoverageRule = 'must-touch' | 'nudge-only';
 
 /** Claves del catálogo v1 (ADR-035 D4). El resto entra por dato en iteraciones. */
-export type FeatureTypeKey = 'movements' | 'ot-allusion' | 'common-misreading' | 'illustration';
+export type FeatureTypeKey =
+    | 'movements'
+    | 'ot-allusion'
+    | 'common-misreading'
+    | 'illustration'
+    | 'parallelism'
+    | 'named-entity'
+    | 'textual-crux';
 
 /**
  * Entrada del catálogo de features — DATO, no código. El pipeline itera sobre
@@ -74,6 +81,29 @@ export const FEATURE_CATALOG_V1: Record<FeatureTypeKey, FeatureType> = {
         kind: 'hard',
         routeToStep: 'function',
         coverageRule: 'must-touch',
+    },
+    // ADR-035 R7 — paralelismo poético (poesía/sabiduría). Estructural → paso 3.
+    parallelism: {
+        key: 'parallelism',
+        kind: 'hard',
+        routeToStep: 'structuralAnalysis',
+        coverageRule: 'must-touch',
+    },
+    // ADR-035 R7 — persona/lugar que pide trasfondo (ej. Balaam, Sodoma). Va al
+    // paso de Contexto/Género (trasfondo histórico-cultural). Nudge informativo.
+    'named-entity': {
+        key: 'named-entity',
+        kind: 'hard',
+        routeToStep: 'contextGenre',
+        coverageRule: 'nudge-only',
+    },
+    // ADR-035 R7 — cruce/variante textual relevante. Va al paso de Palabras (texto
+    // de cerca). Soft + nudge: no se fuerza al pastor a crítica textual.
+    'textual-crux': {
+        key: 'textual-crux',
+        kind: 'soft',
+        routeToStep: 'wordStudies',
+        coverageRule: 'nudge-only',
     },
 };
 
@@ -157,7 +187,42 @@ export interface IllustrationFeature {
     summary: string;
 }
 
-export type DetectedFeature = OtAllusionFeature | CommonMisreadingFeature | IllustrationFeature;
+/** Paralelismo poético directo del texto. `hard` (está EN el pasaje). */
+export interface ParallelismFeature {
+    typeKey: 'parallelism';
+    /** Versos del par, ej. "v.2". */
+    verseRef: string;
+    /** La pareja, ej. "delicados pastos // aguas de reposo". */
+    summary: string;
+}
+
+/** Persona/lugar nombrado que pide trasfondo. `hard` (nombrado en el texto). */
+export interface NamedEntityFeature {
+    typeKey: 'named-entity';
+    /** Dónde se nombra, ej. "v.15". */
+    verseRef: string;
+    /** El nombre, ej. "Balaam hijo de Beor". */
+    name: string;
+    /** Por qué importa su trasfondo (breve, opcional). */
+    note?: string;
+}
+
+/** Cruce/variante textual relevante. `soft`. */
+export interface TextualCruxFeature {
+    typeKey: 'textual-crux';
+    /** Dónde, ej. "v.13". */
+    verseRef: string;
+    /** El cruce, ej. "algunos mss. leen 'ágapais' (amores) vs 'apátais' (engaños)". */
+    summary: string;
+}
+
+export type DetectedFeature =
+    | OtAllusionFeature
+    | CommonMisreadingFeature
+    | IllustrationFeature
+    | ParallelismFeature
+    | NamedEntityFeature
+    | TextualCruxFeature;
 
 /** Perfil del pasaje cristalizado en el seed. */
 export interface PassageProfile {
@@ -188,9 +253,12 @@ export function isFeatureAnchored(feature: DetectedFeature): boolean {
     if (feature.typeKey === 'ot-allusion') {
         return Boolean(feature.anchor?.reference?.trim());
     }
-    if (feature.typeKey === 'illustration') {
-        // Ancla = el verso donde aparece + la imagen. Sin uno u otro, fuera.
+    if (feature.typeKey === 'illustration' || feature.typeKey === 'parallelism' || feature.typeKey === 'textual-crux') {
+        // Ancla = verso + texto. Sin uno u otro, fuera.
         return Boolean(feature.verseRef?.trim() && feature.summary?.trim());
+    }
+    if (feature.typeKey === 'named-entity') {
+        return Boolean(feature.verseRef?.trim() && feature.name?.trim());
     }
     // common-misreading
     return feature.correctiveAnchor.some((a) => Boolean(a?.reference?.trim()));

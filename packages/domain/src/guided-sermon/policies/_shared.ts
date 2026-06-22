@@ -7,6 +7,30 @@
  */
 
 import type { SocraticTurnOutput, TurnContext } from '../SocraticTurn';
+import { featuresForStep, type DetectedFeature, type FeatureTypeKey } from '../../entities/PassageProfile';
+import type { PastoralSeedStepKey } from '../../entities/PastoralSeed';
+
+/**
+ * ADR-035 — nudge INFORMATIVO genérico de features del perfil ruteadas a este
+ * paso. Gated por `enforceCoverage`; sin él (o sin perfil/feature) devuelve ''.
+ * Surface el dato; el pastor escribe el aporte (NO da la respuesta). Para
+ * confrontaciones (misreading) hay lógica propia; esto es solo "considerá esto".
+ */
+export function buildInformationalFeatureNudge(
+    ctx: TurnContext,
+    stepKey: PastoralSeedStepKey,
+    typeKey: FeatureTypeKey,
+    heading: string,
+    render: (f: DetectedFeature) => string,
+    instruction: string,
+): string {
+    if (!ctx.enforceCoverage) return '';
+    const fs = featuresForStep(ctx.passageProfile, stepKey).filter((f) => f.typeKey === typeKey);
+    if (fs.length === 0) return '';
+    const lines = fs.map(render).filter(Boolean).join('\n');
+    if (!lines) return '';
+    return `\n${heading}\n${lines}\n${instruction}`;
+}
 
 /**
  * Core P1/P2/P3 guards every policy injects into its system prompt. The

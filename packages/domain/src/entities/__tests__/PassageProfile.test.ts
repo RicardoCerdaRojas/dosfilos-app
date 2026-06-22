@@ -42,10 +42,12 @@ describe('FEATURE_CATALOG_V1', () => {
         expect(FEATURE_CATALOG_V1.movements).toMatchObject({ kind: 'hard', routeToStep: 'structuralAnalysis' });
     });
 
-    it('only soft features carry nudge-only; hard features are must-touch', () => {
+    it('invariante: soft ⇒ nudge-only; must-touch ⇒ hard (hard puede ser nudge-only, ej. named-entity)', () => {
         for (const ft of Object.values(FEATURE_CATALOG_V1)) {
+            // Un soft (sin ancla dura) NUNCA puede ser must-touch del gate.
             if (ft.kind === 'soft') expect(ft.coverageRule).toBe('nudge-only');
-            else expect(ft.coverageRule).toBe('must-touch');
+            // Un must-touch (entra al gate) DEBE ser hard (verificable).
+            if (ft.coverageRule === 'must-touch') expect(ft.kind).toBe('hard');
         }
     });
 });

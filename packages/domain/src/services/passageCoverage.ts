@@ -9,10 +9,12 @@
  * siguiente; este archivo solo construye el contrato.
  */
 
-import type {
-    CoverageRule,
-    FeatureTypeKey,
-    PassageProfile,
+import {
+    FEATURE_CATALOG_V1,
+    type CoverageRule,
+    type DetectedFeature,
+    type FeatureTypeKey,
+    type PassageProfile,
 } from '../entities/PassageProfile';
 import type { PastoralSeed, PastoralSeedStepKey } from '../entities/PastoralSeed';
 import type { FidelityGateStatus } from '../entities/FidelityReport';
@@ -39,6 +41,49 @@ export interface CoverageContract {
     items: CoverageItem[];
 }
 
+/** Palabras "ancla" del texto de una feature (>4 chars) para el match. */
+function words(s: string): string[] {
+    return norm(s)
+        .split(/\s+/)
+        .filter((w) => w.length > 4);
+}
+
+/** Label legible + marcas de match por tipo de feature. Exhaustivo (TS chequea). */
+function describeFeature(f: DetectedFeature): { label: string; hints: string[] } {
+    switch (f.typeKey) {
+        case 'ot-allusion':
+            return {
+                label: `la alusión a ${norm(f.anchor.reference)} (${norm(f.verseRef)})`,
+                hints: [f.anchor.reference, f.verseRef].map(norm).filter(Boolean),
+            };
+        case 'common-misreading':
+            return {
+                label: `la lectura errónea "${norm(f.claim)}" (${norm(f.verseRef)})`,
+                hints: f.correctiveAnchor.map((a) => norm(a.reference)).filter(Boolean),
+            };
+        case 'illustration':
+            return {
+                label: `la ilustración "${norm(f.summary)}" (${norm(f.verseRef)})`,
+                hints: [norm(f.verseRef), ...words(f.summary)].filter(Boolean),
+            };
+        case 'parallelism':
+            return {
+                label: `el paralelismo "${norm(f.summary)}" (${norm(f.verseRef)})`,
+                hints: [norm(f.verseRef), ...words(f.summary)].filter(Boolean),
+            };
+        case 'named-entity':
+            return {
+                label: `${norm(f.name)} (${norm(f.verseRef)})`,
+                hints: [norm(f.verseRef), ...words(f.name)].filter(Boolean),
+            };
+        case 'textual-crux':
+            return {
+                label: `el cruce textual "${norm(f.summary)}" (${norm(f.verseRef)})`,
+                hints: [norm(f.verseRef), ...words(f.summary)].filter(Boolean),
+            };
+    }
+}
+
 function norm(s: string): string {
     return s.trim();
 }
@@ -60,41 +105,19 @@ export function buildCoverageContract(profile: PassageProfile | undefined): Cove
         });
     });
 
+    // Catalog-driven: route + coverageRule salen del catálogo (SSOT). Solo el
+    // label + las marcas de match son per-tipo (describeFeature, exhaustivo).
     profile.features.forEach((f, i) => {
-        if (f.typeKey === 'ot-allusion') {
-            items.push({
-                id: `ot-allusion:${i}`,
-                typeKey: 'ot-allusion',
-                label: `la alusión a ${norm(f.anchor.reference)} (${norm(f.verseRef)})`,
-                routeToStep: 'recognition',
-                coverageRule: 'must-touch',
-                // El ancla AT (verificable) + el verso son las marcas estables.
-                matchHints: [f.anchor.reference, f.verseRef].map(norm).filter(Boolean),
-            });
-        } else if (f.typeKey === 'common-misreading') {
-            items.push({
-                id: `common-misreading:${i}`,
-                typeKey: 'common-misreading',
-                label: `la lectura errónea "${norm(f.claim)}" (${norm(f.verseRef)})`,
-                routeToStep: 'function',
-                coverageRule: 'nudge-only',
-                // Las anclas correctivas son las marcas estables de que la trató.
-                matchHints: f.correctiveAnchor.map((a) => norm(a.reference)).filter(Boolean),
-            });
-        } else {
-            // illustration (ADR-035 R4)
-            items.push({
-                id: `illustration:${i}`,
-                typeKey: 'illustration',
-                label: `la ilustración "${norm(f.summary)}" (${norm(f.verseRef)})`,
-                routeToStep: 'function',
-                coverageRule: 'must-touch',
-                // La imagen + el verso son las marcas de que la trató.
-                matchHints: [f.verseRef, ...norm(f.summary).split(/\s+/).filter((w) => w.length > 4)]
-                    .map(norm)
-                    .filter(Boolean),
-            });
-        }
+        const ft = FEATURE_CATALOG_V1[f.typeKey];
+        const { label, hints } = describeFeature(f);
+        items.push({
+            id: `${f.typeKey}:${i}`,
+            typeKey: f.typeKey,
+            label,
+            routeToStep: ft.routeToStep,
+            coverageRule: ft.coverageRule,
+            matchHints: hints,
+        });
     });
 
     return { items };

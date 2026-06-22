@@ -42,8 +42,13 @@ function featureHasAnchor(f: FeatureInput): boolean {
     if (f?.typeKey === 'common-misreading') {
         return Array.isArray(f.correctiveAnchor) && f.correctiveAnchor.some((a) => Boolean(str((a as AnchorInput)?.reference)));
     }
-    // ADR-035 R4 — illustration: ancla = verso + imagen presentes.
-    if (f?.typeKey === 'illustration') return Boolean(str((f as { verseRef?: unknown }).verseRef) && str((f as { summary?: unknown }).summary));
+    // ADR-035 R4/R7 — illustration/parallelism/textual-crux: ancla = verso+texto;
+    // named-entity: verso+nombre.
+    const g = f as { verseRef?: unknown; summary?: unknown; name?: unknown };
+    if (f?.typeKey === 'illustration' || f?.typeKey === 'parallelism' || f?.typeKey === 'textual-crux') {
+        return Boolean(str(g.verseRef) && str(g.summary));
+    }
+    if (f?.typeKey === 'named-entity') return Boolean(str(g.verseRef) && str(g.name));
     return false;
 }
 
@@ -71,6 +76,9 @@ export const recordPassageProfileShadow = onCall(
         const otAllusionCount = features.filter((f) => f?.typeKey === 'ot-allusion').length;
         const misreadingCount = features.filter((f) => f?.typeKey === 'common-misreading').length;
         const illustrationCount = features.filter((f) => f?.typeKey === 'illustration').length;
+        const parallelismCount = features.filter((f) => f?.typeKey === 'parallelism').length;
+        const namedEntityCount = features.filter((f) => f?.typeKey === 'named-entity').length;
+        const textualCruxCount = features.filter((f) => f?.typeKey === 'textual-crux').length;
         // Hueco: el perfil corrió pero no detectó NINGUNA feature conocida →
         // candidato a catálogo (telemetría de huecos, plan §5).
         const isGap = featureCount === 0;
@@ -94,6 +102,9 @@ export const recordPassageProfileShadow = onCall(
                 otAllusionCount,
                 misreadingCount,
                 illustrationCount,
+                parallelismCount,
+                namedEntityCount,
+                textualCruxCount,
                 isGap,
                 latencyMs,
                 createdAt: FieldValue.serverTimestamp(),

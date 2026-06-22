@@ -18,7 +18,7 @@ import type {
     StepValidationResult,
     TurnContext,
 } from '../SocraticTurn';
-import { BASE_SYSTEM_GUARDS, parseStandardLlmReply, priorStepsBlock } from './_shared';
+import { BASE_SYSTEM_GUARDS, buildInformationalFeatureNudge, parseStandardLlmReply, priorStepsBlock } from './_shared';
 import type { IStepPolicy } from './IStepPolicy';
 
 const MIN = PASTORAL_SEED_THRESHOLDS.structuralAnalysis.pastorNoteMinChars;
@@ -53,7 +53,14 @@ Trabajo previo del pastor:
 ${priorStepsBlock(ctx)}
 
 AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): que identificó la cláusula principal correcta y mostró cómo las demás la sostienen — nombrá la cláusula. Nada genérico.
-${this.buildMovementsNudge(ctx)}
+${this.buildMovementsNudge(ctx)}${buildInformationalFeatureNudge(
+            ctx,
+            'structuralAnalysis',
+            'parallelism',
+            'DATO DEL PERFIL — paralelismos poéticos del texto:',
+            (f) => (f.typeKey === 'parallelism' ? `- "${f.summary}" (${f.verseRef})` : ''),
+            'Si es poesía/sabiduría, ayudá al pastor a leer la estructura por el paralelismo; él escribe el análisis.',
+        )}
 Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 
