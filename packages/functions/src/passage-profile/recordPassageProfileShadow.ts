@@ -42,6 +42,8 @@ function featureHasAnchor(f: FeatureInput): boolean {
     if (f?.typeKey === 'common-misreading') {
         return Array.isArray(f.correctiveAnchor) && f.correctiveAnchor.some((a) => Boolean(str((a as AnchorInput)?.reference)));
     }
+    // ADR-035 R4 — illustration: ancla = verso + imagen presentes.
+    if (f?.typeKey === 'illustration') return Boolean(str((f as { verseRef?: unknown }).verseRef) && str((f as { summary?: unknown }).summary));
     return false;
 }
 
@@ -68,6 +70,7 @@ export const recordPassageProfileShadow = onCall(
         const anchoredCount = features.filter(featureHasAnchor).length;
         const otAllusionCount = features.filter((f) => f?.typeKey === 'ot-allusion').length;
         const misreadingCount = features.filter((f) => f?.typeKey === 'common-misreading').length;
+        const illustrationCount = features.filter((f) => f?.typeKey === 'illustration').length;
         // Hueco: el perfil corrió pero no detectó NINGUNA feature conocida →
         // candidato a catálogo (telemetría de huecos, plan §5).
         const isGap = featureCount === 0;
@@ -90,6 +93,7 @@ export const recordPassageProfileShadow = onCall(
                 anchoredCount,
                 otAllusionCount,
                 misreadingCount,
+                illustrationCount,
                 isGap,
                 latencyMs,
                 createdAt: FieldValue.serverTimestamp(),

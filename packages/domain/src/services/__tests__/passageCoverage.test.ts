@@ -22,10 +22,11 @@ describe('CA2 — tope de re-confront como dato', () => {
 describe('buildCoverageContract', () => {
     it('deriva un ítem por movimiento + uno por feature (2 Pedro: 3 mov + 2 alusiones + 1 misreading)', () => {
         const contract = buildCoverageContract(secondPeter);
-        expect(contract.items).toHaveLength(6);
+        expect(contract.items).toHaveLength(8);
         expect(contract.items.filter((i) => i.typeKey === 'movements')).toHaveLength(3);
         expect(contract.items.filter((i) => i.typeKey === 'ot-allusion')).toHaveLength(2);
         expect(contract.items.filter((i) => i.typeKey === 'common-misreading')).toHaveLength(1);
+        expect(contract.items.filter((i) => i.typeKey === 'illustration')).toHaveLength(2);
     });
 
     it('rutea cada tipo a su paso + regla (D4/D1)', () => {
@@ -48,7 +49,7 @@ describe('computeCoverageSummary', () => {
         const stepTexts: StepTexts = {
             recognition: 'Números 22-24: Balaam amó el premio; Proverbios 26:11: el perro vuelve.',
             structuralAnalysis: '2 Pedro 2:10-16 acusación; 2 Pedro 2:17-19 vacío; 2 Pedro 2:20-22 fin peor.',
-            function: 'La advertencia confronta la lectura de Juan 10:28-29 sobre falsos maestros.',
+            function: 'La advertencia confronta Juan 10:28-29; usa las fuentes sin agua y nubes, y el perro que vuelve al vómito y la cerda al lodo.',
         };
         const report = computeCoverageSummary(contract, stepTexts);
         expect(report.items.every((i) => i.touched)).toBe(true);
@@ -71,19 +72,21 @@ describe('computeCoverageSummary', () => {
                 { reference: 'Números 22-24', relevanceNote: 'Balaam', source: 'pastor-suggested' },
                 { reference: 'Proverbios 26:11', relevanceNote: 'perro', source: 'pastor-suggested' },
             ] },
-            function: { originalAudienceFunction: 'advertencia; confronta Juan 10:28-29' },
+            function: { originalAudienceFunction: 'advertencia; confronta Juan 10:28-29; fuentes sin agua y nubes; el perro al vómito y la cerda al lodo' },
         } as unknown as PastoralSeed;
         const report = computeCoverageSummary(contract, buildCoverageStepTexts(seed));
-        // Todos los must-touch (movimientos + 2 alusiones) tocados → pass.
+        // Todos los must-touch (movimientos + 2 alusiones + 2 ilustraciones) tocados → pass.
         expect(report.gateStatus).toBe('pass');
         expect(report.mustTouchUntouched).toBe(0);
     });
 
     it('nudge-only sin tratar NO cambia el gate (solo informativo)', () => {
-        // Todos los must-touch tocados, pero la misreading (nudge-only) no.
+        // Todos los must-touch tocados (movimientos + alusiones + ilustraciones),
+        // pero la misreading (nudge-only) no.
         const stepTexts: StepTexts = {
             recognition: 'Números 22-24 y Proverbios 26:11 tratados.',
             structuralAnalysis: '2 Pedro 2:10-16 / 2 Pedro 2:17-19 / 2 Pedro 2:20-22.',
+            function: 'fuentes sin agua y nubes; el perro al vómito y la cerda al lodo.',
         };
         const report = computeCoverageSummary(contract, stepTexts);
         expect(report.nudgeOnlyUnaddressed).toBe(1);

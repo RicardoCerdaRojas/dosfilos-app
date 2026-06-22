@@ -53,7 +53,7 @@ Trabajo previo del pastor:
 ${priorStepsBlock(ctx)}
 
 AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): que ancló la función en la audiencia ORIGINAL antes de cualquier salto a hoy — citá qué les hacía el texto. Nada genérico.
-${this.buildMisreadingNudge(ctx)}
+${this.buildMisreadingNudge(ctx)}${this.buildIllustrationNudge(ctx)}
 Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 
@@ -85,6 +85,28 @@ Intento ${ctx.attemptIndex + 1} en este paso.`;
 DATO DEL PERFIL — lecturas erróneas frecuentes de este pasaje:
 ${lines}
 Si la respuesta del pastor CAE en una de estas lecturas, CONFRONTÁ con errorLabel "common-misreading": nombrá el ancla y preguntale si su lectura la sostiene o la contradice — SIN darle la respuesta. Si no toca el tema o lo trata bien, no confrontes por esto.`;
+    }
+
+    /**
+     * ADR-035 R4 — nudge informativo de las ilustraciones/metáforas del texto que
+     * el perfil detectó. SOLO con enforce on. Surface la imagen como dato para que
+     * el pastor la trate al explicar la función; él escribe qué aporta. NO da la
+     * respuesta. Sin enforce/perfil → '' (clásico).
+     */
+    private buildIllustrationNudge(ctx: TurnContext): string {
+        if (!ctx.enforceCoverage) return '';
+        const illustrations = featuresForStep(ctx.passageProfile, this.stepKey).filter(
+            (f) => f.typeKey === 'illustration',
+        );
+        if (illustrations.length === 0) return '';
+        const lines = illustrations
+            .map((f) => (f.typeKey === 'illustration' ? `- "${f.summary}" (${f.verseRef})` : ''))
+            .filter(Boolean)
+            .join('\n');
+        return `
+DATO DEL PERFIL — ilustraciones/metáforas directas de este pasaje:
+${lines}
+Si el pastor explica la función sin tratarlas, surfacealas como dato y preguntale qué aporta cada imagen al mensaje. Él escribe el aporte; no se lo des hecho.`;
     }
 
     parseLlmReply(raw: string, pastorMessage: string): SocraticTurnOutput {
