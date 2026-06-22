@@ -14,7 +14,7 @@
 import type { MisreadingJudgment, MisreadingTurnOutcome } from '../misreadingTurn';
 
 export interface EngagementCase {
-    row: 'A' | 'B' | 'C' | 'D-1' | 'D-final';
+    row: 'A' | 'B' | 'C' | 'D-1' | 'D-final' | 'ortogonal';
     name: string;
     pastorMessage: string;
     /** Lo que el detector LLM DEBERÍA producir para esta prosa. */
@@ -62,6 +62,19 @@ export const MISREADING_ENGAGEMENT_CORPUS: readonly EngagementCase[] = [
         attemptIndex: 0,
         cap: 1,
         expectedOutcome: 're-confront',
+    },
+    {
+        row: 'ortogonal',
+        name: 'respondió la función SIN mencionar la mala lectura (no tocó el tema)',
+        pastorMessage:
+            'La función para la audiencia original era advertir a la iglesia sobre maestros que explotan a los creyentes con codicia, para que los reconozcan y no los sigan.',
+        // No enganchó el ancla NI cayó en la mala lectura: simplemente no la tocó.
+        judgment: { substantive: true, engagedAnchor: false, contradictsAnchor: false },
+        attemptIndex: 0,
+        cap: 1,
+        // NO se confronta — encerraría al pastor en el caso más frecuente. Lo
+        // no-tratado lo recoge el colector al cierre (E) como nudge.
+        expectedOutcome: 'accept',
     },
     {
         row: 'D-final',

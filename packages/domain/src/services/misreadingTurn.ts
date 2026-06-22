@@ -43,12 +43,19 @@ export function decideMisreadingTurn(
     cap: number,
 ): MisreadingTurnOutcome {
     if (!judgment.substantive) return 'gate-minimo';
-    // Enganchó el ancla y NO la contradice → trabajo hecho, avanza.
-    if (judgment.engagedAnchor && !judgment.contradictsAnchor) return 'accept';
-    // Resto (no enganchó, o enganchó-pero-contradice) amerita re-confront, pero
-    // con tope: nunca atrapa al pastor — al alcanzarlo, override floor acepta y
-    // registra. Esto es lo que hace que la fila D (engaged+contradice) ACEPTE,
-    // probando que juzgamos engagement, no corrección.
+    // TRES estados, no dos. Solo se confronta si el pastor CAYÓ en la lectura
+    // errónea (contradice el ancla). NO tocar el tema (ortogonal: !engaged
+    // !contradice — respondió la función sin mencionar la mala lectura) NO es lo
+    // mismo que ignorarla tras confrontar: ortogonal → accept (lo no-tratado lo
+    // recoge el colector al cierre como nudge, NO un confront in-step que
+    // encerraría al pastor en el caso más frecuente). La fila A (enganchó y no
+    // contradice) también pasa por aquí.
+    if (!judgment.contradictsAnchor) return 'accept';
+    // Contradice (cayó en la mala lectura) → re-confront, pero con tope: nunca
+    // atrapa — al alcanzarlo, override floor acepta y registra. Esto hace que la
+    // fila D (enganchó+contradice) ACEPTE, probando que juzgamos engagement, no
+    // corrección. `engagedAnchor` distingue la REDACCIÓN del nudge (B "no tocaste
+    // el ancla" vs D "trabajaste pero contradices"), no la decisión.
     if (attemptIndex >= cap) return 'accept-override';
     return 're-confront';
 }

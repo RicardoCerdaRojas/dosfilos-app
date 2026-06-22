@@ -37,6 +37,22 @@ describe('garantía de la tesis: juzga engagement, no corrección', () => {
     });
 });
 
+describe('caso ortogonal: respondió sin tocar la mala lectura → NO se confronta', () => {
+    it('!engaged + !contradice → accept (no re-confront): no encierra al pastor', () => {
+        // Con el código de tres-estados, !contradice ⇒ accept aunque !engaged.
+        expect(
+            decideMisreadingTurn({ substantive: true, engagedAnchor: false, contradictsAnchor: false }, 0, 1),
+        ).toBe('accept');
+    });
+
+    it('distingue ortogonal (no tocó) de B (tocó-e-ignoró): B contradice → re-confront', () => {
+        const ortogonal = decideMisreadingTurn({ substantive: true, engagedAnchor: false, contradictsAnchor: false }, 0, 1);
+        const b = decideMisreadingTurn({ substantive: true, engagedAnchor: false, contradictsAnchor: true }, 0, 1);
+        expect(ortogonal).toBe('accept');
+        expect(b).toBe('re-confront');
+    });
+});
+
 describe('tope=0 (theological-tension): nunca re-confronta', () => {
     it('engaged + contradice con cap 0 → acepta directo (override), nunca re-confront', () => {
         const out = decideMisreadingTurn(
