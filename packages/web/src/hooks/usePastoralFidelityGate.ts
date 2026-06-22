@@ -80,6 +80,22 @@ export function useContraScanGate(): { enabled: boolean; loading: boolean } {
     };
 }
 
+/**
+ * ADR-035 sub-gate: pastor needs BOTH `pastoral_fidelity_flow` (parent) AND
+ * `passage_profile` (sub-flag) for the passage profile (Capa 1) + adaptive
+ * coverage. Default off → blast radius 0. While off, the guided study runs the
+ * classic 8-step flow with no profiling. Held off until the shadow run
+ * adjudicates detector precision (plan §5) before the flip to enforce.
+ */
+export function usePassageProfileGate(): { enabled: boolean; loading: boolean } {
+    const parent = useFeatureFlag('pastoral_fidelity_flow');
+    const sub = useFeatureFlag('passage_profile');
+    return {
+        enabled: parent.enabled && sub.enabled,
+        loading: parent.loading || sub.loading,
+    };
+}
+
 export type PastoralFidelityGateReason =
     | 'loading'
     | 'flag-disabled'
