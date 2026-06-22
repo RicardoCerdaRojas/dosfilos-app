@@ -205,6 +205,16 @@ export const FEATURE_FLAG_NAMES = [
      * cristalizar un afecto sin validación en producción.
      */
     'conduccion_corazon',
+
+    /**
+     * ADR-035 sub-flag — gatea el perfil del pasaje (Capa 1) + cobertura
+     * adaptativa: el detector `profilePassage` corre al activar el estudio y
+     * (PR1) registra en sombra; (PR2/PR3) condiciona nudges por paso + el
+     * colector de cobertura. Requiere `pastoral_fidelity_flow`. Default off →
+     * blast radius 0. Se mantiene off hasta adjudicar precisión del detector en
+     * sombra (plan §5: ≥20 estudios reales + 2 cortes) antes del flip a enforce.
+     */
+    'passage_profile',
 ] as const;
 
 export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];
@@ -231,6 +241,7 @@ export const FEATURE_FLAG_PREREQUISITES: Record<FeatureFlagName, readonly Featur
     fidelity_pass: ['pastoral_fidelity_flow'],
     contra_scan: ['pastoral_fidelity_flow'],
     conduccion_corazon: ['pastoral_fidelity_flow'],
+    passage_profile: ['pastoral_fidelity_flow'],
 };
 
 /**

@@ -53,6 +53,7 @@ describe('getFlagDependents — descendientes activos (down con aviso)', () => {
                 'fidelity_pass',
                 'contra_scan',
                 'conduccion_corazon',
+                'passage_profile',
             ].sort(),
         );
     });

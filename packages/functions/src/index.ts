@@ -163,6 +163,9 @@ export { buildStructuralPuzzle } from './study-companion/buildStructuralPuzzle';
 export { evaluateClaimSourceFidelity } from './sermon/evaluateClaimSourceFidelity';
 // 🌱 Pastoral Fidelity Phase 4 PR1 — contra-scan dissent retrieval + classification (ADR-033)
 export { findDissentingChunks } from './sermon/findDissentingChunks';
+// 🧭 Pastoral Fidelity ADR-035 — passage profile detector (Capa 1) + shadow telemetry
+export { profilePassage } from './passage-profile/profilePassage';
+export { recordPassageProfileShadow } from './passage-profile/recordPassageProfileShadow';
 
 
 
