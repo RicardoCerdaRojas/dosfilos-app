@@ -208,3 +208,27 @@ describe('buildSermonDraftPrompt — narrative + verifiable anchor citation cont
         expect(prompt).toContain('PROHIBIDO reproducir texto');
     });
 });
+
+describe('buildSermonDraftPrompt — R3 paralelos canónicos del pastor (ADR-035)', () => {
+    it('omite el bloque cuando no hay canonicalParallels', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules);
+        expect(prompt).not.toContain('Paralelos canónicos marcados por el pastor');
+    });
+
+    it('inyecta los paralelos del pastor en el contexto del borrador', () => {
+        const analysis: HomileticalAnalysis = {
+            ...baseAnalysis,
+            exegeticalStudy: {
+                ...baseAnalysis.exegeticalStudy!,
+                canonicalParallels: [
+                    { reference: 'Proverbios 26:11', relevanceNote: 'el perro vuelve al vómito' },
+                    { reference: 'Números 22-24', relevanceNote: 'Balaam' },
+                ],
+            },
+        };
+        const prompt = buildSermonDraftPrompt(analysis, baseRules);
+        expect(prompt).toContain('Paralelos canónicos marcados por el pastor');
+        expect(prompt).toContain('Proverbios 26:11');
+        expect(prompt).toContain('Números 22-24');
+    });
+});
