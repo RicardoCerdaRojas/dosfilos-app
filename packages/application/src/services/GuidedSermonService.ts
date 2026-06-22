@@ -20,6 +20,7 @@ import type {
     ILlmClient,
     IPastoralSeedRepository,
     IStepPolicyRegistry,
+    PassageProfile,
     PastoralSeed,
     SocraticTurnResult,
     AIChatMessage,
@@ -74,8 +75,10 @@ export class GuidedSermonService {
     private readonly submitWordStudiesUC: SubmitGuidedWordStudiesUseCase;
     private readonly pauseUC: PauseGuidedSermonUseCase;
     private readonly resumeUC: ResumeGuidedSermonUseCase;
+    private readonly seedRepo: IPastoralSeedRepository;
 
     constructor(deps: GuidedSermonServiceDeps) {
+        this.seedRepo = deps.seedRepo;
         this.activateUC = new ActivateGuidedSermonUseCase(deps.chatRepo, deps.seedRepo);
         this.runTurnUC = new RunSocraticTurnUseCase(
             deps.chatRepo,
@@ -105,6 +108,16 @@ export class GuidedSermonService {
     /** Paso 4 estructurado: persiste los Estudios de Palabras desde el formulario. */
     submitWordStudies(input: SubmitGuidedWordStudiesInput): Promise<SubmitGuidedWordStudiesResult> {
         return this.submitWordStudiesUC.execute(input);
+    }
+
+    /**
+     * ADR-035 A — cristaliza el perfil del pasaje en el seed (additivo, inerte).
+     * Lo escribe la activación bajo el flag de sombra `passage_profile`; queda
+     * disponible para que el enforce (`passage_profile_enforce`) lo lea. No
+     * confronta ni nudgea — solo persiste el dato.
+     */
+    crystallizePassageProfile(seedId: string, profile: PassageProfile): Promise<void> {
+        return this.seedRepo.update(seedId, { passageProfile: profile });
     }
 
     pause(input: PauseGuidedSermonInput): Promise<void> {

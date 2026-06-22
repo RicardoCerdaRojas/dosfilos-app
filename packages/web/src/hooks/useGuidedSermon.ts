@@ -54,6 +54,10 @@ async function runPassageProfileShadow(seed: ActivateGuidedSermonResult['seed'],
         const genres: LiteraryGenre[] = genre ? [genre] : [];
         const profile = assemblePassageProfile(raw, genres, new Date());
 
+        // ADR-035 A: cristaliza el perfil en el seed (additivo, inerte). Lo lee
+        // el enforce (passage_profile_enforce); bajo solo sombra queda como dato.
+        await guidedSermonService.crystallizePassageProfile(seed.id, profile);
+
         await httpsCallable(fns, 'recordPassageProfileShadow')({
             seedId: seed.id,
             passage,
