@@ -323,7 +323,12 @@ export const PASTORAL_SEED_THRESHOLDS = {
     },
     recognition: {
         minParallels: 1,
-        maxParallels: 3,
+        // ADR-035 R1/D2 — el techo de 3 era el bloqueo original (un pasaje con
+        // 4+ alusiones no las podía registrar, ej. 2 Pedro 2:10-22). Sube a 8
+        // como TECHO DE SEGURIDAD anti-alucinación, no como cap de diseño: la
+        // defensa anti-proof-texting real es el requisito de nota ≥30 chars por
+        // paralelo + (con perfil) las features hard con ancla.
+        maxParallels: 8,
         relevanceNoteMinChars: 30,
     },
     function: { originalAudienceFunctionMinChars: 100 },
