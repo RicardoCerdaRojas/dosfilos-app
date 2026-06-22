@@ -166,6 +166,8 @@ export { findDissentingChunks } from './sermon/findDissentingChunks';
 // 🧭 Pastoral Fidelity ADR-035 — passage profile detector (Capa 1) + shadow telemetry
 export { profilePassage } from './passage-profile/profilePassage';
 export { recordPassageProfileShadow } from './passage-profile/recordPassageProfileShadow';
+// 🧭 ADR-035 CA1 — engagement judgment (Sonnet) para el confront de common-misreading
+export { evaluateCoverageEngagement } from './passage-profile/evaluateCoverageEngagement';
 
 
 
