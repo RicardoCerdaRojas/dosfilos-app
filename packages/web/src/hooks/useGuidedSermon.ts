@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
 import { guidedSermonService, type ActivateGuidedSermonResult, type SubmitGuidedInsightResult, type SubmitGuidedWordStudiesResult } from '@dosfilos/application';
-import type { SocraticTurnResult, AIChatSession, AIChatMessage } from '@dosfilos/domain';
+import { assemblePassageProfile, type LiteraryGenre, type RawPassageProfile, type SocraticTurnResult, type AIChatSession, type AIChatMessage } from '@dosfilos/domain';
 
 export interface SubmitInsightArgs {
     sessionId: string;
@@ -24,7 +25,48 @@ export interface SubmitWordStudiesArgs {
     affirmationText: string;
 }
 import { useFirebase } from '@/context/firebase-context';
+import { usePassageProfileGate } from '@/hooks/usePastoralFidelityGate';
+import { LocalBibleService } from '@/services/LocalBibleService';
 import { useTranslation } from '@/i18n';
+
+/**
+ * ADR-035 Capa 1 (modo sombra) — perfila el pasaje al activar y registra en
+ * sombra. NON-BLOCKING por diseño: cualquier fallo se traga (la activación NO
+ * puede romperse por el perfil). No surface ni persiste en el seed aún (eso es
+ * PR2/PR3 tras adjudicar precisión en sombra). Fire-and-forget para no demorar
+ * la UX de activación.
+ */
+async function runPassageProfileShadow(seed: ActivateGuidedSermonResult['seed'], passage: string): Promise<void> {
+    try {
+        const passageText = LocalBibleService.getVerses(passage, 'es');
+        if (!passageText) return; // pasaje no resoluble → se omite (no bloquea)
+
+        const fns = getFunctions();
+        const t0 = Date.now();
+        const res = await httpsCallable(fns, 'profilePassage')({ passage, passageText });
+        const latencyMs = Date.now() - t0;
+        const raw = (res.data as { profile?: RawPassageProfile })?.profile;
+        if (!raw) return;
+
+        // Ensamblado de dominio: aplica la regla anti-alucinación (descarta
+        // features sin ancla) antes de medir en sombra.
+        const genre = seed.contextGenre?.genre;
+        const genres: LiteraryGenre[] = genre ? [genre] : [];
+        const profile = assemblePassageProfile(raw, genres, new Date());
+
+        await httpsCallable(fns, 'recordPassageProfileShadow')({
+            seedId: seed.id,
+            passage,
+            genres: profile.genres,
+            schemaVersion: profile.schemaVersion,
+            features: profile.features,
+            movementCount: profile.movements.length,
+            latencyMs,
+        });
+    } catch (err) {
+        console.warn('[useGuidedSermon] passage profile shadow failed (non-blocking)', err);
+    }
+}
 
 interface UseGuidedSermonResult {
     /** True while a turn / activation is in flight. */
@@ -56,6 +98,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
     const { user } = useFirebase();
     const { t } = useTranslation('guidedSermon');
     const queryClient = useQueryClient();
+    const passageProfileGate = usePassageProfileGate();
     const [isProcessing, setIsProcessing] = useState(false);
 
     // The guided agent mutates the chat session server-side (welcome message,
@@ -79,6 +122,11 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                     sessionId,
                     passage,
                 });
+                // ADR-035 (modo sombra): perfila el pasaje fire-and-forget tras
+                // activar. Gated + non-blocking — nunca afecta la activación.
+                if (passageProfileGate.enabled) {
+                    void runPassageProfileShadow(result.seed, passage);
+                }
                 refreshSession();
                 return result;
             } catch (err) {
@@ -94,7 +142,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                 setIsProcessing(false);
             }
         },
-        [user?.uid, t, refreshSession, queryClient],
+        [user?.uid, t, refreshSession, queryClient, passageProfileGate.enabled],
     );
 
     const runTurn = useCallback(
