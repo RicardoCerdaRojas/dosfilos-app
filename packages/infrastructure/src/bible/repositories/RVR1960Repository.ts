@@ -1,4 +1,4 @@
-import { IBibleVersionRepository, BibleReference } from '@dosfilos/domain';
+import { IBibleVersionRepository, BibleReference, parsePassageReference } from '@dosfilos/domain';
 import rvrBible from '../data/rvr1960.json';
 
 /**
@@ -214,7 +214,64 @@ export class RVR1960Repository implements IBibleVersionRepository {
         };
     }
 
+    /**
+     * Resolve a JSON book id (`'2pe'`) from a canon Spanish name (`'2 Pedro'`),
+     * diacritic-insensitive, reusing BOOK_MAPPING. Used by the cross-chapter
+     * path so it doesn't need its own book table.
+     */
+    private resolveJsonId(nameEs: string): string | null {
+        const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        const target = norm(nameEs);
+        for (const [key, value] of Object.entries(this.BOOK_MAPPING)) {
+            if (norm(key) === target) return value;
+        }
+        return null;
+    }
+
+    /**
+     * Cross-chapter ranges (e.g. "Juan 1:50-2:2") — the local `parseReference`
+     * is single-chapter only (rejects a chapter boundary). Detect + resolve them
+     * by delegating to the canon parser `parsePassageReference` (cross-chapter
+     * capable + canon-validated), then concatenate verses across the chapter
+     * range. Reusing the canon parser avoids duplicating regex logic a THIRD
+     * time (cf. `tech_debt_bible_parser_duplication`) — it's the consolidation
+     * direction, not new duplication.
+     *
+     * Returns the text when this IS a cross-chapter ref (or `null` if invalid),
+     * and `undefined` when it is NOT cross-chapter — so `getVerses` falls
+     * through to the unchanged single-chapter path (zero regression).
+     */
+    private getVersesCrossChapter(refString: string): string | null | undefined {
+        const parsed = parsePassageReference(refString);
+        if (!parsed.ok) return undefined;
+        const { bookId: _bookId, chapterStart, chapterEnd, verseStart, verseEnd } = parsed.ref;
+        if (chapterStart === chapterEnd) return undefined; // single-chapter → existing path
+
+        const jsonId = this.resolveJsonId(parsed.book.nameEs);
+        if (!jsonId) return null;
+        const bookData = (rvrBible as any[]).find((b) => b.id === jsonId);
+        if (!bookData) return null;
+
+        let text = '';
+        for (let c = chapterStart; c <= chapterEnd; c++) {
+            const chapterVerses = bookData.chapters[c - 1];
+            if (!chapterVerses) return null; // chapter out of range
+            const from = c === chapterStart ? (verseStart ?? 1) : 1;
+            const to = c === chapterEnd ? (verseEnd ?? chapterVerses.length) : chapterVerses.length;
+            for (let v = from; v <= Math.min(to, chapterVerses.length); v++) {
+                const verse = chapterVerses[v - 1];
+                if (verse === undefined) continue;
+                text += `${c}:${v} ${String(verse).replace(/\s*\/n\s*/g, ' ').trim()} `;
+            }
+        }
+        const trimmed = text.trim();
+        return trimmed || null;
+    }
+
     getVerses(refString: string): string | null {
+        const cross = this.getVersesCrossChapter(refString);
+        if (cross !== undefined) return cross;
+
         const ref = this.parseReference(refString);
         if (!ref) {
             return null;

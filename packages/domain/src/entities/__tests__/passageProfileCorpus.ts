@@ -102,4 +102,39 @@ const PSALM_23: GoldenProfileCase = {
     expectedMovements: 2,
 };
 
-export const GOLDEN_PASSAGE_PROFILES: readonly GoldenProfileCase[] = [SECOND_PETER, PSALM_23];
+/**
+ * Caso CROSS-CHAPTER (cruza frontera de capítulo): Juan 1:43-2:11 (llamado de
+ * Natanael → bodas de Caná). Prueba que el perfil trata un pasaje grande que
+ * cruza capítulos — el canonical analyzer académico rechaza esto; el resolver
+ * del perfil (RVR1960Repository.getVerses) lo lee. Movimientos a ambos lados de
+ * la frontera 1→2.
+ */
+const JOHN_CROSS_CHAPTER: GoldenProfileCase = {
+    name: 'Juan 1:43-2:11 (cruza frontera de capítulo)',
+    passage: 'Juan 1:43-2:11',
+    genres: ['gospel'],
+    raw: {
+        passage: 'Juan 1:43-2:11',
+        movements: [
+            { reference: 'Juan 1:43-51', summary: 'llamado de Felipe y Natanael' },
+            { reference: 'Juan 2:1-11', summary: 'la primera señal: bodas de Caná' },
+        ],
+        features: [
+            {
+                typeKey: 'ot-allusion',
+                hays: 'allusion',
+                verseRef: 'v.1:51',
+                summary: 'los ángeles que suben y descienden sobre el Hijo del Hombre',
+                anchor: { reference: 'Génesis 28:12', note: 'la escalera de Jacob en Betel' },
+            },
+        ],
+    },
+    expectedAnchoredFeatures: 1,
+    expectedMovements: 2,
+};
+
+export const GOLDEN_PASSAGE_PROFILES: readonly GoldenProfileCase[] = [
+    SECOND_PETER,
+    PSALM_23,
+    JOHN_CROSS_CHAPTER,
+];
