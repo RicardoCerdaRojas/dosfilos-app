@@ -166,6 +166,17 @@ export function StepDraft() {
                 );
             }
 
+            // ADR-035 R3/R7 — ¿el sermón citó los paralelos que marcaste? (warning,
+            // no auto-regen). Cierra el dolor original: el sermón no debe salir
+            // ciego a las alusiones del pastor.
+            const missingParallels = draftMissingParallelRefs(result, rulesWithContext.pastoralSeed?.parallels);
+            if (missingParallels.length > 0) {
+                toast.warning(
+                    `El borrador no cita ${missingParallels.length === 1 ? 'el paralelo' : 'los paralelos'} que marcaste: ${missingParallels.join('; ')}. Revisa o re-genera.`,
+                    { duration: 8000 },
+                );
+            }
+
             setDraft(result);
             toast.success(t('drafting.success.generated'));
         } catch (error: any) {
@@ -826,6 +837,30 @@ async function augmentRulesWithPastoralSeed(
  * negative. Case-insensitive because the LLM may capitalise the first
  * letter when wrapping it into a sentence.
  */
+/**
+ * ADR-035 R3/R7 — referencias de paralelos del pastor que NO aparecen en el
+ * borrador. El prompt los marca PRIMARIOS; si el modelo igual los dejó fuera,
+ * surfaceamos cuáles (warning, no auto-regen — P2).
+ */
+function draftMissingParallelRefs(draft: any, parallels: { reference: string }[] | undefined): string[] {
+    if (!Array.isArray(parallels) || parallels.length === 0) return [];
+    const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
+    const haystack = [
+        draft?.title ?? '',
+        draft?.introduction ?? '',
+        draft?.conclusion ?? '',
+        draft?.callToAction ?? '',
+        ...(Array.isArray(draft?.body)
+            ? draft.body.flatMap((b: any) => [b?.content ?? '', ...(Array.isArray(b?.scriptureReferences) ? b.scriptureReferences : [])])
+            : []),
+    ]
+        .map(normalize)
+        .join(' \n ');
+    return parallels
+        .map((p) => p.reference?.trim())
+        .filter((ref): ref is string => Boolean(ref) && !haystack.includes(normalize(ref)));
+}
+
 function draftIncludesCentralIdea(draft: any, centralIdea: string): boolean {
     const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
     const target = normalize(centralIdea);

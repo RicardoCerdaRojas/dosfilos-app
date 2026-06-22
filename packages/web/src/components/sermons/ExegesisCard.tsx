@@ -64,6 +64,22 @@ export function ExegesisCard({ exegesis }: ExegesisCardProps) {
             {exegesis.pastoralInsights && exegesis.pastoralInsights.length > 0 && (
                 <InsightCard insights={exegesis.pastoralInsights} />
             )}
+
+            {/* ADR-035 R3/R7 — paralelos canónicos marcados por el pastor (los
+                que el sermón priorizará). Antes solo iban al prompt, ahora se ven. */}
+            {exegesis.canonicalParallels && exegesis.canonicalParallels.length > 0 && (
+                <div>
+                    <h3 className="text-lg font-semibold mb-3">Paralelos canónicos</h3>
+                    <ul className="space-y-2">
+                        {exegesis.canonicalParallels.map((p, index) => (
+                            <li key={index} className="text-sm leading-relaxed">
+                                <span className="font-semibold">{p.reference}</span>
+                                {p.relevanceNote ? <span className="text-muted-foreground">: {p.relevanceNote}</span> : null}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
         </div>
     );
 }
