@@ -13,6 +13,7 @@ const ALLOWED_FLAGS = new Set<string>([
     'contra_scan',
     'conduccion_corazon',
     'passage_profile',
+    'passage_profile_enforce',
 ]);
 
 /**
