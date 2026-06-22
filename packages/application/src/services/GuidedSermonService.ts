@@ -55,6 +55,7 @@ import {
     type SubmitGuidedWordStudiesResult,
 } from '../use-cases/guided-sermon/SubmitGuidedWordStudiesUseCase';
 import { CallableLlmClient } from './CallableLlmClient';
+import { CallableCoverageEngagementJudge } from './CallableCoverageEngagementJudge';
 
 export interface GuidedSermonServiceDeps {
     chatRepo: IAIChatRepository;
@@ -140,4 +141,5 @@ export const guidedSermonService = new GuidedSermonService({
     seedRepo: new FirestorePastoralSeedRepository(),
     llmClient: new CallableLlmClient(),
     registry: defaultStepPolicyRegistry,
+    coverageJudge: new CallableCoverageEngagementJudge(),
 });

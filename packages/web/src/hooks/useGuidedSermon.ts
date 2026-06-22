@@ -25,7 +25,7 @@ export interface SubmitWordStudiesArgs {
     affirmationText: string;
 }
 import { useFirebase } from '@/context/firebase-context';
-import { usePassageProfileGate } from '@/hooks/usePastoralFidelityGate';
+import { usePassageProfileGate, usePassageProfileEnforceGate } from '@/hooks/usePastoralFidelityGate';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import { useTranslation } from '@/i18n';
 
@@ -103,6 +103,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
     const { t } = useTranslation('guidedSermon');
     const queryClient = useQueryClient();
     const passageProfileGate = usePassageProfileGate();
+    const passageProfileEnforceGate = usePassageProfileEnforceGate();
     const [isProcessing, setIsProcessing] = useState(false);
 
     // The guided agent mutates the chat session server-side (welcome message,
@@ -176,6 +177,10 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                     userId: user.uid,
                     sessionId,
                     pastorMessage,
+                    // ADR-035 enforce (D) — solo confronta/nudgea con el flag
+                    // passage_profile_enforce on. Off ⇒ clásico. El dispatch que
+                    // lo consume llega en el commit 3.
+                    enforceCoverage: passageProfileEnforceGate.enabled,
                 });
                 refreshSession();
                 return result;
@@ -190,7 +195,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                 setIsProcessing(false);
             }
         },
-        [user?.uid, t, refreshSession, queryClient],
+        [user?.uid, t, refreshSession, queryClient, passageProfileEnforceGate.enabled],
     );
 
     const submitInsight = useCallback(
