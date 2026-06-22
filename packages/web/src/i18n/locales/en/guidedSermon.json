@@ -35,6 +35,9 @@
     "activate": "Could not activate the guide. Please try again.",
     "runTurn": "Could not process your reply. Please try again."
   },
+  "coverage": {
+    "closeNudge": "You closed the study, but some passage topics weren't addressed: {{items}}. You can revisit them."
+  },
   "wordStudy": {
     "helperTitle": "Passage key words (helper)",
     "helperHint": "Pick a word to see its original form and meaning. Write YOUR discovery, add it to the list, and when you have enough, submit them.",

@@ -96,6 +96,23 @@ export function usePassageProfileGate(): { enabled: boolean; loading: boolean } 
     };
 }
 
+/**
+ * ADR-035 enforce-gate: aplica el perfil (nudges + confront retenido + colector
+ * de cobertura) SOLO con los tres flags on: pastoral_fidelity_flow +
+ * passage_profile (sombra) + passage_profile_enforce. Separado de la sombra a
+ * propósito — el enforce se enciende tras adjudicar precisión (plan §5). Default
+ * off → perfila/registra pero no confronta.
+ */
+export function usePassageProfileEnforceGate(): { enabled: boolean; loading: boolean } {
+    const parent = useFeatureFlag('pastoral_fidelity_flow');
+    const shadow = useFeatureFlag('passage_profile');
+    const enforce = useFeatureFlag('passage_profile_enforce');
+    return {
+        enabled: parent.enabled && shadow.enabled && enforce.enabled,
+        loading: parent.loading || shadow.loading || enforce.loading,
+    };
+}
+
 export type PastoralFidelityGateReason =
     | 'loading'
     | 'flag-disabled'

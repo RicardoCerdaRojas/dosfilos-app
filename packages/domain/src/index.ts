@@ -39,12 +39,15 @@ export * from './entities/FidelityReport'; // 🌱 Pastoral Fidelity Phase 3 PR 
 export * from './entities/PassageProfile'; // 🌱 Pastoral Fidelity ADR-035 — passage profile (Capa 1)
 export * from './services/computeFidelitySummary'; // 🌱 Pastoral Fidelity Phase 3 PR 1 — gate policy (ADR-029 Q3/Q6)
 export * from './services/evaluatePublishGate'; // 🌱 Pastoral Fidelity Phase 3 PR 2 — publish-gate decision (ADR-029 Q3/Q5)
+export * from './services/passageCoverage'; // 🌱 Pastoral Fidelity ADR-035 Capa 2/3 — coverage contract + collector
+export * from './services/misreadingTurn'; // 🌱 Pastoral Fidelity ADR-035 CA1/CA3 — pure misreading-turn decision
 export * from './services/computePluralityCheck'; // 🌱 Pastoral Fidelity Phase 3 PR 3 — plurality (no-proof-texting) check (ADR-029 Q4)
 export * from './services/computeAttributionCheck'; // 🌱 Pastoral Fidelity Phase 3 PR 5 — attribution check (ADR-006 / ADR-029 Q7)
 export * from './entities/ContraScanReport'; // 🌱 Pastoral Fidelity Phase 4 PR 1 — contra-scan confrontation report (ADR-033)
 export * from './services/evaluateContraScanGate'; // 🌱 Pastoral Fidelity Phase 4 PR 1 — contra-scan gate decision (ADR-033)
 export * from './ports/ILlmClient'; // 🌱 Pastoral Fidelity Phase 2.5 — thin LLM provider port (Q7/ADR-025)
 export * from './ports/IFidelityEvaluator'; // 🌱 Pastoral Fidelity Phase 3 PR 1 — claim/source evaluator port (ADR-029)
+export * from './ports/ICoverageEngagementJudge'; // 🌱 Pastoral Fidelity ADR-035 CA1 — engagement judge port (D)
 // 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent
 export * from './guided-sermon/SocraticTurn';
 export * from './guided-sermon/GuidedSermonSession';

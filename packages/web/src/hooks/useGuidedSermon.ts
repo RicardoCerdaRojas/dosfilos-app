@@ -25,7 +25,7 @@ export interface SubmitWordStudiesArgs {
     affirmationText: string;
 }
 import { useFirebase } from '@/context/firebase-context';
-import { usePassageProfileGate } from '@/hooks/usePastoralFidelityGate';
+import { usePassageProfileGate, usePassageProfileEnforceGate } from '@/hooks/usePastoralFidelityGate';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import { useTranslation } from '@/i18n';
 
@@ -53,6 +53,10 @@ async function runPassageProfileShadow(seed: ActivateGuidedSermonResult['seed'],
         const genre = seed.contextGenre?.genre;
         const genres: LiteraryGenre[] = genre ? [genre] : [];
         const profile = assemblePassageProfile(raw, genres, new Date());
+
+        // ADR-035 A: cristaliza el perfil en el seed (additivo, inerte). Lo lee
+        // el enforce (passage_profile_enforce); bajo solo sombra queda como dato.
+        await guidedSermonService.crystallizePassageProfile(seed.id, profile);
 
         await httpsCallable(fns, 'recordPassageProfileShadow')({
             seedId: seed.id,
@@ -99,6 +103,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
     const { t } = useTranslation('guidedSermon');
     const queryClient = useQueryClient();
     const passageProfileGate = usePassageProfileGate();
+    const passageProfileEnforceGate = usePassageProfileEnforceGate();
     const [isProcessing, setIsProcessing] = useState(false);
 
     // The guided agent mutates the chat session server-side (welcome message,
@@ -111,6 +116,21 @@ export function useGuidedSermon(): UseGuidedSermonResult {
         if (!user?.uid) return;
         queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user.uid] });
     }, [queryClient, user?.uid]);
+
+    // ADR-035 E — nudge de cobertura al cierre (red de seguridad, no bloquea): si
+    // quedó algún must-touch sin tratar, lo recuerda. Reutilizado por runTurn (si
+    // un turno completa) y submitInsight (cierre real del estudio).
+    const surfaceCoverageNudge = useCallback(
+        (report: { mustTouchUntouched: number; items: Array<{ coverageRule: string; touched: boolean; label: string }> } | undefined) => {
+            if (!report || report.mustTouchUntouched <= 0) return;
+            const items = report.items
+                .filter((i) => i.coverageRule === 'must-touch' && !i.touched)
+                .map((i) => i.label)
+                .join('; ');
+            if (items) toast(t('coverage.closeNudge', { items }));
+        },
+        [t],
+    );
 
     const activate = useCallback(
         async (sessionId: string, passage: string) => {
@@ -172,8 +192,13 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                     userId: user.uid,
                     sessionId,
                     pastorMessage,
+                    // ADR-035 enforce (D) — solo confronta/nudgea con el flag
+                    // passage_profile_enforce on. Off ⇒ clásico. El dispatch que
+                    // lo consume llega en el commit 3.
+                    enforceCoverage: passageProfileEnforceGate.enabled,
                 });
                 refreshSession();
+                surfaceCoverageNudge(result?.coverageReport);
                 return result;
             } catch (err) {
                 console.error('[useGuidedSermon] runTurn failed', err);
@@ -186,7 +211,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                 setIsProcessing(false);
             }
         },
-        [user?.uid, t, refreshSession, queryClient],
+        [user?.uid, t, refreshSession, queryClient, passageProfileEnforceGate.enabled, surfaceCoverageNudge],
     );
 
     const submitInsight = useCallback(
@@ -213,8 +238,10 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                     insight: args.insight,
                     renderedInsightText: args.renderedInsightText,
                     affirmationText: args.affirmationText,
+                    enforceCoverage: passageProfileEnforceGate.enabled,
                 });
                 refreshSession();
+                surfaceCoverageNudge(result?.coverageReport);
                 return result;
             } catch (err) {
                 console.error('[useGuidedSermon] submitInsight failed', err);
@@ -227,7 +254,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                 setIsProcessing(false);
             }
         },
-        [user?.uid, t, refreshSession, queryClient],
+        [user?.uid, t, refreshSession, queryClient, passageProfileEnforceGate.enabled, surfaceCoverageNudge],
     );
 
     const submitWordStudies = useCallback(

@@ -11,6 +11,7 @@ import {
     validateFunction,
     type PastoralSeed,
 } from '../../entities/PastoralSeed';
+import { featuresForStep } from '../../entities/PassageProfile';
 import type {
     MethodErrorReport,
     SocraticTurnOutput,
@@ -52,8 +53,38 @@ Trabajo previo del pastor:
 ${priorStepsBlock(ctx)}
 
 AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): que ancló la función en la audiencia ORIGINAL antes de cualquier salto a hoy — citá qué les hacía el texto. Nada genérico.
-
+${this.buildMisreadingNudge(ctx)}
 Intento ${ctx.attemptIndex + 1} en este paso.`;
+    }
+
+    /**
+     * ADR-035 D — nudge informativo de lecturas erróneas frecuentes del perfil
+     * ruteadas a este paso. SOLO con enforce on (gated por `ctx.enforceCoverage`);
+     * sin él devuelve '' (clásico). Socrático: surface la mala lectura + el ancla,
+     * NO da la respuesta. El confront real (con tope + override) lo decide el
+     * dispatch (commit 3) vía `decideMisreadingTurn`.
+     */
+    private buildMisreadingNudge(ctx: TurnContext): string {
+        if (!ctx.enforceCoverage) return '';
+        const misreadings = featuresForStep(ctx.passageProfile, this.stepKey).filter(
+            (f) => f.typeKey === 'common-misreading',
+        );
+        if (misreadings.length === 0) return '';
+        const lines = misreadings
+            .map((f) =>
+                f.typeKey === 'common-misreading'
+                    ? `- "${f.claim}" (${f.verseRef}). Anclas que la refutan: ${f.correctiveAnchor
+                          .map((a) => a.reference)
+                          .filter(Boolean)
+                          .join(', ')}.`
+                    : '',
+            )
+            .filter(Boolean)
+            .join('\n');
+        return `
+DATO DEL PERFIL — lecturas erróneas frecuentes de este pasaje:
+${lines}
+Si la respuesta del pastor CAE en una de estas lecturas, CONFRONTÁ con errorLabel "common-misreading": nombrá el ancla y preguntale si su lectura la sostiene o la contradice — SIN darle la respuesta. Si no toca el tema o lo trata bien, no confrontes por esto.`;
     }
 
     parseLlmReply(raw: string, pastorMessage: string): SocraticTurnOutput {

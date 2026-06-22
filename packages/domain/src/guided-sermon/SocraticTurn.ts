@@ -9,6 +9,7 @@
  */
 
 import type { PastoralSeedStepKey, StepValidationResult, WordStudy } from '../entities/PastoralSeed';
+import type { PassageProfile } from '../entities/PassageProfile';
 
 /**
  * Context passed to a step policy when building prompts / parsing replies
@@ -39,6 +40,19 @@ export interface TurnContext {
      * persists the merged set instead of just the current message.
      */
     existingWordStudies?: WordStudy[];
+    /**
+     * ADR-035 — perfil del pasaje cristalizado en el seed (B). Lo consume el
+     * enforce (D): nudges por paso + confront de lectura errónea condicionados
+     * por las features ruteadas a `currentStep`. Ausente ⇒ seed legacy / flag de
+     * sombra sin perfil ⇒ flujo clásico (no-op). Aquí solo se transporta.
+     */
+    passageProfile?: PassageProfile;
+    /**
+     * ADR-035 enforce (D) — true solo con `passage_profile_enforce` on. Gatea los
+     * nudges + el confront de lectura errónea. Ausente/false ⇒ clásico (las
+     * policies y el dispatch no aplican nada del perfil).
+     */
+    enforceCoverage?: boolean;
 }
 
 /**
@@ -121,6 +135,13 @@ export interface SocraticTurnResult {
     sermonReady: boolean;
     /** Updated attempt counters (echoed for the client to render progress). */
     stepAttempts: Record<PastoralSeedStepKey, number>;
+    /**
+     * ADR-035 E — reporte de cobertura, presente SOLO al cerrar el estudio
+     * (sermonReady) con enforce on. Red de seguridad sobre el Motor B: si quedó
+     * algún must-touch sin tratar (`gateStatus: 'soft-block'`), el web nudgea
+     * "no abordaste X". Ausente ⇒ no aplica (no cierre / enforce off / sin perfil).
+     */
+    coverageReport?: import('../services/passageCoverage').CoverageReport;
 }
 
 export type { StepValidationResult };

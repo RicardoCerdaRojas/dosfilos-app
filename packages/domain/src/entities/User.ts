@@ -215,6 +215,17 @@ export const FEATURE_FLAG_NAMES = [
      * sombra (plan §5: ≥20 estudios reales + 2 cortes) antes del flip a enforce.
      */
     'passage_profile',
+
+    /**
+     * ADR-035 enforce — gatea la APLICACIÓN del perfil (nudges por paso +
+     * confront de lectura errónea retenido + colector de cobertura al cierre).
+     * Separado de `passage_profile` (sombra) a propósito, como el par
+     * shadow/enforce de la grieta doxológica: `passage_profile` mide precisión
+     * del detector en sombra; este flag enciende el enforcement SOLO tras
+     * adjudicar los dos cortes (plan §5). Requiere `passage_profile`. Default
+     * off → el perfil cristaliza/registra pero no confronta ni nudgea.
+     */
+    'passage_profile_enforce',
 ] as const;
 
 export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];
@@ -242,6 +253,9 @@ export const FEATURE_FLAG_PREREQUISITES: Record<FeatureFlagName, readonly Featur
     contra_scan: ['pastoral_fidelity_flow'],
     conduccion_corazon: ['pastoral_fidelity_flow'],
     passage_profile: ['pastoral_fidelity_flow'],
+    // Enforce cuelga del flag de sombra: no se puede enforce sin perfilar antes
+    // (baranda anti-fail-open horneada en la topología).
+    passage_profile_enforce: ['passage_profile'],
 };
 
 /**

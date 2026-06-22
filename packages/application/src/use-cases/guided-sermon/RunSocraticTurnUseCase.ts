@@ -23,6 +23,7 @@ import {
     type AiAssistType,
     type GuidedSermonSession,
     type IAIChatRepository,
+    type ICoverageEngagementJudge,
     type ILlmClient,
     type IPastoralSeedRepository,
     type IStepPolicyRegistry,
@@ -31,12 +32,27 @@ import {
     type SocraticTurnOutput,
     type SocraticTurnResult,
     type TurnContext,
+    type CommonMisreadingFeature,
+    type CoverageReport,
+    decideMisreadingTurn,
+    featuresForStep,
+    RECONFRONT_CAPS,
+    MISREADING_MIN_SUBSTANCE_CHARS,
+    buildCoverageContract,
+    buildCoverageStepTexts,
+    computeCoverageSummary,
 } from '@dosfilos/domain';
 
 export interface RunSocraticTurnInput {
     userId: string;
     sessionId: string;
     pastorMessage: string;
+    /**
+     * ADR-035 enforce (D) — lo pasa el web desde `usePassageProfileEnforceGate`.
+     * Default/ausente = false = clásico. Gatea nudges + confront de lectura
+     * errónea. Inerte hasta el commit del dispatch (D commit 3).
+     */
+    enforceCoverage?: boolean;
 }
 
 /** Heuristic confidence threshold for short-circuiting to a confrontation. */
@@ -83,12 +99,43 @@ function buildLocalConfrontOutput(
     };
 }
 
+/**
+ * ADR-035 (D) — confront de lectura errónea. La redacción depende de
+ * `engagedAnchor` (B: no tocó el ancla / D: trabajó pero contradice), pero NO da
+ * la respuesta. Es `kind:'confront'` ⇒ el dispatch existente lo mapea a retry.
+ */
+function buildMisreadingConfront(
+    mis: CommonMisreadingFeature,
+    engagedAnchor: boolean,
+): SocraticTurnOutput {
+    const anchors = mis.correctiveAnchor
+        .map((a) => a.reference)
+        .filter(Boolean)
+        .join(', ');
+    const reply = engagedAnchor
+        ? `Trabajaste el texto, pero tu lectura sostiene "${mis.claim}", que ${anchors} matiza. ¿Cómo la sostiene el texto frente a ese ancla?`
+        : `Tu respuesta toca la lectura "${mis.claim}" sin abordar ${anchors}, que suele matizarla. ¿Tu lectura la sostiene o la contradice?`;
+    return {
+        kind: 'confront',
+        errorLabel: 'common-misreading',
+        agentReply: reply,
+        data: [mis.whyWrong],
+        questions: ['¿Qué en el texto decide entre esa lectura y lo que el ancla establece?'],
+    };
+}
+
 export class RunSocraticTurnUseCase {
     constructor(
         private readonly chatRepo: IAIChatRepository,
         private readonly seedRepo: IPastoralSeedRepository,
         private readonly llmClient: ILlmClient,
         private readonly registry: IStepPolicyRegistry,
+        /**
+         * ADR-035 CA1 (D) — juez de engagement (opcional). Ausente ⇒ el confront
+         * de lectura errónea no corre (no-op). Lo consume el dispatch (D commit
+         * 3); aquí solo se inyecta.
+         */
+        private readonly coverageJudge?: ICoverageEngagementJudge,
     ) {}
 
     async execute(input: RunSocraticTurnInput): Promise<SocraticTurnResult> {
@@ -116,6 +163,12 @@ export class RunSocraticTurnUseCase {
             // Step 4 accumulates word studies across turns — the policy merges
             // the saved set with the current message before validating.
             existingWordStudies: seed.wordStudies?.studies ?? [],
+            // ADR-035 B — perfil cristalizado (si existe). El enforce (D) lo usa;
+            // sin él el flujo es clásico (no-op). Solo transporte aquí.
+            passageProfile: seed.passageProfile,
+            // ADR-035 enforce (D) — gatea nudges + confront del perfil. Inerte
+            // hasta el dispatch (commit 3).
+            enforceCoverage: input.enforceCoverage === true,
         };
 
         // Persist the pastor's user message FIRST so it always appears in chat
@@ -127,10 +180,23 @@ export class RunSocraticTurnUseCase {
             timestamp: new Date(),
         });
 
+        // 0. ADR-035 (D) — confront de lectura errónea, GATED (enforceCoverage +
+        // juez + feature misreading en este paso). Corre ANTES del heurístico.
+        // re-confront ⇒ output confront (→ retry). accept-override ⇒ registra y
+        // CAE al flujo normal (override floor, no encierra). accept/gate-minimo ⇒
+        // cae al flujo normal. Inerte sin enforce/juez.
+        let output: SocraticTurnOutput | undefined = await this.maybeMisreadingConfront(
+            seed,
+            gss.currentStep,
+            ctx,
+            input.pastorMessage,
+        );
+
         // 1. Heuristic method-error short-circuit. Cheap, no LLM call.
-        let output: SocraticTurnOutput;
-        const heuristicError = policy.detectMethodError(input.pastorMessage, ctx);
-        if (heuristicError && heuristicError.confidence >= METHOD_ERROR_CONFIDENCE_THRESHOLD) {
+        const heuristicError = output ? null : policy.detectMethodError(input.pastorMessage, ctx);
+        if (output) {
+            // already a misreading confront — skip heuristic + LLM.
+        } else if (heuristicError && heuristicError.confidence >= METHOD_ERROR_CONFIDENCE_THRESHOLD) {
             output = buildLocalConfrontOutput(heuristicError.label, heuristicError.description);
         } else {
             // 2. LLM call — the policy's system prompt encodes the full contract.
@@ -263,12 +329,86 @@ export class RunSocraticTurnUseCase {
         // ("% tuyo" needs a denominator of persisted-by-pastor text).
         void pastorTextPersisted;
 
+        // 8. ADR-035 E — colector de cobertura al CIERRE (red de seguridad sobre
+        // el Motor B). Solo al completar el estudio + enforce + perfil. Si quedó
+        // un must-touch sin tratar, `gateStatus: 'soft-block'` → el web nudgea
+        // (no bloquea, D1). Puro; no toca el dispatch del turno.
+        let coverageReport: CoverageReport | undefined;
+        if (sermonReady && ctx.enforceCoverage && seed.passageProfile) {
+            coverageReport = computeCoverageSummary(
+                buildCoverageContract(seed.passageProfile),
+                buildCoverageStepTexts(seed),
+            );
+        }
+
         return {
             output,
             nextStep: nextState.currentStep,
             sermonReady,
             stepAttempts: nextState.stepAttempts,
+            ...(coverageReport ? { coverageReport } : {}),
         };
+    }
+
+    /**
+     * ADR-035 (D) — corre el juicio de engagement (CA1) cuando el paso actual
+     * tiene una lectura errónea en el perfil y el enforce está on, y mapea el
+     * veredicto con `decideMisreadingTurn` (tres estados). Devuelve un output
+     * `confront` solo para `re-confront`; para `accept-override` registra la
+     * discrepancia (override floor) y devuelve `undefined` (cae al flujo normal);
+     * `accept`/`gate-minimo` también devuelven `undefined`. No-op sin enforce,
+     * sin juez, o sin feature (todos los paths del flujo clásico intactos).
+     */
+    private async maybeMisreadingConfront(
+        seed: PastoralSeed,
+        currentStep: PastoralSeedStepKey,
+        ctx: TurnContext,
+        pastorMessage: string,
+    ): Promise<SocraticTurnOutput | undefined> {
+        if (!ctx.enforceCoverage || !this.coverageJudge) return undefined;
+        const misreadings = featuresForStep(seed.passageProfile, currentStep).filter(
+            (f): f is CommonMisreadingFeature => f.typeKey === 'common-misreading',
+        );
+        if (misreadings.length === 0) return undefined;
+        if (misreadings.length > 1) {
+            // No tirar en silencio (mismo principio que la telemetría de huecos):
+            // v1 toma la primera; loguea el descarte para saber con dato si
+            // "resto a futuro" es pronto o lejos.
+            console.warn(
+                `[coverage] ${misreadings.length} lecturas erróneas en el paso "${currentStep}"; v1 confronta la primera, difiere ${misreadings.length - 1}.`,
+            );
+        }
+        const mis = misreadings[0];
+
+        const judgment = await this.coverageJudge.judge({
+            pastorMessage,
+            claim: mis.claim,
+            whyWrong: mis.whyWrong,
+            correctiveAnchors: mis.correctiveAnchor.map((a) => a.reference).filter(Boolean),
+            minSubstanceChars: MISREADING_MIN_SUBSTANCE_CHARS,
+        });
+        const outcome = decideMisreadingTurn(
+            judgment,
+            ctx.attemptIndex,
+            RECONFRONT_CAPS['common-misreading'],
+        );
+
+        if (outcome === 're-confront') {
+            return buildMisreadingConfront(mis, judgment.engagedAnchor);
+        }
+        if (outcome === 'accept-override') {
+            // Override floor: agotó el tope sosteniendo su lectura → libera al
+            // flujo normal con la discrepancia REGISTRADA (no encierra). Evento de
+            // conducción in-step, NO un override del publish-gate.
+            await this.seedRepo.appendAiAssistLog(seed.id, {
+                userId: seed.userId,
+                stepKey: currentStep,
+                assistType: 'coverageMisreadingOverride',
+                outputWasEditedByUser: false,
+            });
+        }
+        // accept / accept-override(registrado) / gate-minimo → flujo normal.
+        return undefined;
     }
 
     /**

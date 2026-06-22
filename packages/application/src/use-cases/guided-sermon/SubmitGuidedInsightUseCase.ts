@@ -15,7 +15,11 @@ import {
     advance,
     evaluatePastoralSeed,
     validateInsight,
+    buildCoverageContract,
+    buildCoverageStepTexts,
+    computeCoverageSummary,
     type AIChatMessage,
+    type CoverageReport,
     type IAIChatRepository,
     type InsightStepData,
     type IPastoralSeedRepository,
@@ -44,6 +48,8 @@ export interface SubmitGuidedInsightInput {
     renderedInsightText: string;
     /** Afirmación templada (locale-aware, la compone el cliente). */
     affirmationText: string;
+    /** ADR-035 enforce (E) — gatea el colector de cobertura al cierre. */
+    enforceCoverage?: boolean;
 }
 
 export interface SubmitGuidedInsightResult {
@@ -51,6 +57,12 @@ export interface SubmitGuidedInsightResult {
     /** Razones de `validateInsight` cuando no pasa (el form las muestra). */
     reasons: string[];
     sermonReady: boolean;
+    /**
+     * ADR-035 E — colector de cobertura al CIERRE real del estudio (insight es el
+     * último paso). Presente solo al completar + enforce + perfil. Si quedó un
+     * must-touch sin tratar (`gateStatus: 'soft-block'`), el web nudgea. No bloquea.
+     */
+    coverageReport?: CoverageReport;
 }
 
 export class SubmitGuidedInsightUseCase {
@@ -122,6 +134,17 @@ export class SubmitGuidedInsightUseCase {
             outputWasEditedByUser: false,
         });
 
-        return { accepted: true, reasons: [], sermonReady };
+        // ADR-035 E — colector de cobertura al cierre (red de seguridad sobre el
+        // Motor B). Solo al completar + enforce + perfil. soft-block ⇒ el web
+        // nudgea los must-touch sin tratar; no bloquea (D1).
+        let coverageReport: CoverageReport | undefined;
+        if (nextState.status === 'completed' && input.enforceCoverage && merged.passageProfile) {
+            coverageReport = computeCoverageSummary(
+                buildCoverageContract(merged.passageProfile),
+                buildCoverageStepTexts(merged),
+            );
+        }
+
+        return { accepted: true, reasons: [], sermonReady, ...(coverageReport ? { coverageReport } : {}) };
     }
 }

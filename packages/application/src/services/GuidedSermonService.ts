@@ -17,9 +17,11 @@
 import type {
     GuidedSermonSession,
     IAIChatRepository,
+    ICoverageEngagementJudge,
     ILlmClient,
     IPastoralSeedRepository,
     IStepPolicyRegistry,
+    PassageProfile,
     PastoralSeed,
     SocraticTurnResult,
     AIChatMessage,
@@ -53,12 +55,16 @@ import {
     type SubmitGuidedWordStudiesResult,
 } from '../use-cases/guided-sermon/SubmitGuidedWordStudiesUseCase';
 import { CallableLlmClient } from './CallableLlmClient';
+import { CallableCoverageEngagementJudge } from './CallableCoverageEngagementJudge';
 
 export interface GuidedSermonServiceDeps {
     chatRepo: IAIChatRepository;
     seedRepo: IPastoralSeedRepository;
     llmClient: ILlmClient;
     registry: IStepPolicyRegistry;
+    /** ADR-035 CA1 (D) — juez de engagement opcional. Ausente ⇒ confront de
+     * lectura errónea no corre. */
+    coverageJudge?: ICoverageEngagementJudge;
 }
 
 export interface ActivateGuidedSermonResult {
@@ -74,14 +80,17 @@ export class GuidedSermonService {
     private readonly submitWordStudiesUC: SubmitGuidedWordStudiesUseCase;
     private readonly pauseUC: PauseGuidedSermonUseCase;
     private readonly resumeUC: ResumeGuidedSermonUseCase;
+    private readonly seedRepo: IPastoralSeedRepository;
 
     constructor(deps: GuidedSermonServiceDeps) {
+        this.seedRepo = deps.seedRepo;
         this.activateUC = new ActivateGuidedSermonUseCase(deps.chatRepo, deps.seedRepo);
         this.runTurnUC = new RunSocraticTurnUseCase(
             deps.chatRepo,
             deps.seedRepo,
             deps.llmClient,
             deps.registry,
+            deps.coverageJudge,
         );
         this.submitInsightUC = new SubmitGuidedInsightUseCase(deps.chatRepo, deps.seedRepo);
         this.submitWordStudiesUC = new SubmitGuidedWordStudiesUseCase(deps.chatRepo, deps.seedRepo);
@@ -107,6 +116,16 @@ export class GuidedSermonService {
         return this.submitWordStudiesUC.execute(input);
     }
 
+    /**
+     * ADR-035 A — cristaliza el perfil del pasaje en el seed (additivo, inerte).
+     * Lo escribe la activación bajo el flag de sombra `passage_profile`; queda
+     * disponible para que el enforce (`passage_profile_enforce`) lo lea. No
+     * confronta ni nudgea — solo persiste el dato.
+     */
+    crystallizePassageProfile(seedId: string, profile: PassageProfile): Promise<void> {
+        return this.seedRepo.update(seedId, { passageProfile: profile });
+    }
+
     pause(input: PauseGuidedSermonInput): Promise<void> {
         return this.pauseUC.execute(input);
     }
@@ -122,4 +141,5 @@ export const guidedSermonService = new GuidedSermonService({
     seedRepo: new FirestorePastoralSeedRepository(),
     llmClient: new CallableLlmClient(),
     registry: defaultStepPolicyRegistry,
+    coverageJudge: new CallableCoverageEngagementJudge(),
 });

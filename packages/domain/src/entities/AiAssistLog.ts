@@ -71,7 +71,15 @@ export type AiAssistType =
      * gave Socratic hints on wrong placements without revealing the answer.
      * Logged once per completed puzzle (not per piece).
      */
-    | 'structuralPuzzle';
+    | 'structuralPuzzle'
+    /**
+     * ADR-035 (D) — el pastor sostuvo su lectura tras el re-confront de una
+     * lectura errónea (override floor in-step): trabajó/ignoró el ancla, agotó el
+     * tope de re-confront y se le liberó al flujo normal con la discrepancia
+     * REGISTRADA. Evento de CONDUCCIÓN pedagógica in-step — NO un override del
+     * publish-gate (Motor B), que se mantiene separado.
+     */
+    | 'coverageMisreadingOverride';
 
 export interface AiAssistLog {
     id: string;
