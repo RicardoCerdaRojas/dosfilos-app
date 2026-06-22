@@ -161,6 +161,24 @@ describe('PastoralSeed validators (eight-step spine)', () => {
         expect(bad.valid).toBe(false);
     });
 
+    it('R1/D2 — acepta 5 paralelos (el bloqueo original de 3 quedó eliminado)', () => {
+        const note = 'a'.repeat(40);
+        const five = Array.from({ length: 5 }, (_, i) => ({
+            reference: `Ref ${i}`, relevanceNote: note, source: 'pastor-suggested' as const,
+        }));
+        expect(validateRecognition({ parallels: five, timeSpentSeconds: 0 }).valid).toBe(true);
+    });
+
+    it('R1/D2 — el techo de seguridad sigue: >8 paralelos rechaza', () => {
+        const note = 'a'.repeat(40);
+        const nine = Array.from({ length: 9 }, (_, i) => ({
+            reference: `Ref ${i}`, relevanceNote: note, source: 'pastor-suggested' as const,
+        }));
+        const res = validateRecognition({ parallels: nine, timeSpentSeconds: 0 });
+        expect(res.valid).toBe(false);
+        expect(res.reasons.join(' ')).toContain('Máximo 8');
+    });
+
     it('validateInsight rejects when any of the 5 fields is short', () => {
         const seed = buildCompleteSeed();
         const ok = validateInsight(seed.insight);
