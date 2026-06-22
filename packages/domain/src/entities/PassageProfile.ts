@@ -84,6 +84,15 @@ export const RECONFRONT_CAPS: Record<'common-misreading' | 'theological-tension'
     'theological-tension': 0,
 };
 
+/**
+ * ADR-035 D — umbral de sustancia (largo TOTAL de la respuesta del pastor) bajo
+ * el cual el juez de engagement NO se llama (gate determinista, compone con el
+ * GATE-MÍNIMO). Mide cosa distinta al mínimo del paso (ej. function=100, "¿hizo
+ * la operación?"); 40 = "¿hay suficiente texto para juzgar engagement?". Dato
+ * editable — afinar con el Corte 2 del shadow (falsos re-confront / costo).
+ */
+export const MISREADING_MIN_SUBSTANCE_CHARS = 40;
+
 /** Ancla verificable: una referencia que sostiene (o corrige) una feature. */
 export interface VerifiableAnchor {
     /** Referencia bíblica o textual, ej. "Proverbios 26:11" o "v.22". */

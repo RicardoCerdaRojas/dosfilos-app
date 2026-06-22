@@ -32,6 +32,11 @@ import {
     type SocraticTurnOutput,
     type SocraticTurnResult,
     type TurnContext,
+    type CommonMisreadingFeature,
+    decideMisreadingTurn,
+    featuresForStep,
+    RECONFRONT_CAPS,
+    MISREADING_MIN_SUBSTANCE_CHARS,
 } from '@dosfilos/domain';
 
 export interface RunSocraticTurnInput {
@@ -87,6 +92,31 @@ function buildLocalConfrontOutput(
             '¿Cómo cambia tu lectura cuando aplicas la regla correcta para este paso?',
             '¿Qué del trabajo previo te ayudaría a reformular esta respuesta?',
         ],
+    };
+}
+
+/**
+ * ADR-035 (D) — confront de lectura errónea. La redacción depende de
+ * `engagedAnchor` (B: no tocó el ancla / D: trabajó pero contradice), pero NO da
+ * la respuesta. Es `kind:'confront'` ⇒ el dispatch existente lo mapea a retry.
+ */
+function buildMisreadingConfront(
+    mis: CommonMisreadingFeature,
+    engagedAnchor: boolean,
+): SocraticTurnOutput {
+    const anchors = mis.correctiveAnchor
+        .map((a) => a.reference)
+        .filter(Boolean)
+        .join(', ');
+    const reply = engagedAnchor
+        ? `Trabajaste el texto, pero tu lectura sostiene "${mis.claim}", que ${anchors} matiza. ¿Cómo la sostiene el texto frente a ese ancla?`
+        : `Tu respuesta toca la lectura "${mis.claim}" sin abordar ${anchors}, que suele matizarla. ¿Tu lectura la sostiene o la contradice?`;
+    return {
+        kind: 'confront',
+        errorLabel: 'common-misreading',
+        agentReply: reply,
+        data: [mis.whyWrong],
+        questions: ['¿Qué en el texto decide entre esa lectura y lo que el ancla establece?'],
     };
 }
 
@@ -146,10 +176,23 @@ export class RunSocraticTurnUseCase {
             timestamp: new Date(),
         });
 
+        // 0. ADR-035 (D) — confront de lectura errónea, GATED (enforceCoverage +
+        // juez + feature misreading en este paso). Corre ANTES del heurístico.
+        // re-confront ⇒ output confront (→ retry). accept-override ⇒ registra y
+        // CAE al flujo normal (override floor, no encierra). accept/gate-minimo ⇒
+        // cae al flujo normal. Inerte sin enforce/juez.
+        let output: SocraticTurnOutput | undefined = await this.maybeMisreadingConfront(
+            seed,
+            gss.currentStep,
+            ctx,
+            input.pastorMessage,
+        );
+
         // 1. Heuristic method-error short-circuit. Cheap, no LLM call.
-        let output: SocraticTurnOutput;
-        const heuristicError = policy.detectMethodError(input.pastorMessage, ctx);
-        if (heuristicError && heuristicError.confidence >= METHOD_ERROR_CONFIDENCE_THRESHOLD) {
+        const heuristicError = output ? null : policy.detectMethodError(input.pastorMessage, ctx);
+        if (output) {
+            // already a misreading confront — skip heuristic + LLM.
+        } else if (heuristicError && heuristicError.confidence >= METHOD_ERROR_CONFIDENCE_THRESHOLD) {
             output = buildLocalConfrontOutput(heuristicError.label, heuristicError.description);
         } else {
             // 2. LLM call — the policy's system prompt encodes the full contract.
@@ -288,6 +331,67 @@ export class RunSocraticTurnUseCase {
             sermonReady,
             stepAttempts: nextState.stepAttempts,
         };
+    }
+
+    /**
+     * ADR-035 (D) — corre el juicio de engagement (CA1) cuando el paso actual
+     * tiene una lectura errónea en el perfil y el enforce está on, y mapea el
+     * veredicto con `decideMisreadingTurn` (tres estados). Devuelve un output
+     * `confront` solo para `re-confront`; para `accept-override` registra la
+     * discrepancia (override floor) y devuelve `undefined` (cae al flujo normal);
+     * `accept`/`gate-minimo` también devuelven `undefined`. No-op sin enforce,
+     * sin juez, o sin feature (todos los paths del flujo clásico intactos).
+     */
+    private async maybeMisreadingConfront(
+        seed: PastoralSeed,
+        currentStep: PastoralSeedStepKey,
+        ctx: TurnContext,
+        pastorMessage: string,
+    ): Promise<SocraticTurnOutput | undefined> {
+        if (!ctx.enforceCoverage || !this.coverageJudge) return undefined;
+        const misreadings = featuresForStep(seed.passageProfile, currentStep).filter(
+            (f): f is CommonMisreadingFeature => f.typeKey === 'common-misreading',
+        );
+        if (misreadings.length === 0) return undefined;
+        if (misreadings.length > 1) {
+            // No tirar en silencio (mismo principio que la telemetría de huecos):
+            // v1 toma la primera; loguea el descarte para saber con dato si
+            // "resto a futuro" es pronto o lejos.
+            console.warn(
+                `[coverage] ${misreadings.length} lecturas erróneas en el paso "${currentStep}"; v1 confronta la primera, difiere ${misreadings.length - 1}.`,
+            );
+        }
+        const mis = misreadings[0];
+
+        const judgment = await this.coverageJudge.judge({
+            pastorMessage,
+            claim: mis.claim,
+            whyWrong: mis.whyWrong,
+            correctiveAnchors: mis.correctiveAnchor.map((a) => a.reference).filter(Boolean),
+            minSubstanceChars: MISREADING_MIN_SUBSTANCE_CHARS,
+        });
+        const outcome = decideMisreadingTurn(
+            judgment,
+            ctx.attemptIndex,
+            RECONFRONT_CAPS['common-misreading'],
+        );
+
+        if (outcome === 're-confront') {
+            return buildMisreadingConfront(mis, judgment.engagedAnchor);
+        }
+        if (outcome === 'accept-override') {
+            // Override floor: agotó el tope sosteniendo su lectura → libera al
+            // flujo normal con la discrepancia REGISTRADA (no encierra). Evento de
+            // conducción in-step, NO un override del publish-gate.
+            await this.seedRepo.appendAiAssistLog(seed.id, {
+                userId: seed.userId,
+                stepKey: currentStep,
+                assistType: 'coverageMisreadingOverride',
+                outputWasEditedByUser: false,
+            });
+        }
+        // accept / accept-override(registrado) / gate-minimo → flujo normal.
+        return undefined;
     }
 
     /**
