@@ -169,6 +169,19 @@ export function isFeatureAnchored(feature: DetectedFeature): boolean {
  * deterministas del libro. Aplica la regla anti-alucinación: descarta toda
  * feature sin ancla verificable. Función PURA (sin LLM/IO).
  */
+/**
+ * Features del perfil ruteadas a un paso (catalog-driven: usa `routeToStep` del
+ * catálogo, no hardcodea el mapeo). Vacío si no hay perfil. Lo usan las policies
+ * para condicionar nudges al paso actual.
+ */
+export function featuresForStep(
+    profile: PassageProfile | undefined,
+    step: PastoralSeedStepKey,
+): DetectedFeature[] {
+    if (!profile) return [];
+    return profile.features.filter((f) => FEATURE_CATALOG_V1[f.typeKey].routeToStep === step);
+}
+
 export function assemblePassageProfile(
     raw: RawPassageProfile,
     genres: LiteraryGenre[],
