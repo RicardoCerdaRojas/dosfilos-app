@@ -3,9 +3,11 @@ import { assemblePassageProfile, RECONFRONT_CAPS } from '../../entities/PassageP
 import { GOLDEN_PASSAGE_PROFILES } from '../../entities/__tests__/passageProfileCorpus';
 import {
     buildCoverageContract,
+    buildCoverageStepTexts,
     computeCoverageSummary,
     type StepTexts,
 } from '../passageCoverage';
+import type { PastoralSeed } from '../../entities/PastoralSeed';
 
 const now = new Date('2026-06-22T00:00:00Z');
 const secondPeter = assemblePassageProfile(GOLDEN_PASSAGE_PROFILES[0].raw, ['epistle'], now);
@@ -60,6 +62,21 @@ describe('computeCoverageSummary', () => {
         expect(report.gateStatus).toBe('soft-block');
         // D1: jamás bloqueo duro por omisión de cobertura.
         expect(report.gateStatus).not.toBe('hard-block');
+    });
+
+    it('E — buildCoverageStepTexts arma el texto por paso y el colector lo lee end-to-end', () => {
+        const seed = {
+            structuralAnalysis: { mainClause: { reference: '2 Pedro 2:10-16', pastorNote: 'acusación; 2 Pedro 2:17-19; 2 Pedro 2:20-22' } },
+            recognition: { parallels: [
+                { reference: 'Números 22-24', relevanceNote: 'Balaam', source: 'pastor-suggested' },
+                { reference: 'Proverbios 26:11', relevanceNote: 'perro', source: 'pastor-suggested' },
+            ] },
+            function: { originalAudienceFunction: 'advertencia; confronta Juan 10:28-29' },
+        } as unknown as PastoralSeed;
+        const report = computeCoverageSummary(contract, buildCoverageStepTexts(seed));
+        // Todos los must-touch (movimientos + 2 alusiones) tocados → pass.
+        expect(report.gateStatus).toBe('pass');
+        expect(report.mustTouchUntouched).toBe(0);
     });
 
     it('nudge-only sin tratar NO cambia el gate (solo informativo)', () => {

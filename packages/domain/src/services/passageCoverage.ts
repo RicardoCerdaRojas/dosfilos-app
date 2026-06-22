@@ -14,7 +14,7 @@ import type {
     FeatureTypeKey,
     PassageProfile,
 } from '../entities/PassageProfile';
-import type { PastoralSeedStepKey } from '../entities/PastoralSeed';
+import type { PastoralSeed, PastoralSeedStepKey } from '../entities/PastoralSeed';
 import type { FidelityGateStatus } from '../entities/FidelityReport';
 
 /** Un ítem del checklist: algo que el pasaje demanda tratar en un paso. */
@@ -119,6 +119,22 @@ export interface CoverageReport {
 
 /** Texto persistido por paso (lo arma la app desde el seed). */
 export type StepTexts = Partial<Record<PastoralSeedStepKey, string>>;
+
+/**
+ * Arma el texto persistido por paso desde el seed, para los pasos a los que el
+ * catálogo v1 rutea features (structuralAnalysis / recognition / function). Es
+ * lo que el colector escanea para decidir "tocado". Puro.
+ */
+export function buildCoverageStepTexts(seed: PastoralSeed): StepTexts {
+    const mc = seed.structuralAnalysis?.mainClause;
+    return {
+        structuralAnalysis: [mc?.reference, mc?.pastorNote].filter(Boolean).join(' '),
+        recognition: (seed.recognition?.parallels ?? [])
+            .map((p) => `${p.reference}: ${p.relevanceNote}`)
+            .join(' | '),
+        function: seed.function?.originalAudienceFunction ?? '',
+    };
+}
 
 function isTouched(item: CoverageItem, stepTexts: StepTexts): boolean {
     const hay = (stepTexts[item.routeToStep] ?? '').toLowerCase();

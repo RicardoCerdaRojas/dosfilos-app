@@ -135,6 +135,13 @@ export interface SocraticTurnResult {
     sermonReady: boolean;
     /** Updated attempt counters (echoed for the client to render progress). */
     stepAttempts: Record<PastoralSeedStepKey, number>;
+    /**
+     * ADR-035 E — reporte de cobertura, presente SOLO al cerrar el estudio
+     * (sermonReady) con enforce on. Red de seguridad sobre el Motor B: si quedó
+     * algún must-touch sin tratar (`gateStatus: 'soft-block'`), el web nudgea
+     * "no abordaste X". Ausente ⇒ no aplica (no cierre / enforce off / sin perfil).
+     */
+    coverageReport?: import('../services/passageCoverage').CoverageReport;
 }
 
 export type { StepValidationResult };

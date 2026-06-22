@@ -73,6 +73,39 @@ describe('SubmitGuidedInsightUseCase', () => {
         expect((chatRepo.addMessageToSession as any).mock.calls.length).toBe(2);
     });
 
+    it('ADR-035 E: enforce + perfil con must-touch sin tratar → coverageReport soft-block al cierre', async () => {
+        const seed = { ...makeSeed(), passageProfile: {
+            schemaVersion: 1, passage: 'Juan 1:1', genres: ['gospel'], movements: [],
+            features: [{ typeKey: 'ot-allusion', hays: 'allusion', verseRef: 'v.1', summary: 'logos',
+                anchor: { reference: 'Génesis 1:1' } }],
+            generatedAt: new Date(),
+        } } as PastoralSeed;
+        const { chatRepo, seedRepo } = makeRepos(seed);
+        const uc = new SubmitGuidedInsightUseCase(chatRepo, seedRepo);
+        const res = await uc.execute({
+            userId: 'u1', sessionId: 's1', insight: validInsight,
+            renderedInsightText: '...', affirmationText: 'Recibido.', enforceCoverage: true,
+        });
+        // Génesis 1:1 no aparece en recognition.parallels del seed → no tocado → soft-block.
+        expect(res.coverageReport).toBeDefined();
+        expect(res.coverageReport!.gateStatus).toBe('soft-block');
+        expect(res.coverageReport!.mustTouchUntouched).toBeGreaterThan(0);
+    });
+
+    it('ADR-035 E: enforce OFF → sin coverageReport (inerte)', async () => {
+        const seed = { ...makeSeed(), passageProfile: {
+            schemaVersion: 1, passage: 'Juan 1:1', genres: ['gospel'], movements: [],
+            features: [], generatedAt: new Date(),
+        } } as PastoralSeed;
+        const { chatRepo, seedRepo } = makeRepos(seed);
+        const uc = new SubmitGuidedInsightUseCase(chatRepo, seedRepo);
+        const res = await uc.execute({
+            userId: 'u1', sessionId: 's1', insight: validInsight,
+            renderedInsightText: '...', affirmationText: 'Recibido.', // enforceCoverage ausente
+        });
+        expect(res.coverageReport).toBeUndefined();
+    });
+
     it('rechaza insight inválido: no persiste, devuelve reasons', async () => {
         const seed = makeSeed();
         const { chatRepo, seedRepo } = makeRepos(seed);

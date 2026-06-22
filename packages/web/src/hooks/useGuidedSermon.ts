@@ -117,6 +117,21 @@ export function useGuidedSermon(): UseGuidedSermonResult {
         queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user.uid] });
     }, [queryClient, user?.uid]);
 
+    // ADR-035 E — nudge de cobertura al cierre (red de seguridad, no bloquea): si
+    // quedó algún must-touch sin tratar, lo recuerda. Reutilizado por runTurn (si
+    // un turno completa) y submitInsight (cierre real del estudio).
+    const surfaceCoverageNudge = useCallback(
+        (report: { mustTouchUntouched: number; items: Array<{ coverageRule: string; touched: boolean; label: string }> } | undefined) => {
+            if (!report || report.mustTouchUntouched <= 0) return;
+            const items = report.items
+                .filter((i) => i.coverageRule === 'must-touch' && !i.touched)
+                .map((i) => i.label)
+                .join('; ');
+            if (items) toast(t('coverage.closeNudge', { items }));
+        },
+        [t],
+    );
+
     const activate = useCallback(
         async (sessionId: string, passage: string) => {
             if (!user?.uid) return null;
@@ -183,6 +198,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                     enforceCoverage: passageProfileEnforceGate.enabled,
                 });
                 refreshSession();
+                surfaceCoverageNudge(result?.coverageReport);
                 return result;
             } catch (err) {
                 console.error('[useGuidedSermon] runTurn failed', err);
@@ -195,7 +211,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                 setIsProcessing(false);
             }
         },
-        [user?.uid, t, refreshSession, queryClient, passageProfileEnforceGate.enabled],
+        [user?.uid, t, refreshSession, queryClient, passageProfileEnforceGate.enabled, surfaceCoverageNudge],
     );
 
     const submitInsight = useCallback(
@@ -222,8 +238,10 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                     insight: args.insight,
                     renderedInsightText: args.renderedInsightText,
                     affirmationText: args.affirmationText,
+                    enforceCoverage: passageProfileEnforceGate.enabled,
                 });
                 refreshSession();
+                surfaceCoverageNudge(result?.coverageReport);
                 return result;
             } catch (err) {
                 console.error('[useGuidedSermon] submitInsight failed', err);
@@ -236,7 +254,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                 setIsProcessing(false);
             }
         },
-        [user?.uid, t, refreshSession, queryClient],
+        [user?.uid, t, refreshSession, queryClient, passageProfileEnforceGate.enabled, surfaceCoverageNudge],
     );
 
     const submitWordStudies = useCallback(

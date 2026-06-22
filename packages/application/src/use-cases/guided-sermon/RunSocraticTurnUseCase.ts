@@ -33,10 +33,14 @@ import {
     type SocraticTurnResult,
     type TurnContext,
     type CommonMisreadingFeature,
+    type CoverageReport,
     decideMisreadingTurn,
     featuresForStep,
     RECONFRONT_CAPS,
     MISREADING_MIN_SUBSTANCE_CHARS,
+    buildCoverageContract,
+    buildCoverageStepTexts,
+    computeCoverageSummary,
 } from '@dosfilos/domain';
 
 export interface RunSocraticTurnInput {
@@ -325,11 +329,24 @@ export class RunSocraticTurnUseCase {
         // ("% tuyo" needs a denominator of persisted-by-pastor text).
         void pastorTextPersisted;
 
+        // 8. ADR-035 E — colector de cobertura al CIERRE (red de seguridad sobre
+        // el Motor B). Solo al completar el estudio + enforce + perfil. Si quedó
+        // un must-touch sin tratar, `gateStatus: 'soft-block'` → el web nudgea
+        // (no bloquea, D1). Puro; no toca el dispatch del turno.
+        let coverageReport: CoverageReport | undefined;
+        if (sermonReady && ctx.enforceCoverage && seed.passageProfile) {
+            coverageReport = computeCoverageSummary(
+                buildCoverageContract(seed.passageProfile),
+                buildCoverageStepTexts(seed),
+            );
+        }
+
         return {
             output,
             nextStep: nextState.currentStep,
             sermonReady,
             stepAttempts: nextState.stepAttempts,
+            ...(coverageReport ? { coverageReport } : {}),
         };
     }
 
