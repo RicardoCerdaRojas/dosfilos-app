@@ -30,7 +30,7 @@ export type FeatureKind = 'hard' | 'soft';
 export type CoverageRule = 'must-touch' | 'nudge-only';
 
 /** Claves del catálogo v1 (ADR-035 D4). El resto entra por dato en iteraciones. */
-export type FeatureTypeKey = 'movements' | 'ot-allusion' | 'common-misreading';
+export type FeatureTypeKey = 'movements' | 'ot-allusion' | 'common-misreading' | 'illustration';
 
 /**
  * Entrada del catálogo de features — DATO, no código. El pipeline itera sobre
@@ -64,6 +64,16 @@ export const FEATURE_CATALOG_V1: Record<FeatureTypeKey, FeatureType> = {
         kind: 'soft',
         routeToStep: 'function',
         coverageRule: 'nudge-only',
+    },
+    // ADR-035 R4 — ilustración/metáfora directa del texto (ej. "perro al vómito",
+    // "fuentes sin agua"). Hard: está EN el texto (ancla = verseRef). El pastor
+    // debería tratarla al explicar la función del pasaje. Cierra la pieza de
+    // "ilustraciones" del dolor original (2 Pedro 2).
+    illustration: {
+        key: 'illustration',
+        kind: 'hard',
+        routeToStep: 'function',
+        coverageRule: 'must-touch',
     },
 };
 
@@ -138,7 +148,16 @@ export interface CommonMisreadingFeature {
     correctiveAnchor: VerifiableAnchor[];
 }
 
-export type DetectedFeature = OtAllusionFeature | CommonMisreadingFeature;
+/** Ilustración/metáfora directa del texto. Siempre `hard` (está EN el pasaje). */
+export interface IllustrationFeature {
+    typeKey: 'illustration';
+    /** Dónde aparece, ej. "v.22". Es el ancla verificable (está en el texto). */
+    verseRef: string;
+    /** La imagen, ej. "el perro que vuelve a su vómito". */
+    summary: string;
+}
+
+export type DetectedFeature = OtAllusionFeature | CommonMisreadingFeature | IllustrationFeature;
 
 /** Perfil del pasaje cristalizado en el seed. */
 export interface PassageProfile {
@@ -168,6 +187,10 @@ export interface RawPassageProfile {
 export function isFeatureAnchored(feature: DetectedFeature): boolean {
     if (feature.typeKey === 'ot-allusion') {
         return Boolean(feature.anchor?.reference?.trim());
+    }
+    if (feature.typeKey === 'illustration') {
+        // Ancla = el verso donde aparece + la imagen. Sin uno u otro, fuera.
+        return Boolean(feature.verseRef?.trim() && feature.summary?.trim());
     }
     // common-misreading
     return feature.correctiveAnchor.some((a) => Boolean(a?.reference?.trim()));

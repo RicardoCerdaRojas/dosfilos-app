@@ -39,7 +39,13 @@ interface RawCommonMisreading {
     correctiveAnchor: Array<{ reference: string; note?: string }>;
 }
 
-type RawFeature = RawOtAllusion | RawCommonMisreading;
+interface RawIllustration {
+    typeKey: 'illustration';
+    verseRef: string;
+    summary: string;
+}
+
+type RawFeature = RawOtAllusion | RawCommonMisreading | RawIllustration;
 
 interface RawProfile {
     passage: string;
@@ -71,7 +77,11 @@ Analiza el TEXTO y devuelve un objeto JSON con esta forma EXACTA:
     { "typeKey": "ot-allusion", "hays": "allusion", "verseRef": "<vers. del pasaje>", "summary": "<qué alude>", "anchor": { "reference": "<pasaje AT fuente>", "note": "<opcional>" } },
     // Lecturas erróneas frecuentes de este pasaje. SOLO incluye una si puedes dar
     // al menos un ancla correctiva verificable (un verso o cross-ref que la refute).
-    { "typeKey": "common-misreading", "verseRef": "<vers.>", "claim": "<la lectura errónea>", "whyWrong": "<por qué es errónea, breve>", "correctiveAnchor": [ { "reference": "<verso/cross-ref que la refuta>" } ] }
+    { "typeKey": "common-misreading", "verseRef": "<vers.>", "claim": "<la lectura errónea>", "whyWrong": "<por qué es errónea, breve>", "correctiveAnchor": [ { "reference": "<verso/cross-ref que la refuta>" } ] },
+    // Ilustraciones/metáforas DIRECTAS del texto (ej. "el perro que vuelve a su
+    // vómito", "fuentes sin agua"). SOLO las que están explícitamente en el texto;
+    // no inventes imágenes que no aparecen.
+    { "typeKey": "illustration", "verseRef": "<vers. donde aparece>", "summary": "<la imagen tal cual la usa el texto>" }
   ]
 }
 
@@ -79,6 +89,7 @@ Reglas:
 - Divide el pasaje en sus movimientos reales (1 si es corto; varios si es un argumento largo).
 - NO inventes alusiones AT: si el texto no remite a un pasaje concreto del AT, deja "features" sin esa entrada.
 - NO inventes lecturas erróneas: solo las recurrentes y peligrosas, y siempre con ancla correctiva.
+- NO inventes ilustraciones: solo las imágenes/metáforas que el texto usa explícitamente.
 - Devuelve SOLO el JSON, sin texto adicional.`;
 }
 
@@ -132,6 +143,12 @@ function shapeFeature(raw: unknown): RawFeature | null {
             whyWrong: str(r.whyWrong),
             correctiveAnchor: anchors,
         };
+    }
+    if (r?.typeKey === 'illustration') {
+        const summary = str(r.summary);
+        const verseRef = str(r.verseRef);
+        if (!summary || !verseRef) return null; // anti-alucinación: sin imagen+verso, fuera
+        return { typeKey: 'illustration', verseRef, summary };
     }
     return null;
 }

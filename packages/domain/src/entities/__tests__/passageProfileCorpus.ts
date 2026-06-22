@@ -67,9 +67,19 @@ const SECOND_PETER: GoldenProfileCase = {
                     { reference: 'Juan 10:28-29' },
                 ],
             },
+            {
+                typeKey: 'illustration',
+                verseRef: 'v.17',
+                summary: 'fuentes sin agua y nubes empujadas por la tormenta',
+            },
+            {
+                typeKey: 'illustration',
+                verseRef: 'v.22',
+                summary: 'el perro vuelve a su vómito y la cerda lavada al lodo',
+            },
         ],
     },
-    expectedAnchoredFeatures: 3,
+    expectedAnchoredFeatures: 5,
     expectedMovements: 3,
 };
 

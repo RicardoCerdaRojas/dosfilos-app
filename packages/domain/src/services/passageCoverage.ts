@@ -71,8 +71,7 @@ export function buildCoverageContract(profile: PassageProfile | undefined): Cove
                 // El ancla AT (verificable) + el verso son las marcas estables.
                 matchHints: [f.anchor.reference, f.verseRef].map(norm).filter(Boolean),
             });
-        } else {
-            // common-misreading
+        } else if (f.typeKey === 'common-misreading') {
             items.push({
                 id: `common-misreading:${i}`,
                 typeKey: 'common-misreading',
@@ -81,6 +80,19 @@ export function buildCoverageContract(profile: PassageProfile | undefined): Cove
                 coverageRule: 'nudge-only',
                 // Las anclas correctivas son las marcas estables de que la trató.
                 matchHints: f.correctiveAnchor.map((a) => norm(a.reference)).filter(Boolean),
+            });
+        } else {
+            // illustration (ADR-035 R4)
+            items.push({
+                id: `illustration:${i}`,
+                typeKey: 'illustration',
+                label: `la ilustración "${norm(f.summary)}" (${norm(f.verseRef)})`,
+                routeToStep: 'function',
+                coverageRule: 'must-touch',
+                // La imagen + el verso son las marcas de que la trató.
+                matchHints: [f.verseRef, ...norm(f.summary).split(/\s+/).filter((w) => w.length > 4)]
+                    .map(norm)
+                    .filter(Boolean),
             });
         }
     });
