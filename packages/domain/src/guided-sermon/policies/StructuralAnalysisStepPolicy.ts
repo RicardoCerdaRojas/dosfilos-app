@@ -53,8 +53,25 @@ Trabajo previo del pastor:
 ${priorStepsBlock(ctx)}
 
 AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): que identificó la cláusula principal correcta y mostró cómo las demás la sostienen — nombrá la cláusula. Nada genérico.
-
+${this.buildMovementsNudge(ctx)}
 Intento ${ctx.attemptIndex + 1} en este paso.`;
+    }
+
+    /**
+     * ADR-035 R2 — nudge de los movimientos que el perfil detectó. SOLO con
+     * enforce on. Para pasajes grandes (varios movimientos), ayuda a que el
+     * pastor no aplane la estructura a una sola cláusula. Surface el dato; él
+     * escribe la estructura. Sin enforce/perfil/un-solo-movimiento → '' (clásico).
+     */
+    private buildMovementsNudge(ctx: TurnContext): string {
+        if (!ctx.enforceCoverage) return '';
+        const movements = ctx.passageProfile?.movements ?? [];
+        if (movements.length <= 1) return '';
+        const lines = movements.map((m) => `- ${m.reference}: ${m.summary}`).join('\n');
+        return `
+DATO DEL PERFIL — este pasaje tiene ${movements.length} movimientos (insumo estructural):
+${lines}
+Ayudá al pastor a ver cómo la cláusula principal se relaciona con estos bloques y a no aplanar el argumento a una sola cláusula. Él escribe la estructura; no se la des hecha.`;
     }
 
     parseLlmReply(raw: string, pastorMessage: string): SocraticTurnOutput {

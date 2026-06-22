@@ -1,7 +1,7 @@
 /**
  * Phase 2.5 PR B (ADR-028) — Step 5 (Reconocimiento canónico) policy.
  *
- * Pastor produces 1-3 canonical parallels, each with a relevance note
+ * Pastor produces 1-8 canonical parallels, each with a relevance note
  * (≥30 chars). Format in chat:
  *
  *   - Gálatas 5:1: el "stand firm" libertador eco la victoria del Verbo
@@ -17,6 +17,7 @@ import {
     type ParallelRef,
     type PastoralSeed,
 } from '../../entities/PastoralSeed';
+import { featuresForStep } from '../../entities/PassageProfile';
 import type {
     MethodErrorReport,
     SocraticTurnOutput,
@@ -68,8 +69,30 @@ Trabajo previo del pastor:
 ${priorStepsBlock(ctx)}
 
 AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): un paralelo con convergencia teológica genuina (no eco verbal) — citá la conexión que trazó. Nada genérico.
-
+${this.buildAllusionNudge(ctx)}
 Intento ${ctx.attemptIndex + 1} en este paso.`;
+    }
+
+    /**
+     * ADR-035 R2 — nudge informativo de alusiones AT que el perfil detectó para
+     * este paso. SOLO con enforce on (`ctx.enforceCoverage`). Surface el dato (la
+     * fuente AT) para que el pastor no la pase por alto; él escribe POR QUÉ
+     * importa. NO le da la nota hecha. Sin enforce/perfil → '' (clásico).
+     */
+    private buildAllusionNudge(ctx: TurnContext): string {
+        if (!ctx.enforceCoverage) return '';
+        const allusions = featuresForStep(ctx.passageProfile, this.stepKey).filter(
+            (f) => f.typeKey === 'ot-allusion',
+        );
+        if (allusions.length === 0) return '';
+        const lines = allusions
+            .map((f) => (f.typeKey === 'ot-allusion' ? `- ${f.anchor.reference} (${f.verseRef}): ${f.summary}` : ''))
+            .filter(Boolean)
+            .join('\n');
+        return `
+DATO DEL PERFIL — alusiones/citas del AT que este pasaje invoca (insumo, NO la nota del pastor):
+${lines}
+Si el pastor las pasa por alto, surfacealas como dato y preguntale qué aportan; él escribe la convergencia teológica. NUNCA escribas el paralelo o la nota por él.`;
     }
 
     parseLlmReply(raw: string, pastorMessage: string): SocraticTurnOutput {

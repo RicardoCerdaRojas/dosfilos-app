@@ -175,7 +175,7 @@ export interface WordStudiesStepData {
 }
 
 export interface RecognitionStepData {
-    /** 1–3 parallels, each with relevanceNote ≥30 chars. */
+    /** 1–8 parallels, each with relevanceNote ≥30 chars (cap = techo de seguridad, ADR-035 R1). */
     parallels: ParallelRef[];
     completedAt?: Date;
     timeSpentSeconds: number;
