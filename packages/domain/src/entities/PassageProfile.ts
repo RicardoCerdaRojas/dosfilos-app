@@ -67,6 +67,23 @@ export const FEATURE_CATALOG_V1: Record<FeatureTypeKey, FeatureType> = {
     },
 };
 
+/**
+ * CA2 (ADR-035) — tope de re-confront por clase de feature, como DATO (no
+ * constante hardcodeada en el confront loop). El loop lee de aquí; cambiar el
+ * tope no toca el loop.
+ *
+ * - `common-misreading`: 1 — soft con ancla, NO un hecho duro; máx 1 re-confront
+ *   si la postura sustantiva aún contradice el ancla, luego override floor.
+ * - `theological-tension`: 0 — no hay "mal"; re-confrontar sería imponer.
+ *
+ * (`genre-mismatch` NO está aquí: es un hecho duro que conserva su comportamiento
+ * de confrontación sin tope, fuera del perfil.)
+ */
+export const RECONFRONT_CAPS: Record<'common-misreading' | 'theological-tension', number> = {
+    'common-misreading': 1,
+    'theological-tension': 0,
+};
+
 /** Ancla verificable: una referencia que sostiene (o corrige) una feature. */
 export interface VerifiableAnchor {
     /** Referencia bíblica o textual, ej. "Proverbios 26:11" o "v.22". */
