@@ -297,6 +297,16 @@ export interface PastoralSeed {
      * Lazy type import to avoid a runtime cycle with the guided-sermon module.
      */
     openDoubts?: import('../guided-sermon/doubtRouting').RaisedDoubt[];
+
+    /**
+     * ADR-035 — perfil del pasaje (Capa 1), cristalizado al activar el estudio
+     * (`schemaVersion`, reproducible). Condiciona el foco de los 8 pasos y la
+     * cobertura al cierre. Additivo + opcional; NO participa en
+     * `evaluatePastoralSeed`. Ausente ⇒ seed legacy: corre el flujo clásico sin
+     * cobertura adaptativa (sin re-perfilar — rompería la cristalización).
+     * Lazy type import para evitar un ciclo runtime con el módulo del perfil.
+     */
+    passageProfile?: import('./PassageProfile').PassageProfile;
 }
 
 /**
