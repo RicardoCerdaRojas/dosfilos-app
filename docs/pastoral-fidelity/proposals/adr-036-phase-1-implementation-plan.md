@@ -101,6 +101,37 @@ composición de precedentes.
   (neutralizar el filtro → el test falla), igual que cross-chapter y la fila
   ortogonal en 035.
 
+## 5b. R3 — Procedencia citable (capas + fixture)
+
+La procedencia citable es columna del pitch al avalador → el código debe
+GARANTIZARLA, no prometerla. Fail-closed también para procedencia: una fuente
+que no se puede trazar no se muestra como cita.
+
+- **PR1 (dominio puro)** — el campo + la regla:
+  - `correctiveAnchor: { reference, note?, sourceId?, provenanceVerified?: boolean }`.
+    `sourceId` → un `DocumentChunk` (lleva `resourceId`, `resourceTitle`, `page`).
+  - Regla pura `isAnchorCitable(anchor)` = `Boolean(sourceId)` **Y**
+    `provenanceVerified === true`. Sin `sourceId` o sin verificar →
+    **`sin-fuente-trazable`**, no citable. (En PR1 solo se puede chequear
+    PRESENCIA de `sourceId` + el flag; la RESOLUCIÓN del chunk es IO → PR4.)
+  - **Fixture (el que pediste)**: entrada/ancla **sin `sourceId` → `isAnchorCitable
+    === false`**; con `sourceId` pero `provenanceVerified !== true` → false; con
+    ambos → true. Vive con los tests de `decideAnchorAdmission`.
+- **PR4 (store/review) — la trazabilidad real**: al curar/revisar, resolver
+  `sourceId` → `DocumentChunk` (lookup Firestore). Si resuelve, setear
+  `provenanceVerified=true` + cachear `{resourceTitle, page}` (procedencia REAL
+  del chunk, `DocumentChunk.metadata.page`, **no redactada**). Si NO resuelve →
+  `provenanceVerified=false` → `sin-fuente-trazable` (fail-closed de procedencia).
+  Fixture PR4: entrada cuyo `sourceId` no resuelve a un chunk → queda no-citable.
+- **PR5 (web) — el display**: el ancla se muestra **como cita respaldada (fuente +
+  página) SOLO si `isAnchorCitable`**; si es `sin-fuente-trazable`, se muestra el
+  verso del ancla pero NO como cita con fuente. Fixture: ancla sin-fuente-trazable
+  → no se renderiza el badge/línea de fuente.
+
+R3 está completo cuando: el campo + regla pura (PR1) + la verificación de
+trazabilidad del chunk (PR4) + el gate de display (PR5) están verdes. Misma forma
+fail-closed que el ancla bíblica: presencia (PR1) → validez/resolución (PR4).
+
 ## 6. Shadow antes de enforcement + gate del flip
 
 - **Job de shadow (PR6)**: corre `verifyAnchorVerse` + `adjudicateAnchorRefutes`
