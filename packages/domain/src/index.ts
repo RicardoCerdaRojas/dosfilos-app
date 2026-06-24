@@ -37,10 +37,12 @@ export * from './entities/AiAssistLog'; // 🌱 Pastoral Fidelity Phase 1.6 — 
 export * from './entities/StudyDepthAssessment'; // 🌱 Pastoral Fidelity Phase 2.5 — Study Companion coverage model (ADR-025)
 export * from './entities/FidelityReport'; // 🌱 Pastoral Fidelity Phase 3 PR 1 — claim/source fidelity pass (ADR-029)
 export * from './entities/PassageProfile'; // 🌱 Pastoral Fidelity ADR-035 — passage profile (Capa 1)
+export * from './entities/VerifiedMisreading'; // 🌱 Pastoral Fidelity ADR-036 — verified misreading entry (anchor fidelity)
 export * from './services/computeFidelitySummary'; // 🌱 Pastoral Fidelity Phase 3 PR 1 — gate policy (ADR-029 Q3/Q6)
 export * from './services/evaluatePublishGate'; // 🌱 Pastoral Fidelity Phase 3 PR 2 — publish-gate decision (ADR-029 Q3/Q5)
 export * from './services/passageCoverage'; // 🌱 Pastoral Fidelity ADR-035 Capa 2/3 — coverage contract + collector
 export * from './services/misreadingTurn'; // 🌱 Pastoral Fidelity ADR-035 CA1/CA3 — pure misreading-turn decision
+export * from './services/anchorAdmission'; // 🌱 Pastoral Fidelity ADR-036 — pure anchor admission + citability (fail-closed)
 export * from './services/computePluralityCheck'; // 🌱 Pastoral Fidelity Phase 3 PR 3 — plurality (no-proof-texting) check (ADR-029 Q4)
 export * from './services/computeAttributionCheck'; // 🌱 Pastoral Fidelity Phase 3 PR 5 — attribution check (ADR-006 / ADR-029 Q7)
 export * from './entities/ContraScanReport'; // 🌱 Pastoral Fidelity Phase 4 PR 1 — contra-scan confrontation report (ADR-033)
