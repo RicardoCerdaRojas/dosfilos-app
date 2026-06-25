@@ -168,6 +168,8 @@ export { profilePassage } from './passage-profile/profilePassage';
 export { recordPassageProfileShadow } from './passage-profile/recordPassageProfileShadow';
 // 🧭 ADR-035 CA1 — engagement judgment (Sonnet) para el confront de common-misreading
 export { evaluateCoverageEngagement } from './passage-profile/evaluateCoverageEngagement';
+// 🧭 ADR-036 PR3 — adjudicación "¿el ancla refuta?" (Sonnet, ingest/revisión)
+export { adjudicateAnchorRefutes } from './anchor-fidelity/adjudicateAnchorRefutes';
 
 
 
