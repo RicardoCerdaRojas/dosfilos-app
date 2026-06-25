@@ -97,7 +97,7 @@ function Section(props: {
 }
 
 function refutesBadge(refutes?: string) {
-    if (refutes === 'yes') return <Badge className="bg-green-600">refuta ✓</Badge>;
+    if (refutes === 'yes') return <Badge className="bg-success text-success-foreground">refuta ✓</Badge>;
     if (refutes === 'unclear') return <Badge variant="secondary">ambiguo</Badge>;
     if (refutes === 'no') return <Badge variant="destructive">no refuta</Badge>;
     return <Badge variant="outline">sin verificar</Badge>;
