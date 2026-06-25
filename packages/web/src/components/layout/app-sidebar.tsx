@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import {
   Home, FileText, Sparkles, Settings, LogOut,
-  BookOpen, BookMarked, Library, ChevronUp, ChevronDown, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText, FolderKanban, Gauge, ScrollText, NotebookPen, Zap, Download, Mail, Globe, Presentation
+  BookOpen, BookMarked, Library, ChevronUp, ChevronDown, User2, Bell, Users, CreditCard, Database, GraduationCap, BarChart3, Book, MessageSquareQuote, Bot, BookOpenText, FolderKanban, Gauge, ScrollText, NotebookPen, Zap, Download, Mail, Globe, Presentation, ShieldCheck
 } from 'lucide-react';
 import { useFirebase } from '@/context/firebase-context';
 import { authService } from '../../../../application/src/services/AuthService';
@@ -174,6 +174,7 @@ export function AppSidebar() {
     { name: 'Biblioteca Core', href: '/dashboard/admin/core-library', icon: Database },
     { name: 'Catálogo CORE Confesiones', href: '/dashboard/admin/confessions', icon: ScrollText },
     { name: 'Cross-references (TSK)', href: '/dashboard/admin/cross-references', icon: Book },
+    { name: 'Lecturas erróneas verificadas', href: '/dashboard/admin/verified-misreadings', icon: ShieldCheck },
     { name: 'LlamaParse Monitor', href: '/dashboard/admin/llamaparse-monitoring', icon: Gauge },
     { name: 'Sombra Doxológica', href: '/dashboard/admin/doxological-shadow', icon: Gauge },
     { name: 'Audit Log', href: '/dashboard/admin/audit-log', icon: ScrollText },

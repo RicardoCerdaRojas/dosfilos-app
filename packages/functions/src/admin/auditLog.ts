@@ -23,7 +23,9 @@ export type AdminAuditAction =
     | 'core_library.seed_ingest'
     | 'core_library.tag_doctrine_levels'
     | 'core_library.update_doctrine_level'
-    | 'cross_references.ingest';
+    | 'cross_references.ingest'
+    | 'anchor_fidelity.ingest_misreading'
+    | 'anchor_fidelity.review_misreading';
 
 interface WriteAuditLogParams {
     /** Firebase UID of the admin who triggered the action. */

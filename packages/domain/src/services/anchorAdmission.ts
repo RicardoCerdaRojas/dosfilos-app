@@ -12,6 +12,7 @@
  */
 
 import type {
+    AnchorRefutesVerdict,
     AnchorVerification,
     CorrectiveAnchor,
     MisreadingReviewStatus,
@@ -56,6 +57,34 @@ export function decideAnchorAdmission(input: AnchorAdmissionInput): AnchorAdmiss
 /** ¿La admisión habilita confrontar con esta ancla? Único `true` = `confront`. */
 export function anchorAdmissionConfronts(admission: AnchorAdmission): boolean {
     return admission === 'confront';
+}
+
+/**
+ * Verificación por-ancla de una entrada (resultado del review: PR2 existe + PR3
+ * refuta, por cada ancla correctiva).
+ */
+export interface PerAnchorVerification {
+    versesExist: boolean;
+    refutes: AnchorRefutesVerdict;
+}
+
+/**
+ * Agrega las verificaciones por-ancla a la verificación de la ENTRADA. Pura.
+ *
+ * Una entrada confronta con su MEJOR ancla: basta UNA ancla que exista y refute
+ * (`yes`) para que la entrada pueda confrontar. Fail-closed: un ancla cuyo verso
+ * NO existe no puede aportar `yes` (su refutación se ignora — no hay verso real
+ * que la sostenga). Precedencia del verdict: yes (con verso) > unclear > no.
+ */
+export function aggregateAnchorVerification(
+    perAnchor: PerAnchorVerification[],
+): { versesExist: boolean; refutes: AnchorRefutesVerdict } {
+    const anyExists = perAnchor.some((a) => a.versesExist);
+    // Solo cuentan para refutar las anclas cuyo verso EXISTE (fail-closed).
+    const valid = perAnchor.filter((a) => a.versesExist);
+    if (valid.some((a) => a.refutes === 'yes')) return { versesExist: anyExists, refutes: 'yes' };
+    if (valid.some((a) => a.refutes === 'unclear')) return { versesExist: anyExists, refutes: 'unclear' };
+    return { versesExist: anyExists, refutes: 'no' };
 }
 
 /**

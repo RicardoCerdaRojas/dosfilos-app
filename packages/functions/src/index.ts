@@ -170,6 +170,9 @@ export { recordPassageProfileShadow } from './passage-profile/recordPassageProfi
 export { evaluateCoverageEngagement } from './passage-profile/evaluateCoverageEngagement';
 // 🧭 ADR-036 PR3 — adjudicación "¿el ancla refuta?" (Sonnet, ingest/revisión)
 export { adjudicateAnchorRefutes } from './anchor-fidelity/adjudicateAnchorRefutes';
+// 🧭 ADR-036 PR4 — store + ingest + review role-gated del set crítico curado
+export { ingestVerifiedMisreading } from './anchor-fidelity/ingestVerifiedMisreading';
+export { reviewVerifiedMisreading } from './anchor-fidelity/reviewVerifiedMisreading';
 
 
 
