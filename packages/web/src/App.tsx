@@ -75,6 +75,7 @@ const AdminEmailPreviews = lazy(() => import('@/pages/admin/AdminEmailPreviews')
 const CoreLibraryAdmin = lazy(() => import('@/pages/admin/CoreLibraryAdmin'));
 const ConfessionsAdmin = lazy(() => import('@/pages/admin/ConfessionsAdmin').then(m => ({ default: m.ConfessionsAdmin })));
 const CrossReferencesAdmin = lazy(() => import('@/pages/admin/CrossReferencesAdmin').then(m => ({ default: m.CrossReferencesAdmin })));
+const VerifiedMisreadingsAdmin = lazy(() => import('@/pages/admin/VerifiedMisreadingsAdmin').then(m => ({ default: m.VerifiedMisreadingsAdmin })));
 const AnalyticsDashboard = lazy(() => import('@/pages/admin/AnalyticsDashboard').then(m => ({ default: m.AnalyticsDashboard })));
 const GeographicDashboard = lazy(() => import('@/pages/admin/GeographicDashboard').then(m => ({ default: m.GeographicDashboard })));
 const UserManagement = lazy(() => import('@/pages/admin/UserManagement').then(m => ({ default: m.UserManagement })));
@@ -372,6 +373,7 @@ function App() {
             <Route path="admin/confessions" element={<ConfessionsAdmin />} />
             <Route path="admin/confessions/:confessionId" element={<ConfessionsAdmin />} />
             <Route path="admin/cross-references" element={<CrossReferencesAdmin />} />
+            <Route path="admin/verified-misreadings" element={<VerifiedMisreadingsAdmin />} />
             <Route path="admin/analytics" element={<AnalyticsDashboard />} />
             <Route path="admin/geographic" element={<GeographicDashboard />} />
             <Route path="admin/users" element={<UserManagement />} />

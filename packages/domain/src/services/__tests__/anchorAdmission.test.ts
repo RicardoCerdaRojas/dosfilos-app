@@ -3,6 +3,7 @@ import {
     decideAnchorAdmission,
     anchorAdmissionConfronts,
     isAnchorCitable,
+    aggregateAnchorVerification,
     type AnchorAdmissionInput,
 } from '../anchorAdmission';
 import type {
@@ -82,6 +83,41 @@ describe('GUARDRAIL — ninguna combinación distinta de (existe+yes+reviewed) c
     it('exactamente UNA combinación confronta en todo el espacio', () => {
         expect(confrontCount).toBe(1);
         expect(anchorAdmissionConfronts(decideAnchorAdmission(input(undefined, 'reviewed')))).toBe(false);
+    });
+});
+
+describe('aggregateAnchorVerification — entrada confronta con su mejor ancla', () => {
+    it('≥1 ancla existe+yes → entrada yes', () => {
+        expect(
+            aggregateAnchorVerification([
+                { versesExist: true, refutes: 'no' },
+                { versesExist: true, refutes: 'yes' },
+            ]),
+        ).toEqual({ versesExist: true, refutes: 'yes' });
+    });
+
+    it('FAIL-CLOSED: ancla con yes pero verso INEXISTENTE no aporta yes', () => {
+        expect(aggregateAnchorVerification([{ versesExist: false, refutes: 'yes' }])).toEqual({
+            versesExist: false,
+            refutes: 'no',
+        });
+    });
+
+    it('sin yes válido, con unclear → unclear', () => {
+        expect(
+            aggregateAnchorVerification([
+                { versesExist: true, refutes: 'no' },
+                { versesExist: true, refutes: 'unclear' },
+            ]),
+        ).toEqual({ versesExist: true, refutes: 'unclear' });
+    });
+
+    it('todas no → no; versesExist refleja si alguna existe', () => {
+        expect(aggregateAnchorVerification([{ versesExist: true, refutes: 'no' }])).toEqual({
+            versesExist: true,
+            refutes: 'no',
+        });
+        expect(aggregateAnchorVerification([])).toEqual({ versesExist: false, refutes: 'no' });
     });
 });
 

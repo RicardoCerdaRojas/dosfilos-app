@@ -112,6 +112,7 @@ export * from './repositories/IUserIntegrationsRepository'; // 🎓 Per-user 3rd
 export * from './repositories/IAuthRepository';
 export * from './repositories/IVectorRepository';
 export * from './repositories/IConfessionRepository';
+export * from './repositories/IVerifiedMisreadingRepository'; // 🌱 Pastoral Fidelity ADR-036 PR4 — verified misreading store (read port)
 export * from './repositories/ICrossReferenceRepository';
 export * from './bible/cross-references/CrossReference';
 

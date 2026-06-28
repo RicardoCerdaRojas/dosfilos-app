@@ -282,6 +282,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Pastoral Fidelity — ADR-036 verified misreadings (anchor fidelity).
+    // El merge runtime (PR5) los lee desde sesiones de usuario, así que la
+    // lectura queda abierta a autenticados. Las escrituras fluyen SOLO por las
+    // Cloud Functions `ingestVerifiedMisreading` / `reviewVerifiedMisreading`
+    // (role-gated: super_admin placeholder hasta asignar `floor-reviewer`).
+    match /verifiedMisreadings/{id} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
     // Pastoral Fidelity — Phase 1 six-step spine seeds (ADR-015).
     // Top-level collection keyed by sermon. Owner-only: pastor reads + writes
     // their own seeds. Super admins read for the audit inspector.
