@@ -43,6 +43,7 @@ export * from './services/evaluatePublishGate'; // 🌱 Pastoral Fidelity Phase 
 export * from './services/passageCoverage'; // 🌱 Pastoral Fidelity ADR-035 Capa 2/3 — coverage contract + collector
 export * from './services/misreadingTurn'; // 🌱 Pastoral Fidelity ADR-035 CA1/CA3 — pure misreading-turn decision
 export * from './services/anchorAdmission'; // 🌱 Pastoral Fidelity ADR-036 — pure anchor admission + citability (fail-closed)
+export * from './services/curatedMisreadingMerge'; // 🌱 Pastoral Fidelity ADR-036 PR5 — curated floor merge (precedence)
 export * from './services/computePluralityCheck'; // 🌱 Pastoral Fidelity Phase 3 PR 3 — plurality (no-proof-texting) check (ADR-029 Q4)
 export * from './services/computeAttributionCheck'; // 🌱 Pastoral Fidelity Phase 3 PR 5 — attribution check (ADR-006 / ADR-029 Q7)
 export * from './entities/ContraScanReport'; // 🌱 Pastoral Fidelity Phase 4 PR 1 — contra-scan confrontation report (ADR-033)
