@@ -10,6 +10,7 @@ export * from './use-cases/guided-sermon/ResumeGuidedSermonUseCase';
 export * from './use-cases/anchor-fidelity/verifyAnchorVerse'; // 🌱 Pastoral Fidelity ADR-036 PR2 — deterministic anchor verse existence
 export * from './use-cases/anchor-fidelity/ReviewVerifiedMisreadingUseCase'; // 🌱 ADR-036 PR4 — review orchestration
 export * from './services/AdminVerifiedMisreadingService'; // 🌱 ADR-036 PR4 — ingest/review callable facade
+export * from './use-cases/anchor-fidelity/ResolveCuratedMisreadingsUseCase'; // 🌱 ADR-036 PR5 — curated floor resolution (authoritative re-verify)
 export * from './services/AuthService';
 export * from './services/FacultyService';
 export * from './services/SeriesService';

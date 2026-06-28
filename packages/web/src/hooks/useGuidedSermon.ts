@@ -2,8 +2,9 @@ import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
-import { guidedSermonService, type ActivateGuidedSermonResult, type SubmitGuidedInsightResult, type SubmitGuidedWordStudiesResult } from '@dosfilos/application';
-import { assemblePassageProfile, type LiteraryGenre, type RawPassageProfile, type SocraticTurnResult, type AIChatSession, type AIChatMessage } from '@dosfilos/domain';
+import { guidedSermonService, ResolveCuratedMisreadingsUseCase, type ActivateGuidedSermonResult, type SubmitGuidedInsightResult, type SubmitGuidedWordStudiesResult } from '@dosfilos/application';
+import { assemblePassageProfile, mergeCuratedMisreadings, type LiteraryGenre, type RawPassageProfile, type SocraticTurnResult, type AIChatSession, type AIChatMessage } from '@dosfilos/domain';
+import { FirebaseVerifiedMisreadingRepository, RVR1960Repository } from '@dosfilos/infrastructure';
 
 export interface SubmitInsightArgs {
     sessionId: string;
@@ -36,6 +37,13 @@ import { useTranslation } from '@/i18n';
  * PR2/PR3 tras adjudicar precisión en sombra). Fire-and-forget para no demorar
  * la UX de activación.
  */
+// ADR-036 PR5 — resolver del piso curado (read-only repo + Biblia ES para la
+// re-verificación autoritativa del verso). Singletons a nivel módulo.
+const curatedMisreadingResolver = new ResolveCuratedMisreadingsUseCase(
+    new FirebaseVerifiedMisreadingRepository(),
+    new RVR1960Repository(),
+);
+
 async function runPassageProfileShadow(seed: ActivateGuidedSermonResult['seed'], passage: string): Promise<void> {
     try {
         const passageText = LocalBibleService.getVerses(passage, 'es');
@@ -54,9 +62,24 @@ async function runPassageProfileShadow(seed: ActivateGuidedSermonResult['seed'],
         const genres: LiteraryGenre[] = genre ? [genre] : [];
         const profile = assemblePassageProfile(raw, genres, new Date());
 
+        // ADR-036 PR5 — piso curado: re-verifica autoritativo (verso existe AHORA)
+        // + admite (yes + reviewed) + mergea con PRECEDENCIA sobre el runtime. Solo
+        // las entradas que pasan el gate fail-closed en el PUNTO DE USO llegan al
+        // perfil que confronta. Non-blocking: un fallo no rompe la activación, y el
+        // perfil runtime queda como estaba.
+        let merged = profile;
+        try {
+            const curated = await curatedMisreadingResolver.execute(passage);
+            if (curated.length > 0) merged = mergeCuratedMisreadings(profile, curated);
+        } catch (e) {
+            console.warn('[useGuidedSermon] curated misreadings merge failed (non-blocking)', e);
+        }
+
         // ADR-035 A: cristaliza el perfil en el seed (additivo, inerte). Lo lee
         // el enforce (passage_profile_enforce); bajo solo sombra queda como dato.
-        await guidedSermonService.crystallizePassageProfile(seed.id, profile);
+        // Cristaliza el MERGED (piso curado incluido); la sombra mide el detector
+        // crudo (`profile`) sin contaminar la precisión con el piso curado.
+        await guidedSermonService.crystallizePassageProfile(seed.id, merged);
 
         await httpsCallable(fns, 'recordPassageProfileShadow')({
             seedId: seed.id,
