@@ -7,6 +7,7 @@ export * from './use-cases/guided-sermon/SubmitGuidedInsightUseCase';
 export * from './use-cases/guided-sermon/SubmitGuidedWordStudiesUseCase';
 export * from './use-cases/guided-sermon/PauseGuidedSermonUseCase';
 export * from './use-cases/guided-sermon/ResumeGuidedSermonUseCase';
+export * from './use-cases/anchor-fidelity/verifyAnchorVerse'; // 🌱 Pastoral Fidelity ADR-036 PR2 — deterministic anchor verse existence
 export * from './services/AuthService';
 export * from './services/FacultyService';
 export * from './services/SeriesService';
