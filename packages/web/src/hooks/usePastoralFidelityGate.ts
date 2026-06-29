@@ -113,6 +113,24 @@ export function usePassageProfileEnforceGate(): { enabled: boolean; loading: boo
     };
 }
 
+/**
+ * ADR-036 PR6 enforce-gate: aplica el VERIFY-DROP de las lecturas erróneas del
+ * DETECTOR (descarta las que no anclan a un verso real) SOLO con los tres flags
+ * on: pastoral_fidelity_flow + passage_profile + anchor_fidelity_enforce.
+ * Separado del shadow a propósito — se enciende tras medir el corte 1 en sombra.
+ * Default off → mide la tasa de falla pero no descarta. El piso curado (PR5) es
+ * independiente de este flag (siempre verificado).
+ */
+export function useAnchorFidelityEnforceGate(): { enabled: boolean; loading: boolean } {
+    const parent = useFeatureFlag('pastoral_fidelity_flow');
+    const shadow = useFeatureFlag('passage_profile');
+    const enforce = useFeatureFlag('anchor_fidelity_enforce');
+    return {
+        enabled: parent.enabled && shadow.enabled && enforce.enabled,
+        loading: parent.loading || shadow.loading || enforce.loading,
+    };
+}
+
 export type PastoralFidelityGateReason =
     | 'loading'
     | 'flag-disabled'

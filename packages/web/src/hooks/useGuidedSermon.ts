@@ -2,8 +2,8 @@ import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
-import { guidedSermonService, ResolveCuratedMisreadingsUseCase, type ActivateGuidedSermonResult, type SubmitGuidedInsightResult, type SubmitGuidedWordStudiesResult } from '@dosfilos/application';
-import { assemblePassageProfile, mergeCuratedMisreadings, type LiteraryGenre, type RawPassageProfile, type SocraticTurnResult, type AIChatSession, type AIChatMessage } from '@dosfilos/domain';
+import { guidedSermonService, ResolveCuratedMisreadingsUseCase, verifyAnchorVerse, type ActivateGuidedSermonResult, type SubmitGuidedInsightResult, type SubmitGuidedWordStudiesResult } from '@dosfilos/application';
+import { assemblePassageProfile, mergeCuratedMisreadings, detectorMisreadingStats, dropUnverifiedDetectorMisreadings, type LiteraryGenre, type RawPassageProfile, type SocraticTurnResult, type AIChatSession, type AIChatMessage } from '@dosfilos/domain';
 import { FirebaseVerifiedMisreadingRepository, RVR1960Repository } from '@dosfilos/infrastructure';
 
 export interface SubmitInsightArgs {
@@ -26,7 +26,7 @@ export interface SubmitWordStudiesArgs {
     affirmationText: string;
 }
 import { useFirebase } from '@/context/firebase-context';
-import { usePassageProfileGate, usePassageProfileEnforceGate } from '@/hooks/usePastoralFidelityGate';
+import { usePassageProfileGate, usePassageProfileEnforceGate, useAnchorFidelityEnforceGate } from '@/hooks/usePastoralFidelityGate';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import { useTranslation } from '@/i18n';
 
@@ -37,14 +37,21 @@ import { useTranslation } from '@/i18n';
  * PR2/PR3 tras adjudicar precisión en sombra). Fire-and-forget para no demorar
  * la UX de activación.
  */
-// ADR-036 PR5 — resolver del piso curado (read-only repo + Biblia ES para la
-// re-verificación autoritativa del verso). Singletons a nivel módulo.
+// ADR-036 PR5/PR6 — Biblia ES (re-verificación autoritativa del verso) + resolver
+// del piso curado (read-only repo). Singletons a nivel módulo.
+const bibleRepoEs = new RVR1960Repository();
 const curatedMisreadingResolver = new ResolveCuratedMisreadingsUseCase(
     new FirebaseVerifiedMisreadingRepository(),
-    new RVR1960Repository(),
+    bibleRepoEs,
 );
+/** Predicado de existencia de verso (misma `verifyAnchorVerse`, determinista). */
+const verseExists = (reference: string): boolean => verifyAnchorVerse(reference, bibleRepoEs).exists;
 
-async function runPassageProfileShadow(seed: ActivateGuidedSermonResult['seed'], passage: string): Promise<void> {
+async function runPassageProfileShadow(
+    seed: ActivateGuidedSermonResult['seed'],
+    passage: string,
+    enforceAnchorFidelity: boolean,
+): Promise<void> {
     try {
         const passageText = LocalBibleService.getVerses(passage, 'es');
         if (!passageText) return; // pasaje no resoluble → se omite (no bloquea)
@@ -62,15 +69,24 @@ async function runPassageProfileShadow(seed: ActivateGuidedSermonResult['seed'],
         const genres: LiteraryGenre[] = genre ? [genre] : [];
         const profile = assemblePassageProfile(raw, genres, new Date());
 
+        // ADR-036 PR6 — corte 1 (sombra): mide cuántas misreadings del DETECTOR
+        // anclan a un verso real. Determinista (verifyAnchorVerse). Siempre se mide.
+        const detectorStats = detectorMisreadingStats(profile, verseExists);
+
+        // ADR-036 PR6 — VERIFY-DROP (enforce): bajo el flag, descarta las
+        // misreadings del detector sin verso real (anti-alucinación). El piso
+        // curado se mergea sobre el resultado (su garantía es independiente).
+        const base = enforceAnchorFidelity ? dropUnverifiedDetectorMisreadings(profile, verseExists) : profile;
+
         // ADR-036 PR5 — piso curado: re-verifica autoritativo (verso existe AHORA)
         // + admite (yes + reviewed) + mergea con PRECEDENCIA sobre el runtime. Solo
         // las entradas que pasan el gate fail-closed en el PUNTO DE USO llegan al
         // perfil que confronta. Non-blocking: un fallo no rompe la activación, y el
         // perfil runtime queda como estaba.
-        let merged = profile;
+        let merged = base;
         try {
             const curated = await curatedMisreadingResolver.execute(passage);
-            if (curated.length > 0) merged = mergeCuratedMisreadings(profile, curated);
+            if (curated.length > 0) merged = mergeCuratedMisreadings(base, curated);
         } catch (e) {
             console.warn('[useGuidedSermon] curated misreadings merge failed (non-blocking)', e);
         }
@@ -89,6 +105,12 @@ async function runPassageProfileShadow(seed: ActivateGuidedSermonResult['seed'],
             features: profile.features,
             movementCount: profile.movements.length,
             latencyMs,
+            // ADR-036 PR6 corte 1 — verificación de anclas del detector.
+            misreadingsTotal: detectorStats.misreadingsTotal,
+            misreadingsWithVerifiedAnchor: detectorStats.misreadingsWithVerifiedAnchor,
+            misreadingAnchorsTotal: detectorStats.anchorsTotal,
+            misreadingAnchorsVerified: detectorStats.anchorsVerified,
+            anchorFidelityEnforced: enforceAnchorFidelity,
         });
     } catch (err) {
         console.warn('[useGuidedSermon] passage profile shadow failed (non-blocking)', err);
@@ -127,6 +149,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
     const queryClient = useQueryClient();
     const passageProfileGate = usePassageProfileGate();
     const passageProfileEnforceGate = usePassageProfileEnforceGate();
+    const anchorFidelityEnforceGate = useAnchorFidelityEnforceGate();
     const [isProcessing, setIsProcessing] = useState(false);
 
     // The guided agent mutates the chat session server-side (welcome message,
@@ -168,7 +191,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                 // ADR-035 (modo sombra): perfila el pasaje fire-and-forget tras
                 // activar. Gated + non-blocking — nunca afecta la activación.
                 if (passageProfileGate.enabled) {
-                    void runPassageProfileShadow(result.seed, passage);
+                    void runPassageProfileShadow(result.seed, passage, anchorFidelityEnforceGate.enabled);
                 }
                 refreshSession();
                 return result;
@@ -185,7 +208,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                 setIsProcessing(false);
             }
         },
-        [user?.uid, t, refreshSession, queryClient, passageProfileGate.enabled],
+        [user?.uid, t, refreshSession, queryClient, passageProfileGate.enabled, anchorFidelityEnforceGate.enabled],
     );
 
     const runTurn = useCallback(
