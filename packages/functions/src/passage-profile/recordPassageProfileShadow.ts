@@ -107,6 +107,12 @@ export const recordPassageProfileShadow = onCall(
                 textualCruxCount,
                 isGap,
                 latencyMs,
+                // ADR-036 PR6 corte 1 — verificación de anclas del detector (verso real).
+                misreadingsTotal: Math.max(0, Math.round(Number(data.misreadingsTotal ?? 0)) || 0),
+                misreadingsWithVerifiedAnchor: Math.max(0, Math.round(Number(data.misreadingsWithVerifiedAnchor ?? 0)) || 0),
+                misreadingAnchorsTotal: Math.max(0, Math.round(Number(data.misreadingAnchorsTotal ?? 0)) || 0),
+                misreadingAnchorsVerified: Math.max(0, Math.round(Number(data.misreadingAnchorsVerified ?? 0)) || 0),
+                anchorFidelityEnforced: data.anchorFidelityEnforced === true,
                 createdAt: FieldValue.serverTimestamp(),
                 expiresAt,
             });

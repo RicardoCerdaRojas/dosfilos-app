@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, RefreshCw, ShieldCheck, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import type { VerifiedMisreadingRecord } from '@dosfilos/domain';
+import { parsePassageReference, type VerifiedMisreadingRecord } from '@dosfilos/domain';
 import {
     useVerifiedMisreadings,
     useReviewVerifiedMisreading,
@@ -176,26 +176,30 @@ function IngestForm({ onIngested }: { onIngested: () => void }) {
     const { ingest, busy } = useIngestVerifiedMisreading();
     const [claim, setClaim] = useState('');
     const [whyWrong, setWhyWrong] = useState('');
-    const [bookId, setBookId] = useState('');
-    const [chapter, setChapter] = useState('');
-    const [vStart, setVStart] = useState('');
-    const [vEnd, setVEnd] = useState('');
+    const [passageRef, setPassageRef] = useState('');
     const [severity, setSeverity] = useState<'critical' | 'standard'>('critical');
     const [anchorRef, setAnchorRef] = useState('');
     const [anchorSourceId, setAnchorSourceId] = useState('');
 
     const submit = async () => {
-        if (!claim.trim() || !bookId.trim() || !anchorRef.trim()) {
-            toast.error('Claim, libro y al menos un ancla son obligatorios');
+        if (!claim.trim() || !passageRef.trim() || !anchorRef.trim()) {
+            toast.error('Claim, pasaje y al menos un ancla son obligatorios');
+            return;
+        }
+        // Parsea el pasaje con el MISMO parser que el merge (PR5) → el bookId
+        // canónico coincide por construcción (evita mismatch silencioso).
+        const parsed = parsePassageReference(passageRef.trim());
+        if (!parsed.ok) {
+            toast.error(`Pasaje no reconocido: ${parsed.hint || passageRef}`);
             return;
         }
         try {
             await ingest({
                 passageScope: {
-                    bookId: bookId.trim(),
-                    chapterStart: Number(chapter) || 0,
-                    verseStart: Number(vStart) || 0,
-                    verseEnd: Number(vEnd) || 0,
+                    bookId: parsed.ref.bookId,
+                    chapterStart: parsed.ref.chapterStart,
+                    verseStart: parsed.ref.verseStart ?? 0,
+                    verseEnd: parsed.ref.verseEnd ?? parsed.ref.verseStart ?? 0,
                 },
                 claim: claim.trim(),
                 whyWrong: whyWrong.trim(),
@@ -205,7 +209,7 @@ function IngestForm({ onIngested }: { onIngested: () => void }) {
                 ],
             });
             toast.success('Entrada creada (pendiente de revisión)');
-            setClaim(''); setWhyWrong(''); setAnchorRef(''); setAnchorSourceId('');
+            setClaim(''); setWhyWrong(''); setPassageRef(''); setAnchorRef(''); setAnchorSourceId('');
             onIngested();
         } catch (e) {
             toast.error(e instanceof Error ? e.message : 'Falló la ingesta');
@@ -217,12 +221,11 @@ function IngestForm({ onIngested }: { onIngested: () => void }) {
             <h2 className="text-lg font-semibold">Curar entrada nueva</h2>
             <Textarea placeholder="Lectura errónea (claim)" value={claim} onChange={(e) => setClaim(e.target.value)} />
             <Textarea placeholder="Por qué es errónea" value={whyWrong} onChange={(e) => setWhyWrong(e.target.value)} />
-            <div className="grid grid-cols-4 gap-2">
-                <Input placeholder="bookId" value={bookId} onChange={(e) => setBookId(e.target.value)} />
-                <Input placeholder="cap." value={chapter} onChange={(e) => setChapter(e.target.value)} />
-                <Input placeholder="v. inicio" value={vStart} onChange={(e) => setVStart(e.target.value)} />
-                <Input placeholder="v. fin" value={vEnd} onChange={(e) => setVEnd(e.target.value)} />
-            </div>
+            <Input
+                placeholder="Pasaje donde dispara (ej. 2 Pedro 2:20-22)"
+                value={passageRef}
+                onChange={(e) => setPassageRef(e.target.value)}
+            />
             <div className="grid grid-cols-2 gap-2">
                 <Input placeholder="Ancla (ej. Juan 10:28-29)" value={anchorRef} onChange={(e) => setAnchorRef(e.target.value)} />
                 <Input placeholder="sourceId del chunk (opcional)" value={anchorSourceId} onChange={(e) => setAnchorSourceId(e.target.value)} />
