@@ -173,6 +173,9 @@ export { adjudicateAnchorRefutes } from './anchor-fidelity/adjudicateAnchorRefut
 // 🧭 ADR-036 PR4 — store + ingest + review role-gated del set crítico curado
 export { ingestVerifiedMisreading } from './anchor-fidelity/ingestVerifiedMisreading';
 export { reviewVerifiedMisreading } from './anchor-fidelity/reviewVerifiedMisreading';
+// 🧭 ADR-036 — editar/borrar entradas del set crítico (re-curar; editar resetea a pending)
+export { updateVerifiedMisreading } from './anchor-fidelity/updateVerifiedMisreading';
+export { deleteVerifiedMisreading } from './anchor-fidelity/deleteVerifiedMisreading';
 
 
 

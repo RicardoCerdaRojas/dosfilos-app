@@ -57,6 +57,22 @@ export class AdminVerifiedMisreadingService {
         const { data } = await fn(args);
         return data;
     }
+
+    /** Re-curar una entrada. Resetea a pending (debe re-verificarse + aprobarse). */
+    async update(args: IngestVerifiedMisreadingArgs & { id: string }): Promise<{ id: string }> {
+        const fn = httpsCallable<IngestVerifiedMisreadingArgs & { id: string }, { id: string }>(
+            getFunctions(),
+            'updateVerifiedMisreading',
+        );
+        const { data } = await fn(args);
+        return data;
+    }
+
+    async remove(id: string): Promise<{ id: string }> {
+        const fn = httpsCallable<{ id: string }, { id: string }>(getFunctions(), 'deleteVerifiedMisreading');
+        const { data } = await fn({ id });
+        return data;
+    }
 }
 
 export const adminVerifiedMisreadingService = new AdminVerifiedMisreadingService();
