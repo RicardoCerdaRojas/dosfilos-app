@@ -25,7 +25,9 @@ export type AdminAuditAction =
     | 'core_library.update_doctrine_level'
     | 'cross_references.ingest'
     | 'anchor_fidelity.ingest_misreading'
-    | 'anchor_fidelity.review_misreading';
+    | 'anchor_fidelity.review_misreading'
+    | 'anchor_fidelity.update_misreading'
+    | 'anchor_fidelity.delete_misreading';
 
 interface WriteAuditLogParams {
     /** Firebase UID of the admin who triggered the action. */

@@ -60,5 +60,26 @@ export function useIngestVerifiedMisreading() {
             setBusy(false);
         }
     }, []);
-    return { ingest, busy };
+    const update = useCallback(async (args: IngestVerifiedMisreadingArgs & { id: string }): Promise<{ id: string }> => {
+        setBusy(true);
+        try {
+            return await adminVerifiedMisreadingService.update(args);
+        } finally {
+            setBusy(false);
+        }
+    }, []);
+    return { ingest, update, busy };
+}
+
+export function useDeleteVerifiedMisreading() {
+    const [busy, setBusy] = useState(false);
+    const remove = useCallback(async (id: string): Promise<{ id: string }> => {
+        setBusy(true);
+        try {
+            return await adminVerifiedMisreadingService.remove(id);
+        } finally {
+            setBusy(false);
+        }
+    }, []);
+    return { remove, busy };
 }
