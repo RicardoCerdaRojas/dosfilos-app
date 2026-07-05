@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Loader2, RefreshCw, ShieldCheck, AlertTriangle, CheckCircle2, Pencil, Trash2, X } from 'lucide-react';
 import { parsePassageReference, type VerifiedMisreadingRecord } from '@dosfilos/domain';
 import {
@@ -132,6 +133,7 @@ function EntryCard({
 }) {
     const { review, busy } = useReviewVerifiedMisreading();
     const { remove, busy: deleting } = useDeleteVerifiedMisreading();
+    const [confirmOpen, setConfirmOpen] = useState(false);
 
     const runReview = async (approve: boolean) => {
         try {
@@ -147,7 +149,6 @@ function EntryCard({
     };
 
     const runDelete = async () => {
-        if (!window.confirm(`¿Borrar la entrada "${item.claim}"?`)) return;
         try {
             await remove(item.id);
             toast.success('Entrada borrada');
@@ -202,10 +203,19 @@ function EntryCard({
                 <Button size="sm" variant="ghost" onClick={() => onEdit(item)}>
                     <Pencil className="h-3 w-3 mr-1.5" /> Editar
                 </Button>
-                <Button size="sm" variant="ghost" disabled={deleting} onClick={() => void runDelete()}>
+                <Button size="sm" variant="ghost" disabled={deleting} onClick={() => setConfirmOpen(true)}>
                     {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
                 </Button>
             </div>
+            <ConfirmDialog
+                open={confirmOpen}
+                onOpenChange={setConfirmOpen}
+                title="Borrar entrada"
+                body={`¿Borrar la entrada "${item.claim}"? Esta acción no se puede deshacer.`}
+                confirmLabel="Borrar"
+                cancelLabel="Cancelar"
+                onConfirm={() => void runDelete()}
+            />
         </Card>
     );
 }
