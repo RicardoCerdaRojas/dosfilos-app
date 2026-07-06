@@ -64,3 +64,42 @@ export function verifyDraftCitations(draft: SermonContent): DraftCitationCheck {
         hasManifest: (draft.citationManifest?.entries?.length ?? 0) > 0,
     };
 }
+
+export interface SanitizeUntilCleanResult {
+    content: SermonContent;
+    /** Cuántas citas fabricadas se eliminaron (inicial − final). */
+    removed: number;
+    /** True si tras `maxRounds` aún quedaban not-found (el gate de publicación las caza). */
+    residual: boolean;
+}
+
+/**
+ * Verifica → sanitiza → RE-VERIFICA en loop hasta que no queden citas fabricadas
+ * o se agoten las rondas. Converge a 0 (no a "casi"): reescribir un párrafo puede
+ * dejar un residuo o rozar otra cita, así que se re-chequea. `sanitize` se inyecta
+ * (la impl real llama la callable Sonnet) → esta función es testeable con un fake.
+ *
+ * Best-effort en el llamador: si `sanitize` falla, el gate de publicación queda
+ * como red final. Nunca deja el borrador peor que como llegó.
+ */
+export async function sanitizeDraftUntilClean(
+    content: SermonContent,
+    sanitize: (draft: SermonContent, notFound: DraftCitationCheck['notFound']) => Promise<SermonContent>,
+    maxRounds = 2,
+): Promise<SanitizeUntilCleanResult> {
+    const initial = verifyDraftCitations(content).notFound.length;
+    let current = content;
+
+    for (let round = 0; round < maxRounds; round++) {
+        const check = verifyDraftCitations(current);
+        if (check.notFound.length === 0) break;
+        current = await sanitize(current, check.notFound);
+    }
+    const finalNotFound = verifyDraftCitations(current).notFound.length;
+
+    return {
+        content: current,
+        removed: Math.max(0, initial - finalNotFound),
+        residual: finalNotFound > 0,
+    };
+}

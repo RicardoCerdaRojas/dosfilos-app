@@ -15,8 +15,6 @@ import {
     exegesisService,
     facultyService,
     pastoralSeedService,
-    verifyDraftCitations,
-    sermonCitationSanitizerService,
     type VerifySermonCitationsOutput,
 } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
@@ -180,33 +178,18 @@ export function StepDraft() {
             }
 
             // Fidelidad de citas EN LA REDACCIÓN (opción B) — verifica el borrador
-            // FRESCO contra su propio manifiesto ANTES de mostrarlo, y SANITIZA las
-            // citas sin respaldo (quita la atribución fabricada, conserva la idea).
-            // Mueve el catch de "al publicar" a "al generar". El gate de publicación
-            // permanece como red final. Fail-safe: si el sanitizado falla, muestra el
-            // borrador original + avisa (nunca peor que hoy).
-            let finalDraft = result;
-            const citationCheck = verifyDraftCitations(result);
-            if (citationCheck.notFound.length > 0) {
-                const authors = Array.from(
-                    new Set(citationCheck.notFound.map((c) => c.citation.author).filter(Boolean)),
-                ).join('; ');
-                try {
-                    finalDraft = await sermonCitationSanitizerService.sanitize(result, citationCheck.notFound);
-                    toast.warning(
-                        `Quitamos ${citationCheck.notFound.length} cita(s) sin respaldo en tus fuentes (probablemente inventadas): ${authors}. Revisa el borrador.`,
-                        { duration: 9000 },
-                    );
-                } catch (sanitizeErr) {
-                    console.error('[StepDraft] citation sanitize failed', sanitizeErr);
-                    toast.warning(
-                        `El borrador incluye ${citationCheck.notFound.length} cita(s) sin respaldo (${authors}). Revísalas o re-genera antes de publicar.`,
-                        { duration: 9000 },
-                    );
-                }
+            // Fidelidad de citas (opción B, v2): la limpieza corre en el SERVICIO de
+            // generación (punto único, alineado con el gate de publicación). Aquí
+            // solo avisamos cuántas citas sin respaldo se quitaron.
+            const san = result.citationSanitization;
+            if (san && san.removed > 0) {
+                toast.warning(
+                    `Quitamos ${san.removed} cita(s) sin respaldo en tus fuentes (probablemente inventadas). Revisa el borrador.`,
+                    { duration: 9000 },
+                );
             }
 
-            setDraft(finalDraft);
+            setDraft(result);
             toast.success(t('drafting.success.generated'));
         } catch (error: any) {
             console.error(error);

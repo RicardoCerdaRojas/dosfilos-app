@@ -4,6 +4,8 @@ import { GeminiSermonGenerator, DocumentProcessingService } from '@dosfilos/infr
 
 import { PhaseConfiguration } from '@dosfilos/domain';
 import { FirebaseStorageService } from '@dosfilos/infrastructure';
+import { sanitizeDraftUntilClean } from '../use-cases/exegesis/verifyDraftCitations';
+import { sermonCitationSanitizerService } from './SermonCitationSanitizerService';
 
 // Extended config that includes library document IDs and File Search Store
 export interface ExtendedPhaseConfiguration extends PhaseConfiguration {
@@ -291,15 +293,44 @@ export class SermonGeneratorService {
             // marker the model leaked (e.g. `[cite: S3]`) so the pulpit prose
             // stays clean. Bibliography + attribution come from the manifest,
             // not from prose markers, so they are unaffected.
-            return {
-                draft: {
-                    ...stripSermonCitationMarkers(validated.content),
-                    citationValidation: validated.stats,
-                },
+            const base: SermonContent = {
+                ...stripSermonCitationMarkers(validated.content),
+                citationValidation: validated.stats,
             };
+            return { draft: await this.sanitizeFabricatedCitations(base) };
         }
 
         return { draft: stripSermonCitationMarkers(rawDraft) };
+    }
+
+    /**
+     * Fidelidad de citas en la redacción (opción B, v2) — punto ÚNICO de limpieza.
+     *
+     * Verifica → sanitiza → RE-VERIFICA el borrador contra el manifiesto (el MISMO
+     * corpus que el gate de publicación usa para sermones de estudio) hasta que no
+     * queden citas atribuidas sin respaldo, o se agoten las rondas. Corre para TODA
+     * generación que pase por acá (wizard/faculty/paper) → un solo lugar, alineado
+     * con el gate, no un detector cliente que discrepe.
+     *
+     * Best-effort: si el sanitizado falla, devuelve el borrador tal cual (el gate de
+     * publicación queda como red final). Nunca deja el borrador peor.
+     */
+    private async sanitizeFabricatedCitations(draft: SermonContent): Promise<SermonContent> {
+        try {
+            const res = await sanitizeDraftUntilClean(draft, (d, nf) =>
+                sermonCitationSanitizerService.sanitize(d, nf),
+            );
+            if (res.removed > 0 || res.residual) {
+                console.warn('[generateSermonDraft] citation sanitize', {
+                    removed: res.removed,
+                    residual: res.residual,
+                });
+            }
+            return { ...res.content, citationSanitization: { removed: res.removed, residual: res.residual } };
+        } catch (err) {
+            console.error('[generateSermonDraft] citation sanitize failed (non-blocking)', err);
+            return draft;
+        }
     }
 
     /**
