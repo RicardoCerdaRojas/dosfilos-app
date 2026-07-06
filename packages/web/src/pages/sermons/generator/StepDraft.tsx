@@ -15,6 +15,7 @@ import {
     exegesisService,
     facultyService,
     pastoralSeedService,
+    verifyDraftCitations,
     type VerifySermonCitationsOutput,
 } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
@@ -174,6 +175,22 @@ export function StepDraft() {
                 toast.warning(
                     `El borrador no cita ${missingParallels.length === 1 ? 'el paralelo' : 'los paralelos'} que marcaste: ${missingParallels.join('; ')}. Revisa o re-genera.`,
                     { duration: 8000 },
+                );
+            }
+
+            // Fidelidad de citas EN LA REDACCIÓN (opción B) — corre el verificador
+            // determinista sobre el borrador FRESCO contra su propio manifiesto,
+            // ANTES de que el pastor lo trabaje. Mueve el catch de "al publicar" a
+            // "al generar". Warning, no auto-regen (P2). El sanitizado quirúrgico es
+            // el paso siguiente; el gate de publicación permanece como red final.
+            const citationCheck = verifyDraftCitations(result);
+            if (citationCheck.notFound.length > 0) {
+                const authors = Array.from(
+                    new Set(citationCheck.notFound.map((c) => c.citation.author).filter(Boolean)),
+                ).join('; ');
+                toast.warning(
+                    `El borrador incluye ${citationCheck.notFound.length} cita(s) sin respaldo en tus fuentes (probablemente inventadas): ${authors}. Revisa o re-genera antes de publicar.`,
+                    { duration: 9000 },
                 );
             }
 

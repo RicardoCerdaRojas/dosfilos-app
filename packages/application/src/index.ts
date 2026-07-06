@@ -11,6 +11,7 @@ export * from './use-cases/anchor-fidelity/verifyAnchorVerse'; // 🌱 Pastoral 
 export * from './use-cases/anchor-fidelity/ReviewVerifiedMisreadingUseCase'; // 🌱 ADR-036 PR4 — review orchestration
 export * from './services/AdminVerifiedMisreadingService'; // 🌱 ADR-036 PR4 — ingest/review callable facade
 export * from './use-cases/anchor-fidelity/ResolveCuratedMisreadingsUseCase'; // 🌱 ADR-036 PR5 — curated floor resolution (authoritative re-verify)
+export * from './use-cases/exegesis/verifyDraftCitations'; // 🌱 Sermon draft citation fidelity (opción B) — in-draft verify
 export * from './services/AuthService';
 export * from './services/FacultyService';
 export * from './services/SeriesService';
