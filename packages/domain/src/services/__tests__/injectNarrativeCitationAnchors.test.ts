@@ -14,26 +14,33 @@ function content(over: Partial<SermonContent>): SermonContent {
 const manifest: CitationManifest = {
     version: '1',
     entries: [
-        { sourceId: 'S1', resourceId: 'r1', chunkId: 'c1', title: 'Comentario 1 y 2 de Pedro y Judas', author: 'Simon J. Kistemaker', page: '88', excerpt: '…' },
-        { sourceId: 'S2', resourceId: 'r2', chunkId: 'c2', title: 'Subukjian - Volvamos a la predicación Bíblica', author: 'Donald R. Subukjian', page: '102', excerpt: '…' },
+        { sourceId: 'S1', resourceId: 'r1', chunkId: 'c1', title: 'Comentario 1 y 2 de Pedro y Judas', author: 'Simon J. Kistemaker', page: '88', excerpt: 'Pedro insta a recordar las verdades ya recibidas.' },
+        { sourceId: 'S2', resourceId: 'r2', chunkId: 'c2', title: 'Subukjian - Volvamos a la predicación Bíblica', author: 'Donald R. Subukjian', page: '102', excerpt: 'El predicador debe entregar el mensaje con fidelidad al texto.' },
     ],
 };
 
 describe('injectNarrativeCitationAnchors (ADR-031)', () => {
-    it('injects [Sn] after the sentence that names the author (matches real LLM behaviour)', () => {
+    it('(b) quita la atribución de Gemini + agrega el excerpt real como blockquote', () => {
         const out = injectNarrativeCitationAnchors(
             content({ body: [{ point: 'I', content: 'Como señala Simon J. Kistemaker, la profecía no es privada. Sigamos.', scriptureReferences: [] }] }),
             manifest,
         );
-        expect(out.body[0].content).toContain('privada [S1].');
+        const c = out.body[0].content;
+        expect(c).not.toContain('Como señala'); // atribución de Gemini removida
+        expect(c).toContain('La profecía no es privada.'); // claim queda como punto del pastor (capitalizado)
+        expect(c).toContain('> «Pedro insta a recordar las verdades ya recibidas.»'); // excerpt REAL como blockquote
+        expect(c).toContain('[S1]');
     });
 
-    it('matches the author surname even when only the surname appears in prose', () => {
+    it('(b) strip por apellido cuando solo aparece el apellido en la prosa', () => {
         const out = injectNarrativeCitationAnchors(
             content({ introduction: 'Como nos recuerda Subukjian, el predicador entrega el mensaje.' }),
             manifest,
         );
-        expect(out.introduction).toContain('mensaje [S2].');
+        expect(out.introduction).not.toContain('Como nos recuerda');
+        expect(out.introduction).toContain('El predicador entrega el mensaje.');
+        expect(out.introduction).toContain('> «El predicador debe entregar el mensaje con fidelidad al texto.»');
+        expect(out.introduction).toContain('[S2]');
     });
 
     it('does not double-anchor a sentence that already has a marker', () => {
@@ -96,8 +103,11 @@ describe('injectNarrativeCitationAnchors (ADR-031)', () => {
             }),
             manifest,
         );
-        expect(out.introduction).toContain('[S1].');
-        expect(out.body[0].content).toContain('[S2].');
-        expect(out.conclusion).toBe('Algo sin fuente.');
+        // Cada superficie con fuente nombrada gana su blockquote del excerpt real.
+        expect(out.introduction).toContain('> «Pedro insta a recordar');
+        expect(out.introduction).toContain('[S1]');
+        expect(out.body[0].content).toContain('> «El predicador debe entregar');
+        expect(out.body[0].content).toContain('[S2]');
+        expect(out.conclusion).toBe('Algo sin fuente.'); // sin fuente → intacto
     });
 });
