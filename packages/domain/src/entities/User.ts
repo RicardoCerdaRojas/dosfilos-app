@@ -226,6 +226,13 @@ export const FEATURE_FLAG_NAMES = [
      * off → el perfil cristaliza/registra pero no confronta ni nudgea.
      */
     'passage_profile_enforce',
+    /**
+     * Redacción v2 — sombra del draft. Mide (non-blocking) tasa de authorityQuote
+     * fabricada, cita-verso-equivocado (proxy) y — con el juez — FCF/principio/
+     * cumplimiento del enfoque. NO gatea nada; instrumentación prerrequisito de todo
+     * validador. Requiere `pastoral_fidelity_flow`.
+     */
+    'sermon_draft_shadow',
 ] as const;
 
 export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];
@@ -256,6 +263,7 @@ export const FEATURE_FLAG_PREREQUISITES: Record<FeatureFlagName, readonly Featur
     // Enforce cuelga del flag de sombra: no se puede enforce sin perfilar antes
     // (baranda anti-fail-open horneada en la topología).
     passage_profile_enforce: ['passage_profile'],
+    sermon_draft_shadow: ['pastoral_fidelity_flow'],
 };
 
 /**

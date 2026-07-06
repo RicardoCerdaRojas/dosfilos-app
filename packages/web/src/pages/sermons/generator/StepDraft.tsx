@@ -15,8 +15,11 @@ import {
     exegesisService,
     facultyService,
     pastoralSeedService,
+    computeDeterministicDraftSignals,
+    sermonDraftShadowService,
     type VerifySermonCitationsOutput,
 } from '@dosfilos/application';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
 import { ContentCanvas } from '@/components/canvas-chat/ContentCanvas';
@@ -60,6 +63,7 @@ export function StepDraft() {
     const navigate = useNavigate();
     const { user } = useFirebase();
     const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, sermonId, derivedContext, reset, saving } = useWizard();
+    const draftShadowGate = useFeatureFlag('sermon_draft_shadow');
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
     // Pre-publish citation verification state (PR #218).
@@ -191,6 +195,25 @@ export function StepDraft() {
 
             setDraft(result);
             toast.success(t('drafting.success.generated'));
+
+            // Redacción v2 — sombra del draft (colector DETERMINISTA), gated +
+            // fire-and-forget. Aislado del juez LLM (otro colector). NON-BLOCKING:
+            // cualquier fallo se traga, nunca afecta la generación.
+            if (draftShadowGate.enabled && sermonId) {
+                try {
+                    const signals = computeDeterministicDraftSignals(result, result.citationManifest);
+                    void sermonDraftShadowService.record({
+                        sermonId,
+                        passage,
+                        approachType: homiletics?.homileticalApproach ?? '',
+                        principlePresent: Boolean(rulesWithContext.pastoralSeed?.timelessPrinciple?.trim()),
+                        collector: 'deterministic',
+                        signals,
+                    });
+                } catch (shadowErr) {
+                    console.warn('[StepDraft] draft shadow (deterministic) failed — non-blocking', shadowErr);
+                }
+            }
         } catch (error: any) {
             console.error(error);
             toast.error(error.message || t('drafting.errors.generating'));
