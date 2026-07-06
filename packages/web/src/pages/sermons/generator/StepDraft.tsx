@@ -16,6 +16,7 @@ import {
     facultyService,
     pastoralSeedService,
     verifyDraftCitations,
+    sermonCitationSanitizerService,
     type VerifySermonCitationsOutput,
 } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
@@ -178,23 +179,34 @@ export function StepDraft() {
                 );
             }
 
-            // Fidelidad de citas EN LA REDACCIÓN (opción B) — corre el verificador
-            // determinista sobre el borrador FRESCO contra su propio manifiesto,
-            // ANTES de que el pastor lo trabaje. Mueve el catch de "al publicar" a
-            // "al generar". Warning, no auto-regen (P2). El sanitizado quirúrgico es
-            // el paso siguiente; el gate de publicación permanece como red final.
+            // Fidelidad de citas EN LA REDACCIÓN (opción B) — verifica el borrador
+            // FRESCO contra su propio manifiesto ANTES de mostrarlo, y SANITIZA las
+            // citas sin respaldo (quita la atribución fabricada, conserva la idea).
+            // Mueve el catch de "al publicar" a "al generar". El gate de publicación
+            // permanece como red final. Fail-safe: si el sanitizado falla, muestra el
+            // borrador original + avisa (nunca peor que hoy).
+            let finalDraft = result;
             const citationCheck = verifyDraftCitations(result);
             if (citationCheck.notFound.length > 0) {
                 const authors = Array.from(
                     new Set(citationCheck.notFound.map((c) => c.citation.author).filter(Boolean)),
                 ).join('; ');
-                toast.warning(
-                    `El borrador incluye ${citationCheck.notFound.length} cita(s) sin respaldo en tus fuentes (probablemente inventadas): ${authors}. Revisa o re-genera antes de publicar.`,
-                    { duration: 9000 },
-                );
+                try {
+                    finalDraft = await sermonCitationSanitizerService.sanitize(result, citationCheck.notFound);
+                    toast.warning(
+                        `Quitamos ${citationCheck.notFound.length} cita(s) sin respaldo en tus fuentes (probablemente inventadas): ${authors}. Revisa el borrador.`,
+                        { duration: 9000 },
+                    );
+                } catch (sanitizeErr) {
+                    console.error('[StepDraft] citation sanitize failed', sanitizeErr);
+                    toast.warning(
+                        `El borrador incluye ${citationCheck.notFound.length} cita(s) sin respaldo (${authors}). Revísalas o re-genera antes de publicar.`,
+                        { duration: 9000 },
+                    );
+                }
             }
 
-            setDraft(result);
+            setDraft(finalDraft);
             toast.success(t('drafting.success.generated'));
         } catch (error: any) {
             console.error(error);
