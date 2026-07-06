@@ -81,6 +81,38 @@ function cleanExcerpt(raw?: string): string {
     return `${startsMid ? '…' : ''}${t}${endsClean ? '' : '…'}`;
 }
 
+/** Blockquote con el excerpt REAL del RAG + atribución + marcador. `null` si sin excerpt. */
+function buildExcerptBlockquote(e: CitationManifest['entries'][number]): string | null {
+    const excerpt = cleanExcerpt(e.excerpt);
+    if (!excerpt) return null;
+    const displayTitle = (e.title ?? '').split(/\s[-–—]\s/).slice(-1)[0] || e.title || '';
+    const author = e.author?.trim();
+    const attribLine = author
+        ? `— ${author}${displayTitle ? `, ${displayTitle}` : ''} [${e.sourceId}]`
+        : `— «${displayTitle}» [${e.sourceId}]`;
+    return `> «${excerpt}»\n>\n> ${attribLine}`;
+}
+
+/**
+ * (b) Quita el lead-in de atribución que Gemini teje ("Como señala {autor}, ",
+ * "Según {autor}, ", "Tal como lo expone {autor} en «título», ") del texto — así
+ * el claim deja de estar atribuido a un autor SIN respaldo (era paráfrasis de
+ * Gemini, no el texto real). El claim queda como punto del pastor; la cita real
+ * va aparte como blockquote. Permite puntos de abreviatura ("J.") en el lead-in.
+ * Si no hay un lead-in limpio, devuelve el texto igual (no toca la prosa).
+ */
+function stripAttributionLead(text: string, name: string): string {
+    const re = new RegExp(
+        `(^|[.!?]\\s+)((?:Como|Seg[úu]n|Tal como)\\b[^,]*?\\b${escapeRegex(name)}\\b[^,]*?,\\s*)`,
+        'i',
+    );
+    const m = re.exec(text);
+    if (!m) return text;
+    const head = text.slice(0, m.index) + (m[1] ?? '');
+    const after = text.slice(m.index + m[0].length).replace(/^([\p{Ll}])/u, (c) => c.toUpperCase());
+    return `${head}${after}`;
+}
+
 export function injectNarrativeCitationAnchors(
     content: SermonContent,
     manifest: CitationManifest | undefined,
@@ -88,28 +120,32 @@ export function injectNarrativeCitationAnchors(
     if (!manifest || manifest.entries.length === 0) return content;
 
     const sources = manifest.entries.map((e) => ({
+        entry: e,
         sourceId: e.sourceId,
         names: candidateNames(e.author, e.title),
     }));
 
+    // (b) Cuando la prosa NOMBRA un autor real: quita la atribución de Gemini
+    // (paráfrasis sin respaldo) y agrega el excerpt REAL como blockquote al final
+    // del texto. Si no hay lead-in limpio para quitar, deja la frase y solo agrega
+    // el blockquote (degradación segura).
     const anchorSurface = (text: string | undefined): string | undefined => {
         if (!text) return text;
         let out = text;
+        const blockquotes: string[] = [];
         for (const src of sources) {
             for (const name of src.names) {
-                // A sentence (between sentence boundaries) that names the source.
-                const re = new RegExp(`[^.!?\\n]*\\b${escapeRegex(name)}\\b[^.!?\\n]*[.!?]`, 'i');
-                const m = re.exec(out);
-                if (!m) continue;
-                const sentence = m[0];
-                // Already anchored anywhere in this sentence? leave it.
-                if (/\[\s*S?\d/.test(sentence)) break;
-                const injected = sentence.replace(/\s*([.!?])\s*$/, ` [${src.sourceId}]$1`);
-                out = out.slice(0, m.index) + injected + out.slice(m.index + sentence.length);
-                break; // one anchor per source per surface
+                const nm = new RegExp(`\\b${escapeRegex(name)}\\b`, 'i').exec(out);
+                if (!nm) continue;
+                // ¿Ya anclado cerca de esta mención? (marcador propio de Gemini) → no dobles.
+                if (/\[\s*S?\d/.test(out.slice(nm.index, nm.index + name.length + 40))) break;
+                out = stripAttributionLead(out, name);
+                const bq = buildExcerptBlockquote(src.entry);
+                if (bq) blockquotes.push(bq);
+                break; // one per source per surface
             }
         }
-        return out;
+        return blockquotes.length ? `${out}\n\n${blockquotes.join('\n\n')}` : out;
     };
 
     // Per-point guarantee (ADR-031): every BODY point should carry ≥1 citation
@@ -134,15 +170,8 @@ export function injectNarrativeCitationAnchors(
         // predicar — NO un name-drop hueco ("Como lo expone X [n]") con el texto
         // escondido en el popover. Es el texto del chunk (dato real), nada
         // fabricado; el `[Sn]` sigue abriendo el popover (fuente + página).
-        const e = best.entry;
-        const excerpt = cleanExcerpt(e.excerpt);
-        if (!excerpt) return pointContent; // sin texto real que citar → no inventamos
-        const displayTitle = (e.title ?? '').split(/\s[-–—]\s/).slice(-1)[0] || e.title || '';
-        const author = e.author?.trim();
-        const attribLine = author
-            ? `— ${author}${displayTitle ? `, ${displayTitle}` : ''} [${e.sourceId}]`
-            : `— «${displayTitle}» [${e.sourceId}]`;
-        const blockquote = `> «${excerpt}»\n>\n> ${attribLine}`;
+        const blockquote = buildExcerptBlockquote(best.entry);
+        if (!blockquote) return pointContent; // sin texto real que citar → no inventamos
         const sep = /\n$/.test(pointContent) ? '' : '\n\n';
         return `${pointContent}${sep}${blockquote}`;
     };
