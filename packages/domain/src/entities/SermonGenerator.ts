@@ -341,6 +341,13 @@ export interface SermonContent {
      * suggest prompt regression or a model change worth investigating.
      */
     citationValidation?: CitationValidationStats;
+    /**
+     * Fidelidad de citas en la redacción (opción B): resultado del sanitizado de
+     * citas atribuidas SIN respaldo en las fuentes. `removed` = cuántas se quitaron
+     * (conservando la idea); `residual` = si algo no se pudo limpiar en las rondas
+     * (el gate de publicación lo caza). Lo pobla `SermonGeneratorService`.
+     */
+    citationSanitization?: { removed: number; residual: boolean };
 }
 
 /**
