@@ -68,6 +68,19 @@ function overlapScore(pointWords: Set<string>, source: { excerpt?: string; title
 
 const MIN_POINT_OVERLAP = 2; // shared significant words to call a point "supported"
 
+/**
+ * Limpia el excerpt para citarlo: colapsa espacios, y marca continuidad con «…»
+ * cuando es un fragmento (arranca en minúscula / no termina en puntuación) —
+ * porque el excerpt es un recorte del chunk, no una frase completa.
+ */
+function cleanExcerpt(raw?: string): string {
+    const t = (raw ?? '').replace(/\s+/g, ' ').trim();
+    if (!t) return '';
+    const startsMid = /^[\p{Ll}]/u.test(t);
+    const endsClean = /[.!?…]$/.test(t);
+    return `${startsMid ? '…' : ''}${t}${endsClean ? '' : '…'}`;
+}
+
 export function injectNarrativeCitationAnchors(
     content: SermonContent,
     manifest: CitationManifest | undefined,
@@ -116,20 +129,22 @@ export function injectNarrativeCitationAnchors(
             }
         }
         if (!best) return pointContent; // no supporting source → leave uncited
-        // The LLM gave no narrative attribution for this point, so WRITE one
-        // pointing at the real overlapping source. The popover (anchor) exposes
-        // the verbatim excerpt + page; we never quote a possibly-messy fragment
-        // inline. Author + work are real manifest data — nothing fabricated.
+        // Opción A (decisión del fundador 2026-07-06): la cita lleva el TEXTO REAL
+        // del excerpt (del RAG) como blockquote, con sustancia y visible al
+        // predicar — NO un name-drop hueco ("Como lo expone X [n]") con el texto
+        // escondido en el popover. Es el texto del chunk (dato real), nada
+        // fabricado; el `[Sn]` sigue abriendo el popover (fuente + página).
         const e = best.entry;
+        const excerpt = cleanExcerpt(e.excerpt);
+        if (!excerpt) return pointContent; // sin texto real que citar → no inventamos
         const displayTitle = (e.title ?? '').split(/\s[-–—]\s/).slice(-1)[0] || e.title || '';
         const author = e.author?.trim();
-        const leadIns = ['Como lo desarrolla', 'Como lo expone', 'Como bien lo trabaja', 'Según lo expone'];
-        const lead = leadIns[idx % leadIns.length];
-        const attribution = author
-            ? `${lead} ${author}${displayTitle ? ` en «${displayTitle}»` : ''} [${e.sourceId}].`
-            : `Esta verdad se expone en «${displayTitle}» [${e.sourceId}].`;
+        const attribLine = author
+            ? `— ${author}${displayTitle ? `, ${displayTitle}` : ''} [${e.sourceId}]`
+            : `— «${displayTitle}» [${e.sourceId}]`;
+        const blockquote = `> «${excerpt}»\n>\n> ${attribLine}`;
         const sep = /\n$/.test(pointContent) ? '' : '\n\n';
-        return `${pointContent}${sep}${attribution}`;
+        return `${pointContent}${sep}${blockquote}`;
     };
 
     return {

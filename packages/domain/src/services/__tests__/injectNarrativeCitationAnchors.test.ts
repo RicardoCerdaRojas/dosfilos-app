@@ -67,9 +67,10 @@ describe('injectNarrativeCitationAnchors (ADR-031)', () => {
             mf,
         );
         expect(out.body[0].content).toMatch(/\[S1\]/); // point now cited
-        // explicit NARRATIVE attribution written (author + work named), not a bare anchor
-        expect(out.body[0].content).toContain('Autor');
-        expect(out.body[0].content).toContain('«Inspiración»');
+        // Opción A: la cita lleva el TEXTO REAL del excerpt como blockquote (no cáscara)
+        expect(out.body[0].content).toContain('> «'); // blockquote
+        expect(out.body[0].content).toContain('La Escritura inspirada permanece como autoridad inmutable'); // excerpt real
+        expect(out.body[0].content).toContain('Autor'); // atribución
         // original prose preserved
         expect(out.body[0].content).toContain('Confiamos en ella.');
     });

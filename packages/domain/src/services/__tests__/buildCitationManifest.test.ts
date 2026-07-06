@@ -46,9 +46,9 @@ describe('buildCitationManifest', () => {
     });
 
     it('truncates excerpts past maxExcerptLength on a word boundary', () => {
-        const longText = 'palabra '.repeat(100); // ~800 chars
+        const longText = 'palabra '.repeat(120); // ~960 chars, supera el default 600
         const manifest = buildCitationManifest([chunk({ id: 'c1', text: longText })]);
-        expect(manifest.entries[0].excerpt.length).toBeLessThanOrEqual(281);
+        expect(manifest.entries[0].excerpt.length).toBeLessThanOrEqual(601);
         expect(manifest.entries[0].excerpt.endsWith('…')).toBe(true);
         expect(manifest.entries[0].excerpt.includes('  ')).toBe(false);
     });

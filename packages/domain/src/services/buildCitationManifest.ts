@@ -24,7 +24,12 @@ export interface CitationRightsSnapshot {
 export interface BuildCitationManifestOptions {
     /** Cap on the manifest size. Defaults to 10 — keeps the Firestore doc small. */
     maxEntries?: number;
-    /** Cap on each entry's excerpt length. Defaults to 280 chars. */
+    /**
+     * Cap on each entry's excerpt length. Defaults to 600 chars — el excerpt se
+     * MUESTRA como cita en la prosa del sermón (blockquote), no solo en el popover,
+     * así que necesita cuerpo suficiente para una cita real (antes 280 alcanzaba
+     * solo para el popover). Sube el peso del doc Firestore un poco; aceptable.
+     */
     maxExcerptLength?: number;
     /**
      * Optional resolver that maps a chunk's `resourceId` to a rights
@@ -54,7 +59,7 @@ export function buildCitationManifest(
     options: BuildCitationManifestOptions = {},
 ): CitationManifest {
     const maxEntries = options.maxEntries ?? 10;
-    const maxExcerptLength = options.maxExcerptLength ?? 280;
+    const maxExcerptLength = options.maxExcerptLength ?? 600;
 
     const entries: CitationManifestEntry[] = chunks
         .slice(0, maxEntries)
