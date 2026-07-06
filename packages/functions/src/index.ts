@@ -161,6 +161,8 @@ export { runSocraticTurnLlm } from './guided-sermon/runSocraticTurnLlm';
 export { buildStructuralPuzzle } from './study-companion/buildStructuralPuzzle';
 // 🌱 Pastoral Fidelity Phase 3 PR1 — Claim ↔ source fidelity evaluator (ADR-029)
 export { evaluateClaimSourceFidelity } from './sermon/evaluateClaimSourceFidelity';
+// 🧭 Fidelidad de citas en la redacción (opción B) — sanitizado quirúrgico de citas fabricadas
+export { sanitizeSermonCitations } from './sermon/sanitizeSermonCitations';
 // 🌱 Pastoral Fidelity Phase 4 PR1 — contra-scan dissent retrieval + classification (ADR-033)
 export { findDissentingChunks } from './sermon/findDissentingChunks';
 // 🧭 Pastoral Fidelity ADR-035 — passage profile detector (Capa 1) + shadow telemetry

@@ -227,7 +227,7 @@ export class VerifySermonCitationsUseCase {
  * latter is rare in sermon citation context (sermons either reuse
  * paper quotes verbatim or invent them wholesale).
  */
-function verifyOne(citation: ParsedSermonCitation, corpus: string): VerifiedSermonCitation {
+export function verifyOne(citation: ParsedSermonCitation, corpus: string): VerifiedSermonCitation {
     if (!corpus.trim()) {
         return {
             citation,
