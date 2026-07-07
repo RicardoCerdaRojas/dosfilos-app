@@ -13,6 +13,8 @@ export * from './services/AdminVerifiedMisreadingService'; // 🌱 ADR-036 PR4 �
 export * from './use-cases/anchor-fidelity/ResolveCuratedMisreadingsUseCase'; // 🌱 ADR-036 PR5 — curated floor resolution (authoritative re-verify)
 export * from './use-cases/exegesis/verifyDraftCitations'; // 🌱 Sermon draft citation fidelity (opción B) — in-draft verify
 export * from './services/SermonCitationSanitizerService'; // 🌱 Sermon draft citation fidelity (opción B) — surgical sanitize
+export * from './use-cases/exegesis/sermonDraftSignals'; // 🌱 Redacción v2 — draft shadow (contrato + colector determinista)
+export * from './services/SermonDraftShadowService'; // 🌱 Redacción v2 — draft shadow recorder facade
 export * from './services/AuthService';
 export * from './services/FacultyService';
 export * from './services/SeriesService';

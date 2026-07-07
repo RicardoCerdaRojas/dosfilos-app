@@ -55,6 +55,7 @@ describe('getFlagDependents — descendientes activos (down con aviso)', () => {
                 'conduccion_corazon',
                 'passage_profile',
                 'passage_profile_enforce',
+                'sermon_draft_shadow',
             ].sort(),
         );
     });
