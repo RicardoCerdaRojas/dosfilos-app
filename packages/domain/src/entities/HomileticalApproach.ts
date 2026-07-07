@@ -42,6 +42,16 @@ export const APPROACH_TYPES: readonly ApproachType[] = [
 ] as const;
 
 /**
+ * Runtime membership guard for `ApproachType`. Use at every WRITE border where a
+ * value of unknown origin (AI output, imported data) becomes a stored approach —
+ * a truthy check is not enough (presence ≠ validity). Fail-closed: reject anything
+ * that is not a member of the six-form catalog.
+ */
+export function isApproachType(value: unknown): value is ApproachType {
+    return typeof value === 'string' && (APPROACH_TYPES as readonly string[]).includes(value);
+}
+
+/**
  * How the current form was derived from a stored value. Preserves origin so a
  * legacy value is never laundered into a clean-looking current form.
  *  - `native`         — stored already as a current-catalog form.
@@ -335,6 +345,13 @@ export class ApproachFactory {
         if (!data.type) {
             throw new Error('Approach type is required');
         }
+        // Fail-closed on the WRITE border: reject a `type` that is not a real
+        // form. AI output is untrusted — a truthy string is not enough (presence
+        // ≠ validity). This is how corrupt values (a tone label, a leaked prompt
+        // block) got persisted before. Callers filter/skip a rejected preview.
+        if (!isApproachType(data.type)) {
+            throw new Error(`Invalid approach type: ${JSON.stringify(data.type).slice(0, 80)}`);
+        }
         if (!data.direction) {
             throw new Error('Approach direction is required');
         }
@@ -365,7 +382,9 @@ export class ApproachFactory {
     static validate(approach: HomileticalApproach): boolean {
         return !!(
             approach.id &&
-            approach.type &&
+            // Membership, not truthy: a corrupt `type` string must fail here so
+            // the caller's filter drops the preview before it can be persisted.
+            isApproachType(approach.type) &&
             approach.direction &&
             approach.tone &&
             approach.homileticalProposition &&
