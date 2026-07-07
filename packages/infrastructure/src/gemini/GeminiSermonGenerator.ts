@@ -176,11 +176,19 @@ export class GeminiSermonGenerator implements ISermonGenerator {
 
             const parsed = JSON.parse(this.cleanJsonResponse(text));
 
-            const homileticalApproaches = Array.isArray(parsed.homileticalApproaches)
-                ? parsed.homileticalApproaches.map((approach: any, index: number) =>
-                    ApproachFactory.createFromAIResponse(approach, index)
-                )
-                : [];
+            // Fail-closed on the write border: createFromAIResponse rejects a
+            // non-member `type` (corrupt AI output). Skip a rejected preview per
+            // item so one bad approach doesn't kill the whole batch.
+            const homileticalApproaches = (Array.isArray(parsed.homileticalApproaches) ? parsed.homileticalApproaches : [])
+                .map((approach: any, index: number) => {
+                    try {
+                        return ApproachFactory.createFromAIResponse(approach, index);
+                    } catch (e: any) {
+                        console.warn('[generateHomiletics] dropped invalid approach preview:', e?.message);
+                        return null;
+                    }
+                })
+                .filter((a: any): a is NonNullable<typeof a> => a !== null);
 
             const validApproaches = homileticalApproaches.filter((approach: any) =>
                 ApproachFactory.validate(approach)
