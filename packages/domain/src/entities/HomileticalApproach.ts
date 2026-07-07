@@ -41,14 +41,34 @@ export const APPROACH_TYPES: readonly ApproachType[] = [
     'narrativo',
 ] as const;
 
+/**
+ * How the current form was derived from a stored value. Preserves origin so a
+ * legacy value is never laundered into a clean-looking current form.
+ *  - `native`         — stored already as a current-catalog form.
+ *  - `renamed`        — clean English→Spanish rename (thematic/narrative).
+ *  - `legacy_topical` — was `topical`: reads as `temático` (same form, wrong
+ *                       name), but whether the original study was faithful-
+ *                       expositive or theme-imposing is UNKNOWN. Its
+ *                       expositivity (global G3) is `sin_auditar` — never treat
+ *                       it as audited-faithful. Surface for preacher confirmation.
+ *  - `none`           — no form could be inferred.
+ */
+export type ApproachProvenance = 'native' | 'renamed' | 'legacy_topical' | 'none';
+
 /** Result of normalizing a possibly-legacy homiletical-approach value. */
 export interface NormalizedApproach {
     /** The current-catalog form, or undefined when no valid form can be inferred. */
     approach?: ApproachType;
     /**
-     * True when a legacy value was mapped to a form the preacher should CONFIRM
-     * rather than accept silently (legacy `topical` → `temático`). Never force
-     * the preacher's structural choice silently.
+     * Origin of the value. `legacy_topical` carries `sin_auditar` semantics for
+     * expositivity — do NOT collapse it to a clean `temático` (would lose
+     * traceability and imply the study was audited-faithful when it was not).
+     */
+    provenance: ApproachProvenance;
+    /**
+     * True when the mapping should be CONFIRMED by the preacher rather than
+     * accepted silently (currently: legacy `topical` → `temático`). Derived from
+     * provenance; never force the preacher's structural choice silently.
      */
     needsConfirmation: boolean;
 }
@@ -78,18 +98,25 @@ export function normalizeHomileticalApproach(
     value: string | undefined | null,
 ): NormalizedApproach {
     if (!value) {
-        return { needsConfirmation: false };
+        return { provenance: 'none', needsConfirmation: false };
     }
     if ((APPROACH_TYPES as readonly string[]).includes(value)) {
-        return { approach: value as ApproachType, needsConfirmation: false };
+        return { approach: value as ApproachType, provenance: 'native', needsConfirmation: false };
+    }
+    if (value === 'topical') {
+        // Same form as temático, wrong name — but expositivity is `sin_auditar`.
+        return { approach: 'temático', provenance: 'legacy_topical', needsConfirmation: true };
     }
     if (value in LEGACY_APPROACH_MAP) {
+        const mapped = LEGACY_APPROACH_MAP[value];
+        // `expository`/`expositivo` map to undefined (condition, not a form) → none.
         return {
-            approach: LEGACY_APPROACH_MAP[value],
-            needsConfirmation: value === 'topical',
+            approach: mapped,
+            provenance: mapped ? 'renamed' : 'none',
+            needsConfirmation: false,
         };
     }
-    return { needsConfirmation: false };
+    return { provenance: 'none', needsConfirmation: false };
 }
 
 /**

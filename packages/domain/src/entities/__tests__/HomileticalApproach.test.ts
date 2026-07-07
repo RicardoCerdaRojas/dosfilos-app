@@ -19,48 +19,57 @@ describe('APPROACH_TYPES — catálogo de seis formas (corregido 2026-07-06)', (
 });
 
 describe('normalizeHomileticalApproach', () => {
-    it('deja pasar las formas nativas actuales sin marca', () => {
+    it('deja pasar las formas nativas actuales (provenance native, sin marca)', () => {
         for (const form of APPROACH_TYPES) {
             expect(normalizeHomileticalApproach(form)).toEqual({
                 approach: form,
+                provenance: 'native',
                 needsConfirmation: false,
             });
         }
     });
 
-    it('renombra el legado inglés: thematic → temático, narrative → narrativo', () => {
+    it('renombra el legado inglés limpio: thematic → temático, narrative → narrativo (renamed)', () => {
         expect(normalizeHomileticalApproach('thematic')).toEqual({
             approach: 'temático',
+            provenance: 'renamed',
             needsConfirmation: false,
         });
         expect(normalizeHomileticalApproach('narrative')).toEqual({
             approach: 'narrativo',
+            provenance: 'renamed',
             needsConfirmation: false,
         });
     });
 
-    it('expository/expositivo → sin forma (expositividad es condición, no forma)', () => {
+    it('expository/expositivo → sin forma (expositividad es condición, no forma; provenance none)', () => {
         expect(normalizeHomileticalApproach('expository')).toEqual({
             approach: undefined,
+            provenance: 'none',
             needsConfirmation: false,
         });
         expect(normalizeHomileticalApproach('expositivo')).toEqual({
             approach: undefined,
+            provenance: 'none',
             needsConfirmation: false,
         });
     });
 
-    it('topical → temático PERO marcado para confirmación (no se fuerza en silencio)', () => {
-        expect(normalizeHomileticalApproach('topical')).toEqual({
+    it('topical → temático con provenance legacy_topical (expositividad sin auditar, NO lava el origen)', () => {
+        const r = normalizeHomileticalApproach('topical');
+        expect(r).toEqual({
             approach: 'temático',
+            provenance: 'legacy_topical',
             needsConfirmation: true,
         });
+        // La distinción se preserva: no es un temático nativo/limpio.
+        expect(r.provenance).not.toBe('native');
     });
 
-    it('vacío/nulo/desconocido → sin forma, sin marca', () => {
-        expect(normalizeHomileticalApproach(undefined)).toEqual({ needsConfirmation: false });
-        expect(normalizeHomileticalApproach(null)).toEqual({ needsConfirmation: false });
-        expect(normalizeHomileticalApproach('')).toEqual({ needsConfirmation: false });
-        expect(normalizeHomileticalApproach('gibberish')).toEqual({ needsConfirmation: false });
+    it('vacío/nulo/desconocido → sin forma, provenance none, sin marca', () => {
+        expect(normalizeHomileticalApproach(undefined)).toEqual({ provenance: 'none', needsConfirmation: false });
+        expect(normalizeHomileticalApproach(null)).toEqual({ provenance: 'none', needsConfirmation: false });
+        expect(normalizeHomileticalApproach('')).toEqual({ provenance: 'none', needsConfirmation: false });
+        expect(normalizeHomileticalApproach('gibberish')).toEqual({ provenance: 'none', needsConfirmation: false });
     });
 });
