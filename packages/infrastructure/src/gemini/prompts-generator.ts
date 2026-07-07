@@ -212,7 +212,7 @@ ${rules.tone ? `Tono sugerido: ${rules.tone}` : ''}
 
 Formato de Salida (JSON):
 {
-  "homileticalApproach": "expository",
+  "homileticalApproach": "temático",
   "contemporaryApplication": ["aplicación 1", "aplicación 2"],
   "homileticalProposition": "La proposición homilética...",
   "outline": {
@@ -511,7 +511,7 @@ ${exegesisContext}
 
 Datos del Análisis Homilético:
 - Proposición Homilética: ${analysis.homileticalProposition}
-- Enfoque: ${analysis.homileticalApproach}
+- Enfoque: ${analysis.homileticalApproach || 'No especificado'}
 - Bosquejo: ${JSON.stringify(analysis.outline)}
 
 ═══════════════════════════════════════════════════════════════════
@@ -870,7 +870,7 @@ Mantén coherencia con la proposición exegética y el pasaje original.`;
       const sermonContext = context.homileticsResult
         ? `**Pasaje**: ${context.exegesisResult?.passage || 'N/A'}
 **Proposición Homilética**: ${context.homileticsResult.homileticalProposition}
-**Enfoque**: ${context.homileticsResult.homileticalApproach}
+**Enfoque**: ${context.homileticsResult.homileticalApproach || 'No especificado'}
 **Bosquejo**: ${context.homileticsResult.outline?.mainPoints?.length || 0} puntos principales`
         : 'Análisis homilético no disponible';
 

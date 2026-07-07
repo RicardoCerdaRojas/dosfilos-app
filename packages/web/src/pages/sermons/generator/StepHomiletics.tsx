@@ -221,7 +221,7 @@ export function StepHomiletics() {
                 exegeticalStudy: exegesis,
                 homileticalApproaches: [approach],
                 selectedApproachId: approach.id,
-                homileticalApproach: approach.type as any,
+                homileticalApproach: approach.type,
                 contemporaryApplication: approach.contemporaryApplication,
                 homileticalProposition: approach.homileticalProposition,
                 outlinePreview: approach.outlinePreview,

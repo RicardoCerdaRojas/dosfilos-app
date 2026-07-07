@@ -14,12 +14,83 @@ import { SermonOutline } from './SermonGenerator';
  * Types of homiletical approaches available for sermon preparation
  */
 export type ApproachType =
+    | 'temático'      // A theme developed by letting Scripture define, correct and order it
     | 'pastoral'      // Focus on pastoral care, comfort, and encouragement
     | 'teológico'     // Deep theological/doctrinal exploration
     | 'apologético'   // Defense of faith, addressing objections
     | 'evangelístico' // Gospel presentation for non-believers
-    | 'expositivo'    // Verse-by-verse exposition
     | 'narrativo';    // Story-driven, narrative preaching
+//
+// NOTE (2026-07-06): `expositivo` is intentionally NOT a form here. Expositivity
+// is the fidelity CONDITION every form must meet (the text governs the content),
+// modeled as global disqualifier G3 in the judge catalog — not a parallel form.
+// `topical` is likewise not a form: it is thematic-done-unfaithfully (a failure
+// mode). See normalizeHomileticalApproach for legacy value migration, and byblos
+// decision "Corrección de categoría: expositividad es G3".
+
+/**
+ * Canonical set of homiletical FORMS (the six-form catalog). Must stay in sync
+ * with the judge's compliance-criteria catalog (invariant enforced by a test).
+ */
+export const APPROACH_TYPES: readonly ApproachType[] = [
+    'temático',
+    'pastoral',
+    'teológico',
+    'apologético',
+    'evangelístico',
+    'narrativo',
+] as const;
+
+/** Result of normalizing a possibly-legacy homiletical-approach value. */
+export interface NormalizedApproach {
+    /** The current-catalog form, or undefined when no valid form can be inferred. */
+    approach?: ApproachType;
+    /**
+     * True when a legacy value was mapped to a form the preacher should CONFIRM
+     * rather than accept silently (legacy `topical` → `temático`). Never force
+     * the preacher's structural choice silently.
+     */
+    needsConfirmation: boolean;
+}
+
+/**
+ * Legacy value → current form. Corrects the accidental 4→6 enum transition:
+ *  - `thematic`/`narrative` were English renames → `temático`/`narrativo`.
+ *  - `expository`/`expositivo` were never a form (expositivity is condition G3) → unset.
+ *  - `topical` was thematic mis-named → `temático`, but flagged for confirmation.
+ */
+const LEGACY_APPROACH_MAP: Record<string, ApproachType | undefined> = {
+    thematic: 'temático',
+    narrative: 'narrativo',
+    expository: undefined,
+    expositivo: undefined,
+    topical: 'temático',
+};
+
+/**
+ * Normalizes a stored homiletical-approach value to the current `ApproachType`
+ * catalog. Native current forms pass through. Legacy values migrate per
+ * LEGACY_APPROACH_MAP. Legacy `topical` sets `needsConfirmation` so the mapping
+ * to `temático` is surfaced to the preacher, never forced silently. Unknown or
+ * empty → no form.
+ */
+export function normalizeHomileticalApproach(
+    value: string | undefined | null,
+): NormalizedApproach {
+    if (!value) {
+        return { needsConfirmation: false };
+    }
+    if ((APPROACH_TYPES as readonly string[]).includes(value)) {
+        return { approach: value as ApproachType, needsConfirmation: false };
+    }
+    if (value in LEGACY_APPROACH_MAP) {
+        return {
+            approach: LEGACY_APPROACH_MAP[value],
+            needsConfirmation: value === 'topical',
+        };
+    }
+    return { needsConfirmation: false };
+}
 
 /**
  * Tone options for sermon delivery

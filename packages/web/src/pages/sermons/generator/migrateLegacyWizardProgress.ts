@@ -228,7 +228,8 @@ function buildHomileticsStub(
 ): HomileticalAnalysis {
     return {
         exegeticalStudy: exegesis,
-        homileticalApproach: 'expository',
+        // No form is known when reconstructing from a legacy draft — leave unset
+        // rather than fabricate one (expositivity is a condition, not a default form).
         homileticalProposition: draft.title,
         contemporaryApplication: [],
         outline: outlineFromDraft(draft),

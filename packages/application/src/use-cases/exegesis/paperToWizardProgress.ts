@@ -167,22 +167,22 @@ function buildHomileticsStub(
 }
 
 /**
- * Maps the paper-to-sermon tone enum to the wizard's homiletical
- * approach enum. The wizard's `homileticalApproach` is a four-value
- * legacy field (`expository`/`thematic`/`narrative`/`topical`) so the
- * mapping is lossy but reasonable:
- *   - `expositivo` → `expository` (verse-by-verse / paper-driven)
- *   - `narrativo` → `narrative` (story-driven)
- *   - `pastoral`  → `thematic` (life-application focus, no exact match)
+ * Maps the paper-to-sermon tone enum to a homiletical FORM (`ApproachType`),
+ * only where the mapping is clean. This is a pre-fill for paper-derived sermons;
+ * the preacher confirms/changes the form at Step 3. We never fabricate a form:
+ *   - `narrativo` → `narrativo` (clean: narrativo IS a form)
+ *   - `pastoral`  → `pastoral`  (clean: pastoral IS a form)
+ *   - `expositivo` → unset — expositivity is a fidelity CONDITION (global G3),
+ *      not a form; the preacher picks the form themselves.
  */
 function mapToneToApproach(tone: PaperToSermonTone): HomileticalAnalysis['homileticalApproach'] {
     switch (tone) {
-        case 'expositivo':
-            return 'expository';
         case 'narrativo':
-            return 'narrative';
+            return 'narrativo';
         case 'pastoral':
-            return 'thematic';
+            return 'pastoral';
+        case 'expositivo':
+            return undefined;
     }
 }
 

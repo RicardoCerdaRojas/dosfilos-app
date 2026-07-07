@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { sermonGeneratorService } from '@dosfilos/application';
-import { WorkflowPhase } from '@dosfilos/domain';
+import { WorkflowPhase, normalizeHomileticalApproach, type ApproachType } from '@dosfilos/domain';
 import { useTranslation } from '@/i18n';
 
 interface UseDraftRefinementParams {
@@ -147,17 +147,28 @@ FORMATO: Usa markdown para mejor legibilidad:
 
                 const refinementSources: Array<{ author: string; title: string; page?: number; snippet: string }> = [];
 
-                const homileticalApproach = homiletics?.homileticalApproach;
+                // Normalize on read: persisted studies may hold legacy values
+                // (expository/thematic/narrative/topical). Maps to the six-form
+                // catalog; expository → unset (was a condition, not a form).
+                const homileticalApproach = normalizeHomileticalApproach(
+                    homiletics?.homileticalApproach,
+                ).approach;
                 const exegeticalProposition = exegesis?.exegeticalProposition;
                 const homileticalProposition = homiletics?.homileticalProposition;
 
                 let sermonContextStr = '';
                 if (passage || homileticalApproach) {
-                    const approachLabel =
-                        homileticalApproach === 'expository' ? 'Expositivo' :
-                        homileticalApproach === 'thematic' ? 'Temático' :
-                        homileticalApproach === 'narrative' ? 'Narrativo' :
-                        homileticalApproach === 'topical' ? 'Tópico' : 'No especificado';
+                    const APPROACH_LABELS: Record<ApproachType, string> = {
+                        'temático': 'Temático',
+                        'pastoral': 'Pastoral',
+                        'teológico': 'Teológico',
+                        'apologético': 'Apologético',
+                        'evangelístico': 'Evangelístico',
+                        'narrativo': 'Narrativo',
+                    };
+                    const approachLabel = homileticalApproach
+                        ? APPROACH_LABELS[homileticalApproach]
+                        : 'No especificado';
                     sermonContextStr = `
 
 CONTEXTO COMPLETO DEL SERMÓN (usa esta información para mantener coherencia):

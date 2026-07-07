@@ -205,11 +205,11 @@ describe('GenerateSermonFromPaperUseCase', () => {
             expect(created.content).toContain('Cuerpo del sermón');
         });
 
-        it('maps tone to a homiletical approach in the homiletics stub', async () => {
-            const cases: Array<{ tone: 'pastoral' | 'expositivo' | 'narrativo'; expected: string }> = [
-                { tone: 'pastoral', expected: 'thematic' },
-                { tone: 'expositivo', expected: 'expository' },
-                { tone: 'narrativo', expected: 'narrative' },
+        it('maps tone to a homiletical form only where clean; expositivo → unset (condition, not a form)', async () => {
+            const cases: Array<{ tone: 'pastoral' | 'expositivo' | 'narrativo'; expected: string | undefined }> = [
+                { tone: 'pastoral', expected: 'pastoral' },
+                { tone: 'expositivo', expected: undefined },
+                { tone: 'narrativo', expected: 'narrativo' },
             ];
             for (const c of cases) {
                 const sermonRepo = stubSermonRepo();

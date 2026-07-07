@@ -156,7 +156,7 @@ export class GeminiSermonGenerator implements ISermonGenerator {
     ): Promise<HomileticalAnalysis> {
         try {
             const { HomileticsPromptBuilder } = await import('./prompts/HomileticsPromptBuilder');
-            const { ApproachFactory } = await import('@dosfilos/domain');
+            const { ApproachFactory, normalizeHomileticalApproach } = await import('@dosfilos/domain');
 
             const prompt = new HomileticsPromptBuilder()
                 .withExegesis(exegesis)
@@ -191,7 +191,9 @@ export class GeminiSermonGenerator implements ISermonGenerator {
                 return {
                     homileticalApproaches: [],
                     selectedApproachId: undefined,
-                    homileticalApproach: parsed.homileticalApproach || 'expository',
+                    // Normalize any model-emitted value to a current form; unset
+                    // rather than fabricate one when the model gave nothing valid.
+                    homileticalApproach: normalizeHomileticalApproach(parsed.homileticalApproach).approach,
                     contemporaryApplication: Array.isArray(parsed.contemporaryApplication) ? parsed.contemporaryApplication : [],
                     homileticalProposition: parsed.homileticalProposition || '',
                     outline: parsed.outline || { mainPoints: [] },
@@ -204,7 +206,7 @@ export class GeminiSermonGenerator implements ISermonGenerator {
             return {
                 homileticalApproaches: validApproaches,
                 selectedApproachId: undefined,
-                homileticalApproach: primaryApproach.type as any || 'expository',
+                homileticalApproach: primaryApproach.type,
                 contemporaryApplication: primaryApproach.contemporaryApplication || [],
                 homileticalProposition: primaryApproach.homileticalProposition || '',
                 outline: primaryApproach.outline || { mainPoints: [] },
