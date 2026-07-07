@@ -8,7 +8,7 @@
 import { HomileticalApproach } from '@dosfilos/domain';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Target, Users, TrendingUp, Star } from 'lucide-react';
+import { CheckCircle2, Target, Users, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ApproachCardProps {
@@ -18,25 +18,21 @@ interface ApproachCardProps {
 }
 
 export function ApproachCard({ approach, isSelected, onSelect }: ApproachCardProps) {
-    // Map types to colors
+    // Map types to colors (six-form catalog)
     const typeColors: Record<string, string> = {
+        'temático': 'bg-amber-100 text-amber-800',
         pastoral: 'bg-blue-100 text-blue-800',
         'teológico': 'bg-purple-100 text-purple-800',
         'apologético': 'bg-red-100 text-red-800',
         'evangelístico': 'bg-green-100 text-green-800',
-        expositivo: 'bg-amber-100 text-amber-800',
         narrativo: 'bg-pink-100 text-pink-800',
     };
 
-    // Check if this is an expository approach (user's primary approach)
-    const isExpository = approach.type === 'expositivo';
-
     return (
-        <Card 
+        <Card
             className={cn(
                 "p-6 cursor-pointer transition-all hover:shadow-lg",
-                isSelected && "ring-2 ring-primary shadow-md",
-                isExpository && "border-2 border-amber-300" // Subtle accent for expository
+                isSelected && "ring-2 ring-primary shadow-md"
             )}
             onClick={onSelect}
         >
@@ -51,12 +47,6 @@ export function ApproachCard({ approach, isSelected, onSelect }: ApproachCardPro
                             <Badge variant="outline" className="text-xs">
                                 {approach.tone}
                             </Badge>
-                            {isExpository && (
-                                <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs">
-                                    <Star className="h-3 w-3 mr-1" />
-                                    Recomendado para ti
-                                </Badge>
-                            )}
                         </div>
                         <h4 className="font-semibold text-lg leading-tight">
                             {approach.direction}

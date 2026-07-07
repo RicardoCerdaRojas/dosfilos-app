@@ -203,8 +203,8 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setHomiletics({
             ...homiletics,
             selectedApproachId: approachId,
-            // Update legacy fields from selected approach
-            homileticalApproach: selectedApproach.type as any,
+            // The preacher's selected FORM (type-safe: ApproachType → ApproachType)
+            homileticalApproach: selectedApproach.type,
             contemporaryApplication: selectedApproach.contemporaryApplication,
             homileticalProposition: selectedApproach.homileticalProposition,
             outlinePreview: selectedApproach.outlinePreview, // 🎯 NEW: Include outline preview

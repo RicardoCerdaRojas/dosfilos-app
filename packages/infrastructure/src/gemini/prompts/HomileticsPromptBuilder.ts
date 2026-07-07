@@ -164,7 +164,7 @@ Con 7 tipos de enfoques disponibles, selecciona los más apropiados para este pa
 
 ### PARA CADA ENFOQUE, DEFINE:
 
-1. **Tipo**: pastoral, teológico, apologético, evangelístico, expositivo, o narrativo
+1. **Tipo**: temático, pastoral, teológico, apologético, evangelístico, o narrativo
 2. **Dirección**: La orientación específica (ej: "Consolar en la tribulación")
 3. **Tono**: exhortativo, de ánimo, didáctico, frontal, académico, conversacional, o persuasivo
 4. **Propósito**: El objetivo principal del sermón

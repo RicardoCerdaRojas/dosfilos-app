@@ -1,3 +1,5 @@
+import type { ApproachType } from './HomileticalApproach';
+
 export interface KeyWord {
     original: string;
     transliteration: string;
@@ -145,10 +147,14 @@ export interface HomileticalAnalysis {
     approachDisplay?: string;
 
     /**
-     * @deprecated Use homileticalApproaches instead
-     * Kept for backward compatibility
+     * Selected homiletical FORM for this sermon — the preacher's structural
+     * choice, one of the six-form `ApproachType` catalog. Optional: unset when
+     * no form has been selected yet. NEVER defaulted to a fabricated form
+     * (expositivity is a condition, not a default form). Legacy stored values
+     * (`expository`/`thematic`/`narrative`/`topical`) must be run through
+     * `normalizeHomileticalApproach` on read.
      */
-    homileticalApproach: 'expository' | 'thematic' | 'narrative' | 'topical';
+    homileticalApproach?: ApproachType;
 
     contemporaryApplication: string[];
     homileticalProposition: string;

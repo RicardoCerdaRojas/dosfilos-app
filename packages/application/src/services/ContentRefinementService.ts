@@ -336,7 +336,7 @@ ${libraryContext}
 Tienes el siguiente análisis homilético actual:
 
 Proposición Homilética: ${homiletics.homileticalProposition}
-Enfoque: ${homiletics.homileticalApproach}
+Enfoque: ${homiletics.homileticalApproach || 'No especificado'}
 Puntos Principales: ${homiletics.outline.mainPoints.map(p => p.title).join(', ')}
 Aplicaciones Contemporáneas: ${homiletics.contemporaryApplication.join(', ')}
 `;

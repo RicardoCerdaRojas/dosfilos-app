@@ -20,6 +20,7 @@ import {
     type VerifySermonCitationsOutput,
 } from '@dosfilos/application';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
+import { normalizeHomileticalApproach } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
 import { ContentCanvas } from '@/components/canvas-chat/ContentCanvas';
@@ -109,6 +110,19 @@ export function StepDraft() {
 
     const handleGenerate = async () => {
         if (!homiletics) return;
+
+        // Fail-closed: never redact a draft without the preacher's chosen FORM.
+        // A null form must NOT silently degrade to the model picking one — that is
+        // the fabrication this module exists to kill. Halt and mark "sin forma
+        // elegida"; the preacher selects a form in the homiletics step first.
+        // (normalize so a legacy value still counts as a real form.)
+        const chosenForm = normalizeHomileticalApproach(homiletics.homileticalApproach).approach;
+        if (!chosenForm) {
+            toast.error(
+                'Elige una forma de sermón antes de redactar. El borrador no elige la forma por ti.',
+            );
+            return;
+        }
 
         setLoading(true);
         try {

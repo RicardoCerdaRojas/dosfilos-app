@@ -271,11 +271,9 @@ function buildHomileticsStub(
 ): HomileticalAnalysis {
     return {
         exegeticalStudy: exegesis,
-        // Faculty outlines are typically expository (verse-anchored
-        // points), so map to 'expository'. The tone field on
-        // personalization is a separate axis (pastoral / doxological /
-        // didactic / etc.) and informs prompts, not approach.
-        homileticalApproach: 'expository',
+        // No form is fabricated: a Faculty outline being verse-anchored is
+        // expositivity (a fidelity CONDITION, global G3), not a form. The
+        // preacher selects the form themselves — leave it unset here.
         homileticalProposition: outline.proposition,
         contemporaryApplication: personalization?.preacherNotes
             ? [personalization.preacherNotes]

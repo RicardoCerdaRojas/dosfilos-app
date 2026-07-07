@@ -129,31 +129,34 @@ Tu tarea es generar **4-5 VISTAS PREVIAS** de enfoques homiléticos diferentes p
 
 Solo genera la información necesaria para que el pastor ELIJA el mejor enfoque para su contexto.
 
-### 🚨 REQUISITO CRÍTICO OBLIGATORIO:
+### 🚨 CONDICIÓN NO NEGOCIABLE: TODO ENFOQUE DEBE SER EXPOSITIVO
 
-**EL PRIMER ENFOQUE DEBE SER SIEMPRE EXPOSITIVO.**
+**La expositividad NO es una forma de sermón — es la condición de fidelidad que TODA
+forma debe cumplir.** Un sermón es expositivo cuando el TEXTO gobierna el contenido:
+el mensaje, los énfasis, las doctrinas y las aplicaciones surgen del sentido correcto
+de la Escritura, y la voz del predicador se somete a la voz del texto. Aplica a las
+seis formas por igual.
 
-El enfoque expositivo es RECOMENDADO por defecto porque:
-- Es el más fiel al texto bíblico
-- Permite análisis profundo verso por verso
-- Es estructurado y didáctico
-- Desarrolla el pasaje de manera orgánica
+Por lo tanto:
+1. CADA enfoque que generes debe ser expositivo en este sentido (fiel al texto, jamás
+   una idea impuesta sobre el pasaje).
+2. NO existe un enfoque "expositivo" separado — expositivo NO es una forma del catálogo.
+3. Genera 4-5 enfoques de FORMAS variadas, todos expositivos, y explica por qué cada
+   forma sirve a ESTE pasaje. No hay una forma "recomendada por defecto": recomienda
+   según el género y el sentido del texto.
 
-INSTRUCCIÓN IMPERATIVA:
-1. El primer enfoque DEBE ser expositivo (id: "expositivo-1")
-2. Los otros 3-4 enfoques pueden ser de cualquier otro tipo
-3. Total: 4-5 enfoques (1 expositivo obligatorio + 3-4 variados)
+### FORMAS DE SERMÓN A CONSIDERAR (catálogo de seis):
 
-### TIPOS DE ENFOQUES A CONSIDERAR:
+1. **Temático**: Desarrolla un tema dejando que la Escritura lo defina, corrija y ordene
+   - Tono: Didáctico, exhortativo
+   - Para: Enseñanza sobre un tema bíblico (varios textos alrededor de un tema)
+   - ⚠️ El tema EMERGE de los textos respetando el contexto de cada uno; NUNCA se impone
+     una idea preconcebida usando los versos de percha
 
-1. **Pastoral**: Enfocado en el cuidado, consuelo y fortalecimiento espiritual
-   - Tono: Exhortativo, cálido
-   - Para: Congregación enfrentando desafíos
-
-2. **Pastoral con tono de ánimo**: Enfocado en traer esperanza y fortalecer la confianza
-   - Tono: De ánimo, consolador
-   - Para: Creyentes que necesitan consuelo, esperanza y fortalecimiento de la fe
-   - Nota: A través de la doctrina, busca animar y dar seguridad espiritual
+2. **Pastoral**: Enfocado en el cuidado, consuelo y fortalecimiento espiritual
+   - Tono: Exhortativo, cálido o de ánimo/consolador según la necesidad
+   - Para: Congregación enfrentando desafíos; creyentes que necesitan esperanza y
+     seguridad espiritual
 
 3. **Teológico**: Profundización doctrinal y conceptual
    - Tono: Didáctico, académico
@@ -167,37 +170,30 @@ INSTRUCCIÓN IMPERATIVA:
    - Tono: Inspiracional, convincente
    - Para: No creyentes, visitantes
 
-6. **🎯 Expositivo** (OBLIGATORIO COMO PRIMER ENFOQUE): Análisis verso por verso
-   - Tono: Didáctico, estructurado
-   - Para: Estudio profundo de la Escritura
-   - **ESTE DEBE SER SIEMPRE EL PRIMER ENFOQUE GENERADO**
-
-7. **Narrativo**: Énfasis en la historia y el relato
+6. **Narrativo**: Énfasis en la historia y el movimiento dramático del relato
    - Tono: Conversacional, envolvente
    - Para: Audiencias que responden a historias
 
 ### REQUISITOS CRÍTICOS:
 
-✅ El primer enfoque SIEMPRE debe ser expositivo (obligatorio)
-✅ Genera 3-4 vistas previas adicionales BIEN DIFERENCIADAS
+✅ Genera 4-5 vistas previas de formas BIEN DIFERENCIADAS
 ✅ Cada vista previa debe dar suficiente información para tomar una decisión informada
-✅ Todos deben ser FIELES al texto bíblico
-✅ Explica POR QUÉ recomiendas ese enfoque para este pasaje
+✅ TODOS deben ser expositivos: el texto gobierna el contenido
+✅ Explica POR QUÉ cada forma funciona con este pasaje
 
 ### PARA CADA VISTA PREVIA, DEFINE ÚNICAMENTE:
 
-1. **Tipo**: pastoral, teológico, apologético, evangelístico, expositivo, o narrativo
+1. **Tipo (forma)**: temático, pastoral, teológico, apologético, evangelístico, o narrativo
 2. **Dirección**: La orientación específica (ej: "Consolar en la tribulación")
 3. **Tono**: exhortativo, de ánimo, didáctico, frontal, académico, conversacional, o persuasivo
 4. **Propósito**: El objetivo principal del sermón
 5. **Estructura Sugerida**: DESCRIPCIÓN BREVE del flujo (NO puntos completos)
    - Ejemplo: "Introducción empática → Verdades doctrinales → Aplicación esperanzadora"
 6. **Audiencia Objetivo**: Para quién es más apropiado
-7. **Razón (Rationale)**: Por qué este enfoque funciona con este pasaje
+7. **Razón (Rationale)**: Por qué esta forma funciona con este pasaje
 
-IMPORTANTE: 
-- El primer enfoque debe ser expositivo (id: "expositivo-1")
-- Los demás enfoques deben ser DISTINTOS entre sí, no variaciones menores
+IMPORTANTE:
+- Los enfoques deben ser DISTINTOS entre sí, no variaciones menores
 - NO incluyas proposición homilética ni bosquejo detallado
 - Esta es una fase de SELECCIÓN, no de desarrollo completo
 `.trim();
@@ -250,18 +246,17 @@ NOTA: Considera estas preferencias al generar los enfoques, pero prioriza siempr
     private buildOutputFormatSection(): string {
         const exampleJson = {
             homileticalApproaches: [
-                // 🚨 PRIMER ENFOQUE SIEMPRE EXPOSITIVO
+                // Formas variadas, TODAS expositivas (el texto gobierna el contenido)
                 {
-                    id: "expositivo-1",
-                    type: "expositivo",
-                    direction: "Análisis sistemático del himno cristológico",
+                    id: "temático-1",
+                    type: "temático",
+                    direction: "La humildad de Cristo como patrón del creyente",
                     tone: "didáctico",
-                    purpose: "Profundizar en la naturaleza de Cristo y la humildad cristiana",
-                    suggestedStructure: "Contexto del pasaje → Análisis verso por verso → Aplicación doctrinal progresiva",
+                    purpose: "Desarrollar el tema de la humildad dejando que el himno cristológico lo defina",
+                    suggestedStructure: "Contexto del pasaje → El tema en el texto → Textos paralelos que lo ordenan → Aplicación",
                     targetAudience: "Congregación general que busca estudio profundo",
-                    rationale: "Este enfoque permite desentrañar la riqueza teológica del himno cristológico de manera ordenada y profunda..."
+                    rationale: "El himno cristológico define y ordena el tema de la humildad desde el texto mismo, sin imponerlo..."
                 },
-                // Otros 3-4 enfoques variados
                 {
                     id: "pastoral-1",
                     type: "pastoral",
@@ -295,10 +290,11 @@ Estructura esperada:
 ${JSON.stringify(exampleJson, null, 2)}
 
 INSTRUCCIONES CRÍTICAS:
-- 🚨 EL PRIMER ENFOQUE DEBE SER SIEMPRE EXPOSITIVO (id: "expositivo-1")
+- Todas las formas deben ser expositivas (el texto gobierna el contenido); NO generes
+  un enfoque "expositivo" — expositivo no es una forma
 - Retorna SOLO el objeto JSON, sin texto adicional
 - NO uses bloques de código markdown
-- Incluye 4-5 vistas previas completas (1 expositivo + 3-4 otros)
+- Incluye 4-5 vistas previas completas de formas variadas
 - NO incluyas "homileticalProposition", "contemporaryApplication" ni "outline" detallado
 - Solo incluye los 7 campos especificados para cada vista previa
 - Todos los campos son requeridos

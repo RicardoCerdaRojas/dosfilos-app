@@ -10,7 +10,7 @@ const baseAnalysis: HomileticalAnalysis = {
         exegeticalProposition: 'ep',
         pastoralInsights: [],
     },
-    homileticalApproach: 'expository',
+    homileticalApproach: 'temático',
     contemporaryApplication: [],
     homileticalProposition: 'hp',
     outline: { mainPoints: [{ title: 'I', description: 'd', scriptureReferences: [] }] },
