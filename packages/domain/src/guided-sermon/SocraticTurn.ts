@@ -53,6 +53,14 @@ export interface TurnContext {
      * policies y el dispatch no aplican nada del perfil).
      */
     enforceCoverage?: boolean;
+    /**
+     * Redacción v2 Fase 1 (§4.4) — enforce del override de género (paso 2).
+     * SEPARADO de `enforceCoverage` a propósito (adjudicación y datos distintos;
+     * flag propio `genre_override_enforce`, decisión diferida al enforce). Gatea
+     * SOLO el dispatch de confront de género. Ausente/false ⇒ inerte (el flujo
+     * clásico intacto). Sin cablear en Fase 1 ⇒ el dispatch entra dormido.
+     */
+    enforceGenreOverride?: boolean;
 }
 
 /**

@@ -15,18 +15,23 @@
  * sampled, in shadow first. The judge SOLO judges.
  */
 
-import type { MisreadingJudgment } from '../services/misreadingTurn';
-
 /**
- * The genre-engagement verdict. Structurally identical to `MisreadingJudgment`
- * so it flows straight into `decideMisreadingTurn`; aliased for readability at
- * call sites that reason about genre, not misreading.
+ * The genre-engagement verdict. Own named type (NOT an alias of
+ * `MisreadingJudgment`) so it can diverge without a refactor — same discipline
+ * as the sibling port (one responsibility per judge). It coincides in shape
+ * with `MisreadingJudgment` TODAY, so a value of this type flows straight into
+ * `decideMisreadingTurn` by structural typing; if genre judgment ever needs a
+ * field misreading lacks, add it here and neither type drags the other.
  * - `substantive`: passed the minimum-substance gate (worked the discernment).
  * - `engagedAnchor`: engaged the proposed genre's reasoning, even if he differs.
  * - `contradictsAnchor`: his reading treats the pericope as a different genre
  *   than the one proposed (an override, not necessarily an error).
  */
-export type GenreEngagementJudgment = MisreadingJudgment;
+export interface GenreEngagementJudgment {
+    substantive: boolean;
+    engagedAnchor: boolean;
+    contradictsAnchor: boolean;
+}
 
 export interface GenreEngagementInput {
     /** What the pastor wrote in the turn. */

@@ -64,3 +64,12 @@ export function decideMisreadingTurn(
 export function misreadingOutcomeAdvances(outcome: MisreadingTurnOutcome): boolean {
     return outcome === 'accept' || outcome === 'accept-override';
 }
+
+/**
+ * Redacción v2 Fase 1 (§4.4) — tope de re-confront del override de género.
+ * Reusa la misma máquina de tres estados (`decideMisreadingTurn`): tras agotar
+ * el tope, el pastor que sostiene otro género se libera vía override floor con
+ * su elección registrada. Dato editable (no hardcode en el use case). =1 espeja
+ * `RECONFRONT_CAPS['common-misreading']`.
+ */
+export const GENRE_OVERRIDE_RECONFRONT_CAP = 1;

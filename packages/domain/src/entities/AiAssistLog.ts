@@ -79,7 +79,16 @@ export type AiAssistType =
      * REGISTRADA. Evento de CONDUCCIÓN pedagógica in-step — NO un override del
      * publish-gate (Motor B), que se mantiene separado.
      */
-    | 'coverageMisreadingOverride';
+    | 'coverageMisreadingOverride'
+    /**
+     * Redacción v2 Fase 1 (§4.4) — el pastor sostuvo su lectura de género tras
+     * el re-confront del override socrático (paso 2): trabajó el discernimiento,
+     * agotó el tope y se le liberó al flujo normal con la discrepancia
+     * REGISTRADA (override floor). Evento de CONDUCCIÓN in-step — mide, no
+     * bloquea. Espeja `coverageMisreadingOverride` para el discernimiento de
+     * género en vez de la lectura errónea.
+     */
+    | 'genreOverride';
 
 export interface AiAssistLog {
     id: string;

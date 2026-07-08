@@ -24,6 +24,7 @@ import {
     type GuidedSermonSession,
     type IAIChatRepository,
     type ICoverageEngagementJudge,
+    type IGenreEngagementJudge,
     type ILlmClient,
     type IPastoralSeedRepository,
     type IStepPolicyRegistry,
@@ -37,6 +38,7 @@ import {
     decideMisreadingTurn,
     featuresForStep,
     RECONFRONT_CAPS,
+    GENRE_OVERRIDE_RECONFRONT_CAP,
     MISREADING_MIN_SUBSTANCE_CHARS,
     buildCoverageContract,
     buildCoverageStepTexts,
@@ -53,6 +55,12 @@ export interface RunSocraticTurnInput {
      * errónea. Inerte hasta el commit del dispatch (D commit 3).
      */
     enforceCoverage?: boolean;
+    /**
+     * Redacción v2 Fase 1 (§4.4) — enforce del override de género (paso 2). Lo
+     * pasará el web desde el flag propio `genre_override_enforce` (A4). SEPARADO
+     * de `enforceCoverage`. Ausente/false ⇒ el dispatch de género es no-op.
+     */
+    enforceGenreOverride?: boolean;
 }
 
 /** Heuristic confidence threshold for short-circuiting to a confrontation. */
@@ -124,6 +132,25 @@ function buildMisreadingConfront(
     };
 }
 
+/**
+ * Redacción v2 Fase 1 (§4.4) — confront del override de género (paso 2). Igual
+ * que `buildMisreadingConfront`: `kind:'confront'` ⇒ el dispatch lo mapea a
+ * retry. NO da el género; pregunta socráticamente qué hace el pasaje. La
+ * redacción cambia por `engagedAnchor` (trabajó el discernimiento vs no lo tocó).
+ */
+function buildGenreConfront(proposedGenre: string, engagedAnchor: boolean): SocraticTurnOutput {
+    const reply = engagedAnchor
+        ? `Trabajaste el texto, pero lo estás leyendo como un género distinto al que el pasaje sugiere (${proposedGenre}). ¿Qué en la perícopa gobierna su género?`
+        : `Tu lectura trata el pasaje como otro género sin abordar por qué se lee como ${proposedGenre}. ¿Qué hace el pasaje —argumenta, narra, canta/ora?`;
+    return {
+        kind: 'confront',
+        errorLabel: 'genre-override',
+        agentReply: reply,
+        data: [`El sistema propone leerlo como ${proposedGenre}.`],
+        questions: ['¿Cuál género gobierna tu perícopa, y qué en el texto lo decide?'],
+    };
+}
+
 export class RunSocraticTurnUseCase {
     constructor(
         private readonly chatRepo: IAIChatRepository,
@@ -136,6 +163,13 @@ export class RunSocraticTurnUseCase {
          * 3); aquí solo se inyecta.
          */
         private readonly coverageJudge?: ICoverageEngagementJudge,
+        /**
+         * Redacción v2 Fase 1 (§4.4) — juez de engagement de género (opcional).
+         * Ausente ⇒ el confront de override de género no corre (no-op). Lo
+         * consume `maybeGenreConfront`; aquí solo se inyecta. Hermano del
+         * coverageJudge (una responsabilidad por juez).
+         */
+        private readonly genreJudge?: IGenreEngagementJudge,
     ) {}
 
     async execute(input: RunSocraticTurnInput): Promise<SocraticTurnResult> {
@@ -169,6 +203,9 @@ export class RunSocraticTurnUseCase {
             // ADR-035 enforce (D) — gatea nudges + confront del perfil. Inerte
             // hasta el dispatch (commit 3).
             enforceCoverage: input.enforceCoverage === true,
+            // Redacción v2 (§4.4) — enforce del override de género (paso 2),
+            // SEPARADO. Inerte hasta que el web lo cablee (A4).
+            enforceGenreOverride: input.enforceGenreOverride === true,
         };
 
         // Persist the pastor's user message FIRST so it always appears in chat
@@ -191,6 +228,14 @@ export class RunSocraticTurnUseCase {
             ctx,
             input.pastorMessage,
         );
+
+        // 0.5. Redacción v2 (§4.4) — confront del override de género, GATED
+        // (enforceGenreOverride + juez), SOLO en el paso 2. Mismo molde: re-confront
+        // ⇒ output confront (→ retry); accept-override ⇒ registra + cae al flujo
+        // normal; accept/gate-minimo ⇒ flujo normal. Inerte sin enforce/juez.
+        if (!output) {
+            output = await this.maybeGenreConfront(seed, gss.currentStep, ctx, input.pastorMessage);
+        }
 
         // 1. Heuristic method-error short-circuit. Cheap, no LLM call.
         const heuristicError = output ? null : policy.detectMethodError(input.pastorMessage, ctx);
@@ -404,6 +449,53 @@ export class RunSocraticTurnUseCase {
                 userId: seed.userId,
                 stepKey: currentStep,
                 assistType: 'coverageMisreadingOverride',
+                outputWasEditedByUser: false,
+            });
+        }
+        // accept / accept-override(registrado) / gate-minimo → flujo normal.
+        return undefined;
+    }
+
+    /**
+     * Redacción v2 Fase 1 (§4.4) — dispatch del override de género (paso 2).
+     * Hermano de `maybeMisreadingConfront`, mismo molde de tres estados con
+     * `decideMisreadingTurn` REUSADO: re-confront ⇒ output confront (→ retry);
+     * accept-override ⇒ registra la discrepancia (override floor) y devuelve
+     * `undefined` (cae al flujo normal, no encierra); accept/gate-minimo ⇒
+     * `undefined`. No-op fuera del paso 2, sin enforce, sin juez, o sin género
+     * propuesto. Juzga ENGAGEMENT del discernimiento, no corrección: un pastor
+     * que trabajó y sostiene otro género se acepta, su elección registrada.
+     */
+    private async maybeGenreConfront(
+        seed: PastoralSeed,
+        currentStep: PastoralSeedStepKey,
+        ctx: TurnContext,
+        pastorMessage: string,
+    ): Promise<SocraticTurnOutput | undefined> {
+        if (currentStep !== 'contextGenre') return undefined;
+        if (!ctx.enforceGenreOverride || !this.genreJudge) return undefined;
+        const proposedGenre = ctx.genre ?? '';
+        if (!proposedGenre) return undefined; // nada propuesto → nada que confrontar
+
+        const judgment = await this.genreJudge.judge({
+            pastorMessage,
+            proposedGenre,
+            proposalRationale: `El sistema infirió "${proposedGenre}" por el libro del pasaje.`,
+            minSubstanceChars: MISREADING_MIN_SUBSTANCE_CHARS,
+        });
+        const outcome = decideMisreadingTurn(judgment, ctx.attemptIndex, GENRE_OVERRIDE_RECONFRONT_CAP);
+
+        if (outcome === 're-confront') {
+            return buildGenreConfront(proposedGenre, judgment.engagedAnchor);
+        }
+        if (outcome === 'accept-override') {
+            // Override floor: sostuvo su género tras agotar el tope → libera al
+            // flujo normal con la discrepancia REGISTRADA (no encierra). Evento
+            // de conducción in-step; mide, no bloquea.
+            await this.seedRepo.appendAiAssistLog(seed.id, {
+                userId: seed.userId,
+                stepKey: currentStep,
+                assistType: 'genreOverride',
                 outputWasEditedByUser: false,
             });
         }
