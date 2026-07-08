@@ -127,3 +127,40 @@ describe('RunSocraticTurnUseCase — override de género (A2, juez fake)', () =>
         expect(res.output.kind).toBe('orient');
     });
 });
+
+describe('RunSocraticTurnUseCase — oportunidad de sombra de género (genreShadow)', () => {
+    it('paso 2 + enforce OFF + mensaje sustantivo → expone genreShadow (dato puro, sin juez)', async () => {
+        const seed = makeSeed();
+        const { chatRepo, seedRepo } = makeRepos(seed, 'contextGenre', { contextGenre: 0 });
+        const uc = new RunSocraticTurnUseCase(chatRepo, seedRepo, orientLlm, registry);
+        const res = await uc.execute({ ...baseInput, enforceGenreOverride: false });
+        expect(res.genreShadow).toBeDefined();
+        expect(res.genreShadow?.proposedGenre).toBe('epistle');
+        expect(res.genreShadow?.seedId).toBe('seed-1');
+        expect(res.genreShadow?.criteria.length).toBeGreaterThan(0);
+    });
+
+    it('enforce ON → NO expone genreShadow (el dispatch ya juzgó, sin doble medición)', async () => {
+        const seed = makeSeed();
+        const { chatRepo, seedRepo } = makeRepos(seed, 'contextGenre', { contextGenre: 0 });
+        const uc = new RunSocraticTurnUseCase(chatRepo, seedRepo, orientLlm, registry, undefined, fakeGenreJudge(kept));
+        const res = await uc.execute({ ...baseInput, enforceGenreOverride: true });
+        expect(res.genreShadow).toBeUndefined();
+    });
+
+    it('fuera del paso 2 → NO expone genreShadow', async () => {
+        const seed = makeSeed();
+        const { chatRepo, seedRepo } = makeRepos(seed, 'structuralAnalysis', { structuralAnalysis: 0 });
+        const uc = new RunSocraticTurnUseCase(chatRepo, seedRepo, orientLlm, registry);
+        const res = await uc.execute({ ...baseInput, enforceGenreOverride: false });
+        expect(res.genreShadow).toBeUndefined();
+    });
+
+    it('mensaje demasiado corto → NO expone genreShadow', async () => {
+        const seed = makeSeed();
+        const { chatRepo, seedRepo } = makeRepos(seed, 'contextGenre', { contextGenre: 0 });
+        const uc = new RunSocraticTurnUseCase(chatRepo, seedRepo, orientLlm, registry);
+        const res = await uc.execute({ userId: 'u1', sessionId: 's1', pastorMessage: 'corto', enforceGenreOverride: false });
+        expect(res.genreShadow).toBeUndefined();
+    });
+});

@@ -233,6 +233,16 @@ export const FEATURE_FLAG_NAMES = [
      * validador. Requiere `pastoral_fidelity_flow`.
      */
     'sermon_draft_shadow',
+    /**
+     * Redacción v2 Fase 1 (§4.4) enforce — gatea la CONFRONTACIÓN del override de
+     * género socrático en el paso 2 (el dispatch `maybeGenreConfront`). SEPARADO
+     * del enforce de cobertura a propósito: adjudicación y datos distintos
+     * (`genreOverride` en sombra). El juez de engagement de género + la medición
+     * en sombra corren bajo `passage_profile`; este flag SOLO enciende que el
+     * sistema confronte al pastor. Requiere `passage_profile`. Default off → mide
+     * el discernimiento en sombra pero no confronta (shadow-first).
+     */
+    'genre_override_enforce',
 ] as const;
 
 export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];
@@ -264,6 +274,9 @@ export const FEATURE_FLAG_PREREQUISITES: Record<FeatureFlagName, readonly Featur
     // (baranda anti-fail-open horneada en la topología).
     passage_profile_enforce: ['passage_profile'],
     sermon_draft_shadow: ['pastoral_fidelity_flow'],
+    // Enforce del override de género cuelga de la sombra del perfil (misma
+    // baranda anti-fail-open: no confronta sin medir antes en sombra).
+    genre_override_enforce: ['passage_profile'],
 };
 
 /**

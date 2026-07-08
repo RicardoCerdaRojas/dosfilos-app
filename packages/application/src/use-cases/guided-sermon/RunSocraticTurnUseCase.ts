@@ -387,12 +387,31 @@ export class RunSocraticTurnUseCase {
             );
         }
 
+        // 9. Redacción v2 (§4.4) — oportunidad de medición en sombra del override
+        // de género: DATO PURO (sin LLM). Solo en el paso 2, con género propuesto
+        // y mensaje sustantivo, y SOLO con enforce OFF (si on, el dispatch ya
+        // juzgó). El web decide muestrear + registrar el verdict, fire-and-forget.
+        const proposedGenre = ctx.genre ?? '';
+        const genreShadow =
+            gss.currentStep === 'contextGenre' &&
+            !ctx.enforceGenreOverride &&
+            proposedGenre &&
+            input.pastorMessage.trim().length >= MISREADING_MIN_SUBSTANCE_CHARS
+                ? {
+                      seedId: seed.id,
+                      passage: gss.passage,
+                      proposedGenre,
+                      criteria: genreDiscernmentCriteriaFor(proposedGenre),
+                  }
+                : undefined;
+
         return {
             output,
             nextStep: nextState.currentStep,
             sermonReady,
             stepAttempts: nextState.stepAttempts,
             ...(coverageReport ? { coverageReport } : {}),
+            ...(genreShadow ? { genreShadow } : {}),
         };
     }
 
