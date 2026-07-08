@@ -26,7 +26,7 @@ export interface SubmitWordStudiesArgs {
     affirmationText: string;
 }
 import { useFirebase } from '@/context/firebase-context';
-import { usePassageProfileGate, usePassageProfileEnforceGate, useAnchorFidelityEnforceGate } from '@/hooks/usePastoralFidelityGate';
+import { usePassageProfileGate, usePassageProfileEnforceGate, useAnchorFidelityEnforceGate, useGenreOverrideEnforceGate } from '@/hooks/usePastoralFidelityGate';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import { useTranslation } from '@/i18n';
 
@@ -117,6 +117,53 @@ async function runPassageProfileShadow(
     }
 }
 
+/**
+ * Redacción v2 Fase 1 (§4.4) — muestreo determinista de la medición en sombra
+ * del override de género (~1 de 4 turnos elegibles). Determinista sobre el seedId
+ * para no encarecer cada turno y dar cobertura estable por estudio.
+ */
+const GENRE_SHADOW_SAMPLE_1_IN = 4;
+function shouldSampleGenreShadow(seedId: string): boolean {
+    let h = 0;
+    for (let i = 0; i < seedId.length; i++) h = (h * 31 + seedId.charCodeAt(i)) | 0;
+    return Math.abs(h) % GENRE_SHADOW_SAMPLE_1_IN === 0;
+}
+
+/**
+ * Redacción v2 Fase 1 (§4.4) — medición en sombra del override de género.
+ * Fire-and-forget, non-blocking, MUESTREADO: corre el juez de engagement de
+ * género (Sonnet) SOLO para medir cómo adjudica en vivo, y registra el `verdict`
+ * (confirmed | discrepancy | unclear) SIN confrontar al pastor. El juez es
+ * fail-closed a unclear; una caída nunca afecta el turno.
+ */
+async function runGenreOverrideShadow(
+    genreShadow: NonNullable<SocraticTurnResult['genreShadow']>,
+    pastorMessage: string,
+): Promise<void> {
+    try {
+        const fns = getFunctions();
+        const res = await httpsCallable(fns, 'evaluateGenreEngagement')({
+            pastorMessage,
+            proposedGenre: genreShadow.proposedGenre,
+            proposalRationale: 'Género inferido por el libro del pasaje.',
+            criteria: genreShadow.criteria,
+        });
+        const judgment = (res.data as { judgment?: { verdict?: string; contradictsAnchor?: boolean } })?.judgment;
+        if (!judgment) return;
+        await httpsCallable(fns, 'recordPassageProfileShadow')({
+            seedId: genreShadow.seedId,
+            passage: genreShadow.passage,
+            genreOverride: {
+                proposedGenre: genreShadow.proposedGenre,
+                verdict: judgment.verdict,
+                sustained: judgment.contradictsAnchor === true,
+            },
+        });
+    } catch (err) {
+        console.warn('[useGuidedSermon] genre override shadow failed (non-blocking)', err);
+    }
+}
+
 interface UseGuidedSermonResult {
     /** True while a turn / activation is in flight. */
     isProcessing: boolean;
@@ -150,6 +197,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
     const passageProfileGate = usePassageProfileGate();
     const passageProfileEnforceGate = usePassageProfileEnforceGate();
     const anchorFidelityEnforceGate = useAnchorFidelityEnforceGate();
+    const genreOverrideEnforceGate = useGenreOverrideEnforceGate();
     const [isProcessing, setIsProcessing] = useState(false);
 
     // The guided agent mutates the chat session server-side (welcome message,
@@ -242,9 +290,19 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                     // passage_profile_enforce on. Off ⇒ clásico. El dispatch que
                     // lo consume llega en el commit 3.
                     enforceCoverage: passageProfileEnforceGate.enabled,
+                    // Redacción v2 (§4.4) — confronta el override de género solo con
+                    // genre_override_enforce on. Off ⇒ mide en sombra, no confronta.
+                    enforceGenreOverride: genreOverrideEnforceGate.enabled,
                 });
                 refreshSession();
                 surfaceCoverageNudge(result?.coverageReport);
+                // Redacción v2 (§4.4) — medición en sombra del override de género:
+                // muestreada, fire-and-forget, non-blocking. Solo con la sombra on
+                // (passage_profile) y cuando el use case expuso la oportunidad
+                // (paso 2, enforce off). Nunca demora ni rompe el turno.
+                if (result?.genreShadow && passageProfileGate.enabled && shouldSampleGenreShadow(result.genreShadow.seedId)) {
+                    void runGenreOverrideShadow(result.genreShadow, pastorMessage);
+                }
                 return result;
             } catch (err) {
                 console.error('[useGuidedSermon] runTurn failed', err);
@@ -257,7 +315,16 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                 setIsProcessing(false);
             }
         },
-        [user?.uid, t, refreshSession, queryClient, passageProfileEnforceGate.enabled, surfaceCoverageNudge],
+        [
+            user?.uid,
+            t,
+            refreshSession,
+            queryClient,
+            passageProfileEnforceGate.enabled,
+            genreOverrideEnforceGate.enabled,
+            passageProfileGate.enabled,
+            surfaceCoverageNudge,
+        ],
     );
 
     const submitInsight = useCallback(

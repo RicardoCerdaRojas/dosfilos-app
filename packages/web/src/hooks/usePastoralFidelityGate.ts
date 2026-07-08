@@ -131,6 +131,24 @@ export function useAnchorFidelityEnforceGate(): { enabled: boolean; loading: boo
     };
 }
 
+/**
+ * Redacción v2 Fase 1 (§4.4) enforce-gate: enciende la CONFRONTACIÓN del override
+ * de género socrático (paso 2) SOLO con los tres flags on: pastoral_fidelity_flow
+ * + passage_profile (sombra) + genre_override_enforce. Separado del enforce de
+ * cobertura a propósito (adjudicación y datos distintos). Default off → el
+ * sistema MIDE el discernimiento de género en sombra pero no confronta
+ * (shadow-first).
+ */
+export function useGenreOverrideEnforceGate(): { enabled: boolean; loading: boolean } {
+    const parent = useFeatureFlag('pastoral_fidelity_flow');
+    const shadow = useFeatureFlag('passage_profile');
+    const enforce = useFeatureFlag('genre_override_enforce');
+    return {
+        enabled: parent.enabled && shadow.enabled && enforce.enabled,
+        loading: parent.loading || shadow.loading || enforce.loading,
+    };
+}
+
 export type PastoralFidelityGateReason =
     | 'loading'
     | 'flag-disabled'

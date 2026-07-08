@@ -18,6 +18,7 @@ import type {
     GuidedSermonSession,
     IAIChatRepository,
     ICoverageEngagementJudge,
+    IGenreEngagementJudge,
     ILlmClient,
     IPastoralSeedRepository,
     IStepPolicyRegistry,
@@ -56,6 +57,7 @@ import {
 } from '../use-cases/guided-sermon/SubmitGuidedWordStudiesUseCase';
 import { CallableLlmClient } from './CallableLlmClient';
 import { CallableCoverageEngagementJudge } from './CallableCoverageEngagementJudge';
+import { CallableGenreEngagementJudge } from './CallableGenreEngagementJudge';
 
 export interface GuidedSermonServiceDeps {
     chatRepo: IAIChatRepository;
@@ -65,6 +67,9 @@ export interface GuidedSermonServiceDeps {
     /** ADR-035 CA1 (D) — juez de engagement opcional. Ausente ⇒ confront de
      * lectura errónea no corre. */
     coverageJudge?: ICoverageEngagementJudge;
+    /** Redacción v2 Fase 1 (§4.4) — juez de engagement de género opcional.
+     * Ausente ⇒ el confront del override de género no corre. */
+    genreJudge?: IGenreEngagementJudge;
 }
 
 export interface ActivateGuidedSermonResult {
@@ -91,6 +96,7 @@ export class GuidedSermonService {
             deps.llmClient,
             deps.registry,
             deps.coverageJudge,
+            deps.genreJudge,
         );
         this.submitInsightUC = new SubmitGuidedInsightUseCase(deps.chatRepo, deps.seedRepo);
         this.submitWordStudiesUC = new SubmitGuidedWordStudiesUseCase(deps.chatRepo, deps.seedRepo);
@@ -142,4 +148,5 @@ export const guidedSermonService = new GuidedSermonService({
     llmClient: new CallableLlmClient(),
     registry: defaultStepPolicyRegistry,
     coverageJudge: new CallableCoverageEngagementJudge(),
+    genreJudge: new CallableGenreEngagementJudge(),
 });
