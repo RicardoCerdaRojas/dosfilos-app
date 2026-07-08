@@ -36,6 +36,30 @@ function str(v: unknown): string {
     return String(v ?? '').trim();
 }
 
+type GenreProvenance = 'aiProposed' | 'userConfirmed' | 'userOverride';
+type GenreVerdict = 'confirmed' | 'discrepancy' | 'unclear';
+
+/**
+ * Redacción v2 Fase 1 (§4.4) A3 — sanitiza la señal del override de género.
+ * FAIL-CLOSED: provenance/verdict desconocidos caen a los valores seguros
+ * (aiProposed / unclear) para no inflar confirmaciones ni discrepancias.
+ */
+function sanitizeGenreOverride(raw: unknown): {
+    proposedGenre: string;
+    provenance: GenreProvenance;
+    verdict: GenreVerdict;
+    sustained: boolean;
+} {
+    const o = (raw ?? {}) as Record<string, unknown>;
+    const provenanceIn = str(o.provenance);
+    const verdictIn = str(o.verdict);
+    const provenance: GenreProvenance =
+        provenanceIn === 'userConfirmed' || provenanceIn === 'userOverride' ? provenanceIn : 'aiProposed';
+    const verdict: GenreVerdict =
+        verdictIn === 'confirmed' || verdictIn === 'discrepancy' ? verdictIn : 'unclear';
+    return { proposedGenre: str(o.proposedGenre), provenance, verdict, sustained: o.sustained === true };
+}
+
 /** ¿La feature trae ancla? Espeja `isFeatureAnchored` del dominio (corte 1). */
 function featureHasAnchor(f: FeatureInput): boolean {
     if (f?.typeKey === 'ot-allusion') return Boolean(str(f.anchor?.reference));
@@ -66,6 +90,30 @@ export const recordPassageProfileShadow = onCall(
         if (!seedId) throw new HttpsError('invalid-argument', 'seedId is required');
         if (!passage) throw new HttpsError('invalid-argument', 'passage is required');
 
+        const segmentEarly = await deriveSegment(userId);
+        const ttlExpiresAt = Timestamp.fromMillis(Date.now() + SHADOW_TTL_DAYS * 24 * 60 * 60 * 1000);
+
+        // Redacción v2 Fase 1 (§4.4) A3 — señal del override de género. Es un
+        // evento SEPARADO (paso 2), no la corrida del perfil (inicio del estudio):
+        // se registra en un doc propio con signalType 'genreOverride' para NO
+        // contaminar las métricas de features/hueco del perfil.
+        if (data.genreOverride) {
+            await admin
+                .firestore()
+                .collection('passageProfileShadow')
+                .add({
+                    userId,
+                    segment: segmentEarly,
+                    seedId,
+                    passage,
+                    signalType: 'genreOverride' as const,
+                    genreOverride: sanitizeGenreOverride(data.genreOverride),
+                    createdAt: FieldValue.serverTimestamp(),
+                    expiresAt: ttlExpiresAt,
+                });
+            return { recorded: true };
+        }
+
         const genres = Array.isArray(data.genres) ? data.genres.map(str).filter(Boolean).slice(0, 10) : [];
         const features: FeatureInput[] = Array.isArray(data.features) ? (data.features as FeatureInput[]).slice(0, 50) : [];
         const movementCount = Math.max(0, Math.round(Number(data.movementCount ?? 0)) || 0);
@@ -83,8 +131,8 @@ export const recordPassageProfileShadow = onCall(
         // candidato a catálogo (telemetría de huecos, plan §5).
         const isGap = featureCount === 0;
 
-        const expiresAt = Timestamp.fromMillis(Date.now() + SHADOW_TTL_DAYS * 24 * 60 * 60 * 1000);
-        const segment = await deriveSegment(userId);
+        const expiresAt = ttlExpiresAt;
+        const segment = segmentEarly;
 
         await admin
             .firestore()
@@ -94,6 +142,7 @@ export const recordPassageProfileShadow = onCall(
                 segment,
                 seedId,
                 passage,
+                signalType: 'profile' as const,
                 genres,
                 schemaVersion: Math.max(0, Math.round(Number(data.schemaVersion ?? 0)) || 0),
                 movementCount,
