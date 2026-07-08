@@ -54,6 +54,7 @@ export * from './ports/IFidelityEvaluator'; // 🌱 Pastoral Fidelity Phase 3 PR
 export * from './ports/ICoverageEngagementJudge'; // 🌱 Pastoral Fidelity ADR-035 CA1 — engagement judge port (D)
 export * from './ports/IGenreEngagementJudge'; // 🌱 Pastoral Fidelity Redacción v2 Fase 1 (§4.4) — genre-engagement judge port (A1)
 export * from './guided-sermon/genreDiscernmentCriteria'; // 🌱 Pastoral Fidelity Redacción v2 Fase 1 (§4.4) — structured genre-discernment vara (A3)
+export * from './guided-sermon/structuralSufficiency'; // 🌱 Pastoral Fidelity Redacción v2 Fase 1 (§4.5) — deterministic step-3 structural-sufficiency vara (B1)
 // 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent
 export * from './guided-sermon/SocraticTurn';
 export * from './guided-sermon/GuidedSermonSession';
