@@ -37,6 +37,7 @@ import {
     type CoverageReport,
     decideMisreadingTurn,
     featuresForStep,
+    genreDiscernmentCriteriaFor,
     RECONFRONT_CAPS,
     GENRE_OVERRIDE_RECONFRONT_CAP,
     MISREADING_MIN_SUBSTANCE_CHARS,
@@ -481,6 +482,9 @@ export class RunSocraticTurnUseCase {
             pastorMessage,
             proposedGenre,
             proposalRationale: `El sistema infirió "${proposedGenre}" por el libro del pasaje.`,
+            // Disciplina 036 — el juez adjudica contra la vara estructurada del
+            // género propuesto, no un juicio libre.
+            criteria: genreDiscernmentCriteriaFor(proposedGenre),
             minSubstanceChars: MISREADING_MIN_SUBSTANCE_CHARS,
         });
         const outcome = decideMisreadingTurn(judgment, ctx.attemptIndex, GENRE_OVERRIDE_RECONFRONT_CAP);

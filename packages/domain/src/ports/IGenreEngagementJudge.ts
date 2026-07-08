@@ -40,6 +40,13 @@ export interface GenreEngagementInput {
     proposedGenre: string;
     /** The visible rationale for the proposal (why the system reads it this way). */
     proposalRationale: string;
+    /**
+     * The structured discernment marks of the proposed genre — the VARA the
+     * judge adjudicates against (disciplina 036, no free judgment). Sourced from
+     * `GENRE_DISCERNMENT_CRITERIA`; empty when the genre has no catalog entry
+     * (the adapter then fail-closes to `unclear`).
+     */
+    criteria: string;
     /** Minimum-substance threshold of the step (GATE-MÍNIMO). */
     minSubstanceChars?: number;
 }
