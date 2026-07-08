@@ -243,6 +243,15 @@ export const FEATURE_FLAG_NAMES = [
      * el discernimiento en sombra pero no confronta (shadow-first).
      */
     'genre_override_enforce',
+    /**
+     * Redacción v2 Fase 1 (§4.5) — ayuda estructural sensible al género en el
+     * paso 3 (guía por género confirmado + ejemplos curados). Andamiaje FORMATIVO
+     * (no juicio, no shadow/enforce), pero el texto pastoral-facing (`guidance`)
+     * requiere revisión del fundador antes de embarcar live → detrás de este flag,
+     * default off. Requiere `pastoral_fidelity_flow`. Off ⇒ prompt clásico del
+     * paso 3.
+     */
+    'step3_genre_help',
 ] as const;
 
 export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];
@@ -277,6 +286,12 @@ export const FEATURE_FLAG_PREREQUISITES: Record<FeatureFlagName, readonly Featur
     // Enforce del override de género cuelga de la sombra del perfil (misma
     // baranda anti-fail-open: no confronta sin medir antes en sombra).
     genre_override_enforce: ['passage_profile'],
+    // La ayuda del paso 3 ramifica por el GÉNERO CONFIRMADO en el paso 2, que
+    // produce la maquinaria de PR1 detrás de `passage_profile`. Prereq
+    // passage_profile (no el parent directo): la cadena EXPRESA la dependencia
+    // funcional — no se puede encender la ayuda con el subsistema de género
+    // apagado. Transitivo → passage_profile → pastoral_fidelity_flow.
+    step3_genre_help: ['passage_profile'],
 };
 
 /**

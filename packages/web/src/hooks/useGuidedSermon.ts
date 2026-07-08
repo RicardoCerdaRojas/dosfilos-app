@@ -26,7 +26,7 @@ export interface SubmitWordStudiesArgs {
     affirmationText: string;
 }
 import { useFirebase } from '@/context/firebase-context';
-import { usePassageProfileGate, usePassageProfileEnforceGate, useAnchorFidelityEnforceGate, useGenreOverrideEnforceGate } from '@/hooks/usePastoralFidelityGate';
+import { usePassageProfileGate, usePassageProfileEnforceGate, useAnchorFidelityEnforceGate, useGenreOverrideEnforceGate, useStep3GenreHelpGate } from '@/hooks/usePastoralFidelityGate';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import { useTranslation } from '@/i18n';
 
@@ -198,6 +198,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
     const passageProfileEnforceGate = usePassageProfileEnforceGate();
     const anchorFidelityEnforceGate = useAnchorFidelityEnforceGate();
     const genreOverrideEnforceGate = useGenreOverrideEnforceGate();
+    const step3GenreHelpGate = useStep3GenreHelpGate();
     const [isProcessing, setIsProcessing] = useState(false);
 
     // The guided agent mutates the chat session server-side (welcome message,
@@ -293,6 +294,10 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                     // Redacción v2 (§4.4) — confronta el override de género solo con
                     // genre_override_enforce on. Off ⇒ mide en sombra, no confronta.
                     enforceGenreOverride: genreOverrideEnforceGate.enabled,
+                    // Redacción v2 (§4.5) — ayuda estructural sensible al género en el
+                    // paso 3, solo con step3_genre_help on (guidance revisado). Off ⇒
+                    // prompt clásico.
+                    enableGenreStructuralHelp: step3GenreHelpGate.enabled,
                 });
                 refreshSession();
                 surfaceCoverageNudge(result?.coverageReport);
@@ -322,6 +327,7 @@ export function useGuidedSermon(): UseGuidedSermonResult {
             queryClient,
             passageProfileEnforceGate.enabled,
             genreOverrideEnforceGate.enabled,
+            step3GenreHelpGate.enabled,
             passageProfileGate.enabled,
             surfaceCoverageNudge,
         ],

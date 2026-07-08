@@ -149,6 +149,25 @@ export function useGenreOverrideEnforceGate(): { enabled: boolean; loading: bool
     };
 }
 
+/**
+ * Redacción v2 Fase 1 (§4.5) — ayuda estructural sensible al género en el paso 3
+ * (andamiaje formativo LIVE). La cadena EXPRESA la dependencia: la ayuda ramifica
+ * por el género confirmado en el paso 2, cuya maquinaria (PR1) vive detrás de
+ * `passage_profile` → enciende con pastoral_fidelity_flow + passage_profile +
+ * step3_genre_help. NO se puede tener la ayuda con el subsistema de género
+ * apagado. Default off: el texto pastoral-facing (`guidance`) espera revisión del
+ * fundador. No es shadow/enforce — es ayuda formativa gated.
+ */
+export function useStep3GenreHelpGate(): { enabled: boolean; loading: boolean } {
+    const parent = useFeatureFlag('pastoral_fidelity_flow');
+    const genreSubsystem = useFeatureFlag('passage_profile');
+    const help = useFeatureFlag('step3_genre_help');
+    return {
+        enabled: parent.enabled && genreSubsystem.enabled && help.enabled,
+        loading: parent.loading || genreSubsystem.loading || help.loading,
+    };
+}
+
 export type PastoralFidelityGateReason =
     | 'loading'
     | 'flag-disabled'

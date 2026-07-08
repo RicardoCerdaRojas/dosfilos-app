@@ -61,6 +61,14 @@ export interface TurnContext {
      * clásico intacto). Sin cablear en Fase 1 ⇒ el dispatch entra dormido.
      */
     enforceGenreOverride?: boolean;
+    /**
+     * Redacción v2 Fase 1 (§4.5) B3 — enciende la ayuda estructural sensible al
+     * género en el paso 3 (guía por género + ejemplos curados). Es andamiaje
+     * FORMATIVO (no juicio), pero el texto pastoral-facing (`guidance`) requiere
+     * revisión del fundador antes de embarcar live → sale detrás de este flag,
+     * default off. Ausente/false ⇒ prompt clásico del paso 3, sin ramificar.
+     */
+    enableGenreStructuralHelp?: boolean;
 }
 
 /**

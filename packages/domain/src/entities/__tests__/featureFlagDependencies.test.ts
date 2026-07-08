@@ -42,6 +42,26 @@ describe('getFlagPrerequisites — cierre transitivo (up auto)', () => {
     });
 });
 
+describe('step3_genre_help — la cadena EXPRESA la dependencia del género confirmado (no delega en degradación)', () => {
+    it('prereq DIRECTO es passage_profile (la fuente del género confirmado, PR1), NO el parent suelto', () => {
+        expect(FEATURE_FLAG_PREREQUISITES.step3_genre_help).toEqual(['passage_profile']);
+    });
+
+    it('cierre transitivo exige passage_profile Y pastoral_fidelity_flow — no puede vivir con el subsistema de género apagado', () => {
+        const prereqs = getFlagPrerequisites('step3_genre_help');
+        expect(prereqs).toContain('passage_profile');
+        expect(prereqs).toContain('pastoral_fidelity_flow');
+    });
+
+    it('NO es hermano de passage_profile (si lo fuera, la ayuda podría encenderse con el género OFF)', () => {
+        expect(getFlagPrerequisites('step3_genre_help')).toContain('passage_profile');
+    });
+
+    it('apagar passage_profile deja step3_genre_help como dependiente (inerte, avisa)', () => {
+        expect(getFlagDependents('passage_profile')).toContain('step3_genre_help');
+    });
+});
+
 describe('getFlagDependents — descendientes activos (down con aviso)', () => {
     it('apagar el parent lista TODOS los sub-flags como dependientes', () => {
         const dependents = getFlagDependents('pastoral_fidelity_flow').sort();
@@ -57,6 +77,7 @@ describe('getFlagDependents — descendientes activos (down con aviso)', () => {
                 'passage_profile_enforce',
                 'sermon_draft_shadow',
                 'genre_override_enforce',
+                'step3_genre_help',
             ].sort(),
         );
     });

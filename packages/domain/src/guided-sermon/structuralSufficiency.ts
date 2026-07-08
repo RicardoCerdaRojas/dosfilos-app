@@ -112,6 +112,17 @@ function normalize(value: string): string {
 }
 
 /**
+ * La guía de discernimiento estructural del género, o cadena vacía si el género
+ * no está en el catálogo (fail-safe). La consume la ayuda live del paso 3 (B3).
+ * Es TEXTO PASTORAL-FACING sujeto a revisión del fundador — no embarca live sin
+ * su aprobación (B3 sale flag-inert).
+ */
+export function structuralGuidanceFor(genre: string | undefined): string {
+    if (!genre) return '';
+    return STRUCTURAL_SUFFICIENCY_BY_GENRE[genre as LiteraryGenre]?.guidance ?? '';
+}
+
+/**
  * Vara determinista y tosca del paso 3: ¿la nota del pastor muestra trabajo
  * estructural propio del género? Presencia de al menos una marca del género →
  * `suficiente`; contenido sin marca → `insuficiente`; sin vara para el género,

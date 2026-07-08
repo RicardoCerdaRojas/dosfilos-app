@@ -12,6 +12,7 @@ import {
     validateStructuralAnalysis,
     type PastoralSeed,
 } from '../../entities/PastoralSeed';
+import { structuralGuidanceFor } from '../structuralSufficiency';
 import type {
     MethodErrorReport,
     SocraticTurnOutput,
@@ -53,7 +54,7 @@ Trabajo previo del pastor:
 ${priorStepsBlock(ctx)}
 
 AFIRMACIÓN (al aceptar, reconocé algo CONCRETO): que identificó la cláusula principal correcta y mostró cómo las demás la sostienen — nombrá la cláusula. Nada genérico.
-${this.buildMovementsNudge(ctx)}${buildInformationalFeatureNudge(
+${this.buildGenreStructuralHelp(ctx)}${this.buildMovementsNudge(ctx)}${buildInformationalFeatureNudge(
             ctx,
             'structuralAnalysis',
             'parallelism',
@@ -79,6 +80,25 @@ Intento ${ctx.attemptIndex + 1} en este paso.`;
 DATO DEL PERFIL — este pasaje tiene ${movements.length} movimientos (insumo estructural):
 ${lines}
 Ayudá al pastor a ver cómo la cláusula principal se relaciona con estos bloques y a no aplanar el argumento a una sola cláusula. Él escribe la estructura; no se la des hecha.`;
+    }
+
+    /**
+     * Redacción v2 (§4.5) B3 — ayuda estructural sensible al GÉNERO confirmado
+     * (paso 2): la guía de discernimiento propia del género (epístola=conectores,
+     * narrativa=arco, poesía=paralelismo…). Andamiaje FORMATIVO, no juicio. Sale
+     * FLAG-INERT: solo con `enableGenreStructuralHelp` on (el texto pastoral-facing
+     * `guidance` espera revisión del fundador). Sin flag / sin género confirmado /
+     * sin guía → '' (prompt clásico intacto). El pastor escribe el análisis; esto
+     * ilumina cómo leer la estructura de SU género, no se lo da hecho.
+     */
+    private buildGenreStructuralHelp(ctx: TurnContext): string {
+        if (!ctx.enableGenreStructuralHelp) return '';
+        const guidance = structuralGuidanceFor(ctx.genre);
+        if (!guidance) return '';
+        return `
+AYUDA SENSIBLE AL GÉNERO (el pastor confirmó "${ctx.genre}" en el paso 2) — cómo leer la estructura de este género:
+${guidance}
+Usá esto para ORIENTAR su lectura estructural (qué mirar en este género); él escribe el análisis, no se lo des hecho.`;
     }
 
     parseLlmReply(raw: string, pastorMessage: string): SocraticTurnOutput {
