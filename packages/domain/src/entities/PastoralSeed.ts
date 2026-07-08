@@ -134,6 +134,18 @@ export interface ReadingStepData {
 }
 
 /**
+ * Redacción v2 Fase 1 (§4.4) — provenance of the confirmed genre. Makes the
+ * implicit "confirm" explicit: `aiProposed` = the system's inference stands,
+ * the pastor has not yet pronounced; `userConfirmed` = the pastor kept the
+ * proposed genre; `userOverride` = the pastor chose a different genre than the
+ * one inferred. The socratic override turn (A2) sets this; until then it stays
+ * `aiProposed`. Supersedes the boolean `genreConfirmed` once the override turn
+ * ships — `genreConfirmed` remains for back-compat / the completion gate until
+ * enforcement flips (shadow-first).
+ */
+export type GenreProvenance = 'aiProposed' | 'userConfirmed' | 'userOverride';
+
+/**
  * Phase 1.6 (ADR-024) — Contexto + Género. Genre governs the rules of
  * reading, so it precedes structural analysis. The assistant proposes the
  * genre + book outline (`BookPanorama` reuse); the pastor confirms the
@@ -144,6 +156,15 @@ export interface ContextGenreStepData {
     genre: LiteraryGenre | '';
     /** True once the pastor confirms the proposed genre (aiProposed → userConfirmed). */
     genreConfirmed: boolean;
+    /**
+     * Redacción v2 (§4.4) — how the confirmed genre came to be: the system's
+     * inference (`aiProposed`), the pastor keeping it (`userConfirmed`), or the
+     * pastor overriding it (`userOverride`). Optional for back-compat: legacy
+     * seeds have no provenance → read as `aiProposed`.
+     */
+    genreProvenance?: GenreProvenance;
+    /** Pastor's reason when he overrides the proposed genre — registered, not gated. */
+    genreOverrideReason?: string;
     /** Pastor's own interpretive implication of the genre — ≥X chars (human). */
     genreImplication: string;
     /** Where the pericope sits in the book's argument/outline (pastor note). */
@@ -383,6 +404,24 @@ export function validateContextGenre(data: ContextGenreStepData | undefined): St
     return { valid: reasons.length === 0, reasons };
 }
 
+/**
+ * Redacción v2 Fase 1 (§4.4) — pure resolution of genre provenance from the
+ * proposed genre and the one the pastor pronounces. `''` chosen (not yet
+ * pronounced) → `aiProposed`; same as proposed → `userConfirmed`; different →
+ * `userOverride`. Case/space-insensitive on the genre string. Consumed by the
+ * override dispatch (A2); kept here so the transition is testable without a
+ * use case or LLM.
+ */
+export function resolveGenreProvenance(
+    proposedGenre: string | undefined,
+    chosenGenre: string | undefined,
+): GenreProvenance {
+    const chosen = (chosenGenre ?? '').trim().toLowerCase();
+    if (!chosen) return 'aiProposed';
+    const proposed = (proposedGenre ?? '').trim().toLowerCase();
+    return chosen === proposed ? 'userConfirmed' : 'userOverride';
+}
+
 export function validateStructuralAnalysis(
     data: StructuralAnalysisStepData | undefined,
 ): StepValidationResult {
@@ -552,6 +591,11 @@ export function createEmptyPastoralSeed(args: {
         contextGenre: {
             genre: args.genre ?? '',
             genreConfirmed: Boolean(args.genre),
+            // Redacción v2 (§4.4): the inferred genre is PROPOSED, not yet
+            // pronounced by the pastor. The override turn (A2) promotes this to
+            // userConfirmed / userOverride. `genreConfirmed` stays as-is to keep
+            // the completion gate unchanged (shadow-first).
+            genreProvenance: 'aiProposed',
             genreImplication: '',
             bookLocationNote: '',
             historicalContextConsulted: false,
