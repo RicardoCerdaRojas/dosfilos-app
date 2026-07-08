@@ -11,6 +11,7 @@
 import { detectGenreInText } from '../../bible/inferGenreFromBook';
 import {
     PASTORAL_SEED_THRESHOLDS,
+    resolveGenreProvenance,
     validateContextGenre,
     type PastoralSeed,
 } from '../../entities/PastoralSeed';
@@ -121,16 +122,31 @@ Intento ${ctx.attemptIndex + 1} en este paso.`;
 
     persistTo(seed: PastoralSeed, pastorMessage: string): Partial<PastoralSeed> {
         const existingGenre = seed.contextGenre?.genre ?? '';
+        // The genre the pastor's prose names, if unambiguous (conservative:
+        // single-family match or null). Drives BOTH the resolved genre when the
+        // book gave none AND the provenance below.
+        const namedByPastor = detectGenreInText(pastorMessage) ?? '';
         // Fix C: if the seed had no book-inferred genre, persist the one the
-        // pastor named in his prose so it sticks for downstream steps and the
-        // record reflects what was actually confirmed.
-        const namedGenre = existingGenre ? '' : detectGenreInText(pastorMessage);
+        // pastor named in his prose so it sticks for downstream steps.
+        // Redacción v2 (§4.4) shadow-first: when the book DID infer a genre we do
+        // NOT swap it here even if the pastor names another — the override is
+        // only MEASURED (provenance + reason); the actual swap waits for enforce.
+        const namedGenre = existingGenre ? '' : namedByPastor;
         const resolvedGenre = existingGenre || namedGenre || '';
+        // Provenance = how the confirmed genre came to be: proposed genre vs the
+        // one the pastor pronounced. No pronouncement → aiProposed; same → kept;
+        // different → override (registered, not acted on in shadow).
+        const genreProvenance = resolveGenreProvenance(existingGenre, namedByPastor);
         return {
             contextGenre: {
                 ...seed.contextGenre,
                 genre: resolvedGenre,
                 genreConfirmed: Boolean(resolvedGenre),
+                genreProvenance,
+                genreOverrideReason:
+                    genreProvenance === 'userOverride'
+                        ? pastorMessage.trim()
+                        : seed.contextGenre?.genreOverrideReason,
                 genreImplication: pastorMessage.trim(),
                 completedAt: new Date(),
             },

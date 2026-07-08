@@ -53,6 +53,14 @@ export interface TurnContext {
      * policies y el dispatch no aplican nada del perfil).
      */
     enforceCoverage?: boolean;
+    /**
+     * Redacción v2 Fase 1 (§4.4) — enforce del override de género (paso 2).
+     * SEPARADO de `enforceCoverage` a propósito (adjudicación y datos distintos;
+     * flag propio `genre_override_enforce`, decisión diferida al enforce). Gatea
+     * SOLO el dispatch de confront de género. Ausente/false ⇒ inerte (el flujo
+     * clásico intacto). Sin cablear en Fase 1 ⇒ el dispatch entra dormido.
+     */
+    enforceGenreOverride?: boolean;
 }
 
 /**
@@ -142,6 +150,20 @@ export interface SocraticTurnResult {
      * "no abordaste X". Ausente ⇒ no aplica (no cierre / enforce off / sin perfil).
      */
     coverageReport?: import('../services/passageCoverage').CoverageReport;
+    /**
+     * Redacción v2 Fase 1 (§4.4) — OPORTUNIDAD de medición en sombra del override
+     * de género. Presente SOLO en turnos del paso 2 (contextGenre), con género
+     * propuesto y mensaje sustantivo, cuando el enforce está OFF (shadow-first: si
+     * enforce on, el dispatch ya juzgó). Es DATO PURO (sin LLM): el web decide,
+     * muestreado y fire-and-forget, si corre el juez de engagement de género y
+     * registra el `verdict`. Ausente ⇒ el web no mide este turno.
+     */
+    genreShadow?: {
+        seedId: string;
+        passage: string;
+        proposedGenre: string;
+        criteria: string;
+    };
 }
 
 export type { StepValidationResult };

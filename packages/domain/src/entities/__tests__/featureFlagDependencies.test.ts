@@ -56,6 +56,7 @@ describe('getFlagDependents — descendientes activos (down con aviso)', () => {
                 'passage_profile',
                 'passage_profile_enforce',
                 'sermon_draft_shadow',
+                'genre_override_enforce',
             ].sort(),
         );
     });
