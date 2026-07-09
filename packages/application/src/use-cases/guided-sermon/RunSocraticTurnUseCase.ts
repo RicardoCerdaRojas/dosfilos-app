@@ -429,6 +429,11 @@ export class RunSocraticTurnUseCase {
                       qualifiedGenre: proposedGenre,
                       provenance: seed.contextGenre?.genreProvenance ?? ('aiProposed' as const),
                       verdict: evaluateStructuralSufficiency(proposedGenre, input.pastorMessage),
+                      // §4.5 — género destino del override (estructurado), si el pastor
+                      // corrigió en el paso 2; re-runnable offline.
+                      ...(seed.contextGenre?.genreOverrideTarget
+                          ? { overrideTargetGenre: seed.contextGenre.genreOverrideTarget }
+                          : {}),
                   }
                 : undefined;
 

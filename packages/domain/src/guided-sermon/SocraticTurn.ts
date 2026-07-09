@@ -193,6 +193,12 @@ export interface SocraticTurnResult {
         /** Cómo llegó ese género (aiProposed | userConfirmed | userOverride). */
         provenance: import('../entities/PastoralSeed').GenreProvenance;
         verdict: import('./structuralSufficiency').StructuralSufficiency;
+        /**
+         * El género destino que el pastor eligió en el override (estructurado),
+         * si provenance = userOverride. Permite re-correr la vara offline contra
+         * el género correcto. Ausente si el pastor no corrigió.
+         */
+        overrideTargetGenre?: string;
     };
 }
 

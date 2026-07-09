@@ -195,6 +195,24 @@ describe('RunSocraticTurnUseCase — señal de suficiencia estructural (structur
         expect(res.structuralShadow?.provenance).toBe('userOverride');
     });
 
+    it('género destino del override viaja ESTRUCTURADO en la señal (re-runnable offline)', async () => {
+        const seed = makeSeed();
+        seed.contextGenre.genreProvenance = 'userOverride';
+        seed.contextGenre.genreOverrideTarget = 'poetry';
+        const { chatRepo, seedRepo } = makeRepos(seed, 'structuralAnalysis', { structuralAnalysis: 0 });
+        const uc = new RunSocraticTurnUseCase(chatRepo, seedRepo, orientLlm, registry);
+        const res = await uc.execute({ ...baseInput });
+        expect(res.structuralShadow?.overrideTargetGenre).toBe('poetry');
+    });
+
+    it('sin override → structuralShadow SIN overrideTargetGenre', async () => {
+        const seed = makeSeed();
+        const { chatRepo, seedRepo } = makeRepos(seed, 'structuralAnalysis', { structuralAnalysis: 0 });
+        const uc = new RunSocraticTurnUseCase(chatRepo, seedRepo, orientLlm, registry);
+        const res = await uc.execute({ ...baseInput });
+        expect(res.structuralShadow?.overrideTargetGenre).toBeUndefined();
+    });
+
     it('fuera del paso 3 → NO expone structuralShadow', async () => {
         const seed = makeSeed();
         const { chatRepo, seedRepo } = makeRepos(seed, 'contextGenre', { contextGenre: 0 });

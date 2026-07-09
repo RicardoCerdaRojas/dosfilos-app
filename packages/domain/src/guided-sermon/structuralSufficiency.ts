@@ -104,6 +104,16 @@ export const STRUCTURAL_SUFFICIENCY_GENRES = Object.keys(STRUCTURAL_SUFFICIENCY_
 
 export type StructuralSufficiency = 'suficiente' | 'insuficiente' | 'unclear';
 
+/**
+ * Redacción v2 Fase 1 (§4.5) — tasa de muestreo de la señal structuralSufficiency
+ * en sombra (1 de N turnos elegibles del paso 3). KNOB EDITABLE (dato, movible a
+ * Firestore), SEPARADO de la tasa de genreOverride: la vara es DETERMINISTA (sin
+ * costo LLM), así que muestrea cada turno elegible (N=1) para dar máximo volumen
+ * de decisión al gate de §4.5; el único costo es un write y los turnos de paso 3
+ * son pocos por estudio. Bajar N reduce writes si molesta.
+ */
+export const STRUCTURAL_SUFFICIENCY_SHADOW_SAMPLE_1_IN = 1;
+
 function normalize(value: string): string {
     return (value ?? '')
         .normalize('NFD')
