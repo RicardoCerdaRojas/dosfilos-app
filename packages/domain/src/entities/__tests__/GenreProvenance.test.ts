@@ -65,11 +65,19 @@ describe('ContextGenreStepPolicy.persistTo — provenance (A2, shadow-first)', (
         expect(patch.contextGenre?.genre).toBe('narrative');
     });
 
-    it('book genre + prose names a DIFFERENT genre → userOverride, genre NOT swapped (shadow), reason stored', () => {
+    it('book genre + prose names a DIFFERENT genre → userOverride, genre NOT swapped (shadow), reason + target stored', () => {
         const patch = policy.persistTo(seedWith('narrative'), 'Esto en realidad es poesía, puro paralelismo.');
         expect(patch.contextGenre?.genreProvenance).toBe('userOverride');
         expect(patch.contextGenre?.genre).toBe('narrative'); // proposed retained in shadow
         expect(patch.contextGenre?.genreOverrideReason).toContain('poesía');
+        // §4.5 — target genre captured STRUCTURED (detectGenreInText), re-runnable offline.
+        expect(patch.contextGenre?.genreOverrideTarget).toBe('poetry');
+    });
+
+    it('no override → genreOverrideTarget NO se fija (queda undefined / preserva el previo)', () => {
+        const patch = policy.persistTo(seedWith('narrative'), 'Es una narrativa histórica, la leo por el relato.');
+        expect(patch.contextGenre?.genreProvenance).toBe('userConfirmed');
+        expect(patch.contextGenre?.genreOverrideTarget).toBeUndefined();
     });
 
     it('no book genre + prose names one → userOverride, genre supplied', () => {

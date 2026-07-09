@@ -165,6 +165,14 @@ export interface ContextGenreStepData {
     genreProvenance?: GenreProvenance;
     /** Pastor's reason when he overrides the proposed genre — registered, not gated. */
     genreOverrideReason?: string;
+    /**
+     * Redacción v2 (§4.5) — the genre the pastor named when overriding (structured,
+     * from `detectGenreInText`, NOT redacted — 036). Present only on `userOverride`.
+     * Lets shadow readers re-run the structural-sufficiency vara offline against the
+     * genre the pastor believes governs, since in shadow `genre` stays the inferred
+     * value (PR1 does not swap it).
+     */
+    genreOverrideTarget?: string;
     /** Pastor's own interpretive implication of the genre — ≥X chars (human). */
     genreImplication: string;
     /** Where the pericope sits in the book's argument/outline (pastor note). */

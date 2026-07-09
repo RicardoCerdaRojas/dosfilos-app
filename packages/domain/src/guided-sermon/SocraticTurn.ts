@@ -61,6 +61,14 @@ export interface TurnContext {
      * clásico intacto). Sin cablear en Fase 1 ⇒ el dispatch entra dormido.
      */
     enforceGenreOverride?: boolean;
+    /**
+     * Redacción v2 Fase 1 (§4.5) B3 — enciende la ayuda estructural sensible al
+     * género en el paso 3 (guía por género + ejemplos curados). Es andamiaje
+     * FORMATIVO (no juicio), pero el texto pastoral-facing (`guidance`) requiere
+     * revisión del fundador antes de embarcar live → sale detrás de este flag,
+     * default off. Ausente/false ⇒ prompt clásico del paso 3, sin ramificar.
+     */
+    enableGenreStructuralHelp?: boolean;
 }
 
 /**
@@ -163,6 +171,34 @@ export interface SocraticTurnResult {
         passage: string;
         proposedGenre: string;
         criteria: string;
+    };
+    /**
+     * Redacción v2 Fase 1 (§4.5) B2 — señal de sombra de la VARA de suficiencia
+     * estructural del paso 3. DETERMINISTA (sin LLM): el verdict se calcula en el
+     * use case; el web solo lo registra como sibling `structuralSufficiency` en
+     * passageProfileShadow (B5). Presente SOLO en turnos del paso 3 con nota
+     * sustantiva.
+     *
+     * Lleva el GÉNERO calificado + su PROVENANCE (contrato de PR1, estructurado,
+     * nunca redactado — 036): en la ventana de shadow (genre_override_enforce OFF)
+     * la vara califica contra el género INFERIDO (no se escribe de vuelta la
+     * corrección del pastor); la provenance permite NO conflar "no analizó" con
+     * "califiqué contra un género mal inferido" al leer la sombra.
+     */
+    structuralShadow?: {
+        seedId: string;
+        passage: string;
+        /** El género contra el que se calificó la vara (inferido en shadow). */
+        qualifiedGenre: string;
+        /** Cómo llegó ese género (aiProposed | userConfirmed | userOverride). */
+        provenance: import('../entities/PastoralSeed').GenreProvenance;
+        verdict: import('./structuralSufficiency').StructuralSufficiency;
+        /**
+         * El género destino que el pastor eligió en el override (estructurado),
+         * si provenance = userOverride. Permite re-correr la vara offline contra
+         * el género correcto. Ausente si el pastor no corrigió.
+         */
+        overrideTargetGenre?: string;
     };
 }
 

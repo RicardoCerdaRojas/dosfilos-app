@@ -38,6 +38,7 @@ import {
     decideMisreadingTurn,
     featuresForStep,
     genreDiscernmentCriteriaFor,
+    evaluateStructuralSufficiency,
     RECONFRONT_CAPS,
     GENRE_OVERRIDE_RECONFRONT_CAP,
     MISREADING_MIN_SUBSTANCE_CHARS,
@@ -62,6 +63,12 @@ export interface RunSocraticTurnInput {
      * de `enforceCoverage`. Ausente/false ⇒ el dispatch de género es no-op.
      */
     enforceGenreOverride?: boolean;
+    /**
+     * Redacción v2 Fase 1 (§4.5) B3 — enciende la ayuda estructural sensible al
+     * género en el paso 3. Lo pasa el web desde el flag `step3_genre_help`.
+     * Ausente/false ⇒ prompt clásico del paso 3.
+     */
+    enableGenreStructuralHelp?: boolean;
 }
 
 /** Heuristic confidence threshold for short-circuiting to a confrontation. */
@@ -207,6 +214,9 @@ export class RunSocraticTurnUseCase {
             // Redacción v2 (§4.4) — enforce del override de género (paso 2),
             // SEPARADO. Inerte hasta que el web lo cablee (A4).
             enforceGenreOverride: input.enforceGenreOverride === true,
+            // Redacción v2 (§4.5) — ayuda estructural sensible al género (paso 3),
+            // flag-inert hasta la revisión del guidance por el fundador (B3).
+            enableGenreStructuralHelp: input.enableGenreStructuralHelp === true,
         };
 
         // Persist the pastor's user message FIRST so it always appears in chat
@@ -405,6 +415,28 @@ export class RunSocraticTurnUseCase {
                   }
                 : undefined;
 
+        // 10. Redacción v2 (§4.5) B2 — señal de sombra de la vara de suficiencia
+        // estructural (paso 3). DETERMINISTA (sin LLM): calcula el verdict aquí y
+        // lo expone; el web lo registra como sibling en passageProfileShadow (B5).
+        // Lleva el género CALIFICADO (inferido en shadow) + su provenance
+        // (contrato PR1, estructurado) para no conflar causas al leer la sombra.
+        const structuralShadow =
+            gss.currentStep === 'structuralAnalysis' &&
+            input.pastorMessage.trim().length >= MISREADING_MIN_SUBSTANCE_CHARS
+                ? {
+                      seedId: seed.id,
+                      passage: gss.passage,
+                      qualifiedGenre: proposedGenre,
+                      provenance: seed.contextGenre?.genreProvenance ?? ('aiProposed' as const),
+                      verdict: evaluateStructuralSufficiency(proposedGenre, input.pastorMessage),
+                      // §4.5 — género destino del override (estructurado), si el pastor
+                      // corrigió en el paso 2; re-runnable offline.
+                      ...(seed.contextGenre?.genreOverrideTarget
+                          ? { overrideTargetGenre: seed.contextGenre.genreOverrideTarget }
+                          : {}),
+                  }
+                : undefined;
+
         return {
             output,
             nextStep: nextState.currentStep,
@@ -412,6 +444,7 @@ export class RunSocraticTurnUseCase {
             stepAttempts: nextState.stepAttempts,
             ...(coverageReport ? { coverageReport } : {}),
             ...(genreShadow ? { genreShadow } : {}),
+            ...(structuralShadow ? { structuralShadow } : {}),
         };
     }
 

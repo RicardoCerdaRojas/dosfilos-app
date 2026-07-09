@@ -147,6 +147,11 @@ Intento ${ctx.attemptIndex + 1} en este paso.`;
                     genreProvenance === 'userOverride'
                         ? pastorMessage.trim()
                         : seed.contextGenre?.genreOverrideReason,
+                // Redacción v2 (§4.5) — captura ESTRUCTURADA del género destino del
+                // override (namedByPastor, ya detectado arriba). Solo en userOverride;
+                // permite re-correr la vara offline contra el género correcto.
+                genreOverrideTarget:
+                    genreProvenance === 'userOverride' ? namedByPastor : seed.contextGenre?.genreOverrideTarget,
                 genreImplication: pastorMessage.trim(),
                 completedAt: new Date(),
             },
