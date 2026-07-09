@@ -38,6 +38,7 @@ import {
     decideMisreadingTurn,
     featuresForStep,
     genreDiscernmentCriteriaFor,
+    evaluateStructuralSufficiency,
     RECONFRONT_CAPS,
     GENRE_OVERRIDE_RECONFRONT_CAP,
     MISREADING_MIN_SUBSTANCE_CHARS,
@@ -414,6 +415,23 @@ export class RunSocraticTurnUseCase {
                   }
                 : undefined;
 
+        // 10. Redacción v2 (§4.5) B2 — señal de sombra de la vara de suficiencia
+        // estructural (paso 3). DETERMINISTA (sin LLM): calcula el verdict aquí y
+        // lo expone; el web lo registra como sibling en passageProfileShadow (B5).
+        // Lleva el género CALIFICADO (inferido en shadow) + su provenance
+        // (contrato PR1, estructurado) para no conflar causas al leer la sombra.
+        const structuralShadow =
+            gss.currentStep === 'structuralAnalysis' &&
+            input.pastorMessage.trim().length >= MISREADING_MIN_SUBSTANCE_CHARS
+                ? {
+                      seedId: seed.id,
+                      passage: gss.passage,
+                      qualifiedGenre: proposedGenre,
+                      provenance: seed.contextGenre?.genreProvenance ?? ('aiProposed' as const),
+                      verdict: evaluateStructuralSufficiency(proposedGenre, input.pastorMessage),
+                  }
+                : undefined;
+
         return {
             output,
             nextStep: nextState.currentStep,
@@ -421,6 +439,7 @@ export class RunSocraticTurnUseCase {
             stepAttempts: nextState.stepAttempts,
             ...(coverageReport ? { coverageReport } : {}),
             ...(genreShadow ? { genreShadow } : {}),
+            ...(structuralShadow ? { structuralShadow } : {}),
         };
     }
 

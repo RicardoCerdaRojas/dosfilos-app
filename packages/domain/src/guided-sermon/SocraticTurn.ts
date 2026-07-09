@@ -172,6 +172,28 @@ export interface SocraticTurnResult {
         proposedGenre: string;
         criteria: string;
     };
+    /**
+     * Redacción v2 Fase 1 (§4.5) B2 — señal de sombra de la VARA de suficiencia
+     * estructural del paso 3. DETERMINISTA (sin LLM): el verdict se calcula en el
+     * use case; el web solo lo registra como sibling `structuralSufficiency` en
+     * passageProfileShadow (B5). Presente SOLO en turnos del paso 3 con nota
+     * sustantiva.
+     *
+     * Lleva el GÉNERO calificado + su PROVENANCE (contrato de PR1, estructurado,
+     * nunca redactado — 036): en la ventana de shadow (genre_override_enforce OFF)
+     * la vara califica contra el género INFERIDO (no se escribe de vuelta la
+     * corrección del pastor); la provenance permite NO conflar "no analizó" con
+     * "califiqué contra un género mal inferido" al leer la sombra.
+     */
+    structuralShadow?: {
+        seedId: string;
+        passage: string;
+        /** El género contra el que se calificó la vara (inferido en shadow). */
+        qualifiedGenre: string;
+        /** Cómo llegó ese género (aiProposed | userConfirmed | userOverride). */
+        provenance: import('../entities/PastoralSeed').GenreProvenance;
+        verdict: import('./structuralSufficiency').StructuralSufficiency;
+    };
 }
 
 export type { StepValidationResult };

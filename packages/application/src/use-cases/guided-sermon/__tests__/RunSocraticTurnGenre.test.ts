@@ -164,3 +164,50 @@ describe('RunSocraticTurnUseCase — oportunidad de sombra de género (genreShad
         expect(res.genreShadow).toBeUndefined();
     });
 });
+
+describe('RunSocraticTurnUseCase — señal de suficiencia estructural (structuralShadow, B2)', () => {
+    it('paso 3 + nota con marca del género → verdict suficiente + género calificado + provenance', async () => {
+        const seed = makeSeed();
+        const { chatRepo, seedRepo } = makeRepos(seed, 'structuralAnalysis', { structuralAnalysis: 0 });
+        const uc = new RunSocraticTurnUseCase(chatRepo, seedRepo, orientLlm, registry);
+        const res = await uc.execute({ userId: 'u1', sessionId: 's1', pastorMessage: `Cláusula principal v.1; "por tanto" encadena el argumento. ${LONG(40)}` });
+        expect(res.structuralShadow).toBeDefined();
+        expect(res.structuralShadow?.verdict).toBe('suficiente');
+        expect(res.structuralShadow?.qualifiedGenre).toBe('epistle'); // inferido
+        expect(res.structuralShadow?.provenance).toBe('aiProposed');
+        expect(res.structuralShadow?.seedId).toBe('seed-1');
+    });
+
+    it('paso 3 + nota sin marca → verdict insuficiente (mide EXISTENCIA de análisis)', async () => {
+        const seed = makeSeed();
+        const { chatRepo, seedRepo } = makeRepos(seed, 'structuralAnalysis', { structuralAnalysis: 0 });
+        const uc = new RunSocraticTurnUseCase(chatRepo, seedRepo, orientLlm, registry);
+        const res = await uc.execute({ ...baseInput }); // LONG(120) 'aaa…' sin marca
+        expect(res.structuralShadow?.verdict).toBe('insuficiente');
+    });
+
+    it('provenance se LEE del seed (contrato PR1), estructurada — userOverride viaja en la señal', async () => {
+        const seed = makeSeed();
+        seed.contextGenre.genreProvenance = 'userOverride';
+        const { chatRepo, seedRepo } = makeRepos(seed, 'structuralAnalysis', { structuralAnalysis: 0 });
+        const uc = new RunSocraticTurnUseCase(chatRepo, seedRepo, orientLlm, registry);
+        const res = await uc.execute({ ...baseInput });
+        expect(res.structuralShadow?.provenance).toBe('userOverride');
+    });
+
+    it('fuera del paso 3 → NO expone structuralShadow', async () => {
+        const seed = makeSeed();
+        const { chatRepo, seedRepo } = makeRepos(seed, 'contextGenre', { contextGenre: 0 });
+        const uc = new RunSocraticTurnUseCase(chatRepo, seedRepo, orientLlm, registry);
+        const res = await uc.execute({ ...baseInput });
+        expect(res.structuralShadow).toBeUndefined();
+    });
+
+    it('mensaje demasiado corto → NO expone structuralShadow', async () => {
+        const seed = makeSeed();
+        const { chatRepo, seedRepo } = makeRepos(seed, 'structuralAnalysis', { structuralAnalysis: 0 });
+        const uc = new RunSocraticTurnUseCase(chatRepo, seedRepo, orientLlm, registry);
+        const res = await uc.execute({ userId: 'u1', sessionId: 's1', pastorMessage: 'corto' });
+        expect(res.structuralShadow).toBeUndefined();
+    });
+});
