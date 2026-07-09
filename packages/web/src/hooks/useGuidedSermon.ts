@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
 import { guidedSermonService, ResolveCuratedMisreadingsUseCase, verifyAnchorVerse, type ActivateGuidedSermonResult, type SubmitGuidedInsightResult, type SubmitGuidedWordStudiesResult } from '@dosfilos/application';
-import { assemblePassageProfile, mergeCuratedMisreadings, detectorMisreadingStats, dropUnverifiedDetectorMisreadings, type LiteraryGenre, type RawPassageProfile, type SocraticTurnResult, type AIChatSession, type AIChatMessage } from '@dosfilos/domain';
+import { assemblePassageProfile, mergeCuratedMisreadings, detectorMisreadingStats, dropUnverifiedDetectorMisreadings, STRUCTURAL_SUFFICIENCY_SHADOW_SAMPLE_1_IN, type LiteraryGenre, type RawPassageProfile, type SocraticTurnResult, type AIChatSession, type AIChatMessage } from '@dosfilos/domain';
 import { FirebaseVerifiedMisreadingRepository, RVR1960Repository } from '@dosfilos/infrastructure';
 
 export interface SubmitInsightArgs {
@@ -164,6 +164,39 @@ async function runGenreOverrideShadow(
     }
 }
 
+/** Muestreo determinista de la señal de suficiencia estructural (1 de N, knob de dominio). */
+function shouldSampleStructuralShadow(seedId: string): boolean {
+    if (STRUCTURAL_SUFFICIENCY_SHADOW_SAMPLE_1_IN <= 1) return true;
+    let h = 0;
+    for (let i = 0; i < seedId.length; i++) h = (h * 31 + seedId.charCodeAt(i)) | 0;
+    return Math.abs(h) % STRUCTURAL_SUFFICIENCY_SHADOW_SAMPLE_1_IN === 0;
+}
+
+/**
+ * Redacción v2 Fase 1 (§4.5) B5 — registro en sombra de la vara de suficiencia
+ * estructural. Fire-and-forget, non-blocking, DETERMINISTA (el verdict ya viene
+ * calculado del use case; el web solo registra). Sibling 'structuralSufficiency'
+ * en passageProfileShadow. Lleva provenance + género destino del override (036).
+ */
+async function runStructuralSufficiencyShadow(
+    s: NonNullable<SocraticTurnResult['structuralShadow']>,
+): Promise<void> {
+    try {
+        await httpsCallable(getFunctions(), 'recordPassageProfileShadow')({
+            seedId: s.seedId,
+            passage: s.passage,
+            structuralSufficiency: {
+                qualifiedGenre: s.qualifiedGenre,
+                provenance: s.provenance,
+                verdict: s.verdict,
+                overrideTargetGenre: s.overrideTargetGenre ?? null,
+            },
+        });
+    } catch (err) {
+        console.warn('[useGuidedSermon] structural sufficiency shadow failed (non-blocking)', err);
+    }
+}
+
 interface UseGuidedSermonResult {
     /** True while a turn / activation is in flight. */
     isProcessing: boolean;
@@ -307,6 +340,13 @@ export function useGuidedSermon(): UseGuidedSermonResult {
                 // (paso 2, enforce off). Nunca demora ni rompe el turno.
                 if (result?.genreShadow && passageProfileGate.enabled && shouldSampleGenreShadow(result.genreShadow.seedId)) {
                     void runGenreOverrideShadow(result.genreShadow, pastorMessage);
+                }
+                // Redacción v2 (§4.5) — señal de suficiencia estructural del paso 3:
+                // determinista, muestreada (knob de dominio), fire-and-forget. Solo
+                // con la sombra on (passage_profile) y cuando el use case expuso la
+                // oportunidad (paso 3, nota sustantiva).
+                if (result?.structuralShadow && passageProfileGate.enabled && shouldSampleStructuralShadow(result.structuralShadow.seedId)) {
+                    void runStructuralSufficiencyShadow(result.structuralShadow);
                 }
                 return result;
             } catch (err) {

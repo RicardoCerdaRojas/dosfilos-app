@@ -60,6 +60,31 @@ function sanitizeGenreOverride(raw: unknown): {
     return { proposedGenre: str(o.proposedGenre), provenance, verdict, sustained: o.sustained === true };
 }
 
+type StructuralVerdict = 'suficiente' | 'insuficiente' | 'unclear';
+
+/**
+ * Redacción v2 Fase 1 (§4.5) B5 — sanitiza la señal de suficiencia estructural.
+ * FAIL-CLOSED: provenance/verdict desconocidos → valores seguros (aiProposed /
+ * unclear). Lleva el género CALIFICADO + provenance (036) + el género destino del
+ * override si el pastor corrigió (re-runnable offline).
+ */
+function sanitizeStructuralSufficiency(raw: unknown): {
+    qualifiedGenre: string;
+    provenance: GenreProvenance;
+    verdict: StructuralVerdict;
+    overrideTargetGenre: string | null;
+} {
+    const o = (raw ?? {}) as Record<string, unknown>;
+    const provenanceIn = str(o.provenance);
+    const verdictIn = str(o.verdict);
+    const provenance: GenreProvenance =
+        provenanceIn === 'userConfirmed' || provenanceIn === 'userOverride' ? provenanceIn : 'aiProposed';
+    const verdict: StructuralVerdict =
+        verdictIn === 'suficiente' || verdictIn === 'insuficiente' ? verdictIn : 'unclear';
+    const target = str(o.overrideTargetGenre);
+    return { qualifiedGenre: str(o.qualifiedGenre), provenance, verdict, overrideTargetGenre: target || null };
+}
+
 /** ¿La feature trae ancla? Espeja `isFeatureAnchored` del dominio (corte 1). */
 function featureHasAnchor(f: FeatureInput): boolean {
     if (f?.typeKey === 'ot-allusion') return Boolean(str(f.anchor?.reference));
@@ -108,6 +133,26 @@ export const recordPassageProfileShadow = onCall(
                     passage,
                     signalType: 'genreOverride' as const,
                     genreOverride: sanitizeGenreOverride(data.genreOverride),
+                    createdAt: FieldValue.serverTimestamp(),
+                    expiresAt: ttlExpiresAt,
+                });
+            return { recorded: true };
+        }
+
+        // Redacción v2 Fase 1 (§4.5) B5 — señal de suficiencia estructural del
+        // paso 3, sibling de 'genreOverride' en la MISMA colección (fase-estudio),
+        // signalType propio → no contamina las métricas del perfil ni del override.
+        if (data.structuralSufficiency) {
+            await admin
+                .firestore()
+                .collection('passageProfileShadow')
+                .add({
+                    userId,
+                    segment: segmentEarly,
+                    seedId,
+                    passage,
+                    signalType: 'structuralSufficiency' as const,
+                    structuralSufficiency: sanitizeStructuralSufficiency(data.structuralSufficiency),
                     createdAt: FieldValue.serverTimestamp(),
                     expiresAt: ttlExpiresAt,
                 });
