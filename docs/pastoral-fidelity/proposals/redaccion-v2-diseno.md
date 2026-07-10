@@ -9,6 +9,22 @@
 
 ---
 
+## DÓNDE RETOMAMOS (estado de implementación, 2026-07-09)
+
+**FASE 1 (fundación) — COMPLETA en prod, INERTE (flags off).**
+- **PR #393** — Paso 2: override de género socrático (provenance + juez de engagement + shadow). En prod, `genre_override_enforce` off.
+- **PR #394** — esta especificación versionada en git.
+- **PR #395** — Paso 3 reforzado: vara determinista de suficiencia estructural + ayuda sensible al género (flag-inert `step3_genre_help`) + señal shadow con provenance. En prod.
+- **Ambas mitades mergeables e inertes.** Nada cambia la experiencia live hasta flip de flags. La instrumentación shadow vive SOLO en el flujo socrático de Faculty (no en el menú "Nuevo Sermón") — ver deuda estructural en byblos (dos implementaciones del spine de 8 pasos).
+
+**EN PAUSA — calibración del gate de suficiencia.** No tocar la maquinaria del gate hasta tener ≥N seeds socráticos reales con `userConfirmed` poblado. Hoy: 0 (instrumento de 2 días, 1 seed, cayó a `aiProposed`). El confront socrático de género sigue siendo heurística, no acto; su conversión a turno explícito es prerrequisito de que `userConfirmed` se pueble. Detalle en byblos (nota de parqueo).
+
+**PENDIENTE DE REVISIÓN DEL FUNDADOR (con datos de shadow):** catálogos hermenéuticos `GENRE_DISCERNMENT_CRITERIA` (PR1) + `STRUCTURAL_SUFFICIENCY_BY_GENRE`/`guidance`/`markers` (PR2). No definitivos; se revisan criterio-por-criterio.
+
+**SIGUIENTE — FASE 3:** mapeo género→estructura de sermón + constructor de proposición (8 elementos). Consume `PassageProfile`, no re-deriva género. NO empezada.
+
+---
+
 ## 1. Contexto y decisión
 
 La auditoría del generador de sermones (post-estudio) encontró que el pipeline
