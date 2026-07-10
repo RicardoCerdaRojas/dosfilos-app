@@ -26,7 +26,13 @@ interface Props {
     onLogAiAssist?: (assistType: AiAssistType, outputWasEditedByUser: boolean) => void;
 }
 
-const GENRE_OPTIONS = Object.keys(LITERARY_GENRE_LABELS_ES) as LiteraryGenre[];
+// parable excluido del selector — llega por el ACTO del pastor vía override
+// socrático, no por selección directa. Su ayuda formativa upstream no existe aún
+// (§4.4, decisión de 0a). Exclude mínimo y acotado. DEUDA PREEXISTENTE (fuera de 0a,
+// para 0b/Fase 3): gospel/mixed son centinelas y HOY sí aparecen como chips
+// seleccionables — este render no los filtra; la abstracción `selectableGenres`
+// (= predicables autorados) es Fase 3, no se toca aquí.
+const GENRE_OPTIONS = (Object.keys(LITERARY_GENRE_LABELS_ES) as LiteraryGenre[]).filter((g) => g !== 'parable');
 const MIN_CHARS = PASTORAL_SEED_THRESHOLDS.contextGenre.genreImplicationMinChars;
 
 interface BackgroundChunk {

@@ -10,16 +10,29 @@ import {
  * Invariante: el catálogo cubre TODO el enum `LiteraryGenre` (si falta un
  * género, el juez queda sin vara para él → adjudicaría libre, violando 036).
  */
-const ALL_GENRES = ['epistle', 'narrative', 'poetry', 'prophecy', 'wisdom', 'gospel', 'apocalypse', 'law', 'mixed'];
+const ALL_GENRES = ['epistle', 'narrative', 'parable', 'poetry', 'prophecy', 'wisdom', 'gospel', 'apocalypse', 'law', 'mixed'];
+
+// Partición sellada (§11.0): predicables AUTORADOS (criterio no vacío) / PENDIENTE
+// (parable — vacío temporal, exento) / CENTINELAS (gospel/mixed — su string es
+// ruteo-al-override, no criterio; no se asevera no-vacío).
+const PENDING_AUTHOR = ['parable']; // temporal, AUTO-REMOVIBLE: al autorarse, sale de aquí y la aserción no-vacía vuelve a aplicarle.
+const SENTINELS = ['gospel', 'mixed'];
 
 describe('GENRE_DISCERNMENT_CRITERIA', () => {
     it('cubre exactamente el enum LiteraryGenre (llaves ≡ enum)', () => {
         expect([...GENRE_DISCERNMENT_GENRES].sort()).toEqual([...ALL_GENRES].sort());
     });
 
-    it('cada género trae criterio no vacío (vara real, no placeholder)', () => {
+    it('predicables autorados: criterio no vacío (pendiente y centinelas exentos)', () => {
         for (const g of GENRE_DISCERNMENT_GENRES) {
+            if (PENDING_AUTHOR.includes(g) || SENTINELS.includes(g)) continue;
             expect(GENRE_DISCERNMENT_CRITERIA[g].trim().length).toBeGreaterThan(20);
+        }
+    });
+
+    it('pendiente (parable): stub vacío VISIBLE — falla al autorarse, forzando quitarlo de PENDING_AUTHOR', () => {
+        for (const g of PENDING_AUTHOR) {
+            expect(GENRE_DISCERNMENT_CRITERIA[g]).toBe('');
         }
     });
 
@@ -27,9 +40,9 @@ describe('GENRE_DISCERNMENT_CRITERIA', () => {
         expect(genreDiscernmentCriteriaFor('epistle')).toBe(GENRE_DISCERNMENT_CRITERIA.epistle);
     });
 
-    it('fail-safe: género desconocido o ausente → cadena vacía (nunca inventa vara)', () => {
+    it('fail-safe: género fuera del enum o ausente → cadena vacía (nunca inventa vara)', () => {
         expect(genreDiscernmentCriteriaFor(undefined)).toBe('');
         expect(genreDiscernmentCriteriaFor('')).toBe('');
-        expect(genreDiscernmentCriteriaFor('parable')).toBe(''); // aún no en el enum (Fase 2)
+        expect(genreDiscernmentCriteriaFor('xyz')).toBe(''); // 'xyz' NO existe en el enum
     });
 });

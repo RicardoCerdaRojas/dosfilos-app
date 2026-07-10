@@ -26,6 +26,10 @@ export const GENRE_DISCERNMENT_CRITERIA: Record<LiteraryGenre, string> = {
         'Discurso lógico/argumentativo: razona con conectores ("por tanto", "porque", "para que"), expone una tesis y la sostiene. Se lee siguiendo el flujo del argumento, no una trama ni una imagen.',
     narrative:
         'Relato histórico: trama, escenas, personajes y el juicio del narrador. Enseña por ilustración de hechos, no por mandato directo ni por argumento abstracto.',
+    // parable: VACÍO TEMPORAL — lo autora el fundador en su revisión criterio-por-
+    // criterio (§6.3, "narrativa con regla de punto único"). Stub visible: sale de
+    // PENDING_AUTHOR en el test cuando se llene. 0a NO inventa criterio.
+    parable: '',
     poetry:
         'Poesía: paralelismo (sinónimo/antitético/sintético), imágenes y afecto. El sentido va por la figura y el movimiento afectivo, no por cronología literal ni cadena lógica.',
     prophecy:

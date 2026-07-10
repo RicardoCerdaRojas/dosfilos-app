@@ -68,6 +68,11 @@ export interface BookPanorama {
 export type LiteraryGenre =
     | 'epistle'
     | 'narrative'
+    // Redacción v2 §11.0 — parábola es perfil PREDICABLE propio (no sub-tipo de
+    // narrativa). Añadido al enum en 0a; su contenido de criterio lo autora el
+    // fundador. `gospel` NO se disuelve a nivel enum: sigue como centinela que
+    // rutea al override socrático por perícopa (relato/parábola/argumentativo).
+    | 'parable'
     | 'poetry'
     | 'prophecy'
     | 'wisdom'

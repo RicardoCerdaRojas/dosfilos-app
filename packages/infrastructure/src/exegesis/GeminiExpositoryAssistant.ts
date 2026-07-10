@@ -505,6 +505,11 @@ function normalizePanorama(raw: any): BookPanorama {
     if (!raw || typeof raw !== 'object') {
         throw new Error('Panorama response is not an object');
     }
+    // `parable` NO está en VALID_GENRES a propósito (Redacción v2 §11.0, 0a): si el
+    // LLM devuelve 'parable', coerce a 'mixed' — ruteo DELIBERADO al override
+    // socrático, NO un drop. La parábola llega por el ACTO del pastor (paso 2), no
+    // por asignación del LLM (principio: el sistema desarrolla, no origina). Añadir
+    // parable a VALID_GENRES se difiere a Fase 3.
     const genre = typeof raw.genre === 'string' && VALID_GENRES.includes(raw.genre as LiteraryGenre)
         ? (raw.genre as LiteraryGenre)
         : 'mixed';
