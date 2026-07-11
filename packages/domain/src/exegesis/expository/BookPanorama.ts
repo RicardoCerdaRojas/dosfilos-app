@@ -80,3 +80,84 @@ export type LiteraryGenre =
     | 'apocalypse'
     | 'law'
     | 'mixed';
+
+/**
+ * Partición sellada del enum `LiteraryGenre` (Redacción v2 §11.0) — SSOT único.
+ *
+ * Tres clases mutuamente exclusivas cuya unión ≡ el enum completo (garantizado
+ * por el test de partición, que rompe CI ante drift):
+ *
+ *  - SELECTABLE_GENRES  — predicables AUTORADOS: el pastor los elige y gobiernan
+ *                         el análisis estructural aguas abajo.
+ *  - SENTINEL_GENRES    — marcadores de ruteo, NO géneros predicables: `gospel`
+ *                         se disuelve por perícopa, `mixed` dispara override.
+ *                         Sin estructura derivable (markers []).
+ *  - PENDING_AUTHOR_GENRES — stub temporal a la espera de que el fundador autore
+ *                         su criterio (`parable`). AUTO-REMOVIBLE: al autorarse
+ *                         sale de aquí y le vuelven a aplicar las aserciones
+ *                         no-vacías de los catálogos.
+ *
+ * Antes vivían duplicados en los tests de 0a (structuralSufficiency /
+ * genreDiscernmentCriteria); promovidos aquí para un solo hogar.
+ */
+export const SENTINEL_GENRES = ['gospel', 'mixed'] as const;
+
+export type SentinelGenre = (typeof SENTINEL_GENRES)[number];
+
+export const PENDING_AUTHOR_GENRES = ['parable'] as const;
+
+export type PendingAuthorGenre = (typeof PENDING_AUTHOR_GENRES)[number];
+
+/**
+ * SSOT de géneros elegibles por el pastor. La UI (selector del paso 2) lo consume
+ * — NO las keys crudas del enum, que incluyen centinelas y stubs pendientes.
+ * Complemento de SENTINEL_GENRES ∪ PENDING_AUTHOR_GENRES.
+ */
+export const SELECTABLE_GENRES = [
+    'epistle',
+    'narrative',
+    'poetry',
+    'prophecy',
+    'wisdom',
+    'apocalypse',
+    'law',
+] as const;
+
+export type SelectableGenre = (typeof SELECTABLE_GENRES)[number];
+
+/** Guard: ¿`g` es un género predicable que el pastor puede elegir? */
+export function isSelectableGenre(g: string): g is SelectableGenre {
+    return (SELECTABLE_GENRES as readonly string[]).includes(g);
+}
+
+/**
+ * Guard: ¿`g` es un centinela de ruteo (gospel/mixed)? S3 lo keyea para
+ * suprimir chips Y el botón acceptProposed — cubre gospel + mixed-Daniel +
+ * mixed-fallback con un solo mecanismo.
+ */
+export function isSentinelGenre(g: string): boolean {
+    return (SENTINEL_GENRES as readonly string[]).includes(g);
+}
+
+/**
+ * Cobertura de la partición a NIVEL DE TIPO (fundación inerte) — SSOT de cobertura.
+ *
+ * Liga las tres listas directo al union `LiteraryGenre`, sin depender del mirror
+ * runtime `ALL_GENRES` (que puede quedar stale → falso-verde) ni de los `Record<
+ * LiteraryGenre,…>` de 0a (desacoplados de estas listas). Un valor nuevo del enum
+ * sin categorizar en selectable/sentinel/pending rompe tsc AQUÍ.
+ *
+ * TUPLE-WRAP obligatorio (`[T] extends [U]`, no `T extends U`): sin los `[]` el
+ * condicional distribuye sobre el union y colapsa a `true` — falso-verde en el
+ * propio guard.
+ */
+type PartitionedGenre = SelectableGenre | SentinelGenre | PendingAuthorGenre;
+
+type AssertPartitionExhaustive = [LiteraryGenre] extends [PartitionedGenre]
+    ? [PartitionedGenre] extends [LiteraryGenre]
+        ? true
+        : ['género en una lista de partición que no está en el enum LiteraryGenre']
+    : ['género del enum LiteraryGenre sin categorizar en selectable/sentinel/pending'];
+
+const _partitionExhaustive: AssertPartitionExhaustive = true;
+void _partitionExhaustive;

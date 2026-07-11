@@ -4,6 +4,7 @@ import {
     GENRE_DISCERNMENT_GENRES,
     genreDiscernmentCriteriaFor,
 } from '../genreDiscernmentCriteria';
+import { SENTINEL_GENRES, PENDING_AUTHOR_GENRES } from '../../exegesis/expository/BookPanorama';
 
 /**
  * Redacción v2 Fase 1 (§4.4) A3 — la vara de discernimiento de género.
@@ -12,11 +13,12 @@ import {
  */
 const ALL_GENRES = ['epistle', 'narrative', 'parable', 'poetry', 'prophecy', 'wisdom', 'gospel', 'apocalypse', 'law', 'mixed'];
 
-// Partición sellada (§11.0): predicables AUTORADOS (criterio no vacío) / PENDIENTE
-// (parable — vacío temporal, exento) / CENTINELAS (gospel/mixed — su string es
-// ruteo-al-override, no criterio; no se asevera no-vacío).
-const PENDING_AUTHOR = ['parable']; // temporal, AUTO-REMOVIBLE: al autorarse, sale de aquí y la aserción no-vacía vuelve a aplicarle.
-const SENTINELS = ['gospel', 'mixed'];
+// Partición sellada (§11.0) — consumida del SSOT de dominio (BookPanorama), no
+// redefinida aquí: predicables AUTORADOS (criterio no vacío) / PENDIENTE (parable
+// — vacío temporal, exento) / CENTINELAS (gospel/mixed — string es ruteo, no
+// criterio; no se asevera no-vacío).
+const PENDING_AUTHOR: readonly string[] = PENDING_AUTHOR_GENRES;
+const SENTINELS: readonly string[] = SENTINEL_GENRES;
 
 describe('GENRE_DISCERNMENT_CRITERIA', () => {
     it('cubre exactamente el enum LiteraryGenre (llaves ≡ enum)', () => {

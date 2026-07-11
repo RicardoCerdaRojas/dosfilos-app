@@ -5,6 +5,7 @@ import {
     evaluateStructuralSufficiency,
 } from '../structuralSufficiency';
 import { GENRE_DISCERNMENT_GENRES } from '../genreDiscernmentCriteria';
+import { SENTINEL_GENRES, PENDING_AUTHOR_GENRES } from '../../exegesis/expository/BookPanorama';
 
 /**
  * Redacción v2 Fase 1 (§4.5) B1 — vara determinista y tosca del paso 3.
@@ -13,11 +14,11 @@ import { GENRE_DISCERNMENT_GENRES } from '../genreDiscernmentCriteria';
  */
 const ALL_GENRES = ['epistle', 'narrative', 'parable', 'poetry', 'prophecy', 'wisdom', 'gospel', 'apocalypse', 'law', 'mixed'];
 
-// Partición sellada (§11.0): predicables AUTORADOS (guía no vacía) / PENDIENTE
-// (parable — vacío temporal, exento hasta que el fundador lo autore) / CENTINELAS
-// (rutean al override; sin estructura derivable → markers []).
-const PENDING_AUTHOR = ['parable']; // temporal, AUTO-REMOVIBLE: al autorarse, sale de aquí y la aserción no-vacía vuelve a aplicarle.
-const SENTINELS = ['gospel', 'mixed'];
+// Partición sellada (§11.0) — consumida del SSOT de dominio (BookPanorama), no
+// redefinida aquí: predicables AUTORADOS (guía no vacía) / PENDIENTE (parable —
+// vacío temporal, exento) / CENTINELAS (rutean al override; markers []).
+const PENDING_AUTHOR: readonly string[] = PENDING_AUTHOR_GENRES;
+const SENTINELS: readonly string[] = SENTINEL_GENRES;
 
 describe('STRUCTURAL_SUFFICIENCY_BY_GENRE', () => {
     // NOTA: la garantía DURA de "llaves ≡ enum" es el TIPO Record<LiteraryGenre,…>:
