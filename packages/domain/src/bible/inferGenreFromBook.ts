@@ -47,6 +47,7 @@ const GENRE_BY_BOOK: Record<BibleBookId, LiteraryGenre> = {
 export const LITERARY_GENRE_LABELS_ES: Record<LiteraryGenre, string> = {
     epistle: 'Epístola',
     narrative: 'Narrativa',
+    parable: 'Parábola', // label mecánico (nombre de display), no criterio
     poetry: 'Poesía',
     prophecy: 'Profecía',
     wisdom: 'Sabiduría',
@@ -69,6 +70,11 @@ export function inferGenreFromBook(bookId: BibleBookId): LiteraryGenre {
  */
 const GENRE_NAME_KEYWORDS: Record<Exclude<LiteraryGenre, 'mixed'>, string[]> = {
     epistle: ['epistola', 'epistolas', 'epistolar', 'carta', 'cartas'],
+    // parable: VACÍO PERMANENTE POR DISEÑO (no es stub pendiente). La parábola
+    // nunca se INFIERE por keyword — llega por el ACTO del pastor (override),
+    // nunca por asignación del texto/LLM. Emptiness load-bearing: `detectGenreInText`
+    // jamás devuelve `parable`.
+    parable: [],
     gospel: ['evangelio', 'evangelios'],
     prophecy: ['profecia', 'profecias', 'profetico', 'profetica', 'oraculo', 'oraculos'],
     poetry: ['poesia', 'poetico', 'poetica', 'salmo', 'salmos', 'himno', 'himnos', 'canto', 'cantico'],

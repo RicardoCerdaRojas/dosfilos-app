@@ -43,6 +43,15 @@ export const STRUCTURAL_SUFFICIENCY_BY_GENRE: Record<LiteraryGenre, StructuralSu
         markers: ['por tanto', 'porque', 'para que', 'pues', 'de modo que', 'conector', 'argumento', 'tesis', 'premisa', 'clausula principal', 'subordina'],
         workedExamples: [],
     },
+    // parable: VACÍO TEMPORAL — lo autora el fundador (§6.3, "regla de punto único").
+    // Stub visible: sale de PENDING_AUTHOR en el test cuando se llene. markers/guidance
+    // vacíos hasta entonces (evaluateStructuralSufficiency → unclear, fail-closed). 0a
+    // NO inventa vara.
+    parable: {
+        guidance: '',
+        markers: [],
+        workedExamples: [],
+    },
     narrative: {
         guidance:
             'Traza el arco de la trama: dónde arranca la tensión, dónde el clímax, dónde la resolución. La estructura son los giros de la escena, no cláusulas lógicas.',

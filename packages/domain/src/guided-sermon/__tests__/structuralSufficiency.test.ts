@@ -11,7 +11,13 @@ import { GENRE_DISCERNMENT_GENRES } from '../genreDiscernmentCriteria';
  * Invariante: cubre TODO el enum LiteraryGenre (si falta un género, la vara no
  * lo mide → hueco silencioso).
  */
-const ALL_GENRES = ['epistle', 'narrative', 'poetry', 'prophecy', 'wisdom', 'gospel', 'apocalypse', 'law', 'mixed'];
+const ALL_GENRES = ['epistle', 'narrative', 'parable', 'poetry', 'prophecy', 'wisdom', 'gospel', 'apocalypse', 'law', 'mixed'];
+
+// Partición sellada (§11.0): predicables AUTORADOS (guía no vacía) / PENDIENTE
+// (parable — vacío temporal, exento hasta que el fundador lo autore) / CENTINELAS
+// (rutean al override; sin estructura derivable → markers []).
+const PENDING_AUTHOR = ['parable']; // temporal, AUTO-REMOVIBLE: al autorarse, sale de aquí y la aserción no-vacía vuelve a aplicarle.
+const SENTINELS = ['gospel', 'mixed'];
 
 describe('STRUCTURAL_SUFFICIENCY_BY_GENRE', () => {
     // NOTA: la garantía DURA de "llaves ≡ enum" es el TIPO Record<LiteraryGenre,…>:
@@ -26,16 +32,25 @@ describe('STRUCTURAL_SUFFICIENCY_BY_GENRE', () => {
         expect([...STRUCTURAL_SUFFICIENCY_GENRES].sort()).toEqual([...GENRE_DISCERNMENT_GENRES].sort());
     });
 
-    it('cada género trae guía no vacía; workedExamples arrancan vacíos (curados por el fundador)', () => {
+    it('predicables autorados: guía no vacía (pendiente y centinelas exentos); workedExamples vacíos en todos', () => {
         for (const g of STRUCTURAL_SUFFICIENCY_GENRES) {
-            expect(STRUCTURAL_SUFFICIENCY_BY_GENRE[g].guidance.trim().length).toBeGreaterThan(20);
             expect(STRUCTURAL_SUFFICIENCY_BY_GENRE[g].workedExamples).toEqual([]);
+            if (PENDING_AUTHOR.includes(g) || SENTINELS.includes(g)) continue;
+            expect(STRUCTURAL_SUFFICIENCY_BY_GENRE[g].guidance.trim().length).toBeGreaterThan(20);
         }
     });
 
-    it('gospel y mixed no tienen marcas deterministas (géneros que se disuelven / disparan override)', () => {
-        expect(STRUCTURAL_SUFFICIENCY_BY_GENRE.gospel.markers).toEqual([]);
-        expect(STRUCTURAL_SUFFICIENCY_BY_GENRE.mixed.markers).toEqual([]);
+    it('centinelas (gospel/mixed) no producen estructura derivable (markers: [])', () => {
+        for (const g of SENTINELS) {
+            expect(STRUCTURAL_SUFFICIENCY_BY_GENRE[g].markers).toEqual([]);
+        }
+    });
+
+    it('pendiente (parable): stub vacío VISIBLE — falla al autorarse, forzando quitarlo de PENDING_AUTHOR (no deuda silenciosa)', () => {
+        for (const g of PENDING_AUTHOR) {
+            expect(STRUCTURAL_SUFFICIENCY_BY_GENRE[g].guidance).toBe('');
+            expect(STRUCTURAL_SUFFICIENCY_BY_GENRE[g].markers).toEqual([]);
+        }
     });
 });
 
@@ -57,7 +72,11 @@ describe('evaluateStructuralSufficiency — determinista, tosca, fail-closed', (
 
     // Cada rama fail-closed → unclear, por separado.
     it('fail-closed: género fuera del enum (sin vara) → unclear', () => {
-        expect(evaluateStructuralSufficiency('parable', 'La cláusula principal y su argumento.')).toBe('unclear');
+        expect(evaluateStructuralSufficiency('xyz', 'La cláusula principal y su argumento.')).toBe('unclear');
+    });
+
+    it('fail-closed: parable (en el enum, markers vacías por autorar) → unclear aunque la nota traiga marcas', () => {
+        expect(evaluateStructuralSufficiency('parable', 'la escena y el argumento por tanto')).toBe('unclear');
     });
 
     it('fail-closed: género ausente (undefined) → unclear', () => {
