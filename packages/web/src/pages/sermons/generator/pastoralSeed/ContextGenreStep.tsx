@@ -6,10 +6,12 @@ import { Sparkles, BookMarked, Loader2, CheckCircle2, AlertTriangle } from 'luci
 import {
     ContextGenreStepData,
     inferGenreFromBook,
+    isSentinelGenre,
     LITERARY_GENRE_LABELS_ES,
     type LiteraryGenre,
     parsePassageReference,
     PASTORAL_SEED_THRESHOLDS,
+    SELECTABLE_GENRES,
     StepValidationResult,
     type AiAssistType,
 } from '@dosfilos/domain';
@@ -26,14 +28,24 @@ interface Props {
     onLogAiAssist?: (assistType: AiAssistType, outputWasEditedByUser: boolean) => void;
 }
 
-// parable excluido del selector — llega por el ACTO del pastor vía override
-// socrático, no por selección directa. Su ayuda formativa upstream no existe aún
-// (§4.4, decisión de 0a). Exclude mínimo y acotado. DEUDA PREEXISTENTE (fuera de 0a,
-// para 0b/Fase 3): gospel/mixed son centinelas y HOY sí aparecen como chips
-// seleccionables — este render no los filtra; la abstracción `selectableGenres`
-// (= predicables autorados) es Fase 3, no se toca aquí.
-const GENRE_OPTIONS = (Object.keys(LITERARY_GENRE_LABELS_ES) as LiteraryGenre[]).filter((g) => g !== 'parable');
+// 0b-A S2 — el selector consume el SSOT de dominio (predicables autorados), no las
+// keys crudas del enum. Así los centinelas (gospel/mixed) y el stub (parable) quedan
+// fuera de los chips por diseño, no por un filtro ad-hoc.
+const GENRE_OPTIONS = SELECTABLE_GENRES;
 const MIN_CHARS = PASTORAL_SEED_THRESHOLDS.contextGenre.genreImplicationMinChars;
+
+/**
+ * 0b-A S3 (§11.0) — cuando la inferencia del libro es un centinela (evangelio o
+ * mixto) el libro NO rinde un género único: cambia por perícopa. No hay propuesta
+ * que confirmar de un clic; el pastor elige el género que gobierna su pasaje.
+ * Copy provisional (§4.4, deuda de UX pendiente de revisión del fundador).
+ */
+function sentinelGenreHint(genre: LiteraryGenre): string {
+    if (genre === 'gospel') {
+        return 'Los evangelios combinan relato, parábola y discurso: no hay un único género para todo el libro. Elige el que gobierna tu perícopa.';
+    }
+    return 'Este libro combina varios géneros según la sección. Elige el que gobierna tu perícopa.';
+}
 
 interface BackgroundChunk {
     text: string;
@@ -70,8 +82,15 @@ export function ContextGenreStep({ passage, data, validation, onChange, onLogAiA
 
     const implicationLen = (data.genreImplication ?? '').trim().length;
 
+    // 0b-A S3 — la inferencia del libro puede ser un centinela (gospel; mixed para
+    // Daniel o libro no reconocido). En ese caso NO se confirma de un clic: el pastor
+    // elige un predicable en los chips (la perícopa manda).
+    const proposedIsSentinel = proposedGenre != null && isSentinelGenre(proposedGenre);
+
     const acceptProposed = useCallback(() => {
-        if (!proposedGenre) return;
+        // Nunca confirmar un centinela como género: el botón de propuesta solo aplica
+        // a predicables. Guard en la fuente (el botón queda oculto cuando es centinela).
+        if (!proposedGenre || isSentinelGenre(proposedGenre)) return;
         const edited = data.genre !== '' && data.genre !== proposedGenre;
         onChange({ genre: proposedGenre, genreConfirmed: true });
         onLogAiAssist?.('genreProposal', edited);
@@ -142,7 +161,7 @@ export function ContextGenreStep({ passage, data, validation, onChange, onLogAiA
                         <Sparkles className="h-4 w-4 text-emerald-600" />
                         <p className="text-sm font-medium">Género literario</p>
                     </div>
-                    {proposedGenre && !data.genreConfirmed && (
+                    {proposedGenre && !data.genreConfirmed && !proposedIsSentinel && (
                         <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
                             <span>
                                 Propuesta:{' '}
@@ -154,6 +173,11 @@ export function ContextGenreStep({ passage, data, validation, onChange, onLogAiA
                                 confirmar
                             </button>
                             <span>· o elige otro abajo</span>
+                        </div>
+                    )}
+                    {proposedGenre && !data.genreConfirmed && proposedIsSentinel && (
+                        <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground/80">
+                            {sentinelGenreHint(proposedGenre)}
                         </div>
                     )}
                     <div className="flex flex-wrap gap-2">
@@ -185,7 +209,8 @@ export function ContextGenreStep({ passage, data, validation, onChange, onLogAiA
                     {data.genreConfirmed &&
                         proposedGenre &&
                         data.genre &&
-                        data.genre !== proposedGenre && (
+                        data.genre !== proposedGenre &&
+                        !proposedIsSentinel && (
                             <div className="rounded-md border border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 text-xs">
                                 <p className="font-medium text-amber-800 dark:text-amber-300 flex items-center gap-1">
                                     <AlertTriangle className="h-3.5 w-3.5" /> Revisa el género antes de seguir
