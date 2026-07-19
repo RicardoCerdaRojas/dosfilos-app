@@ -29,6 +29,11 @@
             ],
             "redirects": [
                 {
+                    "source": "/",
+                    "destination": "/es/",
+                    "type": 301
+                },
+                {
                     "source": "/login",
                     "destination": "https://app.preach.dosfilos.com/login",
                     "type": 301
