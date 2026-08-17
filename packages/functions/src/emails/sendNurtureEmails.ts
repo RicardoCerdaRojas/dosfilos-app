@@ -45,20 +45,35 @@ const getDateRange = (daysAgo: number) => {
     return { start, end };
 };
 
+/**
+ * Runs one nurture stage in isolation. A stage that throws (bad query, missing
+ * index, Resend outage) must NOT take the remaining stages down with it: a
+ * single `await` chain meant the day-14 query failing on a missing composite
+ * index silently killed both trial-expiration warnings every morning. Errors
+ * are logged and swallowed here so every stage gets its turn.
+ */
+async function runStage(name: string, stage: () => Promise<void>): Promise<void> {
+    try {
+        await stage();
+    } catch (e) {
+        console.error(`Nurture stage "${name}" failed; continuing with the rest.`, e);
+    }
+}
+
 export const sendNurtureEmails = onSchedule('every day 10:00', async () => {
     console.log('Starting daily nurture email check...');
 
-    await processDay3Emails();
-    await processDay7Emails();
-    await processDay14Emails();
+    await runStage('day3', processDay3Emails);
+    await runStage('day7', processDay7Emails);
+    await runStage('day14', processDay14Emails);
 
     // Trial-expiration warnings — keyed off subscription.trialEnd, not createdAt.
     // Run AFTER the onboarding nurture cohort so a user that signed up on day N
     // and is approaching trial-end doesn't get both a "day 14 upgrade" and a
     // "5 days left" email on the same morning (the trial-end emails win because
     // they're more time-sensitive).
-    await processTrialEnding5dEmails();
-    await processTrialEnding1dEmails();
+    await runStage('trialEnding5d', processTrialEnding5dEmails);
+    await runStage('trialEnding1d', processTrialEnding1dEmails);
 
     console.log('Daily nurture email check completed.');
 });
