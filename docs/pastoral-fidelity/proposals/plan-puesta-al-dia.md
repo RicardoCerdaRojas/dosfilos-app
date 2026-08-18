@@ -35,10 +35,48 @@ encima. Construir features nuevas sobre instrumentación que no corre acumula m�
 - [ ] **0.2** Commitear `0b-gap-genero-como-acto.md` (terreno de la Ola 2) + corregir su hueco desactualizado:
       el juez **sí está cableado** (`CallableGenreEngagementJudge` inyectado en `GuidedSermonService.ts:151`
       + callable `passage-profile/genreEngagement.ts`).
-- [ ] **0.3** Decidir destino de `scripts/cohorte-superficies-creacion.mjs` (read-only, nunca corrido,
-      requiere `FOUNDER_UID`).
-- [ ] **0.4** Smoke corto en prod (login, wizard, faculty, biblioteca) + revisar quota LlamaParse/Gemini y
-      vigencia de secrets. Barato de verificar, caro de descubrir a mitad de un PR.
+- [x] **0.3** `scripts/cohorte-superficies-creacion.mjs` — ampliado a `FOUNDER_UIDS` (lista; el fundador opera
+      con dos cuentas y filtrar por una dejaba la otra contaminando), **corrido contra prod**. Resultados en
+      § Cohorte real.
+- [x] **0.4a** Smoke automático de funciones — **encontró un roto real**: `sendNurtureEmails` fallaba a diario
+      por índice faltante y la cascada se llevaba las advertencias de fin de trial. Cero usuarios recibieron
+      jamás day-14 ni trial-5d/1d (marcadores `emailsSent` en `users/`). Fix en PR #402.
+- [ ] **0.4b** Smoke manual de UI (login, wizard, faculty, biblioteca) + revisar quota LlamaParse/Gemini y
+      vigencia de secrets. Queda para el fundador.
+
+---
+
+## Cohorte real (medido 2026-08-17, `scripts/cohorte-superficies-creacion.mjs`)
+
+Base: **13 usuarios · 69 pastoralSeeds · 210 sermones.** "Sin fundador" excluye las dos cuentas del fundador.
+
+| Métrica | Con fundador | Sin fundador |
+|---|---|---|
+| Seeds socráticos instrumentados (Spine B) | 4 (2 usuarios) | **2** (1 usuario) |
+| — de esos, `userConfirmed` | 1 | **0** |
+| Estudios del form del menú (Spine A) post-PR1 | 0 | 0 |
+| Seeds legacy pre-PR1 (ambiguos) | 65 (3 usuarios) | 4 (2 usuarios) |
+| Sermones sintéticos (`AI Generated`) | 3 (1 publicado) | **0** |
+| Sermones sin estudio ni tag sintético | 150 (8 usuarios) | 18 (7 usuarios) |
+
+**Tres lecturas que corrigen supuestos del plan:**
+
+1. **El cuello de botella de la Ola 3 no es solo el bug de provenance — es el tráfico.** Post-PR1 hay 4 seeds
+   socráticos en total, casi todos del fundador. Aunque 0b-B quede perfecto, con ese caudal no se llega a
+   20-30 estudios reales en un plazo razonable. La meta 3.3 necesita **generar uso** (dogfood activo del
+   fundador + embajador, o bajar el N y aceptar menos confianza), no solo esperar.
+2. **Instrumentar el Spine A (3.2b) NO es urgente.** Cero estudios entraron por el form post-PR1. El atajo (a)
+   — entrar por el camino socrático — no está tapando volumen.
+3. **El problema del tutor sintético (5.1) es de señal, no de daño.** Los 3 sermones sintéticos son **todos**
+   del fundador; ningún usuario real produjo uno. La decisión sigue siendo válida (qué comunica el menú) pero
+   pierde urgencia.
+
+**Dato de fondo, más incómodo que los tres anteriores:** los usuarios reales tienen **18 sermones sin estudio**
+frente a **2 seeds socráticos**. La tesis del producto — el sermón como fruto del estudio — todavía no se
+refleja en el uso.
+
+> **Fix de raíz pendiente** (lo propone el propio script): no existe campo `origin` en seed ni sermón, así que
+> toda esta partición se hace por proxies. Instrumentar `origin` en la creación mataría la ambigüedad.
 
 ## Ola 1 — Destrabar el panel de control ⬅️ PRIMERO DE VERDAD
 
@@ -81,6 +119,8 @@ Paga doble: des-confunde la sombra de Fase 3 **y** destraba la calibración en p
       *Recomendado: (a) ahora, (b) agendado en Ola 8.*
 - [ ] **3.3** Meta: **≥20-30 estudios reales** con `userConfirmed` poblado. Recién ahí se toca el umbral del
       gate de suficiencia (condición explícita de reanudar, registrada en byblos).
+      ⚠️ **El cohorte medido dice que el caudal no alcanza** (4 seeds socráticos post-PR1, casi todos del
+      fundador). Esta meta exige generar uso deliberadamente o bajar el N a sabiendas. Ver § Cohorte real.
 
 **Regla de lectura de los datos:** solo las filas `userConfirmed` + insuficiente miden labor. `aiProposed` y
 `userOverride` miden precisión de la inferencia, NO "no analizó".
@@ -102,8 +142,12 @@ Paga doble: des-confunde la sombra de Fase 3 **y** destraba la calibración en p
 Sin dependencia de orden; cuanto antes, mejor.
 
 - [ ] **5.1** "Generar con el tutor" — produce sermón 100% sintético y es la **1ª entrada** del menú Nuevo
-      Sermón. Uso marginal (3 sermones / 1 usuario / 203 totales), pero la señal del menú contradice la tesis
-      del producto. Reubicar / reetiquetar / dejar como está.
+      Sermón. Medido 2026-08-17: 3 sermones sintéticos sobre 210, **todos de cuentas del fundador**; ningún
+      usuario real produjo uno. Es un problema de **señal del menú**, no de daño. Reubicar / reetiquetar /
+      dejar como está.
+- [ ] **5.4** ¿A quién apunta hoy el email de día 14? Filtra por `subscription.planId == 'free'` y en prod hay
+      **0 usuarios free** (el registro escribe `planId: 'free'` en `AuthService.ts:240`, pero nadie lo tiene).
+      Con el índice arreglado el correo sigue sin audiencia. Decidir target o retirarlo.
 - [ ] **5.2** `fidelity_pass` — ADR-032 lo manda a Fase 7 (es feature del paper, no del sermón). Confirmar que
       sigue siendo la decisión o reabrir.
 - [ ] **5.3** `contra_scan` — hoy solo en la cuenta del fundador. ¿Ampliar a dogfood?
@@ -169,5 +213,6 @@ Olas 5, 7 y 8 cuelgan del camino sin bloquearlo.
 | Fecha | Ola | Qué pasó |
 |---|---|---|
 | 2026-08-17 | — | Plan creado tras auditoría del estado real. |
+| 2026-08-17 | 0 | 0.1 diff whitespace descartado · 0.2 doc 0b versionado + corregido el hueco del juez · 0.3 script de cohorte ampliado a `FOUNDER_UIDS` y corrido (§ Cohorte real) · 0.4a smoke de funciones destapó el nurture roto (PR #402). Queda 0.4b (smoke manual de UI + quotas). |
 </content>
 </invoke>
