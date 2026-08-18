@@ -479,6 +479,34 @@
                 "conduccion_corazon": {
                     "label": "Conducción del corazón",
                     "description": "Botón \"Conducir el corazón\" en el Estudio Madre: conducción guiada C1–C5 que elicita la aplicación afectiva anclada al texto (manifiesto de conducción formativa). Validado en prod — el examen del corazón ya está desplegado."
+                },
+                "three_witnesses": {
+                    "label": "Tres testigos",
+                    "description": "Gate de tres testigos tras completar la semilla pastoral: contexto inmediato, paralelos canónicos y la confesión declarada por el propio pastor validan la idea central antes del borrador (Fase 2, ADR-011)."
+                },
+                "passage_profile": {
+                    "label": "Perfil del pasaje (sombra)",
+                    "description": "Perfil del pasaje en SOMBRA: el detector corre al activar el estudio y registra lo que habría dicho, sin confrontar ni nudgear. Es el flag de MEDICIÓN — enciéndelo antes que cualquiera de sus enforce (ADR-035)."
+                },
+                "passage_profile_enforce": {
+                    "label": "Perfil del pasaje (enforce)",
+                    "description": "Aplica el perfil en vivo: nudges por paso, confront de lectura errónea y colector de cobertura al cierre. Solo después de adjudicar la precisión del detector en sombra (ADR-035)."
+                },
+                "anchor_fidelity_enforce": {
+                    "label": "Fidelidad del ancla (enforce)",
+                    "description": "Descarta las lecturas erróneas que el detector propone sin ancla verificable (el verso citado no existe). El piso curado de lecturas revisadas NO depende de este flag: siempre va verificado (ADR-036)."
+                },
+                "sermon_draft_shadow": {
+                    "label": "Sombra del borrador",
+                    "description": "Sombra del borrador: mide citas de autoridad fabricadas, versos equivocados y cumplimiento del enfoque homilético. No bloquea nada — es la instrumentación previa a cualquier validador (Redacción v2)."
+                },
+                "genre_override_enforce": {
+                    "label": "Override de género (enforce)",
+                    "description": "El sistema confronta al pastor sobre el género de su perícopa en el paso 2 en vez de solo medirlo en sombra. La medición corre bajo el perfil del pasaje; esto enciende la confrontación (Redacción v2 §4.4)."
+                },
+                "step3_genre_help": {
+                    "label": "Ayuda de género en el paso 3",
+                    "description": "Ayuda estructural sensible al género confirmado en el paso 3: guía y ejemplos por género en vez del prompt genérico. Andamiaje formativo, no juicio (Redacción v2 §4.5)."
                 }
             }
         },

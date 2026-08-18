@@ -479,6 +479,34 @@
                 "conduccion_corazon": {
                     "label": "Heart conduction",
                     "description": "\"Conduct the heart\" button in the Master Study: guided C1–C5 conduction that elicits the affective application anchored to the text (formative conduction manifesto). Validated in prod — the heart exam is already deployed."
+                },
+                "three_witnesses": {
+                    "label": "Three witnesses",
+                    "description": "Three-witnesses gate after the pastoral seed is complete: immediate context, canonical parallels and the pastor's own declared confession validate the central idea before drafting (Phase 2, ADR-011)."
+                },
+                "passage_profile": {
+                    "label": "Passage profile (shadow)",
+                    "description": "Passage profile in SHADOW mode: the detector runs when the study starts and records what it would have said, without confronting or nudging. This is the MEASUREMENT flag — turn it on before any of its enforce flags (ADR-035)."
+                },
+                "passage_profile_enforce": {
+                    "label": "Passage profile (enforce)",
+                    "description": "Applies the profile live: per-step nudges, misreading confrontation and the coverage collector at close. Only after the detector's precision has been adjudicated in shadow (ADR-035)."
+                },
+                "anchor_fidelity_enforce": {
+                    "label": "Anchor fidelity (enforce)",
+                    "description": "Drops the misreadings the detector proposes without a verifiable anchor (the cited verse does not exist). The curated floor of reviewed misreadings does NOT depend on this flag — it is always verified (ADR-036)."
+                },
+                "sermon_draft_shadow": {
+                    "label": "Draft shadow",
+                    "description": "Draft shadow: measures fabricated authority quotes, wrong verse citations and homiletical-approach compliance. Blocks nothing — it is the instrumentation every validator depends on (Redacción v2)."
+                },
+                "genre_override_enforce": {
+                    "label": "Genre override (enforce)",
+                    "description": "The system confronts the pastor about the genre of their pericope in step 2 instead of only measuring it in shadow. Measurement runs under passage profile; this flag turns on the confrontation (Redacción v2 §4.4)."
+                },
+                "step3_genre_help": {
+                    "label": "Step 3 genre help",
+                    "description": "Genre-aware structural help in step 3: guidance and worked examples for the confirmed genre instead of the generic prompt. Formative scaffolding, not judgement (Redacción v2 §4.5)."
                 }
             }
         },

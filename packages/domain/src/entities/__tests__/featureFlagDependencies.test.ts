@@ -78,6 +78,7 @@ describe('getFlagDependents — descendientes activos (down con aviso)', () => {
                 'sermon_draft_shadow',
                 'genre_override_enforce',
                 'step3_genre_help',
+                'anchor_fidelity_enforce',
             ].sort(),
         );
     });
