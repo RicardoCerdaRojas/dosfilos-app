@@ -227,6 +227,15 @@ export const FEATURE_FLAG_NAMES = [
      */
     'passage_profile_enforce',
     /**
+     * ADR-036 PR6 enforce — gatea el VERIFY-DROP de las lecturas erróneas que
+     * propone el DETECTOR en runtime: descarta las que no anclan a un verso real
+     * antes de mergear el piso curado. El piso curado (PR5) NO depende de este
+     * flag — siempre va verificado. Requiere `passage_profile` (misma baranda
+     * anti-fail-open: no se descarta sin medir antes el corte 1 en sombra).
+     * Default off → mide la tasa de falla del detector pero no descarta.
+     */
+    'anchor_fidelity_enforce',
+    /**
      * Redacción v2 — sombra del draft. Mide (non-blocking) tasa de authorityQuote
      * fabricada, cita-verso-equivocado (proxy) y — con el juez — FCF/principio/
      * cumplimiento del enfoque. NO gatea nada; instrumentación prerrequisito de todo
@@ -282,6 +291,8 @@ export const FEATURE_FLAG_PREREQUISITES: Record<FeatureFlagName, readonly Featur
     // Enforce cuelga del flag de sombra: no se puede enforce sin perfilar antes
     // (baranda anti-fail-open horneada en la topología).
     passage_profile_enforce: ['passage_profile'],
+    // Verify-drop del detector: cuelga de la sombra por la misma baranda.
+    anchor_fidelity_enforce: ['passage_profile'],
     sermon_draft_shadow: ['pastoral_fidelity_flow'],
     // Enforce del override de género cuelga de la sombra del perfil (misma
     // baranda anti-fail-open: no confronta sin medir antes en sombra).

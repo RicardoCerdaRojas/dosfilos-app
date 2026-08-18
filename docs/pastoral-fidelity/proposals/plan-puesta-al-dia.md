@@ -82,16 +82,31 @@ refleja en el uso.
 
 **Tamaño:** 1 PR chico. **Bloquea:** todo lo demás — sin esto no se puede encender ni medir nada.
 
-- [ ] **1.1** Sincronizar `ALLOWED_FLAGS` (`packages/functions/src/admin/setUserFeatureFlags.ts:7-17`, hoy 9)
+- [x] **1.1** Sincronizar `ALLOWED_FLAGS` (`packages/functions/src/admin/setUserFeatureFlags.ts:7-17`, hoy 9)
       con `FEATURE_FLAG_NAMES` (`packages/domain/src/entities/User.ts:133-256`, hoy 13). Faltan:
       `sermon_draft_shadow`, `genre_override_enforce`, `step3_genre_help`.
-- [ ] **1.2** Resolver `anchor_fidelity_enforce`: **o** entra a `FEATURE_FLAG_NAMES` + allowlist (y el
-      verify-drop de ADR-036 pasa a ser encendible), **o** se borra `useAnchorFidelityEnforceGate`
-      (`packages/web/src/hooks/usePastoralFidelityGate.ts:124-132`). Hoy es código muerto que aparenta ser un
-      gate vivo.
-- [ ] **1.3** Test de paridad anti-drift. **Gotcha:** `functions` NO puede importar `@dosfilos/domain`
-      (decoupling intencional; importarlo revienta el build con ~180 TS6059). Opciones: test en functions que
-      lea el fuente de `User.ts` vía `fs`, o mover la lista a un JSON compartido en la raíz que ambos consuman.
+- [x] **1.2** `anchor_fidelity_enforce` — **registrado, no borrado**. Era la disyuntiva de la ola (registrarlo
+      o borrar `useAnchorFidelityEnforceGate`); se registró porque el verify-drop es trabajo shipped de
+      ADR-036 y borrarlo lo tiraba a la basura. Entra a `FEATURE_FLAG_NAMES` con prereq `passage_profile`.
+- [x] **1.3** Test de paridad anti-drift — `packages/functions/src/admin/__tests__/allowedFlagsParity.test.ts`.
+      Lee el fuente del dominio vía `fs` porque `functions` NO puede importar `@dosfilos/domain` (decoupling
+      intencional: importarlo revienta el build con ~180 TS6059). Probado fail-closed: al quitar un flag del
+      allowlist, el test falla nombrándolo.
+
+### Cerrada 2026-08-18 — qué se encontró de paso
+
+- **`anchor_fidelity_enforce` no existía en el registry** y sin embargo un hook lo leía. Se registró en
+  `FEATURE_FLAG_NAMES` con prereq `passage_profile` (misma baranda anti-fail-open que sus hermanos) →
+  el verify-drop de ADR-036 pasa de inalcanzable a encendible.
+- **La UI de admin ya derivaba del dominio** (`FEATURE_FLAG_NAMES`), no tenía tercera copia. Lo que fallaba
+  era el borde servidor: el toggle se veía y el callable lo rechazaba como flag desconocido.
+- **7 de 13 flags no tenían descripción en la UI** (i18n es/en). Agregadas — un panel de control con toggles
+  mudos no es un panel de control.
+- 🔴 **HALLAZGO GRANDE, fuera de alcance de esta ola: `packages/web` NO se typechequea en CI.** Su
+  `tsconfig.json` es un archivo-solución con `"files": []`, así que `tsc --noEmit` (lo que corre CI) no mira
+  ni un archivo; `vite build` tampoco typechequea. El chequeo real
+  (`tsc -p packages/web/tsconfig.app.json`) arroja **587 errores preexistentes**. Por eso el flag fantasma
+  sobrevivió a CI. Ver Ola 8.
 
 ## Ola 2 — 0b-B: provenance desde el acto
 
@@ -186,6 +201,11 @@ Boy Scout salvo donde se indique.
 - [ ] Realtime status en Admin Core Library
 - [ ] Rate-limit propio en `completeRegistration`
 - [ ] Faculty extractions user-wide sin trimmed callable
+- [ ] **`packages/web` sin typecheck real en CI** (587 errores preexistentes) — `tsconfig.json` es solución
+      con `files: []`; CI corre `tsc --noEmit` sobre nada. Arreglarlo es un proyecto propio (apuntar el script
+      a `tsconfig.app.json` y bajar los 587 a cero, o adoptar `tsc -b`). No es Boy Scout.
+- [ ] **Clave duplicada `status`** en `i18n/locales/{es,en}/admin.json` (string + objeto; JSON.parse conserva
+      el último → la etiqueta "Estado" está muerta). Nit, arreglar al pasar por ahí.
 - [ ] **Staging env** — 3-4 días, plan ya acordado en byblos. No es Boy Scout.
 
 ---
@@ -213,6 +233,7 @@ Olas 5, 7 y 8 cuelgan del camino sin bloquearlo.
 | Fecha | Ola | Qué pasó |
 |---|---|---|
 | 2026-08-17 | — | Plan creado tras auditoría del estado real. |
+| 2026-08-18 | 1 | Allowlist sincronizada (13/13) · `anchor_fidelity_enforce` registrado con prereq · test de paridad fail-closed · 7 descripciones i18n. Hallazgo: web sin typecheck en CI (587 errores) → Ola 8. |
 | 2026-08-17 | 0 | 0.1 diff whitespace descartado · 0.2 doc 0b versionado + corregido el hueco del juez · 0.3 script de cohorte ampliado a `FOUNDER_UIDS` y corrido (§ Cohorte real) · 0.4a smoke de funciones destapó el nurture roto (PR #402). Queda 0.4b (smoke manual de UI + quotas). |
 </content>
 </invoke>

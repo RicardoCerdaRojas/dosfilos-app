@@ -4,7 +4,15 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { writeAuditLog } from './auditLog';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 
-const ALLOWED_FLAGS = new Set<string>([
+/**
+ * Espejo del `FEATURE_FLAG_NAMES` del dominio. Es una COPIA a propósito: este
+ * paquete no puede importar `@dosfilos/domain` (el build revienta con ~180
+ * TS6059 por el rootDir), así que la paridad se garantiza con el test
+ * `__tests__/allowedFlagsParity.test.ts`, que lee el fuente del dominio y falla
+ * si las dos listas se separan. Un flag que falte aquí queda visible en la UI de
+ * admin pero es INTOGGLEABLE (el callable lo rechaza como desconocido).
+ */
+export const ALLOWED_FLAGS = new Set<string>([
     'pastoral_fidelity_flow',
     'pastoral_word_study',
     'three_witnesses',
@@ -14,6 +22,10 @@ const ALLOWED_FLAGS = new Set<string>([
     'conduccion_corazon',
     'passage_profile',
     'passage_profile_enforce',
+    'anchor_fidelity_enforce',
+    'sermon_draft_shadow',
+    'genre_override_enforce',
+    'step3_genre_help',
 ]);
 
 /**
