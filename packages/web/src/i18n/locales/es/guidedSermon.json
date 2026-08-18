@@ -90,5 +90,13 @@
     "submitting": "Guardando…",
     "missing": "Falta para cerrar el paso:",
     "affirmation": "Recibido. Tu insight quedó guardado tal cual lo escribiste — es tu trabajo, no del asistente. Con esto cierras tu estudio; continúa en el editor para redactar el sermón."
+  },
+  "genre": {
+    "title": "Género literario de tu perícopa",
+    "proposal": "El sistema propone: {{genre}}. Elegir es confirmar — o elige otro si tu perícopa manda distinto.",
+    "sentinelHint": "El libro no define un género predicable por sí solo. Elige el que gobierna TU perícopa: la perícopa manda, no el libro.",
+    "confirmed": "Género confirmado por ti: {{genre}}",
+    "error": "No se pudo registrar el género. Intenta de nuevo.",
+    "thenWrite": "Después escribe con tus palabras qué implica ese género para tu lectura."
   }
 }

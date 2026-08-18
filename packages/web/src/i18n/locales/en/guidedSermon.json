@@ -90,5 +90,13 @@
     "submitting": "Saving…",
     "missing": "Still needed to close the step:",
     "affirmation": "Received. Your insight was saved exactly as you wrote it — it's your work, not the assistant's. That closes your study; continue in the editor to write the sermon."
+  },
+  "genre": {
+    "title": "Literary genre of your pericope",
+    "proposal": "The system proposes: {{genre}}. Choosing is confirming — or pick another if your pericope says otherwise.",
+    "sentinelHint": "This book does not define a preachable genre on its own. Pick the one that governs YOUR pericope: the pericope rules, not the book.",
+    "confirmed": "Genre confirmed by you: {{genre}}",
+    "error": "Could not record the genre. Try again.",
+    "thenWrite": "Then write in your own words what that genre implies for your reading."
   }
 }

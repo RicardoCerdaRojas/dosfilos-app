@@ -5,6 +5,7 @@ export * from './use-cases/guided-sermon/ActivateGuidedSermonUseCase';
 export * from './use-cases/guided-sermon/RunSocraticTurnUseCase';
 export * from './use-cases/guided-sermon/SubmitGuidedInsightUseCase';
 export * from './use-cases/guided-sermon/SubmitGuidedWordStudiesUseCase';
+export * from './use-cases/guided-sermon/PronounceGuidedGenreUseCase'; // 🌱 Redacción v2 0b-B — el acto del pastor sobre el género (paso 2 guiado)
 export * from './use-cases/guided-sermon/PauseGuidedSermonUseCase';
 export * from './use-cases/guided-sermon/ResumeGuidedSermonUseCase';
 export * from './use-cases/anchor-fidelity/verifyAnchorVerse'; // 🌱 Pastoral Fidelity ADR-036 PR2 — deterministic anchor verse existence

@@ -17,7 +17,7 @@
  *     the Kaiser/Robinson bridge between exégesis and homilética)
  */
 
-import type { LiteraryGenre } from '../exegesis/expository/BookPanorama';
+import { isSelectableGenre, type LiteraryGenre } from '../exegesis/expository/BookPanorama';
 
 /**
  * Eight sub-steps of the spine. The wizard enforces them lineally; a step
@@ -428,6 +428,44 @@ export function resolveGenreProvenance(
     if (!chosen) return 'aiProposed';
     const proposed = (proposedGenre ?? '').trim().toLowerCase();
     return chosen === proposed ? 'userConfirmed' : 'userOverride';
+}
+
+/**
+ * Redacción v2 0b-B (§4.4) — el ACTO de pronunciarse sobre el género.
+ *
+ * El pastor elige un género predicable (un clic en el selector, en el wizard o
+ * en el paso 2 guiado) y ESO es la confirmación. La procedencia se deriva del
+ * acto contra la propuesta del libro, NO de escanear su prosa: antes de 0b-B la
+ * procedencia salía de `detectGenreInText(prosa)`, que casi nunca contiene el
+ * nombre del género → todo caía a `aiProposed` aunque el pastor se hubiera
+ * pronunciado (y, peor, un keyword suelto podía emitir un `userConfirmed`
+ * falso). Una sola función para las dos superficies: si diverge, la sombra mide
+ * dos cosas distintas creyendo que mide una.
+ *
+ * Fail-closed: solo se acepta un género PREDICABLE (`SELECTABLE_GENRES`, 0b-A).
+ * Un centinela (`gospel`/`mixed`) o un stub (`parable` sin autor) no es una
+ * elección válida — devuelve `null` y el llamador no escribe nada.
+ */
+export function pronounceGenre(args: {
+    /** Género que el sistema infirió del libro (la propuesta). Puede ser centinela. */
+    proposedGenre: string | undefined;
+    /** Género que el pastor eligió. Debe ser predicable. */
+    chosenGenre: string;
+}): Pick<
+    ContextGenreStepData,
+    'genre' | 'genreConfirmed' | 'genreProvenance' | 'genreOverrideTarget'
+> | null {
+    const chosen = args.chosenGenre?.trim();
+    if (!chosen || !isSelectableGenre(chosen)) return null;
+    const genreProvenance = resolveGenreProvenance(args.proposedGenre, chosen);
+    return {
+        genre: chosen,
+        genreConfirmed: true,
+        genreProvenance,
+        // El destino del override se guarda estructurado para poder re-correr la
+        // vara offline contra el género que el pastor sí eligió.
+        genreOverrideTarget: genreProvenance === 'userOverride' ? chosen : undefined,
+    };
 }
 
 export function validateStructuralAnalysis(

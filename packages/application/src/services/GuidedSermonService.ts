@@ -55,6 +55,11 @@ import {
     type SubmitGuidedWordStudiesInput,
     type SubmitGuidedWordStudiesResult,
 } from '../use-cases/guided-sermon/SubmitGuidedWordStudiesUseCase';
+import {
+    PronounceGuidedGenreUseCase,
+    type PronounceGuidedGenreInput,
+    type PronounceGuidedGenreResult,
+} from '../use-cases/guided-sermon/PronounceGuidedGenreUseCase';
 import { CallableLlmClient } from './CallableLlmClient';
 import { CallableCoverageEngagementJudge } from './CallableCoverageEngagementJudge';
 import { CallableGenreEngagementJudge } from './CallableGenreEngagementJudge';
@@ -83,6 +88,7 @@ export class GuidedSermonService {
     private readonly runTurnUC: RunSocraticTurnUseCase;
     private readonly submitInsightUC: SubmitGuidedInsightUseCase;
     private readonly submitWordStudiesUC: SubmitGuidedWordStudiesUseCase;
+    private readonly pronounceGenreUC: PronounceGuidedGenreUseCase;
     private readonly pauseUC: PauseGuidedSermonUseCase;
     private readonly resumeUC: ResumeGuidedSermonUseCase;
     private readonly seedRepo: IPastoralSeedRepository;
@@ -100,6 +106,7 @@ export class GuidedSermonService {
         );
         this.submitInsightUC = new SubmitGuidedInsightUseCase(deps.chatRepo, deps.seedRepo);
         this.submitWordStudiesUC = new SubmitGuidedWordStudiesUseCase(deps.chatRepo, deps.seedRepo);
+        this.pronounceGenreUC = new PronounceGuidedGenreUseCase(deps.seedRepo);
         this.pauseUC = new PauseGuidedSermonUseCase(deps.chatRepo);
         this.resumeUC = new ResumeGuidedSermonUseCase(deps.chatRepo);
     }
@@ -120,6 +127,15 @@ export class GuidedSermonService {
     /** Paso 4 estructurado: persiste los Estudios de Palabras desde el formulario. */
     submitWordStudies(input: SubmitGuidedWordStudiesInput): Promise<SubmitGuidedWordStudiesResult> {
         return this.submitWordStudiesUC.execute(input);
+    }
+
+    /**
+     * Redacción v2 0b-B (§4.4) — registra el ACTO del pastor sobre el género en
+     * el paso 2 guiado. Escritura al seed, no turno del chat: la implicancia
+     * interpretativa la sigue escribiendo él en su propio mensaje.
+     */
+    pronounceGenre(input: PronounceGuidedGenreInput): Promise<PronounceGuidedGenreResult> {
+        return this.pronounceGenreUC.execute(input);
     }
 
     /**

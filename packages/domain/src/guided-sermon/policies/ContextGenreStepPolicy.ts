@@ -11,7 +11,6 @@
 import { detectGenreInText } from '../../bible/inferGenreFromBook';
 import {
     PASTORAL_SEED_THRESHOLDS,
-    resolveGenreProvenance,
     validateContextGenre,
     type PastoralSeed,
 } from '../../entities/PastoralSeed';
@@ -122,36 +121,33 @@ Intento ${ctx.attemptIndex + 1} en este paso.`;
 
     persistTo(seed: PastoralSeed, pastorMessage: string): Partial<PastoralSeed> {
         const existingGenre = seed.contextGenre?.genre ?? '';
-        // The genre the pastor's prose names, if unambiguous (conservative:
-        // single-family match or null). Drives BOTH the resolved genre when the
-        // book gave none AND the provenance below.
-        const namedByPastor = detectGenreInText(pastorMessage) ?? '';
-        // Fix C: if the seed had no book-inferred genre, persist the one the
-        // pastor named in his prose so it sticks for downstream steps.
-        // Redacción v2 (§4.4) shadow-first: when the book DID infer a genre we do
-        // NOT swap it here even if the pastor names another — the override is
-        // only MEASURED (provenance + reason); the actual swap waits for enforce.
-        const namedGenre = existingGenre ? '' : namedByPastor;
+        // Fix C: si el libro no infirió género, el que el pastor nombra en su
+        // prosa se persiste para que los pasos siguientes tengan uno. Esto es
+        // RESOLUCIÓN de género, no procedencia — ver el bloque de abajo.
+        const namedGenre = existingGenre ? '' : (detectGenreInText(pastorMessage) ?? '');
         const resolvedGenre = existingGenre || namedGenre || '';
-        // Provenance = how the confirmed genre came to be: proposed genre vs the
-        // one the pastor pronounced. No pronouncement → aiProposed; same → kept;
-        // different → override (registered, not acted on in shadow).
-        const genreProvenance = resolveGenreProvenance(existingGenre, namedByPastor);
+        // Redacción v2 0b-B (§4.4): la procedencia SOLO la escribe el ACTO del
+        // pastor (el selector de género, vía `pronounceGenre`). Este turno NO la
+        // deriva de la prosa: `detectGenreInText` es un match de keywords y casi
+        // nunca aparece el nombre del género en la implicancia → emitía
+        // `aiProposed` aunque el pastor se hubiera pronunciado, y un keyword
+        // suelto podía emitir un `userConfirmed` FALSO que contaminaba la sombra.
+        // Aquí se preserva lo que el acto haya escrito; si no hubo acto, queda
+        // como estaba (`aiProposed`, honesto: nadie se pronunció).
+        const genreProvenance = seed.contextGenre?.genreProvenance ?? 'aiProposed';
         return {
             contextGenre: {
                 ...seed.contextGenre,
                 genre: resolvedGenre,
                 genreConfirmed: Boolean(resolvedGenre),
                 genreProvenance,
+                // La razón del override es la prosa del turno, pero solo cuando el
+                // ACTO ya registró que hubo override.
                 genreOverrideReason:
                     genreProvenance === 'userOverride'
                         ? pastorMessage.trim()
                         : seed.contextGenre?.genreOverrideReason,
-                // Redacción v2 (§4.5) — captura ESTRUCTURADA del género destino del
-                // override (namedByPastor, ya detectado arriba). Solo en userOverride;
-                // permite re-correr la vara offline contra el género correcto.
-                genreOverrideTarget:
-                    genreProvenance === 'userOverride' ? namedByPastor : seed.contextGenre?.genreOverrideTarget,
+                genreOverrideTarget: seed.contextGenre?.genreOverrideTarget,
                 genreImplication: pastorMessage.trim(),
                 completedAt: new Date(),
             },

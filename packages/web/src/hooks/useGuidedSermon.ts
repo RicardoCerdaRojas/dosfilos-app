@@ -25,6 +25,14 @@ export interface SubmitWordStudiesArgs {
     renderedText: string;
     affirmationText: string;
 }
+
+export interface PronounceGenreArgs {
+    seedId: string;
+    /** Género inferido del libro (la propuesta). Puede ser centinela. */
+    proposedGenre?: string;
+    /** Género predicable que el pastor eligió — su acto. */
+    chosenGenre: string;
+}
 import { useFirebase } from '@/context/firebase-context';
 import { usePassageProfileGate, usePassageProfileEnforceGate, useAnchorFidelityEnforceGate, useGenreOverrideEnforceGate, useStep3GenreHelpGate } from '@/hooks/usePastoralFidelityGate';
 import { LocalBibleService } from '@/services/LocalBibleService';
@@ -208,6 +216,12 @@ interface UseGuidedSermonResult {
     submitInsight: (args: SubmitInsightArgs) => Promise<SubmitGuidedInsightResult | null>;
     /** Paso 4 estructurado: persiste los Estudios de Palabras desde el formulario. */
     submitWordStudies: (args: SubmitWordStudiesArgs) => Promise<SubmitGuidedWordStudiesResult | null>;
+    /**
+     * Redacción v2 0b-B (§4.4) — paso 2: registra el ACTO del pastor sobre el
+     * género. Escritura al seed, NO un turno: no toca el transcript ni avanza el
+     * paso (la implicancia sigue siendo trabajo suyo, en su propio mensaje).
+     */
+    pronounceGenre: (args: PronounceGenreArgs) => Promise<'userConfirmed' | 'userOverride' | null>;
     /** Pause the agent on the session (resumable). */
     pause: (sessionId: string) => Promise<void>;
     /** Resume a paused agent session. */
@@ -457,6 +471,31 @@ export function useGuidedSermon(): UseGuidedSermonResult {
         [user?.uid, t, refreshSession, queryClient],
     );
 
+    const pronounceGenre = useCallback(
+        async (args: PronounceGenreArgs) => {
+            if (!user?.uid) return null;
+            try {
+                const result = await guidedSermonService.pronounceGenre({
+                    seedId: args.seedId,
+                    proposedGenre: args.proposedGenre,
+                    chosenGenre: args.chosenGenre,
+                });
+                if (!result.accepted) {
+                    // Fail-closed del dominio (centinela / stub / basura): no se
+                    // escribió nada. El componente muestra el error.
+                    console.warn('[useGuidedSermon] pronounceGenre rechazado', result.reason);
+                    return null;
+                }
+                return result.provenance === 'aiProposed' ? null : (result.provenance ?? null);
+            } catch (err) {
+                console.error('[useGuidedSermon] pronounceGenre failed', err);
+                toast.error(t('error.runTurn'));
+                return null;
+            }
+        },
+        [user?.uid, t],
+    );
+
     const pause = useCallback(
         async (sessionId: string) => {
             if (!user?.uid) return;
@@ -483,5 +522,5 @@ export function useGuidedSermon(): UseGuidedSermonResult {
         [user?.uid, refreshSession],
     );
 
-    return { isProcessing, activate, runTurn, submitInsight, submitWordStudies, pause, resume };
+    return { isProcessing, activate, runTurn, submitInsight, submitWordStudies, pronounceGenre, pause, resume };
 }

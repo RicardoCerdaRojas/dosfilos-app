@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createEmptyPastoralSeed, resolveGenreProvenance, type PastoralSeed } from '../PastoralSeed';
+import { createEmptyPastoralSeed, pronounceGenre, resolveGenreProvenance, type PastoralSeed } from '../PastoralSeed';
 import { ContextGenreStepPolicy } from '../../guided-sermon/policies/ContextGenreStepPolicy';
 
 /**
@@ -47,42 +47,83 @@ describe('createEmptyPastoralSeed — genre provenance default', () => {
     });
 });
 
-describe('ContextGenreStepPolicy.persistTo — provenance (A2, shadow-first)', () => {
-    const policy = new ContextGenreStepPolicy();
-    const seedWith = (genre: string): PastoralSeed =>
-        ({ contextGenre: { genre, genreConfirmed: Boolean(genre), genreImplication: '', bookLocationNote: '', historicalContextConsulted: false, timeSpentSeconds: 0 } }) as PastoralSeed;
-
-    it('book genre + prose names no genre → aiProposed, genre unchanged', () => {
-        const patch = policy.persistTo(seedWith('epistle'), 'Reflexión sin nombrar el género literario del pasaje aquí.');
-        expect(patch.contextGenre?.genreProvenance).toBe('aiProposed');
-        expect(patch.contextGenre?.genre).toBe('epistle');
-        expect(patch.contextGenre?.genreOverrideReason).toBeUndefined();
+describe('pronounceGenre — el ACTO del pastor (0b-B)', () => {
+    it('elegir el género propuesto → userConfirmed', () => {
+        const act = pronounceGenre({ proposedGenre: 'epistle', chosenGenre: 'epistle' });
+        expect(act).toEqual({
+            genre: 'epistle',
+            genreConfirmed: true,
+            genreProvenance: 'userConfirmed',
+            genreOverrideTarget: undefined,
+        });
     });
 
-    it('book genre + prose names the SAME genre → userConfirmed', () => {
+    it('elegir otro género → userOverride + target estructurado', () => {
+        const act = pronounceGenre({ proposedGenre: 'narrative', chosenGenre: 'poetry' });
+        expect(act?.genreProvenance).toBe('userOverride');
+        expect(act?.genre).toBe('poetry');
+        expect(act?.genreOverrideTarget).toBe('poetry');
+    });
+
+    it('propuesta centinela: elegir un predicable es override (el centinela no es género)', () => {
+        expect(pronounceGenre({ proposedGenre: 'gospel', chosenGenre: 'narrative' })?.genreProvenance).toBe(
+            'userOverride',
+        );
+        expect(pronounceGenre({ proposedGenre: 'mixed', chosenGenre: 'prophecy' })?.genreProvenance).toBe(
+            'userOverride',
+        );
+    });
+
+    it('sin propuesta del libro, elegir uno sigue siendo un acto → userOverride', () => {
+        expect(pronounceGenre({ proposedGenre: undefined, chosenGenre: 'wisdom' })?.genreProvenance).toBe(
+            'userOverride',
+        );
+    });
+
+    it('FAIL-CLOSED: no se puede pronunciar un centinela, un stub ni basura', () => {
+        expect(pronounceGenre({ proposedGenre: 'epistle', chosenGenre: 'gospel' })).toBeNull();
+        expect(pronounceGenre({ proposedGenre: 'epistle', chosenGenre: 'mixed' })).toBeNull();
+        expect(pronounceGenre({ proposedGenre: 'epistle', chosenGenre: 'parable' })).toBeNull();
+        expect(pronounceGenre({ proposedGenre: 'epistle', chosenGenre: '' })).toBeNull();
+        expect(pronounceGenre({ proposedGenre: 'epistle', chosenGenre: 'no-existe' })).toBeNull();
+    });
+});
+
+describe('ContextGenreStepPolicy.persistTo — la prosa YA NO decide la procedencia (0b-B)', () => {
+    const policy = new ContextGenreStepPolicy();
+    const seedWith = (genre: string, genreProvenance?: 'aiProposed' | 'userConfirmed' | 'userOverride'): PastoralSeed =>
+        ({ contextGenre: { genre, genreConfirmed: Boolean(genre), genreProvenance, genreImplication: '', bookLocationNote: '', historicalContextConsulted: false, timeSpentSeconds: 0 } }) as PastoralSeed;
+
+    it('sin acto previo → aiProposed, aunque la prosa nombre el MISMO género', () => {
+        // Antes de 0b-B esto emitía `userConfirmed` por un match de keywords, sin
+        // que el pastor se hubiera pronunciado. Dato falso en la sombra.
         const patch = policy.persistTo(seedWith('narrative'), 'Es una narrativa histórica, la leo por el relato.');
-        expect(patch.contextGenre?.genreProvenance).toBe('userConfirmed');
+        expect(patch.contextGenre?.genreProvenance).toBe('aiProposed');
         expect(patch.contextGenre?.genre).toBe('narrative');
     });
 
-    it('book genre + prose names a DIFFERENT genre → userOverride, genre NOT swapped (shadow), reason + target stored', () => {
+    it('sin acto previo → aiProposed, aunque la prosa nombre OTRO género', () => {
         const patch = policy.persistTo(seedWith('narrative'), 'Esto en realidad es poesía, puro paralelismo.');
-        expect(patch.contextGenre?.genreProvenance).toBe('userOverride');
-        expect(patch.contextGenre?.genre).toBe('narrative'); // proposed retained in shadow
-        expect(patch.contextGenre?.genreOverrideReason).toContain('poesía');
-        // §4.5 — target genre captured STRUCTURED (detectGenreInText), re-runnable offline.
-        expect(patch.contextGenre?.genreOverrideTarget).toBe('poetry');
-    });
-
-    it('no override → genreOverrideTarget NO se fija (queda undefined / preserva el previo)', () => {
-        const patch = policy.persistTo(seedWith('narrative'), 'Es una narrativa histórica, la leo por el relato.');
-        expect(patch.contextGenre?.genreProvenance).toBe('userConfirmed');
+        expect(patch.contextGenre?.genreProvenance).toBe('aiProposed');
         expect(patch.contextGenre?.genreOverrideTarget).toBeUndefined();
+        expect(patch.contextGenre?.genreOverrideReason).toBeUndefined();
     });
 
-    it('no book genre + prose names one → userOverride, genre supplied', () => {
-        const patch = policy.persistTo(seedWith(''), 'Esto es una carta de Pablo, un argumento sostenido.');
+    it('el acto previo se PRESERVA y el turno solo agrega la implicancia', () => {
+        const patch = policy.persistTo(seedWith('poetry', 'userConfirmed'), 'Es poesía: leo el paralelismo, no cronología.');
+        expect(patch.contextGenre?.genreProvenance).toBe('userConfirmed');
+        expect(patch.contextGenre?.genreImplication).toContain('paralelismo');
+    });
+
+    it('tras un override, la prosa del turno queda como RAZÓN del override', () => {
+        const patch = policy.persistTo(seedWith('poetry', 'userOverride'), 'La perícopa argumenta, no canta.');
         expect(patch.contextGenre?.genreProvenance).toBe('userOverride');
+        expect(patch.contextGenre?.genreOverrideReason).toBe('La perícopa argumenta, no canta.');
+    });
+
+    it('fix C intacto: sin género del libro, la prosa todavía RESUELVE el género (no la procedencia)', () => {
+        const patch = policy.persistTo(seedWith(''), 'Esto es una carta de Pablo, un argumento sostenido.');
         expect(patch.contextGenre?.genre).toBe('epistle');
+        expect(patch.contextGenre?.genreProvenance).toBe('aiProposed');
     });
 });
