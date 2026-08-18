@@ -165,7 +165,7 @@ export function ContextGenreStep({ passage, data, validation, onChange, onLogAiA
                 {/* Genre proposal + confirm */}
                 <div className="border rounded-md p-4 space-y-3 bg-muted/20">
                     <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-emerald-600" />
+                        <Sparkles className="h-4 w-4 text-success" />
                         <p className="text-sm font-medium">Género literario</p>
                     </div>
                     {proposedGenre && !data.genreConfirmed && !proposedIsSentinel && (
@@ -196,7 +196,7 @@ export function ContextGenreStep({ passage, data, validation, onChange, onLogAiA
                                 className={
                                     'rounded-full border px-3 py-1 text-xs transition-colors ' +
                                     (data.genre === g
-                                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-medium'
+                                        ? 'border-success bg-success/10 text-success-subtle-foreground font-medium'
                                         : 'border-muted bg-muted/30 text-muted-foreground hover:bg-primary/10')
                                 }
                             >
@@ -205,7 +205,7 @@ export function ContextGenreStep({ passage, data, validation, onChange, onLogAiA
                         ))}
                     </div>
                     {data.genreConfirmed && data.genre && (
-                        <p className="text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                        <p className="text-xs text-success-subtle-foreground flex items-center gap-1">
                             <CheckCircle2 className="h-3.5 w-3.5" />
                             Género confirmado: {LITERARY_GENRE_LABELS_ES[data.genre as LiteraryGenre]}
                         </p>
@@ -218,11 +218,11 @@ export function ContextGenreStep({ passage, data, validation, onChange, onLogAiA
                         data.genre &&
                         data.genre !== proposedGenre &&
                         !proposedIsSentinel && (
-                            <div className="rounded-md border border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 text-xs">
-                                <p className="font-medium text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                            <div className="rounded-md border border-warning bg-warning-subtle p-3 text-xs">
+                                <p className="font-medium text-warning-subtle-foreground flex items-center gap-1">
                                     <AlertTriangle className="h-3.5 w-3.5" /> Revisa el género antes de seguir
                                 </p>
-                                <p className="text-amber-900/80 dark:text-amber-200/80 mt-1">
+                                <p className="text-warning-subtle-foreground/80 mt-1">
                                     Para este libro el asistente esperaría{' '}
                                     <span className="font-medium">{LITERARY_GENRE_LABELS_ES[proposedGenre]}</span>, no{' '}
                                     <span className="font-medium">{LITERARY_GENRE_LABELS_ES[data.genre as LiteraryGenre]}</span>.
@@ -233,7 +233,7 @@ export function ContextGenreStep({ passage, data, validation, onChange, onLogAiA
                                 <button
                                     type="button"
                                     onClick={acceptProposed}
-                                    className="mt-1 underline text-amber-700 dark:text-amber-400"
+                                    className="mt-1 underline text-warning-subtle-foreground"
                                 >
                                     Usar {LITERARY_GENRE_LABELS_ES[proposedGenre]}
                                 </button>
