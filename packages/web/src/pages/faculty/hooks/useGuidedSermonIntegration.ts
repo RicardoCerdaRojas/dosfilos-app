@@ -56,6 +56,15 @@ interface Result {
     submitInsight: (
         args: Pick<SubmitInsightArgs, 'insight' | 'renderedInsightText'>,
     ) => Promise<import('@dosfilos/application').SubmitGuidedInsightResult | null>;
+    /**
+     * Redacción v2 0b-B (§4.4) — paso 2: registra el ACTO del pastor sobre el
+     * género. Devuelve la procedencia resultante, o `null` si el dominio lo
+     * rechazó (centinela/stub) o no hay seed.
+     */
+    pronounceGenre: (
+        chosenGenre: string,
+        proposedGenre?: string,
+    ) => Promise<'userConfirmed' | 'userOverride' | null>;
     /** Paso 4 estructurado: envía la lista de estudios de palabras. */
     submitWordStudies: (
         args: Pick<SubmitWordStudiesArgs, 'studies' | 'renderedText'>,
@@ -301,6 +310,19 @@ export function useGuidedSermonIntegration({
         [effectiveSessionId, guidedSermon, t],
     );
 
+    /**
+     * Redacción v2 0b-B (§4.4) — paso 2: el acto del pastor sobre el género.
+     * Escribe en el seed de la sesión guiada; no manda turno ni avanza paso.
+     */
+    const pronounceGenre = useCallback(
+        async (chosenGenre: string, proposedGenre?: string) => {
+            const seedId = guidedSermonSession?.seedId;
+            if (!seedId) return null;
+            return guidedSermon.pronounceGenre({ seedId, proposedGenre, chosenGenre });
+        },
+        [guidedSermon, guidedSermonSession?.seedId],
+    );
+
     return {
         isFlagEnabled,
         isGuidedActive,
@@ -316,5 +338,6 @@ export function useGuidedSermonIntegration({
         trySocraticSubmit,
         submitInsight,
         submitWordStudies,
+        pronounceGenre,
     };
 }

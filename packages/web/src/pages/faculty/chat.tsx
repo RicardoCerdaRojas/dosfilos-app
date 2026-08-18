@@ -19,6 +19,7 @@ import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
 import { GuidedSermonHeader } from '@/components/faculty/GuidedSermonHeader';
 import { useGuidedSermonIntegration } from './hooks/useGuidedSermonIntegration';
 import { FacultyChatGuidedZone } from './components/FacultyChatGuidedZone';
+import { GuidedGenreSelector } from './components/GuidedGenreSelector';
 import { GuidedWordStudyHelper } from './components/GuidedWordStudyHelper';
 import { GuidedCrossRefHelper } from './components/GuidedCrossRefHelper';
 import { GuidedInsightHelper } from './components/GuidedInsightHelper';
@@ -469,6 +470,17 @@ export function FacultyChatPage() {
                                                         onCopyMessage={(content, messageId) => copyMessageToClipboard(content, messageId, t)}
                                                         sessionId={isNewSession ? undefined : effectiveSessionId}
                                                     />
+                                                    {guidedIntegration.isGuidedActive
+                                                        && session?.guidedSermonSession?.currentStep === 'contextGenre'
+                                                        && session.guidedSermonSession.passage && (
+                                                        <GuidedGenreSelector
+                                                            passage={session.guidedSermonSession.passage}
+                                                            onPronounce={(genre) =>
+                                                                guidedIntegration.pronounceGenre(genre)
+                                                            }
+                                                            busy={guidedIntegration.isProcessing}
+                                                        />
+                                                    )}
                                                     {guidedIntegration.isGuidedActive
                                                         && session?.guidedSermonSession?.currentStep === 'wordStudies'
                                                         && session.guidedSermonSession.passage && (

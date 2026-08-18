@@ -11,6 +11,7 @@ import {
     type LiteraryGenre,
     parsePassageReference,
     PASTORAL_SEED_THRESHOLDS,
+    pronounceGenre,
     SELECTABLE_GENRES,
     StepValidationResult,
     type AiAssistType,
@@ -92,13 +93,19 @@ export function ContextGenreStep({ passage, data, validation, onChange, onLogAiA
         // a predicables. Guard en la fuente (el botón queda oculto cuando es centinela).
         if (!proposedGenre || isSentinelGenre(proposedGenre)) return;
         const edited = data.genre !== '' && data.genre !== proposedGenre;
-        onChange({ genre: proposedGenre, genreConfirmed: true });
+        // 0b-B: el clic ES el acto — la procedencia sale de él, no de escanear prosa.
+        const act = pronounceGenre({ proposedGenre, chosenGenre: proposedGenre });
+        if (!act) return;
+        onChange(act);
         onLogAiAssist?.('genreProposal', edited);
     }, [proposedGenre, data.genre, onChange, onLogAiAssist]);
 
     const selectGenre = (genre: LiteraryGenre) => {
-        // Manual override of the proposal still counts as confirmed.
-        onChange({ genre, genreConfirmed: true });
+        // Elegir otro género sigue siendo confirmar — y queda registrado como
+        // userOverride contra la propuesta del libro (0b-B).
+        const act = pronounceGenre({ proposedGenre: proposedGenre ?? undefined, chosenGenre: genre });
+        if (!act) return;
+        onChange(act);
         if (proposedGenre && genre !== proposedGenre) onLogAiAssist?.('genreProposal', true);
     };
 

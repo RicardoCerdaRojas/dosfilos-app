@@ -114,13 +114,42 @@ refleja en el uso.
 
 Paga doble: des-confunde la sombra de Fase 3 **y** destraba la calibración en pausa.
 
-- [ ] **2.1** Cerrar los huecos abiertos del doc 0b antes de codear:
+- [x] **2.1** Huecos cerrados — y uno de ellos invalidó la premisa del doc 0b. Ver nota abajo.
+      Enunciado original:
       (a) sourcing de la propuesta inferida-del-libro en `persistTo`;
       (b) si `persistTo` corre en la rama `accept-override` (hoy devuelve `undefined` → probablemente se salta).
       El 3er hueco (hogar de `SELECTABLE_GENRES`) ya lo cerró 0b-A.
-- [ ] **2.2** Rewire de `ContextGenreStepPolicy.persistTo` → `(propuestaDelLibro, géneroDelChip)`; sacar
+- [x] **2.2** Hecho, con el alcance corregido: `persistTo` deja de derivar procedencia de la prosa
+      (preserva el acto); el acto se registra en las DOS superficies. Rewire original enunciado: → `(propuestaDelLibro, géneroDelChip)`; sacar
       `detectGenreInText` de ese path.
-- [ ] **2.3** Verificar en prod que la sombra empieza a escribir `userConfirmed` real.
+- [ ] **2.3** Verificar en prod que la sombra empieza a escribir `userConfirmed` real. **Pendiente del
+      fundador**: requiere un estudio guiado real tras el deploy.
+
+### Cerrada 2026-08-18 — la premisa del doc 0b estaba equivocada
+
+El doc 0b decía: *"el acto YA existe (los chips del paso 2); 0b-B solo re-conecta la escritura de
+provenance a ese acto"*. El código dice otra cosa — **son dos superficies distintas**:
+
+| | Spine A — wizard (`PastoralSeedWizard`) | Spine B — socrático (Faculty chat) |
+|---|---|---|
+| Acto (chips) | **Sí**, `ContextGenreStep` | **No existía** |
+| Escribía provenance | **No** (solo `genre` + `genreConfirmed`) | Sí, adivinada de la prosa |
+
+O sea: la superficie que tenía el acto no lo registraba, y la superficie que registraba procedencia no
+tenía acto. `createEmptyPastoralSeed` lo decía en un comentario desde Fase 1: *"the guided conversational
+flow has no UI to confirm a proposed genre"*. Apuntar `persistTo` "al chip" era imposible: en el chat no
+hay chip.
+
+**Decisión del fundador:** llevar el mismo acto al chat (chips de los 7 predicables del SSOT `SELECTABLE_GENRES`)
+en vez de derivar la procedencia de un veredicto LLM. El acto queda determinista y las dos superficies miden
+lo mismo.
+
+**Lo entregado:**
+- `pronounceGenre` (dominio, puro, fail-closed ante centinelas/stub) — una sola derivación para ambas superficies.
+- `persistTo` deja de usar `detectGenreInText` para procedencia: preserva el acto o queda `aiProposed`
+  honesto. Antes podía emitir un `userConfirmed` **falso** por un keyword suelto en la prosa.
+- `PronounceGuidedGenreUseCase` + `GuidedGenreSelector` — el paso 2 guiado gana el acto que no tenía.
+- El wizard ahora sí registra su propio acto.
 
 ## Ola 3 — Encender la instrumentación + dogfood
 
@@ -233,6 +262,7 @@ Olas 5, 7 y 8 cuelgan del camino sin bloquearlo.
 | Fecha | Ola | Qué pasó |
 |---|---|---|
 | 2026-08-17 | — | Plan creado tras auditoría del estado real. |
+| 2026-08-18 | 2 | 0b-B con alcance corregido: el chat no tenía acto (el doc 0b confundía superficies). `pronounceGenre` en dominio + selector en el paso 2 guiado + wizard registrando su acto + `detectGenreInText` fuera del path de procedencia. Falta verificar en prod (2.3). |
 | 2026-08-18 | 1 | Allowlist sincronizada (13/13) · `anchor_fidelity_enforce` registrado con prereq · test de paridad fail-closed · 7 descripciones i18n. Hallazgo: web sin typecheck en CI (587 errores) → Ola 8. |
 | 2026-08-17 | 0 | 0.1 diff whitespace descartado · 0.2 doc 0b versionado + corregido el hueco del juez · 0.3 script de cohorte ampliado a `FOUNDER_UIDS` y corrido (§ Cohorte real) · 0.4a smoke de funciones destapó el nurture roto (PR #402). Queda 0.4b (smoke manual de UI + quotas). |
 </content>
