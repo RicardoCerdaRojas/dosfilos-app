@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { usageDayKey } from './llmUsageRecorder';
+import { readBudgetConfig, shadowExhausted } from './llmBudget';
 
 /**
  * Lectura super_admin del consumo LLM del servidor para el panel de costos.
@@ -40,6 +41,16 @@ export const getLlmUsageSummary = onCall({ ...appCheckCallableOptions() }, async
 
     const budgetDoc = await db.collection('config').doc('llmBudget').get();
     const monthlyBudgetUsd = Number(budgetDoc.data()?.monthlyUsd ?? DEFAULT_MONTHLY_BUDGET_USD);
+    // Estado del cortacircuito: una sombra en pausa NO puede ser invisible, o el
+    // día que falten datos nadie sabrá que fue por presupuesto y no por un bug.
+    const cfg = await readBudgetConfig();
+    const todayDoc = await db.collection('llmUsageDaily').doc(usageDayKey()).get();
+    const todayUsd = Number(todayDoc.data()?.usd ?? 0);
+    const shadow = {
+        dailyCapUsd: cfg.shadowDailyUsdCap,
+        todayUsd,
+        paused: shadowExhausted(todayUsd, cfg.shadowDailyUsdCap),
+    };
 
     // Resolver uid → email para que el panel muestre personas, no identificadores.
     const uids = new Set<string>();
@@ -55,6 +66,7 @@ export const getLlmUsageSummary = onCall({ ...appCheckCallableOptions() }, async
     return {
         monthlyBudgetUsd,
         budgetIsDefault: !budgetDoc.exists,
+        shadow,
         emails,
         days: snap.docs.map((d) => {
             const x = d.data() ?? {};

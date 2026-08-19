@@ -2,9 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { buildLlmCostReport, type LlmCostReport, type LlmUsageDay } from '@/lib/llmCostReport';
 
+export interface ShadowGuardState {
+    dailyCapUsd: number;
+    todayUsd: number;
+    paused: boolean;
+}
+
 interface Payload {
     monthlyBudgetUsd: number;
     budgetIsDefault: boolean;
+    shadow: ShadowGuardState;
     emails: Record<string, string>;
     days: LlmUsageDay[];
 }
@@ -17,6 +24,7 @@ export function useLlmCostReport(days = 30) {
     const [report, setReport] = useState<LlmCostReport | null>(null);
     const [budget, setBudget] = useState<{ usd: number; isDefault: boolean } | null>(null);
     const [emails, setEmails] = useState<Record<string, string>>({});
+    const [shadow, setShadow] = useState<ShadowGuardState | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +37,7 @@ export function useLlmCostReport(days = 30) {
             const data = res.data as Payload;
             setBudget({ usd: data.monthlyBudgetUsd, isDefault: data.budgetIsDefault });
             setEmails(data.emails ?? {});
+            setShadow(data.shadow ?? null);
             setReport(buildLlmCostReport(data.days ?? [], data.monthlyBudgetUsd, new Date()));
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'No pudimos cargar el consumo.');
@@ -41,5 +50,5 @@ export function useLlmCostReport(days = 30) {
         void refresh();
     }, [refresh]);
 
-    return { report, budget, emails, loading, error, refresh };
+    return { report, budget, emails, shadow, loading, error, refresh };
 }

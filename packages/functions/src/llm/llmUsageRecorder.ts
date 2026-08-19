@@ -40,6 +40,15 @@ export function usageDayKey(now: Date = new Date()): string {
 }
 
 /**
+ * Clave del documento del mes. Existe para que el guardia de presupuesto y la
+ * alerta lean UN documento en vez de sumar 31: se consultan en caliente (por
+ * llamada / cada hora) y sumar el mes cada vez sería más caro que lo que miden.
+ */
+export function usageMonthKey(now: Date = new Date()): string {
+    return now.toISOString().slice(0, 7);
+}
+
+/**
  * Las claves de un mapa de Firestore no pueden llevar `.` `/` `~` `*` `[` `]`.
  * Los ids de modelo y los uid son seguros, pero el nombre de feature lo escribe
  * quien llama: se sanea acá y no en cada caller.
@@ -79,11 +88,21 @@ export async function recordLlmUsage(record: LlmUsageRecord, now: Date = new Dat
             patch[`byUser.${safeMapKey(userId)}.usd`] = inc(usd);
         }
 
-        await admin
-            .firestore()
-            .collection('llmUsageDaily')
-            .doc(usageDayKey(now))
-            .set(patch, { merge: true });
+        const db = admin.firestore();
+        await Promise.all([
+            db.collection('llmUsageDaily').doc(usageDayKey(now)).set(patch, { merge: true }),
+            // El acumulado del mes: solo los totales, sin los cortes (esos se leen
+            // del día). Es lo que consultan el guardia y la alerta.
+            db.collection('llmUsageMonthly').doc(usageMonthKey(now)).set(
+                {
+                    month: usageMonthKey(now),
+                    calls: inc(1),
+                    usd: inc(usd),
+                    updatedAt: FieldValue.serverTimestamp(),
+                },
+                { merge: true },
+            ),
+        ]);
     } catch (err) {
         console.warn('[llmUsage] no se pudo registrar el consumo (no bloqueante)', err);
     }

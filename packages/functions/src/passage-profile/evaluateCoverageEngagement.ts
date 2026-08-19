@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { shadowLlmAllowed } from '../llm/llmBudget';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { AnthropicLlmClient } from '../llm/AnthropicLlmClient';
 import { judgeEngagement, type EngagementInput } from './coverageEngagement';
@@ -39,6 +40,18 @@ export const evaluateCoverageEngagement = onCall(
         };
         if (!input.pastorMessage) throw new HttpsError('invalid-argument', 'pastorMessage is required');
         if (!input.claim) throw new HttpsError('invalid-argument', 'claim is required');
+
+        // Cortacircuito de gasto (ver `llmBudget`): la sombra es lo primero que se
+        // sacrifica cuando el día se pone caro. Mismo `unclear` del fail-closed.
+        if (!(await shadowLlmAllowed())) {
+            // Mismo veredicto neutro que el gate de sustancia: ni trabajó ni
+            // contradijo. El cliente ya sabe tratarlo como "sin señal".
+            return {
+                judgment: { substantive: false, engagedAnchor: false, contradictsAnchor: false },
+                modelTier: 'sonnet' as const,
+                skippedForBudget: true,
+            };
+        }
 
         try {
             const sonnet = new AnthropicLlmClient(anthropicKey, undefined, undefined, {
