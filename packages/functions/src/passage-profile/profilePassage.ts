@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GeminiLlmClient } from '../llm/GeminiLlmClient';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 /**
@@ -223,18 +223,21 @@ export const profilePassage = onCall(
         if (!passage) throw new HttpsError('invalid-argument', 'passage is required');
         if (!passageText) throw new HttpsError('invalid-argument', 'passageText is required');
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
-            generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+        // Vía el port: el adapter mide el consumo (tokens → USD) que antes se
+        // perdía al llamar al SDK directo. Mismo modelo, misma config.
+        const llm = new GeminiLlmClient(apiKey, 'gemini-2.5-flash', {
+            feature: 'profilePassage',
+            userId: request.auth?.uid,
         });
 
         try {
-            const result = await model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: buildPrompt(passage, passageText.slice(0, 12000)) }] }],
-                systemInstruction: SYSTEM_PROMPT,
+            const raw = await llm.generate({
+                system: SYSTEM_PROMPT,
+                prompt: buildPrompt(passage, passageText.slice(0, 12000)),
+                responseMimeType: 'application/json',
+                temperature: 0.2,
             });
-            const parsed = safeParseJson(result.response.text()) as Record<string, unknown>;
+            const parsed = safeParseJson(raw) as Record<string, unknown>;
             const movements = Array.isArray(parsed?.movements)
                 ? parsed.movements.map(shapeMovement).filter((m): m is RawMovement => m !== null)
                 : [];

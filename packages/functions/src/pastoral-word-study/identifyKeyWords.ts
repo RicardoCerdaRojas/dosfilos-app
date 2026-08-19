@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GeminiLlmClient } from '../llm/GeminiLlmClient';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 /**
@@ -139,37 +139,27 @@ export const identifyKeyWords = onCall(
             throw new HttpsError('invalid-argument', 'language must be greek or hebrew');
         }
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
-            generationConfig: {
-                responseMimeType: 'application/json',
-                temperature: 0.3,
-            },
+        // Vía el port: el adapter mide el consumo (tokens → USD) que antes se
+        // perdía al llamar al SDK directo. Mismo modelo, misma config.
+        const llm = new GeminiLlmClient(apiKey, 'gemini-2.5-flash', {
+            feature: 'identifyKeyWords',
+            userId: request.auth?.uid,
         });
 
         try {
-            const result = await model.generateContent({
-                contents: [
-                    {
-                        role: 'user',
-                        parts: [
-                            {
-                                text: buildIdentifyKeyWordsPrompt({
-                                    passage,
-                                    language,
-                                    originalText,
-                                    translationName,
-                                }),
-                            },
-                        ],
-                    },
-                ],
-                systemInstruction: IDENTIFY_KEY_WORDS_SYSTEM_PROMPT,
+            const raw = await llm.generate({
+                system: IDENTIFY_KEY_WORDS_SYSTEM_PROMPT,
+                prompt: buildIdentifyKeyWordsPrompt({
+                    passage,
+                    language,
+                    originalText,
+                    translationName,
+                }),
+                responseMimeType: 'application/json',
+                temperature: 0.3,
             });
 
-            const rawText = result.response.text();
-            const parsed = safeParseJson(rawText);
+            const parsed = safeParseJson(raw);
 
             let rawCandidates: unknown[] = [];
             if (parsed && typeof parsed === 'object' && 'candidates' in parsed) {

@@ -2,7 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { createHash } from 'crypto';
 import { FieldValue } from 'firebase-admin/firestore';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GeminiLlmClient } from '../llm/GeminiLlmClient';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 import {
     WITNESS_PROMPT_VERSION,
@@ -242,18 +242,21 @@ export const validateSeedWitnesses = onCall(
 
         const sections = await fetchTraditionSections();
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
-            generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+        // Vía el port: el adapter mide el consumo (tokens → USD) que antes se
+        // perdía al llamar al SDK directo. Mismo modelo, misma config.
+        const llm = new GeminiLlmClient(apiKey, 'gemini-2.5-flash', {
+            feature: 'validateSeedWitnesses',
+            userId: request.auth?.uid,
         });
 
         const callWitness = async (systemInstruction: string, prompt: string) => {
-            const result = await model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                systemInstruction,
+            const raw = await llm.generate({
+                system: systemInstruction,
+                prompt,
+                responseMimeType: 'application/json',
+                temperature: 0.2,
             });
-            return safeParseJson(result.response.text());
+            return safeParseJson(raw);
         };
 
         let context: RawVerdict[];

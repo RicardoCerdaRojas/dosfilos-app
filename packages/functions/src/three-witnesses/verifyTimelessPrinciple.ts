@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GeminiLlmClient } from '../llm/GeminiLlmClient';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 /**
@@ -94,16 +94,19 @@ Devuelve SIEMPRE JSON válido (sin Markdown):
 }`;
 
         try {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({
-                model: 'gemini-2.5-flash',
-                generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+            // Vía el port: el adapter mide el consumo (tokens → USD) que antes se
+            // perdía al llamar al SDK directo. Mismo modelo, misma config.
+            const llm = new GeminiLlmClient(apiKey, 'gemini-2.5-flash', {
+                feature: 'verifyTimelessPrinciple',
+                userId: request.auth?.uid,
             });
-            const result = await model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                systemInstruction: SYSTEM,
+            const raw = await llm.generate({
+                system: SYSTEM,
+                prompt,
+                responseMimeType: 'application/json',
+                temperature: 0.2,
             });
-            const parsed = safeParseJson(result.response.text());
+            const parsed = safeParseJson(raw);
             const risk = parsed.eisegesisRisk;
             const gen = parsed.generalization;
             return {
