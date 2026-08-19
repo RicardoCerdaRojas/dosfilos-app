@@ -129,6 +129,8 @@ export class PastoralSeedService {
             userId: args.userId,
             passage: args.passage,
             projectId: args.projectId,
+            // Spine A: el estudio nace del formulario del wizard.
+            origin: 'wizard',
         });
         return this.repo.create(empty);
     }

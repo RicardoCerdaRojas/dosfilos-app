@@ -39,3 +39,18 @@ describe('ActivateGuidedSermonUseCase — passage validation (D)', () => {
         expect(seedRepo.create).toHaveBeenCalledTimes(1);
     });
 });
+
+/**
+ * Superficie de creación: los dos spines escriben la misma colección, así que
+ * cada creador debe declarar por dónde entró el pastor. Sin esto la medición
+ * vuelve a los proxies — y el proxy ya mintió una vez (cohorte de agosto: "0
+ * estudios por el wizard" cuando el wizard sí se usaba).
+ */
+describe('ActivateGuidedSermonUseCase — origin', () => {
+    it('el estudio nacido del chat guiado queda marcado como socrático', async () => {
+        const { chatRepo, seedRepo } = makeRepos();
+        const uc = new ActivateGuidedSermonUseCase(chatRepo, seedRepo);
+        const out = await uc.execute({ userId: 'u1', sessionId: 's1', passage: '1 Corintios 7:29-31' });
+        expect(out.seed.origin).toBe('socratic');
+    });
+});

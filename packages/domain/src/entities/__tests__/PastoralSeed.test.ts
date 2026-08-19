@@ -236,3 +236,27 @@ describe('AiAssistLog step guard (ADR-024)', () => {
         expect(() => assertAiAssistAllowed('wordStudies')).not.toThrow();
     });
 });
+
+describe('createEmptyPastoralSeed — superficie de creación (origin)', () => {
+    it('registra la superficie cuando el creador la declara', () => {
+        const seed = createEmptyPastoralSeed({
+            id: 's1',
+            sermonId: 'srm1',
+            userId: 'u1',
+            passage: 'Romanos 8:28',
+            origin: 'wizard',
+        });
+        expect(seed.origin).toBe('wizard');
+    });
+
+    it('sin superficie declarada queda ausente — desconocido, no se inventa', () => {
+        const seed = createEmptyPastoralSeed({
+            id: 's1',
+            sermonId: 'srm1',
+            userId: 'u1',
+            passage: 'Romanos 8:28',
+        });
+        expect(seed.origin).toBeUndefined();
+        expect('origin' in seed).toBe(false);
+    });
+});

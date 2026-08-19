@@ -75,8 +75,10 @@ Base: **13 usuarios · 69 pastoralSeeds · 210 sermones.** "Sin fundador" excluy
 frente a **2 seeds socráticos**. La tesis del producto — el sermón como fruto del estudio — todavía no se
 refleja en el uso.
 
-> **Fix de raíz pendiente** (lo propone el propio script): no existe campo `origin` en seed ni sermón, así que
-> toda esta partición se hace por proxies. Instrumentar `origin` en la creación mataría la ambigüedad.
+> **Fix de raíz — HECHO para seeds (2026-08-19).** Los `pastoralSeeds` nuevos traen `origin` (`wizard` |
+> `socratic`), escrito por el creador: para ellos la superficie es un hecho, no una inferencia. Los proxies
+> quedan como fallback de los seeds anteriores al campo. **Los sermones siguen sin `origin`** — esa mitad de la
+> partición sigue siendo proxy (tag `AI Generated` + enlace a seed). Pendiente.
 
 ## Ola 1 — Destrabar el panel de control ⬅️ PRIMERO DE VERDAD
 
@@ -265,6 +267,7 @@ Olas 5, 7 y 8 cuelgan del camino sin bloquearlo.
 | Fecha | Ola | Qué pasó |
 |---|---|---|
 | 2026-08-17 | — | Plan creado tras auditoría del estado real. |
+| 2026-08-19 | 3 | Campo `origin` en los seeds (los 2 únicos creadores lo declaran) + script de cohorte lee el hecho en vez de adivinarlo. Sermones siguen por proxy. |
 | 2026-08-19 | 3 | 2.3 verificada en prod (`userConfirmed` real). Hallazgo: el estudio del wizard no dejaba sombra → 3.2 resuelto instrumentando el Spine A + servicio único de recorder para los dos spines. Falta encender flags y dogfood (3.1/3.3). |
 | 2026-08-18 | 2 | 0b-B con alcance corregido: el chat no tenía acto (el doc 0b confundía superficies). `pronounceGenre` en dominio + selector en el paso 2 guiado + wizard registrando su acto + `detectGenreInText` fuera del path de procedencia. Falta verificar en prod (2.3). |
 | 2026-08-18 | 1 | Allowlist sincronizada (13/13) · `anchor_fidelity_enforce` registrado con prereq · test de paridad fail-closed · 7 descripciones i18n. Hallazgo: web sin typecheck en CI (587 errores) → Ola 8. |
