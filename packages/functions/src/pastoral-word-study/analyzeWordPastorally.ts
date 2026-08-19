@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GeminiLlmClient } from '../llm/GeminiLlmClient';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 import {
     CURATED_LEXICON_VERSION,
@@ -215,33 +215,35 @@ export const analyzeWordPastorally = onCall(
         }
 
         // 4. Gemini call
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
-            generationConfig: { responseMimeType: 'application/json', temperature: 0.3 },
+        // Vía el port: el adapter mide el consumo (tokens → USD) que antes se
+        // perdía al llamar al SDK directo. Mismo modelo, misma config.
+        const llm = new GeminiLlmClient(apiKey, 'gemini-2.5-flash', {
+            feature: 'analyzeWordPastorally',
+            userId: request.auth?.uid,
         });
 
         let analysis: AnalysisOutput;
         try {
-            const result = await model.generateContent({
-                contents: [{
-                    role: 'user',
-                    parts: [{
-                        text: buildPrompt({
-                            word, lemma, verseRef, passage, language,
-                            lexicon: {
-                                primaryGloss: lexicon.primaryGloss,
-                                semanticRange: lexicon.semanticRange,
-                                theologicalNote: lexicon.theologicalNote,
-                                source: lexicon.source,
-                            },
-                            crossRefs,
-                        }),
-                    }],
-                }],
-                systemInstruction: SYSTEM_PROMPT,
+            const raw = await llm.generate({
+                system: SYSTEM_PROMPT,
+                prompt: buildPrompt({
+                    word,
+                    lemma,
+                    verseRef,
+                    passage,
+                    language,
+                    lexicon: {
+                        primaryGloss: lexicon.primaryGloss,
+                        semanticRange: lexicon.semanticRange,
+                        theologicalNote: lexicon.theologicalNote,
+                        source: lexicon.source,
+                    },
+                    crossRefs,
+                }),
+                responseMimeType: 'application/json',
+                temperature: 0.3,
             });
-            const parsed = safeParseJson(result.response.text()) as Record<string, unknown>;
+            const parsed = safeParseJson(raw) as Record<string, unknown>;
             const wordObj = (parsed.word ?? {}) as Record<string, unknown>;
             const glossObj = (parsed.gloss ?? {}) as Record<string, unknown>;
             const resonancesRaw = Array.isArray(parsed.resonances) ? parsed.resonances : [];

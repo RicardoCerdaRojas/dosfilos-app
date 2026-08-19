@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GeminiLlmClient } from '../llm/GeminiLlmClient';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 
 /**
@@ -86,18 +86,21 @@ export const suggestCanonicalParallels = onCall(
             throw new HttpsError('invalid-argument', 'passage is required');
         }
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
-            generationConfig: { responseMimeType: 'application/json', temperature: 0.3 },
+        // Vía el port: el adapter mide el consumo (tokens → USD) que antes se
+        // perdía al llamar al SDK directo. Mismo modelo, misma config.
+        const llm = new GeminiLlmClient(apiKey, 'gemini-2.5-flash', {
+            feature: 'suggestCanonicalParallels',
+            userId: request.auth?.uid,
         });
 
         try {
-            const result = await model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: buildPrompt(passage) }] }],
-                systemInstruction: SYSTEM_PROMPT,
+            const raw = await llm.generate({
+                system: SYSTEM_PROMPT,
+                prompt: buildPrompt(passage),
+                responseMimeType: 'application/json',
+                temperature: 0.3,
             });
-            const parsed = safeParseJson(result.response.text());
+            const parsed = safeParseJson(raw);
             let rawList: unknown[] = [];
             if (parsed && typeof parsed === 'object' && 'parallels' in parsed) {
                 const p = (parsed as { parallels: unknown }).parallels;
