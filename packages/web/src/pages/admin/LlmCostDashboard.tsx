@@ -23,7 +23,7 @@ const LEVEL_STYLES: Record<BudgetLevel, { bar: string; text: string; label: stri
  * navegador con `VITE_GEMINI_API_KEY` no se ven acá — el aviso está en la página.
  */
 export function LlmCostDashboard() {
-    const { report, budget, emails, loading, error, refresh } = useLlmCostReport(30);
+    const { report, budget, emails, shadow, loading, error, refresh } = useLlmCostReport(30);
     const style = LEVEL_STYLES[report?.level ?? 'ok'];
 
     return (
@@ -84,6 +84,18 @@ export function LlmCostDashboard() {
                             </p>
                         )}
                     </Card>
+
+                    {shadow?.paused && (
+                        <Card className="p-4 border-warning bg-warning-subtle text-xs text-warning-subtle-foreground flex items-start gap-2">
+                            <AlertTriangle className="h-4 w-4 shrink-0" />
+                            <span>
+                                <strong>Sombra en pausa hoy.</strong> El gasto del día
+                                (${shadow.todayUsd.toFixed(2)}) alcanzó el tope de ${shadow.dailyCapUsd}. Los
+                                jueces de sombra dejaron de llamar al modelo; lo determinista sigue
+                                registrándose y el pastor no ve ninguna diferencia. Se reanuda solo mañana.
+                            </span>
+                        </Card>
+                    )}
 
                     <Card className="p-4 text-xs text-muted-foreground">
                         Este panel mide el gasto que pasa por el <strong>servidor</strong>. Las llamadas que

@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { shadowLlmAllowed } from '../llm/llmBudget';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { AnthropicLlmClient } from '../llm/AnthropicLlmClient';
 import { judgeGenreEngagement, type GenreEngagementInput, type GenreEngagementJudgment } from './genreEngagement';
@@ -45,6 +46,14 @@ export const evaluateGenreEngagement = onCall(
         };
         if (!input.pastorMessage) throw new HttpsError('invalid-argument', 'pastorMessage is required');
         if (!input.proposedGenre) throw new HttpsError('invalid-argument', 'proposedGenre is required');
+
+        // Cortacircuito de gasto: si el día ya alcanzó el tope, la sombra no
+        // gasta. Se devuelve el mismo `unclear` del fail-closed — el pastor no
+        // se entera y la medición se salta, que es justo el orden de sacrificio
+        // que queremos (fail-open para él, fail-closed para el gasto).
+        if (!(await shadowLlmAllowed())) {
+            return { judgment: UNCLEAR, modelTier: 'sonnet' as const, skippedForBudget: true };
+        }
 
         try {
             const sonnet = new AnthropicLlmClient(anthropicKey, undefined, undefined, {
