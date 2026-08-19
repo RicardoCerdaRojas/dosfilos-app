@@ -5,6 +5,7 @@ import { Sprout, Save, Loader2, BookOpen, PanelRightOpen, Scale } from 'lucide-r
 import { usePastoralSeed } from '@/hooks/usePastoralSeed';
 import { useThreeWitnessesGate, usePastoralFidelityGate, useStudyDepthGate } from '@/hooks/usePastoralFidelityGate';
 import { useStudyDepth } from '@/hooks/useStudyDepth';
+import { usePastoralSeedShadow } from '@/hooks/usePastoralSeedShadow';
 import { useWizard } from '../WizardContext';
 import { PASTORAL_SEED_STEP_ORDER, PastoralSeedStepKey } from '@dosfilos/domain';
 import { StudyDepthBadge } from './StudyDepthBadge';
@@ -158,6 +159,8 @@ export function PastoralSeedWizard({
     // as the pastor types. Without this lift, the header relied on a
     // one-shot Firestore fetch and stayed stale until step navigation.
     const { setSeedCompletedSteps } = useWizard();
+    // Redacción v2 §4.5 — el wizard también reporta a la sombra del estudio.
+    const seedShadow = usePastoralSeedShadow();
     useEffect(() => {
         setSeedCompletedSteps(evaluation?.completedSteps.length ?? 0);
     }, [evaluation, setSeedCompletedSteps]);
@@ -177,6 +180,9 @@ export function PastoralSeedWizard({
 
     const handleAdvance = async () => {
         await flush();
+        // Redacción v2 §4.5 — cerrar el paso 3 es el acto que la vara mide.
+        // Fire-and-forget bajo `passage_profile`; jamás bloquea el avance.
+        if (currentKey === 'structuralAnalysis') seedShadow.recordStructuralSufficiency(seed);
         if (currentIndex < PASTORAL_SEED_STEP_ORDER.length - 1) {
             setCurrentIndex((i) => i + 1);
             return;
@@ -199,6 +205,11 @@ export function PastoralSeedWizard({
     const handleJumpTo = (key: PastoralSeedStepKey) => {
         const next = PASTORAL_SEED_STEP_ORDER.indexOf(key);
         if (next === -1) return;
+        // Salir del paso 3 por el breadcrumb también lo cierra. El hook deduplica,
+        // así que ir y volver no infla el conteo.
+        if (currentKey === 'structuralAnalysis' && key !== 'structuralAnalysis') {
+            seedShadow.recordStructuralSufficiency(seed);
+        }
         setCurrentIndex(next);
     };
 

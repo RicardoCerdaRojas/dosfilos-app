@@ -122,8 +122,9 @@ Paga doble: des-confunde la sombra de Fase 3 **y** destraba la calibración en p
 - [x] **2.2** Hecho, con el alcance corregido: `persistTo` deja de derivar procedencia de la prosa
       (preserva el acto); el acto se registra en las DOS superficies. Rewire original enunciado: → `(propuestaDelLibro, géneroDelChip)`; sacar
       `detectGenreInText` de ese path.
-- [ ] **2.3** Verificar en prod que la sombra empieza a escribir `userConfirmed` real. **Pendiente del
-      fundador**: requiere un estudio guiado real tras el deploy.
+- [x] **2.3** VERIFICADO en prod (2026-08-19): el seed de Jonás 1:1-3 creado tras el deploy lleva
+      `genreProvenance: userConfirmed` salido del clic del pastor. El otro `userConfirmed` de la base es de
+      julio y venía del keyword-match viejo.
 
 ### Cerrada 2026-08-18 — la premisa del doc 0b estaba equivocada
 
@@ -157,10 +158,12 @@ lo mismo.
 
 - [ ] **3.1** Flip en cuentas dogfood, en orden: `passage_profile` → `sermon_draft_shadow` →
       `genre_override_enforce`.
-- [ ] **3.2** Resolver la traba del spine duplicado. Dos caminos:
-      **(a) barato** — durante el dogfood entrar siempre por el camino socrático (Faculty). Cero código.
-      **(b) correcto** — instrumentar el spine A (form del menú) o converger los dos. PR real.
-      *Recomendado: (a) ahora, (b) agendado en Ola 8.*
+- [x] **3.2** Resuelto por **(b)**, y (a) quedó descartado por los datos. Al verificar 2.3 se vio que el
+      fundador dogfoodea en el WIZARD, no en el chat: su estudio de Jonás quedó completo (3 estudios de
+      palabras en hebreo, 3 paralelos, principio verificado) y **no dejó ni una fila de sombra** — porque el
+      gate lee `passageProfileShadow` y el wizard no reportaba. Pedirle que cambie de superficie para
+      alimentar el instrumento era la cola moviendo al perro. El wizard ahora reporta la misma señal, por la
+      misma puerta (`PassageProfileShadowService`).
 - [ ] **3.3** Meta: **≥20-30 estudios reales** con `userConfirmed` poblado. Recién ahí se toca el umbral del
       gate de suficiencia (condición explícita de reanudar, registrada en byblos).
       ⚠️ **El cohorte medido dice que el caudal no alcanza** (4 seeds socráticos post-PR1, casi todos del
@@ -262,6 +265,7 @@ Olas 5, 7 y 8 cuelgan del camino sin bloquearlo.
 | Fecha | Ola | Qué pasó |
 |---|---|---|
 | 2026-08-17 | — | Plan creado tras auditoría del estado real. |
+| 2026-08-19 | 3 | 2.3 verificada en prod (`userConfirmed` real). Hallazgo: el estudio del wizard no dejaba sombra → 3.2 resuelto instrumentando el Spine A + servicio único de recorder para los dos spines. Falta encender flags y dogfood (3.1/3.3). |
 | 2026-08-18 | 2 | 0b-B con alcance corregido: el chat no tenía acto (el doc 0b confundía superficies). `pronounceGenre` en dominio + selector en el paso 2 guiado + wizard registrando su acto + `detectGenreInText` fuera del path de procedencia. Falta verificar en prod (2.3). |
 | 2026-08-18 | 1 | Allowlist sincronizada (13/13) · `anchor_fidelity_enforce` registrado con prereq · test de paridad fail-closed · 7 descripciones i18n. Hallazgo: web sin typecheck en CI (587 errores) → Ola 8. |
 | 2026-08-17 | 0 | 0.1 diff whitespace descartado · 0.2 doc 0b versionado + corregido el hueco del juez · 0.3 script de cohorte ampliado a `FOUNDER_UIDS` y corrido (§ Cohorte real) · 0.4a smoke de funciones destapó el nurture roto (PR #402). Queda 0.4b (smoke manual de UI + quotas). |

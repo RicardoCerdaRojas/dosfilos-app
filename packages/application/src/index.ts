@@ -16,6 +16,7 @@ export * from './use-cases/exegesis/verifyDraftCitations'; // 🌱 Sermon draft 
 export * from './services/SermonCitationSanitizerService'; // 🌱 Sermon draft citation fidelity (opción B) — surgical sanitize
 export * from './use-cases/exegesis/sermonDraftSignals'; // 🌱 Redacción v2 — draft shadow (contrato + colector determinista)
 export * from './services/SermonDraftShadowService'; // 🌱 Redacción v2 — draft shadow recorder facade
+export * from './services/PassageProfileShadowService'; // 🌱 ADR-035 / Redacción v2 — study-phase shadow recorder facade (una puerta, dos spines)
 export * from './services/AuthService';
 export * from './services/FacultyService';
 export * from './services/SeriesService';
