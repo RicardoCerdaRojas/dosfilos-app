@@ -33,6 +33,7 @@ export interface PronounceGenreArgs {
     /** Género predicable que el pastor eligió — su acto. */
     chosenGenre: string;
 }
+import { passageProfileShadowService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { usePassageProfileGate, usePassageProfileEnforceGate, useAnchorFidelityEnforceGate, useGenreOverrideEnforceGate, useStep3GenreHelpGate } from '@/hooks/usePastoralFidelityGate';
 import { LocalBibleService } from '@/services/LocalBibleService';
@@ -105,7 +106,7 @@ async function runPassageProfileShadow(
         // crudo (`profile`) sin contaminar la precisión con el piso curado.
         await guidedSermonService.crystallizePassageProfile(seed.id, merged);
 
-        await httpsCallable(fns, 'recordPassageProfileShadow')({
+        await passageProfileShadowService.recordProfile({
             seedId: seed.id,
             passage,
             genres: profile.genres,
@@ -158,14 +159,12 @@ async function runGenreOverrideShadow(
         });
         const judgment = (res.data as { judgment?: { verdict?: string; contradictsAnchor?: boolean } })?.judgment;
         if (!judgment) return;
-        await httpsCallable(fns, 'recordPassageProfileShadow')({
+        await passageProfileShadowService.recordGenreOverride({
             seedId: genreShadow.seedId,
             passage: genreShadow.passage,
-            genreOverride: {
-                proposedGenre: genreShadow.proposedGenre,
-                verdict: judgment.verdict,
-                sustained: judgment.contradictsAnchor === true,
-            },
+            proposedGenre: genreShadow.proposedGenre,
+            verdict: judgment.verdict ?? '',
+            sustained: judgment.contradictsAnchor === true,
         });
     } catch (err) {
         console.warn('[useGuidedSermon] genre override shadow failed (non-blocking)', err);
@@ -190,15 +189,13 @@ async function runStructuralSufficiencyShadow(
     s: NonNullable<SocraticTurnResult['structuralShadow']>,
 ): Promise<void> {
     try {
-        await httpsCallable(getFunctions(), 'recordPassageProfileShadow')({
+        await passageProfileShadowService.recordStructuralSufficiency({
             seedId: s.seedId,
             passage: s.passage,
-            structuralSufficiency: {
-                qualifiedGenre: s.qualifiedGenre,
-                provenance: s.provenance,
-                verdict: s.verdict,
-                overrideTargetGenre: s.overrideTargetGenre ?? null,
-            },
+            qualifiedGenre: s.qualifiedGenre,
+            provenance: s.provenance,
+            verdict: s.verdict,
+            overrideTargetGenre: s.overrideTargetGenre ?? null,
         });
     } catch (err) {
         console.warn('[useGuidedSermon] structural sufficiency shadow failed (non-blocking)', err);
