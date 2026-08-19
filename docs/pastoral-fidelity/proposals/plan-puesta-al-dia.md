@@ -80,6 +80,68 @@ refleja en el uso.
 > quedan como fallback de los seeds anteriores al campo. **Los sermones siguen sin `origin`** — esa mitad de la
 > partición sigue siendo proxy (tag `AI Generated` + enlace a seed). Pendiente.
 
+## 🔴 PRIORIDAD ALTA — Sacar la clave de Gemini del navegador
+
+**Descubierto:** 2026-08-19, levantando el terreno para la gestión de costos.
+**Estado:** pendiente. Arranca al cerrar la capa de "actuar" sobre costos.
+**Por qué encabeza la lista:** es el único pendiente del plan que es a la vez un
+problema de **seguridad**, de **costo** y de **medición**.
+
+### El problema
+
+`VITE_GEMINI_API_KEY` se inlinea en el bundle por definición del prefijo `VITE_`
+(inyectada desde un secret de GitHub en `deploy-production.yml:43`). Cualquiera
+que abra DevTools en `app.preach.dosfilos.com` la lee. Consecuencias, en orden:
+
+1. **Un tercero puede gastar tu cuota** sin tocar la app. No aparecería como uso
+   del producto — solo en la factura.
+2. **Ningún medidor del servidor puede verla.** El panel `/dashboard/admin/llm-cost`
+   mide únicamente lo que pasa por callables; mientras esto siga así, el total
+   real es mayor que el mostrado y nadie sabe por cuánto.
+3. **No hay rate-limit posible.** El usuario habla directo con Google; no hay
+   dónde interponer un tope.
+
+Nota: las otras claves `VITE_` (`VITE_FIREBASE_API_KEY`, `VITE_RECAPTCHA_SITE_KEY`)
+son públicas **por diseño** y están protegidas por reglas + App Check. La de Gemini
+es la anómala: es una credencial que gasta dinero directamente.
+
+### Mitigaciones interinas (no reemplazan el fix)
+
+- Restricción por referrer HTTP + restricción de API a Generative Language.
+  ⚠️ El referrer se falsifica con un header; y la API de Gemini históricamente no
+  aplicaba bien esa restricción — **verificar que realmente muerda**.
+- **Tope de cuota por API** en Cloud Console (req/min y req/día). Esto sí se aplica
+  siempre, venga la llamada de donde venga. Es el freno duro real.
+- **Rotar la clave.** Lleva meses en el bundle: tratarla como ya comprometida.
+- ⚠️ **Antes de restringir:** verificar si `VITE_GEMINI_API_KEY` y la
+  `GEMINI_API_KEY` de functions son el MISMO valor. Si lo son, la restricción por
+  referrer tumba todos los callables (Cloud Functions no manda `Referer`).
+
+### El fix real: mover las llamadas a callables
+
+**38 sitios**, agrupados por feature. El orden propuesto va por volumen × riesgo,
+y cada tanda es una PR que además hace visible su gasto en el panel:
+
+| # | Feature | Archivos | Nota |
+|---|---|---|---|
+| 1 | Refinamientos del sermón (draft, homilética, secciones, chat de paso) | 4 hooks web | Los más usados; ganan medición inmediata |
+| 2 | Tutores griego y hebreo | 5 (services + providers) | Sesiones largas = muchos tokens |
+| 3 | Biblioteca (embeddings, file search, core library) | 4 + `library-context` | Embeddings a volumen |
+| 4 | Exégesis (orquestador, compositores, verificador, detectores) | 18 en `infrastructure/exegesis` | La tanda grande; conviene partirla |
+| 5 | Resto (`GeminiAIService`, multi-agent, word study, repurposer, plan generator) | 6 | Barrido final |
+
+**Criterio de cierre:** `grep -r VITE_GEMINI_API_KEY packages/` no devuelve nada,
+la variable sale de los workflows, y la clave del cliente se elimina en Cloud
+Console.
+
+**Patrón a seguir:** el port `ILlmClient` + adapters ya existen en `functions`, y
+desde la PR del medidor **cada callable que se migra queda medido gratis** — la
+migración deja de ser deuda estética y pasa a comprar visibilidad de costo.
+
+**Relación con la deuda vieja:** esto se solapa con
+`tech_debt_llm_provider_abstraction` (~34 callers directos al SDK). Es el mismo
+trabajo mirado desde otro ángulo; hacerlo una vez paga las dos deudas.
+
 ## Ola 1 — Destrabar el panel de control ⬅️ PRIMERO DE VERDAD
 
 **Tamaño:** 1 PR chico. **Bloquea:** todo lo demás — sin esto no se puede encender ni medir nada.
