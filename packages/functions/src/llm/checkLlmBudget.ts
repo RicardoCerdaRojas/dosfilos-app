@@ -22,7 +22,13 @@ import { usageMonthKey } from './llmUsageRecorder';
 const SENDER = 'Preach <onboarding@dosfilos.com>';
 
 export const checkLlmBudget = onSchedule(
-    { schedule: 'every 60 minutes', secrets: ['RESEND_API_KEY'] },
+    // NO declarar `secrets: ['RESEND_API_KEY']`: en este proyecto la clave de
+    // Resend se inyecta como variable de entorno, NO vive en Secret Manager.
+    // Declararla hace que el deploy valide un secreto inexistente y tumbe el
+    // deploy COMPLETO de functions (pasó: run #446). El resto del stack de correo
+    // (sendNurtureEmails, sendWelcomeEmail, leadMagnetMailer) tampoco la declara.
+    // Cuando se migre el stack a Secret Manager se agrega en todas a la vez.
+    { schedule: 'every 60 minutes' },
     async () => {
         const db = admin.firestore();
         const now = new Date();
