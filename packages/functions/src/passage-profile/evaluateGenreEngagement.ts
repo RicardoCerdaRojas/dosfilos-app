@@ -47,7 +47,10 @@ export const evaluateGenreEngagement = onCall(
         if (!input.proposedGenre) throw new HttpsError('invalid-argument', 'proposedGenre is required');
 
         try {
-            const sonnet = new AnthropicLlmClient(anthropicKey);
+            const sonnet = new AnthropicLlmClient(anthropicKey, undefined, undefined, {
+                feature: 'evaluateGenreEngagement',
+                userId: request.auth?.uid,
+            });
             const judgment = await judgeGenreEngagement(sonnet, input);
             return { judgment, modelTier: 'sonnet' as const };
         } catch (err) {

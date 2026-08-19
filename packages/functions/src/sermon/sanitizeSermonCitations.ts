@@ -76,7 +76,10 @@ export const sanitizeSermonCitations = onCall(
         if (items.length === 0) throw new HttpsError('invalid-argument', 'items is required');
 
         try {
-            const sonnet = new AnthropicLlmClient(anthropicKey);
+            const sonnet = new AnthropicLlmClient(anthropicKey, undefined, undefined, {
+                feature: 'sanitizeSermonCitations',
+                userId: request.auth?.uid,
+            });
             const rewritten: string[] = [];
             for (const item of items) {
                 rewritten.push(await rewriteOne(sonnet, item));

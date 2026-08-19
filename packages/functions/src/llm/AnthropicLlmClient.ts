@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { ILlmClient, LlmGenerateOptions } from './LlmClient';
+import { recordLlmUsage, type LlmUsageContext } from './llmUsageRecorder';
 
 /**
  * Anthropic adapter for the thin `ILlmClient` port (Phase 3, Q1 / ADR-029).
@@ -21,10 +22,16 @@ import type { ILlmClient, LlmGenerateOptions } from './LlmClient';
 export class AnthropicLlmClient implements ILlmClient {
     private readonly client: Anthropic;
 
+    /**
+     * `usage` identifica QUIÉN gasta (feature + usuario) para el medidor.
+     * Sonnet es ~10x el precio de Flash por token, así que acá el dato importa
+     * todavía más que en el adapter de Gemini.
+     */
     constructor(
         apiKey: string,
         private readonly modelName: string = 'claude-sonnet-4-6',
         private readonly defaultMaxOutputTokens: number = 4096,
+        private readonly usage?: LlmUsageContext,
     ) {
         this.client = new Anthropic({ apiKey, maxRetries: 3 });
     }
@@ -39,6 +46,15 @@ export class AnthropicLlmClient implements ILlmClient {
             temperature: options.temperature ?? 0.2,
             ...(system ? { system } : {}),
             messages: [{ role: 'user', content: options.prompt }],
+        });
+
+        // Fire-and-forget: medir nunca puede romper la llamada medida.
+        void recordLlmUsage({
+            model: this.modelName,
+            feature: this.usage?.feature ?? 'unknown',
+            userId: this.usage?.userId,
+            inputTokens: response.usage?.input_tokens ?? 0,
+            outputTokens: response.usage?.output_tokens ?? 0,
         });
 
         const text = extractText(response);

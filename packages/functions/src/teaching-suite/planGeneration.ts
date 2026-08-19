@@ -103,11 +103,13 @@ export interface GenerarPlanArgs {
   idSugerido: string;
   alcance?: string;
   erroresPrevios?: string[];
+  /** Para atribuir el gasto LLM a quien lo provoca. Opcional: sin él va a `unknown`. */
+  userId?: string;
 }
 
 /** Genera un candidato a `plan` (una sesión). Lanza Error plano si falla. */
 export async function generarPlan(args: GenerarPlanArgs): Promise<Record<string, unknown>> {
-  const { anthropicKey, estudio, genero, modalidad, marcaId, idSugerido, alcance, erroresPrevios } = args;
+  const { anthropicKey, estudio, genero, modalidad, marcaId, idSugerido, alcance, erroresPrevios, userId } = args;
   const { system, prompt } = buildPlanPrompt({
     refs: loadRefs(genero),
     estudio,
@@ -120,7 +122,10 @@ export async function generarPlan(args: GenerarPlanArgs): Promise<Record<string,
     erroresPrevios,
   });
 
-  const llm = new AnthropicLlmClient(anthropicKey);
+  const llm = new AnthropicLlmClient(anthropicKey, undefined, undefined, {
+    feature: 'teachingSuite.generarPlan',
+    userId,
+  });
   let raw: string;
   try {
     raw = await llm.generate({
