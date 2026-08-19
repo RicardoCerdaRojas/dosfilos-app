@@ -102,7 +102,10 @@ export const proponerOutlineCurso = onCall(
       sesionesSugeridas,
     });
 
-    const llm = new AnthropicLlmClient(anthropicKey);
+    const llm = new AnthropicLlmClient(anthropicKey, undefined, undefined, {
+      feature: 'teachingSuite.proponerOutlineCurso',
+      userId: ownerId,
+    });
     let raw: string;
     try {
       raw = await llm.generate({

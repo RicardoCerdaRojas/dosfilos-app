@@ -127,7 +127,10 @@ export const reviewVerifiedMisreading = onCall(
         const whyWrong = str(entry.whyWrong);
         const anchors = Array.isArray(entry.correctiveAnchors) ? entry.correctiveAnchors : [];
 
-        const sonnet = new AnthropicLlmClient(anthropicKey);
+        const sonnet = new AnthropicLlmClient(anthropicKey, undefined, undefined, {
+            feature: 'reviewVerifiedMisreading',
+            userId: request.auth?.uid,
+        });
         const perAnchor: PerAnchor[] = [];
         const updatedAnchors: Record<string, unknown>[] = [];
 

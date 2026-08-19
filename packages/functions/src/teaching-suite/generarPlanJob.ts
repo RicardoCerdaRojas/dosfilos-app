@@ -77,6 +77,9 @@ export const generarPlanJob = onDocumentCreated(
         idSugerido: slugify(job.estudioTitulo ?? '', 'clase'),
         alcance: job.alcance ?? undefined,
         erroresPrevios: job.erroresPrevios ?? undefined,
+        // Atribución del gasto: el job corre en background, así que el dueño del
+        // trabajo es la única forma de saber a quién cobrarle la llamada.
+        userId: job.ownerId,
       });
 
       // Gap 1: los objetivos los DERIVA el cliente del Estudio Madre (single-source

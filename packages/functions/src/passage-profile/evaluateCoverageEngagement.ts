@@ -41,7 +41,10 @@ export const evaluateCoverageEngagement = onCall(
         if (!input.claim) throw new HttpsError('invalid-argument', 'claim is required');
 
         try {
-            const sonnet = new AnthropicLlmClient(anthropicKey);
+            const sonnet = new AnthropicLlmClient(anthropicKey, undefined, undefined, {
+                feature: 'evaluateCoverageEngagement',
+                userId: request.auth?.uid,
+            });
             const judgment = await judgeEngagement(sonnet, input);
             return { judgment, modelTier: 'sonnet' as const };
         } catch (err) {

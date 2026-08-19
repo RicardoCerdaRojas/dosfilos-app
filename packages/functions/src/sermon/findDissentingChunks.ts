@@ -191,7 +191,10 @@ export const findDissentingChunks = onCall<FindDissentingRequest>(
 
         // 2. CLASSIFY — LLM labels stance; returns only genuine dissenters.
         try {
-            const llm: ILlmClient = new GeminiLlmClient(apiKey);
+            const llm: ILlmClient = new GeminiLlmClient(apiKey, undefined, {
+                feature: 'findDissentingChunks',
+                userId: request.auth?.uid,
+            });
             const raw = await llm.generate({
                 system: SYSTEM,
                 prompt: buildClassifyPrompt(centralIdea, candidates),

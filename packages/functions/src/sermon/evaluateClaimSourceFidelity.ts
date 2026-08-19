@@ -174,8 +174,14 @@ export const evaluateClaimSourceFidelity = onCall(
         const prose = joinProse(content);
         const claims = extractClaims(content, manifestEntries);
 
-        const flash: ILlmClient = new GeminiLlmClient(geminiKey, 'gemini-2.5-flash');
-        const sonnet: ILlmClient = new AnthropicLlmClient(anthropicKey);
+        const flash: ILlmClient = new GeminiLlmClient(geminiKey, 'gemini-2.5-flash', {
+            feature: 'evaluateClaimSourceFidelity',
+            userId: request.auth?.uid,
+        });
+        const sonnet: ILlmClient = new AnthropicLlmClient(anthropicKey, undefined, undefined, {
+            feature: 'evaluateClaimSourceFidelity.escalation',
+            userId: request.auth?.uid,
+        });
 
         const generatedAtMs = Date.now();
         const reportId = `${sermonId}-${generatedAtMs}`;

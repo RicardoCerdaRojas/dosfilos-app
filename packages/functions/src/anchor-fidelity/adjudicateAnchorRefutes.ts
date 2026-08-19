@@ -38,7 +38,10 @@ export const adjudicateAnchorRefutes = onCall(
         if (!input.anchorVerseText) throw new HttpsError('invalid-argument', 'anchorVerseText is required');
 
         try {
-            const sonnet = new AnthropicLlmClient(anthropicKey);
+            const sonnet = new AnthropicLlmClient(anthropicKey, undefined, undefined, {
+                feature: 'adjudicateAnchorRefutes',
+                userId: request.auth?.uid,
+            });
             const adjudication = await adjudicateRefutes(sonnet, input);
             return { adjudication, modelTier: 'sonnet' as const };
         } catch (err) {

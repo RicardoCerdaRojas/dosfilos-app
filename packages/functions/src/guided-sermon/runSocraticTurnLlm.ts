@@ -58,7 +58,10 @@ export const runSocraticTurnLlm = onCall(
             typeof data.maxOutputTokens === 'number' ? data.maxOutputTokens : undefined;
 
         try {
-            const llm: ILlmClient = new GeminiLlmClient(apiKey);
+            const llm: ILlmClient = new GeminiLlmClient(apiKey, undefined, {
+                feature: 'runSocraticTurn',
+                userId: request.auth?.uid,
+            });
             const text = await llm.generate({
                 system,
                 prompt,
