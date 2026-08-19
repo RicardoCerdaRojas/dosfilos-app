@@ -1,5 +1,5 @@
 import { FirebaseAuthRepository, db } from '@dosfilos/infrastructure';
-import { UserEntity } from '@dosfilos/domain';
+import { UserEntity, buildDefaultFeatureFlags } from '@dosfilos/domain';
 import { httpsCallable, getFunctions } from 'firebase/functions';
 import { signInWithCustomToken, getAuth } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -243,6 +243,10 @@ export class AuthService {
                     cancelAtPeriodEnd: false,
                 },
                 metadata: { source: 'organic' },
+                // Toda cuenta estrena el flujo de fidelidad pastoral. Sin esto el
+                // usuario nuevo entra a la app pre-Pastoral Fidelity (pasó de verdad:
+                // cuentas de pago usando la versión vieja del producto sin saberlo).
+                featureFlags: buildDefaultFeatureFlags(),
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
             });

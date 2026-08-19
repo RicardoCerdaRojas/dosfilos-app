@@ -16,6 +16,7 @@
  */
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { buildDefaultFeatureFlags } from './defaultFeatureFlags';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { SupportedLocale } from '../services/EmailService';
@@ -156,6 +157,7 @@ async function createUserProfile(
             trialEnd: pending.subscription.trialEnd,
             currentPeriodEnd: pending.subscription.currentPeriodEnd,
         },
+        featureFlags: buildDefaultFeatureFlags(),
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
         onboardingCompleted: false,
@@ -250,6 +252,7 @@ async function markRegistrationCompleted(sessionId: string): Promise<void> {
 // ============================================================================
 // Main Cloud Function
 // ============================================================================
+
 
 export const completeRegistration = onCall<CompleteRegistrationRequest>(
     appCheckCallableOptions(),
