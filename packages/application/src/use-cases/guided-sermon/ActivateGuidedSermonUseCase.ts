@@ -99,6 +99,8 @@ export class ActivateGuidedSermonUseCase {
             userId: input.userId,
             passage,
             genre,
+            // Spine B: el estudio nace del chat guiado de Faculty.
+            origin: 'socratic',
         });
         const seed = await this.seedRepo.create(empty);
 

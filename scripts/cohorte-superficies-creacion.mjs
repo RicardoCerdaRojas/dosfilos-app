@@ -4,9 +4,10 @@
  * READ-ONLY. Correr: node cohorte-superficies-creacion.mjs (o adaptar a MCP).
  * Requiere credenciales admin del proyecto dosfilosapp.
  *
- * NO hay campo `origin` en seed ni sermón (gap) → superficie por PROXIES.
- * La ÚNICA superficie instrumentada (shadow Redacción v2) es Faculty socrático
- * (genreProvenance presente). Ver caveats abajo.
+ * Los SEEDS ya traen campo `origin` (wizard | socratic): para ellos la superficie
+ * es un hecho, no una inferencia. Los proxies quedan como fallback para los seeds
+ * anteriores al campo. Los SERMONES siguen sin `origin` → ahí sí se infiere.
+ * Ver caveats abajo.
  */
 import admin from 'firebase-admin';
 admin.initializeApp({ projectId: 'dosfilosapp' });
@@ -74,6 +75,20 @@ seedsSnap.forEach((doc) => {
     const createdAt = s?.createdAt?.toDate?.() ?? null;
     const worked = (s?.totalTimeSeconds ?? 0) > 0 || s?.completed === true ||
         (Array.isArray(s?.toolsConsulted) && s.toolsConsulted.length > 0);
+
+    // CAMINO EXACTO: desde el campo `origin` (escrito por el creador) la superficie
+    // es un HECHO, no una inferencia. Los proxies de abajo quedan SOLO para los
+    // seeds anteriores al campo. El proxy ya mintió una vez — reportó "0 estudios
+    // por el wizard" cuando el wizard sí se usaba y solo no instrumentaba.
+    if (s?.origin === 'socratic') {
+        bump(facultyByUser, uid);
+        if (facultyProvByUser[prov]) bump(facultyProvByUser[prov], uid);
+        return;
+    }
+    if (s?.origin === 'wizard') {
+        bump(worked ? formWorkedByUser : formAbandonedByUser, uid);
+        return;
+    }
 
     if (prov) {
         bump(facultyByUser, uid);
@@ -154,6 +169,7 @@ console.log(JSON.stringify({
     SIN_ESTUDIO_ni_sintetico: summarize(noSeedNonSynthByUser),
 
     CAVEATS: [
+        'PARTICIÓN EXACTA cuando el seed trae `origin` (wizard | socratic): es el campo que escribe el creador, no una inferencia. Los proxies de abajo aplican SOLO a seeds anteriores a ese campo.',
         'genreProvenance solo existe post-PR1 (2026-07-08); seeds sin provenance pre-deploy → AMBIGUO_legacy_preP1 (Spine B pre-instrumentación o Spine A form).',
         "'AI Generated' es marcador de CONTENIDO sintético, no de superficie. Solo tutor.tsx (91,173) lo escribe → hoy sintético = tutor-producido; el conteo mide contenido sintético (la métrica buscada).",
         'FOUNDER_UIDS vacío → conFundador == sinFundador (sin filtro). El fundador opera con VARIAS cuentas; filtrar por una sola deja la otra contaminando el cohorte.',

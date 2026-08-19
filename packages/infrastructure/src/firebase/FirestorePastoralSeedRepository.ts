@@ -188,6 +188,9 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
         assign('projectId', seed.projectId);
         assign('userId', seed.userId);
         assign('passage', seed.passage);
+        // Superficie de creación: hecho del origen, se escribe una vez. En update
+        // parcial `assign` omite el `undefined`, así que un patch nunca lo pisa.
+        assign('origin', seed.origin);
         assign('reading', seed.reading ? this.dateOptionalStepToFirestore(seed.reading) : seed.reading);
         assign('contextGenre', seed.contextGenre ? this.dateOptionalStepToFirestore(seed.contextGenre) : seed.contextGenre);
         assign('structuralAnalysis', seed.structuralAnalysis ? this.dateOptionalStepToFirestore(seed.structuralAnalysis) : seed.structuralAnalysis);
@@ -287,6 +290,9 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
             createdAt: this.toDate(data.createdAt),
             updatedAt: this.toDate(data.updatedAt),
             passage: data.passage ?? '',
+            // Ausente en seeds legacy: se deja `undefined` (desconocido), NUNCA se
+            // infiere hacia atrás — un dato que no se registró no se inventa.
+            origin: data.origin ?? undefined,
             reading: this.toReading(data.reading),
             contextGenre: this.toContextGenre(data.contextGenre),
             // Back-compat: legacy seeds stored these under `syntax` / `morphology`

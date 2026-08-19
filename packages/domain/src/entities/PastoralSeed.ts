@@ -273,6 +273,21 @@ export interface InsightStepData {
     timeSpentSeconds: number;
 }
 
+/**
+ * Superficie por la que el pastor entró a estudiar. Las dos implementaciones del
+ * spine de 8 pasos escriben la MISMA colección, así que sin este campo la
+ * superficie solo se puede adivinar por proxies (¿tiene provenance?, ¿tiene tag?)
+ * — y adivinarla dio lecturas falsas: el cohorte de agosto reportó "0 estudios
+ * por el wizard" cuando en realidad el wizard sí se usaba y solo no instrumentaba.
+ *
+ * - `wizard`   — formulario del menú Nuevo Sermón (Spine A).
+ * - `socratic` — chat guiado de Faculty (Spine B).
+ *
+ * Opcional por back-compat: los seeds anteriores a este campo se leen como
+ * `unknown` (nunca se infiere hacia atrás; un dato ausente no se inventa).
+ */
+export type SeedOrigin = 'wizard' | 'socratic';
+
 export interface PastoralSeed {
     id: string;
     sermonId: string;
@@ -284,6 +299,13 @@ export interface PastoralSeed {
 
     /** Bible passage the seed studies. Mirrors `Sermon.bibleReferences[0]`. */
     passage: string;
+
+    /**
+     * Superficie de creación (ver `SeedOrigin`). Se fija UNA vez, al crear, y no
+     * se reescribe: es un hecho del origen, no un estado. Ausente en seeds
+     * legacy — léelos como `unknown`, no los infieras.
+     */
+    origin?: SeedOrigin;
 
     reading: ReadingStepData;
     contextGenre: ContextGenreStepData;
@@ -623,6 +645,8 @@ export function createEmptyPastoralSeed(args: {
      * confirm a proposed genre). The pastor still writes the implication.
      */
     genre?: LiteraryGenre;
+    /** Superficie que crea el estudio. Sin esto la medición vuelve a los proxies. */
+    origin?: SeedOrigin;
 }): PastoralSeed {
     const now = args.now ?? new Date();
     return {
@@ -633,6 +657,7 @@ export function createEmptyPastoralSeed(args: {
         createdAt: now,
         updatedAt: now,
         passage: args.passage,
+        ...(args.origin ? { origin: args.origin } : {}),
         reading: { firstImpression: '', timeSpentSeconds: 0 },
         contextGenre: {
             genre: args.genre ?? '',

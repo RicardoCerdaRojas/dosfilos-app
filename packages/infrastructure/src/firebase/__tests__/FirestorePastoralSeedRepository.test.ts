@@ -43,3 +43,29 @@ describe('FirestorePastoralSeedRepository — partial update no borra pasos ause
         expect((out.insight as any).observations).toEqual(['obs uno', 'obs dos']);
     });
 });
+
+/**
+ * Superficie de creación. El campo se escribe UNA vez al crear; un autosave
+ * posterior (patch parcial sin `origin`) jamás debe pisarlo — si lo pisara, el
+ * estudio perdería su origen a la primera tecla y volveríamos a medir por proxies.
+ */
+describe('FirestorePastoralSeedRepository — origin', () => {
+    it('serializa la superficie al crear', () => {
+        const out = toFs({ passage: 'Romanos 8:28', origin: 'wizard' }, false);
+        expect(out.origin).toBe('wizard');
+    });
+
+    it('un patch parcial sin origin OMITE la clave (no lo borra)', () => {
+        const out = toFs({ completed: true }, true);
+        expect('origin' in out).toBe(false);
+    });
+
+    it('lee la superficie ausente como desconocida, sin inferirla', () => {
+        const seed = (repo as any).toSeed('seed_legacy', {
+            sermonId: 'srm1',
+            userId: 'u1',
+            passage: 'Juan 1:1',
+        });
+        expect(seed.origin).toBeUndefined();
+    });
+});
