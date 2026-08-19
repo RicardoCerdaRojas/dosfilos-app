@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
+    DEFAULT_FEATURE_FLAGS,
+    buildDefaultFeatureFlags,
     FEATURE_FLAG_NAMES,
     FEATURE_FLAG_PREREQUISITES,
     DORMANT_FEATURE_FLAGS,
@@ -97,5 +99,46 @@ describe('flags dormantes', () => {
 
     it('three_witnesses NO es dormante', () => {
         expect(isDormantFeatureFlag('three_witnesses')).toBe(false);
+    });
+});
+
+/**
+ * El set de defaults no es una lista de gustos: es una regla. Estos tests la
+ * hacen cumplir para que nadie agregue por descuido un flag que ACTÚA sobre el
+ * pastor sin datos, o uno dormante, al set que estrena toda cuenta nueva.
+ */
+describe('DEFAULT_FEATURE_FLAGS — el criterio se hace cumplir', () => {
+    it('ningún flag dormante entra al set', () => {
+        const dormantes = DEFAULT_FEATURE_FLAGS.filter(isDormantFeatureFlag);
+        expect(dormantes, `Dormantes en el set de defaults: ${dormantes.join(', ')}`).toEqual([]);
+    });
+
+    it('ningún enforce entra al set (medir antes que actuar)', () => {
+        const enforces = DEFAULT_FEATURE_FLAGS.filter((f) => f.endsWith('_enforce'));
+        expect(enforces, `Enforce en el set de defaults: ${enforces.join(', ')}`).toEqual([]);
+    });
+
+    it('todo default trae también sus prerequisitos encendidos', () => {
+        const set = new Set(DEFAULT_FEATURE_FLAGS);
+        for (const flag of DEFAULT_FEATURE_FLAGS) {
+            for (const prereq of getFlagPrerequisites(flag)) {
+                expect(set.has(prereq), `${flag} necesita ${prereq}, ausente del set`).toBe(true);
+            }
+        }
+    });
+
+    it('todo nombre del set es un flag real del registry', () => {
+        const conocidos = new Set<string>(FEATURE_FLAG_NAMES);
+        const fantasma = DEFAULT_FEATURE_FLAGS.filter((f) => !conocidos.has(f));
+        expect(fantasma).toEqual([]);
+    });
+
+    it('buildDefaultFeatureFlags entrega el mapa listo para escribir', () => {
+        const map = buildDefaultFeatureFlags();
+        expect(map.pastoral_fidelity_flow).toBe(true);
+        expect(map.study_depth).toBe(true);
+        // Lo que no está en el set NO se escribe como false: se omite.
+        expect('passage_profile_enforce' in map).toBe(false);
+        expect('fidelity_pass' in map).toBe(false);
     });
 });

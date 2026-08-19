@@ -200,9 +200,10 @@ export const FEATURE_FLAG_NAMES = [
      * la conducción guiada C1–C5 que elicita la dimensión afectiva (`aplicacion`
      * subtipo `corazon`) anclada a la intención autoral del texto. Independiente
      * de `pastoral_fidelity_flow` (el Estudio Madre vive en Faculty, no en el
-     * wizard del sermón). Default off → blast radius 0. SE MANTIENE off hasta que
-     * el examen del corazón (cristalización) despliegue: no se puede crear +
-     * cristalizar un afecto sin validación en producción.
+     * wizard del sermón). El examen del corazón YA está desplegado (callable
+     * `examenCorazon`, consumido por `useValidarEstudioMadre`), así que la
+     * condición que mantenía este flag apagado quedó cumplida: entra al set de
+     * defaults.
      */
     'conduccion_corazon',
 
@@ -314,6 +315,40 @@ export const DORMANT_FEATURE_FLAGS: readonly FeatureFlagName[] = ['fidelity_pass
 
 export function isDormantFeatureFlag(flag: FeatureFlagName): boolean {
     return DORMANT_FEATURE_FLAGS.includes(flag);
+}
+
+/**
+ * Flags encendidos por defecto para toda cuenta.
+ *
+ * Hasta 2026-08-19 no existía ningún default: cada flag se encendía a mano por
+ * usuario desde el admin. El resultado fue silencioso y caro — TODA cuenta nueva
+ * (incluidas las de pago) estrenaba la app SIN el flujo de fidelidad pastoral, es
+ * decir sin el trabajo de las fases 1 a 4. No fue una decisión de rollout: fue una
+ * omisión que se tomó sola.
+ *
+ * CRITERIO (el mismo que decide si un flag entra acá):
+ * - ENTRA lo validado en producción y lo que MIDE en sombra.
+ * - NO ENTRA nada que ACTÚE sobre el pastor sin datos que lo respalden (los
+ *   `*_enforce`), lo dormante, ni lo que espera revisión de catálogo del fundador.
+ *   Confrontar con una vara sin revisar no puede ser un default.
+ *
+ * Los tests hacen cumplir el criterio, no solo lo documentan.
+ */
+export const DEFAULT_FEATURE_FLAGS: readonly FeatureFlagName[] = [
+    'pastoral_fidelity_flow',
+    'pastoral_word_study',
+    'three_witnesses',
+    'study_depth',
+    'contra_scan',
+    'conduccion_corazon',
+    // Sombra: no cambia lo que el pastor ve; produce el dato de calibración.
+    'passage_profile',
+    'sermon_draft_shadow',
+];
+
+/** El mapa listo para escribir en el perfil (`{flag: true}`). */
+export function buildDefaultFeatureFlags(): FeatureFlags {
+    return Object.fromEntries(DEFAULT_FEATURE_FLAGS.map((f) => [f, true])) as FeatureFlags;
 }
 
 /**
