@@ -98,6 +98,9 @@ que abra DevTools en `app.preach.dosfilos.com` la lee. Consecuencias, en orden:
 2. **Ningún medidor del servidor puede verla.** El panel `/dashboard/admin/llm-cost`
    mide únicamente lo que pasa por callables; mientras esto siga así, el total
    real es mayor que el mostrado y nadie sabe por cuánto.
+   *(Actualizado 2026-08-19: los callables del servidor que llamaban al SDK directo
+   ya se migraron al port y quedaron medidos — 18 sitios. Lo que falta es
+   exclusivamente lo del navegador.)*
 3. **No hay rate-limit posible.** El usuario habla directo con Google; no hay
    dónde interponer un tope.
 
@@ -124,11 +127,25 @@ y cada tanda es una PR que además hace visible su gasto en el panel:
 
 | # | Feature | Archivos | Nota |
 |---|---|---|---|
-| 1 | Refinamientos del sermón (draft, homilética, secciones, chat de paso) | 4 hooks web | Los más usados; ganan medición inmediata |
-| 2 | Tutores griego y hebreo | 5 (services + providers) | Sesiones largas = muchos tokens |
+| 1 | **Superficies conversacionales**: tutor de griego (+quiz), tutor de hebreo, chat de Faculty en modo normal | 6 (services + providers + `GeminiMultiAgentService`) | **Reordenada al frente** — ver abajo |
+| 2 | Refinamientos del sermón (draft, homilética, secciones, chat de paso) | 4 hooks web | Puntuales, pero muy usados |
 | 3 | Biblioteca (embeddings, file search, core library) | 4 + `library-context` | Embeddings a volumen |
 | 4 | Exégesis (orquestador, compositores, verificador, detectores) | 18 en `infrastructure/exegesis` | La tanda grande; conviene partirla |
-| 5 | Resto (`GeminiAIService`, multi-agent, word study, repurposer, plan generator) | 6 | Barrido final |
+| 5 | Resto (`GeminiAIService`, word study, repurposer, plan generator) | 5 | Barrido final |
+
+> **Por qué las conversacionales van primero** (reordenado 2026-08-19): son
+> **conversaciones**, no llamadas puntuales — muchos turnos y contexto que crece en
+> cada uno. En tokens pesan mucho más que un refinamiento suelto, y son tres
+> superficies invisibles a la vez. Es probable que sean el mayor gasto de la app y
+> son exactamente lo que el panel no ve: mientras sigan fuera, el número que muestre
+> subestima tanto que decidir con él es arriesgado.
+>
+> Segundo motivo: son las superficies donde un **rate-limit** tiene sentido real,
+> porque son las que alguien podría explotar con la clave robada.
+>
+> **Matiz que confunde y conviene tener presente:** el chat de Faculty se mide o no
+> **según el modo**. Conversación normal → navegador, invisible. Estudio guiado →
+> callable `runSocraticTurn`, contado. La misma pantalla, dos comportamientos.
 
 **Criterio de cierre:** `grep -r VITE_GEMINI_API_KEY packages/` no devuelve nada,
 la variable sale de los workflows, y la clave del cliente se elimina en Cloud
