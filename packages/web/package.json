@@ -5,10 +5,11 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "tsc && vite build",
+        "build": "vite build",
         "preview": "vite preview",
         "lint": "eslint .",
-        "type-check": "tsc --noEmit",
+        "type-check": "bash ../../scripts/check-web-types.sh",
+        "type-check:raw": "tsc --noEmit -p tsconfig.app.json",
         "test": "vitest run",
         "test:watch": "vitest"
     },
