@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
+import { runLlmPrompt } from '../llm/callableLlm';
 import {
     IAIService,
     GenerateSermonOptions,
@@ -17,49 +17,27 @@ import {
 import { GEMINI_CONFIG } from './config';
 
 export class GeminiAIService implements IAIService {
-    private genAI: GoogleGenerativeAI;
-    private model;
 
-    constructor(apiKey: string) {
-        if (!apiKey) {
-            throw new Error('Gemini API key is required');
-        }
-
-        this.genAI = new GoogleGenerativeAI(apiKey);
-
-        const modelName = GEMINI_CONFIG.MODEL_NAME;
-
-        this.model = this.genAI.getGenerativeModel({
-            model: modelName,
-            safetySettings: [
-                {
-                    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-                    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                },
-                {
-                    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                },
-                {
-                    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                },
-                {
-                    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                },
-            ],
-        });
-    }
+    /**
+     * Sin apiKey: la generación sale por el proxy del servidor, que autentica,
+     * limita por usuario y mide el gasto. Los umbrales de seguridad explícitos
+     * que traía esta clase viajan como `safety: 'standard'` para no cambiar el
+     * filtrado del modelo por accidente.
+     */
+    constructor() {}
 
     async generateSermon(options: GenerateSermonOptions): Promise<GeneratedSermonContent> {
         try {
             console.log('[GeminiAI] Generating sermon with options:', options);
             const prompt = buildSermonPrompt(options);
             console.log('[GeminiAI] Sending request to Gemini API...');
-            const result = await this.model.generateContent(prompt);
-            const response = result.response;
-            const text = response.text();
+            const rawText = await runLlmPrompt({
+                feature: 'sermon.generateSermon',
+                prompt: prompt,
+                model: GEMINI_CONFIG.MODEL_NAME,
+                safety: 'standard',
+            });
+            const text = rawText;
             console.log('[GeminiAI] Received response from Gemini');
 
             // Parse JSON response
@@ -91,9 +69,13 @@ export class GeminiAIService implements IAIService {
     ): Promise<{ title: string; mainPoints: string[]; suggestedReferences: string[] }> {
         try {
             const prompt = buildOutlinePrompt(options);
-            const result = await this.model.generateContent(prompt);
-            const response = result.response;
-            const text = response.text();
+            const rawText = await runLlmPrompt({
+                feature: 'sermon.generateOutline',
+                prompt: prompt,
+                model: GEMINI_CONFIG.MODEL_NAME,
+                safety: 'standard',
+            });
+            const text = rawText;
 
             const cleanedText = this.cleanJsonResponse(text);
             const outline = JSON.parse(cleanedText);
@@ -115,9 +97,13 @@ export class GeminiAIService implements IAIService {
     ): Promise<string> {
         try {
             const prompt = buildExpandSectionPrompt(sectionTitle, context, bibleReferences);
-            const result = await this.model.generateContent(prompt);
-            const response = result.response;
-            return response.text();
+            const rawText = await runLlmPrompt({
+                feature: 'sermon.expandSection',
+                prompt: prompt,
+                model: GEMINI_CONFIG.MODEL_NAME,
+                safety: 'standard',
+            });
+            return rawText;
         } catch (error: any) {
             throw this.handleError(error);
         }
@@ -126,9 +112,13 @@ export class GeminiAIService implements IAIService {
     async suggestBibleReferences(topic: string, count: number = 5): Promise<string[]> {
         try {
             const prompt = buildBibleReferencesPrompt(topic, count);
-            const result = await this.model.generateContent(prompt);
-            const response = result.response;
-            const text = response.text();
+            const rawText = await runLlmPrompt({
+                feature: 'sermon.suggestReferences',
+                prompt: prompt,
+                model: GEMINI_CONFIG.MODEL_NAME,
+                safety: 'standard',
+            });
+            const text = rawText;
 
             const cleanedText = this.cleanJsonResponse(text);
             const references = JSON.parse(cleanedText);
@@ -142,9 +132,13 @@ export class GeminiAIService implements IAIService {
     async refineContent(content: string, instructions?: string): Promise<string> {
         try {
             const prompt = buildRefineContentPrompt(content, instructions);
-            const result = await this.model.generateContent(prompt);
-            const response = result.response;
-            return response.text();
+            const rawText = await runLlmPrompt({
+                feature: 'sermon.refineContent',
+                prompt: prompt,
+                model: GEMINI_CONFIG.MODEL_NAME,
+                safety: 'standard',
+            });
+            return rawText;
         } catch (error: any) {
             throw this.handleError(error);
         }
@@ -153,9 +147,13 @@ export class GeminiAIService implements IAIService {
     async generateTitleSuggestions(topic: string, count: number = 5): Promise<string[]> {
         try {
             const prompt = buildTitleSuggestionsPrompt(topic, count);
-            const result = await this.model.generateContent(prompt);
-            const response = result.response;
-            const text = response.text();
+            const rawText = await runLlmPrompt({
+                feature: 'sermon.titleSuggestions',
+                prompt: prompt,
+                model: GEMINI_CONFIG.MODEL_NAME,
+                safety: 'standard',
+            });
+            const text = rawText;
 
             const cleanedText = this.cleanJsonResponse(text);
             const titles = JSON.parse(cleanedText);
@@ -170,9 +168,13 @@ export class GeminiAIService implements IAIService {
         try {
             console.log('[GeminiAI] Validating context for message:', message);
             const prompt = buildContextValidationPrompt(message, context);
-            const result = await this.model.generateContent(prompt);
-            const response = result.response;
-            const text = response.text();
+            const rawText = await runLlmPrompt({
+                feature: 'sermon.validateContext',
+                prompt: prompt,
+                model: GEMINI_CONFIG.MODEL_NAME,
+                safety: 'standard',
+            });
+            const text = rawText;
             console.log('[GeminiAI] Validation raw response:', text);
 
             const cleanedText = this.cleanJsonResponse(text);

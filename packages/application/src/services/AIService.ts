@@ -15,7 +15,7 @@ export class AIService {
             console.warn('Gemini API key not configured. AI features will be disabled.');
         }
 
-        this.aiService = new GeminiAIService(apiKey || '');
+        this.aiService = new GeminiAIService();
     }
 
     /**

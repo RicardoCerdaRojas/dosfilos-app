@@ -134,7 +134,7 @@ ${formattingInstructions}`;
             const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
             if (!apiKey) throw new Error('API key not configured');
 
-            const aiService = new GeminiAIService(apiKey);
+            const aiService = new GeminiAIService();
             const docProcessor = new DocumentProcessingService(apiKey);
 
             let libraryContextStr = '';
