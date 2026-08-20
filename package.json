@@ -23,6 +23,7 @@
     "audit:features:simple": "node scripts/audit-feature-ids-simple.js",
     "compliance": "./scripts/check-compliance.sh",
     "compliance:staged": "./scripts/check-compliance.sh --staged",
+    "compliance:gemini-sdk": "./scripts/check-gemini-sdk-boundary.sh",
     "compliance:soft": "./scripts/check-compliance.sh --soft",
     "prepare": "husky install",
     "migrate:plans": "node scripts/migrate-plans-phase1.js",

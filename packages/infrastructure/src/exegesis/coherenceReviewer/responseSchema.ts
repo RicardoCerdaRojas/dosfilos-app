@@ -1,4 +1,4 @@
-import { SchemaType } from '@google/generative-ai';
+import { SchemaType } from '../../llm/schemaType';
 
 /**
  * JSON schema for the coherence reviewer's structured output. Locks

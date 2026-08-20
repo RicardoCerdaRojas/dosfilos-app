@@ -7,6 +7,7 @@
 #   2. No `defaultValue:` in i18next calls (fail-loud i18n policy).
 #   3. No raw color literals (`bg-red-500`, `text-slate-900`, etc.) in semantic JSX.
 #   4. File-size soft (>300) and hard (>500) limits for `.tsx` files under `pages/`.
+#   5. No `@google/generative-ai` imports in the packages the browser bundles.
 #
 # Usage:
 #   ./scripts/check-compliance.sh           # check the whole codebase
@@ -214,6 +215,20 @@ else
     [ "$SIZE_HARD" -gt 0 ] && HARD_FAIL=$((HARD_FAIL + SIZE_HARD))
     [ "$SIZE_SOFT" -gt 0 ] && SOFT_WARN=$((SOFT_WARN + SIZE_SOFT))
 fi
+echo
+
+# ── 5. SDK de Gemini fuera del grafo del navegador ───────────────────────────
+# Vive en su propio script porque CI lo corre solo: el audit completo tiene 67
+# violaciones duras preexistentes (long tail de tamaño de archivo), así que no se
+# puede poner entero en CI, y esta regla sí tiene que bloquear. Ver el encabezado
+# de check-gemini-sdk-boundary.sh para el porqué.
+#
+# Se chequea SIEMPRE sobre todo el repo, no solo sobre lo staged: la regresión no
+# es "este archivo cambió", es "el paquete volvió al grafo".
+echo "$(bold "5. SDK de Gemini fuera del grafo del navegador")"
+"$ROOT/scripts/check-gemini-sdk-boundary.sh"
+GEMINI_SDK_COUNT=$?
+[ "$GEMINI_SDK_COUNT" -gt 0 ] && HARD_FAIL=$((HARD_FAIL + GEMINI_SDK_COUNT))
 echo
 
 # ── Boy Scout opportunity (--staged only) ──────────────────────────────────

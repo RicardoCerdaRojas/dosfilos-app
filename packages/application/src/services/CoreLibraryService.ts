@@ -45,10 +45,13 @@ export class CoreLibraryService implements ICoreLibraryService {
      * desde el panel de admin. El camino que sí corre en cada login es
      * `initializeFromConfig()`, que solo lee configuración de Firestore.
      *
-     * Exigirlo obligaba al composition root del navegador a construir un
-     * `GeminiFileSearchService` con la clave de Gemini en el bundle, solo para
-     * satisfacer una firma cuyo destino es inalcanzable. Se deja el parámetro
-     * (los métodos siguen ahí y podrían revivir) pero ya no fuerza la clave.
+     * Exigirlo obligaba al composition root del navegador a construir la
+     * implementación de Gemini con la clave en el bundle, solo para satisfacer
+     * una firma cuyo destino es inalcanzable. Se deja el parámetro (los métodos
+     * siguen ahí y podrían revivir) pero ya no fuerza la clave. La única
+     * implementación que había (`GeminiFileSearchService`) se borró al sacar el
+     * SDK del navegador; si esto revive, la implementación va del lado del
+     * servidor y entra por acá como adapter de callable.
      */
     constructor(
         private fileSearchService: IFileSearchService | null = null

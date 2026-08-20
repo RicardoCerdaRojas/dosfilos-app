@@ -1,7 +1,7 @@
 # Baseline de errores de tipo de packages/web — NO editar a mano.
 # Regenerar con: ./scripts/check-web-types.sh --update
 # Formato: <cantidad>\t<archivo relativo a packages/web>
-# Total: 574
+# Total: 573
 1	../application/src/greek-tutor/use-cases/AddPassageWordToUnitsUseCase.ts
 1	../application/src/greek-tutor/use-cases/GenerateTrainingUnitsUseCase.ts
 1	../application/src/greek-tutor/use-cases/SaveInsightUseCase.ts
@@ -63,7 +63,6 @@
 1	../infrastructure/src/firebase/FirestoreUserRubricRepository.ts
 1	../infrastructure/src/firebase/FirestoreUserStyleGuideRepository.ts
 4	../infrastructure/src/firebase/MockAIAgentRepository.ts
-1	../infrastructure/src/gemini/GeminiMultiAgentService.ts
 5	../infrastructure/src/gemini/GeminiPlanGenerator.ts
 4	../infrastructure/src/greek-tutor/gemini/GeminiGreekTutorService.ts
 1	../infrastructure/src/greek-tutor/gemini/GeminiQuizService.ts

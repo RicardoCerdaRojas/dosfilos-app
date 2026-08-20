@@ -35,12 +35,13 @@ export * from './gemini/GeminiSermonGenerator';
 export * from './sermon-repurposer/GeminiSermonRepurposer';
 export * from './gemini/GeminiPlanGenerator';
 export * from './gemini/GeminiEmbeddingService';
-export * from './gemini/GeminiFileSearchService';
-export * from './gemini/GeminiMultiAgentService'; // 🎓 Multi-Agent AI Service
+// NO va acá ninguna clase que importe `@google/generative-ai`: este barrel lo
+// consume el navegador, y un solo `export *` de una clase con el SDK lo
+// empaqueta entero aunque nadie la construya. Las llamadas al modelo salen
+// por callables desde 2026-08.
 export * from './firebase/MockAIAgentRepository'; // 🎓 Catalog of AI faculty agents
 export * from './firebase/FirestoreAIAgentRepository'; // 🎓 Live DB of AI faculty agents
 export * from './greek-tutor/gemini/GeminiGreekTutorService'; // 🏛️ Greek Tutor Service
-export * from './gemini/GeminiPastoralWordStudyService'; // 🌱 Pastoral Fidelity Phase 1.5 — Pastoral Word Study Service
 export * from './gemini/pastoralWordStudyPrompts'; // 🌱 Phase 1.5 prompt builders
 export * from './lexicon'; // 🌱 Phase 1.5 Composite Lexicon (curated + LSJ + BDB)
 export * from './greek-tutor/repositories/FirestoreGreekSessionRepository';

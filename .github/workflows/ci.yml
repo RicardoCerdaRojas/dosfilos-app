@@ -46,6 +46,15 @@ jobs:
       - name: Web type-check ratchet
         run: ./scripts/check-web-types.sh
 
+      # El audit de compliance completo NO puede correr en CI: arrastra 67
+      # violaciones duras preexistentes (long tail de tamaño de archivo). Esta
+      # regla sí tiene que bloquear, así que corre sola. La clave de Gemini vivió
+      # meses en el bundle y resultó ser la MISMA credencial del backend; el SDK
+      # no necesita la clave para volver a entrar, alcanza con que algo del grafo
+      # del navegador lo importe.
+      - name: SDK de Gemini fuera del navegador
+        run: ./scripts/check-gemini-sdk-boundary.sh
+
   test:
     name: Run Tests
     runs-on: ubuntu-latest

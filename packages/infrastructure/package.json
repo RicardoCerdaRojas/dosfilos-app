@@ -11,7 +11,6 @@
     },
     "dependencies": {
         "@dosfilos/domain": "*",
-        "@google/generative-ai": "^0.21.0",
         "firebase": "^10.14.1",
         "jspdf": "^3.0.4",
         "morphhb": "^1.0.0"
