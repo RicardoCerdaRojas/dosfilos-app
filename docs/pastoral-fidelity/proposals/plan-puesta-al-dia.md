@@ -262,11 +262,57 @@ en esta sesión).
   era el borde servidor: el toggle se veía y el callable lo rechazaba como flag desconocido.
 - **7 de 13 flags no tenían descripción en la UI** (i18n es/en). Agregadas — un panel de control con toggles
   mudos no es un panel de control.
-- 🔴 **HALLAZGO GRANDE, fuera de alcance de esta ola: `packages/web` NO se typechequea en CI.** Su
+- ✅ **HALLAZGO GRANDE, fuera de alcance de esta ola: `packages/web` NO se typechequea en CI.** Su
   `tsconfig.json` es un archivo-solución con `"files": []`, así que `tsc --noEmit` (lo que corre CI) no mira
   ni un archivo; `vite build` tampoco typechequea. El chequeo real
   (`tsc -p packages/web/tsconfig.app.json`) arroja **587 errores preexistentes**. Por eso el flag fantasma
-  sobrevivió a CI. Ver Ola 8.
+  sobrevivió a CI. **Cerrado el 2026-08-20 con un trinquete** — ver § Trinquete de tipos de `packages/web`.
+
+## ✅ CERRADA 2026-08-20 — Trinquete de tipos de `packages/web`
+
+**Por qué existía el agujero:** `packages/web/tsconfig.json` es un archivo-solución con `"files": []`.
+Un `tsc --noEmit` a secas ahí no mira **ni un archivo**, y `vite build` tampoco typechequea. El script
+`type-check` del paquete corría exactamente ese comando: reportaba éxito sin haber chequeado nada.
+El `build` hacía lo mismo (`tsc && vite build`, con el `tsc` mirando cero archivos).
+
+**Lo que costó:** el crash de `ExegesisPaperPage` (PR #436) venía siendo reportado por el compilador
+**desde #296**, en la línea exacta y con el tipo exacto:
+
+    ExegesisPaperPage.tsx(104,11): error TS2322:
+      Type 'ExegesisPaperSummary | null' is not assignable to type 'ExegeticalPaper | null'.
+
+No fue un bug difícil de encontrar. Fue un bug **reportado y no leído**.
+
+**Por qué un trinquete y no "bajar los errores a cero":** el chequeo real arroja **574 errores
+preexistentes**. Exigir cero frena todo el trabajo; dejarlo sin exigir nada repite el crash. El
+trinquete separa las dos cosas: la deuda vieja no bloquea, la deuda nueva sí.
+
+**Por qué el baseline es POR ARCHIVO y no un total:** un total suelto se mantiene plano arreglando un
+error acá y rompiendo otro allá — que es justamente el caso a atrapar. Las líneas y columnas quedan
+fuera del baseline a propósito: se mueven con cualquier edición y volverían el trinquete inservible.
+
+| Pieza | Dónde |
+|---|---|
+| Script | `scripts/check-web-types.sh` (`--update` regraba el baseline) |
+| Baseline | `scripts/web-type-errors-baseline.txt` — 574 errores en 230 archivos |
+| CI | Paso `Web type-check ratchet` en `ci.yml`, **sin** `continue-on-error` |
+| Scripts | `npm run type-check:web` · `npm run type-check:web:update` · `type-check:raw` en el paquete |
+| Regla | `.agent/rules/compliance_gate.md` § Trinquete de tipos |
+
+**Efectos colaterales, ambos deliberados:**
+
+1. `packages/web` `type-check` ahora corre el trinquete de verdad, así que el `npm run type-check` de la
+   raíz deja de mentir sobre el paquete más grande del repo.
+2. Se sacó el `tsc` del `build` de web. No se pierde ningún chequeo — miraba cero archivos — y se deja de
+   aparentar uno.
+
+**No corre en pre-commit:** la corrida completa toma ~20 s, demasiado para cada commit. Vive en CI.
+
+**Verificación:** con el baseline grabado el script sale verde (574 = 574). Con una asignación inválida
+inyectada a propósito en un archivo que YA tenía un error (`planLabels.ts`, 1 → 2) sale rojo y nombra el
+error nuevo — el caso exacto de #296, donde un archivo con deuda vieja gana una regresión.
+
+---
 
 ## Ola 2 — 0b-B: provenance desde el acto
 
@@ -393,9 +439,10 @@ Boy Scout salvo donde se indique.
 - [ ] Realtime status en Admin Core Library
 - [ ] Rate-limit propio en `completeRegistration`
 - [ ] Faculty extractions user-wide sin trimmed callable
-- [ ] **`packages/web` sin typecheck real en CI** (587 errores preexistentes) — `tsconfig.json` es solución
-      con `files: []`; CI corre `tsc --noEmit` sobre nada. Arreglarlo es un proyecto propio (apuntar el script
-      a `tsconfig.app.json` y bajar los 587 a cero, o adoptar `tsc -b`). No es Boy Scout.
+- [x] **`packages/web` sin typecheck real en CI** — ✅ **CERRADO 2026-08-20.** No se bajaron los errores a
+      cero (eso sigue siendo un proyecto propio); se puso un **trinquete** que congela los 574 actuales por
+      archivo y bloquea los nuevos. Ver § Trinquete de tipos de `packages/web`. Bajar el baseline a cero pasa
+      a ser Boy Scout: cada PR que toca un archivo lo deja con menos errores y regraba el baseline.
 - [ ] **Clave duplicada `status`** en `i18n/locales/{es,en}/admin.json` (string + objeto; JSON.parse conserva
       el último → la etiqueta "Estado" está muerta). Nit, arreglar al pasar por ahí.
 - [ ] **Staging env** — 3-4 días, plan ya acordado en byblos. No es Boy Scout.
@@ -425,6 +472,7 @@ Olas 5, 7 y 8 cuelgan del camino sin bloquearlo.
 | Fecha | Ola | Qué pasó |
 |---|---|---|
 | 2026-08-17 | — | Plan creado tras auditoría del estado real. |
+| 2026-08-20 | ✅ | **`packages/web` entra a CI con trinquete** (Ola 8). 574 errores congelados por archivo en `scripts/web-type-errors-baseline.txt`; el paso de CI bloquea los NUEVOS. Se sacó el `tsc` no-op del `build` y el `type-check` del paquete dejó de mentir. Bajar el baseline pasa a Boy Scout. |
 | 2026-08-20 | ✅ | **Track de la clave CERRADO.** Los 5 criterios verificados. Hallazgo que cambió el cierre: la clave del navegador y el secret del servidor eran **el mismo valor** → no se borró, se **rotó** (#435: clave nueva → secret v4 → redeploy → verificación con tráfico real → borrado de la vieja). Secret de GitHub borrado, `.env` limpios, clave eliminada en GCP. |
 | 2026-08-20 | ✅ | Exégesis migrada a mano en tandas (#430, #431, #432) + barrido final (#433) + limpieza de interruptores (#434). |
 | 2026-08-20 | 🐛 | Crash de `ExegesisPaperPage` encontrado probando la rotación — **no era de la rotación**: regresión de #296. La página leía el paper de la lista recortada (`sources` fuera del payload). Fix: usar `useExegesisPaper`, que ya existía (#436). `tsc` ya reportaba el error exacto en la línea 104; nadie lo vio porque **web no se typechequea en CI** (Ola 8). Bug reportado y no leído. |

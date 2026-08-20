@@ -12,6 +12,8 @@
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "type-check": "npm run type-check --workspaces --if-present",
+    "type-check:web": "./scripts/check-web-types.sh",
+    "type-check:web:update": "./scripts/check-web-types.sh --update",
     "test": "vitest",
     "test:unit": "vitest run",
     "test:ui": "vitest --ui",

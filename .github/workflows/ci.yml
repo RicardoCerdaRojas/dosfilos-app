@@ -34,6 +34,18 @@ jobs:
         run: npm run type-check
         continue-on-error: true  # Allow legacy TypeScript errors
 
+      # `packages/web` quedaba fuera de TODO chequeo de tipos: su tsconfig.json
+      # es un archivo-solución con `"files": []`, así que `tsc --noEmit` no
+      # miraba ni un archivo y `vite build` tampoco typechequea. El compilador
+      # venía reportando el crash de `ExegesisPaperPage` (PR #436) desde #296,
+      # en la línea exacta, sin que nadie pudiera leerlo.
+      #
+      # Este paso NO es continue-on-error a propósito: los ~574 errores
+      # preexistentes están congelados en el baseline y no bloquean, pero un
+      # error NUEVO sí. Es la única forma de que el trinquete apriete.
+      - name: Web type-check ratchet
+        run: ./scripts/check-web-types.sh
+
   test:
     name: Run Tests
     runs-on: ubuntu-latest
