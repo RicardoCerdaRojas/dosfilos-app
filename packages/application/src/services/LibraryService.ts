@@ -52,13 +52,17 @@ export class LibraryService {
      */
     private getRAGService(): RAGService | null {
         if (!this.ragService) {
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (apiKey) {
-                const embeddingService = new GeminiEmbeddingService();
-                const vectorRepository = new FirestoreVectorRepository();
-                const cacheService = new MemoryCacheService();
-                this.ragService = new RAGService(embeddingService, vectorRepository, cacheService);
-            }
+            // Antes esto colgaba de la presencia de la clave en el bundle. Los
+            // embeddings salieron del navegador en #428 (callable `embedTexts`),
+            // así que el servicio se construye siempre. Con el gate viejo,
+            // borrar la variable habría devuelto `null` acá y la búsqueda
+            // semántica habría desaparecido en silencio: este método ya
+            // devuelve `null` como caso normal, así que nadie habría visto un
+            // error.
+            const embeddingService = new GeminiEmbeddingService();
+            const vectorRepository = new FirestoreVectorRepository();
+            const cacheService = new MemoryCacheService();
+            this.ragService = new RAGService(embeddingService, vectorRepository, cacheService);
         }
         return this.ragService;
     }

@@ -305,10 +305,8 @@ export class SeriesService {
             // Merge resources (Core first, then User)
             const allResources = [...coreResources, ...selectedUserResources];
 
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) throw new Error('Gemini API Key not found');
 
-            const generator = new GeminiPlanGenerator(apiKey);
+            const generator = new GeminiPlanGenerator();
             return await generator.generateSeriesObjective({
                 ...request,
                 subtopicsOrRange: request.subtopicsOrRange,
@@ -349,10 +347,8 @@ export class SeriesService {
             // Merge resources (Core first, then User)
             const allResources = [...coreResources, ...selectedUserResources];
 
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) throw new Error('Gemini API Key not found');
 
-            const generator = new GeminiPlanGenerator(apiKey);
+            const generator = new GeminiPlanGenerator();
             return await generator.generateSeriesStructure({
                 ...request,
                 contextResources: allResources,
@@ -746,10 +742,8 @@ export class SeriesService {
             const contextResources = userResources.filter(r => request.contextResourceIds.includes(r.id));
 
             // 2. Generate Plan Structure
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) throw new Error('Gemini API Key not found');
 
-            const generator = new GeminiPlanGenerator(apiKey);
+            const generator = new GeminiPlanGenerator();
             const plan = await generator.generatePlan({
                 ...request,
                 contextResources

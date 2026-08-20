@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import type {
     ISermonRepurposer,
     SermonRepurposeKind,
@@ -6,6 +5,7 @@ import type {
     SermonRepurposerOutput,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../exegesis/geminiRetry';
+import { runLlmPromptWithUsage } from '../llm/callableLlm';
 import { buildDevotionalDefaultTitle, buildDevotionalPrompt } from './promptDevotional';
 import { buildStudyGuideDefaultTitle, buildStudyGuidePrompt } from './promptStudyGuide';
 
@@ -17,11 +17,9 @@ import { buildStudyGuideDefaultTitle, buildStudyGuidePrompt } from './promptStud
  * is reorganization plus voice-shift, not novel reasoning.
  */
 export class GeminiSermonRepurposer implements ISermonRepurposer {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-flash';
     }
 
@@ -33,24 +31,21 @@ export class GeminiSermonRepurposer implements ISermonRepurposer {
             ? buildDevotionalDefaultTitle(input)
             : buildStudyGuideDefaultTitle(input);
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            generationConfig: {
+        const { text, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: `sermon.repurpose.${kind}`,
+                model: this.modelName,
+                prompt,
                 // Slightly higher than analyzer (0.5) — devotional /
                 // study-guide prose benefits from warmth and rhythm but
                 // must stay anchored to the sermon's claims.
                 temperature: 0.55,
                 topP: 0.9,
                 maxOutputTokens: 8192,
-            },
-        });
-
-        const result = await withGeminiRetry(
-            () => model.generateContent(prompt),
+            }),
             { contextLabel: `GeminiSermonRepurposer:${kind}` },
         );
-        const markdown = result.response.text().trim();
-        const tokensUsed = result.response.usageMetadata?.totalTokenCount ?? null;
+        const markdown = text.trim();
 
         const extractedTitle = extractTitleFromMarkdown(markdown);
         return {

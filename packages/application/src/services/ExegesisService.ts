@@ -249,7 +249,7 @@ class ExegesisService {
         // if exegesis ends up needing a different tier.
         const exegesisModelId = (import.meta as any).env?.VITE_GEMINI_VISION_MODEL_ID || 'gemini-2.5-pro';
 
-        // Ya no se mira `VITE_GEMINI_API_KEY`: los 18 adapters salen por el
+        // Ya no se mira la clave de Gemini del bundle: los 18 adapters salen por el
         // proxy del servidor y la exégesis funciona sin clave en el navegador.
         // El aviso que vivía acá pasó a ser mentira — y peor, un INTERRUPTOR:
         // el día que se borre la variable, un gate así apaga la feature en

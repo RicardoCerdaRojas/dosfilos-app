@@ -27,16 +27,16 @@ export class SermonGeneratorService {
     private coreLibraryService: ICoreLibraryService | null = null; // 🎯 NEW
 
     constructor(coreLibraryService?: ICoreLibraryService) {
-        const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
-        if (!apiKey) {
-            console.warn('Gemini API key not configured. Generator features will be disabled.');
-        }
         this.generator = new GeminiSermonGenerator();
         this.storageService = new FirebaseStorageService();
         this.coreLibraryService = coreLibraryService || null; // 🎯 NEW
 
         // Initialize services
-        if (apiKey) {
+        // Antes esto colgaba de la presencia de la clave. El procesador de
+        // documentos no la usa — se construye siempre. Con el gate viejo,
+        // borrar la variable habría dejado `documentProcessor` en `null` y la
+        // búsqueda en la biblioteca habría dejado de funcionar sin un error.
+        {
             this.documentProcessor = new DocumentProcessingService();
         }
     }
@@ -494,8 +494,20 @@ export class SermonGeneratorService {
         return this.generator.refineContent(content, instruction, enrichedContext, language);
     }
 
+    /**
+     * Antes devolvía la mera presencia de la clave de Gemini en el bundle. Esa
+     * clave ya no vive en el navegador: la generación sale por callables
+     * autenticados, así que la disponibilidad no depende de nada que el cliente
+     * pueda mirar.
+     *
+     * Se conserva el método en vez de borrarlo porque sus llamadores lo usan
+     * como guarda de UI — `generate-sermon.tsx` esconde la página entera con
+     * él. Devolver `true` es la traducción honesta de "el servidor siempre
+     * puede"; una comprobación real de salud del callable sería otra feature,
+     * no parte de esta migración.
+     */
     isAvailable(): boolean {
-        return !!(import.meta as any).env.VITE_GEMINI_API_KEY;
+        return true;
     }
 }
 
