@@ -129,6 +129,8 @@ export const processWithGemini = onCall<ProcessRequest>(
                 resourceId,
                 apiKey,
                 expectedPageCount,
+                // Atribuye el gasto de extracción al dueño del recurso.
+                data.userId,
             );
 
             const textBytes = Buffer.byteLength(extractedText, 'utf8');

@@ -395,7 +395,7 @@ export const extractPdfWithGemini = onObjectFinalized(
                         // so we no longer need the 12MB heuristic that used
                         // to bail out for text-heavy commentaries.
                         try {
-                            const result = await extractWithGemini(tempFilePath, resourceId, getApiKey(), expectedPageCount);
+                            const result = await extractWithGemini(tempFilePath, resourceId, getApiKey(), expectedPageCount, userId);
                             extractedText = result.text;
                             pageCount = result.pageCount;
                             structuredMarkdown = result.markdown;
@@ -430,7 +430,7 @@ export const extractPdfWithGemini = onObjectFinalized(
                 // splitting, so the old 12MB heuristic is gone.
                 console.log(`🤖 [Extract] Using Gemini (${userOptedOutOfPremium ? 'user opted standard' : 'no LlamaParse key'})`);
                 try {
-                    const result = await extractWithGemini(tempFilePath, resourceId, getApiKey(), expectedPageCount);
+                    const result = await extractWithGemini(tempFilePath, resourceId, getApiKey(), expectedPageCount, userId);
                     extractedText = result.text;
                     pageCount = result.pageCount;
                     structuredMarkdown = result.markdown;
