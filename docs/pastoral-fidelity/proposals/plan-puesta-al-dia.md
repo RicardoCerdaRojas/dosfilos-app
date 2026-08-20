@@ -418,9 +418,15 @@ lo mismo.
 
 **Corre en paralelo con la Ola 3** — los dos últimos se revisan CON los datos de sombra.
 
-- [ ] **4.1** `approach-compliance-criteria.md` — el catálogo del juez, criterio por criterio, + severidad
-      (`critica|estandar`) + tipo (`contenido|tratamiento`) + umbral "mayoría/todos" de §8.6.
-      **Bloquea Redacción v2 Fase 2 entera.**
+- [x] **4.1** `approach-compliance-criteria.md` — ✅ **YA ESTABA HECHO; este ítem estaba desactualizado.**
+      La revisión criterio-por-criterio la cerró el fundador el **2026-07-08** y quedó sellada en
+      `redaccion-v2-diseno.md` §9.1–§9.8: severidad + tipo de los 12 descalificadores de forma, umbral de
+      §9.6 (cierra el pendiente de §8.6), los 4 globales críticos, G4 a global, G2 cristotélico, E2 temático.
+      Lo que faltaba no era la revisión sino **materializarla**, y eso ES la Ola 6.1 — no su bloqueo.
+      Materializada el 2026-08-20 en `packages/domain/src/sermon-judge/`.
+      ⚠️ **Ojo con la lectura anterior:** decir que 4.1 "bloquea Fase 2 entera" mandaba a esperar una
+      decisión que ya existía. 4.2 y 4.3 SÍ siguen abiertos, pero bloquean **flips de flags**
+      (`genre_override_enforce`, `step3_genre_help`), no la construcción de la Ola 6.
 - [ ] **4.2** `GENRE_DISCERNMENT_CRITERIA` (`packages/domain/src/guided-sermon/genreDiscernmentCriteria.ts`).
       **Bloquea el flip de `genre_override_enforce`.**
 - [ ] **4.3** `STRUCTURAL_SUFFICIENCY_BY_GENRE` + `workedExamples` (hoy vacíos, los cura el fundador).
@@ -445,8 +451,16 @@ Sin dependencia de orden; cuanto antes, mejor.
 
 **Depende de:** Ola 4 (catálogos) + Ola 3 (datos). Aquí el track vuelve a ser producto visible.
 
-- [ ] **6.1** **Fase 2 — catálogos como dato**: `ApproachComplianceCatalog` + criterios de género hermanos +
-      severidad/tipo + reconciliación del enum.
+- [x] **6.1** **Fase 2 — catálogos como dato** — ✅ **HECHO 2026-08-20.** `packages/domain/src/sermon-judge/`:
+      catálogo de FORMA (globales G1-G4 + 6 formas con C/E, severidad, tipo, `refina`), catálogo HERMANO de
+      GÉNERO (los D de los 8 perfiles de §6, extraídos, no redactados), compositor de las tres capas y
+      mecánica del veredicto (§8.3/§8.4/§9.6). La reconciliación del enum ya venía de Fase 0.
+      Dos hallazgos del propio trabajo, ambos con test: (a) la clave de un descalificador debe ir calificada
+      por dueño — `genero:D1` fundía "proverbio como promesa" con "aplanar el poema" al agregar sombra;
+      (b) un veredicto `limpio` con `cumple:false` dejaba pasar en silencio el único esencial sellado
+      (C4 narrativo). Severidades que el diseño NO selló quedan **pendientes explícitas en el dato** y nunca
+      escalan a confrontación fuerte: la cola de revisión del fundador se deriva del catálogo, no de la
+      memoria.
 - [ ] **6.2** **Fase 3 — mapeo género→estructura + constructor de proposición (8 elementos)**. Consume
       `PassageProfile`, NO re-deriva género (invariante: una sola fuente de verdad de género).
 
