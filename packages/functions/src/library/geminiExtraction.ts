@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { recordLlmUsage } from '../llm/llmUsageRecorder';
 import { GoogleAIFileManager, FileState } from '@google/generative-ai/server';
 import { PDFDocument } from 'pdf-lib';
 import * as fs from 'fs';
@@ -47,16 +48,18 @@ export async function extractWithGemini(
     resourceId: string,
     apiKey: string,
     expectedPageCount?: number,
+    /** Dueño del recurso. Sin él el gasto queda sin atribuir en el panel. */
+    userId?: string,
 ): Promise<{ text: string; markdown: string; pageCount: number }> {
     const useBatched = !!expectedPageCount && expectedPageCount > BATCH_THRESHOLD_PAGES;
     if (useBatched) {
         console.log(
             `🤖 [Gemini] expected ${expectedPageCount} pages > ${BATCH_THRESHOLD_PAGES} — using batched extraction`,
         );
-        return extractWithGeminiBatched(tempFilePath, resourceId, apiKey, expectedPageCount!);
+        return extractWithGeminiBatched(tempFilePath, resourceId, apiKey, expectedPageCount!, userId);
     }
 
-    const { pages } = await extractGeminiPagesSinglePass(tempFilePath, resourceId, apiKey, expectedPageCount);
+    const { pages } = await extractGeminiPagesSinglePass(tempFilePath, resourceId, apiKey, expectedPageCount, userId);
     return {
         text: pagesToMarkedText(pages),
         markdown: pagesToMarkdown(pages),
@@ -84,6 +87,7 @@ async function extractGeminiPagesSinglePass(
     resourceId: string,
     apiKey: string,
     expectedPageCount?: number,
+    userId?: string,
 ): Promise<{ pages: GeminiPage[] }> {
     const genAI = new GoogleGenerativeAI(apiKey);
     const fileManager = new GoogleAIFileManager(apiKey);
@@ -156,6 +160,18 @@ Si una página está vacía, devuelve string vacío en text/md pero conserva la 
     // only the first 40 pages). Treat this as a hard failure so the
     // cascade falls to pdf-parse, which produces auto-indexable
     // output covering the FULL document.
+    // Se mide ANTES del guard de truncado: una respuesta truncada igual se
+    // cobra, y si no se registrara acá, los reintentos por MAX_TOKENS —que son
+    // justo los caros— quedarían fuera de la contabilidad.
+    const usage = result.response.usageMetadata;
+    void recordLlmUsage({
+        model: 'gemini-2.5-flash',
+        feature: 'library.pdfExtraction',
+        userId,
+        inputTokens: usage?.promptTokenCount ?? 0,
+        outputTokens: usage?.candidatesTokenCount ?? 0,
+    });
+
     const finishReason = result.response.candidates?.[0]?.finishReason;
     if (finishReason && finishReason !== 'STOP') {
         throw new Error(`Gemini stopped early (finishReason=${finishReason}); response truncated`);
@@ -240,6 +256,7 @@ async function extractWithGeminiBatched(
     resourceId: string,
     apiKey: string,
     totalPageCount: number,
+    userId?: string,
 ): Promise<{ text: string; markdown: string; pageCount: number }> {
     const sourceBytes = fs.readFileSync(tempFilePath);
     const sourceDoc = await PDFDocument.load(sourceBytes);
@@ -298,6 +315,7 @@ async function extractWithGeminiBatched(
                 // legitimately returns N pages because that's the chunk
                 // size. Whole-doc completeness is checked below instead.
                 undefined,
+                userId,
             );
 
             // Remap each chunk page's local number (1..chunkSize, as
