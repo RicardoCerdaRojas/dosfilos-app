@@ -112,16 +112,16 @@ export class GeminiSermonGenerator implements ISermonGenerator {
             // 🧪 TESTING: Log prompt to verify hermeneutical method
 
 
-            const model = this.getModel({
-                fileSearchStoreId: config?.fileSearchStoreId,
-                temperature: config?.temperature,
-                modelName: config?.aiModel,
-                responseMimeType: 'application/json'
+            const text = await runLlmPrompt({
+                feature: 'sermon.generateExegesis',
+                prompt: prompt,
+                safety: 'standard',
+                ...(config?.aiModel ? { model: config.aiModel } : {}),
+                ...(config?.temperature !== undefined ? { temperature: config.temperature } : {}),
+                ...(config?.fileSearchStoreId
+                    ? { fileSearchStoreId: config.fileSearchStoreId }
+                    : { responseMimeType: 'application/json' as const }),
             });
-            const content = prompt;
-            const result = await model.generateContent(content);
-            const response = result.response;
-            const text = response.text();
             const parsed = JSON.parse(this.cleanJsonResponse(text));
 
             return {
@@ -164,16 +164,16 @@ export class GeminiSermonGenerator implements ISermonGenerator {
                 .withRules(rules)
                 .build();
 
-            const model = this.getModel({
-                fileSearchStoreId: _config?.fileSearchStoreId,
-                temperature: _config?.temperature,
-                modelName: _config?.aiModel,
-                responseMimeType: 'application/json'
+            const text = await runLlmPrompt({
+                feature: 'sermon.generateHomiletics',
+                prompt: prompt,
+                safety: 'standard',
+                ...(_config?.aiModel ? { model: _config.aiModel } : {}),
+                ...(_config?.temperature !== undefined ? { temperature: _config.temperature } : {}),
+                ...(_config?.fileSearchStoreId
+                    ? { fileSearchStoreId: _config.fileSearchStoreId }
+                    : { responseMimeType: 'application/json' as const }),
             });
-            const content = prompt;
-            const result = await model.generateContent(content);
-            const response = result.response;
-            const text = response.text();
 
             const parsed = JSON.parse(this.cleanJsonResponse(text));
 
@@ -241,15 +241,18 @@ export class GeminiSermonGenerator implements ISermonGenerator {
             // staying under Flash 2.5's 32k cap.
             const attempt = async (mf: CitationManifest | undefined, useFileSearch: boolean): Promise<string> => {
                 const prompt = buildSermonDraftPrompt(analysis, rules, language, mf);
-                const model = this.getModel({
-                    fileSearchStoreId: useFileSearch ? _config?.fileSearchStoreId : undefined,
-                    temperature: _config?.temperature,
-                    modelName: _config?.aiModel,
-                    responseMimeType: 'application/json',
+                const effectiveStore = useFileSearch ? _config?.fileSearchStoreId : undefined;
+                return await runLlmPrompt({
+                    feature: 'sermon.generateDraft',
+                    prompt,
+                    safety: 'standard',
                     maxOutputTokens: 24576,
+                    ...(_config?.aiModel ? { model: _config.aiModel } : {}),
+                    ...(_config?.temperature !== undefined ? { temperature: _config.temperature } : {}),
+                    ...(effectiveStore
+                        ? { fileSearchStoreId: effectiveStore }
+                        : { responseMimeType: 'application/json' as const }),
                 });
-                const result = await model.generateContent(prompt);
-                return result.response.text();
             };
 
             let text: string;
@@ -360,16 +363,16 @@ FORMATO JSON REQUERIDO:
   "transition": "Transición..."
 }
 `;
-            const model = this.getModel({
-                fileSearchStoreId: context?.fileSearchStoreId,
-                temperature: context?.temperature,
-                modelName: context?.aiModel,
-                responseMimeType: 'application/json'
+            const text = await runLlmPrompt({
+                feature: 'sermon.regeneratePoint',
+                prompt: fullPrompt,
+                safety: 'standard',
+                ...(context?.aiModel ? { model: context.aiModel } : {}),
+                ...(context?.temperature !== undefined ? { temperature: context.temperature } : {}),
+                ...(context?.fileSearchStoreId
+                    ? { fileSearchStoreId: context.fileSearchStoreId }
+                    : { responseMimeType: 'application/json' as const }),
             });
-            const content = fullPrompt;
-            const result = await model.generateContent(content);
-            const response = result.response;
-            const text = response.text();
             return JSON.parse(this.cleanJsonResponse(text));
         } catch (error: any) {
             throw this.handleError(error);
@@ -775,16 +778,16 @@ REGLAS:
                 .withRules(rules)
                 .build();
 
-            const model = this.getModel({
-                fileSearchStoreId: _config?.fileSearchStoreId,
-                temperature: _config?.temperature,
-                modelName: _config?.aiModel,
-                responseMimeType: 'application/json'
+            const text = await runLlmPrompt({
+                feature: 'sermon.homileticsPreview',
+                prompt: prompt,
+                safety: 'standard',
+                ...(_config?.aiModel ? { model: _config.aiModel } : {}),
+                ...(_config?.temperature !== undefined ? { temperature: _config.temperature } : {}),
+                ...(_config?.fileSearchStoreId
+                    ? { fileSearchStoreId: _config.fileSearchStoreId }
+                    : { responseMimeType: 'application/json' as const }),
             });
-            const content = prompt;
-            const result = await model.generateContent(content);
-            const response = result.response;
-            const text = response.text();
             const parsed = JSON.parse(this.cleanJsonResponse(text));
             // ... (keep parsing logic) ...
             const previews: import('@dosfilos/domain').HomileticalApproachPreview[] = Array.isArray(parsed.homileticalApproaches)
@@ -826,17 +829,16 @@ REGLAS:
                 .withRules(rules)
                 .build();
 
-            const model = this.getModel({
-                fileSearchStoreId: _config?.fileSearchStoreId,
-                temperature: _config?.temperature,
-                modelName: _config?.aiModel,
-                responseMimeType: 'application/json'
+            const text = await runLlmPrompt({
+                feature: 'sermon.developApproach',
+                prompt: prompt,
+                safety: 'standard',
+                ...(_config?.aiModel ? { model: _config.aiModel } : {}),
+                ...(_config?.temperature !== undefined ? { temperature: _config.temperature } : {}),
+                ...(_config?.fileSearchStoreId
+                    ? { fileSearchStoreId: _config.fileSearchStoreId }
+                    : { responseMimeType: 'application/json' as const }),
             });
-            const content = prompt;
-
-            const result = await model.generateContent(content);
-            const response = result.response;
-            const text = response.text();
             const parsed = JSON.parse(this.cleanJsonResponse(text));
 
             // ... (keep parsing logic) ...

@@ -70,6 +70,14 @@ export const PROXY_FEATURES = [
     // El refinamiento real del wizard (GeminiSermonGenerator), distinto del
     // validador: es el que reescribe el texto cuando el pastor pide un cambio.
     'sermon.refineContent',
+    // Las llamadas GRANDES del wizard: generan documentos completos, así que son
+    // las que más pesan por llamada.
+    'sermon.generateExegesis',
+    'sermon.generateHomiletics',
+    'sermon.generateDraft',
+    'sermon.regeneratePoint',
+    'sermon.homileticsPreview',
+    'sermon.developApproach',
 ] as const;
 
 const MAX_PROMPT_CHARS = 200_000;
