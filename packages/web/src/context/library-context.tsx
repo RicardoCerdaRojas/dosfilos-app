@@ -1,3 +1,4 @@
+import { createLibraryCache } from '@dosfilos/infrastructure';
 /**
  * LibraryContextProvider
  * 
@@ -319,41 +320,22 @@ export function LibraryContextProvider({
             const geminiUris = aiReadyResources.map(r => r.metadata!.geminiUri!);
             console.log(`🔄 LibraryContext: Creating cache with ${geminiUris.length} resources...`);
 
-            // Create cache using Gemini API
-            const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
-            if (!apiKey) {
-                setCacheStatus('error');
-                setLastError('Gemini API Key not configured');
-                return;
-            }
-
-            const cacheResponse = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/cachedContents?key=${apiKey}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: 'models/gemini-2.5-flash',
-                        contents: geminiUris.map(uri => ({
-                            role: 'user',
-                            parts: [{ fileData: { fileUri: uri, mimeType: 'application/pdf' } }]
-                        })),
-                        ttl: `${CACHE_TTL_SECONDS}s`
-                    })
-                }
-            );
-
-            if (!cacheResponse.ok) {
-                const errorText = await cacheResponse.text();
-                console.error('❌ Cache creation failed:', errorText);
+            // La caché la crea el servidor (`createLibraryCache`). Antes esto
+            // era un `fetch` directo a la API de cachés de Google con la clave
+            // en la query string — otra API, no el proxy de LLM, y por eso
+            // necesitó su propio callable.
+            let cacheResult;
+            try {
+                cacheResult = await createLibraryCache(geminiUris, CACHE_TTL_SECONDS);
+            } catch (err) {
+                console.error('❌ Cache creation failed:', err);
                 setCacheStatus('error');
                 setLastError('Cache creation failed');
                 return;
             }
 
-            const cacheData = await cacheResponse.json();
-            const newCacheName = cacheData.name;
-            const expiresAt = new Date(Date.now() + CACHE_TTL_SECONDS * 1000);
+            const newCacheName = cacheResult.cacheName;
+            const expiresAt = new Date(cacheResult.expiresAtMs);
 
             setCacheName(newCacheName);
             setCacheExpiresAt(expiresAt);

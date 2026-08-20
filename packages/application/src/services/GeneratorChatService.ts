@@ -1,4 +1,4 @@
-import { GeminiSermonGenerator, DocumentProcessingService, AutomaticStrategySelector, GeminiFileSearchService } from '@dosfilos/infrastructure';
+import { GeminiSermonGenerator, DocumentProcessingService, AutomaticStrategySelector } from '@dosfilos/infrastructure';
 import { LibraryResourceEntity, DocumentChunkEntity, CoachingStyle, ContentType, ICoreLibraryService, FileSearchStoreContext, DEFAULT_LANGUAGE } from '@dosfilos/domain';
 import type {
     SupportedLanguage,
@@ -33,7 +33,6 @@ const DEFAULT_TTL_DAYS = 7;
 export class GeneratorChatService {
     private generator: GeminiSermonGenerator;
     private documentProcessor: DocumentProcessingService;
-    private fileSearch: GeminiFileSearchService | null = null; // Lazy loaded
     private strategySelector: AutomaticStrategySelector;
     private history: ChatMessage[] = [];
     private sourcesPerMessage: Map<string, SourceReference[]> = new Map();
@@ -53,8 +52,6 @@ export class GeneratorChatService {
     constructor() {
         this.generator = new GeminiSermonGenerator();
         this.documentProcessor = new DocumentProcessingService();
-        // Don't instantiate fileSearch here - it uses server-side APIs
-        // this.fileSearch = new GeminiFileSearchService(apiKey);
         this.strategySelector = new AutomaticStrategySelector();
 
         // Clean up expired histories on initialization
@@ -81,15 +78,6 @@ export class GeneratorChatService {
      */
     setWizardChatRepository(repo: ISermonWizardChatRepository) {
         this.wizardChatRepository = repo;
-    }
-
-    async testGeminiSearch(message: string, storeName: string): Promise<string> {
-        // Lazy load fileSearch only when needed (POC method)
-        if (!this.fileSearch) {
-            const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-            this.fileSearch = new GeminiFileSearchService(apiKey);
-        }
-        return this.fileSearch.chatWithStore(message, storeName);
     }
 
     /**

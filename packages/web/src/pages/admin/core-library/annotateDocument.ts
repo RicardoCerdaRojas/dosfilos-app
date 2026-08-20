@@ -1,3 +1,4 @@
+import { uploadTextToGemini } from '@dosfilos/infrastructure';
 /**
  * Inserts page-aware citation markers into raw document text so the indexed
  * Gemini chunks always carry author / title / page provenance. Each marker is
@@ -55,38 +56,10 @@ export function annotateDocumentText(rawText: string, author: string, title: str
 export async function uploadAnnotatedTextToGemini(
     text: string,
     displayName: string,
-    apiKey: string,
 ): Promise<{ uri: string; name: string }> {
-    const blob = new Blob([text], { type: 'text/plain' });
-    const init = await fetch(
-        `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
-        {
-            method: 'POST',
-            headers: {
-                'X-Goog-Upload-Protocol': 'resumable',
-                'X-Goog-Upload-Command': 'start',
-                'X-Goog-Upload-Header-Content-Length': String(blob.size),
-                'X-Goog-Upload-Header-Content-Type': 'text/plain',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ file: { displayName } }),
-        },
-    );
-    if (!init.ok) throw new Error(`Gemini init upload failed: ${init.statusText}`);
-    const uploadUrl = init.headers.get('x-goog-upload-url');
-    if (!uploadUrl) throw new Error('No upload URL from Gemini');
-
-    const upload = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: {
-            'X-Goog-Upload-Protocol': 'resumable',
-            'X-Goog-Upload-Command': 'upload, finalize',
-            'X-Goog-Upload-Offset': '0',
-            'Content-Length': String(blob.size),
-        },
-        body: blob,
-    });
-    if (!upload.ok) throw new Error(`Gemini upload failed: ${upload.statusText}`);
-    const r = (await upload.json()) as { file: { uri: string; name: string } };
-    return { uri: r.file.uri, name: r.file.name };
+    // La subida vive en el servidor (`uploadTextToGemini`). Antes se hacía acá
+    // con la clave de Gemini en la query string, visible para cualquiera que
+    // abriera DevTools. La negociación resumable en dos pasos no cambió: se
+    // mudó de lado.
+    return uploadTextToGemini(text, displayName);
 }

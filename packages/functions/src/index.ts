@@ -33,6 +33,8 @@ export { createCoreLibraryStore } from './library/createCoreLibraryStore';
 export { updateCoreLibraryStore } from './library/updateCoreLibraryStore';
 export { deleteCoreLibraryStore } from './library/deleteCoreLibraryStore';
 export { removeFileFromStore } from './library/removeFileFromStore';
+export { uploadTextToGemini } from './library/uploadTextToGemini';
+export { createLibraryCache } from './library/createLibraryCache';
 
 // Export Stripe functions
 export { createCheckoutSession } from './stripe/createCheckoutSession';

@@ -3,7 +3,6 @@
 // NOTE: `export {}` would convert this into a module and break the global augmentation.
 
 interface ImportMetaEnv {
-    readonly VITE_GEMINI_API_KEY: string;
     readonly VITE_GEMINI_MODEL?: string;
     readonly [key: `VITE_${string}`]: string | undefined;
 }

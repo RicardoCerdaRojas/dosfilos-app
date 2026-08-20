@@ -10,7 +10,7 @@ import { readBudgetConfig } from './llmBudget';
 
 /**
  * Proxy de LLM para las superficies que hoy llaman al modelo DESDE EL NAVEGADOR
- * con `VITE_GEMINI_API_KEY` — una credencial que gasta dinero y que cualquiera
+ * con la clave de Gemini del bundle — una credencial que gasta dinero y que cualquiera
  * puede leer del bundle.
  *
  * QUÉ CAMBIA, exactamente:

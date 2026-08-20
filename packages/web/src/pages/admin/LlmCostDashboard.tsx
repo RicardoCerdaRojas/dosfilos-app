@@ -20,7 +20,7 @@ const LEVEL_STYLES: Record<BudgetLevel, { bar: string; text: string; label: stri
  * responde: no cuánto gasté, sino EN QUÉ y QUIÉN.
  *
  * Mide solo el gasto que pasa por los callables. Las llamadas que salen del
- * navegador con `VITE_GEMINI_API_KEY` no se ven acá — el aviso está en la página.
+ * navegador con la clave de Gemini no se ven acá — el aviso está en la página.
  */
 export function LlmCostDashboard() {
     const { report, budget, emails, shadow, loading, error, refresh } = useLlmCostReport(30);
