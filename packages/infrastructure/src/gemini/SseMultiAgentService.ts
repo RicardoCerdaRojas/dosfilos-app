@@ -10,7 +10,7 @@ import type {
     SupportedLanguage,
 } from '@dosfilos/domain';
 import { DEFAULT_LANGUAGE } from '@dosfilos/domain';
-import { GeminiMultiAgentService } from './GeminiMultiAgentService';
+import { buildSystemInstruction } from './prompts/geminiMultiAgentPrompts';
 import { appCheck } from '../config/firebase';
 
 /**
@@ -25,22 +25,18 @@ import { appCheck } from '../config/firebase';
  * en la 11, y ese upgrade toca auth, firestore y storage de toda la app. `fetch`
  * no depende del SDK, así que el chat conserva el streaming sin ese riesgo.
  *
- * REUSA el armado del prompt de la implementación de Gemini en vez de
- * duplicarlo: si se copiara, las dos rutas divergirían en silencio y el chat
- * respondería distinto según por dónde saliera.
+ * REUSA el armado del prompt en vez de duplicarlo: si se copiara, las dos rutas
+ * divergirían en silencio y el chat respondería distinto según por dónde saliera.
+ * `buildSystemInstruction` es una función pura del módulo de prompts — antes era
+ * un método de la clase que hablaba directo con Gemini, y reusarlo obligaba a
+ * instanciarla con una clave vacía, lo que arrastraba el SDK al bundle.
  */
 export class SseMultiAgentService implements IAIGeneratorService {
-    private readonly prompts: GeminiMultiAgentService;
-
     constructor(
         private readonly endpoint: string,
         private readonly modelName = 'gemini-2.5-flash',
         private readonly visionModelName = 'gemini-2.5-pro',
-    ) {
-        // Solo para reusar `buildSystemInstruction`: nunca llama al modelo, así
-        // que no recibe clave (ese es justamente el punto de esta migración).
-        this.prompts = new GeminiMultiAgentService('', modelName, visionModelName);
-    }
+    ) {}
 
     async sendMessageStream(
         agent: AIAgent,
@@ -61,7 +57,7 @@ export class SseMultiAgentService implements IAIGeneratorService {
             : message;
 
         const body = {
-            systemInstruction: this.prompts.buildSystemInstruction(agent, lengthPreference, language),
+            systemInstruction: buildSystemInstruction(agent, lengthPreference, language),
             history: history.map((h) => ({ role: h.role, text: h.content })),
             message: finalMessage,
             model: this.modelName,

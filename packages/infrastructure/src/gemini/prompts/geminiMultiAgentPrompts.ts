@@ -1,4 +1,5 @@
-import type { ResponseMode, SupportedLanguage } from '@dosfilos/domain';
+import { resolveLocalized } from '@dosfilos/domain';
+import type { AIAgent, ResponseMode, SupportedLanguage } from '@dosfilos/domain';
 
 /**
  * Localized system prompts for the multi-agent faculty engine.
@@ -577,4 +578,44 @@ export function getLanguageDirective(language: SupportedLanguage): string {
         return 'Respond in English regardless of the language used in the system instructions or training data, unless the user explicitly asks otherwise.';
     }
     return 'Responde en español a menos que el usuario pida explícitamente otro idioma.';
+}
+
+/**
+ * Arma la instrucción de sistema completa de un turno de Faculty:
+ *   1. Prompt global de comportamiento, localizado (reglas de cita, taxonomía
+ *      de callouts, ortografía hebrea, ejemplo de respuesta ideal).
+ *   2. Directiva de idioma como defensa en profundidad (fuerza el idioma de
+ *      salida aunque la personalidad del especialista esté escrita solo en
+ *      español).
+ *   3. La `systemInstruction` del especialista, resuelta a es/en.
+ *   4. Instrucción de modo de respuesta, si hay (concisa / detallada / …).
+ *
+ * 1, 2 y 4 son localizados; 3 cae a español vía `resolveLocalized` cuando el
+ * especialista todavía no tiene variante EN.
+ *
+ * VIVE ACÁ, NO EN UN ADAPTER: el chat sale por el servidor (SSE) y el prompt lo
+ * arma el cliente. Cuando esto era un método de la clase que hablaba directo
+ * con Gemini, el adapter SSE tenía que instanciar esa clase con una clave vacía
+ * solo para reusarlo — y eso arrastraba el SDK de Gemini al bundle del
+ * navegador. Como función pura no arrastra nada, y sigue habiendo una sola
+ * fuente del prompt: si se duplicara, las rutas divergirían en silencio.
+ */
+export function buildSystemInstruction(
+    agent: AIAgent,
+    preference: ResponseMode | undefined,
+    language: SupportedLanguage,
+): string {
+    const agentInstruction = resolveLocalized(agent.systemInstruction, language);
+    const sections: string[] = [
+        getGlobalBehaviorPrompt(language),
+        getLanguageDirective(language),
+        language === 'en'
+            ? `SPECIALIST-SPECIFIC INSTRUCTIONS:\n${agentInstruction}`
+            : `INSTRUCCIONES ESPECÍFICAS DEL ESPECIALISTA:\n${agentInstruction}`,
+    ];
+
+    const modeInstruction = getModeInstruction(preference, language);
+    if (modeInstruction) sections.push(modeInstruction);
+
+    return sections.join('\n\n');
 }

@@ -1,4 +1,4 @@
-import { SchemaType } from '@google/generative-ai';
+import { SchemaType } from '../../llm/schemaType';
 
 /**
  * JSON schema for the per-citation LLM verifier response. Locks the

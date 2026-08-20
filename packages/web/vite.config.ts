@@ -8,8 +8,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      // Fix for @google/generative-ai server imports in browser
-      '@google/generative-ai/server': path.resolve(__dirname, 'src/lib/empty-module.ts'),
       // Force workspace packages to resolve to a SINGLE canonical
       // copy (the repo's own packages/) instead of the nested
       // duplicates that npm/yarn creates inside other packages'
@@ -40,7 +38,6 @@ export default defineConfig({
     // `?raw`, so a re-optimize crashes with
     // `No loader is configured for ".md" files: …?raw`.
     exclude: [
-      '@google/generative-ai/server',
       '@dosfilos/domain',
       '@dosfilos/application',
       '@dosfilos/infrastructure',

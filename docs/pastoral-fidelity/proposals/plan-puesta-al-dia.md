@@ -182,12 +182,11 @@ de Firebase, pública por diseño.
 
 #### Lo que queda, ya sin urgencia
 
-- **El SDK de Gemini sigue empaquetado en el navegador**, arrastrado por el enum
-  `SchemaType` que importan tres esquemas de exégesis, por `GeminiMultiAgentService`
-  (que `SseMultiAgentService` construye con `''` solo para reusar sus prompts) y por
-  dos archivos muertos que nadie construye: `GeminiFileSearchService` y
-  `GeminiPastoralWordStudyService`. Sin clave no hace nada; es peso muerto y una
-  puerta de reentrada.
+- ✅ **El SDK de Gemini ya NO se empaqueta en el navegador** (cerrado 2026-08-20).
+  Lo arrastraban el enum `SchemaType` de tres esquemas de exégesis,
+  `GeminiMultiAgentService` (que `SseMultiAgentService` construía con `''` solo
+  para reusar sus prompts) y dos archivos muertos: `GeminiFileSearchService` y
+  `GeminiPastoralWordStudyService`. Ver § SDK de Gemini fuera del navegador.
 - Cuatro scripts de `scripts/` leen `process.env.GEMINI_API_KEY`. No la traen
   adentro, la toman del entorno — hay que exportar la nueva al correrlos.
 
@@ -311,6 +310,43 @@ fuera del baseline a propósito: se mueven con cualquier edición y volverían e
 **Verificación:** con el baseline grabado el script sale verde (574 = 574). Con una asignación inválida
 inyectada a propósito en un archivo que YA tenía un error (`planLabels.ts`, 1 → 2) sale rojo y nombra el
 error nuevo — el caso exacto de #296, donde un archivo con deuda vieja gana una regresión.
+
+---
+
+## ✅ CERRADA 2026-08-20 — SDK de Gemini fuera del navegador
+
+Cola del track de la clave. La clave ya no está; lo que quedaba era el **paquete**.
+
+**Por qué importaba sin la clave:** el SDK no necesita credenciales para volver al bundle. Alcanza
+con que algo del grafo del navegador lo importe — y un `export *` en el barrel de
+`@dosfilos/infrastructure` basta, aunque nadie construya la clase. Mientras el paquete estuviera
+adentro, reponer la clave era un `import` de distancia.
+
+**Qué lo arrastraba, y por qué ninguno era una llamada al modelo:**
+
+| Arrastre | Qué era en realidad | Cómo salió |
+|---|---|---|
+| `SchemaType` en 3 esquemas de exégesis | Un enum de TS — **existe en runtime**. Seis strings constantes traían un cliente HTTP entero. | Copia local en `packages/infrastructure/src/llm/schemaType.ts`, mismos valores (OpenAPI 3.0). Los esquemas no cambian ni una letra. |
+| `GeminiMultiAgentService` | `SseMultiAgentService` la instanciaba **con clave vacía**, solo para reusar `buildSystemInstruction`. Nunca llamaba al modelo. | El prompt pasa a función pura en `prompts/geminiMultiAgentPrompts.ts`, que ya era el hogar del resto del prompt. La clase queda sin consumidores y se borra. |
+| `GeminiFileSearchService`, `GeminiPastoralWordStudyService` | Archivos muertos: nadie los construía. Solo el barrel los exportaba. | Borrados. |
+
+**Medición, honesta:** −42 KB crudos / −2,2 KB gzip sobre el JS del bundle. Es poco, y no es el punto:
+el bundle son mayormente datos bíblicos. Lo que se compra es que la puerta quede cerrada, no peso.
+
+**La baranda, que es la mitad del trabajo:** `scripts/check-gemini-sdk-boundary.sh` falla si
+`web`/`domain`/`application`/`infrastructure` vuelven a importar `@google/generative-ai`.
+`packages/functions` queda fuera a propósito — corre en el servidor y ahí el SDK debe vivir. Corre en
+CI como paso propio (**no** `continue-on-error`) y dentro del audit de compliance. Vive en su propio
+script porque el audit completo arrastra 67 violaciones duras preexistentes y no puede entrar entero
+a CI. Verificado: con un import inyectado a propósito, falla y lo nombra.
+
+**Limpieza de paso:** se cae el alias de `@google/generative-ai/server` en `vite.config.ts` y el
+`src/lib/empty-module.ts` que existía solo para satisfacerlo; sale la dependencia del
+`package.json` de `infrastructure` (`yarn.lock` no cambia — `functions` la sigue declarando).
+
+**Verificación:** `grep` del bundle reconstruido sin rastro de `GoogleGenerativeAI` ni de
+`generativelanguage.googleapis.com` (antes aparecía en dos chunks). Tests 165 web + 1017 resto en
+verde; tsc de `infrastructure` limpio; el trinquete de web baja de 574 a 573.
 
 ---
 
@@ -472,6 +508,7 @@ Olas 5, 7 y 8 cuelgan del camino sin bloquearlo.
 | Fecha | Ola | Qué pasó |
 |---|---|---|
 | 2026-08-17 | — | Plan creado tras auditoría del estado real. |
+| 2026-08-20 | ✅ | **SDK de Gemini fuera del navegador.** Lo arrastraban el enum `SchemaType` (3 esquemas), `GeminiMultiAgentService` (instanciada con clave vacía solo por sus prompts) y 2 archivos muertos. Baranda en CI: `check-gemini-sdk-boundary.sh`. −42 KB crudos; el valor es la puerta cerrada, no el peso. |
 | 2026-08-20 | ✅ | **`packages/web` entra a CI con trinquete** (Ola 8). 574 errores congelados por archivo en `scripts/web-type-errors-baseline.txt`; el paso de CI bloquea los NUEVOS. Se sacó el `tsc` no-op del `build` y el `type-check` del paquete dejó de mentir. Bajar el baseline pasa a Boy Scout. |
 | 2026-08-20 | ✅ | **Track de la clave CERRADO.** Los 5 criterios verificados. Hallazgo que cambió el cierre: la clave del navegador y el secret del servidor eran **el mismo valor** → no se borró, se **rotó** (#435: clave nueva → secret v4 → redeploy → verificación con tráfico real → borrado de la vieja). Secret de GitHub borrado, `.env` limpios, clave eliminada en GCP. |
 | 2026-08-20 | ✅ | Exégesis migrada a mano en tandas (#430, #431, #432) + barrido final (#433) + limpieza de interruptores (#434). |
