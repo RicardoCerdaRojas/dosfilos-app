@@ -186,7 +186,24 @@ export const runLlmPrompt = onCall(
         if (data.safety === 'standard') {
             try {
                 const genAI = new GoogleGenerativeAI(apiKey);
-                const safeModel = genAI.getGenerativeModel({ model, safetySettings: STANDARD_SAFETY });
+                // La configuración de generación DEBE viajar acá también. La
+                // primera versión de esta rama solo pasaba `safetySettings`, así
+                // que el borrador del sermón perdía su `maxOutputTokens: 24576`
+                // y el modo JSON — y fallaba justo en el reintento, que es el
+                // camino que cae en esta rama.
+                const safeModel = genAI.getGenerativeModel({
+                    model,
+                    safetySettings: STANDARD_SAFETY,
+                    generationConfig: {
+                        ...(typeof data.temperature === 'number' ? { temperature: data.temperature } : {}),
+                        ...(typeof data.maxOutputTokens === 'number'
+                            ? { maxOutputTokens: Math.min(data.maxOutputTokens, MAX_OUTPUT_TOKENS_CAP) }
+                            : {}),
+                        ...(data.responseMimeType === 'application/json'
+                            ? { responseMimeType: 'application/json' }
+                            : {}),
+                    },
+                });
                 const result = await safeModel.generateContent(prompt);
                 const meta = result.response.usageMetadata;
                 void recordLlmUsage({
