@@ -49,6 +49,24 @@ interface LlmProxyResponse {
     tokens: number | null;
 }
 
+/**
+ * Opciones del TRANSPORTE, no del modelo. Van aparte del payload a propósito:
+ * `CallableLlmOptions` viaja verbatim como `data` del callable, y el servidor
+ * rechaza lo que no reconoce.
+ */
+export interface CallableLlmTransport {
+    /**
+     * Tope de espera del cliente. El SDK usa 70 s si no se dice nada
+     * (`options.timeout || 70000`), que alcanza para una respuesta corta y NO
+     * alcanza para las largas: el compositor académico pide 65.536 tokens de
+     * salida en `gemini-2.5-pro` y un paper completo tarda varios minutos. Con
+     * el default, la llamada se cortaría del lado del navegador con el modelo
+     * todavía generando — y el usuario vería un fallo de una composición que en
+     * el servidor terminó bien (y que igual se cobró).
+     */
+    timeoutMs?: number;
+}
+
 export interface CallableLlmResult {
     text: string;
     tokensUsed: number | null;
@@ -63,13 +81,23 @@ export interface CallableLlmResult {
  * `runLlmPrompt` de solo texto habría dejado ese dato en `null` y la línea
  * habría desaparecido de la pantalla sin error ni log.
  */
-export async function runLlmPromptWithUsage(options: CallableLlmOptions): Promise<CallableLlmResult> {
-    const callable = httpsCallable<CallableLlmOptions, LlmProxyResponse>(getFunctions(), 'runLlmPrompt');
+export async function runLlmPromptWithUsage(
+    options: CallableLlmOptions,
+    transport: CallableLlmTransport = {},
+): Promise<CallableLlmResult> {
+    const callable = httpsCallable<CallableLlmOptions, LlmProxyResponse>(
+        getFunctions(),
+        'runLlmPrompt',
+        transport.timeoutMs ? { timeout: transport.timeoutMs } : undefined,
+    );
     const res = await callable(options);
     return { text: res.data?.text ?? '', tokensUsed: res.data?.tokens ?? null };
 }
 
-export async function runLlmPrompt(options: CallableLlmOptions): Promise<string> {
-    const { text } = await runLlmPromptWithUsage(options);
+export async function runLlmPrompt(
+    options: CallableLlmOptions,
+    transport: CallableLlmTransport = {},
+): Promise<string> {
+    const { text } = await runLlmPromptWithUsage(options, transport);
     return text;
 }

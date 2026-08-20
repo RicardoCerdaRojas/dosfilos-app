@@ -100,7 +100,12 @@ const DEFAULT_MAX_CALLS_PER_HOUR = 120;
 const WINDOW_MS = 3_600_000;
 
 export const runLlmPrompt = onCall(
-    { ...appCheckCallableOptions(), secrets: ['GEMINI_API_KEY'], timeoutSeconds: 120 },
+    // 120 s alcanzaban mientras el proxy servía respuestas cortas. El compositor
+    // académico pide 65.536 tokens de salida en `gemini-2.5-pro`: un paper
+    // completo tarda varios minutos y el tope viejo lo habría cortado a la
+    // mitad. Es un techo, no una espera: las llamadas cortas siguen volviendo
+    // igual de rápido.
+    { ...appCheckCallableOptions(), secrets: ['GEMINI_API_KEY'], timeoutSeconds: 540 },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'User must be authenticated');

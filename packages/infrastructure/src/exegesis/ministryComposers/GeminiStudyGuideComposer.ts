@@ -6,6 +6,7 @@ import {
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../geminiRetry';
 import { runLlmPromptWithUsage } from '../../llm/callableLlm';
+import { LONG_COMPOSITION_TIMEOUT_MS } from '../composerTimeouts';
 import { serializeAnalysis } from '../composer/serializeAnalysis';
 import {
     commonGuardrails,
@@ -48,7 +49,7 @@ export class GeminiStudyGuideComposer implements IStudyGuideComposer {
                 temperature: 0.45,
                 topP: 0.92,
                 maxOutputTokens: 16384,
-            }),
+            }, { timeoutMs: LONG_COMPOSITION_TIMEOUT_MS }),
             { contextLabel: 'GeminiStudyGuideComposer' },
         );
 
