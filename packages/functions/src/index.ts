@@ -155,6 +155,7 @@ export { getLlmUsageSummary } from './llm/getLlmUsageSummary';
 export { checkLlmBudget } from './llm/checkLlmBudget';
 export { runLlmPrompt } from './llm/runLlmPrompt';
 export { facultyChatStream } from './faculty/facultyChatStream';
+export { embedTexts } from './llm/embedTexts';
 // ❤️ Examen del corazón — conducción afectiva (manifiesto v1.3 §4)
 export { examenCorazon } from './three-witnesses/examenCorazon';
 // 🌱 Pastoral Fidelity Phase 1.6 — timeless-principle verifier (ADR-023)

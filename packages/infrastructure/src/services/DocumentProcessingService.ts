@@ -16,8 +16,9 @@ export class DocumentProcessingService {
     private embeddingService: GeminiEmbeddingService;
     private chunkRepository: FirebaseChunkRepository;
 
-    constructor(apiKey: string) {
-        this.embeddingService = new GeminiEmbeddingService(apiKey);
+    /** Sin apiKey: los embeddings salen por el callable del servidor. */
+    constructor() {
+        this.embeddingService = new GeminiEmbeddingService();
         this.chunkRepository = new FirebaseChunkRepository();
     }
 

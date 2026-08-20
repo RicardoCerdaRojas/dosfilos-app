@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { IEmbeddingService } from '@dosfilos/domain';
 
 /**
@@ -9,19 +9,15 @@ import { IEmbeddingService } from '@dosfilos/domain';
  * (e.g., OpenAI, Cohere, Vertex AI) by implementing the same interface
  */
 export class GeminiEmbeddingService implements IEmbeddingService {
-    private genAI: GoogleGenerativeAI;
-    private model;
     private static readonly EMBEDDING_DIMENSION = 768; // text-embedding-004 produces 768-dim vectors
     private static readonly BATCH_SIZE = 10;
 
-    constructor(apiKey: string) {
-        if (!apiKey) {
-            throw new Error('Gemini API key is required for embeddings');
-        }
-        this.genAI = new GoogleGenerativeAI(apiKey);
-        // Use models/gemini-embedding-001 with outputDimensionality to match 768 dimensions
-        this.model = this.genAI.getGenerativeModel({ model: 'models/gemini-embedding-001' });
-    }
+    /**
+     * Sin apiKey: los embeddings salen por el callable `embedTexts`. Antes cada
+     * chunk era una llamada del navegador a Google con la clave pública —
+     * indexar un libro eran cientos, ninguna medida ni limitada.
+     */
+    constructor() {}
 
     /**
      * Get the dimension of embeddings produced by this service
@@ -34,41 +30,39 @@ export class GeminiEmbeddingService implements IEmbeddingService {
      * Generate embedding for a single text
      */
     async generateEmbedding(text: string): Promise<number[]> {
-        try {
-            // Truncate text if too long (model has token limits)
-            const truncatedText = text.slice(0, 8000);
-            const result = await this.model.embedContent({
-                content: { role: 'user', parts: [{ text: truncatedText }] },
-                // @ts-ignore - API supports this parameter but types might be outdated
-                outputDimensionality: GeminiEmbeddingService.EMBEDDING_DIMENSION
-            });
-            return result.embedding.values;
-        } catch (error) {
-            console.error('Error generating embedding:', error);
-            throw error;
-        }
+        const [embedding] = await this.generateEmbeddings([text]);
+        if (!embedding) throw new Error('embedTexts no devolvió embedding');
+        return embedding;
     }
 
     /**
      * Generate embeddings for multiple texts in batch
      * More efficient for processing many chunks
      */
+    /**
+     * El lote viaja al servidor y se resuelve allá en paralelo. Se sigue
+     * troceando en grupos para no exceder el tope del callable ni armar
+     * peticiones enormes al indexar libros completos.
+     */
     async generateEmbeddings(texts: string[]): Promise<number[][]> {
-        const embeddings: number[][] = [];
+        const callable = httpsCallable<
+            { texts: string[]; dimension: number },
+            { embeddings: number[][] }
+        >(getFunctions(), 'embedTexts');
 
+        const out: number[][] = [];
         for (let i = 0; i < texts.length; i += GeminiEmbeddingService.BATCH_SIZE) {
-            const batch = texts.slice(i, i + GeminiEmbeddingService.BATCH_SIZE);
-            const batchResults = await Promise.all(
-                batch.map(text => this.generateEmbedding(text))
-            );
-            embeddings.push(...batchResults);
-
-            // Small delay to avoid rate limiting
-            if (i + GeminiEmbeddingService.BATCH_SIZE < texts.length) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
+            const batch = texts
+                .slice(i, i + GeminiEmbeddingService.BATCH_SIZE)
+                // El truncado se conserva del original: el modelo tiene tope de
+                // tokens y el servidor vuelve a recortar por si acaso.
+                .map((t) => t.slice(0, 8000));
+            const res = await callable({
+                texts: batch,
+                dimension: GeminiEmbeddingService.EMBEDDING_DIMENSION,
+            });
+            out.push(...(res.data?.embeddings ?? []));
         }
-
-        return embeddings;
+        return out;
     }
 }

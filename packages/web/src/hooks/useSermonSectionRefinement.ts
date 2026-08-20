@@ -131,11 +131,8 @@ ${formattingInstructions}`;
 
             const { GeminiAIService } = await import('@dosfilos/infrastructure');
             const { DocumentProcessingService } = await import('@dosfilos/infrastructure');
-            const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-            if (!apiKey) throw new Error('API key not configured');
-
             const aiService = new GeminiAIService();
-            const docProcessor = new DocumentProcessingService(apiKey);
+            const docProcessor = new DocumentProcessingService();
 
             let libraryContextStr = '';
             let refinementSources: Array<{ author: string; title: string; page?: number; snippet: string }> = [];
