@@ -117,7 +117,7 @@ export class GeminiSermonGenerator implements ISermonGenerator {
                 prompt: prompt,
                 safety: 'standard',
                 ...(config?.aiModel ? { model: config.aiModel } : {}),
-                ...(config?.temperature !== undefined ? { temperature: config.temperature } : {}),
+                temperature: config?.temperature ?? GEMINI_CONFIG.GENERATION_CONFIG.temperature,
                 ...(config?.fileSearchStoreId
                     ? { fileSearchStoreId: config.fileSearchStoreId }
                     : { responseMimeType: 'application/json' as const }),
@@ -169,7 +169,7 @@ export class GeminiSermonGenerator implements ISermonGenerator {
                 prompt: prompt,
                 safety: 'standard',
                 ...(_config?.aiModel ? { model: _config.aiModel } : {}),
-                ...(_config?.temperature !== undefined ? { temperature: _config.temperature } : {}),
+                temperature: _config?.temperature ?? GEMINI_CONFIG.GENERATION_CONFIG.temperature,
                 ...(_config?.fileSearchStoreId
                     ? { fileSearchStoreId: _config.fileSearchStoreId }
                     : { responseMimeType: 'application/json' as const }),
@@ -248,7 +248,7 @@ export class GeminiSermonGenerator implements ISermonGenerator {
                     safety: 'standard',
                     maxOutputTokens: 24576,
                     ...(_config?.aiModel ? { model: _config.aiModel } : {}),
-                    ...(_config?.temperature !== undefined ? { temperature: _config.temperature } : {}),
+                    temperature: _config?.temperature ?? GEMINI_CONFIG.GENERATION_CONFIG.temperature,
                     ...(effectiveStore
                         ? { fileSearchStoreId: effectiveStore }
                         : { responseMimeType: 'application/json' as const }),
@@ -368,7 +368,7 @@ FORMATO JSON REQUERIDO:
                 prompt: fullPrompt,
                 safety: 'standard',
                 ...(context?.aiModel ? { model: context.aiModel } : {}),
-                ...(context?.temperature !== undefined ? { temperature: context.temperature } : {}),
+                temperature: context?.temperature ?? GEMINI_CONFIG.GENERATION_CONFIG.temperature,
                 ...(context?.fileSearchStoreId
                     ? { fileSearchStoreId: context.fileSearchStoreId }
                     : { responseMimeType: 'application/json' as const }),
@@ -554,7 +554,7 @@ REGLAS:
                 prompt,
                 safety: 'standard',
                 ...(context?.aiModel ? { model: context.aiModel } : {}),
-                ...(context?.temperature !== undefined ? { temperature: context.temperature } : {}),
+                temperature: context?.temperature ?? GEMINI_CONFIG.GENERATION_CONFIG.temperature,
                 ...(context?.fileSearchStoreId ? { fileSearchStoreId: context.fileSearchStoreId } : {}),
             });
         } catch (error: any) {
@@ -783,7 +783,7 @@ REGLAS:
                 prompt: prompt,
                 safety: 'standard',
                 ...(_config?.aiModel ? { model: _config.aiModel } : {}),
-                ...(_config?.temperature !== undefined ? { temperature: _config.temperature } : {}),
+                temperature: _config?.temperature ?? GEMINI_CONFIG.GENERATION_CONFIG.temperature,
                 ...(_config?.fileSearchStoreId
                     ? { fileSearchStoreId: _config.fileSearchStoreId }
                     : { responseMimeType: 'application/json' as const }),
@@ -834,7 +834,7 @@ REGLAS:
                 prompt: prompt,
                 safety: 'standard',
                 ...(_config?.aiModel ? { model: _config.aiModel } : {}),
-                ...(_config?.temperature !== undefined ? { temperature: _config.temperature } : {}),
+                temperature: _config?.temperature ?? GEMINI_CONFIG.GENERATION_CONFIG.temperature,
                 ...(_config?.fileSearchStoreId
                     ? { fileSearchStoreId: _config.fileSearchStoreId }
                     : { responseMimeType: 'application/json' as const }),
