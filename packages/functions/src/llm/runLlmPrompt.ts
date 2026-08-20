@@ -82,7 +82,10 @@ export const PROXY_FEATURES = [
 
 const MAX_PROMPT_CHARS = 200_000;
 const MAX_SYSTEM_CHARS = 40_000;
-const MAX_OUTPUT_TOKENS_CAP = 32_768;
+// 65.536 es el techo real de salida de gemini-2.5-flash y lo usa el compositor
+// académico para papers completos. Un cap menor le habría recortado el
+// documento a la mitad sin error visible.
+const MAX_OUTPUT_TOKENS_CAP = 65_536;
 const DEFAULT_MAX_CALLS_PER_HOUR = 120;
 const WINDOW_MS = 3_600_000;
 
@@ -175,6 +178,43 @@ export const runLlmPrompt = onCall(
                 return { text: result.response.text() };
             } catch (err) {
                 console.error(`[runLlmPrompt] ${feature} (fileSearch) falló`, err);
+                throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
+            }
+        }
+
+        // Camino con CONFIG COMPLETA: `topP` y sobre todo `responseSchema`
+        // (salida estructurada) no están en el port. Perderlos no da error —
+        // da respuestas peor formadas, que es mucho peor de detectar.
+        if (data.topP !== undefined || data.responseSchema) {
+            try {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const cfgModel = genAI.getGenerativeModel({
+                    model,
+                    ...(system ? { systemInstruction: system } : {}),
+                    generationConfig: {
+                        ...(typeof data.temperature === 'number' ? { temperature: data.temperature } : {}),
+                        ...(typeof data.topP === 'number' ? { topP: data.topP } : {}),
+                        ...(typeof data.maxOutputTokens === 'number'
+                            ? { maxOutputTokens: Math.min(data.maxOutputTokens, MAX_OUTPUT_TOKENS_CAP) }
+                            : {}),
+                        ...(data.responseMimeType === 'application/json'
+                            ? { responseMimeType: 'application/json' }
+                            : {}),
+                        ...(data.responseSchema ? { responseSchema: data.responseSchema as object } : {}),
+                    },
+                });
+                const result = await cfgModel.generateContent(prompt);
+                const meta = result.response.usageMetadata;
+                void recordLlmUsage({
+                    model,
+                    feature,
+                    userId: uid,
+                    inputTokens: meta?.promptTokenCount ?? 0,
+                    outputTokens: meta?.candidatesTokenCount ?? 0,
+                });
+                return { text: result.response.text() };
+            } catch (err) {
+                console.error(`[runLlmPrompt] ${feature} (config) falló`, err);
                 throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
             }
         }

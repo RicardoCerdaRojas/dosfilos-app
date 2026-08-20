@@ -34,6 +34,13 @@ export interface CallableLlmOptions {
      * modelo sin querer.
      */
     safety?: 'standard';
+    /** Nucleus sampling. Varios adapters de exégesis lo fijan explícitamente. */
+    topP?: number;
+    /**
+     * Esquema de salida estructurada. Perderlo NO da error: da respuestas peor
+     * formadas, que es mucho más difícil de detectar que un fallo.
+     */
+    responseSchema?: unknown;
 }
 
 export async function runLlmPrompt(options: CallableLlmOptions): Promise<string> {
