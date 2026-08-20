@@ -20,6 +20,8 @@ export interface LlmBudgetConfig {
     shadowDailyUsdCap: number;
     /** Umbrales de aviso, en % del presupuesto mensual. */
     alertPcts: number[];
+    /** Tope de llamadas al proxy por usuario y por hora. */
+    proxyMaxCallsPerHourPerUser: number;
 }
 
 export const DEFAULT_BUDGET: LlmBudgetConfig = {
@@ -28,6 +30,9 @@ export const DEFAULT_BUDGET: LlmBudgetConfig = {
     // Se avisa a la MITAD y no al 90%: con un presupuesto chico, para cuando
     // llegas al 90% ya no queda margen de reacción.
     alertPcts: [50, 80, 100],
+    // Con 13 usuarios esto es holgado; existe para que un cliente manipulado (o
+    // un bucle accidental en la UI) no vacíe el presupuesto en una tarde.
+    proxyMaxCallsPerHourPerUser: 120,
 };
 
 export async function readBudgetConfig(): Promise<LlmBudgetConfig> {
@@ -38,6 +43,10 @@ export async function readBudgetConfig(): Promise<LlmBudgetConfig> {
             monthlyUsd: numberOr(d.monthlyUsd, DEFAULT_BUDGET.monthlyUsd),
             shadowDailyUsdCap: numberOr(d.shadowDailyUsdCap, DEFAULT_BUDGET.shadowDailyUsdCap),
             alertPcts: Array.isArray(d.alertPcts) && d.alertPcts.length > 0 ? d.alertPcts : DEFAULT_BUDGET.alertPcts,
+            proxyMaxCallsPerHourPerUser: numberOr(
+                d.proxyMaxCallsPerHourPerUser,
+                DEFAULT_BUDGET.proxyMaxCallsPerHourPerUser,
+            ),
         };
     } catch (err) {
         console.warn('[llmBudget] no se pudo leer la config; se usan los defaults', err);

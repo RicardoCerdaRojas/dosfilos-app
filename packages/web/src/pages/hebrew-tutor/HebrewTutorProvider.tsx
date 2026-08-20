@@ -8,7 +8,7 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import {
   MorphhbBibleProvider,
-  GeminiHebrewService,
+  HebrewAnalysisService,
   FirebaseHebrewSessionRepository,
   FirestoreDetectiveSessionRepository,
 } from '@dosfilos/infrastructure';
@@ -39,11 +39,10 @@ export function useHebrewTutor(): HebrewTutorContextType {
 }
 
 export const HebrewTutorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY ?? '';
-
+  // Sin clave: el análisis sale por el proxy del servidor (callable `runLlmPrompt`).
   const value = useMemo<HebrewTutorContextType>(() => {
     const bibleProvider = new MorphhbBibleProvider();
-    const analysisService = new GeminiHebrewService(apiKey);
+    const analysisService = new HebrewAnalysisService();
     const sessionRepository = new FirebaseHebrewSessionRepository();
     const detectiveRepository = new FirestoreDetectiveSessionRepository();
     const lexiconRepository = new FirebaseLexiconRepository();
@@ -59,7 +58,7 @@ export const HebrewTutorProvider: React.FC<{ children: React.ReactNode }> = ({ c
       saveDetectiveSession: new SaveDetectiveSessionUseCase(detectiveRepository),
       updateVerseTranslation: new UpdateVerseTranslationUseCase(sessionRepository),
     };
-  }, [apiKey]);
+  }, []);
 
   return <HebrewTutorContext.Provider value={value}>{children}</HebrewTutorContext.Provider>;
 };
