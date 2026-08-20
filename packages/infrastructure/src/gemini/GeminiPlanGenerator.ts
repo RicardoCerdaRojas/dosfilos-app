@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     IPlanGenerator,
     PlanGenerationRequest,
@@ -8,23 +7,29 @@ import {
     Citation
 } from '@dosfilos/domain';
 import { GEMINI_CONFIG } from './config';
+import { runLlmPrompt } from '../llm/callableLlm';
 import { DocumentProcessingService } from '../services/DocumentProcessingService';
 
 export class GeminiPlanGenerator implements IPlanGenerator {
-    private genAI: GoogleGenerativeAI;
-    private model;
     private documentProcessor: DocumentProcessingService;
 
-    constructor(apiKey: string) {
-        if (!apiKey) {
-            throw new Error('Gemini API key is required');
-        }
-        this.genAI = new GoogleGenerativeAI(apiKey);
-        this.model = this.genAI.getGenerativeModel({
-            model: GEMINI_CONFIG.MODEL_NAME,
-            generationConfig: GEMINI_CONFIG.GENERATION_CONFIG,
-        });
+    constructor() {
         this.documentProcessor = new DocumentProcessingService();
+    }
+
+    /**
+     * Las dos llamadas comparten `GEMINI_CONFIG` — antes vivía en el modelo
+     * construido una sola vez en el constructor, así que viaja igual en ambas.
+     */
+    private generate(feature: string, prompt: string): Promise<string> {
+        return runLlmPrompt({
+            feature,
+            model: GEMINI_CONFIG.MODEL_NAME,
+            prompt,
+            maxOutputTokens: GEMINI_CONFIG.GENERATION_CONFIG.maxOutputTokens,
+            temperature: GEMINI_CONFIG.GENERATION_CONFIG.temperature,
+            responseMimeType: 'application/json',
+        });
     }
 
     async generateSeriesObjective(request: PlanGenerationRequest): Promise<SeriesObjective> {
@@ -54,10 +59,8 @@ export class GeminiPlanGenerator implements IPlanGenerator {
         console.log('📝 [Objective] Prompt built. Calling Gemini API...');
 
         try {
-            const result = await this.model.generateContent(prompt);
+            const text = await this.generate('series.generateObjective', prompt);
             console.log('✅ [Objective] Gemini API response received');
-            const response = result.response;
-            const text = response.text();
             console.log('📄 [Objective] Raw response text length:', text.length);
 
             const cleanedJson = this.cleanJsonResponse(text);
@@ -91,9 +94,7 @@ export class GeminiPlanGenerator implements IPlanGenerator {
 
         // 2. Build prompt with verified context
         const prompt = this.buildStructurePromptWithCitations(request, objective, relevantChunks);
-        const result = await this.model.generateContent(prompt);
-        const response = result.response;
-        const text = response.text();
+        const text = await this.generate('series.generateStructure', prompt);
         const parsed = JSON.parse(this.cleanJsonResponse(text));
 
         // 3. Build citations array from chunks used

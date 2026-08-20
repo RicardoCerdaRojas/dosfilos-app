@@ -155,10 +155,10 @@ export function useSermonStepChat({
             try {
                 const { GeminiAIService } = await import('@dosfilos/infrastructure');
 
-                const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-                if (!apiKey) {
-                    throw new Error('API key not configured');
-                }
+                // Sin gate de clave: `GeminiAIService` habla con el callable
+                // del servidor. El `throw` de antes era un interruptor — el día
+                // que se borre la variable habría matado el refinamiento con un
+                // error que suena a configuración faltante, no a regresión.
                 const aiService = new GeminiAIService();
 
                 // Build library resources context for validator

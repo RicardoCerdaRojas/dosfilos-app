@@ -18,8 +18,7 @@ class SermonRepurposeService {
     public readonly listDerivatives: ListSermonDerivativesUseCase;
 
     constructor() {
-        const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
-        const repurposer = new GeminiSermonRepurposer(apiKey || '');
+        const repurposer = new GeminiSermonRepurposer();
         const sermonRepository = new FirebaseSermonRepository();
         const extractionRepository = new FirestoreExtractionRepository();
         this.repurpose = new RepurposeSermonUseCase(

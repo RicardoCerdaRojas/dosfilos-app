@@ -25,8 +25,6 @@ export class PlannerChatService {
     private userPreferredStyle: CoachingStyle | 'auto' = 'auto';
 
     constructor() {
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!apiKey) throw new Error('Gemini API Key not found');
         this.generator = new GeminiSermonGenerator();
         this.documentProcessor = new DocumentProcessingService();
         this.strategySelector = new AutomaticStrategySelector();

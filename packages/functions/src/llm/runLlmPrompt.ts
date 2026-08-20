@@ -110,6 +110,13 @@ export const PROXY_FEATURES = [
     'exegesis.expository.micro',
     'exegesis.expository.preachable',
     'exegesis.expository.fidelityReview',
+    // Barrido final — generador de planes de serie y repurposer del sermón.
+    // Las dos del repurposer se enumeran porque la feature se arma con el
+    // `kind`, y la allowlist no admite texto libre.
+    'series.generateObjective',
+    'series.generateStructure',
+    'sermon.repurpose.devotional',
+    'sermon.repurpose.study-guide',
 ] as const;
 
 /**

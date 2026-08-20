@@ -36,10 +36,6 @@ export class ContentRefinementService {
     private documentProcessor: DocumentProcessingService;
 
     constructor() {
-        const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-        if (!apiKey) {
-            console.warn('Gemini API key not configured. Refinement features will be disabled.');
-        }
         this.generator = new GeminiSermonGenerator();
         this.documentProcessor = new DocumentProcessingService();
     }
@@ -390,7 +386,7 @@ No incluyas ningún texto antes o después del JSON. Solo el objeto JSON.`;
     }
 
     isAvailable(): boolean {
-        return !!(import.meta as any).env.VITE_GEMINI_API_KEY;
+        return true;
     }
 }
 
