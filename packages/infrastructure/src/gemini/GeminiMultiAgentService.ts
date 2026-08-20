@@ -54,7 +54,12 @@ export class GeminiMultiAgentService implements IAIGeneratorService {
      * Steps 1, 2 and 4 are localized; step 3 falls back to Spanish via
      * `resolveLocalized` when the agent doesn't have an EN variant yet.
      */
-    private buildSystemInstruction(
+    /**
+     * Público a propósito: el adapter que habla con el servidor (SSE) arma el
+     * MISMO prompt. Si esto se duplicara, las dos rutas divergirían en silencio
+     * y el chat respondería distinto según por dónde salga.
+     */
+    buildSystemInstruction(
         agent: AIAgent,
         preference: ResponseMode | undefined,
         language: SupportedLanguage,

@@ -6,7 +6,7 @@ import {
     FirestoreExegeticalPaperRepository,
     FirebaseSeriesRepository,
     FirebaseSermonRepository,
-    GeminiMultiAgentService,
+    SseMultiAgentService,
 } from '@dosfilos/infrastructure';
 
 // Use Cases
@@ -103,13 +103,14 @@ class FacultyService {
     public buildSermonFromFacultyOutline: BuildSermonFromFacultyOutlineUseCase;
 
     constructor() {
-        const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
         const modelId = (import.meta as any).env?.VITE_GEMINI_MODEL_ID || 'gemini-2.5-flash';
         const visionModelId = (import.meta as any).env?.VITE_GEMINI_VISION_MODEL_ID || 'gemini-2.5-pro';
-
-        if (!apiKey) {
-            console.warn('Gemini API key not configured. Faculty AI features will be disabled.');
-        }
+        // El chat dejó de hablar con Gemini desde el navegador: ahora pasa por el
+        // endpoint SSE del servidor, que autentica, limita por usuario y mide el
+        // gasto. La clave ya no vive en el bundle.
+        const streamEndpoint =
+            (import.meta as any).env?.VITE_FACULTY_STREAM_URL ||
+            'https://us-central1-dosfilosapp.cloudfunctions.net/facultyChatStream';
 
         const agentRepository = new FirestoreAIAgentRepository();
         const chatRepository = new FirestoreAIChatRepository();
@@ -120,7 +121,7 @@ class FacultyService {
         // model the right anchor without the UI having to thread it.
         const paperRepository = new FirestoreExegeticalPaperRepository();
         const seriesRepository = new FirebaseSeriesRepository();
-        const generatorService = new GeminiMultiAgentService(apiKey || '', modelId, visionModelId);
+        const generatorService = new SseMultiAgentService(streamEndpoint, modelId, visionModelId);
 
         this.createSession = new CreateChatSessionUseCase(agentRepository, chatRepository);
         this.getHistory = new GetChatHistoryUseCase(chatRepository);
