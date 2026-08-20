@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
+import { useExegesisPaper } from '@/hooks/exegesis/useExegesisPaper';
 import { useUserRubrics } from '@/hooks/exegesis/useUserRubrics';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
 import { StepCard } from '@/components/exegesis/StepCard';
@@ -93,15 +94,18 @@ export function ExegesisPaperPage() {
     const backLabel = navState?.fromLabel ?? (t('detail.back') as string);
 
     const {
-        papers,
-        isLoading,
-        error,
         archivePaper,
         removeSource,
         seedSteps,
         generateSermonFromPaper,
     } = useExegesisPapers();
-    const paper: ExegeticalPaper | null = papers.find(p => p.id === paperId) ?? null;
+    // El paper COMPLETO, no el resumen de la lista. `listPaperSummaries` recorta
+    // `sources`, `steps` y `assembledMarkdown` para que la lista cargue rápido
+    // (#296), y esta página los lee los tres. Leerlo con `papers.find(...)`
+    // dejaba `paper.sources` en undefined y el render moría en
+    // `paper.sources.length` — pantalla en blanco al abrir cualquier paper.
+    // La página de setup ya usaba este hook; esta se quedó atrás.
+    const { paper, isLoading, error } = useExegesisPaper(paperId);
 
     const [facultyDrawerOpen, setFacultyDrawerOpen] = useState(false);
     const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
