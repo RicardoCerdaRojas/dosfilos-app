@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     formatPassageReference,
     type IPaperToSermonTransformer,
@@ -7,6 +6,7 @@ import {
     type PaperToSermonTone,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from './geminiRetry';
+import { runLlmPromptWithUsage } from '../llm/callableLlm';
 
 /**
  * Gemini implementation of `IPaperToSermonTransformer`.
@@ -27,11 +27,9 @@ import { withGeminiRetry } from './geminiRetry';
  *     page renders it.
  */
 export class GeminiPaperToSermonTransformer implements IPaperToSermonTransformer {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
@@ -40,10 +38,19 @@ export class GeminiPaperToSermonTransformer implements IPaperToSermonTransformer
         const systemInstruction = buildSystemInstruction(input.tone, input.language);
         const userMessage = buildUserMessage(input, passageLabel);
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
+        console.log('[GeminiPaperToSermonTransformer] generating', {
+            tone: input.tone,
+            language: input.language,
+            paperChars: input.assembledMarkdown.length,
+            hasBrief: input.assignmentBrief !== null,
+        });
+
+        const { text: raw, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.paperToSermon',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
                 // Pro 2.5 rejects thinkingBudget: 0; default budget is fine.
                 maxOutputTokens: 8192,
                 temperature: 0.6,
@@ -60,23 +67,10 @@ export class GeminiPaperToSermonTransformer implements IPaperToSermonTransformer
                         },
                     },
                     required: ['title', 'content', 'bibleReferences'],
-                } as any,
-            },
-        });
-
-        console.log('[GeminiPaperToSermonTransformer] generating', {
-            tone: input.tone,
-            language: input.language,
-            paperChars: input.assembledMarkdown.length,
-            hasBrief: input.assignmentBrief !== null,
-        });
-
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+                },
+            }),
             { contextLabel: 'GeminiPaperToSermonTransformer' },
         );
-        const response = result.response;
-        const raw = response.text();
 
         let parsed: { title?: unknown; content?: unknown; bibleReferences?: unknown };
         try {
@@ -98,12 +92,6 @@ export class GeminiPaperToSermonTransformer implements IPaperToSermonTransformer
                 'GeminiPaperToSermonTransformer returned empty title or content',
             );
         }
-
-        const usage = response.usageMetadata;
-        const totalTokens = usage?.totalTokenCount;
-        const summed = (usage?.promptTokenCount ?? 0) + (usage?.candidatesTokenCount ?? 0);
-        const tokensUsed =
-            typeof totalTokens === 'number' ? totalTokens : summed > 0 ? summed : null;
 
         return {
             title,

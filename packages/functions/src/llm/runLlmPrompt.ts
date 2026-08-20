@@ -97,6 +97,19 @@ export const PROXY_FEATURES = [
     'exegesis.classifySourceType',
     'exegesis.verifyCitation',
     'exegesis.generateStep',
+    // Tanda 3 (exégesis), parte 3 — detección, extractores, planificador,
+    // transformador y los seis pases del asistente expositivo.
+    'exegesis.detectPericopes',
+    'exegesis.extractRubric',
+    'exegesis.extractStyleManifest',
+    'exegesis.planStepCorpus',
+    'exegesis.paperToSermon',
+    'exegesis.expository.panorama',
+    'exegesis.expository.superMacro',
+    'exegesis.expository.macro',
+    'exegesis.expository.micro',
+    'exegesis.expository.preachable',
+    'exegesis.expository.fidelityReview',
 ] as const;
 
 /**
@@ -107,11 +120,22 @@ export const PROXY_FEATURES = [
  * y salida cuando falta el total — y se sube acá para que la hereden los 18
  * adapters en vez de repetirla en cada uno.
  */
+function finishReasonOf(response: { candidates?: ReadonlyArray<{ finishReason?: string }> }): string | null {
+    return response.candidates?.[0]?.finishReason ?? null;
+}
+
 function totalTokensOf(meta?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number }): number | null {
     if (typeof meta?.totalTokenCount === 'number') return meta.totalTokenCount;
     const summed = (meta?.promptTokenCount ?? 0) + (meta?.candidatesTokenCount ?? 0);
     return summed > 0 ? summed : null;
 }
+
+/**
+ * Tope del adjunto en base64 (~7,5 MB de bytes reales). El transporte de
+ * callables admite hasta 10 MB de petición; se corta antes para que un adjunto
+ * grande dé un error claro acá y no un 400 opaco del transporte.
+ */
+const MAX_INLINE_IMAGE_B64_CHARS = 10_000_000;
 
 const MAX_PROMPT_CHARS = 200_000;
 const MAX_SYSTEM_CHARS = 40_000;
@@ -213,9 +237,59 @@ export const runLlmPrompt = onCall(
                     inputTokens: meta?.promptTokenCount ?? 0,
                     outputTokens: meta?.candidatesTokenCount ?? 0,
                 });
-                return { text: result.response.text(), tokens: totalTokensOf(meta) };
+                return { text: result.response.text(), tokens: totalTokensOf(meta), finishReason: finishReasonOf(result.response) };
             } catch (err) {
                 console.error(`[runLlmPrompt] ${feature} (fileSearch) falló`, err);
+                throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
+            }
+        }
+
+        // Camino MULTIMODAL (extracción de rúbricas desde imagen): la petición
+        // deja de ser un string y pasa a ser `parts`. Se separa de las otras
+        // ramas porque lo que cambia es la FORMA del pedido, no su config.
+        const inlineImage = data.inlineImage as { mimeType?: unknown; base64?: unknown } | undefined;
+        if (inlineImage) {
+            const mimeType = String(inlineImage.mimeType ?? '');
+            const base64 = String(inlineImage.base64 ?? '');
+            if (!mimeType.startsWith('image/')) {
+                throw new HttpsError('invalid-argument', `inlineImage.mimeType no soportado: ${mimeType}`);
+            }
+            if (!base64 || base64.length > MAX_INLINE_IMAGE_B64_CHARS) {
+                throw new HttpsError('invalid-argument', 'inlineImage.base64 vacío o demasiado grande');
+            }
+            try {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const visionModel = genAI.getGenerativeModel({
+                    model,
+                    ...(system ? { systemInstruction: system } : {}),
+                    ...(data.safety === 'standard' ? { safetySettings: STANDARD_SAFETY } : {}),
+                    generationConfig: {
+                        ...(typeof data.temperature === 'number' ? { temperature: data.temperature } : {}),
+                        ...(typeof data.topP === 'number' ? { topP: data.topP } : {}),
+                        ...(typeof data.maxOutputTokens === 'number'
+                            ? { maxOutputTokens: Math.min(data.maxOutputTokens, MAX_OUTPUT_TOKENS_CAP) }
+                            : {}),
+                        ...(data.responseMimeType === 'application/json'
+                            ? { responseMimeType: 'application/json' }
+                            : {}),
+                        ...(data.responseSchema ? { responseSchema: data.responseSchema as object } : {}),
+                    },
+                });
+                const result = await visionModel.generateContent([
+                    { text: prompt },
+                    { inlineData: { mimeType, data: base64 } },
+                ]);
+                const meta = result.response.usageMetadata;
+                void recordLlmUsage({
+                    model,
+                    feature,
+                    userId: uid,
+                    inputTokens: meta?.promptTokenCount ?? 0,
+                    outputTokens: meta?.candidatesTokenCount ?? 0,
+                });
+                return { text: result.response.text(), tokens: totalTokensOf(meta), finishReason: finishReasonOf(result.response) };
+            } catch (err) {
+                console.error(`[runLlmPrompt] ${feature} (inlineImage) falló`, err);
                 throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
             }
         }
@@ -229,6 +303,11 @@ export const runLlmPrompt = onCall(
                 const cfgModel = genAI.getGenerativeModel({
                     model,
                     ...(system ? { systemInstruction: system } : {}),
+                    // `safety` es un MODIFICADOR, no una rama propia: esta rama
+                    // se evalúa antes que la de safety, así que sin esto un
+                    // llamador que pida umbrales explícitos JUNTO con `topP` o
+                    // `responseSchema` los perdería en silencio.
+                    ...(data.safety === 'standard' ? { safetySettings: STANDARD_SAFETY } : {}),
                     generationConfig: {
                         ...(typeof data.temperature === 'number' ? { temperature: data.temperature } : {}),
                         ...(typeof data.topP === 'number' ? { topP: data.topP } : {}),
@@ -250,7 +329,7 @@ export const runLlmPrompt = onCall(
                     inputTokens: meta?.promptTokenCount ?? 0,
                     outputTokens: meta?.candidatesTokenCount ?? 0,
                 });
-                return { text: result.response.text(), tokens: totalTokensOf(meta) };
+                return { text: result.response.text(), tokens: totalTokensOf(meta), finishReason: finishReasonOf(result.response) };
             } catch (err) {
                 console.error(`[runLlmPrompt] ${feature} (config) falló`, err);
                 throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
@@ -291,7 +370,7 @@ export const runLlmPrompt = onCall(
                     inputTokens: meta?.promptTokenCount ?? 0,
                     outputTokens: meta?.candidatesTokenCount ?? 0,
                 });
-                return { text: result.response.text(), tokens: totalTokensOf(meta) };
+                return { text: result.response.text(), tokens: totalTokensOf(meta), finishReason: finishReasonOf(result.response) };
             } catch (err) {
                 console.error(`[runLlmPrompt] ${feature} (safety) falló`, err);
                 throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
@@ -309,7 +388,7 @@ export const runLlmPrompt = onCall(
                     ? { maxOutputTokens: Math.min(data.maxOutputTokens, MAX_OUTPUT_TOKENS_CAP) }
                     : {}),
             });
-            return { text, tokens: llm.lastTotalTokens };
+            return { text, tokens: llm.lastTotalTokens, finishReason: null };
         } catch (err) {
             console.error(`[runLlmPrompt] ${feature} falló`, err);
             throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');

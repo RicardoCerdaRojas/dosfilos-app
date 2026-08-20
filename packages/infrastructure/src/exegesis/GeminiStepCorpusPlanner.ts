@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     formatPassageReference,
     type IStepCorpusPlanner,
@@ -7,6 +6,8 @@ import {
     type ProposedAllocation,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from './geminiRetry';
+import { runLlmPrompt } from '../llm/callableLlm';
+import { LONG_COMPOSITION_TIMEOUT_MS } from './composerTimeouts';
 
 /**
  * v1.7 — Gemini implementation of `IStepCorpusPlanner`.
@@ -28,21 +29,27 @@ import { withGeminiRetry } from './geminiRetry';
  * planner just returns whatever Gemini produced (after JSON parsing).
  */
 export class GeminiStepCorpusPlanner implements IStepCorpusPlanner {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
     async propose(input: ProposeStepCorpusInput): Promise<ProposeStepCorpusResult> {
         const { systemInstruction, userMessage } = buildPlannerPrompt(input);
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
+        console.log('[GeminiStepCorpusPlanner] proposing', {
+            sourceCount: input.sources.length,
+            stepCount: input.steps.length,
+            language: input.language,
+        });
+
+        const rawJson = await withGeminiRetry(
+            () => runLlmPrompt({
+                feature: 'exegesis.planStepCorpus',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
                 responseMimeType: 'application/json',
                 // Bumped from 0.2 → 0.4 so the model commits to assignments
                 // instead of hedging when a verse is between two plausible
@@ -58,20 +65,9 @@ export class GeminiStepCorpusPlanner implements IStepCorpusPlanner {
                 // even for ~30 sources × ~30 steps. Pro 2.5 supports up
                 // to 65k so we're nowhere near the model ceiling.
                 maxOutputTokens: 32768,
-            },
-        });
-
-        console.log('[GeminiStepCorpusPlanner] proposing', {
-            sourceCount: input.sources.length,
-            stepCount: input.steps.length,
-            language: input.language,
-        });
-
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+            }, { timeoutMs: LONG_COMPOSITION_TIMEOUT_MS }),
             { contextLabel: 'GeminiStepCorpusPlanner' },
         );
-        const rawJson = result.response.text();
 
         const parsed = parsePlannerJson(rawJson);
         const allocations = mapToAllocations(parsed);
