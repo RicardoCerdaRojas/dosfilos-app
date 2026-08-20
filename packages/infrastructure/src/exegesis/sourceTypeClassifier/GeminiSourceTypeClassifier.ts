@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     SOURCE_TYPE_CATALOG,
     type ClassifySourceTypeInput,
@@ -7,6 +6,7 @@ import {
     type SourceType,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../geminiRetry';
+import { runLlmPromptWithUsage } from '../../llm/callableLlm';
 import { buildClassifierPrompt } from './classifierPrompts';
 import { SOURCE_TYPE_CLASSIFIER_SCHEMA } from './responseSchema';
 
@@ -31,11 +31,9 @@ import { SOURCE_TYPE_CLASSIFIER_SCHEMA } from './responseSchema';
  * falls back to `'other'` with `'low'` confidence rather than crashing.
  */
 export class GeminiSourceTypeClassifier implements ISourceTypeClassifier {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
@@ -48,24 +46,23 @@ export class GeminiSourceTypeClassifier implements ISourceTypeClassifier {
             language,
         });
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
+        const { text: rawJson, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.classifySourceType',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
                 responseMimeType: 'application/json',
-                responseSchema: SOURCE_TYPE_CLASSIFIER_SCHEMA as any,
+                // El enum del catálogo vive en el esquema: sin él, el modelo
+                // puede devolver una etiqueta fuera de catálogo y todo cae al
+                // `'other'` defensivo de más abajo sin que nadie lo note.
+                responseSchema: SOURCE_TYPE_CLASSIFIER_SCHEMA,
                 temperature: 0.1,
                 topP: 0.9,
                 maxOutputTokens: 512,
-            },
-        });
-
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+            }),
             { contextLabel: 'GeminiSourceTypeClassifier' },
         );
-        const rawJson = result.response.text();
-        const tokensUsed = result.response.usageMetadata?.totalTokenCount ?? null;
 
         const parsed = parseClassifierResponse(rawJson);
         return {

@@ -259,7 +259,7 @@ class ExegesisService {
         const userRubricRepository = new FirestoreUserRubricRepository();
         const userAssignmentBriefRepository = new FirestoreUserAssignmentBriefRepository();
         const libraryRepository = new FirebaseLibraryRepository();
-        const orchestrator = new GeminiExegesisOrchestrator(apiKey || '', exegesisModelId);
+        const orchestrator = new GeminiExegesisOrchestrator(exegesisModelId);
         const rubricExtractor = new GeminiPaperRubricExtractor(apiKey || '', exegesisModelId);
         const manifestExtractor = new GeminiStyleGuideManifestExtractor(apiKey || '', exegesisModelId);
         const styleFormatter = new DeterministicStyleFormatter();
@@ -416,7 +416,7 @@ class ExegesisService {
         // top-K chunks scoped to the cited resource using the
         // citation's evidence sentence as the embedding query.
         const relevantChunkRetriever = new RetrieveChunksRelevantChunkRetriever();
-        const citationVerifier = new GeminiLlmCitationVerifier(apiKey || '', {
+        const citationVerifier = new GeminiLlmCitationVerifier({
             modelName: exegesisModelId,
             relevantChunkRetriever,
             retrievalTopK: 5,
@@ -429,7 +429,7 @@ class ExegesisService {
 
         // Coherence reviewer — single Gemini call over the entire
         // accepted paper. Adversarial: returns issues, not praise.
-        const coherenceReviewer = new GeminiCoherenceReviewer(apiKey || '', exegesisModelId);
+        const coherenceReviewer = new GeminiCoherenceReviewer(exegesisModelId);
         this.runCoherencePass = new RunCoherencePassUseCase(
             paperRepository,
             coherenceReviewer,
@@ -438,7 +438,7 @@ class ExegesisService {
         // Source-type classifier — Gemini Pro 2.5 with enum-locked
         // schema. Stateless: caller reads the resource text + metadata
         // upstream and feeds the slice in.
-        const sourceTypeClassifier = new GeminiSourceTypeClassifier(apiKey || '', exegesisModelId);
+        const sourceTypeClassifier = new GeminiSourceTypeClassifier(exegesisModelId);
         this.classifySourceType = new ClassifySourceTypeUseCase(sourceTypeClassifier);
 
         // Canonical analysis pipeline. Wired in parallel to `generateStep`
@@ -453,7 +453,7 @@ class ExegesisService {
         // the use case stays unaware of testament dispatch. Per-session
         // in-memory cache lives inside each underlying provider — the
         // dispatcher itself is stateless.
-        const canonicalAnalyzer = new GeminiCanonicalVerseAnalyzer(apiKey || '', exegesisModelId);
+        const canonicalAnalyzer = new GeminiCanonicalVerseAnalyzer(exegesisModelId);
         const greekProvider = new SBLGNTBibleProvider();
         const hebrewProvider = new MorphhbOriginalLanguageProvider();
         const originalLanguageProvider = new TestamentDispatcherOriginalLanguageProvider(
@@ -473,7 +473,7 @@ class ExegesisService {
         // citations get rewritten per the manifest's templates after
         // the LLM composes prose. Style guide enforcement is mandatory
         // when configured; falls back to TMS / Turabian otherwise.
-        const academicComposer = new GeminiAcademicComposer(apiKey || '', exegesisModelId);
+        const academicComposer = new GeminiAcademicComposer(exegesisModelId);
         this.composeAcademicPaper = new ComposeAcademicPaperUseCase(
             paperRepository,
             styleGuideRepository,

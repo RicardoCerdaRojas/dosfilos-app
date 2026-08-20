@@ -88,7 +88,30 @@ export const PROXY_FEATURES = [
     'exegesis.composeSermon',
     'exegesis.composeDevotional',
     'exegesis.composeStudyGuide',
+    // Tanda 3 (exégesis), parte 2 — el paper académico, el análisis canónico y
+    // los tres pasos verificadores. Todos traen `responseSchema` inline salvo
+    // el compositor y el orquestador.
+    'exegesis.composeAcademicPaper',
+    'exegesis.analyzeVerse',
+    'exegesis.reviewCoherence',
+    'exegesis.classifySourceType',
+    'exegesis.verifyCitation',
+    'exegesis.generateStep',
 ] as const;
+
+/**
+ * Consumo total a devolver al llamador.
+ *
+ * `totalTokenCount` es lo que informa el modelo, pero no siempre viene. El
+ * orquestador de exégesis ya traía esta defensa escrita a mano — sumar entrada
+ * y salida cuando falta el total — y se sube acá para que la hereden los 18
+ * adapters en vez de repetirla en cada uno.
+ */
+function totalTokensOf(meta?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number }): number | null {
+    if (typeof meta?.totalTokenCount === 'number') return meta.totalTokenCount;
+    const summed = (meta?.promptTokenCount ?? 0) + (meta?.candidatesTokenCount ?? 0);
+    return summed > 0 ? summed : null;
+}
 
 const MAX_PROMPT_CHARS = 200_000;
 const MAX_SYSTEM_CHARS = 40_000;
@@ -190,7 +213,7 @@ export const runLlmPrompt = onCall(
                     inputTokens: meta?.promptTokenCount ?? 0,
                     outputTokens: meta?.candidatesTokenCount ?? 0,
                 });
-                return { text: result.response.text(), tokens: meta?.totalTokenCount ?? null };
+                return { text: result.response.text(), tokens: totalTokensOf(meta) };
             } catch (err) {
                 console.error(`[runLlmPrompt] ${feature} (fileSearch) falló`, err);
                 throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
@@ -227,7 +250,7 @@ export const runLlmPrompt = onCall(
                     inputTokens: meta?.promptTokenCount ?? 0,
                     outputTokens: meta?.candidatesTokenCount ?? 0,
                 });
-                return { text: result.response.text(), tokens: meta?.totalTokenCount ?? null };
+                return { text: result.response.text(), tokens: totalTokensOf(meta) };
             } catch (err) {
                 console.error(`[runLlmPrompt] ${feature} (config) falló`, err);
                 throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
@@ -268,7 +291,7 @@ export const runLlmPrompt = onCall(
                     inputTokens: meta?.promptTokenCount ?? 0,
                     outputTokens: meta?.candidatesTokenCount ?? 0,
                 });
-                return { text: result.response.text(), tokens: meta?.totalTokenCount ?? null };
+                return { text: result.response.text(), tokens: totalTokensOf(meta) };
             } catch (err) {
                 console.error(`[runLlmPrompt] ${feature} (safety) falló`, err);
                 throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
