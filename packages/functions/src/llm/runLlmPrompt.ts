@@ -78,6 +78,16 @@ export const PROXY_FEATURES = [
     'sermon.regeneratePoint',
     'sermon.homileticsPreview',
     'sermon.developApproach',
+    // Tanda 3 (exégesis), parte 1 — compositores de sección y de artefactos
+    // ministeriales.
+    // Todos corren en `gemini-2.5-pro` por defecto y traen `topP` explícito, así
+    // que caen en la rama de config completa.
+    'exegesis.composeVerse',
+    'exegesis.composeIntroduction',
+    'exegesis.composeConclusion',
+    'exegesis.composeSermon',
+    'exegesis.composeDevotional',
+    'exegesis.composeStudyGuide',
 ] as const;
 
 const MAX_PROMPT_CHARS = 200_000;
@@ -90,7 +100,12 @@ const DEFAULT_MAX_CALLS_PER_HOUR = 120;
 const WINDOW_MS = 3_600_000;
 
 export const runLlmPrompt = onCall(
-    { ...appCheckCallableOptions(), secrets: ['GEMINI_API_KEY'], timeoutSeconds: 120 },
+    // 120 s alcanzaban mientras el proxy servía respuestas cortas. El compositor
+    // académico pide 65.536 tokens de salida en `gemini-2.5-pro`: un paper
+    // completo tarda varios minutos y el tope viejo lo habría cortado a la
+    // mitad. Es un techo, no una espera: las llamadas cortas siguen volviendo
+    // igual de rápido.
+    { ...appCheckCallableOptions(), secrets: ['GEMINI_API_KEY'], timeoutSeconds: 540 },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'User must be authenticated');
@@ -175,7 +190,7 @@ export const runLlmPrompt = onCall(
                     inputTokens: meta?.promptTokenCount ?? 0,
                     outputTokens: meta?.candidatesTokenCount ?? 0,
                 });
-                return { text: result.response.text() };
+                return { text: result.response.text(), tokens: meta?.totalTokenCount ?? null };
             } catch (err) {
                 console.error(`[runLlmPrompt] ${feature} (fileSearch) falló`, err);
                 throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
@@ -212,7 +227,7 @@ export const runLlmPrompt = onCall(
                     inputTokens: meta?.promptTokenCount ?? 0,
                     outputTokens: meta?.candidatesTokenCount ?? 0,
                 });
-                return { text: result.response.text() };
+                return { text: result.response.text(), tokens: meta?.totalTokenCount ?? null };
             } catch (err) {
                 console.error(`[runLlmPrompt] ${feature} (config) falló`, err);
                 throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
@@ -253,7 +268,7 @@ export const runLlmPrompt = onCall(
                     inputTokens: meta?.promptTokenCount ?? 0,
                     outputTokens: meta?.candidatesTokenCount ?? 0,
                 });
-                return { text: result.response.text() };
+                return { text: result.response.text(), tokens: meta?.totalTokenCount ?? null };
             } catch (err) {
                 console.error(`[runLlmPrompt] ${feature} (safety) falló`, err);
                 throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
@@ -271,7 +286,7 @@ export const runLlmPrompt = onCall(
                     ? { maxOutputTokens: Math.min(data.maxOutputTokens, MAX_OUTPUT_TOKENS_CAP) }
                     : {}),
             });
-            return { text };
+            return { text, tokens: llm.lastTotalTokens };
         } catch (err) {
             console.error(`[runLlmPrompt] ${feature} falló`, err);
             throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');

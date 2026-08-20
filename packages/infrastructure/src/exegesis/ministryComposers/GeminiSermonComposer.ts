@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     formatPassageReference,
     type ComposeSermonInput,
@@ -6,6 +5,8 @@ import {
     type ISermonComposer,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../geminiRetry';
+import { runLlmPromptWithUsage } from '../../llm/callableLlm';
+import { LONG_COMPOSITION_TIMEOUT_MS } from '../composerTimeouts';
 import { serializeAnalysis } from '../composer/serializeAnalysis';
 import {
     commonGuardrails,
@@ -27,30 +28,14 @@ import {
  * headroom for richer treatments without truncation.
  */
 export class GeminiSermonComposer implements ISermonComposer {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
     async composeSermon(input: ComposeSermonInput): Promise<ComposeSermonOutput> {
         const { systemInstruction, userMessage } = buildSermonPrompt(input);
-
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
-                // Higher than analyzer because sermon prose benefits
-                // from rhetorical variation (illustrations, rhythm).
-                // Still bounded — we want tone-faithful, not creative
-                // license.
-                temperature: 0.5,
-                topP: 0.92,
-                maxOutputTokens: 32768,
-            },
-        });
 
         console.log('[GeminiSermonComposer] composing', {
             tone: input.tone,
@@ -58,12 +43,22 @@ export class GeminiSermonComposer implements ISermonComposer {
             language: input.language,
         });
 
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+        const { text: markdown, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.composeSermon',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                // Higher than analyzer because sermon prose benefits
+                // from rhetorical variation (illustrations, rhythm).
+                // Still bounded — we want tone-faithful, not creative
+                // license.
+                temperature: 0.5,
+                topP: 0.92,
+                maxOutputTokens: 32768,
+            }, { timeoutMs: LONG_COMPOSITION_TIMEOUT_MS }),
             { contextLabel: 'GeminiSermonComposer' },
         );
-        const markdown = result.response.text();
-        const tokensUsed = result.response.usageMetadata?.totalTokenCount ?? null;
 
         return { markdown, modelId: this.modelName, tokensUsed };
     }

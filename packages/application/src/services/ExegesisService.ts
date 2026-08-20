@@ -486,7 +486,7 @@ class ExegesisService {
         // `composeAcademicPaper`. Introduction is written LAST per
         // academic methodology — the use case enforces this by
         // requiring an accepted conclusion before composing.
-        const conclusionComposer = new GeminiConclusionComposer(apiKey || '', exegesisModelId);
+        const conclusionComposer = new GeminiConclusionComposer(exegesisModelId);
         this.composeConclusionFromAnalyses = new ComposeConclusionFromAnalysesUseCase(
             paperRepository,
             styleGuideRepository,
@@ -494,7 +494,7 @@ class ExegesisService {
             conclusionComposer,
             styleFormatter,
         );
-        const introductionComposer = new GeminiIntroductionComposer(apiKey || '', exegesisModelId);
+        const introductionComposer = new GeminiIntroductionComposer(exegesisModelId);
         this.composeIntroductionFromAnalyses = new ComposeIntroductionFromAnalysesUseCase(
             paperRepository,
             styleGuideRepository,
@@ -502,7 +502,7 @@ class ExegesisService {
             introductionComposer,
             styleFormatter,
         );
-        const verseAcademicComposer = new GeminiVerseAcademicComposer(apiKey || '', exegesisModelId);
+        const verseAcademicComposer = new GeminiVerseAcademicComposer(exegesisModelId);
         this.composeVerseAcademicProse = new ComposeVerseAcademicProseUseCase(
             paperRepository,
             styleGuideRepository,
@@ -517,21 +517,21 @@ class ExegesisService {
         // deterministic style formatter — ministry registers diverge
         // from academic citation conventions, and citation post-
         // processing would harm the homiletic feel.
-        const sermonComposer = new GeminiSermonComposer(apiKey || '', exegesisModelId);
+        const sermonComposer = new GeminiSermonComposer(exegesisModelId);
         this.composeSermonFromAnalyses = new ComposeSermonFromAnalysesUseCase(
             paperRepository,
             styleGuideRepository,
             contentReader,
             sermonComposer,
         );
-        const devotionalComposer = new GeminiDevotionalComposer(apiKey || '', exegesisModelId);
+        const devotionalComposer = new GeminiDevotionalComposer(exegesisModelId);
         this.composeDevotionalFromAnalyses = new ComposeDevotionalFromAnalysesUseCase(
             paperRepository,
             styleGuideRepository,
             contentReader,
             devotionalComposer,
         );
-        const studyGuideComposer = new GeminiStudyGuideComposer(apiKey || '', exegesisModelId);
+        const studyGuideComposer = new GeminiStudyGuideComposer(exegesisModelId);
         this.composeStudyGuideFromAnalyses = new ComposeStudyGuideFromAnalysesUseCase(
             paperRepository,
             styleGuideRepository,

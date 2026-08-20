@@ -23,6 +23,17 @@ export class GeminiLlmClient implements ILlmClient {
         private readonly usage?: LlmUsageContext,
     ) {}
 
+    /**
+     * Consumo total de la ÚLTIMA llamada, o `null` si el modelo no lo informó.
+     *
+     * El port es texto→texto a propósito, así que el dato no cabe en `generate`.
+     * Vive acá porque `runLlmPrompt` tiene que devolvérselo al navegador: varios
+     * adapters de exégesis leían `usageMetadata.totalTokenCount` y lo muestran
+     * en el diálogo de composición ("12.345 tokens · modelo X"). Sin esto, esa
+     * línea desaparecería de la UI sin ningún error de por medio.
+     */
+    lastTotalTokens: number | null = null;
+
     async generate(options: LlmGenerateOptions): Promise<string> {
         const genAI = new GoogleGenerativeAI(this.apiKey);
         const model = genAI.getGenerativeModel({
@@ -40,6 +51,7 @@ export class GeminiLlmClient implements ILlmClient {
         // El consumo viene en la respuesta y hasta ahora se descartaba.
         // Fire-and-forget: medir nunca puede romper la llamada medida.
         const meta = result.response.usageMetadata;
+        this.lastTotalTokens = meta?.totalTokenCount ?? null;
         void recordLlmUsage({
             model: this.modelName,
             feature: this.usage?.feature ?? 'unknown',
