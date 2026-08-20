@@ -1,7 +1,9 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GeminiLlmClient } from './GeminiLlmClient';
+import { recordLlmUsage } from './llmUsageRecorder';
 import { LLM_PRICING } from './llmCost';
 import { consumeRateLimitToken } from '../shared/rateLimit';
 import { readBudgetConfig } from './llmBudget';
@@ -101,8 +103,52 @@ export const runLlmPrompt = onCall(
             );
         }
 
-        // Vía el port: el adapter mide tokens → USD y los atribuye a esta feature
-        // y a este usuario. Ese es el otro motivo de existir del proxy.
+        // Camino con TOOLS (fileSearch del tutor de griego): el port es
+        // texto→texto y no las cubre, así que acá se usa el SDK directo y se
+        // llama al medidor A MANO. El port es una comodidad, no un requisito: lo
+        // que no es negociable es que la llamada salga del servidor y quede medida.
+        const storeId = data.fileSearchStoreId ? String(data.fileSearchStoreId) : '';
+        if (storeId) {
+            try {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const toolModel = genAI.getGenerativeModel({
+                    model,
+                    tools: [
+                        {
+                            // @ts-ignore - los tipos del SDK aún no cubren fileSearch
+                            fileSearch: { fileSearchStoreNames: [storeId] },
+                        },
+                    ],
+                    // NOTA: `responseMimeType: application/json` NO es compatible
+                    // con tools — el llamador limpia el JSON del texto.
+                });
+                const result = await toolModel.generateContent({
+                    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                    ...(system ? { systemInstruction: system } : {}),
+                    generationConfig: {
+                        ...(typeof data.temperature === 'number' ? { temperature: data.temperature } : {}),
+                        ...(typeof data.maxOutputTokens === 'number'
+                            ? { maxOutputTokens: Math.min(data.maxOutputTokens, MAX_OUTPUT_TOKENS_CAP) }
+                            : {}),
+                    },
+                });
+                const meta = result.response.usageMetadata;
+                void recordLlmUsage({
+                    model,
+                    feature,
+                    userId: uid,
+                    inputTokens: meta?.promptTokenCount ?? 0,
+                    outputTokens: meta?.candidatesTokenCount ?? 0,
+                });
+                return { text: result.response.text() };
+            } catch (err) {
+                console.error(`[runLlmPrompt] ${feature} (fileSearch) falló`, err);
+                throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
+            }
+        }
+
+        // Camino normal, vía el port: el adapter mide tokens → USD y los atribuye
+        // a esta feature y a este usuario.
         const llm = new GeminiLlmClient(apiKey, model, { feature, userId: uid });
         try {
             const text = await llm.generate({

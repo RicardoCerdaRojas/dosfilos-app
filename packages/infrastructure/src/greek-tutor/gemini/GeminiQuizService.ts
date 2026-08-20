@@ -4,7 +4,7 @@ import {
     QuizQuestion,
     TrainingUnit
 } from '@dosfilos/domain';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { runLlmPrompt } from '../../llm/callableLlm';
 
 /**
  * Implementation of IQuizService using Gemini AI with hybrid caching strategy.
@@ -18,15 +18,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
  * Follows Dependency Inversion - depends on ISessionRepository abstraction for caching.
  */
 export class GeminiQuizService implements IQuizService {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
+    /** Sin apiKey: la generación sale por el proxy del servidor. */
     constructor(
-        private apiKey: string,
         private sessionRepository: ISessionRepository,
         modelName?: string
     ) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
         this.modelName = modelName || 'gemini-2.5-flash';
     }
 
@@ -125,19 +123,15 @@ export class GeminiQuizService implements IQuizService {
         count: number,
         language: string
     ): Promise<QuizQuestion[]> {
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            generationConfig: {
-                responseMimeType: 'application/json',
-                temperature: 0.7 // Slight creativity for varied questions
-            }
-        });
-
         const prompt = this.buildQuizPrompt(unit, count, language);
 
-        const result = await model.generateContent(prompt);
-        const response = result.response;
-        const text = response.text();
+        const text = await runLlmPrompt({
+            feature: 'greekTutor.quiz',
+            prompt,
+            model: this.modelName,
+            responseMimeType: 'application/json',
+            temperature: 0.7, // Algo de creatividad para variar las preguntas.
+        });
 
         let parsed;
         try {
