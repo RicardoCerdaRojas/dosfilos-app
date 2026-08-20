@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     formatPassageReference,
     type ComposeIntroductionInput,
@@ -8,6 +7,7 @@ import {
     type StyleGuideManifest,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../geminiRetry';
+import { runLlmPromptWithUsage } from '../../llm/callableLlm';
 import { formatPaperRubric, formatStrategy } from '../composer/composerPrompts';
 import { serializeAnalysis } from '../composer/serializeAnalysis';
 
@@ -27,26 +27,14 @@ import { serializeAnalysis } from '../composer/serializeAnalysis';
  * 8k output cap).
  */
 export class GeminiIntroductionComposer implements IIntroductionComposer {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
     async composeIntroduction(input: ComposeIntroductionInput): Promise<ComposeIntroductionOutput> {
         const { systemInstruction, userMessage } = buildIntroductionPrompt(input);
-
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
-                temperature: 0.4,
-                topP: 0.9,
-                maxOutputTokens: 8192,
-            },
-        });
 
         console.log('[GeminiIntroductionComposer] composing', {
             verseCount: input.verseAnalyses.length,
@@ -56,12 +44,18 @@ export class GeminiIntroductionComposer implements IIntroductionComposer {
             language: input.language,
         });
 
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+        const { text: markdown, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.composeIntroduction',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                temperature: 0.4,
+                topP: 0.9,
+                maxOutputTokens: 8192,
+            }),
             { contextLabel: 'GeminiIntroductionComposer' },
         );
-        const markdown = result.response.text();
-        const tokensUsed = result.response.usageMetadata?.totalTokenCount ?? null;
 
         return {
             markdown,

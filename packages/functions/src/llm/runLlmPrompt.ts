@@ -78,6 +78,16 @@ export const PROXY_FEATURES = [
     'sermon.regeneratePoint',
     'sermon.homileticsPreview',
     'sermon.developApproach',
+    // Tanda 3 (exégesis), parte 1 — compositores de sección y de artefactos
+    // ministeriales.
+    // Todos corren en `gemini-2.5-pro` por defecto y traen `topP` explícito, así
+    // que caen en la rama de config completa.
+    'exegesis.composeVerse',
+    'exegesis.composeIntroduction',
+    'exegesis.composeConclusion',
+    'exegesis.composeSermon',
+    'exegesis.composeDevotional',
+    'exegesis.composeStudyGuide',
 ] as const;
 
 const MAX_PROMPT_CHARS = 200_000;
@@ -175,7 +185,7 @@ export const runLlmPrompt = onCall(
                     inputTokens: meta?.promptTokenCount ?? 0,
                     outputTokens: meta?.candidatesTokenCount ?? 0,
                 });
-                return { text: result.response.text() };
+                return { text: result.response.text(), tokens: meta?.totalTokenCount ?? null };
             } catch (err) {
                 console.error(`[runLlmPrompt] ${feature} (fileSearch) falló`, err);
                 throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
@@ -212,7 +222,7 @@ export const runLlmPrompt = onCall(
                     inputTokens: meta?.promptTokenCount ?? 0,
                     outputTokens: meta?.candidatesTokenCount ?? 0,
                 });
-                return { text: result.response.text() };
+                return { text: result.response.text(), tokens: meta?.totalTokenCount ?? null };
             } catch (err) {
                 console.error(`[runLlmPrompt] ${feature} (config) falló`, err);
                 throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
@@ -253,7 +263,7 @@ export const runLlmPrompt = onCall(
                     inputTokens: meta?.promptTokenCount ?? 0,
                     outputTokens: meta?.candidatesTokenCount ?? 0,
                 });
-                return { text: result.response.text() };
+                return { text: result.response.text(), tokens: meta?.totalTokenCount ?? null };
             } catch (err) {
                 console.error(`[runLlmPrompt] ${feature} (safety) falló`, err);
                 throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
@@ -271,7 +281,7 @@ export const runLlmPrompt = onCall(
                     ? { maxOutputTokens: Math.min(data.maxOutputTokens, MAX_OUTPUT_TOKENS_CAP) }
                     : {}),
             });
-            return { text };
+            return { text, tokens: llm.lastTotalTokens };
         } catch (err) {
             console.error(`[runLlmPrompt] ${feature} falló`, err);
             throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');

@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     formatPassageReference,
     type ComposeConclusionInput,
@@ -8,6 +7,7 @@ import {
     type StyleGuideManifest,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../geminiRetry';
+import { runLlmPromptWithUsage } from '../../llm/callableLlm';
 import { formatPaperRubric, formatStrategy } from '../composer/composerPrompts';
 import { serializeAnalysis } from '../composer/serializeAnalysis';
 
@@ -32,26 +32,14 @@ import { serializeAnalysis } from '../composer/serializeAnalysis';
  *     headroom for 2-3 paragraphs even in dense Spanish prose.
  */
 export class GeminiConclusionComposer implements IConclusionComposer {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
     async composeConclusion(input: ComposeConclusionInput): Promise<ComposeConclusionOutput> {
         const { systemInstruction, userMessage } = buildConclusionPrompt(input);
-
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
-                temperature: 0.4,
-                topP: 0.9,
-                maxOutputTokens: 8192,
-            },
-        });
 
         console.log('[GeminiConclusionComposer] composing', {
             verseCount: input.verseAnalyses.length,
@@ -61,12 +49,18 @@ export class GeminiConclusionComposer implements IConclusionComposer {
             pinnedKeysInPrompt: input.pinnedSourceKeys,
         });
 
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+        const { text: markdown, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.composeConclusion',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                temperature: 0.4,
+                topP: 0.9,
+                maxOutputTokens: 8192,
+            }),
             { contextLabel: 'GeminiConclusionComposer' },
         );
-        const markdown = result.response.text();
-        const tokensUsed = result.response.usageMetadata?.totalTokenCount ?? null;
 
         return {
             markdown,

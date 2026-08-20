@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     formatPassageReference,
     type ComposeDevotionalInput,
@@ -6,6 +5,7 @@ import {
     type IDevotionalComposer,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../geminiRetry';
+import { runLlmPromptWithUsage } from '../../llm/callableLlm';
 import { serializeAnalysis } from '../composer/serializeAnalysis';
 import {
     commonGuardrails,
@@ -25,26 +25,14 @@ import {
  * Length cap: 8k tokens. Devotionals are SHORT.
  */
 export class GeminiDevotionalComposer implements IDevotionalComposer {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
     async composeDevotional(input: ComposeDevotionalInput): Promise<ComposeDevotionalOutput> {
         const { systemInstruction, userMessage } = buildDevotionalPrompt(input);
-
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
-                temperature: 0.5,
-                topP: 0.92,
-                maxOutputTokens: 8192,
-            },
-        });
 
         console.log('[GeminiDevotionalComposer] composing', {
             audience: input.audience,
@@ -52,12 +40,18 @@ export class GeminiDevotionalComposer implements IDevotionalComposer {
             language: input.language,
         });
 
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+        const { text: markdown, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.composeDevotional',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                temperature: 0.5,
+                topP: 0.92,
+                maxOutputTokens: 8192,
+            }),
             { contextLabel: 'GeminiDevotionalComposer' },
         );
-        const markdown = result.response.text();
-        const tokensUsed = result.response.usageMetadata?.totalTokenCount ?? null;
 
         return { markdown, modelId: this.modelName, tokensUsed };
     }

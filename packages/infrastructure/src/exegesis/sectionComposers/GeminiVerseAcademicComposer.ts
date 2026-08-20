@@ -1,10 +1,10 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     type ComposeVerseInput,
     type ComposeVerseOutput,
     type IVerseAcademicComposer,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../geminiRetry';
+import { runLlmPromptWithUsage } from '../../llm/callableLlm';
 import { buildVerseProsePrompt } from './verseProsePrompt';
 
 /**
@@ -25,33 +25,27 @@ import { buildVerseProsePrompt } from './verseProsePrompt';
  * case applies the deterministic style formatter post-hoc.
  */
 export class GeminiVerseAcademicComposer implements IVerseAcademicComposer {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
     async composeVerse(input: ComposeVerseInput): Promise<ComposeVerseOutput> {
         const { systemInstruction, userMessage } = buildVerseProsePrompt(input);
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
+        const { text: markdown, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.composeVerse',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
                 temperature: 0.4,
                 topP: 0.9,
                 maxOutputTokens: 8192,
-            },
-        });
-
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+            }),
             { contextLabel: 'GeminiVerseAcademicComposer' },
         );
-        const markdown = result.response.text();
-        const tokensUsed = result.response.usageMetadata?.totalTokenCount ?? null;
 
         return {
             markdown,

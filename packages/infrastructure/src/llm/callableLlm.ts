@@ -43,8 +43,33 @@ export interface CallableLlmOptions {
     responseSchema?: unknown;
 }
 
-export async function runLlmPrompt(options: CallableLlmOptions): Promise<string> {
-    const callable = httpsCallable<CallableLlmOptions, { text: string }>(getFunctions(), 'runLlmPrompt');
+interface LlmProxyResponse {
+    text: string;
+    /** Consumo total informado por el modelo, o `null` si no vino. */
+    tokens: number | null;
+}
+
+export interface CallableLlmResult {
+    text: string;
+    tokensUsed: number | null;
+}
+
+/**
+ * Variante que además devuelve el consumo de la llamada.
+ *
+ * Existe porque los adapters de exégesis leían
+ * `result.response.usageMetadata.totalTokenCount` del SDK y lo propagan hasta la
+ * UI: los diálogos de composición muestran "N tokens · modelo X". Migrar con el
+ * `runLlmPrompt` de solo texto habría dejado ese dato en `null` y la línea
+ * habría desaparecido de la pantalla sin error ni log.
+ */
+export async function runLlmPromptWithUsage(options: CallableLlmOptions): Promise<CallableLlmResult> {
+    const callable = httpsCallable<CallableLlmOptions, LlmProxyResponse>(getFunctions(), 'runLlmPrompt');
     const res = await callable(options);
-    return res.data?.text ?? '';
+    return { text: res.data?.text ?? '', tokensUsed: res.data?.tokens ?? null };
+}
+
+export async function runLlmPrompt(options: CallableLlmOptions): Promise<string> {
+    const { text } = await runLlmPromptWithUsage(options);
+    return text;
 }
