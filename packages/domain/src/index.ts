@@ -55,6 +55,14 @@ export * from './ports/ICoverageEngagementJudge'; // 🌱 Pastoral Fidelity ADR-
 export * from './ports/IGenreEngagementJudge'; // 🌱 Pastoral Fidelity Redacción v2 Fase 1 (§4.4) — genre-engagement judge port (A1)
 export * from './guided-sermon/genreDiscernmentCriteria'; // 🌱 Pastoral Fidelity Redacción v2 Fase 1 (§4.4) — structured genre-discernment vara (A3)
 export * from './guided-sermon/structuralSufficiency'; // 🌱 Pastoral Fidelity Redacción v2 Fase 1 (§4.5) — deterministic step-3 structural-sufficiency vara (B1)
+// 🌱 Redacción v2 Fase 2 (§9) — la vara del juez de fidelidad homilética, como
+// DATO editable: catálogos hermanos de FORMA y de GÉNERO (no se fusionan), el
+// compositor de las tres capas y la mecánica del veredicto.
+export * from './sermon-judge/complianceTypes';
+export * from './sermon-judge/approachComplianceCatalog';
+export * from './sermon-judge/genreComplianceCatalog';
+export * from './sermon-judge/composeJudgeRubric';
+export * from './sermon-judge/evaluateCompliance';
 // 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent
 export * from './guided-sermon/SocraticTurn';
 export * from './guided-sermon/GuidedSermonSession';

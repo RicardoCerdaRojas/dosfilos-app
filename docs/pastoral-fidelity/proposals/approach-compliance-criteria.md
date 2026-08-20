@@ -4,6 +4,39 @@
 > vara de fidelidad, no la define el modelo. Viven como DATO editable (catálogo
 > domain, movible a config Firestore). NO en el prompt del juez hardcodeados.
 
+## ⚙️ MATERIALIZADO EN CÓDIGO (2026-08-20) — este archivo ya no es la fuente de verdad
+
+La revisión criterio-por-criterio que este documento pedía **está cerrada** (`redaccion-v2-diseno.md`
+§9.1–§9.8, sellada 2026-07-08). Lo que aquí abajo se describe sin severidad ni tipo vive ahora, CON esos
+campos, como dato editable en el dominio:
+
+| Pieza | Dónde |
+|---|---|
+| Globales G1–G4 + las 6 formas (C y E, con severidad/tipo/refina) | `packages/domain/src/sermon-judge/approachComplianceCatalog.ts` |
+| Catálogo HERMANO de género (los D de los 8 perfiles de §6) | `packages/domain/src/sermon-judge/genreComplianceCatalog.ts` |
+| Composición de las tres capas para un sermón concreto | `composeJudgeRubric.ts` |
+| Umbral (§9.6) y los tres estados del veredicto (§8.3) | `evaluateCompliance.ts` |
+
+**Lo que cambió respecto del texto de abajo, y que este archivo todavía no reflejaba:**
+
+- **G4 — proof-texting subió a GLOBAL** (§9.2). Abajo solo aparecen G1/G2/G3.
+- **G2 se redactó de nuevo como CRISTOTÉLICO** (§9.7): "no traza el telos cristológico… DONDE la
+  trayectoria canónica lo sostiene". La cláusula condicional es la que impide que G2 empuje a eisegesis.
+- **Los cuatro globales son severidad CRÍTICA** (§9.7).
+- **Los 12 descalificadores de forma ganaron `severidad` + `tipo`** (§9.5).
+- **Temático ganó E2 — yuxtapone sin sintetizar** (§9.8).
+- **El umbral se cerró** (§9.6): TODOS los esenciales en `yes` + MAYORÍA de los esperados + CERO
+  descalificadores. C4 narrativo es el único esencial sellado. Abajo todavía dice "mayoría/todos", que era
+  justamente el pendiente de §8.6.
+- **Invariante nuevo:** ningún criterio esencial sin ayuda formativa upstream. Un esencial sin andamiaje es
+  un muro, y está prohibido por diseño — un test rompe CI si falta.
+
+Este documento se conserva como el **razonamiento** de por qué cada criterio es lo que es (la corrección de
+categoría de `expositivo`, las promesas de cada forma, el trato de los estudios legados). Para editar la
+vara, se edita el catálogo en dominio.
+
+---
+
 ## Corrección de categoría (2026-07-06) — leer antes que nada
 
 La investigación Fase 0 del enum destapó un error más profundo que el accidente del
