@@ -122,34 +122,62 @@ es la anómala: es una credencial que gasta dinero directamente.
 
 ### El fix real: mover las llamadas a callables
 
-**38 sitios**, agrupados por feature. El orden propuesto va por volumen × riesgo,
-y cada tanda es una PR que además hace visible su gasto en el panel:
+**Estado al 2026-08-20: ~60% cerrado.** Todo lo conversacional, el motor de
+sermón completo, la extracción de PDFs y los embeddings ya salen por el servidor
+y aparecen en el panel. Queda la tanda de exégesis y un barrido final.
 
-| # | Feature | Archivos | Nota |
-|---|---|---|---|
-| 1 | **Superficies conversacionales**: tutor de griego (+quiz), tutor de hebreo, chat de Faculty en modo normal | 6 (services + providers + `GeminiMultiAgentService`) | **Reordenada al frente** — ver abajo |
-| 2 | Refinamientos del sermón (draft, homilética, secciones, chat de paso) | 4 hooks web | Puntuales, pero muy usados |
-| 3 | Biblioteca (embeddings, file search, core library) | 4 + `library-context` | Embeddings a volumen |
-| 4 | Exégesis (orquestador, compositores, verificador, detectores) | 18 en `infrastructure/exegesis` | La tanda grande; conviene partirla |
-| 5 | Resto (`GeminiAIService`, word study, repurposer, plan generator) | 5 | Barrido final |
+#### Lo que ya salió del navegador (en prod)
 
-> **Por qué las conversacionales van primero** (reordenado 2026-08-19): son
-> **conversaciones**, no llamadas puntuales — muchos turnos y contexto que crece en
-> cada uno. En tokens pesan mucho más que un refinamiento suelto, y son tres
-> superficies invisibles a la vez. Es probable que sean el mayor gasto de la app y
-> son exactamente lo que el panel no ve: mientras sigan fuera, el número que muestre
-> subestima tanto que decidir con él es arriesgado.
+| PR | Superficie | Cómo salió |
+|---|---|---|
+| #417 | Proxy `runLlmPrompt` + tutor de hebreo | callable con allowlist de features/modelos + rate-limit por uid |
+| #420 | Chat de Faculty (modo normal) | **SSE** (`facultyChatStream`, `onRequest`) — el SDK cliente v10 no tiene `.stream()` en callables |
+| #421 | Tutor de griego + quiz | proxy |
+| #422 #423 #424 #426 | `GeminiSermonGenerator` completo: generación, refinamiento, las 6 generaciones grandes, chat del wizard | proxy + SSE para el chat |
+| #427 | Extracción de PDFs | ya corría en el servidor; lo que faltaba era **medirla** |
+| #428 | Embeddings | callable `embedTexts` (tokens estimados: `embedContent` no devuelve `usageMetadata`) |
+| #429 | Contrato del proxy completo | `responseSchema`, `topP`, `maxOutputTokens` hasta 65.536 |
+
+#### Lo que falta
+
+**A. La tanda de exégesis — 18 adapters** en `packages/infrastructure/src/exegesis/`,
+alcanzados desde `ExegesisService.ts` y `SeriesService.ts`. Es el bloque grande y
+el último de verdad. El contrato del servidor **ya soporta todo lo que necesitan**
+(#429): no falta backend, falta traducir los 18 sitios.
+
+> **Regla no negociable: archivo por archivo, leyendo cada uno antes de tocarlo.**
+> El intento mecánico ya falló dos veces. Parecen homogéneos desde fuera, pero el
+> `responseSchema` es un objeto inline de decenas de líneas distinto en cada
+> archivo, y varias llamadas van envueltas en `withGeminiRetry(() => …)`, así que
+> el punto de reemplazo no es el mismo.
 >
-> Segundo motivo: son las superficies donde un **rate-limit** tiene sentido real,
-> porque son las que alguien podría explotar con la clave robada.
->
-> **Matiz que confunde y conviene tener presente:** el chat de Faculty se mide o no
-> **según el modo**. Conversación normal → navegador, invisible. Estudio guiado →
-> callable `runSocraticTurn`, contado. La misma pantalla, dos comportamientos.
+> Lo que no se puede perder al traducir — cada uno es una regresión **silenciosa**,
+> sin error:
+> - `responseSchema`: perderlo no rompe, devuelve texto peor formado.
+> - `topP`: fijado explícito en casi todos (0.85 / 0.9).
+> - `maxOutputTokens`: `composer/GeminiAcademicComposer` usa **65.536**; con un cap
+>   menor el paper sale recortado a la mitad y nadie se entera.
+> - El modelo por defecto de varios es `gemini-2.5-pro`, **no** flash: pasarlo
+>   explícito o el precio y el panel quedan mal.
 
-**Criterio de cierre:** `grep -r VITE_GEMINI_API_KEY packages/` no devuelve nada,
-la variable sale de los workflows, y la clave del cliente se elimina en Cloud
-Console.
+**B. Barrido final** (fuera de exégesis):
+`ContentRefinementService`, `PlannerChatService`, `SermonRepurposeService`,
+`LibraryService`, `GeneratorChatService` (File Search), `GeminiPlanGenerator` (vía
+`SeriesService`), y en web: `library-context.tsx`, `useSermonStepChat.ts`,
+`useDraftRefinement.ts`, `useHomileticsRefinement.ts`, `CoreLibraryAdmin.tsx`,
+`coreLibraryService.ts`.
+
+**C. Trampa al borrar la variable** ⚠️ — `AIService.ts` y `SermonGeneratorService.ts`
+ya tienen el adapter migrado, pero **siguen leyendo la clave como interruptor**:
+`isAvailable()` devuelve `!!apiKey`, y `SermonGeneratorService` solo instancia
+`documentProcessor` `if (apiKey)`. Si se borra la variable antes de limpiar estos
+dos, las features quedan **apagadas en silencio**, sin error y sin log. Limpiar
+estos gates es parte del criterio de cierre, no un detalle cosmético.
+
+**Criterio de cierre:** `grep -r VITE_GEMINI_API_KEY packages/` no devuelve nada
+(incluidos los dos `env.d.ts` y los gates vestigiales del punto C), la variable
+sale de `deploy-production.yml` y `deploy-preview.yml`, y la clave del cliente se
+**elimina** en Cloud Console — no se deja restringida, se borra.
 
 **Patrón a seguir:** el port `ILlmClient` + adapters ya existen en `functions`, y
 desde la PR del medidor **cada callable que se migra queda medido gratis** — la
@@ -158,6 +186,45 @@ migración deja de ser deuda estética y pasa a comprar visibilidad de costo.
 **Relación con la deuda vieja:** esto se solapa con
 `tech_debt_llm_provider_abstraction` (~34 callers directos al SDK). Es el mismo
 trabajo mirado desde otro ángulo; hacerlo una vez paga las dos deudas.
+
+## Lo que el medidor ya nos dijo (2026-08-20)
+
+Con el panel `/dashboard/admin/llm-cost` en pie y las superficies migradas
+midiéndose, hay por fin números en vez de intuición:
+
+| Hecho medido | Número |
+|---|---|
+| Costo de un sermón completo, punta a punta | **≈ USD 0,02** |
+| Sermones/mes que caben en el presupuesto de USD 25 | **≈ 1.200** |
+| Factura real de GCP del mes | **≈ USD 2** |
+
+**Conclusión, y conviene decirla sin adorno: el costo no es una restricción a esta
+escala.** Estuvimos a punto de tratarlo como si lo fuera. El valor del medidor no
+es ahorrar centavos — es **detectar fugas**: un bucle que reintenta, un prompt que
+duplicó su contexto, una clave robada gastando de noche. Para eso sirve el
+presupuesto de USD 25 y las alertas al 50/80/100%: no como techo económico, sino
+como **detector de anomalías**.
+
+Corolario para priorizar: la migración de la clave sigue siendo P0, pero por
+**seguridad y visibilidad**, no por plata.
+
+⚠️ Cuidado con la moneda: la consola de GCP muestra **CLP**. Leer esos montos como
+USD infla la factura ~900× y lleva a optimizar lo que no importa (ya pasó una vez
+en esta sesión).
+
+### Cómo se mide (para no re-descubrirlo)
+
+- Cada llamada escribe en `llmUsageDaily/{YYYY-MM-DD}` y `llmUsageMonthly/{YYYY-MM}`,
+  con cortes por feature, modelo y `userId`, vía `recordLlmUsage` (fire-and-forget:
+  el medidor nunca debe tumbar la feature que mide).
+- El presupuesto vive como **dato editable** en `config/llmBudget`, no en código.
+- `shadowLlmAllowed()` es el cortacircuito: cuando el día se pasa de
+  `shadowDailyUsdCap`, lo primero que se sacrifica es la medición en sombra, no el
+  producto. **Fail-open** a propósito.
+- Trampa ya pagada: los cortes se escriben como **mapas anidados**, nunca con
+  claves con punto (`set({'byFeature.x.calls': …})` crea un campo llamado
+  literalmente así, y el panel muestra totales correctos con cortes vacíos —
+  miente a medias, que es peor que fallar). Hay test que prohíbe el punto.
 
 ## Ola 1 — Destrabar el panel de control ⬅️ PRIMERO DE VERDAD
 
@@ -346,6 +413,10 @@ Olas 5, 7 y 8 cuelgan del camino sin bloquearlo.
 | Fecha | Ola | Qué pasó |
 |---|---|---|
 | 2026-08-17 | — | Plan creado tras auditoría del estado real. |
+| 2026-08-20 | 🔴 | **Migración de la clave, ~60% cerrada.** Conversacionales (griego, hebreo, Faculty vía SSE) + `GeminiSermonGenerator` completo + extracción de PDFs + embeddings, todo en prod y medido (#417–#429). Falta la tanda de exégesis (18 adapters, contrato listo) + barrido final. |
+| 2026-08-20 | 🔴 | Contrato del proxy completo (#429): `responseSchema`, `topP`, `maxOutputTokens` hasta 65.536. Descubierto de paso: el cap anterior (32.768) le habría recortado el paper académico a la mitad **en silencio**. |
+| 2026-08-19 | 🔴 | Medidor de costo en pie: `llmUsageDaily`/`Monthly`, panel admin, presupuesto como dato, alertas 50/80/100%, cortacircuito de sombra. Números: sermón ≈ USD 0,02, factura real ≈ USD 2/mes → el costo no es restricción; el medidor sirve para **detectar fugas**. |
+| 2026-08-19 | 🔴 | `firebase-functions` v4.5 → v7.3.2 (#418), con canario previo. Mi evaluación inicial de que el cambio de entrypoint v2 no afectaba al repo fue **incorrecta**: 41 errores en 6 archivos, resueltos fijando imports a `firebase-functions/v1`. |
 | 2026-08-19 | 3 | Campo `origin` en los seeds (los 2 únicos creadores lo declaran) + script de cohorte lee el hecho en vez de adivinarlo. Sermones siguen por proxy. |
 | 2026-08-19 | 3 | 2.3 verificada en prod (`userConfirmed` real). Hallazgo: el estudio del wizard no dejaba sombra → 3.2 resuelto instrumentando el Spine A + servicio único de recorder para los dos spines. Falta encender flags y dogfood (3.1/3.3). |
 | 2026-08-18 | 2 | 0b-B con alcance corregido: el chat no tenía acto (el doc 0b confundía superficies). `pronounceGenre` en dominio + selector en el paso 2 guiado + wizard registrando su acto + `detectGenreInText` fuera del path de procedencia. Falta verificar en prod (2.3). |
