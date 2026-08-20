@@ -1,10 +1,11 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     type ComposeAcademicPaperInput,
     type ComposeAcademicPaperOutput,
     type IAcademicComposer,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../geminiRetry';
+import { runLlmPromptWithUsage } from '../../llm/callableLlm';
+import { LONG_COMPOSITION_TIMEOUT_MS } from '../composerTimeouts';
 import { buildComposerPrompt } from './composerPrompts';
 
 /**
@@ -40,26 +41,14 @@ import { buildComposerPrompt } from './composerPrompts';
  * just produces the LLM-generated markdown.
  */
 export class GeminiAcademicComposer implements IAcademicComposer {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
     async composeAcademicPaper(input: ComposeAcademicPaperInput): Promise<ComposeAcademicPaperOutput> {
         const { systemInstruction, userMessage } = buildComposerPrompt(input);
-
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
-                temperature: 0.4,
-                topP: 0.9,
-                maxOutputTokens: 65536,
-            },
-        });
 
         console.log('[GeminiAcademicComposer] composing', {
             verseCount: input.verseAnalyses.length,
@@ -68,12 +57,20 @@ export class GeminiAcademicComposer implements IAcademicComposer {
             language: input.language,
         });
 
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+        const { text: markdown, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.composeAcademicPaper',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                temperature: 0.4,
+                topP: 0.9,
+                // 65.536, no menos: un paper de 12-25 páginas ronda los
+                // 25-50k tokens. Con un tope menor sale recortado y sin error.
+                maxOutputTokens: 65536,
+            }, { timeoutMs: LONG_COMPOSITION_TIMEOUT_MS }),
             { contextLabel: 'GeminiAcademicComposer' },
         );
-        const markdown = result.response.text();
-        const tokensUsed = result.response.usageMetadata?.totalTokenCount ?? null;
 
         // The composer always returns 'skipped' here — formatter
         // status is determined by the use case AFTER it runs the

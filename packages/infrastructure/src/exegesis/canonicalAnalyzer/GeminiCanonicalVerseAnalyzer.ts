@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     type AnalyzeVerseInput,
     type AnalyzeVerseOutput,
@@ -6,6 +5,8 @@ import {
     type ICanonicalVerseAnalyzer,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../geminiRetry';
+import { runLlmPromptWithUsage } from '../../llm/callableLlm';
+import { LONG_COMPOSITION_TIMEOUT_MS } from '../composerTimeouts';
 import { buildAnalyzerPrompt } from './analyzerPrompts';
 import { CANONICAL_VERSE_ANALYSIS_SCHEMA } from './responseSchema';
 
@@ -39,32 +40,14 @@ import { CANONICAL_VERSE_ANALYSIS_SCHEMA } from './responseSchema';
  *     keys against the corpus and for stamping createdAt/updatedAt.
  */
 export class GeminiCanonicalVerseAnalyzer implements ICanonicalVerseAnalyzer {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
     async analyzeVerse(input: AnalyzeVerseInput): Promise<AnalyzeVerseOutput> {
         const { systemInstruction, userMessage } = buildAnalyzerPrompt(input);
-
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
-                responseMimeType: 'application/json',
-                // Schema enforced server-side. Cast to any because the
-                // SDK's response-schema typing is looser than what we
-                // construct (`as const` produces literal types Gemini's
-                // generic accepts at runtime but not at compile time).
-                responseSchema: CANONICAL_VERSE_ANALYSIS_SCHEMA as any,
-                temperature: 0.3,
-                topP: 0.9,
-                maxOutputTokens: 32768,
-            },
-        });
 
         console.log('[GeminiCanonicalVerseAnalyzer] analyzing', {
             verse: `${input.verseRef.bookId} ${input.verseRef.chapterStart}:${input.verseRef.verseStart}-${input.verseRef.verseEnd ?? input.verseRef.verseStart}`,
@@ -74,12 +57,23 @@ export class GeminiCanonicalVerseAnalyzer implements ICanonicalVerseAnalyzer {
             hasOriginalLanguageText: !!input.originalLanguageText,
         });
 
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+        const { text: rawJson, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.analyzeVerse',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                responseMimeType: 'application/json',
+                // El esquema lo sigue aplicando el servidor. El proxy lo pasa
+                // tal cual a `generationConfig`; perderlo no daría error, daría
+                // JSON peor formado.
+                responseSchema: CANONICAL_VERSE_ANALYSIS_SCHEMA,
+                temperature: 0.3,
+                topP: 0.9,
+                maxOutputTokens: 32768,
+            }, { timeoutMs: LONG_COMPOSITION_TIMEOUT_MS }),
             { contextLabel: 'GeminiCanonicalVerseAnalyzer' },
         );
-        const rawJson = result.response.text();
-        const tokensUsed = result.response.usageMetadata?.totalTokenCount ?? null;
 
         const parsed = parseAnalyzerResponse(rawJson);
         const analysis = mapToCanonicalVerseAnalysis(parsed, input);

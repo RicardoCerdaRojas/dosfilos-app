@@ -1,10 +1,10 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import type {
     ExegesisGenerationInput,
     ExegesisGenerationOutput,
     IExegesisOrchestrator,
 } from '@dosfilos/domain';
 import { buildPrompt } from './prompts';
+import { runLlmPromptWithUsage } from '../llm/callableLlm';
 
 /**
  * Gemini implementation of `IExegesisOrchestrator`.
@@ -33,11 +33,9 @@ import { buildPrompt } from './prompts';
  * step kind.
  */
 export class GeminiExegesisOrchestrator implements IExegesisOrchestrator {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         // Default to Pro 2.5. The vision model env var is reused because
         // both use cases want the same Pro tier; a dedicated env var can
         // split them later if exegesis ends up needing a different model.
@@ -46,19 +44,6 @@ export class GeminiExegesisOrchestrator implements IExegesisOrchestrator {
 
     async generateStep(input: ExegesisGenerationInput): Promise<ExegesisGenerationOutput> {
         const { systemInstruction, userMessage } = buildPrompt(input);
-
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
-                // Pro 2.5 rejects thinkingBudget: 0 — leaving thinking on
-                // its default budget here. The reasoning bandwidth is the
-                // whole point of using Pro for exegesis.
-                maxOutputTokens: 8192,
-                temperature: 0.5,
-                topP: 0.9,
-            },
-        });
 
         console.log('[GeminiExegesisOrchestrator] generating', {
             kind: input.kind,
@@ -69,14 +54,25 @@ export class GeminiExegesisOrchestrator implements IExegesisOrchestrator {
             styleGuideChars: input.styleGuideContent.length,
         });
 
-        const result = await model.generateContent(userMessage);
-        const response = result.response;
-        const markdown = response.text();
-
-        const usage = response.usageMetadata;
-        const totalTokens = usage?.totalTokenCount;
-        const summed = (usage?.promptTokenCount ?? 0) + (usage?.candidatesTokenCount ?? 0);
-        const tokensUsed = typeof totalTokens === 'number' ? totalTokens : (summed > 0 ? summed : null);
+        // Sin `withGeminiRetry`: este adapter nunca lo tuvo y no se le agrega
+        // acá — cambiar la política de reintentos de refilón, dentro de una
+        // migración de transporte, es justo lo que nadie vería en el diff.
+        //
+        // El respaldo de tokens que este método calculaba a mano (sumar entrada
+        // y salida cuando falta el total) ahora vive en el proxy, así que
+        // `tokensUsed` sigue llegando igual de completo.
+        const { text: markdown, tokensUsed } = await runLlmPromptWithUsage({
+            feature: 'exegesis.generateStep',
+            model: this.modelName,
+            system: systemInstruction,
+            prompt: userMessage,
+            // Pro 2.5 rejects thinkingBudget: 0 — leaving thinking on
+            // its default budget here. The reasoning bandwidth is the
+            // whole point of using Pro for exegesis.
+            maxOutputTokens: 8192,
+            temperature: 0.5,
+            topP: 0.9,
+        });
 
         return {
             markdown,

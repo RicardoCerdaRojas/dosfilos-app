@@ -51,7 +51,9 @@ export class GeminiLlmClient implements ILlmClient {
         // El consumo viene en la respuesta y hasta ahora se descartaba.
         // Fire-and-forget: medir nunca puede romper la llamada medida.
         const meta = result.response.usageMetadata;
-        this.lastTotalTokens = meta?.totalTokenCount ?? null;
+        this.lastTotalTokens = typeof meta?.totalTokenCount === 'number'
+            ? meta.totalTokenCount
+            : (((meta?.promptTokenCount ?? 0) + (meta?.candidatesTokenCount ?? 0)) || null);
         void recordLlmUsage({
             model: this.modelName,
             feature: this.usage?.feature ?? 'unknown',

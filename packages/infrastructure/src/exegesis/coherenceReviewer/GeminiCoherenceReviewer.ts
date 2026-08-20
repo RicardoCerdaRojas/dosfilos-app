@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import type {
     CoherenceIssue,
     CoherenceIssueCategory,
@@ -7,6 +6,7 @@ import type {
     ICoherenceReviewer,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../geminiRetry';
+import { runLlmPromptWithUsage } from '../../llm/callableLlm';
 import { buildReviewerPrompt } from './reviewerPrompts';
 import { COHERENCE_REVIEW_SCHEMA } from './responseSchema';
 
@@ -31,35 +31,29 @@ import { COHERENCE_REVIEW_SCHEMA } from './responseSchema';
  *     response can't be parsed (visible to the user, doesn't crash).
  */
 export class GeminiCoherenceReviewer implements ICoherenceReviewer {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
     async review(input: CoherenceReviewInput): Promise<CoherenceReviewOutput> {
         const { systemInstruction, userMessage } = buildReviewerPrompt(input);
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
+        const { text: rawJson, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.reviewCoherence',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
                 responseMimeType: 'application/json',
-                responseSchema: COHERENCE_REVIEW_SCHEMA as any,
+                responseSchema: COHERENCE_REVIEW_SCHEMA,
                 temperature: 0.2,
                 topP: 0.9,
                 maxOutputTokens: 8192,
-            },
-        });
-
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+            }),
             { contextLabel: 'GeminiCoherenceReviewer' },
         );
-        const rawJson = result.response.text();
-        const tokensUsed = result.response.usageMetadata?.totalTokenCount ?? null;
 
         const parsed = parseReviewerResponse(rawJson, input.language);
 

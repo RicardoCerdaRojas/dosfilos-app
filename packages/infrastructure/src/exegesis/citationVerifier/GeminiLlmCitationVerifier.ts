@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import type {
     CitationStatus,
     CitationVerifierInput,
@@ -11,6 +10,7 @@ import type {
     VerifierSourceChunk,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../geminiRetry';
+import { runLlmPrompt } from '../../llm/callableLlm';
 import { parseCitations } from './citationParser';
 import { buildLlmVerifierPrompt } from './llmVerifierPrompts';
 import { LLM_CITATION_VERIFIER_SCHEMA } from './llmVerifierSchema';
@@ -46,7 +46,6 @@ import { LLM_CITATION_VERIFIER_SCHEMA } from './llmVerifierSchema';
  *   - Source not matched bypasses the LLM entirely (free).
  */
 export class GeminiLlmCitationVerifier implements ICitationVerifier {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
     /** Per-source-chunk character cap to keep prompt tokens bounded. */
     private maxCharsPerChunk: number;
@@ -58,7 +57,6 @@ export class GeminiLlmCitationVerifier implements ICitationVerifier {
     private relevantChunkRetriever: IRelevantChunkRetriever | null;
 
     constructor(
-        apiKey: string,
         options?: {
             modelName?: string;
             maxCharsPerChunk?: number;
@@ -67,7 +65,6 @@ export class GeminiLlmCitationVerifier implements ICitationVerifier {
             relevantChunkRetriever?: IRelevantChunkRetriever | null;
         },
     ) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
         this.modelName = options?.modelName || 'gemini-2.5-pro';
         this.maxCharsPerChunk = options?.maxCharsPerChunk ?? 4000;
         this.maxChunksPerCitation = options?.maxChunksPerCitation ?? 8;
@@ -164,22 +161,20 @@ export class GeminiLlmCitationVerifier implements ICitationVerifier {
         });
 
         try {
-            const model = this.genAI.getGenerativeModel({
-                model: this.modelName,
-                systemInstruction,
-                generationConfig: {
+            const rawJson = await withGeminiRetry(
+                () => runLlmPrompt({
+                    feature: 'exegesis.verifyCitation',
+                    model: this.modelName,
+                    system: systemInstruction,
+                    prompt: userMessage,
                     responseMimeType: 'application/json',
-                    responseSchema: LLM_CITATION_VERIFIER_SCHEMA as any,
+                    responseSchema: LLM_CITATION_VERIFIER_SCHEMA,
                     temperature: 0.1,
                     topP: 0.9,
                     maxOutputTokens: 1024,
-                },
-            });
-            const result = await withGeminiRetry(
-                () => model.generateContent(userMessage),
+                }),
                 { contextLabel: 'GeminiLlmCitationVerifier' },
             );
-            const rawJson = result.response.text();
             const parsedResp = parseLlmResponse(rawJson);
 
             const matchedPage = extractPageFromHint(parsedResp.bestPageHint);
