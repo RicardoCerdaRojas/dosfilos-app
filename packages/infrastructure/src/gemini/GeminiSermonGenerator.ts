@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, GenerativeModel } from '@google/generative-ai';
+import { runLlmPrompt } from '../llm/callableLlm';
 import {
     CitationManifest,
     ISermonGenerator,
@@ -542,15 +543,17 @@ REGLAS:
                 ? 'IMPORTANT: Respond entirely in English.'
                 : 'IMPORTANTE: Responde completamente en español.';
             const prompt = `${directive}\n\n${promptBody}`;
-            const model = this.getModel({
-                fileSearchStoreId: context?.fileSearchStoreId,
-                temperature: context?.temperature,
-                modelName: context?.aiModel
+            // Vía el proxy del servidor: la clave sale del navegador y el gasto
+            // queda medido. Se conservan los mismos parámetros que traía la
+            // llamada directa, incluidos los umbrales de seguridad explícitos.
+            return await runLlmPrompt({
+                feature: 'sermon.refineContent',
+                prompt,
+                safety: 'standard',
+                ...(context?.aiModel ? { model: context.aiModel } : {}),
+                ...(context?.temperature !== undefined ? { temperature: context.temperature } : {}),
+                ...(context?.fileSearchStoreId ? { fileSearchStoreId: context.fileSearchStoreId } : {}),
             });
-            const preparedContent = prompt;
-            const result = await model.generateContent(preparedContent);
-            const response = result.response;
-            return response.text();
         } catch (error: any) {
             throw this.handleError(error);
         }
