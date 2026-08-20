@@ -55,3 +55,5 @@ export * from './bible'; // 📖 Bible Multi-version Repositories
 
 // Hebrew Tutor
 export * from './hebrew-tutor/index.js';
+
+export * from './gemini/SseMultiAgentService';
