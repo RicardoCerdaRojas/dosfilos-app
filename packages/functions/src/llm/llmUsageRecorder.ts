@@ -58,46 +58,62 @@ export function safeMapKey(raw: string): string {
     return cleaned.length > 0 ? cleaned.slice(0, 100) : 'unknown';
 }
 
+/**
+ * Arma el patch del documento diario. PURO y exportado para poder probar su
+ * FORMA: el bug que motivó esto no se veía en ningún test porque nadie miraba
+ * la estructura del objeto que se escribe.
+ *
+ * CLAVE: los cortes van como mapas ANIDADOS, no como claves con puntos.
+ * `set(..., { merge: true })` NO interpreta los puntos como rutas de campo (solo
+ * `update()` lo hace), así que `{'byFeature.x.calls': 1}` crea un campo llamado
+ * literalmente "byFeature.x.calls" y el lector nunca lo encuentra. Los
+ * `increment` funcionan igual de bien anidados.
+ */
+export function buildUsagePatch(record: LlmUsageRecord, now: Date = new Date()): Record<string, unknown> {
+    const { model, feature, userId, inputTokens, outputTokens } = record;
+    const usd = estimateUsd(model, inputTokens, outputTokens);
+    const inc = FieldValue.increment;
+    const inTok = inputTokens || 0;
+    const outTok = outputTokens || 0;
+
+    return {
+        day: usageDayKey(now),
+        calls: inc(1),
+        inputTokens: inc(inTok),
+        outputTokens: inc(outTok),
+        usd: inc(usd),
+        byFeature: {
+            [safeMapKey(feature)]: {
+                calls: inc(1),
+                usd: inc(usd),
+                inputTokens: inc(inTok),
+                outputTokens: inc(outTok),
+            },
+        },
+        byModel: {
+            [safeMapKey(model)]: { calls: inc(1), usd: inc(usd) },
+        },
+        ...(userId ? { byUser: { [safeMapKey(userId)]: { calls: inc(1), usd: inc(usd) } } } : {}),
+        // Un modelo sin precio propio se cuenta aparte: el total lleva una
+        // estimación de respaldo y hay que saber cuánto del total es eso.
+        ...(hasKnownPricing(model) ? {} : { usdFromFallbackPricing: inc(usd) }),
+        updatedAt: FieldValue.serverTimestamp(),
+    };
+}
+
 export async function recordLlmUsage(record: LlmUsageRecord, now: Date = new Date()): Promise<void> {
     try {
-        const { model, feature, userId, inputTokens, outputTokens } = record;
-        const usd = estimateUsd(model, inputTokens, outputTokens);
-        const inc = FieldValue.increment;
-        const f = safeMapKey(feature);
-        const m = safeMapKey(model);
-
-        const patch: Record<string, unknown> = {
-            day: usageDayKey(now),
-            calls: inc(1),
-            inputTokens: inc(inputTokens || 0),
-            outputTokens: inc(outputTokens || 0),
-            usd: inc(usd),
-            [`byFeature.${f}.calls`]: inc(1),
-            [`byFeature.${f}.usd`]: inc(usd),
-            [`byFeature.${f}.inputTokens`]: inc(inputTokens || 0),
-            [`byFeature.${f}.outputTokens`]: inc(outputTokens || 0),
-            [`byModel.${m}.calls`]: inc(1),
-            [`byModel.${m}.usd`]: inc(usd),
-            // Un modelo sin precio propio se cuenta aparte: el total lleva una
-            // estimación de respaldo y hay que saber cuánto del total es eso.
-            ...(hasKnownPricing(model) ? {} : { usdFromFallbackPricing: inc(usd) }),
-            updatedAt: FieldValue.serverTimestamp(),
-        };
-        if (userId) {
-            patch[`byUser.${safeMapKey(userId)}.calls`] = inc(1);
-            patch[`byUser.${safeMapKey(userId)}.usd`] = inc(usd);
-        }
-
+        const usd = estimateUsd(record.model, record.inputTokens, record.outputTokens);
         const db = admin.firestore();
         await Promise.all([
-            db.collection('llmUsageDaily').doc(usageDayKey(now)).set(patch, { merge: true }),
+            db.collection('llmUsageDaily').doc(usageDayKey(now)).set(buildUsagePatch(record, now), { merge: true }),
             // El acumulado del mes: solo los totales, sin los cortes (esos se leen
             // del día). Es lo que consultan el guardia y la alerta.
             db.collection('llmUsageMonthly').doc(usageMonthKey(now)).set(
                 {
                     month: usageMonthKey(now),
-                    calls: inc(1),
-                    usd: inc(usd),
+                    calls: FieldValue.increment(1),
+                    usd: FieldValue.increment(usd),
                     updatedAt: FieldValue.serverTimestamp(),
                 },
                 { merge: true },
