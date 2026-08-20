@@ -1,5 +1,9 @@
+// firebase-functions v6+ cambió el entrypoint por defecto de v1 a v2. Estas
+// funciones siguen en v1 (runWith / firestore.document / https.onCall v1), así
+// que el import apunta explícitamente a /v1 para conservar el MISMO
+// comportamiento. Migrarlas a v2 es trabajo aparte, no de este upgrade.
 import * as admin from 'firebase-admin';
-import { https } from 'firebase-functions';
+import { https } from 'firebase-functions/v1';
 
 const db = admin.firestore();
 
