@@ -159,7 +159,7 @@ export function useSermonStepChat({
                 if (!apiKey) {
                     throw new Error('API key not configured');
                 }
-                const aiService = new GeminiAIService(apiKey);
+                const aiService = new GeminiAIService();
 
                 // Build library resources context for validator
                 const availableResources = getEffectiveResources()

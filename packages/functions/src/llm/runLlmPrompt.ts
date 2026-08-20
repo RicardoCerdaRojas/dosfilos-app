@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai';
 import { GeminiLlmClient } from './GeminiLlmClient';
 import { recordLlmUsage } from './llmUsageRecorder';
 import { LLM_PRICING } from './llmCost';
@@ -37,6 +37,19 @@ import { readBudgetConfig } from './llmBudget';
  * tenga cortes estables y para que un cliente manipulado no invente etiquetas que
  * ensucien la contabilidad.
  */
+/**
+ * Umbrales de seguridad explícitos que la ruta directa del generador de sermones
+ * traía escritos. Se preservan tal cual: cambiar el filtrado del modelo de
+ * refilón, dentro de una migración de infraestructura, sería un cambio de
+ * comportamiento que nadie vería en el diff.
+ */
+const STANDARD_SAFETY = [
+    HarmCategory.HARM_CATEGORY_HARASSMENT,
+    HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+].map((category) => ({ category, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE }));
+
 export const PROXY_FEATURES = [
     'hebrewTutor.analyzeVerse',
     'greekTutor.identifyForms',
@@ -46,6 +59,14 @@ export const PROXY_FEATURES = [
     'greekTutor.answerFreeQuestion',
     'greekTutor.analyzeSyntax',
     'greekTutor.quiz',
+    // Tanda 2 — generación y refinamiento del sermón (GeminiAIService).
+    'sermon.generateSermon',
+    'sermon.generateOutline',
+    'sermon.expandSection',
+    'sermon.suggestReferences',
+    'sermon.refineContent',
+    'sermon.titleSuggestions',
+    'sermon.validateContext',
 ] as const;
 
 const MAX_PROMPT_CHARS = 200_000;
@@ -149,6 +170,28 @@ export const runLlmPrompt = onCall(
 
         // Camino normal, vía el port: el adapter mide tokens → USD y los atribuye
         // a esta feature y a este usuario.
+        // Camino con SAFETY explícito: el port no expone safetySettings, así que
+        // acá se usa el SDK y se mide a mano (mismo trato que fileSearch).
+        if (data.safety === 'standard') {
+            try {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const safeModel = genAI.getGenerativeModel({ model, safetySettings: STANDARD_SAFETY });
+                const result = await safeModel.generateContent(prompt);
+                const meta = result.response.usageMetadata;
+                void recordLlmUsage({
+                    model,
+                    feature,
+                    userId: uid,
+                    inputTokens: meta?.promptTokenCount ?? 0,
+                    outputTokens: meta?.candidatesTokenCount ?? 0,
+                });
+                return { text: result.response.text() };
+            } catch (err) {
+                console.error(`[runLlmPrompt] ${feature} (safety) falló`, err);
+                throw new HttpsError('internal', err instanceof Error ? err.message : 'runLlmPrompt failed');
+            }
+        }
+
         const llm = new GeminiLlmClient(apiKey, model, { feature, userId: uid });
         try {
             const text = await llm.generate({

@@ -64,7 +64,7 @@ export function useDraftRefinement({
                 if (!apiKey) {
                     throw new Error('API key not configured');
                 }
-                const aiService = new GeminiAIService(apiKey);
+                const aiService = new GeminiAIService();
 
                 let currentContextStr = '';
                 if (expandedSectionId && draft) {

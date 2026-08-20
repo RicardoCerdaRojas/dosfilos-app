@@ -28,6 +28,12 @@ export interface CallableLlmOptions {
      * aplica: con tools el modelo devuelve texto y el llamador limpia el JSON.
      */
     fileSearchStoreId?: string;
+    /**
+     * `'standard'` aplica los umbrales de seguridad explícitos que traía la ruta
+     * directa del generador. Se pide explícito para no cambiar el filtrado del
+     * modelo sin querer.
+     */
+    safety?: 'standard';
 }
 
 export async function runLlmPrompt(options: CallableLlmOptions): Promise<string> {
