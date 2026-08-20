@@ -80,10 +80,11 @@ refleja en el uso.
 > quedan como fallback de los seeds anteriores al campo. **Los sermones siguen sin `origin`** — esa mitad de la
 > partición sigue siendo proxy (tag `AI Generated` + enlace a seed). Pendiente.
 
-## 🔴 PRIORIDAD ALTA — Sacar la clave de Gemini del navegador
+## ✅ CERRADA 2026-08-20 — Sacar la clave de Gemini del navegador
 
 **Descubierto:** 2026-08-19, levantando el terreno para la gestión de costos.
-**Estado:** pendiente. Arranca al cerrar la capa de "actuar" sobre costos.
+**Estado:** ✅ **CERRADA 2026-08-20.** Los cinco criterios verificados (ver abajo).
+La credencial expuesta fue **rotada y eliminada**, no solo reemplazada.
 **Por qué encabeza la lista:** es el único pendiente del plan que es a la vez un
 problema de **seguridad**, de **costo** y de **medición**.
 
@@ -138,46 +139,57 @@ y aparecen en el panel. Queda la tanda de exégesis y un barrido final.
 | #428 | Embeddings | callable `embedTexts` (tokens estimados: `embedContent` no devuelve `usageMetadata`) |
 | #429 | Contrato del proxy completo | `responseSchema`, `topP`, `maxOutputTokens` hasta 65.536 |
 
-#### Lo que falta
+#### Cómo cerró
 
-**A. La tanda de exégesis — 18 adapters** en `packages/infrastructure/src/exegesis/`,
-alcanzados desde `ExegesisService.ts` y `SeriesService.ts`. Es el bloque grande y
-el último de verdad. El contrato del servidor **ya soporta todo lo que necesitan**
-(#429): no falta backend, falta traducir los 18 sitios.
+Las 18 adapters de exégesis se migraron a mano, en tandas (#430, #431, #432), más
+el barrido final (#433) y la limpieza de interruptores (#434).
 
-> **Regla no negociable: archivo por archivo, leyendo cada uno antes de tocarlo.**
-> El intento mecánico ya falló dos veces. Parecen homogéneos desde fuera, pero el
-> `responseSchema` es un objeto inline de decenas de líneas distinto en cada
-> archivo, y varias llamadas van envueltas en `withGeminiRetry(() => …)`, así que
-> el punto de reemplazo no es el mismo.
->
-> Lo que no se puede perder al traducir — cada uno es una regresión **silenciosa**,
-> sin error:
-> - `responseSchema`: perderlo no rompe, devuelve texto peor formado.
-> - `topP`: fijado explícito en casi todos (0.85 / 0.9).
-> - `maxOutputTokens`: `composer/GeminiAcademicComposer` usa **65.536**; con un cap
->   menor el paper sale recortado a la mitad y nadie se entera.
-> - El modelo por defecto de varios es `gemini-2.5-pro`, **no** flash: pasarlo
->   explícito o el precio y el panel quedan mal.
+**El hallazgo que casi cuesta una caída de prod:** al verificar antes de borrar la
+clave apareció que `VITE_GEMINI_API_KEY` y el secret `GEMINI_API_KEY` del servidor
+**eran el mismo valor**. Dos consecuencias:
 
-**B. Barrido final** (fuera de exégesis):
-`ContentRefinementService`, `PlannerChatService`, `SermonRepurposeService`,
-`LibraryService`, `GeneratorChatService` (File Search), `GeminiPlanGenerator` (vía
-`SeriesService`), y en web: `library-context.tsx`, `useSermonStepChat.ts`,
-`useDraftRefinement.ts`, `useHomileticsRefinement.ts`, `CoreLibraryAdmin.tsx`,
-`coreLibraryService.ts`.
+1. Ejecutar el criterio de cierre literalmente ("borrar la clave del cliente")
+   habría tumbado los 23 callables que declaran ese secret.
+2. La exposición era peor de lo que decía este documento. No era "un tercero puede
+   quemar cuota del navegador": la clave pública en el bundle durante meses **era la
+   credencial del backend**.
 
-**C. Trampa al borrar la variable** ⚠️ — `AIService.ts` y `SermonGeneratorService.ts`
-ya tienen el adapter migrado, pero **siguen leyendo la clave como interruptor**:
-`isAvailable()` devuelve `!!apiKey`, y `SermonGeneratorService` solo instancia
-`documentProcessor` `if (apiKey)`. Si se borra la variable antes de limpiar estos
-dos, las features quedan **apagadas en silencio**, sin error y sin log. Limpiar
-estos gates es parte del criterio de cierre, no un detalle cosmético.
+Por eso el cierre no fue borrar, sino **rotar** (#435):
 
-**Criterio de cierre:** `grep -r VITE_GEMINI_API_KEY packages/` no devuelve nada
-(incluidos los dos `env.d.ts` y los gates vestigiales del punto C), la variable
-sale de `deploy-production.yml` y `deploy-preview.yml`, y la clave del cliente se
-**elimina** en Cloud Console — no se deja restringida, se borra.
+1. Clave nueva, solo servidor, creada y canalizada directo a Secret Manager por un
+   pipe — el valor nunca pasó por pantalla ni por el portapapeles.
+2. Versión 4 del secret.
+3. **Redeploy de functions.** Firebase FIJA la versión del secret en el deploy;
+   agregar la versión no basta. Este es el paso que se olvida.
+4. Verificación en prod con tráfico real: `facultyChat`, `hebrewTutor_analyzeVerse`,
+   `exegesis_analyzeVerse` (en `gemini-2.5-pro`) y cuatro features de sermón, todas
+   registrando en el panel después del deploy.
+5. Recién ahí, borrado de la clave vieja.
+
+#### Verificación de cierre (2026-08-20)
+
+| # | Criterio | Estado |
+|---|---|---|
+| 1 | `grep -rn VITE_GEMINI_API_KEY packages/*/src` | ✅ vacío |
+| 2 | Fuera de `deploy-production.yml` y `deploy-preview.yml` | ✅ |
+| 3 | Fuera de `.env.example` y `.env.local` | ✅ |
+| 4 | Secret `VITE_GEMINI_API_KEY` borrado en GitHub | ✅ |
+| 5 | Clave `dosfilosapp` (uid `025c013a-…`) eliminada en GCP | ✅ |
+
+Además: barrido del bundle desplegado (`index.js` + los 317 chunks de
+`app.preach.dosfilos.com`) sin rastro de la clave. La única `AIza` que queda es la
+de Firebase, pública por diseño.
+
+#### Lo que queda, ya sin urgencia
+
+- **El SDK de Gemini sigue empaquetado en el navegador**, arrastrado por el enum
+  `SchemaType` que importan tres esquemas de exégesis, por `GeminiMultiAgentService`
+  (que `SseMultiAgentService` construye con `''` solo para reusar sus prompts) y por
+  dos archivos muertos que nadie construye: `GeminiFileSearchService` y
+  `GeminiPastoralWordStudyService`. Sin clave no hace nada; es peso muerto y una
+  puerta de reentrada.
+- Cuatro scripts de `scripts/` leen `process.env.GEMINI_API_KEY`. No la traen
+  adentro, la toman del entorno — hay que exportar la nueva al correrlos.
 
 **Patrón a seguir:** el port `ILlmClient` + adapters ya existen en `functions`, y
 desde la PR del medidor **cada callable que se migra queda medido gratis** — la
@@ -413,6 +425,9 @@ Olas 5, 7 y 8 cuelgan del camino sin bloquearlo.
 | Fecha | Ola | Qué pasó |
 |---|---|---|
 | 2026-08-17 | — | Plan creado tras auditoría del estado real. |
+| 2026-08-20 | ✅ | **Track de la clave CERRADO.** Los 5 criterios verificados. Hallazgo que cambió el cierre: la clave del navegador y el secret del servidor eran **el mismo valor** → no se borró, se **rotó** (#435: clave nueva → secret v4 → redeploy → verificación con tráfico real → borrado de la vieja). Secret de GitHub borrado, `.env` limpios, clave eliminada en GCP. |
+| 2026-08-20 | ✅ | Exégesis migrada a mano en tandas (#430, #431, #432) + barrido final (#433) + limpieza de interruptores (#434). |
+| 2026-08-20 | 🐛 | Crash de `ExegesisPaperPage` encontrado probando la rotación — **no era de la rotación**: regresión de #296. La página leía el paper de la lista recortada (`sources` fuera del payload). Fix: usar `useExegesisPaper`, que ya existía (#436). `tsc` ya reportaba el error exacto en la línea 104; nadie lo vio porque **web no se typechequea en CI** (Ola 8). Bug reportado y no leído. |
 | 2026-08-20 | 🔴 | **Migración de la clave, ~60% cerrada.** Conversacionales (griego, hebreo, Faculty vía SSE) + `GeminiSermonGenerator` completo + extracción de PDFs + embeddings, todo en prod y medido (#417–#429). Falta la tanda de exégesis (18 adapters, contrato listo) + barrido final. |
 | 2026-08-20 | 🔴 | Contrato del proxy completo (#429): `responseSchema`, `topP`, `maxOutputTokens` hasta 65.536. Descubierto de paso: el cap anterior (32.768) le habría recortado el paper académico a la mitad **en silencio**. |
 | 2026-08-19 | 🔴 | Medidor de costo en pie: `llmUsageDaily`/`Monthly`, panel admin, presupuesto como dato, alertas 50/80/100%, cortacircuito de sombra. Números: sermón ≈ USD 0,02, factura real ≈ USD 2/mes → el costo no es restricción; el medidor sirve para **detectar fugas**. |
