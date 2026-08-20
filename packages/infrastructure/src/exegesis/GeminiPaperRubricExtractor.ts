@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI, type Part } from '@google/generative-ai';
 import {
     type ExtractRubricInput,
     type ExtractedRubric,
@@ -10,6 +9,7 @@ import {
     SOURCE_TYPE_GROUPS,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from './geminiRetry';
+import { runLlmPromptWithUsage } from '../llm/callableLlm';
 
 /**
  * Gemini implementation of `IPaperRubricExtractor`.
@@ -36,27 +36,14 @@ import { withGeminiRetry } from './geminiRetry';
  * fall back to the system default rubric or surface the error.
  */
 export class GeminiPaperRubricExtractor implements IPaperRubricExtractor {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
     async extract(input: ExtractRubricInput): Promise<ExtractedRubric> {
         const { systemInstruction, userMessage } = buildExtractionPrompt(input);
-
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
-                responseMimeType: 'application/json',
-                temperature: 0.2, // Low — extraction is deterministic, not creative.
-                topP: 0.9,
-                maxOutputTokens: 8192,
-            },
-        });
 
         console.log('[GeminiPaperRubricExtractor] extracting', {
             language: input.language,
@@ -70,37 +57,40 @@ export class GeminiPaperRubricExtractor implements IPaperRubricExtractor {
         // instructions so Gemini Vision parses the rubric directly from
         // the picture. Skips the PDF-text-extraction roundtrip that
         // breaks for screenshots and clipboard pastes.
-        const requestParts: string | Part[] = input.inlineImage
-            ? [
-                { text: userMessage },
-                {
-                    inlineData: {
-                        mimeType: input.inlineImage.mimeType,
-                        data: input.inlineImage.base64,
-                    },
-                },
-            ] as Part[]
-            : userMessage;
-
+        //
+        // Es el ÚNICO adapter multimodal de exégesis; el resto es texto→texto.
+        // El proxy arma las `parts` del lado del servidor a partir de este
+        // campo — acá ya no se construyen a mano.
+        //
         // Pro 2.5 hits intermittent 503s ("model experiencing high demand")
         // during peak windows. Retry transparently with exponential
         // backoff before surfacing the failure to the user.
-        const result = await withGeminiRetry(
-            () => model.generateContent(requestParts),
+        const { text: rawJson, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.extractRubric',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                responseMimeType: 'application/json',
+                temperature: 0.2, // Low — extraction is deterministic, not creative.
+                topP: 0.9,
+                maxOutputTokens: 8192,
+                ...(input.inlineImage
+                    ? {
+                        inlineImage: {
+                            mimeType: input.inlineImage.mimeType,
+                            base64: input.inlineImage.base64,
+                        },
+                    }
+                    : {}),
+            }),
             { contextLabel: 'GeminiPaperRubricExtractor' },
         );
-        const response = result.response;
-        const rawJson = response.text();
 
         const parsed = parseExtractorJson(rawJson);
         const rubric = mapToDomain(parsed, input);
         const confidence = inferConfidence(parsed);
         const reviewNotes = collectReviewNotes(parsed, input.language);
-
-        const usage = response.usageMetadata;
-        const totalTokens = usage?.totalTokenCount;
-        const summed = (usage?.promptTokenCount ?? 0) + (usage?.candidatesTokenCount ?? 0);
-        const tokensUsed = typeof totalTokens === 'number' ? totalTokens : (summed > 0 ? summed : null);
 
         return {
             rubric,

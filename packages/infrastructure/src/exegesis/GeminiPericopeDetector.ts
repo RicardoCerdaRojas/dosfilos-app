@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     type DetectedPericope,
     type IPericopeDetector,
@@ -8,6 +7,7 @@ import {
     type SyntacticUnit,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from './geminiRetry';
+import { runLlmPromptWithUsage } from '../llm/callableLlm';
 
 const PROMPT_VERSION = 'v1';
 
@@ -36,11 +36,9 @@ const PROMPT_VERSION = 'v1';
  * detector does NOT cache.
  */
 export class GeminiPericopeDetector implements IPericopeDetector {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
@@ -51,10 +49,19 @@ export class GeminiPericopeDetector implements IPericopeDetector {
         );
         const userMessage = buildUserMessage(input);
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
+        console.log('[GeminiPericopeDetector] detecting', {
+            book: input.book,
+            language: input.originalLanguage,
+            verseCount: input.originalText.length,
+            targetCount: input.targetPericopeCount ?? null,
+        });
+
+        const { text: raw, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.detectPericopes',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
                 maxOutputTokens: 8192,
                 temperature: 0.3,
                 topP: 0.85,
@@ -86,23 +93,10 @@ export class GeminiPericopeDetector implements IPericopeDetector {
                         },
                     },
                     required: ['pericopes'],
-                } as any,
-            },
-        });
-
-        console.log('[GeminiPericopeDetector] detecting', {
-            book: input.book,
-            language: input.originalLanguage,
-            verseCount: input.originalText.length,
-            targetCount: input.targetPericopeCount ?? null,
-        });
-
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+                },
+            }),
             { contextLabel: 'GeminiPericopeDetector' },
         );
-        const response = result.response;
-        const raw = response.text();
 
         let parsed: { pericopes?: unknown };
         try {
@@ -119,12 +113,6 @@ export class GeminiPericopeDetector implements IPericopeDetector {
                 'GeminiPericopeDetector returned zero valid pericopes',
             );
         }
-
-        const usage = response.usageMetadata;
-        const totalTokens = usage?.totalTokenCount;
-        const summed = (usage?.promptTokenCount ?? 0) + (usage?.candidatesTokenCount ?? 0);
-        const tokensUsed =
-            typeof totalTokens === 'number' ? totalTokens : summed > 0 ? summed : null;
 
         const inputHash = hashInput(input);
         return {

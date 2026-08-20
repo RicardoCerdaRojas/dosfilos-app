@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
     type ExtractStyleManifestInput,
     type ExtractedStyleManifest,
@@ -7,6 +6,7 @@ import {
     type FootnoteExample,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from './geminiRetry';
+import { runLlmPromptWithUsage } from '../llm/callableLlm';
 
 /**
  * Gemini implementation of `IStyleGuideManifestExtractor`.
@@ -33,47 +33,36 @@ import { withGeminiRetry } from './geminiRetry';
  * `OverloadedError` so the UI shows the right toast.
  */
 export class GeminiStyleGuideManifestExtractor implements IStyleGuideManifestExtractor {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
     async extract(input: ExtractStyleManifestInput): Promise<ExtractedStyleManifest> {
         const { systemInstruction, userMessage } = buildExtractionPrompt(input);
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            generationConfig: {
-                responseMimeType: 'application/json',
-                temperature: 0.2,
-                topP: 0.9,
-                maxOutputTokens: 8192,
-            },
-        });
-
         console.log('[GeminiStyleGuideManifestExtractor] extracting', {
             language: input.language,
             rawTextChars: input.rawText.length,
         });
 
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+        const { text: rawJson, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.extractStyleManifest',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                responseMimeType: 'application/json',
+                temperature: 0.2,
+                topP: 0.9,
+                maxOutputTokens: 8192,
+            }),
             { contextLabel: 'GeminiStyleGuideManifestExtractor' },
         );
-        const response = result.response;
-        const rawJson = response.text();
 
         const parsed = parseExtractorJson(rawJson);
         const manifest = mapToDomain(parsed, this.modelName);
-
-        const usage = response.usageMetadata;
-        const totalTokens = usage?.totalTokenCount;
-        const summed = (usage?.promptTokenCount ?? 0) + (usage?.candidatesTokenCount ?? 0);
-        const tokensUsed = typeof totalTokens === 'number' ? totalTokens : (summed > 0 ? summed : null);
 
         return {
             manifest,

@@ -41,12 +41,20 @@ export interface CallableLlmOptions {
      * formadas, que es mucho más difícil de detectar que un fallo.
      */
     responseSchema?: unknown;
+    /**
+     * Imagen enviada junto al prompt (extracción de rúbricas desde una foto o
+     * un pantallazo). Es el único adapter de exégesis que es multimodal; el
+     * resto es texto→texto.
+     */
+    inlineImage?: { mimeType: string; base64: string };
 }
 
 interface LlmProxyResponse {
     text: string;
     /** Consumo total informado por el modelo, o `null` si no vino. */
     tokens: number | null;
+    /** `finishReason` del candidato, o `null` si el camino no lo expone. */
+    finishReason: string | null;
 }
 
 /**
@@ -70,6 +78,13 @@ export interface CallableLlmTransport {
 export interface CallableLlmResult {
     text: string;
     tokensUsed: number | null;
+    /**
+     * Por qué paró el modelo. Distingue "vino vacío porque safety lo bloqueó"
+     * de "vino vacío porque se truncó en MAX_TOKENS" — el asistente expositivo
+     * arma su mensaje de error con esto, y sin la distinción ambos casos
+     * saldrían como un genérico "non-JSON output".
+     */
+    finishReason: string | null;
 }
 
 /**
@@ -91,7 +106,11 @@ export async function runLlmPromptWithUsage(
         transport.timeoutMs ? { timeout: transport.timeoutMs } : undefined,
     );
     const res = await callable(options);
-    return { text: res.data?.text ?? '', tokensUsed: res.data?.tokens ?? null };
+    return {
+        text: res.data?.text ?? '',
+        tokensUsed: res.data?.tokens ?? null,
+        finishReason: res.data?.finishReason ?? null,
+    };
 }
 
 export async function runLlmPrompt(

@@ -58,10 +58,9 @@ export class SeriesService {
         // entry point that routes to the right instance). v1.5 will fold
         // both into a single use case once the bible repository abstracts
         // language selection internally.
-        const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
         const exegesisModelId =
             (import.meta as any).env?.VITE_GEMINI_VISION_MODEL_ID || 'gemini-2.5-pro';
-        const detector = new GeminiPericopeDetector(apiKey || '', exegesisModelId);
+        const detector = new GeminiPericopeDetector(exegesisModelId);
         this.bibleRepoEs = new RVR1960Repository();
         this.bibleRepoEn = new ASVRepository();
         this.detectPericopes = new DetectPericopesUseCase(this.bibleRepoEs, detector);
@@ -85,7 +84,7 @@ export class SeriesService {
         // same book in the same language only pay the LLM cost once
         // for the canonical structural analysis. Pases 4-5 pass
         // through unchanged (per-pastor homiletical decisions).
-        const geminiExpositoryAssistant = new GeminiExpositoryAssistant(apiKey || '', exegesisModelId);
+        const geminiExpositoryAssistant = new GeminiExpositoryAssistant(exegesisModelId);
         const expositoryCacheRepo = new FirestoreExpositoryAssistantCacheRepository();
         const cachedExpositoryAssistant = new CachedExpositoryAssistant(
             geminiExpositoryAssistant,

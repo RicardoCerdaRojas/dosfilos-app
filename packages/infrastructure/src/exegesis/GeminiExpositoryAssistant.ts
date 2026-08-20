@@ -1,10 +1,4 @@
 import {
-    GoogleGenerativeAI,
-    HarmBlockThreshold,
-    HarmCategory,
-    type SafetySetting,
-} from '@google/generative-ai';
-import {
     type BookPanorama,
     type ExegeticalUnit,
     type FidelityInput,
@@ -22,6 +16,7 @@ import {
     type SuperMacroSection,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from './geminiRetry';
+import { runLlmPromptWithUsage } from '../llm/callableLlm';
 import {
     buildPanoramaSystemInstruction,
     buildPanoramaUserMessage,
@@ -104,11 +99,9 @@ type ValidMacroFunction = typeof VALID_MACRO_FUNCTIONS[number];
  * their commit lands so the type system remains complete.
  */
 export class GeminiExpositoryAssistant implements IExpositoryAssistant {
-    private genAI: GoogleGenerativeAI;
     private modelName: string;
 
-    constructor(apiKey: string, modelName?: string) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
+    constructor(modelName?: string) {
         this.modelName = modelName || 'gemini-2.5-pro';
     }
 
@@ -118,20 +111,6 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         const systemInstruction = buildPanoramaSystemInstruction(input.displayLanguage);
         const userMessage = buildPanoramaUserMessage(input);
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            safetySettings: EXPOSITORY_SAFETY_SETTINGS as SafetySetting[],
-            generationConfig: {
-                // Pro 2.5 rejects thinkingBudget: 0; default budget is fine.
-                maxOutputTokens: 4096,
-                temperature: 0.4,
-                topP: 0.9,
-                responseMimeType: 'application/json',
-                responseSchema: PANORAMA_RESPONSE_SCHEMA as any,
-            },
-        });
-
         console.log('[GeminiExpositoryAssistant] runPanorama', {
             book: input.book,
             language: input.displayLanguage,
@@ -139,12 +118,25 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
             targetCount: input.targetPreachableCount ?? null,
         });
 
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+        const { text: raw, finishReason, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.expository.panorama',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                // Los mismos umbrales que traía `EXPOSITORY_SAFETY_SETTINGS`,
+                // que eran idénticos a los del proxy.
+                safety: 'standard',
+                // Pro 2.5 rejects thinkingBudget: 0; default budget is fine.
+                maxOutputTokens: 4096,
+                temperature: 0.4,
+                topP: 0.9,
+                responseMimeType: 'application/json',
+                responseSchema: PANORAMA_RESPONSE_SCHEMA,
+            }),
             { contextLabel: 'GeminiExpositoryAssistant.runPanorama' },
         );
-        const response = result.response;
-        const raw = readResponseTextOrThrow(response, 'panorama');
+        assertUsableResponse(raw, finishReason, 'panorama');
 
         const parsed = parseJsonOrThrow(raw, 'panorama');
         const payload = normalizePanorama(parsed);
@@ -152,7 +144,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         return {
             payload,
             modelId: this.modelName,
-            tokensUsed: extractTokens(response.usageMetadata),
+            tokensUsed,
             passVersion: this.passVersion('panorama', input),
         };
     }
@@ -163,19 +155,6 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         const systemInstruction = buildSuperMacroSystemInstruction(input.displayLanguage);
         const userMessage = buildSuperMacroUserMessage(input);
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            safetySettings: EXPOSITORY_SAFETY_SETTINGS as SafetySetting[],
-            generationConfig: {
-                maxOutputTokens: 4096,
-                temperature: 0.3,
-                topP: 0.9,
-                responseMimeType: 'application/json',
-                responseSchema: SUPER_MACRO_RESPONSE_SCHEMA as any,
-            },
-        });
-
         console.log('[GeminiExpositoryAssistant] runSuperMacroStructure', {
             book: input.book,
             language: input.displayLanguage,
@@ -183,12 +162,24 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
             panoramaGenre: input.panorama.genre,
         });
 
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+        const { text: raw, finishReason, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.expository.superMacro',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                // Los mismos umbrales que traía `EXPOSITORY_SAFETY_SETTINGS`,
+                // que eran idénticos a los del proxy.
+                safety: 'standard',
+                maxOutputTokens: 4096,
+                temperature: 0.3,
+                topP: 0.9,
+                responseMimeType: 'application/json',
+                responseSchema: SUPER_MACRO_RESPONSE_SCHEMA,
+            }),
             { contextLabel: 'GeminiExpositoryAssistant.runSuperMacroStructure' },
         );
-        const response = result.response;
-        const raw = readResponseTextOrThrow(response, 'superMacroStructure');
+        assertUsableResponse(raw, finishReason, 'superMacroStructure');
 
         const parsed = parseJsonOrThrow(raw, 'superMacroStructure');
         const payload = normalizeSuperMacroSections(parsed);
@@ -196,7 +187,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         return {
             payload,
             modelId: this.modelName,
-            tokensUsed: extractTokens(response.usageMetadata),
+            tokensUsed,
             passVersion: this.passVersion('super-macro', input),
         };
     }
@@ -205,11 +196,22 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         const systemInstruction = buildMacroSystemInstruction(input.displayLanguage);
         const userMessage = buildMacroUserMessage(input);
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            safetySettings: EXPOSITORY_SAFETY_SETTINGS as SafetySetting[],
-            generationConfig: {
+        console.log('[GeminiExpositoryAssistant] runMacroStructure', {
+            book: input.book,
+            language: input.displayLanguage,
+            verseCount: input.verses.length,
+            panoramaGenre: input.panorama.genre,
+        });
+
+        const { text: raw, finishReason, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.expository.macro',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                // Los mismos umbrales que traía `EXPOSITORY_SAFETY_SETTINGS`,
+                // que eran idénticos a los del proxy.
+                safety: 'standard',
                 // Bumped from 4096 → 8192 to match micro/fidelity. The
                 // 4096 ceiling was tight for books with many macro
                 // sections + verbose justification fields, occasionally
@@ -219,23 +221,11 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
                 temperature: 0.3,
                 topP: 0.9,
                 responseMimeType: 'application/json',
-                responseSchema: MACRO_RESPONSE_SCHEMA as any,
-            },
-        });
-
-        console.log('[GeminiExpositoryAssistant] runMacroStructure', {
-            book: input.book,
-            language: input.displayLanguage,
-            verseCount: input.verses.length,
-            panoramaGenre: input.panorama.genre,
-        });
-
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+                responseSchema: MACRO_RESPONSE_SCHEMA,
+            }),
             { contextLabel: 'GeminiExpositoryAssistant.runMacroStructure' },
         );
-        const response = result.response;
-        const raw = readResponseTextOrThrow(response, 'macroStructure');
+        assertUsableResponse(raw, finishReason, 'macroStructure');
 
         const parsed = parseJsonOrThrow(raw, 'macroStructure');
         const payload = normalizeMacroSections(parsed);
@@ -243,7 +233,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         return {
             payload,
             modelId: this.modelName,
-            tokensUsed: extractTokens(response.usageMetadata),
+            tokensUsed,
             passVersion: this.passVersion('macro', input),
         };
     }
@@ -254,19 +244,6 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         const systemInstruction = buildMicroSystemInstruction(input.panorama.genre, input.displayLanguage);
         const userMessage = buildMicroUserMessage(input);
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            safetySettings: EXPOSITORY_SAFETY_SETTINGS as SafetySetting[],
-            generationConfig: {
-                maxOutputTokens: 8192,
-                temperature: 0.3,
-                topP: 0.9,
-                responseMimeType: 'application/json',
-                responseSchema: MICRO_RESPONSE_SCHEMA as any,
-            },
-        });
-
         console.log('[GeminiExpositoryAssistant] runMicroStructure', {
             book: input.book,
             language: input.displayLanguage,
@@ -275,12 +252,24 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
             verseCount: input.verses.length,
         });
 
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+        const { text: raw, finishReason, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.expository.micro',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                // Los mismos umbrales que traía `EXPOSITORY_SAFETY_SETTINGS`,
+                // que eran idénticos a los del proxy.
+                safety: 'standard',
+                maxOutputTokens: 8192,
+                temperature: 0.3,
+                topP: 0.9,
+                responseMimeType: 'application/json',
+                responseSchema: MICRO_RESPONSE_SCHEMA,
+            }),
             { contextLabel: 'GeminiExpositoryAssistant.runMicroStructure' },
         );
-        const response = result.response;
-        const raw = readResponseTextOrThrow(response, 'microStructure');
+        assertUsableResponse(raw, finishReason, 'microStructure');
 
         const parsed = parseJsonOrThrow(raw, 'microStructure');
         const validMacroIds = new Set(input.macroSections.map((m) => m.id));
@@ -289,7 +278,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         return {
             payload,
             modelId: this.modelName,
-            tokensUsed: extractTokens(response.usageMetadata),
+            tokensUsed,
             passVersion: this.passVersion('micro', input),
         };
     }
@@ -300,11 +289,23 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         const systemInstruction = buildPreachableSystemInstruction(input.displayLanguage, input.strictMode === true);
         const userMessage = buildPreachableUserMessage(input);
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            safetySettings: EXPOSITORY_SAFETY_SETTINGS as SafetySetting[],
-            generationConfig: {
+        console.log('[GeminiExpositoryAssistant] runPreachableConversion', {
+            book: input.book,
+            language: input.displayLanguage,
+            macroCount: input.macroSections.length,
+            microCount: input.exegeticalUnits.length,
+            targetCount: input.targetPreachableCount ?? null,
+        });
+
+        const { text: raw, finishReason, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.expository.preachable',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                // Los mismos umbrales que traía `EXPOSITORY_SAFETY_SETTINGS`,
+                // que eran idénticos a los del proxy.
+                safety: 'standard',
                 // Larger budget — propositions are 2-3 sentences each
                 // and we may emit 8-20 preachable units.
                 maxOutputTokens: 16384,
@@ -315,24 +316,11 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
                 temperature: 0.5,
                 topP: 0.92,
                 responseMimeType: 'application/json',
-                responseSchema: PREACHABLE_RESPONSE_SCHEMA as any,
-            },
-        });
-
-        console.log('[GeminiExpositoryAssistant] runPreachableConversion', {
-            book: input.book,
-            language: input.displayLanguage,
-            macroCount: input.macroSections.length,
-            microCount: input.exegeticalUnits.length,
-            targetCount: input.targetPreachableCount ?? null,
-        });
-
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+                responseSchema: PREACHABLE_RESPONSE_SCHEMA,
+            }),
             { contextLabel: 'GeminiExpositoryAssistant.runPreachableConversion' },
         );
-        const response = result.response;
-        const raw = readResponseTextOrThrow(response, 'preachableConversion');
+        assertUsableResponse(raw, finishReason, 'preachableConversion');
 
         const parsed = parseJsonOrThrow(raw, 'preachableConversion');
         const validMicroIds = new Set(input.exegeticalUnits.map((u) => u.id));
@@ -341,7 +329,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         return {
             payload,
             modelId: this.modelName,
-            tokensUsed: extractTokens(response.usageMetadata),
+            tokensUsed,
             passVersion: this.passVersion('preachable', input),
         };
     }
@@ -352,11 +340,21 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         const systemInstruction = buildFidelitySystemInstruction(input.displayLanguage);
         const userMessage = buildFidelityUserMessage(input);
 
-        const model = this.genAI.getGenerativeModel({
-            model: this.modelName,
-            systemInstruction,
-            safetySettings: EXPOSITORY_SAFETY_SETTINGS as SafetySetting[],
-            generationConfig: {
+        console.log('[GeminiExpositoryAssistant] runFidelityReview', {
+            book: input.book,
+            language: input.displayLanguage,
+            preachableCount: input.preachableUnits.length,
+        });
+
+        const { text: raw, finishReason, tokensUsed } = await withGeminiRetry(
+            () => runLlmPromptWithUsage({
+                feature: 'exegesis.expository.fidelityReview',
+                model: this.modelName,
+                system: systemInstruction,
+                prompt: userMessage,
+                // Los mismos umbrales que traía `EXPOSITORY_SAFETY_SETTINGS`,
+                // que eran idénticos a los del proxy.
+                safety: 'standard',
                 maxOutputTokens: 8192,
                 // Lower temperature: this is critical audit work; we
                 // don't want creative invention of issues, we want
@@ -364,22 +362,11 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
                 temperature: 0.2,
                 topP: 0.85,
                 responseMimeType: 'application/json',
-                responseSchema: FIDELITY_RESPONSE_SCHEMA as any,
-            },
-        });
-
-        console.log('[GeminiExpositoryAssistant] runFidelityReview', {
-            book: input.book,
-            language: input.displayLanguage,
-            preachableCount: input.preachableUnits.length,
-        });
-
-        const result = await withGeminiRetry(
-            () => model.generateContent(userMessage),
+                responseSchema: FIDELITY_RESPONSE_SCHEMA,
+            }),
             { contextLabel: 'GeminiExpositoryAssistant.runFidelityReview' },
         );
-        const response = result.response;
-        const raw = readResponseTextOrThrow(response, 'fidelityReview');
+        assertUsableResponse(raw, finishReason, 'fidelityReview');
 
         const parsed = parseJsonOrThrow(raw, 'fidelityReview');
         const validUnitIds = new Set(input.preachableUnits.map((p) => p.id));
@@ -388,7 +375,7 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
         return {
             payload,
             modelId: this.modelName,
-            tokensUsed: extractTokens(response.usageMetadata),
+            tokensUsed,
             passVersion: this.passVersion('fidelity', input),
         };
     }
@@ -425,12 +412,6 @@ export class GeminiExpositoryAssistant implements IExpositoryAssistant {
  * enough for sermon/exegesis content while keeping a real safety
  * floor.
  */
-const EXPOSITORY_SAFETY_SETTINGS: ReadonlyArray<SafetySetting> = [
-    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
-    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
-    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
-    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
-];
 
 /**
  * Reads the response text defensively.
@@ -444,20 +425,24 @@ const EXPOSITORY_SAFETY_SETTINGS: ReadonlyArray<SafetySetting> = [
  * "false teachers / immorality / Sodom" content that trips
  * default-threshold safety filters).
  */
-function readResponseTextOrThrow(
-    response: { text: () => string; candidates?: ReadonlyArray<{ finishReason?: string; safetyRatings?: unknown }> },
-    passId: string,
-): string {
-    const candidate = response.candidates?.[0];
-    const finishReason = candidate?.finishReason;
-    const text = response.text() ?? '';
+/**
+ * Misma guarda que hacía `readResponseTextOrThrow` sobre el objeto de respuesta
+ * del SDK, ahora sobre lo que devuelve el proxy: el texto y el `finishReason`.
+ *
+ * Se conserva porque distingue dos fracasos que se ven igual desde afuera —
+ * "vino vacío porque safety lo bloqueó" y "vino vacío porque se truncó en
+ * MAX_TOKENS" — y esa distinción es la que dice si hay que tocar el prompt o
+ * subir el tope de salida. Sin ella, ambos casos caerían en el parser de JSON y
+ * saldrían como un genérico "non-JSON output".
+ *
+ * Los `safetyRatings` sí se pierden: viven en el candidato y el proxy no los
+ * expone. El `finishReason` ya dice si el bloqueo fue de seguridad.
+ */
+function assertUsableResponse(text: string, finishReason: string | null, passId: string): void {
     if (text.trim().length === 0) {
-        const detail = finishReason
-            ? `finishReason=${finishReason}`
-            : 'finishReason=unknown';
-        const safety = candidate?.safetyRatings ? ` safetyRatings=${JSON.stringify(candidate.safetyRatings)}` : '';
+        const detail = finishReason ? `finishReason=${finishReason}` : 'finishReason=unknown';
         throw new Error(
-            `GeminiExpositoryAssistant.${passId} returned empty content (${detail}${safety}). ` +
+            `GeminiExpositoryAssistant.${passId} returned empty content (${detail}). ` +
             `Likely safety-blocked or hit MAX_TOKENS — review prompt or relax safety thresholds.`,
         );
     }
@@ -469,7 +454,6 @@ function readResponseTextOrThrow(
             `[GeminiExpositoryAssistant] ${passId} non-STOP finishReason=${finishReason} (text length=${text.length})`,
         );
     }
-    return text;
 }
 
 function parseJsonOrThrow(raw: string, passId: string): any {
@@ -482,12 +466,6 @@ function parseJsonOrThrow(raw: string, passId: string): any {
     }
 }
 
-function extractTokens(usage: { totalTokenCount?: number; promptTokenCount?: number; candidatesTokenCount?: number } | undefined): number | null {
-    if (!usage) return null;
-    if (typeof usage.totalTokenCount === 'number') return usage.totalTokenCount;
-    const summed = (usage.promptTokenCount ?? 0) + (usage.candidatesTokenCount ?? 0);
-    return summed > 0 ? summed : null;
-}
 
 const VALID_GENRES: ReadonlyArray<LiteraryGenre> = [
     'epistle',

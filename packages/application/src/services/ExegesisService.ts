@@ -244,15 +244,16 @@ class ExegesisService {
     public verifySermonCitations: VerifySermonCitationsUseCase;
 
     constructor() {
-        const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
         // Reuse the vision model env var — both surfaces want Pro 2.5.
         // A dedicated `VITE_GEMINI_EXEGESIS_MODEL_ID` can split them later
         // if exegesis ends up needing a different tier.
         const exegesisModelId = (import.meta as any).env?.VITE_GEMINI_VISION_MODEL_ID || 'gemini-2.5-pro';
 
-        if (!apiKey) {
-            console.warn('Gemini API key not configured. Exegesis generation will be disabled.');
-        }
+        // Ya no se mira `VITE_GEMINI_API_KEY`: los 18 adapters salen por el
+        // proxy del servidor y la exégesis funciona sin clave en el navegador.
+        // El aviso que vivía acá pasó a ser mentira — y peor, un INTERRUPTOR:
+        // el día que se borre la variable, un gate así apaga la feature en
+        // silencio en vez de fallar.
 
         const paperRepository = new FirestoreExegeticalPaperRepository();
         const styleGuideRepository = new FirestoreUserStyleGuideRepository();
@@ -260,8 +261,8 @@ class ExegesisService {
         const userAssignmentBriefRepository = new FirestoreUserAssignmentBriefRepository();
         const libraryRepository = new FirebaseLibraryRepository();
         const orchestrator = new GeminiExegesisOrchestrator(exegesisModelId);
-        const rubricExtractor = new GeminiPaperRubricExtractor(apiKey || '', exegesisModelId);
-        const manifestExtractor = new GeminiStyleGuideManifestExtractor(apiKey || '', exegesisModelId);
+        const rubricExtractor = new GeminiPaperRubricExtractor(exegesisModelId);
+        const manifestExtractor = new GeminiStyleGuideManifestExtractor(exegesisModelId);
         const styleFormatter = new DeterministicStyleFormatter();
 
         // Adapt the broader library repository to the narrow content-reader
@@ -376,7 +377,7 @@ class ExegesisService {
         // to which generation step, populating
         // `paper.stepPlan.perStep[*].pinnedSources`. The orchestrator
         // then prioritizes those at generation time (flexible mode).
-        const stepCorpusPlanner = new GeminiStepCorpusPlanner(apiKey || '', exegesisModelId);
+        const stepCorpusPlanner = new GeminiStepCorpusPlanner(exegesisModelId);
         this.proposeStepCorpusAllocations = new ProposeStepCorpusAllocationsUseCase(
             paperRepository,
             stepCorpusPlanner,
@@ -543,10 +544,7 @@ class ExegesisService {
         // legacy sermon module; the use case persists a draft with
         // sourcePaperId set so the sermon detail view can deep-link back.
         const sermonRepository = new FirebaseSermonRepository();
-        const paperToSermonTransformer = new GeminiPaperToSermonTransformer(
-            apiKey || '',
-            exegesisModelId,
-        );
+        const paperToSermonTransformer = new GeminiPaperToSermonTransformer(exegesisModelId);
         // Series repo is wired so the use case can patch the
         // originating series' planned-sermon entry (draftId + status)
         // when the paper came from a pericope. Without this the
