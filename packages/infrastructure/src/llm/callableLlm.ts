@@ -22,6 +22,12 @@ export interface CallableLlmOptions {
     temperature?: number;
     maxOutputTokens?: number;
     model?: string;
+    /**
+     * Store de `fileSearch` (tutor de griego). Cuando viaja, el servidor usa el
+     * SDK con tools en vez del port — y `responseMimeType: application/json` NO
+     * aplica: con tools el modelo devuelve texto y el llamador limpia el JSON.
+     */
+    fileSearchStoreId?: string;
 }
 
 export async function runLlmPrompt(options: CallableLlmOptions): Promise<string> {
