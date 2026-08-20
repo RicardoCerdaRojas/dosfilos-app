@@ -1,6 +1,6 @@
 
 import { IGreekTutorService, IWordCacheRepository, TrainingUnit, GreekForm, UserResponse, MorphologyBreakdown, BiblicalPassage, PassageWord, UnitPreview } from '@dosfilos/domain';
-import { GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai';
+import { runLlmPrompt } from '../../llm/callableLlm';
 import { FORM_SELECTION_SYSTEM_PROMPT, buildFormSelectionPrompt } from './prompts/FormSelectionPrompt';
 import { TRAINING_UNIT_SYSTEM_PROMPT, buildTrainingUnitPrompt } from './prompts/TrainingUnitPrompt';
 import { FEEDBACK_SYSTEM_PROMPT, buildFeedbackPrompt } from './prompts/FeedbackPrompt';
@@ -12,49 +12,34 @@ import { getGeneralQuestionSystemInstruction, getContextualQuestionSystemInstruc
 import { GEMINI_CONFIG } from '../../gemini/config';
 
 export class GeminiGreekTutorService implements IGreekTutorService {
-    private genAI: GoogleGenerativeAI;
-    private model: GenerativeModel;
     private wordCache?: IWordCacheRepository;
 
-    constructor(apiKey: string, wordCache?: IWordCacheRepository) {
-        this.genAI = new GoogleGenerativeAI(apiKey);
-        this.model = this.genAI.getGenerativeModel({ model: GEMINI_CONFIG.MODEL_NAME });
+    /**
+     * Sin apiKey: las llamadas al modelo salen por el proxy del servidor
+     * (callable `runLlmPrompt`), que autentica, limita por usuario y mide el
+     * gasto. El prompt se sigue armando acá.
+     */
+    constructor(wordCache?: IWordCacheRepository) {
         this.wordCache = wordCache;
     }
 
-    private getModelWithTools(fileSearchStoreId?: string) {
-        if (fileSearchStoreId) {
-            return this.genAI.getGenerativeModel({
-                model: GEMINI_CONFIG.MODEL_NAME,
-                tools: [
-                    {
-                        // @ts-ignore - types might not be fully updated for fileSearch
-                        fileSearch: {
-                            fileSearchStoreNames: [fileSearchStoreId]
-                        }
-                    }
-                ],
-                // NOTE: Cannot use responseMimeType: "application/json" with Tools
-            });
-        }
-        return this.model;
-    }
 
     async identifyForms(passage: string, fileSearchStoreId?: string, config?: { basePrompt?: string; userPrompts?: string[] }, language: string = 'Spanish'): Promise<string[]> {
-        const model = this.getModelWithTools(fileSearchStoreId);
 
         const genConfig: any = {};
         if (!fileSearchStoreId) {
             genConfig.responseMimeType = "application/json";
         }
 
-        const result = await model.generateContent({
-            contents: [{ role: 'user', parts: [{ text: buildFormSelectionPrompt(passage, language) }] }],
-            systemInstruction: FORM_SELECTION_SYSTEM_PROMPT,
-            generationConfig: genConfig
+        const rawResult = await runLlmPrompt({
+            feature: 'greekTutor.identifyForms',
+            prompt: buildFormSelectionPrompt(passage, language),
+            system: FORM_SELECTION_SYSTEM_PROMPT,
+            model: GEMINI_CONFIG.MODEL_NAME,
+            ...(fileSearchStoreId ? { fileSearchStoreId } : {}),
         });
 
-        const text = result.response.text();
+        const text = rawResult;
         const parsed = JSON.parse(this.cleanJsonResponse(text));
 
         if (Array.isArray(parsed)) {
@@ -82,20 +67,21 @@ export class GeminiGreekTutorService implements IGreekTutorService {
     }
 
     async createTrainingUnit(form: string, passage: string, fileSearchStoreId?: string, config?: { basePrompt?: string; userPrompts?: string[] }, language: string = 'Spanish'): Promise<TrainingUnit> {
-        const model = this.getModelWithTools(fileSearchStoreId);
 
         const genConfig: any = {};
         if (!fileSearchStoreId) {
             genConfig.responseMimeType = "application/json";
         }
 
-        const result = await model.generateContent({
-            contents: [{ role: 'user', parts: [{ text: buildTrainingUnitPrompt(form, passage, language) }] }],
-            systemInstruction: TRAINING_UNIT_SYSTEM_PROMPT,
-            generationConfig: genConfig
+        const rawResult = await runLlmPrompt({
+            feature: 'greekTutor.createTrainingUnit',
+            prompt: buildTrainingUnitPrompt(form, passage, language),
+            system: TRAINING_UNIT_SYSTEM_PROMPT,
+            model: GEMINI_CONFIG.MODEL_NAME,
+            ...(fileSearchStoreId ? { fileSearchStoreId } : {}),
         });
 
-        const data = JSON.parse(this.cleanJsonResponse(result.response.text()));
+        const data = JSON.parse(this.cleanJsonResponse(rawResult));
 
         return {
             id: crypto.randomUUID(),
@@ -110,7 +96,6 @@ export class GeminiGreekTutorService implements IGreekTutorService {
     }
 
     async evaluateResponse(unit: TrainingUnit, userAnswer: string, fileSearchStoreId?: string, language: string = 'Spanish'): Promise<{ feedback: string; isCorrect: boolean; }> {
-        const model = this.getModelWithTools(fileSearchStoreId);
 
         const unitJson = JSON.stringify({
             identification: unit.identification,
@@ -123,17 +108,18 @@ export class GeminiGreekTutorService implements IGreekTutorService {
             genConfig.responseMimeType = "application/json";
         }
 
-        const result = await model.generateContent({
-            contents: [{ role: 'user', parts: [{ text: buildFeedbackPrompt(unitJson, userAnswer, language) }] }],
-            systemInstruction: FEEDBACK_SYSTEM_PROMPT,
-            generationConfig: genConfig
+        const rawResult = await runLlmPrompt({
+            feature: 'greekTutor.evaluateResponse',
+            prompt: buildFeedbackPrompt(unitJson, userAnswer, language),
+            system: FEEDBACK_SYSTEM_PROMPT,
+            model: GEMINI_CONFIG.MODEL_NAME,
+            ...(fileSearchStoreId ? { fileSearchStoreId } : {}),
         });
 
-        return JSON.parse(this.cleanJsonResponse(result.response.text()));
+        return JSON.parse(this.cleanJsonResponse(rawResult));
     }
 
     async explainMorphology(word: string, passage: string, fileSearchStoreId?: string, language: string = 'Spanish'): Promise<MorphologyBreakdown> {
-        const model = this.getModelWithTools(fileSearchStoreId);
 
         const genConfig: any = {};
         if (!fileSearchStoreId) {
@@ -141,13 +127,15 @@ export class GeminiGreekTutorService implements IGreekTutorService {
         }
 
         try {
-            const result = await model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: buildMorphologyBreakdownPrompt(word, passage, language) }] }],
-                systemInstruction: MORPHOLOGY_BREAKDOWN_SYSTEM_PROMPT,
-                generationConfig: genConfig
+            const rawResult = await runLlmPrompt({
+                feature: 'greekTutor.explainMorphology',
+                prompt: buildMorphologyBreakdownPrompt(word, passage, language),
+                system: MORPHOLOGY_BREAKDOWN_SYSTEM_PROMPT,
+                model: GEMINI_CONFIG.MODEL_NAME,
+                ...(fileSearchStoreId ? { fileSearchStoreId } : {}),
             });
 
-            const rawText = result.response.text();
+            const rawText = rawResult;
             const cleanedJson = this.cleanJsonResponse(rawText);
             let data: unknown;
             try {
@@ -210,7 +198,6 @@ export class GeminiGreekTutorService implements IGreekTutorService {
         fileSearchStoreId?: string,
         language: string = 'Spanish'
     ): Promise<string> {
-        const model = this.getModelWithTools(fileSearchStoreId);
 
         // Check if this is a general question (empty context)
         const isGeneralQuestion = !context.greekWord && !context.passage;
@@ -219,18 +206,17 @@ export class GeminiGreekTutorService implements IGreekTutorService {
             // General Greek question - no specific context
             const systemInstruction = getGeneralQuestionSystemInstruction(language);
 
-            const result = await model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: question }] }],
-                systemInstruction: systemInstruction,
-                generationConfig: {
-                    temperature: 0.7,
-                    topP: 0.95,
-                    topK: 40,
-                    maxOutputTokens: 8192, // Ensure complete responses
-                }
+            const rawResult = await runLlmPrompt({
+                feature: 'greekTutor.answerFreeQuestion',
+                prompt: question,
+                system: systemInstruction,
+                model: GEMINI_CONFIG.MODEL_NAME,
+                temperature: 0.7,
+                maxOutputTokens: 8192,
+                ...(fileSearchStoreId ? { fileSearchStoreId } : {}),
             });
 
-            return result.response.text();
+            return rawResult;
         }
 
         // Contextual question about specific word/passage
@@ -238,18 +224,17 @@ export class GeminiGreekTutorService implements IGreekTutorService {
         const contextPrompt = getContextualQuestionPrompt(context, question, language);
         const systemInstruction = getContextualQuestionSystemInstruction(language);
 
-        const result = await model.generateContent({
-            contents: [{ role: 'user', parts: [{ text: contextPrompt }] }],
-            systemInstruction: systemInstruction,
-            generationConfig: {
-                temperature: 0.7,
-                topP: 0.95,
-                topK: 40,
-                maxOutputTokens: 8192, // Ensure complete responses
-            }
+        const rawResult = await runLlmPrompt({
+            feature: 'greekTutor.answerFreeQuestion',
+            prompt: contextPrompt,
+            system: systemInstruction,
+            model: GEMINI_CONFIG.MODEL_NAME,
+            temperature: 0.7,
+            maxOutputTokens: 8192,
+            ...(fileSearchStoreId ? { fileSearchStoreId } : {}),
         });
 
-        return result.response.text();
+        return rawResult;
     }
 
     private cleanJsonResponse(text: string): string {
@@ -303,7 +288,6 @@ export class GeminiGreekTutorService implements IGreekTutorService {
     ): Promise<BiblicalPassage> {
         console.log('[GeminiGreekTutorService] Fetching passage text for:', reference);
 
-        const model = this.getModelWithTools(fileSearchStoreId);
 
         const genConfig: any = {};
         if (!fileSearchStoreId) {
@@ -311,13 +295,15 @@ export class GeminiGreekTutorService implements IGreekTutorService {
         }
 
         try {
-            const result = await model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: buildPassageTextPrompt(reference, language, bibleText) }] }],
-                systemInstruction: PASSAGE_TEXT_SYSTEM_PROMPT,
-                generationConfig: genConfig
+            const rawResult = await runLlmPrompt({
+                feature: 'greekTutor.answerFreeQuestion',
+                prompt: buildPassageTextPrompt(reference, language, bibleText),
+                system: PASSAGE_TEXT_SYSTEM_PROMPT,
+                model: GEMINI_CONFIG.MODEL_NAME,
+                ...(fileSearchStoreId ? { fileSearchStoreId } : {}),
             });
 
-            const data = JSON.parse(this.cleanJsonResponse(result.response.text()));
+            const data = JSON.parse(this.cleanJsonResponse(rawResult));
 
             // Validate and structure the response
             const passage: BiblicalPassage = {
@@ -386,7 +372,6 @@ export class GeminiGreekTutorService implements IGreekTutorService {
         // Cache miss - call Gemini API
         console.log('[GeminiGreekTutorService] Cache MISS, calling API:', word.greek);
 
-        const model = this.getModelWithTools(fileSearchStoreId);
 
         const genConfig: any = {};
         if (!fileSearchStoreId) {
@@ -394,13 +379,15 @@ export class GeminiGreekTutorService implements IGreekTutorService {
         }
 
         try {
-            const result = await model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: buildWordIdentificationPrompt(word.greek, context, language) }] }],
-                systemInstruction: WORD_IDENTIFICATION_SYSTEM_PROMPT,
-                generationConfig: genConfig
+            const rawResult = await runLlmPrompt({
+                feature: 'greekTutor.answerFreeQuestion',
+                prompt: buildWordIdentificationPrompt(word.greek, context, language),
+                system: WORD_IDENTIFICATION_SYSTEM_PROMPT,
+                model: GEMINI_CONFIG.MODEL_NAME,
+                ...(fileSearchStoreId ? { fileSearchStoreId } : {}),
             });
 
-            const data = JSON.parse(this.cleanJsonResponse(result.response.text()));
+            const data = JSON.parse(this.cleanJsonResponse(rawResult));
 
             const preview: UnitPreview = {
                 greekForm: {
@@ -460,20 +447,15 @@ export class GeminiGreekTutorService implements IGreekTutorService {
 
             // Use the model without tools for JSON response
             // (Tools conflict with JSON mode in Gemini)
-            const result = await this.model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.3, // Lower temperature for more deterministic syntax analysis
-                    topP: 0.95,
-                    topK: 40,
-                    maxOutputTokens: 16384, // Increased from 8192 to support 10+ verse passages
-                    // NOTE: responseMimeType JSON doesn't guarantee valid JSON in practice,
-                    // so we parse manually in the use case
-                }
+            // NOTA: responseMimeType JSON no garantiza JSON válido en la
+            // práctica, así que el use case sigue parseando a mano.
+            const text = await runLlmPrompt({
+                feature: 'greekTutor.analyzeSyntax',
+                prompt,
+                model: GEMINI_CONFIG.MODEL_NAME,
+                temperature: 0.3, // Bajo: el análisis sintáctico debe ser determinista.
+                maxOutputTokens: 16384, // Pasajes de 10+ versos necesitan espacio.
             });
-
-            const response = result.response;
-            const text = response.text();
 
             console.log('[GeminiGreekTutorService] Syntax analysis complete. Response length:', text.length);
 

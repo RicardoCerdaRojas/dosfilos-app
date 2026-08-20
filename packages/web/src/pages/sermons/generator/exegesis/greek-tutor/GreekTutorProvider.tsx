@@ -59,15 +59,14 @@ interface GreekTutorContextType {
 const GreekTutorContext = createContext<GreekTutorContextType | null>(null);
 
 export const GreekTutorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // Determine API Key from environment
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-    
+    // Sin clave: las llamadas al modelo salen por el proxy del servidor
+    // (callable `runLlmPrompt`), que autentica, limita por usuario y mide.
     // Instantiate Infrastructure (repository encapsulates the Firestore singleton)
     const wordCacheRepository = new FirestoreWordCacheRepository();
-    const greekTutorService = new GeminiGreekTutorService(apiKey, wordCacheRepository);
+    const greekTutorService = new GeminiGreekTutorService(wordCacheRepository);
     const sessionRepository = new FirestoreGreekSessionRepository();
     // Phase 3A: Quiz service (hybrid caching)
-    const quizService = new GeminiQuizService(apiKey, sessionRepository);
+    const quizService = new GeminiQuizService(sessionRepository);
 
     // Instantiate Application Use Cases
     const generateTrainingUnits = new GenerateTrainingUnitsUseCase(greekTutorService, sessionRepository);
