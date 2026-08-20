@@ -37,7 +37,7 @@ export class SermonGeneratorService {
 
         // Initialize services
         if (apiKey) {
-            this.documentProcessor = new DocumentProcessingService(apiKey);
+            this.documentProcessor = new DocumentProcessingService();
         }
     }
 

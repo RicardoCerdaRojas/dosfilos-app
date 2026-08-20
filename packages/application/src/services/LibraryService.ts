@@ -54,7 +54,7 @@ export class LibraryService {
         if (!this.ragService) {
             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
             if (apiKey) {
-                const embeddingService = new GeminiEmbeddingService(apiKey);
+                const embeddingService = new GeminiEmbeddingService();
                 const vectorRepository = new FirestoreVectorRepository();
                 const cacheService = new MemoryCacheService();
                 this.ragService = new RAGService(embeddingService, vectorRepository, cacheService);

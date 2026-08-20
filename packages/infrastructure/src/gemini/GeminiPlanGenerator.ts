@@ -24,7 +24,7 @@ export class GeminiPlanGenerator implements IPlanGenerator {
             model: GEMINI_CONFIG.MODEL_NAME,
             generationConfig: GEMINI_CONFIG.GENERATION_CONFIG,
         });
-        this.documentProcessor = new DocumentProcessingService(apiKey);
+        this.documentProcessor = new DocumentProcessingService();
     }
 
     async generateSeriesObjective(request: PlanGenerationRequest): Promise<SeriesObjective> {

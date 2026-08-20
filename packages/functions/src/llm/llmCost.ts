@@ -24,6 +24,10 @@ export const LLM_PRICING: Record<string, ModelPricing> = {
     'gemini-2.0-flash': { inputPer1M: 0.1, outputPer1M: 0.4 },
     'claude-sonnet-4-6': { inputPer1M: 3, outputPer1M: 15 },
     'claude-haiku-4-5': { inputPer1M: 1, outputPer1M: 5 },
+    // Embeddings: solo cobran entrada. Sin precio propio caerían al respaldo
+    // caro y el panel mostraría el indexado de una biblioteca como si costara
+    // veinte veces lo que cuesta.
+    'gemini-embedding-001': { inputPer1M: 0.15, outputPer1M: 0 },
 };
 
 /**

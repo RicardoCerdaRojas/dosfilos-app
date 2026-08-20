@@ -41,7 +41,7 @@ export class ContentRefinementService {
             console.warn('Gemini API key not configured. Refinement features will be disabled.');
         }
         this.generator = new GeminiSermonGenerator();
-        this.documentProcessor = new DocumentProcessingService(apiKey || '');
+        this.documentProcessor = new DocumentProcessingService();
     }
 
     /**
