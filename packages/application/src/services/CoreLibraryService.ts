@@ -37,9 +37,33 @@ export class CoreLibraryService implements ICoreLibraryService {
     private initialized = false;
     private readonly CONFIG_PATH = 'config/coreLibraryStores';
 
+    /**
+     * `fileSearchService` es OPCIONAL a propósito.
+     *
+     * Los dos únicos métodos que lo usan — `recreateStores` y `createAllStores`
+     * — no los llama nadie: la creación de stores se hace del lado del servidor
+     * desde el panel de admin. El camino que sí corre en cada login es
+     * `initializeFromConfig()`, que solo lee configuración de Firestore.
+     *
+     * Exigirlo obligaba al composition root del navegador a construir un
+     * `GeminiFileSearchService` con la clave de Gemini en el bundle, solo para
+     * satisfacer una firma cuyo destino es inalcanzable. Se deja el parámetro
+     * (los métodos siguen ahí y podrían revivir) pero ya no fuerza la clave.
+     */
     constructor(
-        private fileSearchService: IFileSearchService
+        private fileSearchService: IFileSearchService | null = null
     ) { }
+
+    /** Falla con un mensaje que dice DÓNDE está ahora, no solo que falta. */
+    private requireFileSearch(): IFileSearchService {
+        if (!this.fileSearchService) {
+            throw new Error(
+                'CoreLibraryService: no hay IFileSearchService inyectado. La creación de ' +
+                'stores se hace del lado del servidor desde /dashboard/admin/core-library.',
+            );
+        }
+        return this.fileSearchService;
+    }
 
     async ensureStoresReady(): Promise<void> {
         try {
@@ -115,7 +139,7 @@ export class CoreLibraryService implements ICoreLibraryService {
                 const storeId = config.stores[context];
                 if (storeId) {
                     try {
-                        await this.fileSearchService.deleteFileSearchStore(storeId);
+                        await this.requireFileSearch().deleteFileSearchStore(storeId);
                         console.log(`✅ Deleted old store: ${context}`);
                     } catch (error) {
                         console.warn(`⚠️ Could not delete store ${context}:`, error);
@@ -232,19 +256,19 @@ export class CoreLibraryService implements ICoreLibraryService {
         // Create stores (only if has files)
         const [exegesisStore, homileticsStore, genericStore] = await Promise.all([
             exegesisFiles.length > 0
-                ? this.fileSearchService.createFileSearchStore(
+                ? this.requireFileSearch().createFileSearchStore(
                     exegesisFiles.map(f => f.geminiUri),
                     'Dos Filos - Biblioteca de Exégesis'
                 )
                 : Promise.resolve({ name: '' }),
             homileticsFiles.length > 0
-                ? this.fileSearchService.createFileSearchStore(
+                ? this.requireFileSearch().createFileSearchStore(
                     homileticsFiles.map(f => f.geminiUri),
                     'Dos Filos - Biblioteca de Homilética'
                 )
                 : Promise.resolve({ name: '' }),
             genericFiles.length > 0
-                ? this.fileSearchService.createFileSearchStore(
+                ? this.requireFileSearch().createFileSearchStore(
                     genericFiles.map(f => f.geminiUri),
                     'Dos Filos - Biblioteca Genérica'
                 )

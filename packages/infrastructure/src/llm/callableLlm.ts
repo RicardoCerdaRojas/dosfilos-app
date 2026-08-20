@@ -3,7 +3,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 /**
  * Cliente del proxy de LLM del servidor.
  *
- * Reemplaza el patrón `new GoogleGenerativeAI(VITE_GEMINI_API_KEY)` que hoy corre
+ * Reemplaza el patrón `new GoogleGenerativeAI(<clave de Gemini>)` que corría
  * en el navegador: esa clave viaja en el bundle y cualquiera puede leerla y
  * gastar la cuota del proyecto. Con esto la llamada pasa por un callable
  * autenticado, con App Check, rate-limit por usuario y medición del gasto.

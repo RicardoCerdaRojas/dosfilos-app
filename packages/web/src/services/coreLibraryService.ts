@@ -1,5 +1,4 @@
 import { CoreLibraryService } from '@dosfilos/application';
-import { GeminiFileSearchService } from '@dosfilos/infrastructure';
 
 /**
  * Singleton instance of CoreLibraryService
@@ -14,20 +13,13 @@ let coreLibraryServiceInstance: CoreLibraryService | null = null;
  */
 export function getCoreLibraryService(): CoreLibraryService {
     if (!coreLibraryServiceInstance) {
-        // Get API key from environment
-        const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
-        if (!apiKey) {
-            console.warn('VITE_GEMINI_API_KEY not found, Core Library will not work');
-            throw new Error('VITE_GEMINI_API_KEY not configured');
-        }
-
-        // Create dependencies (only IFileSearchService now - no storage needed)
-        const fileSearchService = new GeminiFileSearchService(apiKey);
-
-        // Create service with injected dependencies
-        coreLibraryServiceInstance = new CoreLibraryService(
-            fileSearchService as any // Temporary type workaround
-        );
+        // Sin dependencia de File Search: el camino vivo de este servicio
+        // (`initializeFromConfig`) solo lee configuración de Firestore. El
+        // `throw` que había acá era el interruptor más peligroso del track —
+        // corre en cada login desde `firebase-context`, dentro de un try/catch
+        // que solo loguea. Borrar la clave habría dejado Core Library apagada
+        // en silencio, y con ella el contexto de biblioteca del generador.
+        coreLibraryServiceInstance = new CoreLibraryService();
     }
 
     return coreLibraryServiceInstance;

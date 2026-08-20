@@ -480,9 +480,6 @@ export default function CoreLibraryAdmin() {
     };
 
     const handleAnnotateStore = async (storeKey: string, force: boolean = false, skipConfirm: boolean = false) => {
-        const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
-        if (!apiKey) { toast.error('API key de Gemini no configurada'); return; }
-
         if (force && !skipConfirm) {
             const ok = await askConfirm({
                 title: 'Forzar re-anotación de todos los documentos',
@@ -555,7 +552,6 @@ export default function CoreLibraryAdmin() {
                 const { uri, name } = await uploadAnnotatedTextToGemini(
                     annotated,
                     `${r.title} [anotado]`,
-                    apiKey
                 );
                 console.log(`[Annotate]   Uploaded → uri: ${uri}, name: ${name}`);
 
