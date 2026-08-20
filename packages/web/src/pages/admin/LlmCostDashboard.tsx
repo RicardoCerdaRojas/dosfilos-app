@@ -98,9 +98,9 @@ export function LlmCostDashboard() {
                     )}
 
                     <Card className="p-4 text-xs text-muted-foreground">
-                        Este panel mide el gasto que pasa por el <strong>servidor</strong>. Las llamadas que
-                        salen del navegador con la clave del cliente no se ven aquí: hasta migrarlas a
-                        callables, el total real es mayor que el mostrado.
+                        Todas las llamadas al modelo pasan por el <strong>servidor</strong>, así que este
+                        total es el gasto completo. El navegador ya no lleva clave: la migración cerró el
+                        2026-08-20 y la credencial del cliente se eliminó.
                     </Card>
 
                     <div className="grid gap-4 md:grid-cols-2">
