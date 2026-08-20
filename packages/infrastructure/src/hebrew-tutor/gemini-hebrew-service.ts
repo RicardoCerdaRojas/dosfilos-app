@@ -1,5 +1,5 @@
 /**
- * GeminiHebrewService
+ * HebrewAnalysisService
  *
  * Implements IHebrewAnalysisService using Google Gemini 2.5 Flash.
  * Applies Farfán's grammar rules and the professor's pedagogical methodology
@@ -13,27 +13,18 @@
  */
 
 import type { IHebrewAnalysisService, HebrewVerse, VerseAnalysis, LexicalEntry } from '@dosfilos/domain';
-import { GoogleGenerativeAI, type GenerativeModel } from '@google/generative-ai';
+import { runLlmPrompt } from '../llm/callableLlm';
 import { GEMINI_CONFIG } from '../gemini/config.js';
 import { selectRelevantChunks } from './knowledge/knowledge-selector.js';
 import { buildVerseAnalysisPrompt } from './knowledge/hebrew-prompt-builder.js';
 
-export class GeminiHebrewService implements IHebrewAnalysisService {
-  private readonly model: GenerativeModel;
-
-  constructor(apiKey: string) {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    this.model = genAI.getGenerativeModel({
-      model: GEMINI_CONFIG.MODEL_NAME,
-      generationConfig: {
-        responseMimeType: 'application/json',
-        temperature: 0.2,       // Low for deterministic morphological analysis
-        topP: 0.95,
-        topK: 40,
-        maxOutputTokens: 32768, // Large verses (Job, Psalms) need room
-      },
-    });
-  }
+/**
+ * Análisis morfológico del hebreo. Ya NO habla con Gemini desde el navegador:
+ * el prompt se arma acá (necesita el selector de gramática y el glosario léxico
+ * de este paquete) y la llamada al modelo sale por el proxy del servidor, que
+ * autentica, limita y mide. La clave dejó de viajar en el bundle.
+ */
+export class HebrewAnalysisService implements IHebrewAnalysisService {
 
   async analyzeVerse(
     verse: HebrewVerse,
@@ -49,13 +40,17 @@ export class GeminiHebrewService implements IHebrewAnalysisService {
     // 3. Call Gemini
     let rawResponse: string;
     try {
-      const result = await this.model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      rawResponse = await runLlmPrompt({
+        feature: 'hebrewTutor.analyzeVerse',
+        prompt,
+        model: GEMINI_CONFIG.MODEL_NAME,
+        responseMimeType: 'application/json',
+        temperature: 0.2, // Bajo: el análisis morfológico debe ser determinista.
+        maxOutputTokens: 32768, // Versos largos (Job, Salmos) necesitan espacio.
       });
-      rawResponse = result.response.text();
     } catch (error) {
       throw new Error(
-        `GeminiHebrewService: API call failed — ${error instanceof Error ? error.message : String(error)}`,
+        `HebrewAnalysisService: API call failed — ${error instanceof Error ? error.message : String(error)}`,
       );
     }
 
@@ -85,10 +80,10 @@ export class GeminiHebrewService implements IHebrewAnalysisService {
       const fallback = this.stripTrailingLexicalNotes(cleaned);
       try {
         data = JSON.parse(fallback) as Record<string, unknown>;
-        console.warn('GeminiHebrewService: lexicalNotes stripped to recover malformed JSON.');
+        console.warn('HebrewAnalysisService: lexicalNotes stripped to recover malformed JSON.');
       } catch (e) {
         throw new Error(
-          `GeminiHebrewService: Failed to parse JSON response. Raw: ${rawJson.slice(0, 400)}`,
+          `HebrewAnalysisService: Failed to parse JSON response. Raw: ${rawJson.slice(0, 400)}`,
         );
       }
     }
@@ -96,7 +91,7 @@ export class GeminiHebrewService implements IHebrewAnalysisService {
     // Validate required top-level fields
     if (!data.words || !Array.isArray(data.words)) {
       throw new Error(
-        `GeminiHebrewService: Response missing required "words" array. Data keys: ${Object.keys(data).join(', ')}`,
+        `HebrewAnalysisService: Response missing required "words" array. Data keys: ${Object.keys(data).join(', ')}`,
       );
     }
 
