@@ -53,7 +53,7 @@ export class GeneratorChatService {
     constructor() {
         const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
         if (!apiKey) throw new Error('Gemini API Key not found');
-        this.generator = new GeminiSermonGenerator(apiKey);
+        this.generator = new GeminiSermonGenerator();
         this.documentProcessor = new DocumentProcessingService(apiKey);
         // Don't instantiate fileSearch here - it uses server-side APIs
         // this.fileSearch = new GeminiFileSearchService(apiKey);

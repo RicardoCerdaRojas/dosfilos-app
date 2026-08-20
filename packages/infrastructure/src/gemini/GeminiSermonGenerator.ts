@@ -1,5 +1,5 @@
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, GenerativeModel } from '@google/generative-ai';
 import { runLlmPrompt } from '../llm/callableLlm';
+import { streamChat } from '../llm/sseChat';
 import {
     CitationManifest,
     ISermonGenerator,
@@ -21,89 +21,15 @@ import {
 import { GEMINI_CONFIG } from './config';
 
 export class GeminiSermonGenerator implements ISermonGenerator {
-    private genAI: GoogleGenerativeAI;
-    private model: GenerativeModel;
 
-    constructor(apiKey: string) {
-        if (!apiKey) {
-            throw new Error('Gemini API key is required');
-        }
+    /**
+     * Sin apiKey: todas las llamadas salen por el servidor — las de generación
+     * por el proxy (`runLlmPrompt`) y las de chat por el endpoint SSE. La clave
+     * ya no vive en el navegador.
+     */
+    constructor() {}
 
-        this.genAI = new GoogleGenerativeAI(apiKey);
-        const modelName = GEMINI_CONFIG.MODEL_NAME;
 
-        this.model = this.genAI.getGenerativeModel({
-            model: modelName,
-            generationConfig: GEMINI_CONFIG.GENERATION_CONFIG,
-            safetySettings: this.getSafetySettings(),
-        });
-    }
-
-    private getModel(options?: { fileSearchStoreId?: string; temperature?: number; modelName?: string; responseMimeType?: string; maxOutputTokens?: number }): GenerativeModel {
-        const modelName = options?.modelName || GEMINI_CONFIG.MODEL_NAME;
-        const temperature = options?.temperature ?? GEMINI_CONFIG.GENERATION_CONFIG.temperature;
-
-        const generationConfig: any = {
-            ...GEMINI_CONFIG.GENERATION_CONFIG,
-            temperature: temperature,
-            ...(options?.maxOutputTokens ? { maxOutputTokens: options.maxOutputTokens } : {}),
-        };
-
-        if (options?.responseMimeType && !options.fileSearchStoreId) {
-            // NOTE: Gemini API throws 400 if responseMimeType is used with Tools (File Search)
-            // So we only enable JSON mode if NOT using RAG tools.
-            generationConfig.responseMimeType = options.responseMimeType;
-        }
-
-        // Priority 1: Use File Search Store (Core Library)
-        if (options?.fileSearchStoreId) {
-            // CRITICAL FIX: Explicitly disable JSON mode when using Tools (RAG/File Search)
-            // Gemini API throws 400 if responseMimeType='application/json' is used with Tools.
-            if (generationConfig.responseMimeType) {
-                delete generationConfig.responseMimeType;
-            }
-
-            return this.genAI.getGenerativeModel({
-                model: modelName,
-                tools: [{
-                    // @ts-ignore - File Search tool
-                    fileSearch: {
-                        fileSearchStoreNames: [options.fileSearchStoreId]
-                    }
-                }],
-                generationConfig: generationConfig,
-                safetySettings: this.getSafetySettings()
-            });
-        }
-
-        // Priority 2: Default model (no tools)
-        return this.genAI.getGenerativeModel({
-            model: modelName,
-            generationConfig: generationConfig,
-            safetySettings: this.getSafetySettings()
-        });
-    }
-
-    private getSafetySettings() {
-        return [
-            {
-                category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-                threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            },
-            {
-                category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            },
-            {
-                category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            },
-            {
-                category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            },
-        ];
-    }
 
     async generateExegesis(passage: string, rules: GenerationRules, config?: any, language: SupportedLanguage = DEFAULT_LANGUAGE): Promise<ExegeticalStudy> {
         try {
@@ -404,29 +330,27 @@ FORMATO JSON REQUERIDO:
             const lastMessage = history[history.length - 1];
             if (!lastMessage || lastMessage.role !== 'user') throw new Error('Last message must be from user');
 
-            const model = this.getModel({
-                fileSearchStoreId: context?.fileSearchStoreId,
-                temperature: context?.temperature,
-                modelName: context?.aiModel
-            });
-            const chat = model.startChat({
-                history: geminiHistory,
-                generationConfig: {
-                    maxOutputTokens: 8192,
-                    temperature: context?.temperature || GEMINI_CONFIG.GENERATION_CONFIG.temperature
-                },
-            });
-
             let messageToSend = lastMessage.content;
             if (geminiHistory.length === 0) {
                 messageToSend = `${systemPrompt}\n\n${messageToSend}`;
             }
 
-            const contentToSend = messageToSend;
-
-            const result = await chat.sendMessage(contentToSend);
-            const response = await result.response;
-            return sanitizeChatResponseText(response.text());
+            // Vía el servidor. Se conserva la peculiaridad del prompt original:
+            // el system va INLINE (antepuesto al primer mensaje del historial, o
+            // al mensaje si no hay historial), no como `systemInstruction`.
+            // Cambiarlo alteraría lo que ve el modelo.
+            const { text } = await streamChat({
+                message: messageToSend,
+                history: geminiHistory.map((h) => ({ role: h.role, text: h.parts[0]?.text ?? '' })),
+                feature: 'sermonWizard.chat',
+                generationConfig: {
+                    maxOutputTokens: 8192,
+                    temperature: context?.temperature || GEMINI_CONFIG.GENERATION_CONFIG.temperature,
+                },
+                ...(context?.aiModel ? { model: context.aiModel } : {}),
+                ...(context?.fileSearchStoreId ? { corpusIds: [context.fileSearchStoreId] } : {}),
+            });
+            return sanitizeChatResponseText(text);
         } catch (error: any) {
             throw this.handleError(error);
         }
@@ -457,35 +381,33 @@ FORMATO JSON REQUERIDO:
             const lastMessage = history[history.length - 1];
             if (!lastMessage || lastMessage.role !== 'user') throw new Error('Last message must be from user');
 
-            const model = this.getModel({
-                fileSearchStoreId: context?.fileSearchStoreId,
-                temperature: context?.temperature,
-                modelName: context?.aiModel
-            });
-            const chatObject = model.startChat({
-                history: geminiHistory,
-                generationConfig: {
-                    maxOutputTokens: 8192,
-                    temperature: context?.temperature || GEMINI_CONFIG.GENERATION_CONFIG.temperature
-                },
-            });
-
             let messageToSend = lastMessage.content;
             if (geminiHistory.length === 0) {
                 messageToSend = `${systemPrompt}\n\n${messageToSend}`;
             }
 
-            const result = await chatObject.sendMessageStream(messageToSend);
             let fullText = '';
-            for await (const chunk of result.stream) {
-                const chunkText = chunk.text();
-                fullText += chunkText;
-                // Strip any leaked tool-call syntax before each
-                // incremental UI render so the user never sees the
-                // leak mid-stream either.
-                onChunk(sanitizeChatResponseText(fullText));
-            }
-            return sanitizeChatResponseText(fullText);
+            const { text } = await streamChat(
+                {
+                    message: messageToSend,
+                    history: geminiHistory.map((h) => ({ role: h.role, text: h.parts[0]?.text ?? '' })),
+                    feature: 'sermonWizard.chatStream',
+                    generationConfig: {
+                        maxOutputTokens: 8192,
+                        temperature: context?.temperature || GEMINI_CONFIG.GENERATION_CONFIG.temperature,
+                    },
+                    ...(context?.aiModel ? { model: context.aiModel } : {}),
+                    ...(context?.fileSearchStoreId ? { corpusIds: [context.fileSearchStoreId] } : {}),
+                },
+                (chunk) => {
+                    fullText += chunk;
+                    // Se sanea el ACUMULADO en cada render, igual que antes: así
+                    // el pastor nunca ve sintaxis de tool-call filtrada a medio
+                    // stream.
+                    onChunk(sanitizeChatResponseText(fullText));
+                },
+            );
+            return sanitizeChatResponseText(text || fullText);
         } catch (error: any) {
             throw this.handleError(error);
         }

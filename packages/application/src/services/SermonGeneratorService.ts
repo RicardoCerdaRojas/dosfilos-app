@@ -31,7 +31,7 @@ export class SermonGeneratorService {
         if (!apiKey) {
             console.warn('Gemini API key not configured. Generator features will be disabled.');
         }
-        this.generator = new GeminiSermonGenerator(apiKey || '');
+        this.generator = new GeminiSermonGenerator();
         this.storageService = new FirebaseStorageService();
         this.coreLibraryService = coreLibraryService || null; // 🎯 NEW
 
