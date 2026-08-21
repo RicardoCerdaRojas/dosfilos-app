@@ -88,4 +88,5 @@ export * from './services/CallableLlmClient';
 // 🌱 Redacción v2 §8.5 — el juez de fidelidad homilética, EN SOMBRA: mide, no
 // confronta. Colector `judged`, aislado del determinista.
 export * from './use-cases/sermon-judge/judgeDraftSignals';
+export * from './use-cases/sermon-judge/judgeCorpus';
 export * from './use-cases/sermon-judge/JudgeSermonDraftUseCase';
