@@ -472,8 +472,17 @@ Sin dependencia de orden; cuanto antes, mejor.
             el catálogo en el conteo que la regla transversal niega. Sapiencial es el único género donde la
             marca ramifica la estructura (`porMarca`); las categorías de poesía ramifican elementos
             internos, no el rango. Centinelas → `null`, no `{min:0,max:0}` (eso confrontaría todo sermón).
-      - [ ] **6.2b — constructor de proposición** (los 8 elementos, §4.3). Es la mitad visible: la
-            proposición se vuelve el CONTRATO del que heredan los puntos del bosquejo.
+      - [x] **6.2b — constructor de proposición** (2026-08-20, `propositionContract.ts`). Los 8 elementos
+            como dato, pre-siembra desde el estudio (idea central VERBATIM del paso 7), ensamblado del
+            borrador y confrontación contra los 8. La proposición es el CONTRATO: el elemento 8 verifica que
+            los puntos hereden el llamado a la acción, y un punto que no lo recoge refina G3.
+            **El sistema pide, no decide:** sustantivo y llamado a la acción son del pastor y se dejan
+            vacíos a propósito — pre-rellenarlos convertiría al tutor en el autor de la proposición.
+            La vara de herencia es TOSCA por diseño (raíz verbal, sin tildes) igual que la de suficiencia
+            estructural: cuando no alcanza sale `armonia-indeterminada`, no una falla inventada.
+      - [ ] **Pendiente para que la Ola 6 sea VISIBLE:** todo 6.1/6.2 es dominio puro, sin UI ni flags. El
+            cableado al paso del wizard (constructor de proposición en pantalla + veredicto del juez en
+            sombra) es trabajo aparte y no está hecho.
 
 ## Ola 7 — Cerrar Fase 4 (Pastoral Fidelity)
 

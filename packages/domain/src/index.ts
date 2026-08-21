@@ -68,6 +68,9 @@ export * from './sermon-judge/evaluateCompliance';
 // anclaje, que es lo que de verdad se juzga (no el conteo de puntos).
 export * from './sermon-judge/genreSermonStructure';
 export * from './sermon-judge/pointAnchoring';
+// 🌱 Redacción v2 Fase 3 (§4.3) — constructor de proposición: los 8 elementos.
+// La proposición es el CONTRATO del que heredan los puntos del bosquejo.
+export * from './sermon-judge/propositionContract';
 // 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent
 export * from './guided-sermon/SocraticTurn';
 export * from './guided-sermon/GuidedSermonSession';
