@@ -24,14 +24,69 @@ const AMBASSADOR_UIDS: ReadonlySet<string> = new Set<string>([
 ]);
 const TEAM_UIDS: ReadonlySet<string> = new Set<string>([]);
 
-export async function deriveSegment(uid: string): Promise<AccountSegment> {
+/**
+ * Flags que CAMBIAN LO QUE EL PASTOR VIVE durante el estudio, y que por eso
+ * cambian lo que la sombra mide.
+ *
+ * Criterio para agregar uno acá: ¿altera lo que el pastor ve, se le pide o se le
+ * confronta mientras produce el dato? Si sí, va. Los flags que solo encienden
+ * medición NO van: no mueven la conducta, y listarlos haría ruido.
+ *
+ * POR QUÉ EXISTE ESTO. Sin este registro, dos poblaciones distintas caen en la
+ * misma colección sin forma de separarlas después: un pastor con nudges y
+ * confrontación activos no escribe lo mismo que uno sin ellos. Se descubrió el
+ * 2026-08-21, cuando las ÚNICAS filas `userConfirmed` de toda la base resultaron
+ * venir de dos cuentas que corrían con `passage_profile_enforce` encendido — o
+ * sea, el dato con el que se iba a decidir el flip a enforce estaba generado
+ * bajo enforce. Retroactivamente no hay forma de separarlas; desde acá sí.
+ */
+export const BEHAVIOR_FLAGS = [
+    'passage_profile_enforce',
+    'genre_override_enforce',
+    'step3_genre_help',
+] as const;
+
+export type BehaviorFlagName = (typeof BEHAVIOR_FLAGS)[number];
+
+export interface ShadowContext {
+    segment: AccountSegment;
+    /** Estado de los flags que mueven la conducta, al momento de producir la fila. */
+    behaviorFlags: Record<BehaviorFlagName, boolean>;
+}
+
+/**
+ * Segmento + flags de conducta en UNA sola lectura del doc del usuario.
+ *
+ * Server-side a propósito, igual que el segmento: si el cliente los mandara,
+ * la fila diría lo que el cliente cree, no lo que el servidor aplica.
+ */
+export async function deriveShadowContext(uid: string): Promise<ShadowContext> {
+    let segment: AccountSegment | null = null;
+    const behaviorFlags = Object.fromEntries(
+        BEHAVIOR_FLAGS.map((f) => [f, false]),
+    ) as Record<BehaviorFlagName, boolean>;
+
     try {
         const snap = await admin.firestore().collection('users').doc(uid).get();
-        if (snap.exists && snap.data()?.role === 'super_admin') return 'super_admin';
+        const data = snap.exists ? snap.data() : undefined;
+        if (data?.role === 'super_admin') segment = 'super_admin';
+        const flags = (data?.featureFlags ?? {}) as Record<string, unknown>;
+        for (const f of BEHAVIOR_FLAGS) behaviorFlags[f] = flags[f] === true;
     } catch {
-        // Si la lectura falla, caemos a la clasificación por allowlist / real.
+        // Lectura fallida: se cae a la clasificación por allowlist y a flags en
+        // false. Un `false` por error de lectura es indistinguible de un false
+        // real, así que esto es una limitación conocida — pero preferible a no
+        // registrar la fila.
     }
-    if (AMBASSADOR_UIDS.has(uid)) return 'ambassador';
-    if (TEAM_UIDS.has(uid)) return 'team';
-    return 'real';
+
+    if (!segment) {
+        if (AMBASSADOR_UIDS.has(uid)) segment = 'ambassador';
+        else if (TEAM_UIDS.has(uid)) segment = 'team';
+        else segment = 'real';
+    }
+    return { segment, behaviorFlags };
+}
+
+export async function deriveSegment(uid: string): Promise<AccountSegment> {
+    return (await deriveShadowContext(uid)).segment;
 }

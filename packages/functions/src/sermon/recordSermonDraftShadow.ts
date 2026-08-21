@@ -2,7 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
-import { deriveSegment } from '../config/accountSegment';
+import { deriveShadowContext } from '../config/accountSegment';
 
 /**
  * Instrumentación de sombra del draft — RECORDER (persistencia común).
@@ -62,7 +62,10 @@ export const recordSermonDraftShadow = onCall(
         const collector = data.collector === 'judged' ? 'judged' : 'deterministic';
 
         const expiresAt = Timestamp.fromMillis(Date.now() + SHADOW_TTL_DAYS * 24 * 60 * 60 * 1000);
-        const segment = await deriveSegment(userId);
+        // Mismo contexto que la sombra de la fase de estudio: el borrador sale
+        // de un estudio que corrió con enforcement o sin él, y sin registrarlo
+        // las dos poblaciones quedan mezcladas también acá.
+        const { segment, behaviorFlags } = await deriveShadowContext(userId);
 
         await admin
             .firestore()
@@ -70,6 +73,7 @@ export const recordSermonDraftShadow = onCall(
             .add({
                 userId,
                 segment,
+                behaviorFlags,
                 sermonId,
                 passage,
                 approachType,

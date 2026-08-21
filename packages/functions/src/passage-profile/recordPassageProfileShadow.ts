@@ -2,7 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
-import { deriveSegment } from '../config/accountSegment';
+import { deriveShadowContext } from '../config/accountSegment';
 
 /**
  * ADR-035 — perfil del pasaje, Capa 1 (modo SHADOW).
@@ -115,7 +115,11 @@ export const recordPassageProfileShadow = onCall(
         if (!seedId) throw new HttpsError('invalid-argument', 'seedId is required');
         if (!passage) throw new HttpsError('invalid-argument', 'passage is required');
 
-        const segmentEarly = await deriveSegment(userId);
+        // Segmento + flags de CONDUCTA en una sola lectura, server-side. Los
+        // flags viajan en la fila porque sin ellos dos poblaciones distintas
+        // —pastor con nudges y confrontación activos vs. pastor sin ellos— caen
+        // en la misma colección y no hay forma de separarlas al calibrar.
+        const { segment: segmentEarly, behaviorFlags } = await deriveShadowContext(userId);
         const ttlExpiresAt = Timestamp.fromMillis(Date.now() + SHADOW_TTL_DAYS * 24 * 60 * 60 * 1000);
 
         // Redacción v2 Fase 1 (§4.4) A3 — señal del override de género. Es un
@@ -132,6 +136,7 @@ export const recordPassageProfileShadow = onCall(
                     seedId,
                     passage,
                     signalType: 'genreOverride' as const,
+                    behaviorFlags,
                     genreOverride: sanitizeGenreOverride(data.genreOverride),
                     createdAt: FieldValue.serverTimestamp(),
                     expiresAt: ttlExpiresAt,
@@ -152,6 +157,7 @@ export const recordPassageProfileShadow = onCall(
                     seedId,
                     passage,
                     signalType: 'structuralSufficiency' as const,
+                    behaviorFlags,
                     structuralSufficiency: sanitizeStructuralSufficiency(data.structuralSufficiency),
                     createdAt: FieldValue.serverTimestamp(),
                     expiresAt: ttlExpiresAt,
@@ -188,6 +194,7 @@ export const recordPassageProfileShadow = onCall(
                 seedId,
                 passage,
                 signalType: 'profile' as const,
+                behaviorFlags,
                 genres,
                 schemaVersion: Math.max(0, Math.round(Number(data.schemaVersion ?? 0)) || 0),
                 movementCount,
