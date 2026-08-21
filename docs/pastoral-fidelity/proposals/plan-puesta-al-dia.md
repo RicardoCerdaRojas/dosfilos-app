@@ -461,8 +461,19 @@ Sin dependencia de orden; cuanto antes, mejor.
       (C4 narrativo). Severidades que el diseño NO selló quedan **pendientes explícitas en el dato** y nunca
       escalan a confrontación fuerte: la cola de revisión del fundador se deriva del catálogo, no de la
       memoria.
-- [ ] **6.2** **Fase 3 — mapeo género→estructura + constructor de proposición (8 elementos)**. Consume
+- [~] **6.2** **Fase 3 — mapeo género→estructura + constructor de proposición (8 elementos)**. Consume
       `PassageProfile`, NO re-deriva género (invariante: una sola fuente de verdad de género).
+      - [x] **6.2a — mapeo género→estructura** (2026-08-20). Las 4 piezas de §6 por perfil
+            (`genreSermonStructure.ts`) + la vara transversal (`pointAnchoring.ts`). Lo importante del
+            modelado: **el rango de puntos NO es una regla de conteo**. Fusionar movimientos afines y
+            dividir uno profundo son libertad homilética, no infidelidad; lo que se confronta es un punto
+            que no rastrea a movimiento estudiado (G3 crítico) y la omisión **ciega** (declararla la vuelve
+            fiel). Techo y piso salen como GUÍA de carga, no como violación — mezclarlos habría convertido
+            el catálogo en el conteo que la regla transversal niega. Sapiencial es el único género donde la
+            marca ramifica la estructura (`porMarca`); las categorías de poesía ramifican elementos
+            internos, no el rango. Centinelas → `null`, no `{min:0,max:0}` (eso confrontaría todo sermón).
+      - [ ] **6.2b — constructor de proposición** (los 8 elementos, §4.3). Es la mitad visible: la
+            proposición se vuelve el CONTRATO del que heredan los puntos del bosquejo.
 
 ## Ola 7 — Cerrar Fase 4 (Pastoral Fidelity)
 
@@ -522,6 +533,7 @@ Olas 5, 7 y 8 cuelgan del camino sin bloquearlo.
 | Fecha | Ola | Qué pasó |
 |---|---|---|
 | 2026-08-17 | — | Plan creado tras auditoría del estado real. |
+| 2026-08-20 | 6 | **Ola 6.1 en prod** (#440, deploy verde) + **6.2a** lista. Hallazgo que reordenó la ola: 4.1 NO bloqueaba — el fundador cerró la revisión del catálogo el 2026-07-08 (§9.1-§9.8); faltaba materializarla, que es 6.1. Tres defectos encontrados por tests propios: clave de descalificador sin calificar por dueño, veredicto `limpio` con `cumple:false`, y el riesgo de leer el rango de puntos como regla de conteo. |
 | 2026-08-20 | ✅ | **SDK de Gemini fuera del navegador.** Lo arrastraban el enum `SchemaType` (3 esquemas), `GeminiMultiAgentService` (instanciada con clave vacía solo por sus prompts) y 2 archivos muertos. Baranda en CI: `check-gemini-sdk-boundary.sh`. −42 KB crudos; el valor es la puerta cerrada, no el peso. |
 | 2026-08-20 | ✅ | **`packages/web` entra a CI con trinquete** (Ola 8). 574 errores congelados por archivo en `scripts/web-type-errors-baseline.txt`; el paso de CI bloquea los NUEVOS. Se sacó el `tsc` no-op del `build` y el `type-check` del paquete dejó de mentir. Bajar el baseline pasa a Boy Scout. |
 | 2026-08-20 | ✅ | **Track de la clave CERRADO.** Los 5 criterios verificados. Hallazgo que cambió el cierre: la clave del navegador y el secret del servidor eran **el mismo valor** → no se borró, se **rotó** (#435: clave nueva → secret v4 → redeploy → verificación con tráfico real → borrado de la vieja). Secret de GitHub borrado, `.env` limpios, clave eliminada en GCP. |

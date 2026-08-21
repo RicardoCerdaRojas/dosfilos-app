@@ -63,6 +63,11 @@ export * from './sermon-judge/approachComplianceCatalog';
 export * from './sermon-judge/genreComplianceCatalog';
 export * from './sermon-judge/composeJudgeRubric';
 export * from './sermon-judge/evaluateCompliance';
+// 🌱 Redacción v2 Fase 3 (§6) — mapeo género→estructura del sermón (consume
+// PassageProfile, NO re-deriva género) + la vara transversal de cobertura y
+// anclaje, que es lo que de verdad se juzga (no el conteo de puntos).
+export * from './sermon-judge/genreSermonStructure';
+export * from './sermon-judge/pointAnchoring';
 // 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent
 export * from './guided-sermon/SocraticTurn';
 export * from './guided-sermon/GuidedSermonSession';
