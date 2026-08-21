@@ -147,3 +147,16 @@ export function evaluateCompliance(
         esperados: { adjudicados: esperadosAdjudicados, enYes: esperadosEnYes, mayoria: mayoriaEsperados },
     };
 }
+
+/**
+ * Muestreo del juez en sombra: 1 de cada N borradores se juzga.
+ *
+ * KNOB EDITABLE, y tiene que existir porque este colector es CARO: cada
+ * juicio es una llamada LLM extra sobre un sermón completo, encima de la
+ * generación que el pastor ya pagó. El colector determinista corre siempre
+ * porque es gratis; este no puede.
+ *
+ * Arranca en 1 (juzga todos) mientras el volumen es chico y lo que hace falta
+ * es señal, no ahorro. Subirlo es la palanca cuando el tráfico crezca.
+ */
+export const JUDGE_SHADOW_SAMPLE_1_IN = 1;

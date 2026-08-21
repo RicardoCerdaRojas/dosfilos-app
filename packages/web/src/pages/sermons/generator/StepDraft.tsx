@@ -17,10 +17,18 @@ import {
     pastoralSeedService,
     computeDeterministicDraftSignals,
     sermonDraftShadowService,
+    JudgeSermonDraftUseCase,
+    buildJudgeCorpus,
     type VerifySermonCitationsOutput,
 } from '@dosfilos/application';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
-import { normalizeHomileticalApproach } from '@dosfilos/domain';
+import {
+    normalizeHomileticalApproach,
+    GENRE_COMPLIANCE_GENRES,
+    JUDGE_SHADOW_SAMPLE_1_IN,
+    type LiteraryGenre,
+} from '@dosfilos/domain';
+import { createProxyLlmClient } from '@dosfilos/infrastructure';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
 import { ContentCanvas } from '@/components/canvas-chat/ContentCanvas';
@@ -227,6 +235,40 @@ export function StepDraft() {
                 } catch (shadowErr) {
                     console.warn('[StepDraft] draft shadow (deterministic) failed — non-blocking', shadowErr);
                 }
+            }
+
+            // Redacción v2 §8.5 — sombra del JUEZ (colector LLM). Mismo flag y
+            // mismo recorder que el determinista, pero COLECTOR APARTE: aquel es
+            // gratis y corre siempre; este es una llamada LLM extra sobre el
+            // sermón completo, así que va muestreado y su caída jamás puede
+            // arrastrar al otro.
+            //
+            // NO SE ESPERA (`void`, sin await): el pastor ya esperó la
+            // generación. Sumarle la latencia de un juicio que él ni siquiera
+            // ve todavía sería cobrarle el precio de una medición nuestra.
+            const judged = normalizeHomileticalApproach(homiletics?.homileticalApproach);
+            if (draftShadowGate.enabled && sermonId && judged.approach && shouldJudgeSample(sermonId)) {
+                // El género se estrecha contra el catálogo en vez de castearse:
+                // un valor viejo o desconocido deja la vara SIN piso de género,
+                // que es correcto, en vez de fingir uno.
+                const seedGenre = rulesWithContext.pastoralSeed?.genre;
+                const genre = seedGenre && (GENRE_COMPLIANCE_GENRES as readonly string[]).includes(seedGenre)
+                    ? (seedGenre as LiteraryGenre)
+                    : undefined;
+                void new JudgeSermonDraftUseCase(
+                    createProxyLlmClient('sermon.judgeCompliance'),
+                    sermonDraftShadowService,
+                )
+                    .execute({
+                        sermonId,
+                        passage,
+                        approach: judged.approach,
+                        ...(genre ? { genre } : {}),
+                        draftText: buildJudgeCorpus(result),
+                    })
+                    .catch((judgeErr) => {
+                        console.warn('[StepDraft] draft shadow (judged) failed — non-blocking', judgeErr);
+                    });
             }
         } catch (error: any) {
             console.error(error);
@@ -924,4 +966,16 @@ function draftIncludesCentralIdea(draft: any, centralIdea: string): boolean {
         .map(normalize)
         .join(' \n ');
     return haystack.includes(target);
+}
+
+/**
+ * Muestreo determinista por `sermonId` — mismo molde que el del spine socrático.
+ * Determinista para que un mismo sermón caiga siempre del mismo lado y los
+ * conteos no dependan de cuántas veces se regeneró.
+ */
+function shouldJudgeSample(sermonId: string): boolean {
+    if (JUDGE_SHADOW_SAMPLE_1_IN <= 1) return true;
+    let h = 0;
+    for (let i = 0; i < sermonId.length; i++) h = (h * 31 + sermonId.charCodeAt(i)) | 0;
+    return Math.abs(h) % JUDGE_SHADOW_SAMPLE_1_IN === 0;
 }
