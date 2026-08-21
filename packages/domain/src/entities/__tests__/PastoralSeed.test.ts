@@ -3,6 +3,7 @@ import {
     createEmptyPastoralSeed,
     evaluatePastoralSeed,
     PASTORAL_SEED_AI_FORBIDDEN_FIELDS,
+    PASTOR_VOICE_STEPS,
     PASTORAL_SEED_STEP_ORDER,
     validateContextGenre,
     validateInsight,
@@ -220,20 +221,55 @@ describe('PastoralSeed validators (eight-step spine)', () => {
 });
 
 describe('AiAssistLog step guard (ADR-024)', () => {
-    it('forbids assist logs on the pastor-voice steps (reading + insight)', () => {
-        expect(AI_ASSIST_FORBIDDEN_STEPS).toEqual(['reading', 'insight']);
-        expect(isAiAssistAllowed('reading')).toBe(false);
-        expect(isAiAssistAllowed('insight')).toBe(false);
-        expect(() => assertAiAssistAllowed('reading')).toThrow();
-        expect(() => assertAiAssistAllowed('insight')).toThrow();
+    // 2026-08-21: esta lista decía ['reading', 'insight'] y se había quedado sin
+    // `timelessPrinciple`, que las políticas del chat SÍ tratan como voz del
+    // pastor. Un assist de tier CONTENIDO podía registrarse ahí como legítimo y
+    // la métrica "% tuyo" lo habría contado como voz del pastor. Ahora deriva
+    // del SSOT; el test de paridad de abajo impide que se vuelvan a separar.
+    it('forbids content-tier assist logs on the three pastor-voice steps', () => {
+        expect(AI_ASSIST_FORBIDDEN_STEPS).toEqual(PASTOR_VOICE_STEPS);
+        for (const step of PASTOR_VOICE_STEPS) {
+            expect(isAiAssistAllowed(step)).toBe(false);
+            expect(() => assertAiAssistAllowed(step)).toThrow();
+        }
     });
 
     it('allows assist logs on the assistant-supported steps', () => {
         expect(isAiAssistAllowed('contextGenre')).toBe(true);
         expect(isAiAssistAllowed('structuralAnalysis')).toBe(true);
         expect(isAiAssistAllowed('wordStudies')).toBe(true);
-        expect(isAiAssistAllowed('timelessPrinciple')).toBe(true);
         expect(() => assertAiAssistAllowed('wordStudies')).not.toThrow();
+    });
+
+    // Lo que hace seguro haber sumado `timelessPrinciple`: su verificador de
+    // eisegesis es tier de VALIDACIÓN y sigue pasando. Prohibir generar no es
+    // prohibir acompañar.
+    it('validation-tier assists still pass on pastor-voice steps', () => {
+        expect(isAiAssistAllowed('timelessPrinciple', 'eisegesisCheck')).toBe(true);
+        expect(isAiAssistAllowed('reading', 'stepOrientation')).toBe(true);
+        expect(isAiAssistAllowed('insight', 'socraticGuidance')).toBe(true);
+        expect(() => assertAiAssistAllowed('timelessPrinciple', 'eisegesisCheck')).not.toThrow();
+    });
+});
+
+describe('voz del pastor — paridad entre los encodings (SSOT)', () => {
+    it('cada paso de voz del pastor tiene al menos un campo prohibido, y viceversa', () => {
+        const prefijos = new Set(PASTORAL_SEED_AI_FORBIDDEN_FIELDS.map(f => f.split('.')[0]));
+        for (const step of PASTOR_VOICE_STEPS) {
+            expect(prefijos.has(step), `${step} es voz del pastor y no tiene campos protegidos`).toBe(true);
+        }
+        for (const prefijo of prefijos) {
+            expect(
+                PASTOR_VOICE_STEPS.includes(prefijo as (typeof PASTOR_VOICE_STEPS)[number]),
+                `${prefijo} tiene campos protegidos pero no está en PASTOR_VOICE_STEPS`,
+            ).toBe(true);
+        }
+    });
+
+    it('la primera impresión del pastor está protegida (faltaba)', () => {
+        // Sin esto, un mapper paper→wizard podía pre-llenarla sin que nada lo
+        // detuviera.
+        expect(PASTORAL_SEED_AI_FORBIDDEN_FIELDS).toContain('reading.firstImpression');
     });
 });
 

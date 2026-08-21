@@ -263,7 +263,12 @@ export function usePastoralSeed(args: UsePastoralSeedArgs): UsePastoralSeedResul
         }) => {
             if (!seed || !userId) return;
             // Guard client-side too so a forbidden step never hits Firestore.
-            if (!isAiAssistAllowed(args.stepKey)) return;
+            // El assistType es OBLIGATORIO acá: sin él, `isAiAssistAllowed`
+            // rechaza todo en los pasos de voz del pastor — incluidos los
+            // assists de tier VALIDACIÓN que el dominio sí permite (orientación,
+            // guía socrática, verificador de eisegesis). Omitirlo silenciaba
+            // justo la auditoría de los pasos donde más importa medir "% tuyo".
+            if (!isAiAssistAllowed(args.stepKey, args.assistType)) return;
             try {
                 await pastoralSeedService.appendAiAssistLog({
                     seedId: seed.id,

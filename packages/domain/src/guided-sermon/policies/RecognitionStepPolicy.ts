@@ -12,6 +12,7 @@
  */
 
 import {
+    isPastorVoiceStep,
     PASTORAL_SEED_THRESHOLDS,
     validateRecognition,
     type ParallelRef,
@@ -48,7 +49,8 @@ export function parseParallelsFromMessage(message: string): ParallelRef[] {
 
 export class RecognitionStepPolicy implements IStepPolicy {
     readonly stepKey = 'recognition' as const;
-    readonly isAiGenerationForbidden = false;
+    // Deriva del SSOT: la voz del pastor se declara UNA vez.
+    readonly isAiGenerationForbidden = isPastorVoiceStep('recognition');
 
     buildSystemPrompt(ctx: TurnContext): string {
         return `${BASE_SYSTEM_GUARDS}

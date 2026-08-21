@@ -17,6 +17,7 @@
  * a generator.
  */
 
+import { PASTOR_VOICE_STEPS } from './PastoralSeed';
 import type { PastoralSeedStepKey } from './PastoralSeed';
 
 /**
@@ -108,8 +109,15 @@ export interface AiAssistLog {
 /**
  * Steps where AI-GENERATED CONTENT must never enter the seed — the pastor's
  * own voice lives there. Enforced by `assertAiAssistAllowed` + tested.
+ *
+ * DERIVA del SSOT `PASTOR_VOICE_STEPS`. Antes era una lista propia y se había
+ * quedado sin `timelessPrinciple`: un assist de tier CONTENIDO podía registrarse
+ * ahí como legítimo mientras el chat prohibía generar ese mismo texto, y la
+ * métrica "% tuyo" lo habría contado como voz del pastor. Los assists de tier
+ * VALIDACIÓN (el verificador de eisegesis de ese paso, entre otros) siguen
+ * pasando — ver `VALIDATION_TIER_ASSISTS` abajo.
  */
-export const AI_ASSIST_FORBIDDEN_STEPS: PastoralSeedStepKey[] = ['reading', 'insight'];
+export const AI_ASSIST_FORBIDDEN_STEPS: PastoralSeedStepKey[] = PASTOR_VOICE_STEPS;
 
 /**
  * Assist types that are VALIDATION/observation-tier — they do NOT inject

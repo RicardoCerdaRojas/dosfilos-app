@@ -53,6 +53,9 @@ export * from './ports/ILlmClient'; // 🌱 Pastoral Fidelity Phase 2.5 — thin
 export * from './ports/IFidelityEvaluator'; // 🌱 Pastoral Fidelity Phase 3 PR 1 — claim/source evaluator port (ADR-029)
 export * from './ports/ICoverageEngagementJudge'; // 🌱 Pastoral Fidelity ADR-035 CA1 — engagement judge port (D)
 export * from './ports/IGenreEngagementJudge'; // 🌱 Pastoral Fidelity Redacción v2 Fase 1 (§4.4) — genre-engagement judge port (A1)
+// 🌱 Vara ÚNICA de error de método: la comparten el acompañante socrático del
+// chat y el wizard. Observa, no bloquea.
+export * from './guided-sermon/methodErrorCatalog';
 export * from './guided-sermon/genreDiscernmentCriteria'; // 🌱 Pastoral Fidelity Redacción v2 Fase 1 (§4.4) — structured genre-discernment vara (A3)
 export * from './guided-sermon/structuralSufficiency'; // 🌱 Pastoral Fidelity Redacción v2 Fase 1 (§4.5) — deterministic step-3 structural-sufficiency vara (B1)
 // 🌱 Redacción v2 Fase 2 (§9) — la vara del juez de fidelidad homilética, como

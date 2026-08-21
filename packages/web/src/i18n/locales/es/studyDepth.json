@@ -103,5 +103,10 @@
     "needsChapterVerseTitle": "Necesito capítulo y versículo",
     "needsChapterVerseBody": "El puzzle estructural trabaja sobre una perícopa concreta. Indica capítulo y versículos (ej. \"Juan 3:16\" o \"Romanos 8:28-30\"). Para libros breves (Filemón, Judas, 2 Juan, 3 Juan, Abdías) la referencia sola es suficiente.",
     "needsChapterVerseInputHint": "Escribe la perícopa con capítulo y versículos."
+  },
+  "methodNote": {
+    "title": "Una observación de método",
+    "optional": "Es opcional: tú decides si la tomas. No te impide avanzar.",
+    "dismiss": "Descartar la observación"
   }
 }

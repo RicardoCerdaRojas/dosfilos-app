@@ -10,6 +10,7 @@
 
 import { detectGenreInText } from '../../bible/inferGenreFromBook';
 import {
+    isPastorVoiceStep,
     PASTORAL_SEED_THRESHOLDS,
     validateContextGenre,
     type PastoralSeed,
@@ -22,25 +23,15 @@ import type {
     TurnContext,
 } from '../SocraticTurn';
 import { BASE_SYSTEM_GUARDS, buildInformationalFeatureNudge, parseStandardLlmReply, priorStepsBlock } from './_shared';
+import { detectMethodErrorForStep } from '../methodErrorCatalog';
 import type { IStepPolicy } from './IStepPolicy';
 
 const MIN = PASTORAL_SEED_THRESHOLDS.contextGenre.genreImplicationMinChars;
 
-/**
- * Local heuristic for the UC3 case: pastor writes "es profecía" / "como
- * apocalipsis" while the passage is a Gospel/letter. Confidence is intentionally
- * conservative — the LLM confronts more broadly via the prompt.
- */
-const GENRE_MISMATCH_KEYWORDS: Record<string, string[]> = {
-    evangelio: ['profecía', 'profeta', 'apocalipsis', 'predice', 'predicción', 'cumplirá', 'tribulación'],
-    carta: ['profecía', 'apocalipsis', 'narrativa histórica'],
-    'sabiduría': ['profecía', 'predicción literal'],
-    'poesía': ['cronología literal', 'narrativa histórica'],
-};
-
 export class ContextGenreStepPolicy implements IStepPolicy {
     readonly stepKey = 'contextGenre' as const;
-    readonly isAiGenerationForbidden = false;
+    // Deriva del SSOT: la voz del pastor se declara UNA vez.
+    readonly isAiGenerationForbidden = isPastorVoiceStep('contextGenre');
 
     buildSystemPrompt(ctx: TurnContext): string {
         return `${BASE_SYSTEM_GUARDS}
@@ -103,20 +94,9 @@ Intento ${ctx.attemptIndex + 1} en este paso.`;
     }
 
     detectMethodError(pastorMessage: string, ctx: TurnContext): MethodErrorReport | null {
-        const genre = (ctx.genre ?? '').toLowerCase();
-        if (!genre) return null;
-        const keys = Object.keys(GENRE_MISMATCH_KEYWORDS);
-        const matchedFamily = keys.find((k) => genre.includes(k));
-        if (!matchedFamily) return null;
-        const flagged = GENRE_MISMATCH_KEYWORDS[matchedFamily];
-        const msgLower = pastorMessage.toLowerCase();
-        const hit = flagged.find((kw) => msgLower.includes(kw));
-        if (!hit) return null;
-        return {
-            label: 'genre-mismatch',
-            description: `El pastor usa lenguaje propio de un género distinto (palabra detectada: "${hit}") mientras el pasaje es ${matchedFamily}.`,
-            confidence: 0.75,
-        };
+        // Delega al catálogo compartido: la misma vara la usa el wizard. Vivía
+        // acá y el wizard tenía la suya; dos copias de una regla derivan.
+        return detectMethodErrorForStep(this.stepKey, pastorMessage, { genre: ctx.genre });
     }
 
     persistTo(seed: PastoralSeed, pastorMessage: string): Partial<PastoralSeed> {

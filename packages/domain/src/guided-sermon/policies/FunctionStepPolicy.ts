@@ -7,6 +7,7 @@
  */
 
 import {
+    isPastorVoiceStep,
     PASTORAL_SEED_THRESHOLDS,
     validateFunction,
     type PastoralSeed,
@@ -19,22 +20,15 @@ import type {
     TurnContext,
 } from '../SocraticTurn';
 import { BASE_SYSTEM_GUARDS, parseStandardLlmReply, priorStepsBlock } from './_shared';
+import { detectMethodErrorForStep } from '../methodErrorCatalog';
 import type { IStepPolicy } from './IStepPolicy';
 
 const MIN = PASTORAL_SEED_THRESHOLDS.function.originalAudienceFunctionMinChars;
 
-const MODERN_LEAP_KEYWORDS = [
-    'me dice a mí',
-    'aplicado hoy',
-    'aplicación moderna',
-    'para nuestra iglesia',
-    'en nuestros tiempos',
-    'la sociedad actual',
-];
-
 export class FunctionStepPolicy implements IStepPolicy {
     readonly stepKey = 'function' as const;
-    readonly isAiGenerationForbidden = false;
+    // Deriva del SSOT: la voz del pastor se declara UNA vez.
+    readonly isAiGenerationForbidden = isPastorVoiceStep('function');
 
     buildSystemPrompt(ctx: TurnContext): string {
         return `${BASE_SYSTEM_GUARDS}
@@ -121,14 +115,7 @@ Si el pastor explica la función sin tratarlas, surfacealas como dato y pregunta
     }
 
     detectMethodError(pastorMessage: string): MethodErrorReport | null {
-        const lower = pastorMessage.toLowerCase();
-        const hit = MODERN_LEAP_KEYWORDS.find((kw) => lower.includes(kw));
-        if (!hit) return null;
-        return {
-            label: 'modern-application-leap',
-            description: `El pastor salta a aplicación moderna ("${hit}") antes de anclar la función original del texto.`,
-            confidence: 0.7,
-        };
+        return detectMethodErrorForStep(this.stepKey, pastorMessage);
     }
 
     persistTo(seed: PastoralSeed, pastorMessage: string): Partial<PastoralSeed> {

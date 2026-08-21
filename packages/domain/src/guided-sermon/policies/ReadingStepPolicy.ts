@@ -8,6 +8,7 @@
  */
 
 import {
+    isPastorVoiceStep,
     PASTORAL_SEED_THRESHOLDS,
     validateReading,
     type PastoralSeed,
@@ -25,7 +26,8 @@ const MIN = PASTORAL_SEED_THRESHOLDS.reading.firstImpressionMinChars;
 
 export class ReadingStepPolicy implements IStepPolicy {
     readonly stepKey = 'reading' as const;
-    readonly isAiGenerationForbidden = true;
+    // Deriva del SSOT: la voz del pastor se declara UNA vez.
+    readonly isAiGenerationForbidden = isPastorVoiceStep('reading');
 
     buildSystemPrompt(ctx: TurnContext): string {
         return `${BASE_SYSTEM_GUARDS}

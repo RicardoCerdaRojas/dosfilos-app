@@ -7,8 +7,9 @@ import { useThreeWitnessesGate, usePastoralFidelityGate, useStudyDepthGate } fro
 import { useStudyDepth } from '@/hooks/useStudyDepth';
 import { usePastoralSeedShadow } from '@/hooks/usePastoralSeedShadow';
 import { useWizard } from '../WizardContext';
-import { PASTORAL_SEED_STEP_ORDER, PastoralSeedStepKey } from '@dosfilos/domain';
+import { PASTORAL_SEED_STEP_ORDER, PastoralSeedStepKey, detectMethodErrorForStep } from '@dosfilos/domain';
 import { StudyDepthBadge } from './StudyDepthBadge';
+import { MethodErrorNote } from './MethodErrorNote';
 import { StepCompanion } from './StepCompanion';
 import { ORIENTABLE_STEPS, pastorInputForStep } from './stepCompanionWiring';
 import { StudyDepthPreGenerationGate } from './StudyDepthPreGenerationGate';
@@ -262,6 +263,18 @@ export function PastoralSeedWizard({
     const stepValidation = evaluation?.perStep[currentKey];
     const stepValid = stepValidation?.valid ?? false;
 
+    // Observación de método: MISMA vara que el acompañante socrático del chat.
+    // Es heurística local (sin LLM, sin callable), así que se puede evaluar en
+    // cada render sin costo ni latencia — por eso puede aparecer sola en vez de
+    // esperar a que el pastor la pida, que era la asimetría entre superficies.
+    // NO va detrás de `studyDepthGate`: dejarla ahí reproduciría justamente la
+    // asimetría que se viene a cerrar.
+    const methodError = currentKey
+        ? detectMethodErrorForStep(currentKey, pastorInputForStep(seed, currentKey), {
+              genre: seed.contextGenre?.genreConfirmed ? seed.contextGenre.genre || undefined : undefined,
+          })
+        : null;
+
     const renderStep = () => {
         const common = { passage } as const;
         switch (currentKey) {
@@ -471,6 +484,8 @@ export function PastoralSeedWizard({
                     )}
 
                     <Card className="p-6">{renderStep()}</Card>
+
+                    {methodError && <MethodErrorNote description={methodError.description} />}
 
                     {studyDepthGate.enabled && ORIENTABLE_STEPS[currentKey] && (
                         <StepCompanion

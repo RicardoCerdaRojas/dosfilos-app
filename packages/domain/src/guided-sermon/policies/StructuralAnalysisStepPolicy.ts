@@ -8,6 +8,7 @@
  */
 
 import {
+    isPastorVoiceStep,
     PASTORAL_SEED_THRESHOLDS,
     validateStructuralAnalysis,
     type PastoralSeed,
@@ -20,6 +21,7 @@ import type {
     TurnContext,
 } from '../SocraticTurn';
 import { BASE_SYSTEM_GUARDS, buildInformationalFeatureNudge, parseStandardLlmReply, priorStepsBlock } from './_shared';
+import { detectMethodErrorForStep } from '../methodErrorCatalog';
 import type { IStepPolicy } from './IStepPolicy';
 
 const MIN = PASTORAL_SEED_THRESHOLDS.structuralAnalysis.pastorNoteMinChars;
@@ -34,7 +36,8 @@ const REF_PATTERN = /\b\d?\s*[A-Za-zÁÉÍÓÚáéíóúñÑ]+\s*\d+[:.]\d+[a-c]
 
 export class StructuralAnalysisStepPolicy implements IStepPolicy {
     readonly stepKey = 'structuralAnalysis' as const;
-    readonly isAiGenerationForbidden = false;
+    // Deriva del SSOT: la voz del pastor se declara UNA vez.
+    readonly isAiGenerationForbidden = isPastorVoiceStep('structuralAnalysis');
 
     buildSystemPrompt(ctx: TurnContext): string {
         return `${BASE_SYSTEM_GUARDS}
@@ -117,26 +120,7 @@ Usá esto para ORIENTAR su lectura estructural (qué mirar en este género); él
     }
 
     detectMethodError(pastorMessage: string): MethodErrorReport | null {
-        // Lexical leakage heuristic: pastor leans on Greek morphology terms.
-        const lexicalKeywords = [
-            'predicado nominal',
-            'sin artículo',
-            'morfología',
-            'morfema',
-            'lexema',
-            'genitivo',
-            'acusativo',
-            'dativo',
-            'vocativo',
-        ];
-        const lower = pastorMessage.toLowerCase();
-        const hit = lexicalKeywords.find((kw) => lower.includes(kw));
-        if (!hit) return null;
-        return {
-            label: 'lexical-leakage',
-            description: `El pastor menciona "${hit}", que es léxico/morfología (paso 4), no estructura.`,
-            confidence: 0.7,
-        };
+        return detectMethodErrorForStep(this.stepKey, pastorMessage);
     }
 
     persistTo(seed: PastoralSeed, pastorMessage: string): Partial<PastoralSeed> {

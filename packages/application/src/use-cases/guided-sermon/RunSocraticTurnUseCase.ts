@@ -98,21 +98,13 @@ function buildPriorSteps(seed: PastoralSeed): Partial<Record<PastoralSeedStepKey
     };
 }
 
-/** Builds a confrontation output directly from a heuristic method-error hit. */
-function buildLocalConfrontOutput(
-    label: string,
-    description: string,
-): SocraticTurnOutput {
-    return {
-        kind: 'confront',
-        errorLabel: label,
-        agentReply: `Revisemos tu método antes de seguir. ${description}`,
-        data: [description],
-        questions: [
-            '¿Cómo cambia tu lectura cuando aplicas la regla correcta para este paso?',
-            '¿Qué del trabajo previo te ayudaría a reformular esta respuesta?',
-        ],
-    };
+/**
+ * Nota de método que se ADJUNTA a la respuesta cuando la heurística detecta
+ * algo. No es un veredicto: es una observación que el pastor puede tomar o
+ * dejar.
+ */
+function buildMethodErrorNote(description: string): string {
+    return `\n\nUna observación de método, por si te sirve: ${description} Tú decides si la tomas.`;
 }
 
 /**
@@ -248,12 +240,20 @@ export class RunSocraticTurnUseCase {
             output = await this.maybeGenreConfront(seed, gss.currentStep, ctx, input.pastorMessage);
         }
 
-        // 1. Heuristic method-error short-circuit. Cheap, no LLM call.
+        // 1. Heurística de error de método. Barata, sin LLM.
+        //
+        // YA NO HACE SHORT-CIRCUIT (decisión del fundador, 2026-08-21). Antes
+        // un acierto de la heurística trababa el turno con un `confront`. Pero
+        // esto es coincidencia de palabras, no juicio: bloquear el avance del
+        // pastor porque escribió "genitivo" o "aplicado hoy" convierte una lista
+        // de keywords en la vara. Lo que traba sigue siendo lo determinista (los
+        // validadores de umbral); esto ahora se ADJUNTA como observación.
+        //
+        // El juicio fino no se pierde: el LLM confronta desde su prompt en TODOS
+        // los pasos, y ese sí es juicio.
         const heuristicError = output ? null : policy.detectMethodError(input.pastorMessage, ctx);
         if (output) {
-            // already a misreading confront — skip heuristic + LLM.
-        } else if (heuristicError && heuristicError.confidence >= METHOD_ERROR_CONFIDENCE_THRESHOLD) {
-            output = buildLocalConfrontOutput(heuristicError.label, heuristicError.description);
+            // ya hay un confront de lectura errónea — se salta la heurística + LLM.
         } else {
             // 2. LLM call — the policy's system prompt encodes the full contract.
             const rawJson = await this.llmClient.generate({
@@ -278,6 +278,15 @@ export class RunSocraticTurnUseCase {
                     };
                 }
             }
+        }
+
+        // 1b. La observación de método viaja en la respuesta, sin cambiar el
+        // veredicto: el pastor la ve y sigue si quiere.
+        if (heuristicError && heuristicError.confidence >= METHOD_ERROR_CONFIDENCE_THRESHOLD) {
+            output = {
+                ...output,
+                agentReply: `${output.agentReply}${buildMethodErrorNote(heuristicError.description)}`,
+            };
         }
 
         // 3b. Accumulating steps (e.g. Step 4 Word Studies): the pastor builds
