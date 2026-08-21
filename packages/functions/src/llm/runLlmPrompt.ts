@@ -70,6 +70,12 @@ export const PROXY_FEATURES = [
     // El refinamiento real del wizard (GeminiSermonGenerator), distinto del
     // validador: es el que reescribe el texto cuando el pastor pide un cambio.
     'sermon.refineContent',
+    // Redacción v2 §8.5 — el juez de fidelidad homilética, en SOMBRA. La vara la
+    // compone el cliente (los catálogos viven en dominio y `functions` no
+    // depende de dominio); acá solo se presta el modelo para adjudicar contra
+    // ella. Corte propio en el panel de costos: es caro y muestreado, y hay que
+    // poder verlo separado del resto del sermón.
+    'sermon.judgeCompliance',
     // Las llamadas GRANDES del wizard: generan documentos completos, así que son
     // las que más pesan por llamada.
     'sermon.generateExegesis',
