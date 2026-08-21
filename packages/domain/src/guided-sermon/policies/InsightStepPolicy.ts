@@ -18,6 +18,7 @@
  */
 
 import {
+    isPastorVoiceStep,
     PASTORAL_SEED_THRESHOLDS,
     validateInsight,
     type PastoralSeed,
@@ -87,7 +88,8 @@ export function parseInsightFromMessage(message: string): ParsedInsight {
 
 export class InsightStepPolicy implements IStepPolicy {
     readonly stepKey = 'insight' as const;
-    readonly isAiGenerationForbidden = true;
+    // Deriva del SSOT: la voz del pastor se declara UNA vez.
+    readonly isAiGenerationForbidden = isPastorVoiceStep('insight');
 
     buildSystemPrompt(ctx: TurnContext): string {
         return `${BASE_SYSTEM_GUARDS}

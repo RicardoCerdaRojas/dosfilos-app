@@ -350,6 +350,49 @@ verde; tsc de `infrastructure` limpio; el trinquete de web baja de 574 a 573.
 
 ---
 
+## ✅ CERRADA 2026-08-21 — Una vara de error de método para las dos superficies
+
+**Decisión del fundador que ordena todo esto:** lo DETERMINISTA bloquea (los validadores de umbral, en
+ambas superficies, como ya era). El ERROR DE MÉTODO no bloquea en ninguna, **pero aparece solo en ambas**.
+
+Antes: el chat hacía short-circuit del turno con la heurística —trababa el avance— y el wizard solo
+confrontaba si el pastor abría el acompañante. Mismo trabajo pedagógico, exigencia distinta según por dónde
+entró el pastor.
+
+**Por qué no bloquear con la heurística:** lo que hay ahí es coincidencia de palabras, no juicio — bloqueaba
+si el pastor escribía "genitivo" o "aplicado hoy", con confianza fija 0.7. Un falso positivo en un chat
+cuesta un turno; en un formulario, sin recuperación conversacional, cuesta un muro levantado por una lista
+de keywords. El juicio fino no se pierde: el LLM confronta desde su prompt en TODOS los pasos.
+
+| Pieza | Dónde |
+|---|---|
+| Catálogo único de detección | `packages/domain/src/guided-sermon/methodErrorCatalog.ts` |
+| SSOT de la voz del pastor | `PASTOR_VOICE_STEPS` en `entities/PastoralSeed.ts` |
+| Nota en el wizard | `MethodErrorNote.tsx`, descartable, sin flag |
+| Contrato del chat | `RunSocraticTurnUseCase` adjunta la observación, ya no corta el turno |
+
+**Tres defectos que aparecieron al medir, no al revisar:**
+
+1. `AI_ASSIST_FORBIDDEN_STEPS` no tenía `timelessPrinciple`: un assist de tier CONTENIDO podía registrarse
+   ahí como legítimo mientras el chat prohibía generar ese texto, y "% tuyo" lo habría contado como voz del
+   pastor. Sumarlo fue seguro porque ese paso solo registra `eisegesisCheck`, que es tier de validación.
+2. `PASTORAL_SEED_AI_FORBIDDEN_FIELDS` no protegía `reading.firstImpression`: un mapper paper→wizard podía
+   pre-llenar la primera impresión del pastor sin que nada lo detuviera. Latente, no explotado.
+3. El guard del cliente llamaba `isAiAssistAllowed(stepKey)` sin `assistType`, así que descartaba TODOS los
+   logs en los pasos de voz del pastor — incluidos los de validación que el dominio sí permite. Silenciaba
+   la auditoría justo donde más importa medirla.
+
+**Lo que el cambio enseñó del proceso:** al soltar el bloqueo del chat **no se rompió ni un test**. La
+heurística trababa el turno y nada lo cubría. Se agregaron 4 tests que fijan el contrato nuevo, más el test
+de paridad que impide que la voz del pastor se vuelva a escribir dos veces.
+
+**Corrección a una afirmación previa de este plan:** que el chat "no confronta en wordStudies ni
+recognition" es FALSO. `detectMethodError` devuelve `null` ahí, pero eso es solo el atajo local; el prompt
+base instruye confrontar error de método en todos los pasos y `WordStudiesStepPolicy` tiene reglas
+explícitas de falacia de estudio de palabra.
+
+---
+
 ## Ola 2 — 0b-B: provenance desde el acto
 
 **Tamaño:** 1 PR. **Depende de:** Ola 1 (para poder encender y verificar). **Palanca:** la más alta del sistema.
@@ -500,7 +543,18 @@ Solo el contra-scan está shipped (#315-#317). Faltan dos sub-features.
 
 Boy Scout salvo donde se indique.
 
-- [ ] Convergencia/instrumentación del spine duplicado (viene de 3.2b)
+- [~] Convergencia/instrumentación del spine duplicado (viene de 3.2b). **Medido 2026-08-21**, y el
+      diagnóstico era peor de lo que decía este plan en una cosa y mejor en otra:
+      - **Mejor:** NO hay dos varas de suficiencia. Los 8 validadores y `evaluatePastoralSeed` viven en
+        dominio y los usan las dos superficies; las ~1.800 líneas de los pasos del wizard son casi todas
+        presentación. Y las dos ya instrumentan sombra por la misma puerta.
+      - **Peor:** la misma regla pedagógica estaba escrita hasta cuatro veces con membresías distintas.
+        La "voz del pastor" en tres (`PASTORAL_SEED_AI_FORBIDDEN_FIELDS` sin `reading`,
+        `AI_ASSIST_FORBIDDEN_STEPS` sin `timelessPrinciple`, las políticas con los tres) y la detección de
+        error de método en dos motores contra dos callables.
+      - ✅ **Cerrado lo que sangraba** (ver § Una vara de error de método). Queda abierta la convergencia
+        de las dos implementaciones del spine, que es otra cosa y NO bloquea: chat y formulario son
+        modalidades distintas a propósito.
 - [ ] Parser Biblia duplicado (web + infra) — cambios deben mirrorearse o las superficies divergen en silencio
 - [ ] Abstracción de proveedor LLM (~34 callers directos a Gemini) — sprint dedicado
 - [ ] SBLGNT hardcoded → catálogo CORE (próxima ingesta)
@@ -542,6 +596,7 @@ Olas 5, 7 y 8 cuelgan del camino sin bloquearlo.
 | Fecha | Ola | Qué pasó |
 |---|---|---|
 | 2026-08-17 | — | Plan creado tras auditoría del estado real. |
+| 2026-08-21 | 8 | **Una vara de error de método.** Decisión del fundador: lo determinista bloquea, el error de método observa y aparece solo, en ambas superficies. Catálogo único en dominio + SSOT de la voz del pastor + nota proactiva en el wizard. Tres defectos latentes cerrados. El cambio no rompió ningún test: nada cubría el bloqueo por heurística. |
 | 2026-08-20 | 6 | **Ola 6.1 en prod** (#440, deploy verde) + **6.2a** lista. Hallazgo que reordenó la ola: 4.1 NO bloqueaba — el fundador cerró la revisión del catálogo el 2026-07-08 (§9.1-§9.8); faltaba materializarla, que es 6.1. Tres defectos encontrados por tests propios: clave de descalificador sin calificar por dueño, veredicto `limpio` con `cumple:false`, y el riesgo de leer el rango de puntos como regla de conteo. |
 | 2026-08-20 | ✅ | **SDK de Gemini fuera del navegador.** Lo arrastraban el enum `SchemaType` (3 esquemas), `GeminiMultiAgentService` (instanciada con clave vacía solo por sus prompts) y 2 archivos muertos. Baranda en CI: `check-gemini-sdk-boundary.sh`. −42 KB crudos; el valor es la puerta cerrada, no el peso. |
 | 2026-08-20 | ✅ | **`packages/web` entra a CI con trinquete** (Ola 8). 574 errores congelados por archivo en `scripts/web-type-errors-baseline.txt`; el paso de CI bloquea los NUEVOS. Se sacó el `tsc` no-op del `build` y el `type-check` del paquete dejó de mentir. Bajar el baseline pasa a Boy Scout. |

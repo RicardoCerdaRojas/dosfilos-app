@@ -9,6 +9,7 @@
  */
 
 import {
+    isPastorVoiceStep,
     PASTORAL_SEED_THRESHOLDS,
     validateTimelessPrinciple,
     type PastoralSeed,
@@ -26,7 +27,8 @@ const MIN = PASTORAL_SEED_THRESHOLDS.timelessPrinciple.principleMinChars;
 
 export class TimelessPrincipleStepPolicy implements IStepPolicy {
     readonly stepKey = 'timelessPrinciple' as const;
-    readonly isAiGenerationForbidden = true;
+    // Deriva del SSOT: la voz del pastor se declara UNA vez.
+    readonly isAiGenerationForbidden = isPastorVoiceStep('timelessPrinciple');
 
     buildSystemPrompt(ctx: TurnContext): string {
         return `${BASE_SYSTEM_GUARDS}

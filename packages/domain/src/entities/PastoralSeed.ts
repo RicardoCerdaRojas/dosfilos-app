@@ -693,14 +693,42 @@ export function createEmptyPastoralSeed(args: {
 }
 
 /**
+ * SSOT — los pasos donde el texto es VOZ DEL PASTOR y el agente nunca lo
+ * escribe: su primera impresión, su principio atemporal, su insight.
+ *
+ * Existía escrito tres veces, con tres membresías distintas, cada una omitiendo
+ * algo que las otras tenían: la lista de campos de abajo se olvidaba de
+ * `reading`, `AI_ASSIST_FORBIDDEN_STEPS` se olvidaba de `timelessPrinciple`, y
+ * las políticas del chat eran la única que tenía los tres. Ahora las tres
+ * derivan de acá y un test de paridad rompe CI si se separan.
+ *
+ * OJO — NO confundir con "acá no hay ayuda". El agente no ESCRIBE estos pasos,
+ * pero sí puede orientar, confrontar y verificar en ellos: eso es tier de
+ * validación y no contamina la voz del pastor (ver `VALIDATION_TIER_ASSISTS`).
+ * `timelessPrinciple` es el caso claro: tiene verificador propio de eisegesis
+ * y aun así el agente no redacta el principio.
+ */
+export const PASTOR_VOICE_STEPS: PastoralSeedStepKey[] = ['reading', 'timelessPrinciple', 'insight'];
+
+/** ¿El texto de este paso lo escribe el pastor y solo el pastor? */
+export function isPastorVoiceStep(step: PastoralSeedStepKey): boolean {
+    return PASTOR_VOICE_STEPS.includes(step);
+}
+
+/**
  * AI-forbidden field paths inside the seed. Consumers that pre-populate
  * the seed from derived contexts (paper / Faculty) MUST NOT write to
  * these fields automatically — the pastor's own voice goes there.
  *
  * Surfaced as a runtime guard for `paperToWizardProgress`-style mappers
  * and documented in the manifesto + ADR-002 / ADR-022.
+ *
+ * Cubre exactamente los `PASTOR_VOICE_STEPS` (test de paridad). `reading` entró
+ * en 2026-08-21: faltaba, y un mapper podía pre-llenar la primera impresión del
+ * pastor desde un paper sin que nada lo detuviera.
  */
 export const PASTORAL_SEED_AI_FORBIDDEN_FIELDS = [
+    'reading.firstImpression',
     'timelessPrinciple.principle',
     'insight.centralIdea',
     'insight.observations',

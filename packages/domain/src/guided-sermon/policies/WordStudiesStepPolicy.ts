@@ -15,6 +15,7 @@
  */
 
 import {
+    isPastorVoiceStep,
     PASTORAL_SEED_THRESHOLDS,
     validateWordStudies,
     type PastoralSeed,
@@ -86,7 +87,8 @@ export function parseWordStudiesFromMessage(message: string): WordStudy[] {
 
 export class WordStudiesStepPolicy implements IStepPolicy {
     readonly stepKey = 'wordStudies' as const;
-    readonly isAiGenerationForbidden = false;
+    // Deriva del SSOT: la voz del pastor se declara UNA vez.
+    readonly isAiGenerationForbidden = isPastorVoiceStep('wordStudies');
     readonly accumulatesAcrossTurns = true;
 
     buildSystemPrompt(ctx: TurnContext): string {
