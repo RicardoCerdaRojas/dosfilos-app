@@ -17,6 +17,11 @@
 
 import { ExegeticalStudy, GenerationRules } from '@dosfilos/domain';
 import { HomileticalApproachPreview } from '@dosfilos/domain';
+import {
+    GENRE_SERMON_STRUCTURE_GENRES,
+    sermonStructureFor,
+    type LiteraryGenre,
+} from '@dosfilos/domain';
 
 // Import MD files as strings (Vite will handle this)
 import propositionGuidelinesMD from '../../../config/prompts/homiletics/proposition-guidelines.md?raw';
@@ -126,10 +131,36 @@ Tu especialidad es desarrollar proposiciones homiléticas y bosquejos detallados
 ${parallels.map(p => `- ${p.reference}${p.relevanceNote ? `: ${p.relevanceNote}` : ''}`).join('\n')}`
             : '';
 
+        // EL GÉNERO GOBIERNA LAS REGLAS DE LECTURA (Phase 1.6, ADR-022/024) y
+        // hasta ahora no llegaba al prompt. Viajaba en `rules.pastoralSeed`
+        // hasta la puerta de este builder y se quedaba afuera: la sección se
+        // llamaba "ESTUDIO EXEGÉTICO COMPLETO" y omitía justamente el campo
+        // cuya documentación dice que gobierna cómo se lee el texto.
+        //
+        // Sin él, el generador pedía la misma forma de bosquejo para una
+        // epístola, una narrativa y un proverbio. Los puntos de una narrativa
+        // son GIROS DE LA TRAMA; los de una epístola, movimientos del
+        // argumento. No es lo mismo y el modelo no tenía cómo saberlo.
+        //
+        // `genreImplication` es la lectura del PASTOR sobre lo que ese género
+        // implica — su voz, no una inferencia — así que va junto al género.
+        const seed = this.rules?.pastoralSeed;
+        const genreBlock = seed?.genre
+            ? `
+
+**Género del pasaje (gobierna las reglas de lectura):** ${seed.genre}${
+                  seed.genreImplication
+                      ? `
+**Lo que el pastor concluyó que ese género implica:**
+${seed.genreImplication}`
+                      : ''
+              }`
+            : '';
+
         return `
 ## ESTUDIO EXEGÉTICO COMPLETO
 
-**Pasaje:** ${exegesis.passage}
+**Pasaje:** ${exegesis.passage}${genreBlock}
 
 **Proposición Exegética:**
 ${exegesis.exegeticalProposition}
@@ -149,6 +180,63 @@ ${keyWordsText}
 **Insights Pastorales:**
 ${exegesis.pastoralInsights.map((insight, i) => `${i + 1}. ${insight}`).join('\n')}${parallelsBlock}
 `.trim();
+    }
+
+    /**
+     * Lo que el GÉNERO pide de la estructura del sermón (Redacción v2 §6).
+     *
+     * Reemplaza al rango plano "mínimo 2, óptimo 3, máximo 4" que se aplicaba
+     * igual a una epístola, una narrativa y un proverbio. Cada género rinde sus
+     * puntos de otra fuente: la epístola de los movimientos del argumento
+     * (conectores lógicos, cláusulas principales), la narrativa de los GIROS DE
+     * LA TRAMA, la parábola de una sola comparación central.
+     *
+     * LO MÁS IMPORTANTE QUE DICE ESTE BLOQUE ES QUE EL RANGO NO ES UNA REGLA DE
+     * CONTEO. La vara sellada es cobertura + anclaje: fusionar movimientos
+     * afines o dividir uno profundo es libertad homilética; lo que no se puede
+     * es un punto que no rastree al texto. Sin esa aclaración, dar un rango
+     * invita al modelo a rellenar hasta el número.
+     *
+     * Devuelve '' cuando no hay género o no es uno del catálogo: sin género no
+     * se inventa estructura, se cae al criterio general de más arriba.
+     */
+    private buildGenreStructureSection(): string {
+        const raw = this.rules?.pastoralSeed?.genre;
+        if (!raw) return '';
+        if (!(GENRE_SERMON_STRUCTURE_GENRES as readonly string[]).includes(raw)) return '';
+        const st = sermonStructureFor(raw as LiteraryGenre);
+        if (!st) return '';
+
+        const rango = st.puntos.min === st.puntos.max
+            ? `${st.puntos.min}`
+            : `${st.puntos.min} a ${st.puntos.max}`;
+
+        return [
+            `## 📐 LO QUE EL GÉNERO **${raw}** PIDE DE LA ESTRUCTURA`,
+            '',
+            '**Esto MANDA sobre el rango genérico de puntos indicado más arriba.**',
+            '',
+            `- **Cantidad de puntos:** ${rango}. ${st.puntos.razon}`,
+            `- **De dónde salen los puntos:** ${st.fuenteDeLosPuntos}`,
+            `- **Cómo se realiza la explicación:** ${st.realizacionDeLaExplicacion}`,
+            `- **Forma de la proposición:** sustantivo ${st.proposicion.sustantivo}. ${st.proposicion.nota}`,
+            ...(st.confrontaMultiplicacion
+                ? [
+                      '',
+                      '⚠️ **Este género enseña por UN punto mayor de comparación.** No multipliques los puntos: si crees que hacen falta varios, probablemente estés fragmentando la única verdad.',
+                  ]
+                : []),
+            '',
+            '### ⚠️ El rango es GUÍA, no una regla de conteo',
+            '',
+            'La vara real es **cobertura + anclaje**, no el número:',
+            '- Fusionar movimientos afines en un punto, o dividir uno profundo en varios, es libertad homilética legítima.',
+            '- Lo que NO es legítimo es un punto que no rastree a ningún movimiento del texto: eso es el predicador imponiendo su idea.',
+            '- **NO rellenes hasta llegar al número.** Si el pasaje rinde menos movimientos de los que sugiere el rango, entrega menos puntos. El texto manda sobre el rango.',
+            '',
+            '---',
+            '',
+        ].join('\n');
     }
 
     /**
@@ -318,6 +406,9 @@ alineado con este enfoque, especialmente su TONO (${preview.tone}) y PROPÓSITO.
             '### 📋 2. BOSQUEJO DETALLADO',
             '',
             outlineInstructions || this.getFallbackOutlineInstructions(),
+            // Va DESPUÉS del rango genérico a propósito: lo corrige, y para
+            // corregirlo tiene que haberse leído primero.
+            this.buildGenreStructureSection(),
             '',
             '---',
             '',
