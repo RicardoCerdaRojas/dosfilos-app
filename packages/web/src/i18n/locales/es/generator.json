@@ -261,6 +261,22 @@
       "beforeManualEdit": "Antes de edición manual",
       "manualEdit": "Edición manual",
       "manualEditSummary": "Cambios guardados manualmente"
+    },
+    "contract": {
+      "title": "Proposición y bosquejo",
+      "subtitle": "Son un solo contrato: los puntos heredan el sustantivo y el llamado a la acción de la proposición. Edítalos juntos.",
+      "aligned": "Alineado",
+      "needsReview": "Revisa la alineación",
+      "propositionLabel": "Proposición homilética",
+      "pointsLabel": "Puntos del bosquejo ({{count}})",
+      "announced": "la proposición anuncia {{count}}",
+      "pointPlaceholder": "Título del punto",
+      "removePoint": "Quitar este punto",
+      "addPoint": "Agregar un punto",
+      "addMissingPoint": "Agregar el punto que falta ({{count}})",
+      "secondPersonVerb": "El verbo está en segunda persona. Tus proposiciones usan primera persona plural (veremos, aprenderemos): el predicador se incluye con la congregación.",
+      "disclaimer": "Se te señala lo que falta; tú decides. No bloquea.",
+      "apply": "Aplicar cambios"
     }
   },
   "drafting": {

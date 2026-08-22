@@ -261,6 +261,22 @@
       "beforeManualEdit": "Before manual edit",
       "manualEdit": "Manual edit",
       "manualEditSummary": "Changes saved manually"
+    },
+    "contract": {
+      "title": "Proposition and outline",
+      "subtitle": "They are one contract: the points inherit the proposition's noun and call to action. Edit them together.",
+      "aligned": "Aligned",
+      "needsReview": "Check the alignment",
+      "propositionLabel": "Homiletical proposition",
+      "pointsLabel": "Outline points ({{count}})",
+      "announced": "the proposition announces {{count}}",
+      "pointPlaceholder": "Point title",
+      "removePoint": "Remove this point",
+      "addPoint": "Add a point",
+      "addMissingPoint": "Add the missing point ({{count}})",
+      "secondPersonVerb": "The verb is in second person. Your propositions use first person plural: the preacher stands with the congregation, not outside it.",
+      "disclaimer": "It flags what's missing; you decide. It doesn't block.",
+      "apply": "Apply changes"
     }
   },
   "drafting": {
