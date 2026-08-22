@@ -1,5 +1,11 @@
 import { CitationManifest, GenerationRules, ExegeticalStudy, HomileticalAnalysis, WorkflowPhase, PhaseConfiguration, DEFAULT_LANGUAGE, formatSermonPersonalizationBlock } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
+// Guía de ilustraciones extraída de 90 ilustraciones REALES del fundador. Vive
+// en un .md editable, como las guías de homilética, para que se pueda afinar sin
+// tocar código. Hasta 2026-08-22 la instrucción sobre ilustraciones eran cuatro
+// líneas dispersas ("relevante", "memorable", "no repitas categoría") y ninguna
+// describía la forma que el pastor de verdad usa.
+import illustrationGuidelinesMD from '../../config/prompts/homiletics/illustration-guidelines.md?raw';
 
 const JSON_INSTRUCTION = `IMPORTANTE: Tu respuesta debe ser EXCLUSIVAMENTE un objeto JSON válido. No incluyas NADA de texto antes ni después del JSON (ni "Aquí está el JSON", ni bloques de código markdown como \`\`\`json). Solo el objeto JSON crudo.`;
 
@@ -672,7 +678,7 @@ Instrucciones de Contenido:
 REGLAS DE GENERACIÓN:
 1. Si usas información de documentos proporcionados, incluye en "ragSources" una entrada por cada documento consultado — con el campo \`sourceId\` igual al ID del CONTRATO DE CITACIÓN (\`S1\`, \`S2\`, …) cuando el contrato esté presente. Si no hay contrato (sermón sin biblioteca), omite \`sourceId\`.
 2. Cada punto debe tener al menos 2 implicaciones prácticas con formato de lista.
-3. Las ilustraciones deben ser culturalmente relevantes, memorables y estar formateadas con encabezados.
+3. **Ilustraciones**: sigue la GUÍA DE ILUSTRACIONES incluida más abajo. No es una preferencia de estilo: describe la forma que este pastor usa, medida sobre sus sermones reales.
 4. **Diversidad de ilustraciones**: NO uses la misma categoría (viaje/deporte/familia/cocina/transporte) en dos puntos consecutivos. Si Punto I usa transporte (avión, tren), Punto II DEBE usar otra categoría.
 5. **authorityQuote es OPCIONAL** (null por defecto). Solo inclúyelo cuando uses una cita REAL y verificable de un autor cuyo texto esté presente en los documentos proporcionados o en la conversación. PROHIBIDO inventar citas atribuidas a Owen, Spurgeon, Calvino, Van Til, Edwards, MacArthur u otros autores. Si no hay una cita verificable disponible, deja authorityQuote en null. Una cita inventada en el pulpito destruye credibilidad.
 6. **callToAction es OBLIGATORIO y no puede ser vacío**. Debe contener 1-3 acciones concretas y específicas (no genéricas) que el oyente pueda comenzar esta semana. Sin callToAction, el sermón no se considera completo.
@@ -690,6 +696,10 @@ REGLAS DE GENERACIÓN:
    PROHIBIDO: sermón puramente moralista ("haz X, evita Y") sin FCF explícito y sin centralidad cristológica. Eso convierte el púlpito en consejería moral, no en proclamación del evangelio.
 
 10. **NIVEL DE RIGOR SEGÚN AUDIENCIA**: ${audienceRigorBlock(rules.audienceRigor)}
+
+---
+
+${illustrationGuidelinesMD}
 `;
 }
 
