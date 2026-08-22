@@ -1,339 +1,339 @@
 {
-    "title": "Generador de Sermones",
-    "subtitle": "Tienes sermones en progreso. ¿Deseas continuar con alguno?",
-    "derivedContext": {
-        "tone": {
-            "pastoral": "pastoral",
-            "expositivo": "expositivo",
-            "narrativo": "narrativo"
-        },
-        "banner": {
-            "paper": {
-                "headline": "Pre-cargado desde el paper exegético: {{title}}",
-                "openLink": "Ver paper origen",
-                "passageHint": "El pasaje viene del paper exegético. Cámbialo si quieres reorientar el sermón.",
-                "exegesisHint": "Esta sección es un resumen de tu paper. Si quieres mayor profundidad o usar el Tutor Griego, vuelve a generarla desde este paso.",
-                "homileticsHint": "El enfoque se derivó del tono '{{tone}}' que elegiste al generar. Puedes elegir otro enfoque o volver a generar opciones.",
-                "draftHint": "Borrador pre-cargado desde el paper. Refínalo con el chat, edítalo directamente, o publícalo."
-            },
-            "faculty": {
-                "headline": "Pre-cargado desde tu sesión de Facultad: {{title}}",
-                "openLink": "Volver a la conversación",
-                "passageHint": "El pasaje viene del bosquejo que aprobaste en la Facultad. Edítalo si quieres reorientar el sermón.",
-                "exegesisHint": "Esta exégesis es un resumen breve desde el bosquejo de la Facultad. Si quieres análisis canónico más profundo con Tutor Griego y referencias de tu biblioteca, vuelve a generarla desde este paso.",
-                "homileticsHint": "Los puntos vienen del bosquejo aprobado y la personalización pastoral que añadiste. Puedes elegir otro enfoque o volver a generar opciones.",
-                "draftHint": "Borrador generado desde tu sesión de Facultad. Refínalo con el chat, edítalo directamente, o publícalo."
-            }
-        }
+  "title": "Generador de Sermones",
+  "subtitle": "Tienes sermones en progreso. ¿Deseas continuar con alguno?",
+  "derivedContext": {
+    "tone": {
+      "pastoral": "pastoral",
+      "expositivo": "expositivo",
+      "narrativo": "narrativo"
     },
-    "citationVerification": {
-        "titleVerifying": "Verificando citas…",
-        "titleIssues": "Posibles citas inventadas",
-        "titleClean": "Todas las citas verificadas",
-        "titleLibraryNarrative": "Citas verificadas",
-        "titleUnavailable": "Verificación no disponible",
-        "descVerifying": "Estamos revisando que las citas atribuidas a autores estén realmente presentes en el material fuente.",
-        "descIssues_one": "Encontramos {{count}} cita que probablemente no aparece en el material fuente. Las citas inventadas en el pulpito destruyen credibilidad — revisa y corrige antes de publicar.",
-        "descIssues_other": "Encontramos {{count}} citas que probablemente no aparecen en el material fuente. Las citas inventadas en el pulpito destruyen credibilidad — revisa y corrige antes de publicar.",
-        "descClean_one": "Verificamos {{count}} cita atribuida a autor y todas aparecen en el material fuente. Puedes publicar con confianza.",
-        "descClean_other": "Verificamos {{count}} citas atribuidas a autores y todas aparecen en el material fuente. Puedes publicar con confianza.",
-        "descNoCitations": "El sermón no contiene citas atribuidas a autores. Solo se cita la Escritura — nada que verificar.",
-        "descLibraryNarrative": "Tus citas son atribuciones narrativas ancladas a tu biblioteca, verificables al hacer clic en cada marcador.",
-        "descUnavailable": "Este sermón no está vinculado a un paper exegético ni a una sesión Faculty, así que no hay material fuente contra el cual verificar las citas. Si tu sermón cita autores, revisa manualmente que sean reales.",
-        "allCleanDetail_one": "{{count}} cita verificada en el material fuente.",
-        "allCleanDetail_other": "{{count}} citas verificadas en el material fuente.",
-        "status": {
-            "verified": "Verificada",
-            "fuzzy-low": "Parcialmente encontrada",
-            "not-found": "No encontrada en la fuente"
-        },
-        "editSermon": "Editar sermón",
-        "publishAnyway": "Publicar de todos modos",
-        "publishNow": "Publicar ahora",
-        "cancel": "Cancelar"
-    },
-    "phases": {
-        "published": "Publicado",
-        "exegesis": "Exégesis",
-        "homiletics": "Homilética",
-        "drafting": "Redacción",
-        "unknown": "Desconocido"
-    },
-    "stats": {
-        "total": "Total",
-        "published": "Publicados",
-        "drafts": "Borradores",
-        "progress": "Progreso"
-    },
-    "inProgress": {
-        "title": "Sermones en Progreso",
-        "subtitle": "Continúa trabajando en tus sermones guardados."
-    },
-    "search": {
-        "placeholder": "Buscar por pasaje..."
-    },
-    "sort": {
-        "newest": "Más recientes",
-        "oldest": "Más antiguos",
-        "publishedFirst": "Publicados primero",
-        "draftFirst": "Borradores primero",
-        "progressHigh": "Mayor progreso",
-        "progressLow": "Menor progreso"
-    },
-    "filter": {
-        "label": "Filtrar:",
-        "all": "Todos",
-        "published": "Publicados",
-        "draft": "Borradores",
-        "exegesis": "Exégesis",
-        "homiletics": "Homilética",
-        "drafting": "Redacción"
-    },
-    "card": {
-        "versions": "versiones",
-        "progress": "Progreso",
-        "publishedAgo": "Publicado"
-    },
-    "passage": {
-        "title": "Selecciona un Pasaje Bíblico",
-        "developingSermon": "Desarrollando sermón:",
-        "descWithTitle": "¿Qué texto bíblico usarás para desarrollar este sermón?",
-        "descDefault": "El texto base que usarás para desarrollar tu sermón.",
-        "inputTitle": "Pasaje Bíblico",
-        "inputDesc": "Ingresa una referencia como 'Juan 3:16' o 'Romanos 8:28-39'",
-        "inputPlaceholder": "Ej: Juan 3:16, Salmos 23, Mateo 5:1-12",
-        "continueBtn": "Continuar con Exégesis",
-        "loading": "Cargando...",
-        "suggestionsTitle": "Sugerencias Populares",
-        "suggestions": [
-            {
-                "book": "Juan",
-                "ref": "Juan 3:16",
-                "topic": "Amor de Dios"
-            },
-            {
-                "book": "Romanos",
-                "ref": "Romanos 8:28",
-                "topic": "Propósito"
-            },
-            {
-                "book": "Filipenses",
-                "ref": "Filipenses 4:13",
-                "topic": "Fortaleza"
-            },
-            {
-                "book": "Salmos",
-                "ref": "Salmos 23",
-                "topic": "Protección"
-            },
-            {
-                "book": "Isaías",
-                "ref": "Isaías 40:31",
-                "topic": "Esperanza"
-            }
-        ],
-        "comingSoonTitle": "Próximamente: Sugerencias automáticas",
-        "comingSoonDesc": "Basado en el título y descripción de tu sermón, podremos sugerirte pasajes relevantes."
-    },
-    "actions": {
-        "startNew": "Comenzar Nuevo Sermón",
-        "duplicate": "Duplicar sermón",
-        "publishNow": "Publicar ahora",
-        "delete": "Eliminar",
-        "publish": "Publicar",
-        "publishing": "Publicando...",
-        "continue": "Continuar"
-    },
-    "empty": "No se encontraron sermones que coincidan con tu búsqueda.",
-    "exegesis": {
-        "title": "Estudio Exegético",
-        "subtitle": "Analiza el texto original y define la base bíblica de tu sermón.",
-        "contextActive": "Contexto Experto Activo: {{count}} documentos cargados",
-        "passageLabel": "Pasaje Bíblico",
-        "passagePlaceholder": "Ej: 1 Pedro 2:1-10",
-        "generateBtn": "Iniciar Estudio Exegético",
-        "analysisTitle": "Análisis Exegético: {{passage}}",
-        "refiningStatus": "Refinando sección. Usa el chat para hacer cambios.",
-        "defaultStatus": "Haz clic en \"Refinar\" para expandir una sección, o usa el chat para consultas generales.",
-        "continueBtn": "Continuar a Homilética",
-        "whatIsTitle": "¿Qué es la Exégesis?",
-        "whatIsDesc": "La exégesis es el análisis crítico del texto bíblico en su idioma original, considerando el contexto histórico, literario y cultural.",
-        "includesLabel": "Incluye:",
-        "includesList": [
-            "Análisis del contexto histórico y cultural",
-            "Estudio del género literario",
-            "Identificación de la audiencia original",
-            "Análisis de palabras clave",
-            "Proposición exegética"
-        ],
-        "saved": "Guardado",
-        "errors": {
-            "enterPassage": "Por favor ingresa un pasaje bíblico",
-            "generateError": "Error al generar exégesis",
-            "refineError": "Error al refinar la sección",
-            "updateError": "Error al actualizar la sección",
-            "parseError": "Error al parsear la respuesta del modelo",
-            "invalidArray": "El modelo no devolvió un array válido"
-        },
-        "success": {
-            "generated": "Estudio exegético generado",
-            "restored": "Versión restaurada",
-            "refined": "Sección refinada exitosamente",
-            "updated": "Sección actualizada",
-            "undo": "Cambio deshecho",
-            "redo": "Cambio rehecho"
-        },
-        "loading": {
-            "preparingContext": "Preparando contexto de biblioteca..."
-        }
-    },
-    "homiletics": {
-        "title": "Análisis Homilético",
-        "subtitle": "Desarrolla la estructura y propósito de tu sermón basándote en la exégesis.",
-        "selectionTitle": "Elige el Enfoque de tu Sermón",
-        "selectionDesc": "Se han generado <strong>{{count}} enfoques diferentes</strong> para predicar este pasaje. Selecciona el que mejor se ajuste a tu contexto y audiencia.",
-        "regenerateBtn": "Regenerar Enfoques",
-        "regeneratingBtn": "Regenerando...",
-        "selectedApproach": "Enfoque Seleccionado:",
-        "developBtn": "Desarrollar este Enfoque",
-        "developingBtn": "Desarrollando Enfoque...",
-        "clickToSelect": "Haz clic en una tarjeta para seleccionar ese enfoque",
-        "phase1Loading": "Generando enfoques homiléticos...",
-        "phase1Sub": "📋 Fase 1: Creando 4-5 opciones",
-        "phase2Loading": "Desarrollando enfoque seleccionado...",
-        "phase2Sub": "🎨 Fase 2: Generando proposición y bosquejo detallado",
-        "errorNoExegesis": "Error: Falta el estudio exegético.",
-        "infoTitle": "Selección de Enfoque",
-        "infoDesc": "Cada enfoque ofrece una perspectiva única para predicar este pasaje. Considera tu contexto y audiencia al elegir.",
-        "typesTitle": "Tipos de Enfoque",
-        "typesDesc": "Pastoral, Teológico, Apologético, Evangelístico, Expositivo y Narrativo. Cada uno con su propósito único.",
-        "audienceTitle": "Audiencia Objetivo",
-        "audienceDesc": "Cada enfoque está optimizado para una audiencia específica. Elige el que mejor conecte con tu congregación.",
-        "developmentTitle": "Desarrollo Personalizado",
-        "developmentDesc": "Una vez seleccionado, generaremos una proposición homilética y bosquejo específicamente afinados al tono y propósito de tu enfoque elegido.",
-        "tip": "Tip:",
-        "tipText": "No existe un enfoque \"correcto\". Elige el que mejor resuene con las necesidades actuales de tu iglesia.",
-        "continueToDrafting": "Continuar a Redacción",
-        "subtitle2": "Construye el puente hacia la aplicación contemporánea.",
-        "exegeticalBasis": "Base Exegética",
-        "readyToGenerate": "Listo para generar tu propuesta homilética",
-        "readyDesc": "Basándome en tu análisis exegético, crearé 4-5 enfoques homiléticos diferentes para que elijas el más apropiado.",
-        "generateBtn": "Generar Enfoques Homiléticos",
-        "proposalTitle": "Propuesta Homilética",
-        "proposalDesc": "Revisa y refina el contenido usando el chat",
-        "regenerateShort": "Regenerar",
-        "backToExegesis": "Volver a Exégesis",
-        "whatIsTitle": "¿Qué es la Homilética?",
-        "whatIsDesc": "La homilética es el arte de construir el puente entre el texto bíblico y la audiencia contemporánea, transformando la verdad eterna en aplicación práctica.",
-        "afterGenerateTitle": "Después de generar podrás:",
-        "afterGenerateList": [
-            "Elegir entre 4-5 enfoques diferentes",
-            "Refinar proposición homilética",
-            "Mejorar el bosquejo del sermón",
-            "Agregar ilustraciones relevantes"
-        ],
-        "success": {
-            "previewsGenerated": "{{count}} enfoques generados. Selecciona el mejor para tu contexto.",
-            "developed": "Enfoque completamente desarrollado. ¡Revisa y refina!",
-            "refined": "Sección refinada exitosamente",
-            "undo": "Cambio deshecho",
-            "redo": "Cambio rehecho",
-            "restored": "Versión restaurada",
-            "updated": "Sección actualizada"
-        },
-        "errors": {
-            "generatePreviews": "Error al generar vistas previas de enfoques",
-            "notFound": "No se encontró el enfoque seleccionado",
-            "develop": "Error al desarrollar el enfoque seleccionado",
-            "refine": "Error al refinar la sección",
-            "update": "Error al actualizar la sección",
-            "readonlySection": "Esta sección es de solo lectura y no puede ser editada directamente",
-            "processFailed": "No se pudo procesar la solicitud"
-        },
-        "regenerateConfirm": {
-            "title": "¿Regenerar Estudio Homilético?",
-            "description": "Esta acción reiniciará todo el proceso homilético. Generará nuevos enfoques y perderás la selección actual y los refinamientos manuales.",
-            "cancel": "Cancelar",
-            "confirm": "Regenerar"
-        },
-        "saved": "Guardado",
-        "versions": {
-            "beforeManualEdit": "Antes de edición manual",
-            "manualEdit": "Edición manual",
-            "manualEditSummary": "Cambios guardados manualmente"
-        }
-    },
-    "drafting": {
-        "title": "Borrador del Sermón",
-        "subtitle": "Genera el sermón completo listo para predicar.",
-        "homileticalProposition": "Proposición Homilética",
-        "outlinePoints": "Puntos del Sermón:",
-        "readyToGenerate": "Listo para generar tu sermón completo",
-        "readyDesc": "Crearé un sermón completo con introducción, desarrollo de puntos, ilustraciones, conclusión y llamado a la acción.",
-        "generateBtn": "Generar Borrador del Sermón",
-        "regenerateBtn": "Regenerar",
-        "regeneratingBtn": "Generando...",
-        "refiningStatus": "Refinando sección. Usa el chat para hacer cambios.",
-        "defaultStatus": "Haz clic en \"Refinar\" para expandir una sección, o usa el chat para consultas generales.",
-        "saveAndExit": "Guardar y Salir",
-        "publishCopy": "Publicar Copia",
-        "back": "Atrás",
-        "backToHomiletics": "Volver a Homilética",
-        "preview": "Vista Previa",
-        "previewDialogTitle": "Vista Previa del Sermón",
-        "closePreview": "Cerrar Vista Previa",
-        "publishing": "Publicando...",
-        "publishSermon": "Publicar Sermón",
-        "finalDraftTitle": "El Borrador Final",
-        "finalDraftDesc": "Este es el último paso. Generaré un sermón completo y estructurado basado en tu exégesis y análisis homilético.",
-        "illustrationLabel": "Ilustración",
-        "conclusionLabel": "Conclusión",
-        "callToActionLabel": "Llamado a la Acción",
-        "authorDefault": "Pastor",
-        "loading": "Generando borrador del sermón...",
-        "loadingSub": "Esto puede tomar unos momentos",
-        "loadingRegeneratePoint": "Regenerando punto...",
-        "success": {
-            "generated": "Borrador del sermón generado",
-            "refined": "Sección refinada exitosamente",
-            "refinedSection": "{{section}} refinada exitosamente",
-            "refinedSectionWithSources": "{{section}} refinada usando {{count}} fuente(s) de biblioteca",
-            "saved": "Borrador guardado",
-            "published": "Sermón publicado exitosamente",
-            "regeneratedPoint": "Punto regenerado exitosamente",
-            "generatedWithSources": "Punto regenerado usando {{count}} fuente(s) de biblioteca",
-            "undo": "Cambio deshecho",
-            "redo": "Cambio rehecho",
-            "restored": "Versión restaurada",
-            "updated": "Sección actualizada"
-        },
-        "errors": {
-            "noDraft": "No hay borrador para publicar",
-            "publishing": "Error al publicar el sermón",
-            "generating": "Error al generar borrador",
-            "refining": "Error al refinar la sección",
-            "updating": "Error al actualizar la sección",
-            "regeneratingPoint": "Error al regenerar el punto",
-            "noHomiletics": "Error: Falta el análisis homilético.",
-            "processFailed": "No se pudo procesar la solicitud"
-        },
-        "regenerateConfirm": {
-            "title": "¿Regenerar Borrador del Sermón?",
-            "description": "Esta acción creará un nuevo borrador basado en tus elecciones homiléticas. Cualquier edición manual en el texto actual se perderá permanentemente.",
-            "cancel": "Cancelar",
-            "confirm": "Regenerar"
-        },
-        "saved": "Guardado",
-        "fullContent": {
-            "crossReferences": "Referencias Cruzadas",
-            "practicalImplications": "Implicaciones Prácticas"
-        },
-        "versions": {
-            "beforeManualEdit": "Antes de edición manual",
-            "manualEdit": "Edición manual",
-            "manualEditSummary": "Cambios guardados manualmente",
-            "beforeRefinement": "Antes de: {{summary}}...",
-            "refinedSummary": "✅ Sección \"{{section}}\" refinada exitosamente."
-        }
+    "banner": {
+      "paper": {
+        "headline": "Pre-cargado desde el paper exegético: {{title}}",
+        "openLink": "Ver paper origen",
+        "passageHint": "El pasaje viene del paper exegético. Cámbialo si quieres reorientar el sermón.",
+        "exegesisHint": "Esta sección es un resumen de tu paper. Si quieres mayor profundidad o usar el Tutor Griego, vuelve a generarla desde este paso.",
+        "homileticsHint": "El enfoque se derivó del tono '{{tone}}' que elegiste al generar. Puedes elegir otro enfoque o volver a generar opciones.",
+        "draftHint": "Borrador pre-cargado desde el paper. Refínalo con el chat, edítalo directamente, o publícalo."
+      },
+      "faculty": {
+        "headline": "Pre-cargado desde tu sesión de Facultad: {{title}}",
+        "openLink": "Volver a la conversación",
+        "passageHint": "El pasaje viene del bosquejo que aprobaste en la Facultad. Edítalo si quieres reorientar el sermón.",
+        "exegesisHint": "Esta exégesis es un resumen breve desde el bosquejo de la Facultad. Si quieres análisis canónico más profundo con Tutor Griego y referencias de tu biblioteca, vuelve a generarla desde este paso.",
+        "homileticsHint": "Los puntos vienen del bosquejo aprobado y la personalización pastoral que añadiste. Puedes elegir otro enfoque o volver a generar opciones.",
+        "draftHint": "Borrador generado desde tu sesión de Facultad. Refínalo con el chat, edítalo directamente, o publícalo."
+      }
     }
+  },
+  "citationVerification": {
+    "titleVerifying": "Verificando citas…",
+    "titleIssues": "Posibles citas inventadas",
+    "titleClean": "Todas las citas verificadas",
+    "titleLibraryNarrative": "Citas verificadas",
+    "titleUnavailable": "Verificación no disponible",
+    "descVerifying": "Estamos revisando que las citas atribuidas a autores estén realmente presentes en el material fuente.",
+    "descIssues_one": "Encontramos {{count}} cita que probablemente no aparece en el material fuente. Las citas inventadas en el pulpito destruyen credibilidad — revisa y corrige antes de publicar.",
+    "descIssues_other": "Encontramos {{count}} citas que probablemente no aparecen en el material fuente. Las citas inventadas en el pulpito destruyen credibilidad — revisa y corrige antes de publicar.",
+    "descClean_one": "Verificamos {{count}} cita atribuida a autor y todas aparecen en el material fuente. Puedes publicar con confianza.",
+    "descClean_other": "Verificamos {{count}} citas atribuidas a autores y todas aparecen en el material fuente. Puedes publicar con confianza.",
+    "descNoCitations": "El sermón no contiene citas atribuidas a autores. Solo se cita la Escritura — nada que verificar.",
+    "descLibraryNarrative": "Tus citas son atribuciones narrativas ancladas a tu biblioteca, verificables al hacer clic en cada marcador.",
+    "descUnavailable": "Este sermón no está vinculado a un paper exegético ni a una sesión Faculty, así que no hay material fuente contra el cual verificar las citas. Si tu sermón cita autores, revisa manualmente que sean reales.",
+    "allCleanDetail_one": "{{count}} cita verificada en el material fuente.",
+    "allCleanDetail_other": "{{count}} citas verificadas en el material fuente.",
+    "status": {
+      "verified": "Verificada",
+      "fuzzy-low": "Parcialmente encontrada",
+      "not-found": "No encontrada en la fuente"
+    },
+    "editSermon": "Editar sermón",
+    "publishAnyway": "Publicar de todos modos",
+    "publishNow": "Publicar ahora",
+    "cancel": "Cancelar"
+  },
+  "phases": {
+    "published": "Publicado",
+    "exegesis": "Exégesis",
+    "homiletics": "Homilética",
+    "drafting": "Redacción",
+    "unknown": "Desconocido"
+  },
+  "stats": {
+    "total": "Total",
+    "published": "Publicados",
+    "drafts": "Borradores",
+    "progress": "Progreso"
+  },
+  "inProgress": {
+    "title": "Sermones en Progreso",
+    "subtitle": "Continúa trabajando en tus sermones guardados."
+  },
+  "search": {
+    "placeholder": "Buscar por pasaje..."
+  },
+  "sort": {
+    "newest": "Más recientes",
+    "oldest": "Más antiguos",
+    "publishedFirst": "Publicados primero",
+    "draftFirst": "Borradores primero",
+    "progressHigh": "Mayor progreso",
+    "progressLow": "Menor progreso"
+  },
+  "filter": {
+    "label": "Filtrar:",
+    "all": "Todos",
+    "published": "Publicados",
+    "draft": "Borradores",
+    "exegesis": "Exégesis",
+    "homiletics": "Homilética",
+    "drafting": "Redacción"
+  },
+  "card": {
+    "versions": "versiones",
+    "progress": "Progreso",
+    "publishedAgo": "Publicado"
+  },
+  "passage": {
+    "title": "Selecciona un Pasaje Bíblico",
+    "developingSermon": "Desarrollando sermón:",
+    "descWithTitle": "¿Qué texto bíblico usarás para desarrollar este sermón?",
+    "descDefault": "El texto base que usarás para desarrollar tu sermón.",
+    "inputTitle": "Pasaje Bíblico",
+    "inputDesc": "Ingresa una referencia como 'Juan 3:16' o 'Romanos 8:28-39'",
+    "inputPlaceholder": "Ej: Juan 3:16, Salmos 23, Mateo 5:1-12",
+    "continueBtn": "Continuar con Exégesis",
+    "loading": "Cargando...",
+    "suggestionsTitle": "Sugerencias Populares",
+    "suggestions": [
+      {
+        "book": "Juan",
+        "ref": "Juan 3:16",
+        "topic": "Amor de Dios"
+      },
+      {
+        "book": "Romanos",
+        "ref": "Romanos 8:28",
+        "topic": "Propósito"
+      },
+      {
+        "book": "Filipenses",
+        "ref": "Filipenses 4:13",
+        "topic": "Fortaleza"
+      },
+      {
+        "book": "Salmos",
+        "ref": "Salmos 23",
+        "topic": "Protección"
+      },
+      {
+        "book": "Isaías",
+        "ref": "Isaías 40:31",
+        "topic": "Esperanza"
+      }
+    ],
+    "comingSoonTitle": "Próximamente: Sugerencias automáticas",
+    "comingSoonDesc": "Basado en el título y descripción de tu sermón, podremos sugerirte pasajes relevantes."
+  },
+  "actions": {
+    "startNew": "Comenzar Nuevo Sermón",
+    "duplicate": "Duplicar sermón",
+    "publishNow": "Publicar ahora",
+    "delete": "Eliminar",
+    "publish": "Publicar",
+    "publishing": "Publicando...",
+    "continue": "Continuar"
+  },
+  "empty": "No se encontraron sermones que coincidan con tu búsqueda.",
+  "exegesis": {
+    "title": "Estudio Exegético",
+    "subtitle": "Analiza el texto original y define la base bíblica de tu sermón.",
+    "contextActive": "Contexto Experto Activo: {{count}} documentos cargados",
+    "passageLabel": "Pasaje Bíblico",
+    "passagePlaceholder": "Ej: 1 Pedro 2:1-10",
+    "generateBtn": "Iniciar Estudio Exegético",
+    "analysisTitle": "Análisis Exegético: {{passage}}",
+    "refiningStatus": "Refinando sección. Usa el chat para hacer cambios.",
+    "defaultStatus": "Haz clic en \"Refinar\" para expandir una sección, o usa el chat para consultas generales.",
+    "continueBtn": "Continuar a Homilética",
+    "whatIsTitle": "¿Qué es la Exégesis?",
+    "whatIsDesc": "La exégesis es el análisis crítico del texto bíblico en su idioma original, considerando el contexto histórico, literario y cultural.",
+    "includesLabel": "Incluye:",
+    "includesList": [
+      "Análisis del contexto histórico y cultural",
+      "Estudio del género literario",
+      "Identificación de la audiencia original",
+      "Análisis de palabras clave",
+      "Proposición exegética"
+    ],
+    "saved": "Guardado",
+    "errors": {
+      "enterPassage": "Por favor ingresa un pasaje bíblico",
+      "generateError": "Error al generar exégesis",
+      "refineError": "Error al refinar la sección",
+      "updateError": "Error al actualizar la sección",
+      "parseError": "Error al parsear la respuesta del modelo",
+      "invalidArray": "El modelo no devolvió un array válido"
+    },
+    "success": {
+      "generated": "Estudio exegético generado",
+      "restored": "Versión restaurada",
+      "refined": "Sección refinada exitosamente",
+      "updated": "Sección actualizada",
+      "undo": "Cambio deshecho",
+      "redo": "Cambio rehecho"
+    },
+    "loading": {
+      "preparingContext": "Preparando contexto de biblioteca..."
+    }
+  },
+  "homiletics": {
+    "title": "Análisis Homilético",
+    "subtitle": "Desarrolla la estructura y propósito de tu sermón basándote en la exégesis.",
+    "selectionTitle": "Elige el Enfoque de tu Sermón",
+    "selectionDesc": "Se han generado <strong>{{count}} enfoques diferentes</strong> para predicar este pasaje. Selecciona el que mejor se ajuste a tu contexto y audiencia.",
+    "regenerateBtn": "Regenerar Enfoques",
+    "regeneratingBtn": "Regenerando...",
+    "selectedApproach": "Enfoque Seleccionado:",
+    "developBtn": "Desarrollar este Enfoque",
+    "developingBtn": "Desarrollando Enfoque...",
+    "clickToSelect": "Haz clic en una tarjeta para seleccionar ese enfoque",
+    "phase1Loading": "Generando enfoques homiléticos...",
+    "phase1Sub": "📋 Fase 1: Creando 4-5 opciones",
+    "phase2Loading": "Desarrollando enfoque seleccionado...",
+    "phase2Sub": "🎨 Fase 2: Generando proposición y bosquejo detallado",
+    "errorNoExegesis": "Error: Falta el estudio exegético.",
+    "infoTitle": "Selección de Enfoque",
+    "infoDesc": "Cada enfoque ofrece una perspectiva única para predicar este pasaje. Considera tu contexto y audiencia al elegir.",
+    "typesTitle": "Tipos de Enfoque",
+    "typesDesc": "Temático, Pastoral, Teológico, Apologético, Evangelístico y Narrativo. Cada uno con su propósito único.",
+    "audienceTitle": "Audiencia Objetivo",
+    "audienceDesc": "Cada enfoque está optimizado para una audiencia específica. Elige el que mejor conecte con tu congregación.",
+    "developmentTitle": "Desarrollo Personalizado",
+    "developmentDesc": "Una vez seleccionado, generaremos una proposición homilética y bosquejo específicamente afinados al tono y propósito de tu enfoque elegido.",
+    "tip": "Tip:",
+    "tipText": "No existe un enfoque \"correcto\". Elige el que mejor resuene con las necesidades actuales de tu iglesia.",
+    "continueToDrafting": "Continuar a Redacción",
+    "subtitle2": "Construye el puente hacia la aplicación contemporánea.",
+    "exegeticalBasis": "Base Exegética",
+    "readyToGenerate": "Listo para generar tu propuesta homilética",
+    "readyDesc": "Basándome en tu análisis exegético, crearé 4-5 enfoques homiléticos diferentes para que elijas el más apropiado.",
+    "generateBtn": "Generar Enfoques Homiléticos",
+    "proposalTitle": "Propuesta Homilética",
+    "proposalDesc": "Revisa y refina el contenido usando el chat",
+    "regenerateShort": "Regenerar",
+    "backToExegesis": "Volver a Exégesis",
+    "whatIsTitle": "¿Qué es la Homilética?",
+    "whatIsDesc": "La homilética es el arte de construir el puente entre el texto bíblico y la audiencia contemporánea, transformando la verdad eterna en aplicación práctica.",
+    "afterGenerateTitle": "Después de generar podrás:",
+    "afterGenerateList": [
+      "Elegir entre 4-5 enfoques diferentes",
+      "Refinar proposición homilética",
+      "Mejorar el bosquejo del sermón",
+      "Agregar ilustraciones relevantes"
+    ],
+    "success": {
+      "previewsGenerated": "{{count}} enfoques generados. Selecciona el mejor para tu contexto.",
+      "developed": "Enfoque completamente desarrollado. ¡Revisa y refina!",
+      "refined": "Sección refinada exitosamente",
+      "undo": "Cambio deshecho",
+      "redo": "Cambio rehecho",
+      "restored": "Versión restaurada",
+      "updated": "Sección actualizada"
+    },
+    "errors": {
+      "generatePreviews": "Error al generar vistas previas de enfoques",
+      "notFound": "No se encontró el enfoque seleccionado",
+      "develop": "Error al desarrollar el enfoque seleccionado",
+      "refine": "Error al refinar la sección",
+      "update": "Error al actualizar la sección",
+      "readonlySection": "Esta sección es de solo lectura y no puede ser editada directamente",
+      "processFailed": "No se pudo procesar la solicitud"
+    },
+    "regenerateConfirm": {
+      "title": "¿Regenerar Estudio Homilético?",
+      "description": "Esta acción reiniciará todo el proceso homilético. Generará nuevos enfoques y perderás la selección actual y los refinamientos manuales.",
+      "cancel": "Cancelar",
+      "confirm": "Regenerar"
+    },
+    "saved": "Guardado",
+    "versions": {
+      "beforeManualEdit": "Antes de edición manual",
+      "manualEdit": "Edición manual",
+      "manualEditSummary": "Cambios guardados manualmente"
+    }
+  },
+  "drafting": {
+    "title": "Borrador del Sermón",
+    "subtitle": "Genera el sermón completo listo para predicar.",
+    "homileticalProposition": "Proposición Homilética",
+    "outlinePoints": "Puntos del Sermón:",
+    "readyToGenerate": "Listo para generar tu sermón completo",
+    "readyDesc": "Crearé un sermón completo con introducción, desarrollo de puntos, ilustraciones, conclusión y llamado a la acción.",
+    "generateBtn": "Generar Borrador del Sermón",
+    "regenerateBtn": "Regenerar",
+    "regeneratingBtn": "Generando...",
+    "refiningStatus": "Refinando sección. Usa el chat para hacer cambios.",
+    "defaultStatus": "Haz clic en \"Refinar\" para expandir una sección, o usa el chat para consultas generales.",
+    "saveAndExit": "Guardar y Salir",
+    "publishCopy": "Publicar Copia",
+    "back": "Atrás",
+    "backToHomiletics": "Volver a Homilética",
+    "preview": "Vista Previa",
+    "previewDialogTitle": "Vista Previa del Sermón",
+    "closePreview": "Cerrar Vista Previa",
+    "publishing": "Publicando...",
+    "publishSermon": "Publicar Sermón",
+    "finalDraftTitle": "El Borrador Final",
+    "finalDraftDesc": "Este es el último paso. Generaré un sermón completo y estructurado basado en tu exégesis y análisis homilético.",
+    "illustrationLabel": "Ilustración",
+    "conclusionLabel": "Conclusión",
+    "callToActionLabel": "Llamado a la Acción",
+    "authorDefault": "Pastor",
+    "loading": "Generando borrador del sermón...",
+    "loadingSub": "Esto puede tomar unos momentos",
+    "loadingRegeneratePoint": "Regenerando punto...",
+    "success": {
+      "generated": "Borrador del sermón generado",
+      "refined": "Sección refinada exitosamente",
+      "refinedSection": "{{section}} refinada exitosamente",
+      "refinedSectionWithSources": "{{section}} refinada usando {{count}} fuente(s) de biblioteca",
+      "saved": "Borrador guardado",
+      "published": "Sermón publicado exitosamente",
+      "regeneratedPoint": "Punto regenerado exitosamente",
+      "generatedWithSources": "Punto regenerado usando {{count}} fuente(s) de biblioteca",
+      "undo": "Cambio deshecho",
+      "redo": "Cambio rehecho",
+      "restored": "Versión restaurada",
+      "updated": "Sección actualizada"
+    },
+    "errors": {
+      "noDraft": "No hay borrador para publicar",
+      "publishing": "Error al publicar el sermón",
+      "generating": "Error al generar borrador",
+      "refining": "Error al refinar la sección",
+      "updating": "Error al actualizar la sección",
+      "regeneratingPoint": "Error al regenerar el punto",
+      "noHomiletics": "Error: Falta el análisis homilético.",
+      "processFailed": "No se pudo procesar la solicitud"
+    },
+    "regenerateConfirm": {
+      "title": "¿Regenerar Borrador del Sermón?",
+      "description": "Esta acción creará un nuevo borrador basado en tus elecciones homiléticas. Cualquier edición manual en el texto actual se perderá permanentemente.",
+      "cancel": "Cancelar",
+      "confirm": "Regenerar"
+    },
+    "saved": "Guardado",
+    "fullContent": {
+      "crossReferences": "Referencias Cruzadas",
+      "practicalImplications": "Implicaciones Prácticas"
+    },
+    "versions": {
+      "beforeManualEdit": "Antes de edición manual",
+      "manualEdit": "Edición manual",
+      "manualEditSummary": "Cambios guardados manualmente",
+      "beforeRefinement": "Antes de: {{summary}}...",
+      "refinedSummary": "✅ Sección \"{{section}}\" refinada exitosamente."
+    }
+  }
 }

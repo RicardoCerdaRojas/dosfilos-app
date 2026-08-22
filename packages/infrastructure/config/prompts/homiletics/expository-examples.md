@@ -1,7 +1,13 @@
-# Ejemplos de Proposiciones Expositivas con Estructura Sustantivada
+# Ejemplos de Proposiciones con Estructura Sustantivada
 
-> **Propósito:** Galería de ejemplos reales para cada tipo de sustantivo plural  
+> **Propósito:** Galería de ejemplos para cada tipo de sustantivo plural  
 > **Uso:** Referencia para IA y predicadores
+>
+> **2026-08-22:** dejó de ser "expositivo" — la estructura aplica a las SEIS formas.
+> Los verbos se pasaron a 1ª persona plural ("veremos", "descubriremos"), que es como
+> escribe el fundador: el predicador se incluye con la congregación. Los títulos del
+> bosquejo SÍ conservan el imperativo ("Debes..."), que es correcto y sincroniza con
+> el llamado a la acción de la proposición.
 
 ---
 
@@ -9,7 +15,7 @@
 
 ### **Filipenses 2:5-11**
 ```
-En Filipenses 2:5-11, descubrirás tres verdades sobre la humillación de Cristo 
+En Filipenses 2:5-11, descubriremos tres verdades sobre la humillación de Cristo 
 que debes obedecer para que vivamos en unidad sacrificial por la gloria de Dios.
 ```
 
@@ -20,7 +26,7 @@ que debes obedecer para que vivamos en unidad sacrificial por la gloria de Dios.
 
 ### **Romanos 8:28-30**
 ```
-En Romanos 8:28-30, encontrarás cuatro verdades inquebrantables sobre la soberanía 
+En Romanos 8:28-30, encontraremos cuatro verdades inquebrantables sobre la soberanía 
 de Dios que debes creer para descansar plenamente en Su plan perfecto.
 ```
 
@@ -36,7 +42,7 @@ de Dios que debes creer para descansar plenamente en Su plan perfecto.
 
 ### **Salmo 23**
 ```
-En el Salmo 23, descubrirás cinco motivos para confiar absolutamente en Jehová 
+En el Salmo 23, descubriremos cinco motivos para confiar absolutamente en Jehová 
 como tu Pastor, aun en medio del valle más oscuro de tu vida.
 ```
 
@@ -49,7 +55,7 @@ como tu Pastor, aun en medio del valle más oscuro de tu vida.
 
 ### **1 Pedro 1:3-9**
 ```
-En 1 Pedro 1:3-9, recibirás tres motivos poderosos para mantener esperanza viva, 
+En 1 Pedro 1:3-9, recibiremos tres motivos poderosos para mantener esperanza viva, 
 aun cuando enfrentes pruebas que parecen consumir tu fe.
 ```
 
@@ -64,7 +70,7 @@ aun cuando enfrentes pruebas que parecen consumir tu fe.
 
 ### **Efesios 6:10-17**
 ```
-En Efesios 6:10-17, aprenderás cuatro pasos esenciales para vestirte 
+En Efesios 6:10-17, aprenderemos cuatro pasos esenciales para vestirte 
 de la armadura completa de Dios y resistir victoriosamente al enemigo.
 ```
 
@@ -76,7 +82,7 @@ de la armadura completa de Dios y resistir victoriosamente al enemigo.
 
 ### **Santiago 1:2-8**
 ```
-En Santiago 1:2-8, recibirás tres pasos progresivos para transformar 
+En Santiago 1:2-8, recibiremos tres pasos progresivos para transformar 
 tus pruebas en madurez espiritual por el poder de Dios.
 ```
 
@@ -91,7 +97,7 @@ tus pruebas en madurez espiritual por el poder de Dios.
 
 ### **Isaías 43:1-7**
 ```
-En Isaías 43:1-7, encontrarás tres promesas consoladoras de Dios que aseguran 
+En Isaías 43:1-7, encontraremos tres promesas consoladoras de Dios que aseguran 
 que nunca te abandonará, aun cuando pases por fuego y agua.
 ```
 
@@ -102,7 +108,7 @@ que nunca te abandonará, aun cuando pases por fuego y agua.
 
 ### **Filipenses 4:6-7**
 ```
-En Filipenses 4:6-7, recibirás dos promesas poderosas que aseguran 
+En Filipenses 4:6-7, recibiremos dos promesas poderosas que aseguran 
 tu paz interior cuando presentes tus peticiones a Dios en oración.
 ```
 
@@ -116,7 +122,7 @@ tu paz interior cuando presentes tus peticiones a Dios en oración.
 
 ### **Colosenses 3:1-17**
 ```
-En Colosenses 3:1-17, recibirás cuatro exhortaciones vitales que transformarán 
+En Colosenses 3:1-17, recibiremos cuatro exhortaciones vitales que transformarán 
 radicalmente tu manera de vivir si las obedeces por el poder del Espíritu.
 ```
 
@@ -128,7 +134,7 @@ radicalmente tu manera de vivir si las obedeces por el poder del Espíritu.
 
 ### **Hebreos 10:19-25**
 ```
-En Hebreos 10:19-25, aprenderás tres exhortaciones urgentes que revolucionarán 
+En Hebreos 10:19-25, aprenderemos tres exhortaciones urgentes que revolucionarán 
 tu vida devocional y comunitaria como creyente.
 ```
 
@@ -143,7 +149,7 @@ tu vida devocional y comunitaria como creyente.
 
 ### **Proverbios 3:5-12**
 ```
-En Proverbios 3:5-12, descubrirás cuatro principios fundamentales para vivir 
+En Proverbios 3:5-12, descubriremos cuatro principios fundamentales para vivir 
 en sabiduría divina que reconoce al Señor en todos tus caminos.
 ```
 
@@ -155,7 +161,7 @@ en sabiduría divina que reconoce al Señor en todos tus caminos.
 
 ### **Mateo 6:25-34**
 ```
-En Mateo 6:25-34, recibirás tres principios liberadores para vencer la ansiedad 
+En Mateo 6:25-34, recibiremos tres principios liberadores para vencer la ansiedad 
 y descansar en la provisión perfecta de tu Padre celestial.
 ```
 
@@ -170,7 +176,7 @@ y descansar en la provisión perfecta de tu Padre celestial.
 
 ### **Jonás 1-4**
 ```
-En el libro de Jonás, aprenderás tres lecciones cruciales sobre la gracia 
+En el libro de Jonás, aprenderemos tres lecciones cruciales sobre la gracia 
 misericordiosa de Dios que desafiarán tu comprensión del amor divino.
 ```
 
@@ -181,7 +187,7 @@ misericordiosa de Dios que desafiarán tu comprensión del amor divino.
 
 ### **Lucas 15:11-32**
 ```
-En la parábola del hijo pródigo, descubrirás dos lecciones transformadoras 
+En la parábola del hijo pródigo, descubriremos dos lecciones transformadoras 
 sobre el corazón del Padre que cambiarán tu perspectiva de Dios y la gracia.
 ```
 
@@ -205,7 +211,7 @@ a decidir hoy mismo a quién servirás con tu vida entera.
 
 ### **Apocalipsis 3:14-22**
 ```
-En Apocalipsis 3:14-22, recibirás tres desafíos urgentes de Cristo 
+En Apocalipsis 3:14-22, recibiremos tres desafíos urgentes de Cristo 
 a la iglesia tibia que te confrontarán sobre tu verdadero estado espiritual.
 ```
 
@@ -226,13 +232,13 @@ sobre la kenosis y exaltación de Cristo que debes conocer para una eclesiologí
 
 ### **Expositivo-Pastoral (Más cálido)**
 ```
-En Filipenses 2:6-11, descubrirás tres verdades consoladoras sobre el amor 
+En Filipenses 2:6-11, descubriremos tres verdades consoladoras sobre el amor 
 de Cristo que debes abrazar para vivir en humildad y esperanza.
 ```
 
 ### **Expositivo-Exhortativo (Más imperativo)**
 ```
-En Filipenses 2:6-11, recibirás tres verdades desafiantes sobre Cristo 
+En Filipenses 2:6-11, recibiremos tres verdades desafiantes sobre Cristo 
 que debes obedecer hoy para transformar tu carácter a Su imagen.
 ```
 
