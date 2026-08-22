@@ -32,7 +32,13 @@ interface WizardContextType extends WizardState {
     setPassage: (passage: string) => void;
     setRules: (rules: GenerationRules) => void;
     setExegesis: (exegesis: ExegeticalStudy) => void;
-    setHomiletics: (homiletics: HomileticalAnalysis) => void;
+    /**
+     * Acepta `null` para DESCARTAR la propuesta desarrollada. El estado interno
+     * siempre fue `HomileticalAnalysis | null` y el propio contexto ya lo
+     * limpiaba así; el tipo expuesto era más estrecho que la realidad, y eso
+     * impedía que un llamador hiciera lo que el contexto sí hace.
+     */
+    setHomiletics: (homiletics: HomileticalAnalysis | null) => void;
     setDraft: (draft: SermonContent) => void;
     setSermonId: (id: string | null) => void;
     setDerivedContext: (ctx: DerivedContext | null) => void;
