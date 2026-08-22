@@ -17,60 +17,87 @@ La proposición homilética es **la idea central del sermón expresada en una or
 
 ## 📐 Estructura Requerida
 
-### **🌟 IMPORTANTE: Dos Tipos de Estructura Según Enfoque**
+### **🌟 UNA SOLA ESTRUCTURA PARA LAS SEIS FORMAS**
 
-#### **Para Enfoques EXPOSITIVOS (⭐ Recomendado)**
+> **Cambio 2026-08-22.** Antes este documento definía DOS estructuras: la sustantivada para
+> enfoques "expositivos" y una "flexible" para el resto. Eso se corrige por dos razones.
+>
+> 1. **`expositivo` ya no es una forma.** La corrección de categoría (2026-07-06) lo sacó del
+>    catálogo: la expositividad es la CONDICIÓN que toda forma debe cumplir —que el texto gobierne
+>    el contenido— no una forma paralela. Las seis formas son temático, pastoral, teológico,
+>    apologético, evangelístico y narrativo. Ninguna se llama "expositivo", así que la rama
+>    sustantivada quedaba inalcanzable en la práctica.
+> 2. **El corpus del fundador la usa en todas.** Sus proposiciones pastorales, doctrinales y de
+>    consuelo tienen todas la misma estructura. Lo que cambia con el enfoque es el TONO y el
+>    SUSTANTIVO elegido, nunca el andamiaje.
 
-Usar **Estructura Sustantivada de 8 Elementos** - La más cohesiva y predicable.
+**La proposición sustantivada es el DEFAULT de las seis formas.** El tono adapta las palabras; no
+elimina la estructura.
 
 ##### **Template Completo:**
 ```
-En [PASAJE], [VERBO] [NÚMERO] [SUSTANTIVO PLURAL] que [LLAMADO ACCIÓN] 
-y que [ELEMENTO PROPOSICIONAL] [1ª PERSONA PLURAL] [IDEA CENTRAL].
+En [PASAJE], [VERBO 1ª PLURAL] [NÚMERO] [SUSTANTIVO PLURAL] [NEXO] [LLAMADO A LA ACCIÓN]
+[que/para] [IDEA CENTRAL DEL PASAJE].
 ```
 
 ##### **Los 8 Elementos:**
 
-1. **PASAJE ESPECÍFICO:** "En Filipenses 2:5-11", "En Mateo 28:19-20"
-2. **VERBO DE DESCUBRIMIENTO:** encontrarás, descubrirás, recibirás, veremos, aprenderemos
-3. **NÚMERO:** dos, tres, cuatro (cantidad EXACTA de puntos del bosquejo)
-4. **SUSTANTIVO PLURAL:** Define el tipo de contenido
-   - **verdades** → para contenido doctrinal (más didáctico)
-   - **motivos** → para persuasión (hacia acción/decisión)
-   - **exhortaciones** → para llamado a acción (imperativo)
-   - **pasos** → para procesos (secuencial)
-   - **promesas** → para consuelo (pastoral)
-   - **lecciones** → para aprendizaje (educativo)
-   - **principios** → para aplicación (práctico)
-   - **desafíos** → para confrontación (fuerte)
+1. **PASAJE ESPECÍFICO:** "En Jonás 1:1-3", "En 2 Pedro 1:16-21". Siempre abre la proposición.
+2. **VERBO DE DESCUBRIMIENTO, EN 1ª PERSONA PLURAL:** **veremos** (el más usado), aprenderemos,
+   descubriremos, consideraremos.
+   ⚠️ NO uses 2ª persona singular ("descubrirás", "encontrarás"): el predicador se incluye con la
+   congregación, no le habla desde afuera.
+3. **NÚMERO:** dos, tres, cuatro. Debe coincidir EXACTAMENTE con la cantidad de puntos del bosquejo.
+   Es lo que vuelve memorable la proposición: la congregación puede contar lo que va a oír.
+4. **SUSTANTIVO PLURAL:** define el tipo de contenido y es lo que el enfoque cambia.
+   - **verdades** → doctrinal/didáctico (el más frecuente)
+   - **exhortaciones** → llamado a acción (imperativo)
+   - **motivos / razones** → persuasión
+   - **promesas** → consuelo (pastoral)
+   - **lecciones / principios** → aprendizaje, aplicación
+   - **reacciones / desafíos** → narrativo, confrontación
+5. **NEXO:** que, por las que, para, a fin de, sobre.
+6. **LLAMADO A LA ACCIÓN:** qué debe hacer el oyente con esa verdad ("que deben modelar",
+   "que debemos abrazar", "para confiar", "que nos permitirán").
+7. **IDEA CENTRAL DEL PASAJE:** el sentido original del texto, no una idea traída de afuera.
+8. **ARMONÍA CON LOS PUNTOS:** cada punto del bosquejo refuerza la proposición y aborda versículos
+   del pasaje que se está predicando. Acá manda el flujo del texto.
 
-5. **LLAMADO A ACCIÓN:** que debes obedecer, para confiar, que transformarán, a fin de vivir
-6. **ELEMENTO PROPOSICIONAL:** que, para, a fin de, por lo que (conecta ideas)
-7. **PRIMERA PERSONA PLURAL:** vivimos, confiamos, obedecemos, crezcamos (puede ser implícito)
-8. **IDEA CENTRAL DEL PASAJE:** por la gloria de Dios, en Cristo, para Su reino
+##### **Ejemplos REALES del fundador (no inventados)**
 
-##### **Ejemplo Completo (Expositivo):**
+Estos son sus proposiciones tal como las predicó. Nota que la estructura NO cambia con el tono:
+
 ```
-"En Filipenses 2:5-11, descubrirás tres verdades sobre la humillación 
-de Cristo que debes obedecer para que vivamos en unidad sacrificial 
-por la gloria de Dios."
-```
+Doctrinal:
+"En 2 Pedro 1:16-21, veremos tres verdades sobre la autoridad de las Escrituras
+que deben modelar nuestra confianza en Dios, protegiéndonos de las falsas enseñanzas."
 
-**Desglose:**
-1. Pasaje: "En Filipenses 2:5-11"
-2. Verbo: "descubrirás"
-3. Número: "tres"
-4. Sustantivo: "verdades"
-5. Llamado: "que debes obedecer"
-6. Proposicional: "para que"
-7. 1ª Plural: "vivamos"
-8. Idea central: "en unidad sacrificial por la gloria de Dios"
+Exhortativo:
+"En 1 Pedro 5:1-4, veremos tres exhortaciones a los pastores
+que nos permitirán servir fielmente a Dios."
+
+Pastoral / de consuelo:
+"En 1 Corintios 15:20-26, veremos tres verdades
+por las que un creyente no debe temer a la muerte."
+
+Pastoral / matrimonio:
+"En 1 Pedro 3:1-7, descubriremos tres verdades que debemos abrazar
+para que vivamos matrimonios que honren a Cristo y testifiquen de Su poder transformador."
+
+Sapiencial:
+"En Proverbios 13:12, aprenderemos tres verdades
+que nos libran de la frustración y el decaimiento espiritual."
+
+Narrativo:
+"En Lucas 23:39-43, veremos dos reacciones acerca de la cruz
+que nos guían a la adoración genuina."
+```
 
 ##### **CRÍTICO: Sincronización con Títulos del Bosquejo**
 
 Los títulos del bosquejo DEBEN estar en armonía perfecta con:
-- El **SUSTANTIVO PLURAL** (verdades, motivos, pasos, etc.)
-- El **LLAMADO A ACCIÓN** (debes obedecer, para confiar, etc.)
+- El **SUSTANTIVO PLURAL** (verdades, exhortaciones, motivos, etc.)
+- El **LLAMADO A ACCIÓN** (que debes obedecer, para confiar, etc.)
 
 **Ejemplos de Sincronización:**
 
@@ -90,51 +117,13 @@ III. El ejemplo de Cristo asegura que puedes confiar plenamente
 ```
 ✅ Todos conectan con "confiar"
 
-**C) "pasos para crecer espiritualmente" →**
-```
-I. Primer paso: Reconoce tu necesidad de Cristo
-II. Segundo paso: Aplica Sus enseñanzas diariamente
-III. Tercer paso: Persevera en obediencia hasta el fin
-```
-✅ Estructura secuencial clara
+##### **Si el pastor prefiere otra forma**
 
-#### **Para OTROS Enfoques (Pastoral, Teológico, Evangelístico, etc.)**
+La sustantivada es el default, **no una prohibición**. Un pastor puede escribir su proposición como
+quiera: el sistema le señala qué elemento falta y él decide. Se confronta, no se bloquea. Lo que NO
+se hace es generar por defecto una proposición sin estructura y llamarla flexible.
 
-Usar **Estructura Flexible Tradicional** - Más libertad creativa.
-
-##### **Criterios Flexibles:**
-
-### **1. SUJETO CLARO**
-- ¿De quién o qué se habla?
-- Debe ser específico, no genérico
-
-**Ejemplo:**
-- ❌ Genérico: "La gente"
-- ✅ Específico: "Los creyentes que enfrentan pruebas"
-
-### **2. VERBO DE ACCIÓN**
-- ¿Qué sucede, se hace o se debe hacer?
-- Preferir verbos activos sobre verbos ser/estar
-
-**Ejemplo:**
-- ❌ Débil: "es importante"
-- ✅ Fuerte: "experimenta", "transforma", "capacita"
-
-### **3. COMPLEMENTO ESPECÍFICO**
-- ¿Qué resultado, beneficio o llamado se presenta?
-- Debe conectar con la vida real
-
-**Ejemplo:**
-- ❌ Vago: "para ser mejores"
-- ✅ Concreto: "para vivir en unidad sacrificial imitando a Cristo"
-
-### **4. CONEXIÓN TEOLÓGICA**
-- Debe anclar en una verdad de Dios, Cristo, o el Evangelio
-- No solo moralismo o consejos prácticos
-
-**Ejemplo:**
-- ❌ Moralista: "Debemos ser humildes para tener éxito"
-- ✅ Teológica: "La humillación de Cristo nos capacita para la humildad verdadera"
+---
 
 ---
 
@@ -251,19 +240,24 @@ Palabras: [contar para verificar 15-25]
 
 ---
 
-## 📊 Ejemplos de Proposiciones Excelentes
+## 📊 El tono cambia las palabras, no la estructura
 
-### **Filipenses 2:5-11 - Enfoque Expositivo/Didáctico**
-"La preexistencia, humillación y exaltación de Cristo fundamentan nuestra ética de humildad comunitaria como patrón de vida cristiana auténtica."
+Un mismo pasaje, cuatro enfoques, la MISMA estructura sustantivada:
 
-### **Filipenses 2:5-11 - Enfoque Pastoral/De Ánimo**
-"Cuando enfrentamos la humillación y el sufrimiento, la asombrosa humildad de Cristo nos asegura que Dios nos levantará en Su tiempo, transformando nuestras pruebas en camino de esperanza y exaltación eterna."
+### **Filipenses 2:5-11 — Teológico/Didáctico**
+"En Filipenses 2:5-11, veremos tres verdades sobre la humillación de Cristo que fundamentan nuestra humildad comunitaria."
 
-### **Filipenses 2:5-11 - Enfoque Evangelístico**
-"El viaje de Cristo desde la gloria al dolor de cruz revela el amor radical de Dios que llama a cada persona a rendir su orgullo y recibir vida eterna."
+### **Filipenses 2:5-11 — Pastoral/De Ánimo**
+"En Filipenses 2:5-11, veremos tres promesas para el que hoy está siendo humillado, por las que podemos confiar en que Dios levanta a su tiempo."
 
-### **Filipenses 2:5-11 - Enfoque Teológico/Académico**
-"El himno cristológico de Filipenses expone la naturaleza paradójica de la kenosis divina: Dios se revela más plenamente no en demostración de poder, sino en vaciamiento sacrificial."
+### **Filipenses 2:5-11 — Evangelístico**
+"En Filipenses 2:5-11, veremos tres motivos para rendir tu orgullo ante el Cristo que se despojó por ti."
+
+### **Filipenses 2:5-11 — Apologético**
+"En Filipenses 2:5-11, veremos tres razones por las que la grandeza de Dios se demuestra en humildad y no en poder coercitivo."
+
+⚠️ Lo que cambia entre los cuatro: el SUSTANTIVO (verdades / promesas / motivos / razones), el
+llamado y el registro del lenguaje. Lo que NO cambia: "En [pasaje], veremos [número] [sustantivo]…".
 
 ---
 
@@ -285,4 +279,4 @@ Si encuentras áreas de mejora en estas guías:
 2. Commit con mensaje descriptivo
 3. Las mejoras se aplican inmediatamente en producción
 
-**Última revisión:** 2025-12-11
+**Última revisión:** 2026-08-22 — una sola estructura para las seis formas.

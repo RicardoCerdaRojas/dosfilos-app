@@ -186,7 +186,24 @@ alineado con este enfoque, especialmente su TONO (${preview.tone}) y PROPÓSITO.
      */
     private buildInstructionsSection(): string {
         const preview = this.selectedPreview!;
-        const isExpository = preview.type?.toLowerCase().includes('expositiv');
+        // 2026-08-22 — SE QUITÓ EL GATE `isExpository`.
+        //
+        // La estructura sustantivada de 8 elementos estaba detrás de
+        // `preview.type.includes('expositiv')`, y para cualquier otra forma el
+        // prompt terminaba diciendo "usa estructura flexible". O sea: el pastor
+        // elegía `pastoral` y el modelo recibía permiso explícito para no seguir
+        // el método. No era un fallo del modelo; obedecía.
+        //
+        // Peor: `expositivo` DEJÓ DE SER UNA FORMA en la corrección de categoría
+        // (2026-07-06) — la expositividad es la condición que toda forma debe
+        // cumplir (el descalificador global G3), no una forma paralela. Las seis
+        // formas son temático, pastoral, teológico, apologético, evangelístico y
+        // narrativo. Ninguna contiene "expositiv", así que el gate se había
+        // vuelto una puerta que ya no se podía abrir y la estructura quedaba
+        // muerta para TODAS las formas vivas.
+        //
+        // La sustantivada es ahora el default de las seis. El tono adapta las
+        // palabras; no elimina el andamiaje. Ver proposition-guidelines.md.
 
         // Use imported MD files directly
         const propositionGuidelines = propositionGuidelinesMD;
@@ -194,7 +211,7 @@ alineado con este enfoque, especialmente su TONO (${preview.tone}) y PROPÓSITO.
         const applicationTemplate = applicationTemplateMD;
         const toneConsistency = toneConsistencyMD;
         const scriptureCriteria = scriptureReferencesMD;
-        const expositoryExamples = isExpository ? expositoryExamplesMD : '';
+        const structureExamples = expositoryExamplesMD;
 
         // Build comprehensive instructions
         const sections = [
@@ -204,14 +221,14 @@ alineado con este enfoque, especialmente su TONO (${preview.tone}) y PROPÓSITO.
             '',
         ];
 
-        // 🚨 FOR EXPOSITORY: Add CRITICAL imperatives FIRST
-        if (isExpository) {
+        // La estructura sustantivada va SIEMPRE y va PRIMERO.
+        {
             sections.push(
                 '---',
                 '',
-                '# 🚨 IMPERATIVO CRÍTICO: ENFOQUE EXPOSITIVO',
+                '# 🚨 IMPERATIVO CRÍTICO: ESTRUCTURA DE LA PROPOSICIÓN',
                 '',
-                '**ESTE ES UN ENFOQUE EXPOSITIVO. DEBES SEGUIR EXACTAMENTE LA ESTRUCTURA SUSTANTIVADA DE 8 ELEMENTOS.**',
+                `**DEBES SEGUIR EXACTAMENTE LA ESTRUCTURA SUSTANTIVADA DE 8 ELEMENTOS**, sea cual sea el enfoque — este es *${preview.type}*. El tono adapta las PALABRAS; no elimina la estructura.`,
                 '',
                 '## ⚠️ ESTRUCTURA OBLIGATORIA PARA LA PROPOSICIÓN:',
                 '',
@@ -222,7 +239,7 @@ alineado con este enfoque, especialmente su TONO (${preview.tone}) y PROPÓSITO.
                 '',
                 '### Los 8 Elementos REQUERIDOS:',
                 '1. **PASAJE:** "En Filipenses 2:5-11" (el pasaje exacto)',
-                '2. **VERBO:** descubrirás, encontrarás, recibirás, aprenderás',
+                '2. **VERBO, EN 1ª PERSONA PLURAL:** veremos (el más usado), aprenderemos, descubriremos, consideraremos. NUNCA 2ª persona singular ("descubrirás"): el predicador se incluye con la congregación.',
                 '3. **NÚMERO:** dos, tres, cuatro (DEBE coincidir con cantidad de puntos del bosquejo)',
                 '4. **SUSTANTIVO PLURAL:** verdades, motivos, pasos, promesas, exhortaciones, principios, lecciones, desafíos',
                 '5. **LLAMADO ACCIÓN:** que debes obedecer, para confiar, que transformarán, a fin de vivir',
@@ -321,9 +338,9 @@ alineado con este enfoque, especialmente su TONO (${preview.tone}) y PROPÓSITO.
             scriptureCriteria || 'Incluye 2-3 referencias por punto del bosquejo.'
         );
 
-        // Add expository examples if available
-        if (isExpository && expositoryExamples) {
-            sections.push('', '---', '', '### 📚 EJEMPLOS DE REFERENCIA (EXPOSITIVOS)', '', expositoryExamples);
+        // La galería de ejemplos de la estructura va siempre, no solo para una forma.
+        if (structureExamples) {
+            sections.push('', '---', '', '### 📚 EJEMPLOS DE REFERENCIA (ESTRUCTURA SUSTANTIVADA)', '', structureExamples);
         }
 
         sections.push(
@@ -335,9 +352,8 @@ alineado con este enfoque, especialmente su TONO (${preview.tone}) y PROPÓSITO.
             `- El enfoque seleccionado es: **${preview.type}** con tono **${preview.tone}**`,
             `- La dirección es: "${preview.direction}"`,
             `- TODO debe estar perfectamente alineado con ese enfoque y tono`,
-            isExpository
-                ? '- **IMPORTANTE:** Como es EXPOSITIVO, usa la Estructura Sustantivada de 8 elementos para la proposición'
-                : '- Usa estructura flexible apropiada para este tipo de enfoque',
+            '- **IMPORTANTE:** Usa la Estructura Sustantivada de 8 elementos para la proposición, sea cual sea el enfoque',
+            `- Lo que el enfoque **${preview.type}** cambia es el SUSTANTIVO PLURAL elegido y el registro del lenguaje, NO el andamiaje de la proposición`,
             '- Verifica que proposición y bosquejo se sientan como UN SOLO sermón cohesivo',
             '- No pierdas el tono en ningún elemento'
         );
