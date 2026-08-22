@@ -127,7 +127,25 @@ export function buildStudyDepthSnapshot(
         dimensionScores,
         weakDimensions: [...assessment.weakDimensions],
         bypassedConfrontation: options.bypassedConfrontation,
-        justification: options.justification?.trim() || undefined,
+        // La clave se OMITE cuando no hay justificación, en vez de viajar con
+        // `undefined`. Firestore rechaza `undefined` como valor —lanza
+        // "Unsupported field value"— así que `justification: undefined` hacía
+        // fallar el guardado ENTERO del snapshot.
+        //
+        // El efecto era silencioso y exactamente al revés de lo que se quería:
+        // solo persistían los snapshots CON override (que traen justificación).
+        // Los del pastor que hizo bien el estudio —el caso bueno, sin override—
+        // reventaban siempre. Medido en prod el 2026-08-22: de 212 sermones,
+        // 11 tenían snapshot y los 11 eran `bypassedConfrontation: true`. Cero
+        // del caso bueno, nunca.
+        //
+        // Y arrastraba una consecuencia peor: el auto-desbloqueo del modo
+        // experto (ADR-027) cuenta sermones con `overallScore` alto, y un
+        // sermón de score alto es justamente uno que NO hace override. O sea
+        // que el desbloqueo era inalcanzable por construcción — el mismo
+        // chicken-egg que el ADR había resuelto a propósito, reintroducido por
+        // un `undefined`.
+        ...(options.justification?.trim() ? { justification: options.justification.trim() } : {}),
         expertMode: options.expertMode,
     };
 }
