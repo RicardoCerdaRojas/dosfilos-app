@@ -131,6 +131,24 @@ export function StepHomiletics() {
         setLoading(true);
         setApproachPreviews([]);
 
+        // Regenerar enfoques DESCARTA la propuesta ya desarrollada.
+        //
+        // El diálogo de confirmación siempre prometió esto —"reiniciará todo el
+        // proceso homilético… perderás la selección actual"— pero el código solo
+        // reemplazaba los previews. La proposición y el bosquejo del enfoque
+        // anterior sobrevivían, y la pantalla los seguía mostrando como si
+        // correspondieran a los enfoques nuevos. Una propuesta huérfana de su
+        // enfoque no es contenido viejo: es contenido que MIENTE sobre de dónde
+        // salió, y el pastor no tiene forma de notarlo.
+        //
+        // Se limpia ANTES de la llamada, no después: si la generación falla, es
+        // preferible quedar sin propuesta —con los enfoques a la vista para
+        // reintentar— que conservar una que ya no pertenece a nada.
+        setHomiletics(null);
+        setTempSelectedApproachId(undefined);
+        setExpandedSectionId(null);
+        setModifiedSections(new Set());
+
         try {
             const baseConfig = config ? config[WorkflowPhase.HOMILETICS] : undefined;
             const homileticsConfig = baseConfig
