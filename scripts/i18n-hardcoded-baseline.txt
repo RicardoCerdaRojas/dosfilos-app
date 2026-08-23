@@ -113,7 +113,6 @@
 1 packages/web/src/pages/recursos/ManualPredicacionLandingPage.tsx
 5 packages/web/src/pages/sermons/generator/PromptSettings.tsx
 1 packages/web/src/pages/sermons/generator/SermonInProgress.tsx
-11 packages/web/src/pages/sermons/generator/SermonPersonalizationPanel.tsx
 4 packages/web/src/pages/sermons/generator/StepPassage.tsx
 1 packages/web/src/pages/sermons/generator/exegesis/greek-tutor/GreekTutorOverlay.tsx
 1 packages/web/src/pages/sermons/generator/exegesis/greek-tutor/GreekTutorSessionView.tsx
