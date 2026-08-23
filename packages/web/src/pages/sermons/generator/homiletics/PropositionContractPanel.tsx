@@ -23,7 +23,10 @@ interface Props {
      * referencias al punto equivocado — corrupción silenciosa, justo la clase
      * de fallo que no se nota hasta el púlpito.
      */
-    onApply: (patch: { proposition: string; points: { title: string; srcIndex: number | null }[] }) => void;
+    onApply: (patch: {
+        proposition: string;
+        points: { title: string; application: string; srcIndex: number | null }[];
+    }) => void;
 }
 
 /**
@@ -47,26 +50,35 @@ export function PropositionContractPanel({ homiletics, genre, onApply }: Props) 
     const { t } = useTranslation('generator');
 
     const originalProposition = homiletics.homileticalProposition ?? '';
-    const originalTitles = useMemo(
-        () => (homiletics.outline?.mainPoints ?? []).map((p) => p.title ?? ''),
-        [homiletics.outline],
-    );
-
     const [proposition, setProposition] = useState(originalProposition);
-    const [points, setPoints] = useState<{ title: string; srcIndex: number | null }[]>(
-        () => originalTitles.map((title, i) => ({ title, srcIndex: i })),
+    // La aplicación vive EN el punto (una por punto). Los sermones anteriores
+    // la tienen en la lista suelta `contemporaryApplication`; se siembra por
+    // posición para no perder ese trabajo, que es lo único que se puede hacer
+    // con un dato que nunca supo a qué punto pertenecía.
+    const legacyApps = useMemo(
+        () => (Array.isArray(homiletics.contemporaryApplication) ? homiletics.contemporaryApplication : []),
+        [homiletics.contemporaryApplication],
     );
+    const originalPoints = useMemo(
+        () =>
+            (homiletics.outline?.mainPoints ?? []).map((p, i) => ({
+                title: p.title ?? '',
+                application: p.application ?? legacyApps[i] ?? '',
+                srcIndex: i as number | null,
+            })),
+        [homiletics.outline, legacyApps],
+    );
+    const [points, setPoints] = useState(originalPoints);
 
     // Si el contenido cambia por fuera (regenerar, refinar por chat), el panel
     // se re-sincroniza en vez de quedar mostrando una edición huérfana.
     useEffect(() => setProposition(originalProposition), [originalProposition]);
-    useEffect(() => setPoints(originalTitles.map((title, i) => ({ title, srcIndex: i }))), [originalTitles]);
+    useEffect(() => setPoints(originalPoints), [originalPoints]);
 
     const titles = points.map((p) => p.title);
-    const dirty =
-        proposition !== originalProposition ||
-        titles.length !== originalTitles.length ||
-        titles.some((x, i) => x !== originalTitles[i]);
+    const same = (a: typeof points, b: typeof points) =>
+        a.length === b.length && a.every((x, i) => x.title === b[i]!.title && x.application === b[i]!.application);
+    const dirty = proposition !== originalProposition || !same(points, originalPoints);
 
     const { report, verboEnSegundaPersona, anunciados } = useMemo(() => {
         const parsed = parseSustantivada(proposition, titles);
@@ -89,10 +101,12 @@ export function PropositionContractPanel({ homiletics, genre, onApply }: Props) 
     const guias = report.hallazgos.filter((h) => !h.esViolacion);
     const alineado = violaciones.length === 0 && !verboEnSegundaPersona;
 
-    const addPoint = () => setPoints((prev) => [...prev, { title: '', srcIndex: null }]);
+    const addPoint = () => setPoints((prev) => [...prev, { title: '', application: '', srcIndex: null }]);
     const removePoint = (i: number) => setPoints((prev) => prev.filter((_, k) => k !== i));
     const setTitle = (i: number, v: string) =>
         setPoints((prev) => prev.map((x, k) => (k === i ? { ...x, title: v } : x)));
+    const setApplication = (i: number, v: string) =>
+        setPoints((prev) => prev.map((x, k) => (k === i ? { ...x, application: v } : x)));
 
     return (
         <div className="rounded-lg border border-border bg-card p-4 space-y-4">
@@ -138,23 +152,36 @@ export function PropositionContractPanel({ homiletics, genre, onApply }: Props) 
                         </span>
                     )}
                 </div>
-                {titles.map((title, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                        <Input
-                            value={title}
-                            onChange={(e) => setTitle(i, e.target.value)}
-                            placeholder={t('homiletics.contract.pointPlaceholder')}
-                            className="text-sm"
+                {points.map((p, i) => (
+                    <div key={i} className="rounded-md border border-border/60 p-2 space-y-2">
+                        <div className="flex items-center gap-2">
+                            <span className="shrink-0 text-xs font-medium text-muted-foreground">{i + 1}</span>
+                            <Input
+                                value={p.title}
+                                onChange={(e) => setTitle(i, e.target.value)}
+                                placeholder={t('homiletics.contract.pointPlaceholder')}
+                                className="text-sm"
+                            />
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 shrink-0"
+                                aria-label={t('homiletics.contract.removePoint')}
+                                onClick={() => removePoint(i)}
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                        </div>
+                        {/* La aplicación DEBAJO de su punto: así se ve a cuál
+                            pertenece, que es justo lo que la lista suelta no
+                            podía decir. Se deriva del punto; no lo gobierna. */}
+                        <Textarea
+                            value={p.application}
+                            onChange={(e) => setApplication(i, e.target.value)}
+                            rows={2}
+                            placeholder={t('homiletics.contract.applicationPlaceholder')}
+                            className="text-sm bg-muted/30"
                         />
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 shrink-0"
-                            aria-label={t('homiletics.contract.removePoint')}
-                            onClick={() => removePoint(i)}
-                        >
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
                     </div>
                 ))}
                 <Button variant="outline" size="sm" onClick={addPoint} className="w-full">

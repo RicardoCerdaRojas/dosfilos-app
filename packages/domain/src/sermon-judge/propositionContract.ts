@@ -221,18 +221,37 @@ export function confrontProposition(input: ConfrontacionInput): ReporteDeProposi
                 mensaje: 'El llamado a la acción es demasiado corto para cotejar herencia en los puntos: revísalo a mano.',
             });
         } else {
+            // SE SEÑALA LA INCONSISTENCIA, NO LA AUSENCIA.
+            //
+            // Si NINGÚN punto recoge el verbo del llamado, lo más probable es
+            // que la herencia vaya por otra ruta legítima — por el SUSTANTIVO,
+            // por ejemplo: "dos realidades del conflicto" con puntos "Dios
+            // habla…" y "El hombre desobedece…" hereda perfectamente, y marcar
+            // los dos entrena al pastor a ignorar el panel.
+            //
+            // Lo que SÍ es señal es que unos hereden y otros no: ahí hay una
+            // inconsistencia real dentro del mismo bosquejo.
+            const heredan = draft.puntos.filter(p => normalizar(p).includes(raiz)).length;
+            const algunoHereda = heredan > 0;
             for (const [i, p] of draft.puntos.entries()) {
-                if (!normalizar(p).includes(raiz)) {
+                if (algunoHereda && !normalizar(p).includes(raiz)) {
                     hallazgos.push({
                         clase: 'punto-sin-llamado',
-                        esViolacion: true,
-                        // G3 en miniatura (§4.3): un punto que no hereda el
-                        // llamado dejó de rastrear al contrato que la
-                        // proposición fijó.
-                        severidad: 'estandar',
-                        refina: 'G3',
+                        // GUÍA, no violación (2026-08-23). La herencia del
+                        // llamado es real —"tres verdades que debes obedecer" ⇒
+                        // títulos que empiezan con "Debes"— pero acá se coteja
+                        // con una raíz verbal, y esa es una vara tosca sobre una
+                        // relación sutil.
+                        //
+                        // Caso que lo demostró: "dos REALIDADES del conflicto
+                        // que deben guiarnos a la obediencia", con puntos "Dios
+                        // habla…" y "El hombre desobedece…". La herencia va por
+                        // el SUSTANTIVO (son realidades), no por el verbo del
+                        // llamado — y marcarlo como falla acusaba a una
+                        // proposición correcta.
+                        esViolacion: false,
                         referencia: `punto ${i + 1}`,
-                        mensaje: `Este punto no recoge el llamado a la acción de la proposición ("${draft.llamadoALaAccion}").`,
+                        mensaje: `Revisa si este punto recoge el llamado de la proposición ("${draft.llamadoALaAccion}").`,
                     });
                 }
             }

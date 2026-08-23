@@ -470,6 +470,94 @@ ${parallels}
 `;
 }
 
+/**
+ * Renderiza el bosquejo COMO BLOQUE ETIQUETADO, no como `JSON.stringify`.
+ *
+ * El JSON crudo llegaba entero al prompt —descripciones incluidas— pero sin una
+ * sola instrucción que lo atara: las ~200 líneas siguientes le piden al modelo
+ * redactar la exposición de cada punto desde cero. El resultado era que el
+ * trabajo del pastor sobre el bosquejo se respetaba de forma probabilística.
+ *
+ * Etiquetar cada campo es la mitad del arreglo; la otra mitad es el CONTRATO
+ * que emite `buildPastorDirectiveContract` cuando hay directivas.
+ */
+function buildOutlineBlock(outline: HomileticalAnalysis['outline']): string {
+  const points = outline?.mainPoints ?? [];
+  if (points.length === 0) return '- Bosquejo: (sin puntos definidos)';
+
+  const rendered = points.map((p, i) => {
+    const n = i + 1;
+    const refs = p.scriptureReferences?.length ? p.scriptureReferences.join(', ') : '(sin referencias)';
+    const lines = [
+      `▸ PUNTO ${n}: ${p.title}`,
+      `   Descripción: ${p.description || '(pendiente)'}`,
+      `   Referencias: ${refs}`,
+    ];
+    if (p.application?.trim()) {
+      lines.push(`   Aplicación aprobada por el pastor: ${p.application.trim()}`);
+    }
+    const emphasis = p.pastorDirective?.emphasis?.trim();
+    if (emphasis) {
+      lines.push(`   ⚑ ÉNFASIS DEL PASTOR (vinculante): ${emphasis}`);
+    }
+    const notes = (p.pastorDirective?.exegeticalNotes ?? []).filter((nt) => nt.trim());
+    if (notes.length > 0) {
+      lines.push('   ⚑ DEBE APARECER EN LA EXPOSICIÓN DE ESTE PUNTO (vinculante):');
+      notes.forEach((nt, k) => lines.push(`      ${k + 1}. ${nt.trim()}`));
+    }
+    return lines.join('\n');
+  });
+
+  return `Bosquejo (${points.length} punto${points.length === 1 ? '' : 's'}):\n\n${rendered.join('\n\n')}`;
+}
+
+/**
+ * El contrato que hace vinculante la voz del pastor.
+ *
+ * Sólo se emite si HAY directivas: un bloque que dice "respeta las directivas"
+ * cuando no hay ninguna es ruido que compite con el resto del prompt.
+ *
+ * Distingue las dos formas porque no son lo mismo y fallan distinto: el énfasis
+ * MODULA (gobierna el ángulo de toda la exposición) y las notas OBLIGAN (son
+ * datos que deben aparecer). Una nota tratada como sugerencia desaparece; un
+ * énfasis tratado como dato se convierte en una frase pegada al final.
+ */
+function buildPastorDirectiveContract(outline: HomileticalAnalysis['outline']): string {
+  const points = outline?.mainPoints ?? [];
+  const conEnfasis: number[] = [];
+  const conNotas: number[] = [];
+  points.forEach((p, i) => {
+    if (p.pastorDirective?.emphasis?.trim()) conEnfasis.push(i + 1);
+    if ((p.pastorDirective?.exegeticalNotes ?? []).some((n) => n.trim())) conNotas.push(i + 1);
+  });
+  if (conEnfasis.length === 0 && conNotas.length === 0) return '';
+
+  return `
+═══════════════════════════════════════════════════════════════════
+⚑ DIRECTIVAS DEL PASTOR — MÁXIMA PRECEDENCIA
+═══════════════════════════════════════════════════════════════════
+
+Las líneas marcadas con ⚑ en el bosquejo las escribió EL PASTOR, no el sistema.
+Son lo único del bosquejo que no generaste tú. Tienen precedencia sobre tus
+propias decisiones de contenido y sobre el resto de estas instrucciones.
+
+${conEnfasis.length > 0 ? `**ÉNFASIS (puntos ${conEnfasis.join(', ')})** — MODULA la exposición.
+Es el ángulo desde el cual se predica ese punto: gobierna la exposición COMPLETA
+del punto, no es una frase que se agrega al final. Si tu desarrollo natural del
+texto apunta a otro lado, cede: el pastor ya decidió el ángulo.
+` : ''}${conNotas.length > 0 ? `**DEBE APARECER (puntos ${conNotas.join(', ')})** — OBLIGA.
+Son datos del texto que el pastor quiere expuestos. Cada uno DEBE aparecer
+desarrollado en el "content" de su punto —normalmente bajo "Palabras Clave" o
+"Nota Exegética"—, no mencionado de pasada. Si compite con una palabra clave que
+elegiste tú, gana la del pastor.
+` : ''}
+LÍMITE: la directiva dirige cómo se EXPONE el texto. No autoriza a afirmar lo que
+el texto no dice. Si una directiva contradice el pasaje, exponla como el pastor
+la formuló y NO la refuerces con datos inventados.
+═══════════════════════════════════════════════════════════════════
+`;
+}
+
 function buildSermonDraftPromptBody(analysis: HomileticalAnalysis, rules: GenerationRules, manifest?: CitationManifest): string {
   // Format exegetical study for context
   const exegesisContext = analysis.exegeticalStudy ? `
@@ -518,7 +606,8 @@ ${exegesisContext}
 Datos del Análisis Homilético:
 - Proposición Homilética: ${analysis.homileticalProposition}
 - Enfoque: ${analysis.homileticalApproach || 'No especificado'}
-- Bosquejo: ${JSON.stringify(analysis.outline)}
+${buildOutlineBlock(analysis.outline)}
+${buildPastorDirectiveContract(analysis.outline)}
 
 ═══════════════════════════════════════════════════════════════════
 🎯 INSTRUCCIONES CRÍTICAS DE FORMATO PARA PREDICACIÓN
@@ -607,7 +696,7 @@ Instrucciones de Contenido:
      
      - **illustration** (string): Ilustración relevante con título en negritas
      
-     - **implications** (array): Al menos 2 implicaciones prácticas, cada una debe empezar con "**Implicación X:**"
+     - **implications** (array): UNA implicación, que DESARROLLA la aplicación ya aprobada de ese punto (llega en el bosquejo como \`application\`). Empieza con "**Implicación:**". Si el punto no trae \`application\`, deriva una del propio punto — pero NUNCA inventes una que el punto no sostenga.
      
      - **transition** (string): Frase de transición + recordatorio CON SALTOS DE LÍNEA
        Formato exacto: "[Frase]\\n\\n**Recordatorio:**\\nProposición: [texto]\\n\\n**Puntos:**\\n1. [Punto 1]\\n2. [Punto 2]\\n3. [Punto 3]"
@@ -677,7 +766,9 @@ Instrucciones de Contenido:
 
 REGLAS DE GENERACIÓN:
 1. Si usas información de documentos proporcionados, incluye en "ragSources" una entrada por cada documento consultado — con el campo \`sourceId\` igual al ID del CONTRATO DE CITACIÓN (\`S1\`, \`S2\`, …) cuando el contrato esté presente. Si no hay contrato (sermón sin biblioteca), omite \`sourceId\`.
-2. Cada punto debe tener al menos 2 implicaciones prácticas con formato de lista.
+2. **APLICACIÓN — el orden es TEXTO → PUNTO → APLICACIÓN.** Cada punto del bosquejo trae su \`application\`: la que el pastor YA APROBÓ para ese punto. UNA por punto. Desarróllala; no la reemplaces por otra tuya.
+   ⚠️ PERO NO ESCRIBAS EL PUNTO "HACIA" SU APLICACIÓN. La explicación sigue el TEXTO —su gramática, su movimiento, su argumento—; la aplicación es donde ese punto ATERRIZA, no la meta a la que la exposición se dirige. Organizar la exposición en función de la aplicación es moralismo con pasos previos, y es exactamente lo que el descalificador global G3 nombra: el predicador impuso su idea y usó el texto de excusa.
+   El componente OBLIGATORIO de cada punto es la EXPLICACIÓN EXEGÉTICA del propio pasaje. Sin ella es paráfrasis; con ella es exposición.
 3. **Ilustraciones**: sigue la GUÍA DE ILUSTRACIONES incluida más abajo. No es una preferencia de estilo: describe la forma que este pastor usa, medida sobre sus sermones reales.
 4. **Diversidad de ilustraciones**: NO uses la misma categoría (viaje/deporte/familia/cocina/transporte) en dos puntos consecutivos. Si Punto I usa transporte (avión, tren), Punto II DEBE usar otra categoría.
 5. **authorityQuote es OPCIONAL** (null por defecto). Solo inclúyelo cuando uses una cita REAL y verificable de un autor cuyo texto esté presente en los documentos proporcionados o en la conversación. PROHIBIDO inventar citas atribuidas a Owen, Spurgeon, Calvino, Van Til, Edwards, MacArthur u otros autores. Si no hay una cita verificable disponible, deja authorityQuote en null. Una cita inventada en el pulpito destruye credibilidad.
@@ -859,7 +950,8 @@ verifica primero si ya está en las "Palabras Clave Analizadas" y construye sobr
       const homileticsInfo = context.homileticsResult
         ? `**Proposición Homilética Actual**: ${context.homileticsResult.homileticalProposition || 'Pendiente'}
 **Enfoque**: ${context.homileticsResult.homileticalApproach || 'Pendiente'}
-**Puntos del Bosquejo**: ${context.homileticsResult.outline?.mainPoints?.length || 0} puntos`
+${buildOutlineBlock(context.homileticsResult.outline)}
+${buildPastorDirectiveContract(context.homileticsResult.outline)}`
         : '';
 
       return `${base} Eres el EXPERTO EN HOMILÉTICA. Tu trabajo es ayudar a estructurar el sermón.
@@ -881,7 +973,8 @@ Mantén coherencia con la proposición exegética y el pasaje original.`;
         ? `**Pasaje**: ${context.exegesisResult?.passage || 'N/A'}
 **Proposición Homilética**: ${context.homileticsResult.homileticalProposition}
 **Enfoque**: ${context.homileticsResult.homileticalApproach || 'No especificado'}
-**Bosquejo**: ${context.homileticsResult.outline?.mainPoints?.length || 0} puntos principales`
+${buildOutlineBlock(context.homileticsResult.outline)}
+${buildPastorDirectiveContract(context.homileticsResult.outline)}`
         : 'Análisis homilético no disponible';
 
       const draftInfo = context.draft

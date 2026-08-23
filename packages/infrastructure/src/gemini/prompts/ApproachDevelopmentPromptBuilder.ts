@@ -414,7 +414,7 @@ alineado con este enfoque, especialmente su TONO (${preview.tone}) y PROPÓSITO.
             '',
             '### 📋 3. APLICACIONES CONTEMPORÁNEAS',
             '',
-            applicationTemplate || 'Genera 3-5 aplicaciones específicas y accionables.',
+            applicationTemplate || 'Genera una aplicación por cada punto del bosquejo, en el mismo orden, específica y accionable.',
             '',
             '---',
             '',

@@ -200,7 +200,7 @@ export function ChatInterface<T = any>({
       {/* Animated border effect when loading */}
       {isLoading && (
         <div className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none z-10">
-          <div className="absolute inset-0 rounded-lg border-2 border-transparent bg-gradient-to-r from-primary via-purple-500 to-primary bg-[length:200%_100%] animate-[gradient_3s_linear_infinite]" 
+          <div className="absolute inset-0 rounded-lg border-2 border-transparent bg-gradient-to-r from-primary via-primary/50 to-primary bg-[length:200%_100%] animate-[gradient_3s_linear_infinite]" 
                style={{ 
                  WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                  WebkitMaskComposite: 'xor',
@@ -211,9 +211,13 @@ export function ChatInterface<T = any>({
         </div>
       )}
       
-      <Card className="h-full flex flex-col overflow-hidden relative">
+      {/* `py-0 gap-0`: la Card base trae `py-6 gap-6` y este panel ya pone su
+          propio espaciado (header `p-4 border-b`, mensajes `p-4`, input abajo).
+          Sumados, empujaban el contenido hacia abajo y el estado vacío quedaba
+          flotando lejos del encabezado. Mismo caso que SectionCard. */}
+      <Card className="h-full flex flex-col overflow-hidden relative py-0 gap-0">
         {/* Header */}
-        <div className="p-4 border-b flex-shrink-0">
+        <div className="p-4 pr-12 border-b flex-shrink-0">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             <div className="flex-1 min-w-0">
@@ -227,18 +231,21 @@ export function ChatInterface<T = any>({
                       : 'Asistente de Exégesis'
                 }
               </h3>
-              <p className="text-xs text-muted-foreground truncate">
-                {focusedSection 
-                  ? 'Los cambios se aplicarán a esta sección'
-                  : 'Hazme preguntas sobre cualquier aspecto'
-                }
-              </p>
+              {/* El subtítulo solo aparece cuando DICE algo. Fuera de foco era
+                  "Hazme preguntas sobre cualquier aspecto": relleno que en una
+                  columna angosta se truncaba a "Hazme preguntas so..." y
+                  competía con el título por el poco espacio que hay. */}
+              {focusedSection && (
+                <p className="text-xs text-muted-foreground truncate">
+                  Los cambios se aplicarán a esta sección
+                </p>
+              )}
             </div>
             
             {/* Chat Mode Selector - Show when refining a section */}
             {focusedSection && (
               <Select value={chatMode} onValueChange={(v) => setChatMode(v as 'refine' | 'general')}>
-                <SelectTrigger className="w-[180px] h-8 text-xs">
+                <SelectTrigger className="w-auto min-w-[7rem] max-w-[11rem] h-8 text-xs shrink-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -261,7 +268,7 @@ export function ChatInterface<T = any>({
             {/* Coaching Style Selector */}
             {showStyleSelector && onStyleChange && (
               <Select value={selectedStyle} onValueChange={(v) => onStyleChange(v as CoachingStyle | 'auto')}>
-                <SelectTrigger className="w-[160px] h-8 text-xs">
+                <SelectTrigger className="w-auto min-w-[7rem] max-w-[10rem] h-8 text-xs shrink-0">
                   <SelectValue placeholder="Modo" />
                 </SelectTrigger>
                 <SelectContent>

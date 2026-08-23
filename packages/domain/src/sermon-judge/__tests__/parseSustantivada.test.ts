@@ -86,3 +86,30 @@ describe('parseSustantivada — lo que NO reconoce', () => {
         expect(draft.cantidadDePuntos).toBeUndefined();
     });
 });
+
+describe('parseSustantivada — el llamado a la acción (elemento 4)', () => {
+    it('lo extrae: sin esto, el contrato acusaba de faltante a TODA proposición', () => {
+        // Bug real, encontrado por el fundador el 2026-08-23 sobre una
+        // proposición suya correcta: el parser nunca asignaba el elemento 4, así
+        // que `confrontProposition` lo reportaba siempre como faltante.
+        const { draft } = parseSustantivada(
+            'En Jonás 1:1-3, veremos dos realidades del conflicto entre Jonás y Dios que deben guiarnos a la obediencia.',
+        );
+        expect(draft.llamadoALaAccion).toContain('deben guiarnos a la obediencia');
+    });
+
+    it('lo extrae con otros nexos del corpus', () => {
+        expect(
+            parseSustantivada('En 1 Pedro 5:1-4, veremos tres exhortaciones a los pastores que nos permitirán servir fielmente a Dios.').draft
+                .llamadoALaAccion,
+        ).toContain('nos permitirán servir');
+        expect(
+            parseSustantivada('En 1 Corintios 15:20-26, veremos tres verdades por las que un creyente no debe temer a la muerte.').draft
+                .llamadoALaAccion,
+        ).toContain('no debe temer');
+    });
+
+    it('sin nexo no inventa un llamado', () => {
+        expect(parseSustantivada('Una proposición libre sin estructura.').draft.llamadoALaAccion).toBeUndefined();
+    });
+});

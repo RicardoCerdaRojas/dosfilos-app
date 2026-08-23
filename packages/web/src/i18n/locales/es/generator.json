@@ -248,7 +248,8 @@
       "refine": "Error al refinar la sección",
       "update": "Error al actualizar la sección",
       "readonlySection": "Esta sección es de solo lectura y no puede ser editada directamente",
-      "processFailed": "No se pudo procesar la solicitud"
+      "processFailed": "No se pudo procesar la solicitud",
+      "refineShape": "No se pudo refinar \"{{section}}\": el asistente devolvió algo con una forma inesperada. Tu contenido quedó intacto — vuelve a intentarlo."
     },
     "regenerateConfirm": {
       "title": "¿Regenerar Estudio Homilético?",
@@ -276,7 +277,19 @@
       "addMissingPoint": "Agregar el punto que falta ({{count}})",
       "secondPersonVerb": "El verbo está en segunda persona. Tus proposiciones usan primera persona plural (veremos, aprenderemos): el predicador se incluye con la congregación.",
       "disclaimer": "Se te señala lo que falta; tú decides. No bloquea.",
-      "apply": "Aplicar cambios"
+      "apply": "Aplicar cambios",
+      "applicationPlaceholder": "Aplicación de este punto — cómo aterriza en el oyente"
+    },
+    "directive": {
+      "noPoints": "Todavía no hay puntos en el bosquejo.",
+      "intro": "Lo que escribas aquí es tuyo: el asistente no lo reescribe, y el borrador lo respeta como instrucción.",
+      "emphasisLabel": "Énfasis — el ángulo de este punto",
+      "emphasisPlaceholder": "Ej.: Dios habla, pero su palabra no es sin propósito: habla para dirigir a su pueblo. Contra la idea de que Dios existe pero no se comunica conmigo.",
+      "notesLabel": "Debe aparecer en la exposición",
+      "notePlaceholder": "Ej.: “y pagando su pasaje”: el hebreo no dice que sea su pasaje personal, personifica a la nave.",
+      "addNote": "Agregar",
+      "removeNote": "Quitar",
+      "save": "Guardar mis indicaciones"
     }
   },
   "drafting": {

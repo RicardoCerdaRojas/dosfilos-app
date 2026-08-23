@@ -248,7 +248,8 @@
       "refine": "Error refining section",
       "update": "Error updating section",
       "readonlySection": "This section is read-only and cannot be edited directly",
-      "processFailed": "Could not process the request"
+      "processFailed": "Could not process the request",
+      "refineShape": "Could not refine \"{{section}}\": the assistant returned an unexpected shape. Your content is untouched — try again."
     },
     "regenerateConfirm": {
       "title": "Regenerate Homiletical Study?",
@@ -276,7 +277,19 @@
       "addMissingPoint": "Add the missing point ({{count}})",
       "secondPersonVerb": "The verb is in second person. Your propositions use first person plural: the preacher stands with the congregation, not outside it.",
       "disclaimer": "It flags what's missing; you decide. It doesn't block.",
-      "apply": "Apply changes"
+      "apply": "Apply changes",
+      "applicationPlaceholder": "This point's application — how it lands on the hearer"
+    },
+    "directive": {
+      "noPoints": "No outline points yet.",
+      "intro": "What you write here is yours: the assistant never rewrites it, and the draft treats it as an instruction.",
+      "emphasisLabel": "Emphasis — the angle of this point",
+      "emphasisPlaceholder": "e.g. God speaks, but his word is not without purpose: he speaks to direct his people.",
+      "notesLabel": "Must appear in the exposition",
+      "notePlaceholder": "e.g. “paid the fare”: the Hebrew does not say it was his personal fare; it personifies the ship.",
+      "addNote": "Add",
+      "removeNote": "Remove",
+      "save": "Save my directions"
     }
   },
   "drafting": {

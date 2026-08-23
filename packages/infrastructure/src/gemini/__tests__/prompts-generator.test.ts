@@ -232,3 +232,64 @@ describe('buildSermonDraftPrompt — R3 paralelos canónicos del pastor (ADR-035
         expect(prompt).toContain('Números 22-24');
     });
 });
+
+describe('buildSermonDraftPrompt — el bosquejo del pastor gobierna el borrador', () => {
+    const conDirectivas: HomileticalAnalysis = {
+        ...baseAnalysis,
+        outline: {
+            mainPoints: [
+                {
+                    title: 'I. Dios habla y revela su voluntad (vv. 1-2)',
+                    description: 'El pasaje comienza…',
+                    scriptureReferences: ['Jonás 1:1-2'],
+                    pastorDirective: {
+                        emphasis: 'Dios habla, pero su palabra no es sin propósito: habla para dirigir a su pueblo.',
+                    },
+                },
+                {
+                    title: 'II. El hombre desobedece (v. 3)',
+                    description: 'La respuesta…',
+                    scriptureReferences: ['Jonás 1:3a'],
+                    pastorDirective: {
+                        exegeticalNotes: ['"y pagando su pasaje": el hebreo personifica a la nave.'],
+                    },
+                },
+            ],
+        },
+    };
+
+    it('el bosquejo viaja ETIQUETADO, no como JSON crudo', () => {
+        const prompt = buildSermonDraftPrompt(conDirectivas, baseRules);
+        expect(prompt).toContain('▸ PUNTO 1: I. Dios habla');
+        expect(prompt).toContain('Descripción: El pasaje comienza…');
+        // El JSON crudo tapaba el trabajo del pastor entre llaves sin etiquetar.
+        expect(prompt).not.toContain('"mainPoints":');
+    });
+
+    it('la directiva del pastor llega marcada como vinculante', () => {
+        const prompt = buildSermonDraftPrompt(conDirectivas, baseRules);
+        expect(prompt).toContain('⚑ ÉNFASIS DEL PASTOR (vinculante)');
+        expect(prompt).toContain('no es sin propósito');
+        expect(prompt).toContain('⚑ DEBE APARECER EN LA EXPOSICIÓN DE ESTE PUNTO (vinculante)');
+        expect(prompt).toContain('personifica a la nave');
+    });
+
+    it('el contrato nombra QUÉ punto lleva cada forma de directiva', () => {
+        const prompt = buildSermonDraftPrompt(conDirectivas, baseRules);
+        expect(prompt).toContain('DIRECTIVAS DEL PASTOR — MÁXIMA PRECEDENCIA');
+        expect(prompt).toContain('**ÉNFASIS (puntos 1)**');
+        expect(prompt).toContain('**DEBE APARECER (puntos 2)**');
+    });
+
+    it('sin directivas NO emite el contrato: un bloque vacío es ruido que compite', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules);
+        expect(prompt).not.toContain('DIRECTIVAS DEL PASTOR');
+        expect(prompt).toContain('▸ PUNTO 1: I');
+    });
+
+    it('el límite anti-invención viaja con el contrato', () => {
+        const prompt = buildSermonDraftPrompt(conDirectivas, baseRules);
+        expect(prompt).toContain('No autoriza a afirmar lo que');
+        expect(prompt).toContain('NO la refuerces con datos inventados');
+    });
+});
