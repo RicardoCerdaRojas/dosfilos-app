@@ -55,6 +55,19 @@ jobs:
       - name: SDK de Gemini fuera del navegador
         run: ./scripts/check-gemini-sdk-boundary.sh
 
+      # REGLA DEL FUNDADOR (2026-08-23): en cada tarea —crear O refactorizar— el
+      # texto de cara al usuario va por i18n, exista o no traducción previa en
+      # ese archivo. "El archivo ya estaba hardcodeado" dejó de ser excusa.
+      #
+      # El chequeo de i18n que había sólo prohibía `defaultValue:` — vigilaba a
+      # quien ya usaba `t()` y hacía trampa, y no miraba a quien no lo usaba en
+      # absoluto. Así quedaron 141 archivos con español incrustado, invisibles.
+      #
+      # Trinquete, no cero: las 588 ocurrencias preexistentes no bloquean; una
+      # nueva sí.
+      - name: Trinquete de i18n (texto hardcodeado)
+        run: ./scripts/check-i18n-hardcoded.sh
+
   test:
     name: Run Tests
     runs-on: ubuntu-latest
