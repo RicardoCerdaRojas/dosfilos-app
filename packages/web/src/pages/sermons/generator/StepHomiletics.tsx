@@ -9,7 +9,9 @@ import { Card } from '@/components/ui/card';
 import { Loader2, ArrowRight, ArrowLeft, Mic2, Sparkles, BookOpen, RefreshCw } from 'lucide-react';
 import { sermonGeneratorService, generatorChatService } from '@dosfilos/application';
 import { toast } from 'sonner';
+import { applyPropositionContract } from '@dosfilos/domain';
 import { ContentCanvas } from '@/components/canvas-chat/ContentCanvas';
+import { PropositionContractPanel } from './homiletics/PropositionContractPanel';
 import { ChatInterface } from '@/components/canvas-chat/ChatInterface';
 import { ResizableChatPanel } from '@/components/canvas-chat/ResizableChatPanel';
 import { useFirebase } from '@/context/firebase-context';
@@ -98,6 +100,16 @@ export function StepHomiletics() {
     const passage = useMemo(() => {
         return exegesis?.passage || homiletics?.exegeticalStudy?.passage || '';
     }, [exegesis, homiletics]);
+
+    /**
+     * Delega en la función pura de dominio: acá viviría la corrupción
+     * silenciosa (descripciones pegadas al punto equivocado al borrar o
+     * reordenar) y eso tiene que ser testeable sin montar la UI.
+     */
+    const applyContract = (patch: { proposition: string; points: { title: string; srcIndex: number | null }[] }) => {
+        if (!homiletics) return;
+        setHomiletics(applyPropositionContract(homiletics, patch));
+    };
 
     const formattedHomiletics = useMemo(() => {
         if (!homiletics) return homiletics;
@@ -409,6 +421,20 @@ export function StepHomiletics() {
                     </AlertDialog>
                 </div>
             </div>
+            {/* El contrato va ARRIBA del canvas: primero se alinea proposición
+                con puntos, después se refina el detalle de cada punto por chat.
+                No reemplaza al canvas — resuelve lo que el canvas no puede,
+                que es verlos juntos. */}
+            {homiletics && (
+                <div className="flex-shrink-0 pb-4">
+                    <PropositionContractPanel
+                        homiletics={homiletics}
+                        {...(rules?.pastoralSeed?.genre ? { genre: rules.pastoralSeed.genre } : {})}
+                        onApply={applyContract}
+                    />
+                </div>
+            )}
+
             <div className="flex-1 min-h-0">
                 <ContentCanvas
                     content={formattedHomiletics}
