@@ -1,322 +1,323 @@
 {
-    "loading": "Cargando sermón...",
-    "noDraft": {
-        "title": "Este sermón aún no tiene borrador",
-        "body": "Tu estudio está listo. Continúa en el editor para generar y redactar el sermón.",
-        "cta": "Continuar en el editor"
+  "loading": "Cargando sermón...",
+  "noDraft": {
+    "title": "Este sermón aún no tiene borrador",
+    "body": "Tu estudio está listo. Continúa en el editor para generar y redactar el sermón.",
+    "cta": "Continuar en el editor"
+  },
+  "notFound": {
+    "title": "Sermón no encontrado",
+    "button": "Volver a sermones"
+  },
+  "actions": {
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "export": "Exportar",
+    "share": "Compartir",
+    "duplicate": "Duplicar",
+    "back": "Volver a Sermones",
+    "preach": "Predicar",
+    "viewPublic": "Ver Público",
+    "publish": "Publicar",
+    "archive": "Archivar",
+    "markComplete": "Marcar Completado",
+    "markingComplete": "Marcando...",
+    "exportPdf": "Exportar PDF",
+    "exportDocx": "Exportar Word (.docx)",
+    "history": "Historial",
+    "notes": "Notas",
+    "hideNotes": "Ocultar Notas",
+    "present": "Predicar"
+  },
+  "status": {
+    "draft": "Borrador",
+    "published": "Publicado",
+    "archived": "Archivado"
+  },
+  "sections": {
+    "passage": "Pasaje",
+    "exegesis": "Exégesis",
+    "outline": "Bosquejo",
+    "sermon": "Sermón",
+    "notes": "Notas",
+    "tagsAndCategory": "Etiquetas y Categoría"
+  },
+  "series": {
+    "partOf": "Parte de la Serie",
+    "viewFull": "Ver Serie Completa"
+  },
+  "history": {
+    "title": "Historial",
+    "description": "Registro de predicaciones y detalles.",
+    "logTitle": "Registro de Predicaciones",
+    "addLog": "Agregar",
+    "empty": "No hay registros de predicación.",
+    "logButton": "Registrar Predicación"
+  },
+  "dialogs": {
+    "delete": {
+      "title": "¿Estás seguro?",
+      "description": "Esta acción no se puede deshacer. El sermón \"{{title}}\" será eliminado permanentemente.",
+      "confirm": "Eliminar",
+      "deleting": "Eliminando...",
+      "cancel": "Cancelar"
     },
-    "notFound": {
-        "title": "Sermón no encontrado",
-        "button": "Volver a sermones"
+    "share": {
+      "title": "Compartir Sermón",
+      "description": "Genera un enlace público para compartir este sermón con otros.",
+      "publicMode": "Compartir públicamente",
+      "publicModeDesc": "Cualquiera con el enlace podrá ver este sermón.",
+      "publicLink": "Enlace público",
+      "copyTip": "Este enlace permite ver el sermón sin necesidad de iniciar sesión.",
+      "copied": "Enlace copiado al portapapeles"
     },
-    "actions": {
-        "edit": "Editar",
-        "delete": "Eliminar",
-        "export": "Exportar",
-        "share": "Compartir",
-        "duplicate": "Duplicar",
-        "back": "Volver a Sermones",
-        "preach": "Predicar",
-        "viewPublic": "Ver Público",
-        "publish": "Publicar",
-        "archive": "Archivar",
-        "markComplete": "Marcar Completado",
-        "markingComplete": "Marcando...",
-        "exportPdf": "Exportar PDF",
-        "exportDocx": "Exportar Word (.docx)",
-        "history": "Historial",
-        "notes": "Notas",
-        "hideNotes": "Ocultar Notas",
-        "present": "Predicar"
+    "log": {
+      "title": "Registrar Predicación",
+      "description": "Guarda un registro de cuándo y dónde predicaste este sermón.",
+      "date": "Fecha",
+      "duration": "Duración (min)",
+      "location": "Lugar / Iglesia",
+      "locationPlaceholder": "Ej: Iglesia Central",
+      "notes": "Notas (Opcional)",
+      "notesPlaceholder": "Reacciones, puntos a mejorar, etc.",
+      "save": "Guardar Registro",
+      "saving": "Guardando..."
+    }
+  },
+  "toast": {
+    "exportSuccess": "Sermón exportado",
+    "exportError": "Error al exportar el sermón",
+    "deleteSuccess": "Sermón eliminado",
+    "deleteError": "Error al eliminar el sermón",
+    "shared": "Sermón compartido",
+    "unshared": "Sermón dejado de compartir",
+    "shareError": "Error al cambiar estado de compartir",
+    "logSuccess": "Predicación registrada",
+    "logError": "Error al registrar predicación",
+    "completeSuccess": "Sermón marcado como completado",
+    "completeError": "Error al marcar como completado",
+    "copied": "Enlace copiado al portapapeles"
+  },
+  "form": {
+    "title": "Título del Sermón",
+    "titlePlaceholder": "Ej: El amor de Dios",
+    "titleError": "El título debe tener al menos 5 caracteres",
+    "category": "Categoría",
+    "categoryPlaceholder": "Selecciona una categoría",
+    "author": "Autor",
+    "authorPlaceholder": "Ej: Pastor Juan Pérez",
+    "authorHelp": "Nombre del predicador (opcional)",
+    "content": "Contenido del Sermón",
+    "contentPlaceholder": "Escribe el contenido de tu sermón...",
+    "contentError": "El contenido es requerido",
+    "bibleRefs": "Referencias Bíblicas",
+    "bibleRefsPlaceholder": "Ej: Juan 3:16, Romanos 8:28",
+    "bibleRefsHelp": "Agrega las referencias bíblicas que usarás en el sermón",
+    "tags": "Etiquetas",
+    "tagsPlaceholder": "Ej: salvación, gracia, fe",
+    "tagsHelp": "Agrega etiquetas para organizar tus sermones",
+    "status": "Estado",
+    "save": "Guardar Cambios",
+    "saving": "Guardando...",
+    "write": "Escribir",
+    "preview": "Vista Previa",
+    "editTitle": "Editar Sermón",
+    "sermonDetails": "Detalles del Sermón",
+    "categories": {
+      "evangelismo": "Evangelismo",
+      "discipulado": "Discipulado",
+      "adoracion": "Adoración",
+      "familia": "Familia",
+      "juventud": "Juventud",
+      "matrimonio": "Matrimonio",
+      "finanzas": "Finanzas",
+      "oracion": "Oración",
+      "otro": "Otro"
+    }
+  },
+  "preachMode": {
+    "exit": "Salir",
+    "loading": "Cargando...",
+    "fullScreen": "Pantalla Completa",
+    "exitFullScreen": "Salir de Pantalla Completa",
+    "timeUp": "¡Tiempo!",
+    "highlights": "{{count}} resaltado",
+    "highlights_other": "{{count}} resaltados",
+    "clearHighlights": "Limpiar todos los resaltados",
+    "blackout": "Presiona B o haz clic para continuar",
+    "annotations": "Notas",
+    "studyPanel": {
+      "show": "Ver sesión de estudio con tutores",
+      "hide": "Ocultar sesión de estudio"
     },
-    "status": {
-        "draft": "Borrador",
-        "published": "Publicado",
-        "archived": "Archivado"
+    "highlight": {
+      "removeUnderline": "Click para quitar subrayado",
+      "removeMark": "Click para quitar resaltado"
     },
-    "sections": {
-        "passage": "Pasaje",
-        "exegesis": "Exégesis",
-        "outline": "Bosquejo",
-        "sermon": "Sermón",
-        "notes": "Notas",
-        "tagsAndCategory": "Etiquetas y Categoría"
+    "shortcuts": {
+      "blackout": "Pantalla negra",
+      "exit": "Salir de pantalla completa"
     },
-    "series": {
-        "partOf": "Parte de la Serie",
-        "viewFull": "Ver Serie Completa"
+    "timer": {
+      "settings": "Configurar Temporizador",
+      "duration": "Duración del Sermón (minutos)",
+      "saveAndReset": "Guardar y Reiniciar"
     },
-    "history": {
-        "title": "Historial",
-        "description": "Registro de predicaciones y detalles.",
-        "logTitle": "Registro de Predicaciones",
-        "addLog": "Agregar",
-        "empty": "No hay registros de predicación.",
-        "logButton": "Registrar Predicación"
+    "bible": {
+      "source": "Fuente: {{version}}",
+      "notFound": "No se pudo encontrar el texto. Verifique la referencia.",
+      "error": "Error al cargar el texto bíblico."
+    }
+  },
+  "fidelityReview": {
+    "title": "Revisión de fidelidad",
+    "run": "Revisar fidelidad",
+    "rerun": "Volver a revisar",
+    "running": "Revisando…",
+    "toastDone": "Revisión de fidelidad completada.",
+    "toastError": "No pudimos completar la revisión. Intenta de nuevo.",
+    "empty": "Aún no se ha corrido la revisión para este sermón. La revisión evalúa, marcador por marcador, si la fuente citada respalda la oración previa.",
+    "noMarkers": "Este sermón no tiene marcadores de cita para revisar.",
+    "attention": "Requiere tu atención",
+    "supported": "Respaldadas",
+    "markersEvaluated": "{{count}} marcadores evaluados",
+    "ratios": "{{unrelated}}% sin respaldo · {{partial}}% parcial",
+    "lastReview": "Última revisión: {{date}}",
+    "model": "Modelo: {{model}}",
+    "expand": "Expandir detalle",
+    "collapse": "Contraer detalle",
+    "jumpToMarker": "Saltar al marcador {{marker}} en el sermón",
+    "stale": "(obsoleto)",
+    "reasoning": "Razonamiento",
+    "citedExcerpt": "Extracto citado",
+    "modelLine": "Modelo: {{model}} · {{date}}",
+    "banner": {
+      "pass": "Las citas respaldan los reclamos del borrador.",
+      "soft": "Algunas citas respaldan parcialmente el reclamo. Revisa los marcadores marcados antes de publicar.",
+      "hard": "Demasiados marcadores sin respaldo o que contradicen su fuente. Corrige las citas antes de publicar."
     },
-    "dialogs": {
-        "delete": {
-            "title": "¿Estás seguro?",
-            "description": "Esta acción no se puede deshacer. El sermón \"{{title}}\" será eliminado permanentemente.",
-            "confirm": "Eliminar",
-            "deleting": "Eliminando...",
-            "cancel": "Cancelar"
-        },
-        "share": {
-            "title": "Compartir Sermón",
-            "description": "Genera un enlace público para compartir este sermón con otros.",
-            "publicMode": "Compartir públicamente",
-            "publicModeDesc": "Cualquiera con el enlace podrá ver este sermón.",
-            "publicLink": "Enlace público",
-            "copyTip": "Este enlace permite ver el sermón sin necesidad de iniciar sesión.",
-            "copied": "Enlace copiado al portapapeles"
-        },
-        "log": {
-            "title": "Registrar Predicación",
-            "description": "Guarda un registro de cuándo y dónde predicaste este sermón.",
-            "date": "Fecha",
-            "duration": "Duración (min)",
-            "location": "Lugar / Iglesia",
-            "locationPlaceholder": "Ej: Iglesia Central",
-            "notes": "Notas (Opcional)",
-            "notesPlaceholder": "Reacciones, puntos a mejorar, etc.",
-            "save": "Guardar Registro",
-            "saving": "Guardando..."
-        }
+    "verdict": {
+      "supports": "Respalda",
+      "partial": "Parcial",
+      "unrelated": "No respalda",
+      "contradicts": "Contradice"
+    }
+  },
+  "contraScan": {
+    "cancel": "Volver",
+    "publish": "Publicar",
+    "publishing": "Publicando…",
+    "page": "p. {{page}}",
+    "coreBadge": "Biblioteca base",
+    "personalBadge": "Tu biblioteca",
+    "tensionLabel": "En qué tensiona tu idea",
+    "selectedHint": "Escribe abajo cómo respondes a esta objeción ↓",
+    "yourIdea": {
+      "label": "Tu idea central (lo que predicas)"
+    },
+    "noDissent": {
+      "title": "No encontramos posiciones contrarias",
+      "description": "Revisamos tu biblioteca buscando voces que disientan de tu idea central y no hallamos ninguna.",
+      "invite": "Considera sumar fuentes que representen otras tradiciones fieles. Confrontar la mejor objeción hace tu predicación más sólida — y aquí nunca inventamos una posición contraria que no esté en un recurso real."
+    },
+    "dissent": {
+      "title": "Antes de publicar: escucha el consejo completo",
+      "description": "Estos recursos de tu biblioteca empujan en otra dirección que tu idea central. Considera al menos uno antes de subir al púlpito (Hechos 20:27).",
+      "step": "Selecciona la objeción que vas a considerar ({{count}} de tu biblioteca):"
+    },
+    "note": {
+      "label": "¿Cómo respondes a esta objeción desde el texto?",
+      "hint": "Tu reflexión, en tus palabras. No la escribimos por ti. Si la objeción te convence, vuelve y ajusta ese punto del sermón.",
+      "placeholder": "Escribe tu reflexión (mínimo {{min}} caracteres).",
+      "counter": "{{count}}/{{min}} caracteres"
+    },
+    "consider": {
+      "publish": "Registrar consideración y publicar"
+    },
+    "override": {
+      "toggle": "No puedo abordar esto ahora",
+      "back": "Volver a considerar",
+      "label": "Justifica por qué publicas sin registrar una consideración",
+      "placeholder": "Explica tu decisión (mínimo {{min}} caracteres). Queda registrada.",
+      "counter": "{{count}}/{{min}} caracteres",
+      "publish": "Publicar de todos modos"
     },
     "toast": {
-        "exportSuccess": "Sermón exportado",
-        "exportError": "Error al exportar el sermón",
-        "deleteSuccess": "Sermón eliminado",
-        "deleteError": "Error al eliminar el sermón",
-        "shared": "Sermón compartido",
-        "unshared": "Sermón dejado de compartir",
-        "shareError": "Error al cambiar estado de compartir",
-        "logSuccess": "Predicación registrada",
-        "logError": "Error al registrar predicación",
-        "completeSuccess": "Sermón marcado como completado",
-        "completeError": "Error al marcar como completado",
-        "copied": "Enlace copiado al portapapeles"
-    },
-    "form": {
-        "title": "Título del Sermón",
-        "titlePlaceholder": "Ej: El amor de Dios",
-        "titleError": "El título debe tener al menos 5 caracteres",
-        "category": "Categoría",
-        "categoryPlaceholder": "Selecciona una categoría",
-        "author": "Autor",
-        "authorPlaceholder": "Ej: Pastor Juan Pérez",
-        "authorHelp": "Nombre del predicador (opcional)",
-        "content": "Contenido del Sermón",
-        "contentPlaceholder": "Escribe el contenido de tu sermón...",
-        "contentError": "El contenido es requerido",
-        "bibleRefs": "Referencias Bíblicas",
-        "bibleRefsPlaceholder": "Ej: Juan 3:16, Romanos 8:28",
-        "bibleRefsHelp": "Agrega las referencias bíblicas que usarás en el sermón",
-        "tags": "Etiquetas",
-        "tagsPlaceholder": "Ej: salvación, gracia, fe",
-        "tagsHelp": "Agrega etiquetas para organizar tus sermones",
-        "status": "Estado",
-        "save": "Guardar Cambios",
-        "saving": "Guardando...",
-        "write": "Escribir",
-        "preview": "Vista Previa",
-        "editTitle": "Editar Sermón",
-        "sermonDetails": "Detalles del Sermón",
-        "categories": {
-            "evangelismo": "Evangelismo",
-            "discipulado": "Discipulado",
-            "adoracion": "Adoración",
-            "familia": "Familia",
-            "juventud": "Juventud",
-            "matrimonio": "Matrimonio",
-            "finanzas": "Finanzas",
-            "oracion": "Oración",
-            "otro": "Otro"
-        }
-    },
-    "preachMode": {
-        "exit": "Salir",
-        "loading": "Cargando...",
-        "fullScreen": "Pantalla Completa",
-        "exitFullScreen": "Salir de Pantalla Completa",
-        "timeUp": "¡Tiempo!",
-        "highlights": "{{count}} resaltado",
-        "highlights_other": "{{count}} resaltados",
-        "clearHighlights": "Limpiar todos los resaltados",
-        "blackout": "Presiona B o haz clic para continuar",
-        "annotations": "Notas",
-        "studyPanel": {
-            "show": "Ver sesión de estudio con tutores",
-            "hide": "Ocultar sesión de estudio"
-        },
-        "highlight": {
-            "removeUnderline": "Click para quitar subrayado",
-            "removeMark": "Click para quitar resaltado"
-        },
-        "shortcuts": {
-            "blackout": "Pantalla negra",
-            "exit": "Salir de pantalla completa"
-        },
-        "timer": {
-            "settings": "Configurar Temporizador",
-            "duration": "Duración del Sermón (minutos)",
-            "saveAndReset": "Guardar y Reiniciar"
-        },
-        "bible": {
-            "source": "Fuente: {{version}}",
-            "notFound": "No se pudo encontrar el texto. Verifique la referencia.",
-            "error": "Error al cargar el texto bíblico."
-        }
-    },
-    "fidelityReview": {
-        "title": "Revisión de fidelidad",
-        "run": "Revisar fidelidad",
-        "rerun": "Volver a revisar",
-        "running": "Revisando…",
-        "toastDone": "Revisión de fidelidad completada.",
-        "toastError": "No pudimos completar la revisión. Intenta de nuevo.",
-        "empty": "Aún no se ha corrido la revisión para este sermón. La revisión evalúa, marcador por marcador, si la fuente citada respalda la oración previa.",
-        "noMarkers": "Este sermón no tiene marcadores de cita para revisar.",
-        "attention": "Requiere tu atención",
-        "supported": "Respaldadas",
-        "markersEvaluated": "{{count}} marcadores evaluados",
-        "ratios": "{{unrelated}}% sin respaldo · {{partial}}% parcial",
-        "lastReview": "Última revisión: {{date}}",
-        "model": "Modelo: {{model}}",
-        "expand": "Expandir detalle",
-        "collapse": "Contraer detalle",
-        "jumpToMarker": "Saltar al marcador {{marker}} en el sermón",
-        "stale": "(obsoleto)",
-        "reasoning": "Razonamiento",
-        "citedExcerpt": "Extracto citado",
-        "modelLine": "Modelo: {{model}} · {{date}}",
-        "banner": {
-            "pass": "Las citas respaldan los reclamos del borrador.",
-            "soft": "Algunas citas respaldan parcialmente el reclamo. Revisa los marcadores marcados antes de publicar.",
-            "hard": "Demasiados marcadores sin respaldo o que contradicen su fuente. Corrige las citas antes de publicar."
-        },
-        "verdict": {
-            "supports": "Respalda",
-            "partial": "Parcial",
-            "unrelated": "No respalda",
-            "contradicts": "Contradice"
-        }
-    },
-    "contraScan": {
-        "cancel": "Volver",
-        "publish": "Publicar",
-        "publishing": "Publicando…",
-        "page": "p. {{page}}",
-        "coreBadge": "Biblioteca base",
-        "personalBadge": "Tu biblioteca",
-        "tensionLabel": "En qué tensiona tu idea",
-        "selectedHint": "Escribe abajo cómo respondes a esta objeción ↓",
-        "yourIdea": {
-            "label": "Tu idea central (lo que predicas)"
-        },
-        "noDissent": {
-            "title": "No encontramos posiciones contrarias",
-            "description": "Revisamos tu biblioteca buscando voces que disientan de tu idea central y no hallamos ninguna.",
-            "invite": "Considera sumar fuentes que representen otras tradiciones fieles. Confrontar la mejor objeción hace tu predicación más sólida — y aquí nunca inventamos una posición contraria que no esté en un recurso real."
-        },
-        "dissent": {
-            "title": "Antes de publicar: escucha el consejo completo",
-            "description": "Estos recursos de tu biblioteca empujan en otra dirección que tu idea central. Considera al menos uno antes de subir al púlpito (Hechos 20:27).",
-            "step": "Selecciona la objeción que vas a considerar ({{count}} de tu biblioteca):"
-        },
-        "note": {
-            "label": "¿Cómo respondes a esta objeción desde el texto?",
-            "hint": "Tu reflexión, en tus palabras. No la escribimos por ti. Si la objeción te convence, vuelve y ajusta ese punto del sermón.",
-            "placeholder": "Escribe tu reflexión (mínimo {{min}} caracteres).",
-            "counter": "{{count}}/{{min}} caracteres"
-        },
-        "consider": {
-            "publish": "Registrar consideración y publicar"
-        },
-        "override": {
-            "toggle": "No puedo abordar esto ahora",
-            "back": "Volver a considerar",
-            "label": "Justifica por qué publicas sin registrar una consideración",
-            "placeholder": "Explica tu decisión (mínimo {{min}} caracteres). Queda registrada.",
-            "counter": "{{count}}/{{min}} caracteres",
-            "publish": "Publicar de todos modos"
-        },
-        "toast": {
-            "error": "No pudimos registrar la revisión. Intenta de nuevo.",
-            "gateError": "Debes considerar una posición contraria o justificar tu decisión antes de publicar."
-        }
-    },
-    "fidelityGate": {
-        "preparing": "Revisando fidelidad…",
-        "softTitle": "Revisa antes de publicar",
-        "softDescription": "Algunas citas respaldan solo en parte lo que afirma el borrador. Puedes corregir esos marcadores o continuar dejando registrada tu justificación pastoral.",
-        "hardTitle": "Todavía no podemos publicar",
-        "hardDescription": "Demasiados marcadores no tienen respaldo o contradicen su fuente. Corrige esas citas antes de publicar — este bloqueo no admite excepción.",
-        "summary": "{{unrelated}}% sin respaldo · {{partial}}% parcial · {{total}} marcadores",
-        "reviewMarkers": "Revisar marcadores",
-        "cancel": "Cancelar",
-        "publishAnyway": "Publicar de todas formas",
-        "publishing": "Publicando…",
-        "override": {
-            "label": "¿Por qué publicas a pesar de las observaciones?",
-            "placeholder": "Explica tu decisión pastoral con cuidado (mínimo {{min}} caracteres)…",
-            "counter": "{{count}}/{{min}}",
-            "remaining": "Faltan {{remaining}} caracteres para poder continuar."
-        },
-        "plurality": {
-            "title": "Pluralidad bíblica",
-            "description": "Estas afirmaciones doctrinales se apoyan en un solo pasaje. Un reclamo de peso debería sostenerse en al menos dos testigos bíblicos.",
-            "groundedOn": "Apoyada en:",
-            "noPassage": "No cita ningún pasaje bíblico.",
-            "addParallel": "Añadir paralelo canónico",
-            "hideParallel": "Ocultar paralelos",
-            "loadingParallels": "Buscando paralelos…",
-            "noParallels": "No encontramos paralelos para {{passage}}.",
-            "parallelsHint": "Paralelos sugeridos para {{passage}}:",
-            "level": {
-                "core": "Doctrina central",
-                "distinctive": "Doctrina distintiva",
-                "open-evangelical": "Asunto abierto"
-            }
-        },
-        "authority": {
-            "title": "Autoridad subordinada",
-            "description": "Estas afirmaciones se apoyan en una confesión, credo o teólogo como autoridad final. El fundamento debe ser el texto; la confesión es testigo, no fundamento.",
-            "reformulation": "Reformulación sugerida",
-            "unnamedAuthority": "Autoridad citada"
-        },
-        "attribution": {
-            "title": "Atribución de fuentes",
-            "description": "Estas fuentes requieren una atribución por su licencia, pero no encontramos los datos para incluirla. Revisa el recurso en tu biblioteca antes de publicar.",
-            "missingLabel": "Falta atribución",
-            "unknownLicense": "Licencia con atribución obligatoria"
-        },
-        "toast": {
-            "published": "Sermón publicado.",
-            "error": "No pudimos publicar el sermón. Intenta de nuevo.",
-            "reviewFailed": "No pudimos revisar la fidelidad. Intenta de nuevo."
-        }
-    },
-    "attributions": {
-        "title": "Atribuciones",
-        "description": "Atribuciones obligatorias por licencia para las fuentes citadas en este sermón."
-    },
-    "tutorPanel": {
-        "title": "Tutor",
-        "close": "Cerrar panel",
-        "toggleOpen": "Consultar al tutor",
-        "toggleClose": "Ocultar tutor",
-        "subtitleOrigin": "Continúa tu conversación de estudio",
-        "subtitleNew": "Pregunta sobre este sermón",
-        "savedHint": "El tutor considera el sermón guardado. Guarda para incluir tus últimos cambios.",
-        "emptyTitle": "Pregúntale al tutor",
-        "emptyBody": "Haz preguntas sobre este sermón: ilustraciones, fidelidad al texto, aplicación, estructura…",
-        "placeholder": "Escribe tu pregunta…",
-        "send": "Enviar",
-        "you": "Tú",
-        "tutor": "Tutor",
-        "thinking": "Pensando…",
-        "fullSession": "Ir a la sesión completa"
+      "error": "No pudimos registrar la revisión. Intenta de nuevo.",
+      "gateError": "Debes considerar una posición contraria o justificar tu decisión antes de publicar.",
+      "scanFailed": "No pudimos revisar tu biblioteca en busca de posiciones contrarias. Puedes continuar publicando."
     }
+  },
+  "fidelityGate": {
+    "preparing": "Revisando fidelidad…",
+    "softTitle": "Revisa antes de publicar",
+    "softDescription": "Algunas citas respaldan solo en parte lo que afirma el borrador. Puedes corregir esos marcadores o continuar dejando registrada tu justificación pastoral.",
+    "hardTitle": "Todavía no podemos publicar",
+    "hardDescription": "Demasiados marcadores no tienen respaldo o contradicen su fuente. Corrige esas citas antes de publicar — este bloqueo no admite excepción.",
+    "summary": "{{unrelated}}% sin respaldo · {{partial}}% parcial · {{total}} marcadores",
+    "reviewMarkers": "Revisar marcadores",
+    "cancel": "Cancelar",
+    "publishAnyway": "Publicar de todas formas",
+    "publishing": "Publicando…",
+    "override": {
+      "label": "¿Por qué publicas a pesar de las observaciones?",
+      "placeholder": "Explica tu decisión pastoral con cuidado (mínimo {{min}} caracteres)…",
+      "counter": "{{count}}/{{min}}",
+      "remaining": "Faltan {{remaining}} caracteres para poder continuar."
+    },
+    "plurality": {
+      "title": "Pluralidad bíblica",
+      "description": "Estas afirmaciones doctrinales se apoyan en un solo pasaje. Un reclamo de peso debería sostenerse en al menos dos testigos bíblicos.",
+      "groundedOn": "Apoyada en:",
+      "noPassage": "No cita ningún pasaje bíblico.",
+      "addParallel": "Añadir paralelo canónico",
+      "hideParallel": "Ocultar paralelos",
+      "loadingParallels": "Buscando paralelos…",
+      "noParallels": "No encontramos paralelos para {{passage}}.",
+      "parallelsHint": "Paralelos sugeridos para {{passage}}:",
+      "level": {
+        "core": "Doctrina central",
+        "distinctive": "Doctrina distintiva",
+        "open-evangelical": "Asunto abierto"
+      }
+    },
+    "authority": {
+      "title": "Autoridad subordinada",
+      "description": "Estas afirmaciones se apoyan en una confesión, credo o teólogo como autoridad final. El fundamento debe ser el texto; la confesión es testigo, no fundamento.",
+      "reformulation": "Reformulación sugerida",
+      "unnamedAuthority": "Autoridad citada"
+    },
+    "attribution": {
+      "title": "Atribución de fuentes",
+      "description": "Estas fuentes requieren una atribución por su licencia, pero no encontramos los datos para incluirla. Revisa el recurso en tu biblioteca antes de publicar.",
+      "missingLabel": "Falta atribución",
+      "unknownLicense": "Licencia con atribución obligatoria"
+    },
+    "toast": {
+      "published": "Sermón publicado.",
+      "error": "No pudimos publicar el sermón. Intenta de nuevo.",
+      "reviewFailed": "No pudimos revisar la fidelidad. Intenta de nuevo."
+    }
+  },
+  "attributions": {
+    "title": "Atribuciones",
+    "description": "Atribuciones obligatorias por licencia para las fuentes citadas en este sermón."
+  },
+  "tutorPanel": {
+    "title": "Tutor",
+    "close": "Cerrar panel",
+    "toggleOpen": "Consultar al tutor",
+    "toggleClose": "Ocultar tutor",
+    "subtitleOrigin": "Continúa tu conversación de estudio",
+    "subtitleNew": "Pregunta sobre este sermón",
+    "savedHint": "El tutor considera el sermón guardado. Guarda para incluir tus últimos cambios.",
+    "emptyTitle": "Pregúntale al tutor",
+    "emptyBody": "Haz preguntas sobre este sermón: ilustraciones, fidelidad al texto, aplicación, estructura…",
+    "placeholder": "Escribe tu pregunta…",
+    "send": "Enviar",
+    "you": "Tú",
+    "tutor": "Tutor",
+    "thinking": "Pensando…",
+    "fullSession": "Ir a la sesión completa"
+  }
 }

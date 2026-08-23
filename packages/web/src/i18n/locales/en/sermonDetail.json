@@ -1,321 +1,322 @@
 {
-    "loading": "Loading sermon...",
-    "noDraft": {
-        "title": "This sermon has no draft yet",
-        "body": "Your study is ready. Continue in the editor to generate and write the sermon.",
-        "cta": "Continue in the editor"
+  "loading": "Loading sermon...",
+  "noDraft": {
+    "title": "This sermon has no draft yet",
+    "body": "Your study is ready. Continue in the editor to generate and write the sermon.",
+    "cta": "Continue in the editor"
+  },
+  "notFound": {
+    "title": "Sermon not found",
+    "button": "Back to sermons"
+  },
+  "actions": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "export": "Export",
+    "share": "Share",
+    "duplicate": "Duplicate",
+    "back": "Back to Sermons",
+    "preach": "Preach",
+    "viewPublic": "View Public",
+    "publish": "Publish",
+    "archive": "Archive",
+    "markComplete": "Mark Complete",
+    "markingComplete": "Marking...",
+    "exportPdf": "Export PDF",
+    "exportDocx": "Export Word (.docx)",
+    "history": "History",
+    "notes": "Notes",
+    "hideNotes": "Hide Notes",
+    "present": "Preach"
+  },
+  "status": {
+    "draft": "Draft",
+    "published": "Published",
+    "archived": "Archived"
+  },
+  "sections": {
+    "passage": "Passage",
+    "exegesis": "Exegesis",
+    "outline": "Outline",
+    "sermon": "Sermon",
+    "notes": "Notes",
+    "tagsAndCategory": "Tags and Category"
+  },
+  "series": {
+    "partOf": "Part of Series",
+    "viewFull": "View Full Series"
+  },
+  "history": {
+    "title": "History",
+    "description": "Record of preachings and details.",
+    "logTitle": "Preaching Log",
+    "addLog": "Add",
+    "empty": "No preaching logs.",
+    "logButton": "Log Preaching"
+  },
+  "dialogs": {
+    "delete": {
+      "title": "Are you sure?",
+      "description": "This action cannot be undone. The sermon \"{{title}}\" will be permanently deleted.",
+      "confirm": "Delete",
+      "deleting": "Deleting...",
+      "cancel": "Cancel"
     },
-    "notFound": {
-        "title": "Sermon not found",
-        "button": "Back to sermons"
+    "share": {
+      "title": "Share Sermon",
+      "description": "Generate a public link to share this sermon with others.",
+      "publicMode": "Share publicly",
+      "publicModeDesc": "Anyone with the link can view this sermon.",
+      "publicLink": "Public link",
+      "copyTip": "This link allows viewing the sermon without logging in.",
+      "copied": "Link copied to clipboard"
     },
-    "actions": {
-        "edit": "Edit",
-        "delete": "Delete",
-        "export": "Export",
-        "share": "Share",
-        "duplicate": "Duplicate",
-        "back": "Back to Sermons",
-        "preach": "Preach",
-        "viewPublic": "View Public",
-        "publish": "Publish",
-        "archive": "Archive",
-        "markComplete": "Mark Complete",
-        "markingComplete": "Marking...",
-        "exportPdf": "Export PDF",
-        "exportDocx": "Export Word (.docx)",
-        "history": "History",
-        "notes": "Notes",
-        "hideNotes": "Hide Notes",
-        "present": "Preach"
+    "log": {
+      "title": "Log Preaching",
+      "description": "Keep a record of when and where you preached this sermon.",
+      "date": "Date",
+      "duration": "Duration (min)",
+      "location": "Location / Church",
+      "locationPlaceholder": "E.g. Central Church",
+      "notes": "Notes (Optional)",
+      "notesPlaceholder": "Reactions, points to improve, etc.",
+      "save": "Save Log",
+      "saving": "Saving..."
+    }
+  },
+  "toast": {
+    "exportSuccess": "Sermon exported",
+    "exportError": "Error exporting sermon",
+    "deleteSuccess": "Sermon deleted",
+    "deleteError": "Error deleting sermon",
+    "shared": "Sermon shared",
+    "unshared": "Sermon unshared",
+    "shareError": "Error changing share status",
+    "logSuccess": "Preaching logged",
+    "logError": "Error logging preaching",
+    "completeSuccess": "Sermon marked as complete",
+    "completeError": "Error marking as complete",
+    "copied": "Link copied to clipboard"
+  },
+  "form": {
+    "title": "Sermon Title",
+    "titlePlaceholder": "E.g. The Love of God",
+    "titleError": "Title must be at least 5 characters",
+    "category": "Category",
+    "categoryPlaceholder": "Select a category",
+    "author": "Author",
+    "authorPlaceholder": "E.g. Pastor John Doe",
+    "authorHelp": "Preacher name (optional)",
+    "content": "Sermon Content",
+    "contentPlaceholder": "Write your sermon content...",
+    "contentError": "Content is required",
+    "bibleRefs": "Bible References",
+    "bibleRefsPlaceholder": "E.g. John 3:16, Romans 8:28",
+    "bibleRefsHelp": "Add the bible references used in the sermon",
+    "tags": "Tags",
+    "tagsPlaceholder": "E.g. salvation, grace, faith",
+    "tagsHelp": "Add tags to organize your sermons",
+    "status": "Status",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "write": "Write",
+    "preview": "Preview",
+    "editTitle": "Edit Sermon",
+    "categories": {
+      "evangelismo": "Evangelism",
+      "discipulado": "Discipleship",
+      "adoracion": "Worship",
+      "familia": "Family",
+      "juventud": "Youth",
+      "matrimonio": "Marriage",
+      "finanzas": "Finances",
+      "oracion": "Prayer",
+      "otro": "Other"
+    }
+  },
+  "preachMode": {
+    "exit": "Exit",
+    "loading": "Loading...",
+    "fullScreen": "Full Screen",
+    "exitFullScreen": "Exit Full Screen",
+    "timeUp": "Time's up!",
+    "highlights": "{{count}} highlight",
+    "highlights_other": "{{count}} highlights",
+    "clearHighlights": "Clear all highlights",
+    "blackout": "Press B or click to continue",
+    "annotations": "Notes",
+    "studyPanel": {
+      "show": "Show study session with tutors",
+      "hide": "Hide study session"
     },
-    "status": {
-        "draft": "Draft",
-        "published": "Published",
-        "archived": "Archived"
+    "highlight": {
+      "removeUnderline": "Click to remove underline",
+      "removeMark": "Click to remove highlight"
     },
-    "sections": {
-        "passage": "Passage",
-        "exegesis": "Exegesis",
-        "outline": "Outline",
-        "sermon": "Sermon",
-        "notes": "Notes",
-        "tagsAndCategory": "Tags and Category"
+    "shortcuts": {
+      "blackout": "Blackout",
+      "exit": "Exit fullscreen"
     },
-    "series": {
-        "partOf": "Part of Series",
-        "viewFull": "View Full Series"
+    "timer": {
+      "settings": "Timer Settings",
+      "duration": "Sermon Duration (minutes)",
+      "saveAndReset": "Save and Reset"
     },
-    "history": {
-        "title": "History",
-        "description": "Record of preachings and details.",
-        "logTitle": "Preaching Log",
-        "addLog": "Add",
-        "empty": "No preaching logs.",
-        "logButton": "Log Preaching"
+    "bible": {
+      "source": "Source: {{version}}",
+      "notFound": "Could not find text. Check reference.",
+      "error": "Error loading bible text."
+    }
+  },
+  "fidelityReview": {
+    "title": "Fidelity review",
+    "run": "Review fidelity",
+    "rerun": "Review again",
+    "running": "Reviewing…",
+    "toastDone": "Fidelity review complete.",
+    "toastError": "We couldn't complete the review. Try again.",
+    "empty": "The review hasn't run for this sermon yet. It evaluates, marker by marker, whether the cited source supports the preceding sentence.",
+    "noMarkers": "This sermon has no citation markers to review.",
+    "attention": "Needs your attention",
+    "supported": "Supported",
+    "markersEvaluated": "{{count}} markers evaluated",
+    "ratios": "{{unrelated}}% unsupported · {{partial}}% partial",
+    "lastReview": "Last review: {{date}}",
+    "model": "Model: {{model}}",
+    "expand": "Expand detail",
+    "collapse": "Collapse detail",
+    "jumpToMarker": "Jump to marker {{marker}} in the sermon",
+    "stale": "(stale)",
+    "reasoning": "Reasoning",
+    "citedExcerpt": "Cited excerpt",
+    "modelLine": "Model: {{model}} · {{date}}",
+    "banner": {
+      "pass": "The citations support the draft's claims.",
+      "soft": "Some citations only partly support the claim. Review the flagged markers before publishing.",
+      "hard": "Too many markers are unsupported or contradict their source. Fix the citations before publishing."
     },
-    "dialogs": {
-        "delete": {
-            "title": "Are you sure?",
-            "description": "This action cannot be undone. The sermon \"{{title}}\" will be permanently deleted.",
-            "confirm": "Delete",
-            "deleting": "Deleting...",
-            "cancel": "Cancel"
-        },
-        "share": {
-            "title": "Share Sermon",
-            "description": "Generate a public link to share this sermon with others.",
-            "publicMode": "Share publicly",
-            "publicModeDesc": "Anyone with the link can view this sermon.",
-            "publicLink": "Public link",
-            "copyTip": "This link allows viewing the sermon without logging in.",
-            "copied": "Link copied to clipboard"
-        },
-        "log": {
-            "title": "Log Preaching",
-            "description": "Keep a record of when and where you preached this sermon.",
-            "date": "Date",
-            "duration": "Duration (min)",
-            "location": "Location / Church",
-            "locationPlaceholder": "E.g. Central Church",
-            "notes": "Notes (Optional)",
-            "notesPlaceholder": "Reactions, points to improve, etc.",
-            "save": "Save Log",
-            "saving": "Saving..."
-        }
+    "verdict": {
+      "supports": "Supports",
+      "partial": "Partial",
+      "unrelated": "Unsupported",
+      "contradicts": "Contradicts"
+    }
+  },
+  "contraScan": {
+    "cancel": "Back",
+    "publish": "Publish",
+    "publishing": "Publishing…",
+    "page": "p. {{page}}",
+    "coreBadge": "Core library",
+    "personalBadge": "Your library",
+    "tensionLabel": "How it tensions your idea",
+    "selectedHint": "Write below how you answer this objection ↓",
+    "yourIdea": {
+      "label": "Your central idea (what you preach)"
+    },
+    "noDissent": {
+      "title": "No contrary positions found",
+      "description": "We searched your library for voices that dissent from your central idea and found none.",
+      "invite": "Consider adding sources that represent other faithful traditions. Engaging the strongest objection makes your preaching sturdier — and we never invent a contrary position that isn't in a real resource."
+    },
+    "dissent": {
+      "title": "Before publishing: hear the whole counsel",
+      "description": "These resources in your library push in a different direction than your central idea. Consider at least one before you step into the pulpit (Acts 20:27).",
+      "step": "Select the objection you'll engage ({{count}} from your library):"
+    },
+    "note": {
+      "label": "How do you answer this objection from the text?",
+      "hint": "Your reflection, in your words. We don't write it for you. If the objection convinces you, go back and adjust that point of the sermon.",
+      "placeholder": "Write your reflection (at least {{min}} characters).",
+      "counter": "{{count}}/{{min}} characters"
+    },
+    "consider": {
+      "publish": "Record consideration and publish"
+    },
+    "override": {
+      "toggle": "I can't address this now",
+      "back": "Back to considering",
+      "label": "Justify why you publish without recording a consideration",
+      "placeholder": "Explain your decision (at least {{min}} characters). It is logged.",
+      "counter": "{{count}}/{{min}} characters",
+      "publish": "Publish anyway"
     },
     "toast": {
-        "exportSuccess": "Sermon exported",
-        "exportError": "Error exporting sermon",
-        "deleteSuccess": "Sermon deleted",
-        "deleteError": "Error deleting sermon",
-        "shared": "Sermon shared",
-        "unshared": "Sermon unshared",
-        "shareError": "Error changing share status",
-        "logSuccess": "Preaching logged",
-        "logError": "Error logging preaching",
-        "completeSuccess": "Sermon marked as complete",
-        "completeError": "Error marking as complete",
-        "copied": "Link copied to clipboard"
-    },
-    "form": {
-        "title": "Sermon Title",
-        "titlePlaceholder": "E.g. The Love of God",
-        "titleError": "Title must be at least 5 characters",
-        "category": "Category",
-        "categoryPlaceholder": "Select a category",
-        "author": "Author",
-        "authorPlaceholder": "E.g. Pastor John Doe",
-        "authorHelp": "Preacher name (optional)",
-        "content": "Sermon Content",
-        "contentPlaceholder": "Write your sermon content...",
-        "contentError": "Content is required",
-        "bibleRefs": "Bible References",
-        "bibleRefsPlaceholder": "E.g. John 3:16, Romans 8:28",
-        "bibleRefsHelp": "Add the bible references used in the sermon",
-        "tags": "Tags",
-        "tagsPlaceholder": "E.g. salvation, grace, faith",
-        "tagsHelp": "Add tags to organize your sermons",
-        "status": "Status",
-        "save": "Save Changes",
-        "saving": "Saving...",
-        "write": "Write",
-        "preview": "Preview",
-        "editTitle": "Edit Sermon",
-        "categories": {
-            "evangelismo": "Evangelism",
-            "discipulado": "Discipleship",
-            "adoracion": "Worship",
-            "familia": "Family",
-            "juventud": "Youth",
-            "matrimonio": "Marriage",
-            "finanzas": "Finances",
-            "oracion": "Prayer",
-            "otro": "Other"
-        }
-    },
-    "preachMode": {
-        "exit": "Exit",
-        "loading": "Loading...",
-        "fullScreen": "Full Screen",
-        "exitFullScreen": "Exit Full Screen",
-        "timeUp": "Time's up!",
-        "highlights": "{{count}} highlight",
-        "highlights_other": "{{count}} highlights",
-        "clearHighlights": "Clear all highlights",
-        "blackout": "Press B or click to continue",
-        "annotations": "Notes",
-        "studyPanel": {
-            "show": "Show study session with tutors",
-            "hide": "Hide study session"
-        },
-        "highlight": {
-            "removeUnderline": "Click to remove underline",
-            "removeMark": "Click to remove highlight"
-        },
-        "shortcuts": {
-            "blackout": "Blackout",
-            "exit": "Exit fullscreen"
-        },
-        "timer": {
-            "settings": "Timer Settings",
-            "duration": "Sermon Duration (minutes)",
-            "saveAndReset": "Save and Reset"
-        },
-        "bible": {
-            "source": "Source: {{version}}",
-            "notFound": "Could not find text. Check reference.",
-            "error": "Error loading bible text."
-        }
-    },
-    "fidelityReview": {
-        "title": "Fidelity review",
-        "run": "Review fidelity",
-        "rerun": "Review again",
-        "running": "Reviewing…",
-        "toastDone": "Fidelity review complete.",
-        "toastError": "We couldn't complete the review. Try again.",
-        "empty": "The review hasn't run for this sermon yet. It evaluates, marker by marker, whether the cited source supports the preceding sentence.",
-        "noMarkers": "This sermon has no citation markers to review.",
-        "attention": "Needs your attention",
-        "supported": "Supported",
-        "markersEvaluated": "{{count}} markers evaluated",
-        "ratios": "{{unrelated}}% unsupported · {{partial}}% partial",
-        "lastReview": "Last review: {{date}}",
-        "model": "Model: {{model}}",
-        "expand": "Expand detail",
-        "collapse": "Collapse detail",
-        "jumpToMarker": "Jump to marker {{marker}} in the sermon",
-        "stale": "(stale)",
-        "reasoning": "Reasoning",
-        "citedExcerpt": "Cited excerpt",
-        "modelLine": "Model: {{model}} · {{date}}",
-        "banner": {
-            "pass": "The citations support the draft's claims.",
-            "soft": "Some citations only partly support the claim. Review the flagged markers before publishing.",
-            "hard": "Too many markers are unsupported or contradict their source. Fix the citations before publishing."
-        },
-        "verdict": {
-            "supports": "Supports",
-            "partial": "Partial",
-            "unrelated": "Unsupported",
-            "contradicts": "Contradicts"
-        }
-    },
-    "contraScan": {
-        "cancel": "Back",
-        "publish": "Publish",
-        "publishing": "Publishing…",
-        "page": "p. {{page}}",
-        "coreBadge": "Core library",
-        "personalBadge": "Your library",
-        "tensionLabel": "How it tensions your idea",
-        "selectedHint": "Write below how you answer this objection ↓",
-        "yourIdea": {
-            "label": "Your central idea (what you preach)"
-        },
-        "noDissent": {
-            "title": "No contrary positions found",
-            "description": "We searched your library for voices that dissent from your central idea and found none.",
-            "invite": "Consider adding sources that represent other faithful traditions. Engaging the strongest objection makes your preaching sturdier — and we never invent a contrary position that isn't in a real resource."
-        },
-        "dissent": {
-            "title": "Before publishing: hear the whole counsel",
-            "description": "These resources in your library push in a different direction than your central idea. Consider at least one before you step into the pulpit (Acts 20:27).",
-            "step": "Select the objection you'll engage ({{count}} from your library):"
-        },
-        "note": {
-            "label": "How do you answer this objection from the text?",
-            "hint": "Your reflection, in your words. We don't write it for you. If the objection convinces you, go back and adjust that point of the sermon.",
-            "placeholder": "Write your reflection (at least {{min}} characters).",
-            "counter": "{{count}}/{{min}} characters"
-        },
-        "consider": {
-            "publish": "Record consideration and publish"
-        },
-        "override": {
-            "toggle": "I can't address this now",
-            "back": "Back to considering",
-            "label": "Justify why you publish without recording a consideration",
-            "placeholder": "Explain your decision (at least {{min}} characters). It is logged.",
-            "counter": "{{count}}/{{min}} characters",
-            "publish": "Publish anyway"
-        },
-        "toast": {
-            "error": "We couldn't record the review. Please try again.",
-            "gateError": "You must consider a contrary position or justify your decision before publishing."
-        }
-    },
-    "fidelityGate": {
-        "preparing": "Checking fidelity…",
-        "softTitle": "Review before publishing",
-        "softDescription": "Some citations only partly support what the draft claims. You can fix those markers or proceed by recording your pastoral justification.",
-        "hardTitle": "We can't publish yet",
-        "hardDescription": "Too many markers are unsupported or contradict their source. Fix those citations before publishing — this block has no exception.",
-        "summary": "{{unrelated}}% unsupported · {{partial}}% partial · {{total}} markers",
-        "reviewMarkers": "Review markers",
-        "cancel": "Cancel",
-        "publishAnyway": "Publish anyway",
-        "publishing": "Publishing…",
-        "override": {
-            "label": "Why are you publishing despite the findings?",
-            "placeholder": "Explain your pastoral decision carefully (at least {{min}} characters)…",
-            "counter": "{{count}}/{{min}}",
-            "remaining": "{{remaining}} more characters needed to continue."
-        },
-        "plurality": {
-            "title": "Biblical plurality",
-            "description": "These doctrinal claims rest on a single passage. A weight-bearing claim should stand on at least two biblical witnesses.",
-            "groundedOn": "Grounded on:",
-            "noPassage": "No biblical passage is cited.",
-            "addParallel": "Add canonical parallel",
-            "hideParallel": "Hide parallels",
-            "loadingParallels": "Looking up parallels…",
-            "noParallels": "No parallels found for {{passage}}.",
-            "parallelsHint": "Suggested parallels for {{passage}}:",
-            "level": {
-                "core": "Core doctrine",
-                "distinctive": "Distinctive doctrine",
-                "open-evangelical": "Open question"
-            }
-        },
-        "authority": {
-            "title": "Authority subordination",
-            "description": "These claims lean on a confession, creed, or theologian as the final authority. The ground must be the text; the confession is a witness, not the ground.",
-            "reformulation": "Suggested reformulation",
-            "unnamedAuthority": "Cited authority"
-        },
-        "attribution": {
-            "title": "Source attribution",
-            "description": "These sources require attribution under their licence, but the data to render it is missing. Review the resource in your library before publishing.",
-            "missingLabel": "Missing attribution",
-            "unknownLicense": "Licence requires attribution"
-        },
-        "toast": {
-            "published": "Sermon published.",
-            "error": "We couldn't publish the sermon. Try again.",
-            "reviewFailed": "We couldn't check fidelity. Try again."
-        }
-    },
-    "attributions": {
-        "title": "Attributions",
-        "description": "License-required attributions for the sources cited in this sermon."
-    },
-    "tutorPanel": {
-        "title": "Tutor",
-        "close": "Close panel",
-        "toggleOpen": "Ask the tutor",
-        "toggleClose": "Hide tutor",
-        "subtitleOrigin": "Continue your study conversation",
-        "subtitleNew": "Ask about this sermon",
-        "savedHint": "The tutor sees the saved sermon. Save to include your latest edits.",
-        "emptyTitle": "Ask the tutor",
-        "emptyBody": "Ask anything about this sermon: illustrations, faithfulness to the text, application, structure…",
-        "placeholder": "Type your question…",
-        "send": "Send",
-        "you": "You",
-        "tutor": "Tutor",
-        "thinking": "Thinking…",
-        "fullSession": "Open full session"
+      "error": "We couldn't record the review. Please try again.",
+      "gateError": "You must consider a contrary position or justify your decision before publishing.",
+      "scanFailed": "We couldn't scan your library for dissenting positions. You can go ahead and publish."
     }
+  },
+  "fidelityGate": {
+    "preparing": "Checking fidelity…",
+    "softTitle": "Review before publishing",
+    "softDescription": "Some citations only partly support what the draft claims. You can fix those markers or proceed by recording your pastoral justification.",
+    "hardTitle": "We can't publish yet",
+    "hardDescription": "Too many markers are unsupported or contradict their source. Fix those citations before publishing — this block has no exception.",
+    "summary": "{{unrelated}}% unsupported · {{partial}}% partial · {{total}} markers",
+    "reviewMarkers": "Review markers",
+    "cancel": "Cancel",
+    "publishAnyway": "Publish anyway",
+    "publishing": "Publishing…",
+    "override": {
+      "label": "Why are you publishing despite the findings?",
+      "placeholder": "Explain your pastoral decision carefully (at least {{min}} characters)…",
+      "counter": "{{count}}/{{min}}",
+      "remaining": "{{remaining}} more characters needed to continue."
+    },
+    "plurality": {
+      "title": "Biblical plurality",
+      "description": "These doctrinal claims rest on a single passage. A weight-bearing claim should stand on at least two biblical witnesses.",
+      "groundedOn": "Grounded on:",
+      "noPassage": "No biblical passage is cited.",
+      "addParallel": "Add canonical parallel",
+      "hideParallel": "Hide parallels",
+      "loadingParallels": "Looking up parallels…",
+      "noParallels": "No parallels found for {{passage}}.",
+      "parallelsHint": "Suggested parallels for {{passage}}:",
+      "level": {
+        "core": "Core doctrine",
+        "distinctive": "Distinctive doctrine",
+        "open-evangelical": "Open question"
+      }
+    },
+    "authority": {
+      "title": "Authority subordination",
+      "description": "These claims lean on a confession, creed, or theologian as the final authority. The ground must be the text; the confession is a witness, not the ground.",
+      "reformulation": "Suggested reformulation",
+      "unnamedAuthority": "Cited authority"
+    },
+    "attribution": {
+      "title": "Source attribution",
+      "description": "These sources require attribution under their licence, but the data to render it is missing. Review the resource in your library before publishing.",
+      "missingLabel": "Missing attribution",
+      "unknownLicense": "Licence requires attribution"
+    },
+    "toast": {
+      "published": "Sermon published.",
+      "error": "We couldn't publish the sermon. Try again.",
+      "reviewFailed": "We couldn't check fidelity. Try again."
+    }
+  },
+  "attributions": {
+    "title": "Attributions",
+    "description": "License-required attributions for the sources cited in this sermon."
+  },
+  "tutorPanel": {
+    "title": "Tutor",
+    "close": "Close panel",
+    "toggleOpen": "Ask the tutor",
+    "toggleClose": "Hide tutor",
+    "subtitleOrigin": "Continue your study conversation",
+    "subtitleNew": "Ask about this sermon",
+    "savedHint": "The tutor sees the saved sermon. Save to include your latest edits.",
+    "emptyTitle": "Ask the tutor",
+    "emptyBody": "Ask anything about this sermon: illustrations, faithfulness to the text, application, structure…",
+    "placeholder": "Type your question…",
+    "send": "Send",
+    "you": "You",
+    "tutor": "Tutor",
+    "thinking": "Thinking…",
+    "fullSession": "Open full session"
+  }
 }
