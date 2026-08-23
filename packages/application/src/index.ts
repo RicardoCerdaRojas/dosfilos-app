@@ -1,5 +1,7 @@
 export * from './services/SermonService';
 export * from './services/PastoralSeedService'; // 🌱 Pastoral Fidelity Phase 1 — six-step spine
+export * from './services/PastoralWordAnalysisReadService'; // 🌱 Fase 1.5 — lectura del análisis léxico cacheado
+export * from './services/ContentHistoryService'; // Historial de versiones durable (Firestore + localStorage)
 export * from './services/GuidedSermonService'; // 🌱 Pastoral Fidelity Phase 2.5 PR B — Faculty Socratic Sermon Agent (ADR-028)
 export * from './use-cases/guided-sermon/ActivateGuidedSermonUseCase';
 export * from './use-cases/guided-sermon/RunSocraticTurnUseCase';

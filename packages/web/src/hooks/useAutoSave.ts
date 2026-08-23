@@ -1,20 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { sermonService } from '@dosfilos/application';
-import { ExegeticalStudy, HomileticalAnalysis, Sermon, SermonContent, SermonPersonalization } from '@dosfilos/domain';
+import { buildWizardProgress, type WizardState } from './buildWizardProgress';
 
-type DerivedContext = NonNullable<NonNullable<Sermon['wizardProgress']>['derivedContext']>;
-
-interface WizardState {
-    step: number;
-    passage: string;
-    exegesis: ExegeticalStudy | null;
-    homiletics: HomileticalAnalysis | null;
-    draft: SermonContent | null;
-    derivedContext?: DerivedContext | null;
-    personalization?: SermonPersonalization | null;
-    audienceRigor?: 'beginner' | 'seminary' | null;
-}
 
 export function useAutoSave(
     sermonId: string | null,
@@ -47,35 +35,7 @@ export function useAutoSave(
         try {
             setSaving(true);
 
-            // Build progress object, filtering out undefined values
-            const progress: any = {
-                currentStep: wizardState.step,
-                passage: wizardState.passage,
-                lastSaved: new Date()
-            };
-
-            if (wizardState.exegesis) progress.exegesis = wizardState.exegesis;
-            if (wizardState.homiletics) progress.homiletics = wizardState.homiletics;
-            if (wizardState.draft) progress.draft = wizardState.draft;
-            // derivedContext must persist across auto-saves —
-            // updateWizardProgress replaces the whole object, so we
-            // re-include it on every save when present. Wizard-native
-            // sermons (no paper, no Faculty origin) carry no
-            // derivedContext and this branch is skipped.
-            if (wizardState.derivedContext) progress.derivedContext = wizardState.derivedContext;
-            // Persist personalization when any field is populated. Skip
-            // the empty default object so we don't write an empty
-            // wizardProgress.personalization for users who never opened
-            // the pastoral context panel.
-            if (wizardState.personalization && hasAnyField(wizardState.personalization)) {
-                progress.personalization = wizardState.personalization;
-            }
-            // Only persist non-default rigor (seminary). Beginner is the
-            // implicit default; persisting it would write to every legacy
-            // sermon unnecessarily.
-            if (wizardState.audienceRigor === 'seminary') {
-                progress.audienceRigor = 'seminary';
-            }
+            const progress = buildWizardProgress(wizardState);
 
             await sermonService.updateWizardProgress(sermonId, progress);
 
@@ -131,13 +91,3 @@ export function useAutoSave(
     return { saving, lastSaved, save };
 }
 
-function hasAnyField(p: SermonPersonalization): boolean {
-    return Boolean(
-        p.tone ||
-        p.situationalContext?.trim() ||
-        p.congregationDescription?.trim() ||
-        p.pastoralEmphasis?.trim() ||
-        p.illustrations?.trim() ||
-        p.preacherNotes?.trim()
-    );
-}

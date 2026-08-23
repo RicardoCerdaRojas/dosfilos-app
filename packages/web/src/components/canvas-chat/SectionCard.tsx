@@ -2,7 +2,7 @@ import { useState, Fragment, ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronRight, Maximize2, BookOpen } from 'lucide-react';
+import { ChevronDown, ChevronRight, Maximize2, BookOpen, History } from 'lucide-react';
 import { SectionConfig } from './section-configs';
 import { cn } from '@/lib/utils';
 import { MarkdownRenderer } from './MarkdownRenderer';
@@ -18,7 +18,32 @@ import { LocalBibleService } from '@/services/LocalBibleService';
 function stripLeadingFieldLabel(value: string, label: string): string {
   if (!value || !label) return value;
   const esc = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return value.replace(new RegExp(`^\\s*\\*{0,2}\\s*${esc}\\s*:?\\s*\\*{0,2}\\s*\\n*`, 'i'), '');
+  const sinEtiqueta = value.replace(
+    new RegExp(`^\\s*(\\*{0,2})\\s*${esc}\\s*:?\\s*(\\*{0,2})\\s*\\n*`, 'i'),
+    (_m, abre: string, cierra: string) => (abre && !cierra ? '\u0000' : ''),
+  );
+  // MARCADOR HUÉRFANO.
+  //
+  // El modelo suele meter etiqueta y título en UNA sola negrita:
+  // `**Ilustración: El Mensajero Real**`. Al quitar la etiqueta se va también
+  // el `**` de apertura y queda el de cierre solo, que se renderiza literal:
+  // el pastor veía "El Mensajero Real**" en su sermón.
+  //
+  // El centinela marca que se consumió una apertura sin su cierre; entonces se
+  // quita el `**` final que quedó suelto. Es defensa en profundidad: el prompt
+  // ya no pide la etiqueta, pero el modelo puede volver a agregarla y esto no
+  // puede llegar a pantalla.
+  if (sinEtiqueta.startsWith('\u0000')) {
+    // El huérfano cierra la PRIMERA LÍNEA, no el texto: el título va solo en su
+    // renglón y el desarrollo viene después. Anclar al final del string dejaría
+    // el marcador intacto.
+    const resto = sinEtiqueta.slice(1);
+    const corte = resto.indexOf('\n');
+    const primera = corte === -1 ? resto : resto.slice(0, corte);
+    const cola = corte === -1 ? '' : resto.slice(corte);
+    return primera.replace(/\*{1,2}\s*$/, '') + cola;
+  }
+  return sinEtiqueta;
 }
 
 // Comprehensive pattern to match Bible references in Spanish
@@ -45,6 +70,10 @@ interface SectionCardProps {
    * duplicaría en pantalla lo que la tarjeta ya muestra.
    */
   customBody?: React.ReactNode;
+  /** Cuántas versiones guardadas tiene esta sección. 0 = no se muestra nada. */
+  versionCount?: number;
+  /** Abre el historial de esta sección directamente. */
+  onOpenHistory?: () => void;
 }
 
 /**
@@ -64,6 +93,8 @@ export function SectionCard({
   isModified = false,
   isCollapsed = false,
   customBody,
+  versionCount = 0,
+  onOpenHistory,
   onToggleCollapse
 }: SectionCardProps) {
   const [selectedReference, setSelectedReference] = useState<string | null>(null);
@@ -227,7 +258,7 @@ export function SectionCard({
       }
       
       // If expanded, render markdown
-      const rendered = <MarkdownRenderer content={text} />;
+      const rendered = <MarkdownRenderer content={text} reading />;
       
       // (Se quitó el parche que metía los puntos del bosquejo dentro de la
       // tarjeta de proposición. Existía porque no había forma de verlos juntos;
@@ -352,7 +383,7 @@ export function SectionCard({
                                 // (e.g. authorityQuote starts with "Cita de Autoridad:") — strip it
                                 // so the label doesn't render twice.
                                 (key === 'content' || key === 'illustration' || key === 'significance' || value.length > 100) ? (
-                                  <MarkdownRenderer content={stripLeadingFieldLabel(value, translateFieldName(key))} />
+                                  <MarkdownRenderer content={stripLeadingFieldLabel(value, translateFieldName(key))} reading />
                                 ) : (
                                   renderTextWithBibleLinks(stripLeadingFieldLabel(value, translateFieldName(key)))
                                 )
@@ -480,6 +511,27 @@ export function SectionCard({
               Modificado
             </Badge>
           )}
+
+          {/* EL SEGURO TIENE QUE VERSE DESDE DONDE SE NECESITA.
+              El historial vivía sólo dentro de la vista expandida, y el momento
+              en que hace falta es justo después de regenerar — cuando el pastor
+              mira el canvas, no una sección abierta. Un indicador acá lo
+              anuncia y lo abre de un clic. */}
+          {versionCount > 0 && onOpenHistory && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs flex-shrink-0 text-muted-foreground hover:text-foreground"
+              title={`Ver ${versionCount} versión(es) anterior(es) de esta sección`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenHistory();
+              }}
+            >
+              <History className="h-3 w-3 mr-1" />
+              {versionCount}
+            </Button>
+          )}
         </div>
 
         <Button
@@ -515,3 +567,6 @@ export function SectionCard({
     </Card>
   );
 }
+
+/** Sólo para tests: la limpieza de etiquetas es pura y se prueba sin montar la tarjeta. */
+export const __testables = { stripLeadingFieldLabel };

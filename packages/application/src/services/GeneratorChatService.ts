@@ -2,6 +2,8 @@ import { GeminiSermonGenerator, DocumentProcessingService, AutomaticStrategySele
 import { LibraryResourceEntity, DocumentChunkEntity, CoachingStyle, ContentType, ICoreLibraryService, FileSearchStoreContext, DEFAULT_LANGUAGE } from '@dosfilos/domain';
 import type {
     SupportedLanguage,
+    GenerationRules,
+    HomileticalAnalysis,
     ISermonWizardChatRepository,
     SermonWizardChatHistory,
     SermonWizardChatPhase,
@@ -198,6 +200,24 @@ export class GeneratorChatService {
             aiModel?: string;      // 🎯 NEW
             temperature?: number;  // 🎯 NEW
             language?: SupportedLanguage;
+            /**
+             * La voz del predicador y el nivel de rigor.
+             *
+             * Antes no llegaban: el punto regenerado salía sin las
+             * ilustraciones del pastor, sin su énfasis pastoral y sin el techo
+             * de rigor de su congregación — desentonando con los demás puntos
+             * del mismo sermón, que sí los tenían.
+             */
+            personalization?: GenerationRules['personalization'];
+            audienceRigor?: GenerationRules['audienceRigor'];
+            /**
+             * El análisis homilético completo.
+             *
+             * Es lo que le da al prompt el bosquejo real, la aplicación ya
+             * aprobada de este punto y la directiva que el pastor escribió
+             * sobre él. Sin esto el prompt sólo veía título y proposición.
+             */
+            homileticsResult?: HomileticalAnalysis;
         }
     ): Promise<{ point: any; sources: SourceReference[] }> {
         // 1. Search for relevant content in library (RAG)
@@ -245,14 +265,19 @@ export class GeneratorChatService {
             relevantChunks,
             fileSearchStoreId,
             aiModel: context.aiModel,       // 🎯 NEW
-            temperature: context.temperature // 🎯 NEW
+            temperature: context.temperature, // 🎯 NEW
+            // El bosquejo, las aplicaciones aprobadas y las directivas del
+            // pastor viajan por acá.
+            ...(context.homileticsResult ? { homileticsResult: context.homileticsResult } : {}),
         };
 
         const regeneratedPoint = await this.generator.regenerateSermonPoint(
             point,
             {
                 tone: (context.tone as any) || 'pastoral',
-                customInstructions: context.customInstructions
+                customInstructions: context.customInstructions,
+                ...(context.personalization ? { personalization: context.personalization } : {}),
+                ...(context.audienceRigor ? { audienceRigor: context.audienceRigor } : {}),
             },
             regenerateContext,
             context.language ?? DEFAULT_LANGUAGE,

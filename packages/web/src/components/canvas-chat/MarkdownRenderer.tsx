@@ -11,6 +11,19 @@ import { CitationManifestContext, CitationMarker, wrapCitationMarkers } from '@/
 interface MarkdownRendererProps {
   content: string;
   className?: string;
+  /**
+   * Tipografía para LEER EN VOZ ALTA desde el púlpito.
+   *
+   * Sin esto la prosa hereda `max-w-none`: las líneas corren el ancho completo
+   * del panel —unos 110 caracteres— cuando la medida legible son 60-75. Al
+   * final de un renglón tan largo el ojo tiene que recorrer media pantalla para
+   * encontrar el inicio del siguiente, y ése es justo el momento en que el
+   * predicador levanta la vista y pierde el lugar.
+   *
+   * No es el default porque las burbujas del chat y los paneles angostos ya son
+   * estrechos por su contenedor; ahí un tope de medida sólo agregaría aire.
+   */
+  reading?: boolean;
   /** If true, Bible references will be clickable to view the passage. */
   enableBibleLinks?: boolean;
 }
@@ -38,7 +51,7 @@ const BIBLE_REF_PATTERN = /(?:^|[^\wáéíóúñ])((?:[1-3]\s?)?(?:Génesis|Gene
  * That keeps the click handler scoped to text nodes and lets
  * react-markdown handle the rest of the inline parsing.
  */
-export function MarkdownRenderer({ content, className, enableBibleLinks = true }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, className, enableBibleLinks = true, reading = false }: MarkdownRendererProps) {
   const [selectedReference, setSelectedReference] = useState<string | null>(null);
 
   // ADR-031 — when a sermon citation manifest is in context (provided by the
@@ -87,6 +100,11 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true }
       <div
         className={cn(
           'prose prose-sm dark:prose-invert max-w-none',
+          // Medida acotada + interlineado y respiro entre párrafos generosos:
+          // el texto se lee de pie y hay que poder reencontrar el renglón.
+          reading && '[&>p]:max-w-[68ch] [&>ul]:max-w-[68ch] [&>ol]:max-w-[68ch] [&>blockquote]:max-w-[68ch]',
+          reading && '[&>p]:leading-[1.85] [&>p]:mb-5 [&_li]:leading-[1.8] [&>ul]:mb-5 [&>ol]:mb-5',
+          reading && '[&>h3]:mt-8 [&>h4]:mt-6',
           // Tighten paragraph spacing so successive blocks read like the
           // legacy renderer that emitted `mb-3 leading-relaxed` per <p>.
           '[&>p]:mb-3 [&>p]:leading-relaxed [&>p]:text-sm [&>p]:text-foreground/90',

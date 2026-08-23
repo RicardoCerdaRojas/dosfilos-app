@@ -4,6 +4,7 @@ import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
 import { DerivedContextBanner } from './DerivedContextBanner';
 import { SermonPersonalizationPanel } from './SermonPersonalizationPanel';
+import { DraftSkeletonPreview } from './DraftSkeletonPreview';
 import { IllustrationDuplicateBanner } from './IllustrationDuplicateBanner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -15,6 +16,7 @@ import {
     exegesisService,
     facultyService,
     pastoralSeedService,
+    pastoralWordAnalysisReadService,
     computeDeterministicDraftSignals,
     sermonDraftShadowService,
     JudgeSermonDraftUseCase,
@@ -111,7 +113,16 @@ export function StepDraft() {
     const [selectedStyle, setSelectedStyle] = useState<CoachingStyle | 'auto'>('auto');
     const [rightPanelMode, setRightPanelMode] = useState<'chat' | 'bible'>('chat');
 
-    const contentHistory = useContentHistory('sermon', config?.id);
+    const contentHistory = useContentHistory('sermon', sermonId ?? undefined);
+    // Sección cuyo historial hay que abrir al expandir. La ponen los dos
+    // caminos de entrada —el aviso tras regenerar y el indicador de la tarjeta—
+    // y se limpia al cerrar, para que volver a expandir no reabra el modal.
+    const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null);
+    const abrirHistorial = (sectionId: string) => {
+        setOpenHistoryFor(sectionId);
+        setExpandedSectionId(sectionId);
+        setMessages([]);
+    };
 
     const getSectionVersions = (sectionId: string) => contentHistory.getVersions(sectionId);
     const getCurrentVersionId = (sectionId: string) => contentHistory.getCurrentVersion(sectionId)?.id;
@@ -215,8 +226,51 @@ export function StepDraft() {
                 );
             }
 
+            // REGENERAR NO PUEDE SER DESTRUCTIVO.
+            //
+            // `handleGenerate` reemplazaba el borrador con `setDraft` sin pasar
+            // por el historial: el sermón anterior desaparecía sin quedar en
+            // ningún lado. El historial sólo se alimentaba al refinar o editar
+            // una sección, así que el pastor podía deshacer un ajuste menor pero
+            // no una regeneración completa — justo la acción que más se lleva
+            // por delante.
+            //
+            // Se guarda POR SECCIÓN, no como bloque único, porque es como el
+            // historial ya funciona y porque permite rescatar sólo la
+            // introducción que le gustaba sin perder los puntos nuevos.
+            let guardoVersiones = false;
+            if (draft) {
+                const { getSectionsForType } = await import('@/components/canvas-chat/section-configs');
+                const { getValueByPath } = await import('@/utils/path-utils');
+                for (const section of getSectionsForType('sermon')) {
+                    const previo = getValueByPath(draft, section.path);
+                    if (previo === undefined || previo === null) continue;
+                    contentHistory.saveVersion(
+                        section.id,
+                        previo,
+                        t('drafting.versions.beforeRegenerate'),
+                        undefined,
+                    );
+                    guardoVersiones = true;
+                }
+            }
+
             setDraft(result);
-            toast.success(t('drafting.success.generated'));
+            // EL AVISO OFRECE EL SEGURO EN EL MOMENTO EN QUE HACE FALTA.
+            // Justo después de regenerar es cuando el pastor quiere comparar o
+            // volver — y es justo cuando está mirando el canvas, no una sección
+            // expandida. Anunciar el historial acá lo pone donde se necesita.
+            if (guardoVersiones) {
+                toast.success(t('drafting.success.generated'), {
+                    duration: 10000,
+                    action: {
+                        label: t('drafting.versions.seePrevious'),
+                        onClick: () => abrirHistorial('introduction'),
+                    },
+                });
+            } else {
+                toast.success(t('drafting.success.generated'));
+            }
 
             // Redacción v2 — sombra del draft (colector DETERMINISTA), gated +
             // fire-and-forget. Aislado del juez LLM (otro colector). NON-BLOCKING:
@@ -563,6 +617,7 @@ export function StepDraft() {
                             }}
                             onSectionClose={() => {
                                 setExpandedSectionId(null);
+                                setOpenHistoryFor(null);
                                 setMessages([]);
                             }}
                             onSectionUndo={handleUndo}
@@ -572,6 +627,8 @@ export function StepDraft() {
                             getCurrentVersionId={getCurrentVersionId}
                             onRestoreVersion={handleRestoreVersion}
                             modifiedSections={modifiedSections}
+                            openHistoryFor={openHistoryFor}
+                            onSectionOpenHistory={abrirHistorial}
                             onSectionUpdate={handleSectionUpdate}
                             onRegenerate={async (sectionId, itemIndex) => {
                                 if (sectionId === 'body' && typeof itemIndex === 'number' && draft.body[itemIndex]) {
@@ -585,6 +642,15 @@ export function StepDraft() {
                                                 homileticalProposition: homiletics.homileticalProposition,
                                                 tone: rules.tone,
                                                 customInstructions: rules.customInstructions,
+                                                // El resto del sermón ya se
+                                                // generó CON la voz del
+                                                // predicador, el nivel de rigor
+                                                // y el bosquejo. Un punto
+                                                // regenerado sin eso desentona
+                                                // con los demás.
+                                                ...(rules.personalization ? { personalization: rules.personalization } : {}),
+                                                ...(rules.audienceRigor ? { audienceRigor: rules.audienceRigor } : {}),
+                                                homileticsResult: homiletics,
                                                 libraryResources: [],
                                                 aiModel: config?.advanced?.aiModel,
                                                 temperature:
@@ -662,7 +728,19 @@ export function StepDraft() {
                 </Button>
 
                 <Button onClick={handlePublish} disabled={publishing || contraScan.scanning || !sermonId} size="lg" className="flex-1">
-                    {publishing || contraScan.scanning ? (
+                    {/* EL BOTÓN DICE LO QUE ESTÁ PASANDO, NO LO QUE SE PIDIÓ.
+                        Antes mostraba "Publicando…" también durante el
+                        contra-scan, que es la etapa LENTA (un callable de 1 GB
+                        que recorre la biblioteca: ~11 s en el caso real). El
+                        pastor leía "Publicando", esperaba, no veía nada, y
+                        concluía que se había roto — cuando sólo estaba
+                        trabajando. Le costó un intento entero. */}
+                    {contraScan.scanning ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t('drafting.scanningLibrary')}
+                        </>
+                    ) : publishing ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             {t('drafting.publishing')}
@@ -688,10 +766,26 @@ export function StepDraft() {
                     <h3 className="font-semibold mb-2">{t('drafting.finalDraftTitle')}</h3>
                     <p className="text-sm text-muted-foreground">{t('drafting.finalDraftDesc')}</p>
                 </div>
+                {/* Este panel usaba las claves de HOMILÉTICA
+                    (`homiletics.afterGenerate*`), así que en Redacción prometía
+                    cosas del paso anterior y ya hechas: elegir enfoque, refinar
+                    la proposición, mejorar el bosquejo, agregar ilustraciones
+                    —que el pastor acababa de escribir en el panel de al lado—.
+                    Ninguna de las cuatro ocurre después de generar el borrador.
+                    Reusar la clave de otro paso ahorró cuatro líneas y le mintió
+                    al pastor sobre dónde está parado. Cada paso describe lo
+                    suyo. */}
+                {/* La FORMA antes que la lista: el esqueleto se arma con el
+                    bosquejo del pastor, así que anticipa la estructura y le
+                    confirma que su trabajo llegó hasta acá. */}
+                <div className="pt-4 border-t text-left">
+                    <h4 className="font-medium text-sm mb-2">{t('drafting.skeleton.title')}</h4>
+                    <DraftSkeletonPreview homiletics={homiletics} />
+                </div>
                 <div className="pt-4 border-t">
-                    <h4 className="font-medium text-sm mb-2">{t('homiletics.afterGenerateTitle')}</h4>
+                    <h4 className="font-medium text-sm mb-2">{t('drafting.afterGenerateTitle')}</h4>
                     <ul className="text-sm text-muted-foreground space-y-1 text-left">
-                        {(t('homiletics.afterGenerateList', { returnObjects: true }) as string[]).map((item, i) => (
+                        {(t('drafting.afterGenerateList', { returnObjects: true }) as string[]).map((item, i) => (
                             <li key={i}>• {item}</li>
                         ))}
                     </ul>
@@ -880,6 +974,46 @@ async function augmentRulesWithProjectContext(
  * builder can prepend the PRIMARY VOICE block. Best-effort: a missing
  * seed (legacy / flag-off sermon) just leaves rules untouched.
  */
+/**
+ * Le adjunta a cada estudio de palabra SU ANÁLISIS LÉXICO, si existe.
+ *
+ * POR QUÉ HACÍA FALTA: el seed guarda `wordAnalysisId` desde la Fase 1.5 y el
+ * análisis cacheado (`pastoralWordAnalyses/`) trae rango semántico, uso en el
+ * versículo y peso teológico — exactamente lo que el pastor espera ver en las
+ * palabras clave del sermón. Nunca llegaba: el mapeo pasaba sólo su
+ * descubrimiento, y el borrador lo imprimía como si fuera la glosa.
+ *
+ * BEST-EFFORT A PROPÓSITO. Un análisis que no está —estudio escrito a mano, o
+ * caché expirada por versión curada nueva— no puede impedir que el sermón se
+ * genere. Se cae al comportamiento anterior: sólo el descubrimiento del pastor,
+ * pero ahora rotulado como suyo.
+ */
+async function hydrateWordStudies(
+    studies: readonly { word: string; reference: string; pastorDiscovery: string; wordAnalysisId?: string }[],
+): Promise<NonNullable<GenerationRules['pastoralSeed']>['wordStudies']> {
+    return Promise.all(
+        studies.map(async (w) => {
+            const base = { word: w.word, reference: w.reference, discovery: w.pastorDiscovery };
+            if (!w.wordAnalysisId) return base;
+            try {
+                const doc = await pastoralWordAnalysisReadService.findById(w.wordAnalysisId);
+                if (!doc) return base;
+                const a = doc.analysis;
+                return {
+                    ...base,
+                    ...(a.gloss?.semanticRange?.length ? { semanticRange: a.gloss.semanticRange } : {}),
+                    ...(a.grammaticalFunctionInVerse ? { useInVerse: a.grammaticalFunctionInVerse } : {}),
+                    ...(a.theologicalWeight ? { theologicalWeight: a.theologicalWeight } : {}),
+                    ...(a.lexiconSource ? { lexiconSource: String(a.lexiconSource) } : {}),
+                };
+            } catch (error) {
+                console.warn('[StepDraft] No se pudo leer el análisis de', w.word, error);
+                return base;
+            }
+        }),
+    );
+}
+
 async function augmentRulesWithPastoralSeed(
     rules: GenerationRules,
     sermonId: string | null,
@@ -899,11 +1033,7 @@ async function augmentRulesWithPastoralSeed(
                 doxologicalApplication: seed.insight.doxologicalApplication,
                 mainClauseReference: seed.structuralAnalysis.mainClause.reference,
                 mainClauseNote: seed.structuralAnalysis.mainClause.pastorNote,
-                wordStudies: seed.wordStudies.studies.map((w) => ({
-                    word: w.word,
-                    reference: w.reference,
-                    discovery: w.pastorDiscovery,
-                })),
+                wordStudies: await hydrateWordStudies(seed.wordStudies.studies),
                 parallels: seed.recognition.parallels.map((p) => ({
                     reference: p.reference,
                     relevance: p.relevanceNote,

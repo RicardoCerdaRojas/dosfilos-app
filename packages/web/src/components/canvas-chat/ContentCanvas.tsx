@@ -22,6 +22,15 @@ interface ContentCanvasProps<T = any> {
   canRedo?: (sectionId: string) => boolean;
   // History modal props
   getSectionVersions?: (sectionId: string) => any[];
+  /**
+   * Sección cuyo historial debe abrirse al expandir.
+   *
+   * Lo decide quien está afuera —el aviso tras regenerar, o el indicador de la
+   * tarjeta— porque los dos caminos tienen que llegar al mismo lugar.
+   */
+  openHistoryFor?: string | null;
+  /** El pastor pidió ver el historial de esta sección desde la tarjeta. */
+  onSectionOpenHistory?: (sectionId: string) => void;
   getCurrentVersionId?: (sectionId: string) => string | undefined;
   onRestoreVersion?: (sectionId: string, versionId: string) => void;
   modifiedSections?: Set<string>;
@@ -59,6 +68,8 @@ export function ContentCanvas<T = any>({
   canUndo,
   canRedo,
   getSectionVersions,
+  openHistoryFor,
+  onSectionOpenHistory,
   getCurrentVersionId,
   onRestoreVersion,
   modifiedSections = new Set(),
@@ -124,6 +135,7 @@ export function ContentCanvas<T = any>({
           canUndo={canUndo ? canUndo(section.id) : false}
           canRedo={canRedo ? canRedo(section.id) : false}
           versions={getSectionVersions ? getSectionVersions(section.id) : []}
+          initialShowHistory={openHistoryFor === section.id}
           currentVersionId={getCurrentVersionId ? getCurrentVersionId(section.id) : undefined}
           onRestoreVersion={
             onRestoreVersion
@@ -165,6 +177,8 @@ export function ContentCanvas<T = any>({
               isCollapsed={isCollapsed}
               onToggleCollapse={() => toggleCollapse(section.id)}
               {...(sectionBodies?.[section.id] ? { customBody: sectionBodies[section.id] } : {})}
+              versionCount={getSectionVersions ? getSectionVersions(section.id).length : 0}
+              {...(onSectionOpenHistory ? { onOpenHistory: () => onSectionOpenHistory(section.id) } : {})}
             />
           );
         })}

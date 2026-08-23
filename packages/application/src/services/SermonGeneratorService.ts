@@ -1,4 +1,4 @@
-import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent, DEFAULT_LANGUAGE, buildCitationManifest, validateCitations, stripSermonCitationMarkers, injectNarrativeCitationAnchors, type CitationManifest } from '@dosfilos/domain';
+import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent, DEFAULT_LANGUAGE, buildCitationManifest, validateCitations, stripSermonCitationMarkers, injectNarrativeCitationAnchors, assembleTransitions, type CitationManifest } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 import { GeminiSermonGenerator, DocumentProcessingService } from '@dosfilos/infrastructure';
 
@@ -266,7 +266,15 @@ export class SermonGeneratorService {
         // strips any marker / ragSources entry the LLM emits that doesn't match.
         const manifest = prebuiltManifest ?? await this.buildDraftManifest(config, searchQuery);
 
-        const rawDraft = await this.generator.generateSermonDraft(analysis, rules, finalConfig, language, manifest);
+        const generated = await this.generator.generateSermonDraft(analysis, rules, finalConfig, language, manifest);
+
+        // La proposición y los puntos del recordatorio se ENSAMBLAN desde el
+        // bosquejo, verbatim. El prompt los pedía con un placeholder entre
+        // corchetes y el modelo terminó escribiendo un título inventado en el
+        // lugar de la proposición que el pastor aprobó. Son datos que ya
+        // tenemos: pedírselos es darle la oportunidad de reformularlos.
+        // Va ANTES de las citas para que el texto que se valida sea el final.
+        const rawDraft = assembleTransitions(generated, analysis);
 
         // Phase B: enforce the citation contract server-side. Strips
         // unknown `[Sn]` markers, drops hallucinated `ragSources`

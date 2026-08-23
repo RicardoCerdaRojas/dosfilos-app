@@ -362,7 +362,75 @@
       "manualEdit": "Edición manual",
       "manualEditSummary": "Cambios guardados manualmente",
       "beforeRefinement": "Antes de: {{summary}}...",
-      "refinedSummary": "✅ Sección \"{{section}}\" refinada exitosamente."
-    }
+      "refinedSummary": "✅ Sección \"{{section}}\" refinada exitosamente.",
+      "beforeRegenerate": "Antes de regenerar el borrador",
+      "seePrevious": "Ver versión anterior"
+    },
+    "afterGenerateTitle": "Después de generar podrás:",
+    "afterGenerateList": [
+      "Refinar introducción, puntos y conclusión conversando con el asistente",
+      "Regenerar un punto que no te convenza, sin rehacer el sermón",
+      "Volver a cualquier versión anterior de cada sección",
+      "Publicar el sermón cuando esté listo"
+    ],
+    "skeleton": {
+      "introduction": "Introducción",
+      "introductionParts": [
+        "Contexto histórico",
+        "·",
+        "Conexión actual",
+        "·",
+        "Proposición y puntos"
+      ],
+      "pointsPending": "Puntos del sermón",
+      "pointParts": [
+        "Exposición",
+        "·",
+        "Referencias",
+        "·",
+        "Ilustración",
+        "·",
+        "Aplicación",
+        "·",
+        "Transición"
+      ],
+      "conclusion": "Conclusión",
+      "conclusionParts": [
+        "Resumen",
+        "·",
+        "Llamado final"
+      ],
+      "callToAction": "Llamado a la acción",
+      "callToActionParts": [
+        "1 a 3 pasos concretos para esta semana"
+      ],
+      "yourApplication": "tu aplicación",
+      "yourDirective": "tu indicación",
+      "title": "Así quedará tu sermón"
+    },
+    "scanningLibrary": "Revisando tu biblioteca…"
+  },
+  "pastoralContext": {
+    "title": "Contexto Pastoral (Opcional)",
+    "hint": "Funeral, boda, crisis, énfasis, anécdotas… cuanto más le digas, más a la medida queda el sermón.",
+    "filled_one": "{{count}} campo completado",
+    "filled_other": "{{count}} campos completados",
+    "active": "Activo",
+    "intro": "Nada de esto se archiva: entra en el sermón que se redacta. Tus ilustraciones se usan tal como las escribes, y el borrador toma el lenguaje de tu congregación.",
+    "languageLabel": "Lenguaje del sermón",
+    "languageEveryday": "Cotidiano",
+    "languageEverydayHint": "Explica los términos teológicos al usarlos. Griego y hebreo sólo cuando aportan. Ilustraciones de la vida diaria.",
+    "languageTechnical": "Técnico",
+    "languageTechnicalHint": "Griego, hebreo y morfología cuando el texto lo pide. Asume las categorías sistemáticas. Autores reformados consolidados.",
+    "situational": "Contexto situacional",
+    "situationalPlaceholder": "Ej: Será predicado en un culto de funeral, o después de una crisis en la comunidad…",
+    "congregation": "Congregación",
+    "congregationPlaceholder": "Ej: 80 personas, reformados, nivel teológico medio-alto",
+    "emphasis": "Énfasis pastoral",
+    "emphasisPlaceholder": "¿Qué quieres que la congregación sienta, entienda o haga al terminar el sermón?",
+    "illustrations": "Ilustraciones del predicador",
+    "illustrationsPlaceholder": "Anécdotas personales, historias de la congregación, o testimonios que quieras incluir…",
+    "notes": "Notas del predicador",
+    "notesPlaceholder": "Ideas sueltas, argumentos que quieras desarrollar, énfasis particulares…"
   }
 }

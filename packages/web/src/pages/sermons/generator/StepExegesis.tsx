@@ -46,7 +46,7 @@ function StepExegesisContent() {
     const activeLanguage = language === 'en' ? 'en' : 'es';
     const { passage, setPassage, rules, setExegesis, setStep, exegesis, config, sermonId, saving } = useWizard();
     const { user } = useFirebase();
-    const contentHistory = useContentHistory('exegesis', config?.id);
+    const contentHistory = useContentHistory('exegesis', sermonId ?? undefined);
 
     // Unified Chat Hook
     const {

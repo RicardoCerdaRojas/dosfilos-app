@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
+import { contentHistoryService } from '@dosfilos/application';
+import type { StoredSectionVersion } from '@dosfilos/domain';
 
 /**
  * Represents a single version of a section's content
@@ -30,7 +32,19 @@ export function useContentHistory(
     const [currentVersionIndex, setCurrentVersionIndex] = useState<Record<string, number>>({});
     const [isLoaded, setIsLoaded] = useState(false);
 
-    // Generate storage key for localStorage
+    /**
+     * Clave de almacenamiento — POR SERMÓN.
+     *
+     * Antes se pasaba `config.id`, que es la CONFIGURACIÓN DEL USUARIO, no el
+     * documento. Todos los sermones de un pastor compartían el mismo bucket:
+     * las versiones de uno aparecían en otro, y refinar en el sermón B podía
+     * pisar el historial del sermón A. El mismo defecto estaba en los tres
+     * pasos del wizard.
+     *
+     * Cambiar la clave deja huérfano el historial viejo a propósito: mezclaba
+     * sermones, así que migrarlo importaría versiones que pertenecen a otro
+     * documento. Es preferible empezar limpio a heredar datos cruzados.
+     */
     const getStorageKey = useCallback(() => {
         if (!contentId) return null;
         return `content-history-${contentType}-${contentId}`;
@@ -44,6 +58,47 @@ export function useContentHistory(
             return;
         }
 
+        let cancelled = false;
+
+        /**
+         * Firestore primero, `localStorage` de respaldo.
+         *
+         * El durable gana porque es el que sobrevive a cambiar de equipo o de
+         * navegador. El local sigue existiendo para que el historial aparezca al
+         * instante y para no perderlo si Firestore no responde.
+         */
+        const cargar = async () => {
+            const remoto = contentId ? await contentHistoryService.load(contentId, contentType) : null;
+            if (cancelled) return;
+            if (remoto && Object.keys(remoto).length > 0) {
+                aplicar(remoto);
+                setIsLoaded(true);
+                return;
+            }
+            cargarLocal();
+        };
+
+        const aplicar = (parsed: Record<string, any>) => {
+            const historyWithDates: ContentHistory = {};
+            Object.keys(parsed).forEach((sectionId) => {
+                const sectionVersions = parsed[sectionId];
+                if (Array.isArray(sectionVersions)) {
+                    historyWithDates[sectionId] = sectionVersions.map((v: any) => ({
+                        ...v,
+                        timestamp: new Date(v.timestamp),
+                    }));
+                }
+            });
+            setHistory(historyWithDates);
+            const indices: Record<string, number> = {};
+            Object.keys(historyWithDates).forEach((sectionId) => {
+                const sectionHistory = historyWithDates[sectionId];
+                if (sectionHistory) indices[sectionId] = sectionHistory.length - 1;
+            });
+            setCurrentVersionIndex(indices);
+        };
+
+        const cargarLocal = () => {
         try {
             const stored = localStorage.getItem(storageKey);
             if (stored) {
@@ -77,7 +132,13 @@ export function useContentHistory(
         } finally {
             setIsLoaded(true);
         }
-    }, [getStorageKey]);
+        };
+
+        void cargar();
+        return () => {
+            cancelled = true;
+        };
+    }, [getStorageKey, contentId, contentType]);
 
     // Save history to localStorage whenever it changes (but only after initial load)
     useEffect(() => {
@@ -93,7 +154,34 @@ export function useContentHistory(
         } catch (error) {
             console.error('Failed to save history to localStorage:', error);
         }
-    }, [history, getStorageKey, isLoaded]);
+
+        // ESCRITURA DURABLE, CON RESPIRO.
+        //
+        // `localStorage` se escribe en el acto porque es gratis. Firestore no:
+        // guardar en cada cambio dispararía una escritura por tecla mientras el
+        // pastor edita. Un segundo de calma agrupa la ráfaga en una sola.
+        //
+        // El `timestamp` se serializa a ISO: Firestore no acepta un `Date`
+        // dentro de un mapa anidado sin convertirlo, y el historial es
+        // exactamente eso — un mapa de arreglos de objetos.
+        if (!contentId) return;
+        const t = setTimeout(() => {
+            const sections: Record<string, StoredSectionVersion[]> = {};
+            for (const [sectionId, versions] of Object.entries(history)) {
+                if (!versions?.length) continue;
+                sections[sectionId] = versions.map((v) => ({
+                    id: v.id,
+                    sectionId: v.sectionId,
+                    content: v.content ?? null,
+                    timestamp: new Date(v.timestamp).toISOString(),
+                    changeDescription: v.changeDescription,
+                    ...(v.aiSuggestion ? { aiSuggestion: v.aiSuggestion } : {}),
+                }));
+            }
+            void contentHistoryService.save(contentId, contentType, sections);
+        }, 1000);
+        return () => clearTimeout(t);
+    }, [history, getStorageKey, isLoaded, contentId, contentType]);
 
     /**
      * Save a new version of a section
