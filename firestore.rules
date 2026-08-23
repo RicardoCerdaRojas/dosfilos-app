@@ -89,6 +89,14 @@ service cloud.firestore {
         allow read, write: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId);
       }
 
+      // Historial de versiones por sección (antes sólo vivía en localStorage,
+      // así que se perdía al cambiar de navegador o de equipo). Un documento
+      // por tipo de contenido: sermon | homiletics | exegesis.
+      // Misma regla que annotations: sólo el dueño del sermón.
+      match /contentHistory/{contentType} {
+        allow read, write: if isOwner(get(/databases/$(database)/documents/sermons/$(sermonId)).data.userId);
+      }
+
       // PR #219: Sermon wizard chat history per phase. One doc per
       // phase (exegesis / homiletics / sermon). Owner-only access —
       // matches the parent sermon document's userId.

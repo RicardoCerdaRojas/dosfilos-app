@@ -15,6 +15,7 @@ import { ChatMessage } from '@dosfilos/domain/src/entities/SermonWorkflow';
 import {
     buildExegesisPrompt,
     buildSermonDraftPrompt,
+    buildRegeneratePointPrompt,
     buildChatSystemPrompt
 } from './prompts-generator';
 
@@ -252,43 +253,11 @@ export class GeminiSermonGenerator implements ISermonGenerator {
         language: SupportedLanguage = DEFAULT_LANGUAGE,
     ): Promise<any> {
         try {
-            const fullPrompt = `
-${buildChatSystemPrompt(WorkflowPhase.DRAFTING, context, language)}
-
-TAREA: REGENERAR UN PUNTO ESPECÍFICO DEL SERMÓN
-
-Contexto del Sermón:
-- Título: ${context.sermonTitle || 'Sin título'}
-- Proposición Homilética: ${context.homileticalProposition || 'No especificada'}
-
-Punto a Regenerar:
-- Título: ${point.point || point.title}
-- Referencias Base: ${point.scriptureReferences ? point.scriptureReferences.join(', ') : 'Ninguna'}
-
-INSTRUCCIONES:
-Genera el contenido completo para este punto específico, siguiendo la estructura estricta:
-1. Contenido profundo y teológico.
-2. Referencias cruzadas relevantes.
-3. Una ilustración clara.
-4. Al menos 2 implicaciones prácticas.
-5. Una cita de autoridad.
-6. Una transición al siguiente punto.
-
-Reglas Personalizadas:
-${rules.customInstructions || 'Ninguna'}
-Tono: ${rules.tone || 'Inspirador'}
-
-FORMATO JSON REQUERIDO:
-{
-  "point": "${point.point || point.title}",
-  "content": "Contenido desarrollado...",
-  "scriptureReferences": ["Ref 1", "Ref 2"],
-  "illustration": "Ilustración...",
-  "implications": ["Implicación 1", "Implicación 2"],
-  "authorityQuote": "Cita...",
-  "transition": "Transición..."
-}
-`;
+            // El prompt vive en `prompts-generator` como el del borrador
+            // completo. Tenerlo acá embebido fue lo que dejó que divergiera:
+            // el punto regenerado salía sin la voz del predicador, sin nivel de
+            // rigor, sin bosquejo y sin las directivas del pastor.
+            const fullPrompt = buildRegeneratePointPrompt(point, rules, context, language);
             const text = await runLlmPrompt({
                 feature: 'sermon.regeneratePoint',
                 prompt: fullPrompt,

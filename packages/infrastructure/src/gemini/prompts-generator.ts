@@ -1,4 +1,4 @@
-import { CitationManifest, GenerationRules, ExegeticalStudy, HomileticalAnalysis, WorkflowPhase, PhaseConfiguration, DEFAULT_LANGUAGE, formatSermonPersonalizationBlock } from '@dosfilos/domain';
+import { CitationManifest, GenerationRules, ExegeticalStudy, HomileticalAnalysis, WorkflowPhase, PhaseConfiguration, DEFAULT_LANGUAGE, formatSermonPersonalizationBlock, opensBook, splitApplication } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 // Guía de ilustraciones extraída de 90 ilustraciones REALES del fundador. Vive
 // en un .md editable, como las guías de homilética, para que se pueda afinar sin
@@ -406,8 +406,25 @@ ${paperContext.assembledMarkdown}
 function buildPastoralSeedBlock(seed?: GenerationRules['pastoralSeed']): string {
   if (!seed) return '';
   const observations = seed.observations.map((o, i) => `${i + 1}. "${o}"`).join('\n');
+  // EL DATO LÉXICO Y EL DESCUBRIMIENTO DEL PASTOR VAN SEPARADOS, ETIQUETADOS.
+  // Cuando viajaban juntos en una línea, el borrador imprimía el comentario del
+  // pastor bajo el rótulo "Palabras Clave", como si fuera la glosa: una
+  // asociación forzada que le atribuye al léxico lo que dijo él.
   const wordStudies = seed.wordStudies
-    .map((w) => `  - ${w.word} (${w.reference}): ${w.discovery}`)
+    .map((w) => {
+      const partes = [`  - ${w.word} (${w.reference})`];
+      if (w.semanticRange?.length) {
+        partes.push(`      Rango semántico: ${w.semanticRange.join(' · ')}`);
+      }
+      if (w.useInVerse?.trim()) {
+        partes.push(`      Uso en este versículo: ${w.useInVerse.trim()}`);
+      }
+      if (w.theologicalWeight?.trim()) {
+        partes.push(`      Peso teológico: ${w.theologicalWeight.trim()}`);
+      }
+      partes.push(`      Lo que descubrió EL PASTOR (es suyo, no es la glosa): ${w.discovery}`);
+      return partes.join('\n');
+    })
     .join('\n');
   const parallels = seed.parallels
     .map((p) => `  - ${p.reference} — ${p.relevance}`)
@@ -493,8 +510,15 @@ function buildOutlineBlock(outline: HomileticalAnalysis['outline']): string {
       `   Descripción: ${p.description || '(pendiente)'}`,
       `   Referencias: ${refs}`,
     ];
-    if (p.application?.trim()) {
-      lines.push(`   Aplicación aprobada por el pastor: ${p.application.trim()}`);
+    // El pastor decide CUÁNTAS implicaciones separando con líneas en blanco.
+    // Se parten acá, en dominio, y llegan numeradas: pedirle al modelo que
+    // "respete los saltos de línea" es pedirle que haga algo calculable.
+    const aplicaciones = splitApplication(p.application);
+    if (aplicaciones.length === 1) {
+      lines.push(`   Aplicación aprobada por el pastor: ${aplicaciones[0]}`);
+    } else if (aplicaciones.length > 1) {
+      lines.push(`   Aplicaciones aprobadas por el pastor (${aplicaciones.length} — una implicación por cada una):`);
+      aplicaciones.forEach((a, k) => lines.push(`      ${k + 1}. ${a}`));
     }
     const emphasis = p.pastorDirective?.emphasis?.trim();
     if (emphasis) {
@@ -555,6 +579,106 @@ LÍMITE: la directiva dirige cómo se EXPONE el texto. No autoriza a afirmar lo 
 el texto no dice. Si una directiva contradice el pasaje, exponla como el pastor
 la formuló y NO la refuerces con datos inventados.
 ═══════════════════════════════════════════════════════════════════
+`;
+}
+
+
+/**
+ * El ORDEN de las secciones de la introducción.
+ *
+ * La anécdota del Paso 8 abre el sermón cuando existe: el pastor la escribe
+ * ANTES de tener puntos homiléticos —está pensando en la congregación, no en el
+ * bosquejo— así que su lugar natural es la puerta de entrada, no el interior de
+ * un punto.
+ */
+function introSections(analysis: HomileticalAnalysis, rules: GenerationRules): string {
+  const anecdota = rules.pastoralSeed?.pastoralAnecdote?.trim();
+  const orientacion = opensBook(analysis.exegeticalStudy?.passage ?? '');
+  return [
+    anecdota ? '### Ilustración de Apertura' : null,
+    orientacion ? '### El Libro de un Vistazo' : null,
+    '### Contexto Histórico',
+    '### Conexión Actual',
+    '### Proposición Homilética',
+  ]
+    .filter(Boolean)
+    .join(' → ');
+}
+
+/**
+ * Dónde va la anécdota del pastor, y —tan importante— dónde NO va.
+ *
+ * El problema real: la anécdota llegaba al prompt por DOS caminos. El bloque de
+ * la semilla la anunciaba como "anécdota que el pastor quiere integrar", y el
+ * bloque de personalización la repetía bajo "ILUSTRACIONES DEL PREDICADOR
+ * (incorporar literalmente en el CUERPO del sermón)" —porque el wizard copia
+ * `insight.pastoralAnecdote` a `personalization.illustrations` al cargar la
+ * semilla—. Ninguno de los dos decía DÓNDE, y el segundo empujaba activamente
+ * hacia adentro de un punto. Resultado: la ilustración de apertura terminaba
+ * enterrada en el punto I.
+ *
+ * Y la segunda mitad de la regla importa igual: las ilustraciones de cada punto
+ * se generan DESDE ese punto. Reciclar la de apertura adentro de un movimiento
+ * gasta dos veces la misma imagen y deja al punto sin la suya.
+ */
+function openingIllustrationRule(rules: GenerationRules): string {
+  const anecdota = rules.pastoralSeed?.pastoralAnecdote?.trim();
+  if (!anecdota) return '';
+  return `     - **ILUSTRACIÓN DE APERTURA (del pastor)**: el sermón ABRE con la anécdota
+       que el pastor escribió en su estudio. Va PRIMERO, antes del contexto
+       histórico, bajo "### Ilustración de Apertura". Úsala tal como la escribió
+       —puedes pulir la redacción, no cambiar la historia— y cierra con un puente
+       de una o dos frases hacia el texto.
+     - **NO la repitas en ningún punto del cuerpo.** Si aparece también en
+       "ILUSTRACIONES DEL PREDICADOR", es la misma y ya está usada acá. La
+       ilustración de cada punto se genera DESDE ese punto.
+`;
+}
+
+/**
+ * La orientación al libro, SÓLO cuando el sermón lo abre.
+ *
+ * `opensBook` lo decide en dominio y no el modelo: es calculable, y preguntarle
+ * al modelo "¿esto es la introducción del libro?" invita a decidirlo por
+ * parecido. En medio de una serie este material es relleno que le roba minutos
+ * a la exposición.
+ *
+ * EL LÍMITE ES LA PARTE IMPORTANTE. Las fechas de composición, la autoría y los
+ * libros contemporáneos son terreno DISPUTADO —Jonás es el caso de manual: hay
+ * quien lo fecha en el siglo VIII y quien lo hace postexílico—. Pedir un dato
+ * verificable como obligatorio es el mecanismo por el que se fabrica uno falso;
+ * es la misma lección que la cita de autoridad. Por eso acá se pide el rango y
+ * el nombre del debate, nunca una fecha única presentada como hecho.
+ */
+function bookOrientationRule(analysis: HomileticalAnalysis): string {
+  if (!opensBook(analysis.exegeticalStudy?.passage ?? '')) return '';
+  return `     - **EL LIBRO DE UN VISTAZO**: este sermón ABRE el libro, así que la
+       introducción tiene que ubicar a la congregación en el libro ENTERO antes
+       de entrar al texto. En 2 o 3 párrafos cortos, bajo "### El Libro de un
+       Vistazo":
+       · quién lo escribe y en tiempo de qué rey o período;
+       · **qué OTRO pasaje de la Biblia habla de este libro o de su autor**, con
+         la referencia (por ejemplo, para Jonás: 2 Reyes 14:25, que lo nombra
+         hijo de Amitai bajo Jeroboam II);
+       · sus divisiones más reconocidas;
+       · **quién más profetiza o escribe en el mismo escenario**, y si algún
+         otro libro trata el mismo asunto (para Jonás: Nahúm también profetiza
+         sobre Nínive; Amós y Oseas son contemporáneos);
+       · cómo se integra en lo que Dios está haciendo con Israel y en la
+         historia de la redención completa.
+     - **ANCLA EN EL CANON, NO EN LA ERUDICIÓN.** Lo anterior es casi todo dato
+       BÍBLICO: sale de la Escritura y de los reinados que ella misma fecha, no
+       de reconstrucciones académicas. Prefiérelo siempre, y da la referencia.
+     - **NO ABRAS DEBATES QUE NO VAS A CERRAR (obligatorio).** PROHIBIDO escribir
+       "algunos estudiosos debaten", "hay discusión sobre la fecha" o
+       equivalentes. Esto se predica de pie ante una congregación: una duda
+       planteada y no resuelta se queda con ellos el resto del sermón y le roba
+       atención al texto. La crítica de fechas y autoría pertenece al paper
+       exegético, no al púlpito.
+       Da el dato como lo ubica la tradición, en UNA cláusula y sin matizar. Si
+       no tienes una respuesta simple y defendible, **OMITE ese punto**: un
+       párrafo más corto es mejor que una duda abierta — y mucho mejor que un
+       dato inventado que el pastor va a repetir desde el púlpito.
 `;
 }
 
@@ -623,7 +747,21 @@ Usa formato MARKDOWN con JERARQUIZACIÓN VISUAL CLARA en todos los campos de tex
    - Usa #### para sub-puntos o divisiones menores
    - Cada encabezado debe estar en su propia línea con espacio antes y después
 
-2. **SEPARACIÓN VISUAL**:
+2. **SEPARACIÓN VISUAL — ESTE TEXTO SE LEE DE PIE, EN VOZ ALTA**:
+   No se lee en una pantalla ni en un sillón: se lee desde el púlpito, mirando
+   a la gente y volviendo a la hoja. El predicador levanta la vista y tiene que
+   REENCONTRAR el punto exacto donde iba. En un párrafo largo eso es imposible:
+   pierde el renglón, repite una frase o se salta media idea delante de todos.
+   Por eso el formato no es estética, es legibilidad bajo presión:
+   - **PÁRRAFOS CORTOS: máximo 3 oraciones, idealmente 2.** Un párrafo de seis
+     líneas es una trampa. Si una idea necesita más, pártela en dos párrafos.
+   - **UNA IDEA POR PÁRRAFO.** El regreso de la mirada tiene que caer en un
+     bloque que se entienda solo.
+   - **ANCLA AL INICIO DE CADA PÁRRAFO**: empieza con 2-4 palabras en negrita
+     que digan de qué trata ese bloque. Es el asidero visual para reencontrar
+     el lugar de un vistazo.
+   - **ORACIONES CORTAS.** Evita las cadenas de subordinadas: una oración con
+     tres comas y dos "que" no se puede decir de memoria ni retomar a la mitad.
    - SEPARA PÁRRAFOS con líneas en blanco (doble salto de línea)
    - NUNCA escribas párrafos continuos sin separación
    - Usa líneas horizontales (---) para separar secciones mayores
@@ -633,10 +771,20 @@ Usa formato MARKDOWN con JERARQUIZACIÓN VISUAL CLARA en todos los campos de tex
    - Usa *cursivas* para palabras en hebreo/griego y énfasis secundario
    - Usa > para bloques de citas bíblicas o citas de autoridad
 
-4. **LISTAS Y ENUMERACIONES**:
-   - Usa listas con viñetas (-, *) para múltiples puntos relacionados
-   - Usa listas numeradas (1., 2.) para secuencias o pasos
-   - Cada ítem de lista debe estar en su propia línea
+4. **LISTAS Y ENUMERACIONES — LA VIÑETA TIENE QUE SIGNIFICAR ALGO**:
+   La viñeta le da forma visual a la lectura en voz alta: el ojo la reencuentra
+   más rápido que un renglón de prosa. Pero si TODO se vuelve lista se pierde el
+   contraste y vuelve el problema de origen — nada destaca porque todo se lee
+   igual.
+   - **VA EN VIÑETAS lo que es una ENUMERACIÓN**: dos o más elementos paralelos.
+     Razones, contrastes, pasos, palabras clave, implicaciones.
+   - **VA EN PÁRRAFO la exposición continua**, que es prosa y se lee como prosa,
+     con su ancla en negrita al inicio.
+   - **Máximo UNA lista por punto del sermón.** Si te salen dos, una de las dos
+     no era una lista: reescríbela como párrafo.
+   - Cada ítem en su propia línea y de UNA sola línea: un ítem de cuatro
+     renglones es un párrafo disfrazado y se pierde igual al levantar la vista.
+   - Usa numeradas (1., 2.) sólo cuando el ORDEN importe — pasos o secuencia.
 
 5. **ESTRUCTURA DEL CONTENIDO DE CADA PUNTO**:
    Organiza el campo "content" con esta estructura clara:
@@ -662,13 +810,14 @@ Usa formato MARKDOWN con JERARQUIZACIÓN VISUAL CLARA en todos los campos de tex
 ═══════════════════════════════════════════════════════════════════
 
 Instrucciones de Contenido:
-  1. **INTRODUCCIÓN**: 
-     - Estructura con encabezados claros (### Contexto Histórico, ### Conexión Actual, ### Proposición Homilética)
+  1. **INTRODUCCIÓN**:
+     - Orden de las secciones: ${introSections(analysis, rules)}
      - Separa párrafos visualmente
      - Usa negritas para conceptos clave
      - Explica el trasfondo del pasaje (quién, cuándo, dónde, por qué)
      - Conecta la situación de la audiencia original con el presente
      - INCLUYE al final la Proposición Homilética seguida de la lista de puntos del sermón como referencia
+${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
      
   2. **DESARROLLO DE CADA PUNTO** del bosquejo:
      En el campo "content", estructura así:
@@ -678,8 +827,19 @@ Instrucciones de Contenido:
      
      [Párrafo 2: Profundización teológica]
      
-     **Palabras Clave Relevantes**:
-     - *original* (transliteración): **significado teológico**
+     **Palabras Clave Relevantes** — para cada palabra, DOS COSAS y en este orden:
+     1. su **RANGO SEMÁNTICO**: los sentidos que la palabra puede tener, no uno
+        solo. Si el estudio del pastor trae el rango, úsalo TAL CUAL; no lo
+        sustituyas por tu propia glosa.
+     2. **QUÉ SENTIDO LE DIO EL AUTOR AQUÍ**, y por qué se sabe: qué quiso
+        expresar en ESTE versículo, dentro de ESE rango. Es la pregunta que
+        justifica traer la palabra al púlpito; sin ella el dato es trivia.
+     PROHIBIDO presentar el comentario del pastor como si fuera el significado
+     de la palabra. Lo que él descubrió es SUYO y va como su lectura del texto,
+     no como glosa léxica — atribuirle al diccionario lo que dijo él es una
+     asociación forzada, y el pastor la nota.
+     Formato: "- *original* (transliteración) — **rango**: sentido A / sentido B
+     / sentido C. **Aquí**: [qué sentido usa el autor y por qué]"
      
      **Nota Exegética**: 
      [Si aplica, explicación técnica accesible]
@@ -687,19 +847,44 @@ Instrucciones de Contenido:
      ---
      
      Luego, en campos separados:
-     - **scriptureReferences** (array): Lista de referencias con TEXTO del versículo como blockquote
+     - **scriptureReferences** (array): de 2 a 3 referencias que CRUCEN a OTROS
+       LIBROS de la Biblia, con el TEXTO del versículo como blockquote.
+       **PROHIBIDO usar el pasaje que se está predicando.** Volver a citar el
+       texto expuesto no es una referencia cruzada: es repetir el texto, y no
+       argumenta nada. Tampoco cuenta otro capítulo del MISMO libro.
+       Su trabajo es MOSTRAR QUE LA AFIRMACIÓN DEL PUNTO ES CONSISTENTE CON EL
+       RESTO DE LA ESCRITURA: cada una debe sostener exegéticamente lo que el
+       punto afirma, no ilustrarlo ni adornarlo.
+       Lista de referencias con TEXTO del versículo como blockquote
        Formato: "> \"[Texto del versículo]\" ([Referencia])"
        Ejemplo: "> \"En el principio era el Verbo\" (Juan 1:1)"
      
-     - **authorityQuote** (string): PRIMERO el título sin blockquote, LUEGO la cita con blockquote
-       Formato: "**Cita de Autoridad:**\\n\\n> \\"[Cita]\\"\\n> — *[Autor], [Fuente]*"
+     - **authorityQuote** (string): la cita en blockquote con su atribución. NO
+       escribas "Cita de Autoridad:" adelante — la tarjeta ya rotula el campo, y
+       pedir una etiqueta que la UI después borra deja marcadores de negrita
+       huérfanos en pantalla.
+       Formato: "> \\"[Cita]\\"\\n> — *[Autor], [Fuente]*"
      
-     - **illustration** (string): Ilustración relevante con título en negritas
+     - **illustration** (string): la ilustración, empezando por su TÍTULO en
+       negritas y solo — sin la palabra "Ilustración:" delante, por la misma
+       razón.
+       Formato: "**[Título]**\\n\\n[Desarrollo]"
      
-     - **implications** (array): UNA implicación, que DESARROLLA la aplicación ya aprobada de ese punto (llega en el bosquejo como \`application\`). Empieza con "**Implicación:**". Si el punto no trae \`application\`, deriva una del propio punto — pero NUNCA inventes una que el punto no sostenga.
+     - **implications** (array): UNA ENTRADA POR CADA APLICACIÓN APROBADA que el
+       punto trae en el bosquejo. El pastor separa sus aplicaciones con líneas en
+       blanco y llegan ya numeradas: si trae dos, van DOS implicaciones, una por
+       cada una, en su orden. No las fusiones en un párrafo ni agregues de más.
+       Cada una DESARROLLA la suya; no la reemplaces por otra tuya. Empieza cada
+       entrada con "**Implicación:**". Si el punto no trae aplicación aprobada,
+       deriva UNA del propio punto — pero NUNCA inventes una que el punto no
+       sostenga.
      
-     - **transition** (string): Frase de transición + recordatorio CON SALTOS DE LÍNEA
-       Formato exacto: "[Frase]\\n\\n**Recordatorio:**\\nProposición: [texto]\\n\\n**Puntos:**\\n1. [Punto 1]\\n2. [Punto 2]\\n3. [Punto 3]"
+     - **transition** (string): SÓLO la frase de transición al punto siguiente —
+       el puente retórico, una o dos oraciones. Nada más.
+       NO escribas la proposición ni la lista de puntos: el sistema las agrega
+       después, copiadas palabra por palabra del bosquejo que el pastor aprobó.
+       Tampoco escribas rótulos ("Transición:", "Recordatorio:"): la tarjeta ya
+       rotula el bloque.
      
   3. **CONCLUSIÓN**: 
      - Estructura con subsecciones (### Resumen Principal, ### Llamado Final)
@@ -732,12 +917,12 @@ Instrucciones de Contenido:
           "> \\"Sabemos que a los que aman a Dios...\\" (Romanos 8:28)"
         ],
         "authorityQuote": null,
-        "illustration": "**Ilustración:** [Título]\\n\\n[Desarrollo de la ilustración]",
+        "illustration": "**[Título]**\\n\\n[Desarrollo de la ilustración]",
         "implications": [
           "**Implicación 1:** Descripción de la primera implicación", 
           "**Implicación 2:** Descripción de la segunda implicación"
         ],
-        "transition": "[Frase de transición natural]\\n\\n**Recordatorio:**\\nProposición: [proposición homilética]\\n\\n**Puntos:**\\n1. [Punto 1]\\n2. [Punto 2]\\n3. [Punto 3]"
+        "transition": "[Sólo la frase de transición al siguiente punto]"
       }
     ],
   "conclusion": "### Resumen Principal\\n\\n[Párrafo 1]\\n\\n### Llamado Final\\n\\n**Punto culminante**: [Cierre poderoso]",
@@ -786,7 +971,7 @@ REGLAS DE GENERACIÓN:
 
    PROHIBIDO: sermón puramente moralista ("haz X, evita Y") sin FCF explícito y sin centralidad cristológica. Eso convierte el púlpito en consejería moral, no en proclamación del evangelio.
 
-10. **NIVEL DE RIGOR SEGÚN AUDIENCIA**: ${audienceRigorBlock(rules.audienceRigor)}
+10. **LENGUAJE DEL SERMÓN**: ${audienceRigorBlock(rules.audienceRigor)}
 
 ---
 
@@ -794,20 +979,153 @@ ${illustrationGuidelinesMD}
 `;
 }
 
+/**
+ * El REGISTRO del sermón, no el rigor del estudio.
+ *
+ * El encabezado decía "NIVEL DE RIGOR SEGÚN AUDIENCIA" y el cuerpo describía al
+ * PREDICADOR ("Predicador con formación seminarista"). Dos ejes distintos en la
+ * misma regla: al modelo se le anunciaba que decidiera por quien escucha y se le
+ * daba la ficha de quien habla.
+ *
+ * Y "rigor" era la palabra equivocada: el rigor exegético ya ocurrió río arriba,
+ * en el estudio, y este bloque no lo toca. Lo único que modula es cuánto
+ * vocabulario técnico aflora en el púlpito. Un sermón para una congregación
+ * general es igual de riguroso; sólo no dice "participio circunstancial" en voz
+ * alta.
+ *
+ * Los identificadores (`beginner` / `seminary`) se conservan: están persistidos
+ * en `wizardProgress.audienceRigor` de los sermones ya guardados.
+ */
 function audienceRigorBlock(tier?: 'beginner' | 'seminary'): string {
   if (tier === 'seminary') {
-    return `Predicador con formación seminarista (TMS / reformada / similar).
+    return `Registro TÉCNICO — congregación con formación teológica.
    - Profundiza en morfología y sintaxis del griego/hebreo cuando el texto lo amerite (aoristos, participios circunstanciales, géneros de la literatura, paralelismo hebreo, quiasmos).
    - Cita autores reformados / evangélicos consolidados cuando aporten (Calvino, Owen, Edwards, Spurgeon, Berkhof, Frame, Carson, Beale, Schreiner, Vanhoozer, Keller) — solo si están en las fuentes proporcionadas o son citas verificables; NUNCA inventes.
    - Asume conocimiento de categorías sistemáticas (justificación forense, unión con Cristo, pacto de gracia/obras, eclesiología reformada).
    - Permite densidad técnica mayor: notas exegéticas extensas, distinciones precisas, advertencias contra herejías históricas cuando relevante.`;
   }
-  return `Predicador sin formación teológica formal (default).
+  return `Registro COTIDIANO — congregación general (default).
    - Mantén el lenguaje accesible. Cuando uses un término técnico (justificación, propiciación, pacto), defínelo en una línea.
    - Limita las menciones de griego/hebreo a 1-2 palabras clave por punto, con transliteración + significado simple. Evita morfología densa.
    - Prefiere ilustraciones cotidianas (familia, trabajo, comunidad) sobre referencias académicas.
    - No asumas conocimiento previo de categorías sistemáticas reformadas; explica brevemente cuando uses una.
    - Las citas de autoridad son opcionales y deben venir solo de las fuentes proporcionadas.`;
+}
+
+/**
+ * El prompt para REGENERAR UN PUNTO SUELTO.
+ *
+ * POR QUÉ SE MUDÓ ACÁ: vivía embebido en `GeminiSermonGenerator` y había
+ * divergido del prompt del borrador completo. El punto regenerado salía sin la
+ * voz del predicador, sin el nivel de rigor, sin el bosquejo y sin las
+ * directivas del pastor — o sea, desentonando con los demás puntos del mismo
+ * sermón. Es la misma clase de deriva que ya nos costó dos veces: dos caminos
+ * para lo mismo, y sólo uno se mantiene al día.
+ *
+ * DOS DIVERGENCIAS QUE ERAN DAÑINAS, no sólo inconsistentes:
+ *
+ * 1. Pedía "una cita de autoridad" como si fuera obligatoria. El prompt del
+ *    borrador la declara OPCIONAL y PROHÍBE inventarla, porque una cita falsa
+ *    atribuida a Owen o a Calvino destruye credibilidad en el púlpito. Exigirla
+ *    es exactamente cómo se fabrica una.
+ *
+ * 2. Pedía "al menos 2 implicaciones prácticas". La regla vigente es UNA
+ *    aplicación por punto, la que el pastor YA APROBÓ, desarrollada — no dos
+ *    inventadas de nuevo.
+ */
+export function buildRegeneratePointPrompt(
+  point: any,
+  rules: GenerationRules,
+  context: any,
+  language: SupportedLanguage = DEFAULT_LANGUAGE,
+): string {
+  return withLanguage(language, buildRegeneratePointPromptBody(point, rules, context));
+}
+
+function buildRegeneratePointPromptBody(point: any, rules: GenerationRules, context: any): string {
+  const personalizationBlock = formatSermonPersonalizationBlock(rules.personalization);
+
+  // La directiva del pastor sobre ESTE punto. Se busca por título porque el
+  // índice del cuerpo del borrador y el del bosquejo pueden no coincidir si el
+  // pastor reordenó puntos después de generar.
+  const titulo = String(point?.point ?? point?.title ?? '');
+  const puntos: NonNullable<HomileticalAnalysis['outline']>['mainPoints'] =
+    context?.homileticsResult?.outline?.mainPoints ?? [];
+  const delBosquejo = puntos.find((p) => (p.title ?? '').trim() === titulo.trim());
+
+  const emphasis = delBosquejo?.pastorDirective?.emphasis?.trim();
+  const notas = (delBosquejo?.pastorDirective?.exegeticalNotes ?? []).filter((n: string) => n?.trim());
+  const aplicacion = delBosquejo?.application?.trim();
+
+  const directivaBlock =
+    emphasis || notas.length > 0
+      ? `
+⚑ DIRECTIVAS DEL PASTOR PARA ESTE PUNTO — MÁXIMA PRECEDENCIA
+${emphasis ? `\n**ÉNFASIS (modula toda la exposición del punto)**: ${emphasis}` : ''}
+${notas.length > 0 ? `\n**DEBE APARECER (obliga)**:\n${notas.map((n: string, i: number) => `${i + 1}. ${n.trim()}`).join('\n')}` : ''}
+
+Estas líneas las escribió el pastor, no el sistema. Tienen precedencia sobre tus
+propias decisiones de contenido. LÍMITE: dirigen cómo se EXPONE el texto; no
+autorizan a afirmar lo que el texto no dice ni a inventar datos que las apoyen.
+`
+      : '';
+
+  return `
+${personalizationBlock}${buildChatSystemPromptBody(WorkflowPhase.DRAFTING, context)}
+
+TAREA: REGENERAR UN PUNTO ESPECÍFICO DEL SERMÓN
+
+El resto del sermón YA está escrito. Este punto tiene que sonar como los demás:
+mismo tono, mismo nivel de rigor, misma voz. Un punto regenerado que desentona
+es peor que el que estabas reemplazando.
+
+Contexto del Sermón:
+- Título: ${context.sermonTitle || 'Sin título'}
+- Proposición Homilética: ${context.homileticalProposition || 'No especificada'}
+
+Punto a Regenerar:
+- Título: ${titulo || 'Sin título'}
+- Referencias Base: ${point.scriptureReferences ? point.scriptureReferences.join(', ') : 'Ninguna'}
+${directivaBlock}
+INSTRUCCIONES:
+1. **content**: exposición del texto con la misma estructura del resto del
+   sermón (### Exposición Bíblica, párrafos separados, **negritas** en los
+   conceptos clave, palabras originales en *cursiva*).
+2. **scriptureReferences**: referencias cruzadas relevantes, con el texto del
+   versículo como blockquote.
+3. **illustration**: sigue la GUÍA DE ILUSTRACIONES de más abajo.
+4. **implications**: UNA sola, que DESARROLLA la aplicación ya aprobada para
+   este punto${aplicacion ? `: "${aplicacion}"` : ''}. El orden es TEXTO → PUNTO →
+   APLICACIÓN: la aplicación se DERIVA del punto, no dirige la exposición.
+   ${aplicacion ? 'Desarróllala; no la reemplaces por otra tuya.' : 'Deriva una del propio punto — nunca una que el punto no sostenga.'}
+5. **authorityQuote**: OPCIONAL, null por defecto. Sólo si usas una cita REAL y
+   verificable de un autor presente en las fuentes proporcionadas. PROHIBIDO
+   inventar citas atribuidas a Owen, Spurgeon, Calvino, Edwards, MacArthur u
+   otros. Si no hay una verificable, deja null. Una cita inventada en el púlpito
+   destruye credibilidad.
+6. **transition**: transición natural al siguiente punto.
+
+LENGUAJE DEL SERMÓN: ${audienceRigorBlock(rules.audienceRigor)}
+
+Reglas Personalizadas:
+${rules.customInstructions || 'Ninguna'}
+Tono: ${rules.tone || 'Inspirador'}
+
+FORMATO JSON REQUERIDO:
+{
+  "point": "${titulo}",
+  "content": "### Exposición Bíblica\\n\\n[Párrafo 1]\\n\\n[Párrafo 2]",
+  "scriptureReferences": ["> \\"[Texto]\\" ([Referencia])"],
+  "illustration": "**[Título]**\\n\\n[Desarrollo]",
+  "implications": ["**Implicación:** [Desarrollo de la aplicación aprobada]"],
+  "authorityQuote": null,
+  "transition": "[Frase de transición]"
+}
+
+---
+
+${illustrationGuidelinesMD}
+`;
 }
 
 export function buildChatSystemPrompt(phase: WorkflowPhase, context: any, language?: SupportedLanguage): string {

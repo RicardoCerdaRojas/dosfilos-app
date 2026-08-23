@@ -133,6 +133,7 @@ export function injectNarrativeCitationAnchors(
         if (!text) return text;
         let out = text;
         const blockquotes: string[] = [];
+        const usados: string[] = [];
         for (const src of sources) {
             for (const name of src.names) {
                 const nm = new RegExp(`\\b${escapeRegex(name)}\\b`, 'i').exec(out);
@@ -141,10 +142,40 @@ export function injectNarrativeCitationAnchors(
                 if (/\[\s*S?\d/.test(out.slice(nm.index, nm.index + name.length + 40))) break;
                 out = stripAttributionLead(out, name);
                 const bq = buildExcerptBlockquote(src.entry);
-                if (bq) blockquotes.push(bq);
+                if (bq) {
+                    blockquotes.push(bq);
+                    usados.push(src.sourceId);
+                }
                 break; // one per source per surface
             }
         }
+        // (c) MARCADOR SIN TEXTO: el modelo escribió `[Sn]` pero NO nombró al
+        // autor en la prosa, así que (b) no se disparó y el excerpt real nunca
+        // se pegó. El pastor ve un número colgando y la cita queda escondida en
+        // el popover — exactamente el "name-drop hueco" que el fundador rechazó
+        // al decidir la Opción A (2026-07-06): la cita lleva el TEXTO REAL,
+        // visible al predicar.
+        //
+        // El marcador es la afirmación LEGIBLE POR MÁQUINA de que el modelo se
+        // apoyó en esa fuente. Con eso alcanza para anclar: no depende de que
+        // además haya redactado bien la atribución narrativa.
+        //
+        // Tope de 2 por superficie: tres blockquotes seguidos convierten un
+        // punto del sermón en una antología y nadie los lee desde el púlpito.
+        const yaAnclados = new Set(usados);
+        let extra = 0;
+        for (const src of sources) {
+            if (extra >= 2) break;
+            if (yaAnclados.has(src.sourceId)) continue;
+            const marcado = new RegExp(`\\[\\s*${escapeRegex(src.sourceId)}\\s*[,\\]]`, 'i').test(out);
+            if (!marcado) continue;
+            const bq = buildExcerptBlockquote(src.entry);
+            if (!bq) continue;
+            blockquotes.push(bq);
+            yaAnclados.add(src.sourceId);
+            extra++;
+        }
+
         return blockquotes.length ? `${out}\n\n${blockquotes.join('\n\n')}` : out;
     };
 

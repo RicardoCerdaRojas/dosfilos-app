@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildSermonDraftPrompt } from '../prompts-generator';
+import { buildSermonDraftPrompt, buildRegeneratePointPrompt } from '../prompts-generator';
 import type { HomileticalAnalysis, GenerationRules, CitationManifest } from '@dosfilos/domain';
 
 const baseAnalysis: HomileticalAnalysis = {
@@ -291,5 +291,279 @@ describe('buildSermonDraftPrompt — el bosquejo del pastor gobierna el borrador
         const prompt = buildSermonDraftPrompt(conDirectivas, baseRules);
         expect(prompt).toContain('No autoriza a afirmar lo que');
         expect(prompt).toContain('NO la refuerces con datos inventados');
+    });
+});
+
+describe('buildRegeneratePointPrompt — el punto regenerado no puede desentonar', () => {
+    const point = { point: 'II. El hombre desobedece (v. 3)', scriptureReferences: ['Jonás 1:3a'] };
+    const homileticsResult: HomileticalAnalysis = {
+        ...baseAnalysis,
+        outline: {
+            mainPoints: [
+                { title: 'I. Dios habla (vv. 1-2)', description: 'd', scriptureReferences: [] },
+                {
+                    title: 'II. El hombre desobedece (v. 3)',
+                    description: 'd',
+                    scriptureReferences: ['Jonás 1:3a'],
+                    application: 'Reconoce esta semana dónde estás huyendo de una orden clara.',
+                    pastorDirective: {
+                        emphasis: 'Mostrar con ejemplos bíblicos cómo hombres se hicieron necios resistiendo a Dios.',
+                        exegeticalNotes: ['"y pagando su pasaje": el hebreo personifica a la nave.'],
+                    },
+                },
+            ],
+        },
+    };
+    const ctx = { sermonTitle: 'Huir de Dios', homileticalProposition: 'hp', homileticsResult };
+
+    it('lleva la voz del predicador: sin ella el punto desentona con el resto del sermón', () => {
+        const prompt = buildRegeneratePointPrompt(point, {
+            tone: 'pastoral',
+            personalization: {
+                illustrations: 'Cuando se estrenó LOST, millones nos obsesionamos con los misterios de la isla.',
+                pastoralEmphasis: 'Que reconozcan que es mejor obedecer a Dios.',
+            },
+        } as GenerationRules, ctx);
+        expect(prompt).toContain('VOZ DEL PREDICADOR');
+        expect(prompt).toContain('LOST');
+        expect(prompt).toContain('ÉNFASIS PASTORAL');
+    });
+
+    it('lleva el registro del sermón, y describe a quien ESCUCHA, no a quien predica', () => {
+        const cotidiano = buildRegeneratePointPrompt(point, { audienceRigor: 'beginner' } as GenerationRules, ctx);
+        expect(cotidiano).toContain('Registro COTIDIANO — congregación general');
+        const tecnico = buildRegeneratePointPrompt(point, { audienceRigor: 'seminary' } as GenerationRules, ctx);
+        expect(tecnico).toContain('Registro TÉCNICO — congregación con formación teológica');
+        // El encabezado anunciaba la audiencia y el cuerpo describía al
+        // predicador: dos ejes distintos en la misma regla.
+        expect(cotidiano).not.toContain('Predicador sin formación');
+        expect(tecnico).not.toContain('Predicador con formación');
+    });
+
+    it('encuentra la directiva del pastor para ESTE punto, no la del vecino', () => {
+        const prompt = buildRegeneratePointPrompt(point, {} as GenerationRules, ctx);
+        expect(prompt).toContain('DIRECTIVAS DEL PASTOR PARA ESTE PUNTO');
+        expect(prompt).toContain('personifica a la nave');
+        expect(prompt).toContain('hombres se hicieron necios');
+        // La del punto I no debe filtrarse como directiva de éste.
+        expect(prompt).not.toContain('I. Dios habla (vv. 1-2)\n   ⚑');
+    });
+
+    it('desarrolla la aplicación YA APROBADA, no inventa dos nuevas', () => {
+        const prompt = buildRegeneratePointPrompt(point, {} as GenerationRules, ctx);
+        expect(prompt).toContain('dónde estás huyendo de una orden clara');
+        expect(prompt).toContain('no la reemplaces por otra tuya');
+        // La versión vieja pedía "al menos 2 implicaciones prácticas", contra la
+        // regla vigente de UNA por punto.
+        expect(prompt).not.toContain('2 implicaciones');
+        expect(prompt).toContain('TEXTO → PUNTO →');
+    });
+
+    it('la cita de autoridad es OPCIONAL y prohíbe inventarla', () => {
+        const prompt = buildRegeneratePointPrompt(point, {} as GenerationRules, ctx);
+        // Exigir una cita es exactamente cómo se fabrica una falsa.
+        expect(prompt).not.toContain('5. Una cita de autoridad');
+        expect(prompt).toContain('OPCIONAL, null por defecto');
+        expect(prompt).toContain('PROHIBIDO');
+        expect(prompt).toContain('destruye credibilidad');
+    });
+
+    it('sin directiva no emite el bloque vinculante', () => {
+        const sinDirectiva = buildRegeneratePointPrompt(
+            { point: 'I. Dios habla (vv. 1-2)' },
+            {} as GenerationRules,
+            ctx,
+        );
+        expect(sinDirectiva).not.toContain('DIRECTIVAS DEL PASTOR PARA ESTE PUNTO');
+    });
+});
+
+describe('buildSermonDraftPrompt — la ilustración del pastor ABRE el sermón', () => {
+    const conAnecdota = {
+        ...baseRules,
+        pastoralSeed: {
+            pastoralAnecdote: 'Cuando se estrenó LOST, millones nos obsesionamos con los misterios de la isla.',
+            observations: [],
+            wordStudies: [],
+            parallels: [],
+        },
+    } as GenerationRules;
+
+    it('la anécdota del Paso 8 va primero, antes del contexto histórico', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, conAnecdota);
+        expect(prompt).toContain('ILUSTRACIÓN DE APERTURA');
+        const orden = prompt.match(/Orden de las secciones: (.+)/)?.[1] ?? '';
+        expect(orden.indexOf('Ilustración de Apertura')).toBeLessThan(orden.indexOf('Contexto Histórico'));
+    });
+
+    it('prohíbe reciclarla dentro de un punto: cada punto genera la suya', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, conAnecdota);
+        expect(prompt).toContain('NO la repitas en ningún punto del cuerpo');
+        expect(prompt).toContain('se genera DESDE ese punto');
+    });
+
+    it('sin anécdota, la introducción no anuncia una sección que no existirá', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules);
+        expect(prompt).not.toContain('ILUSTRACIÓN DE APERTURA');
+        expect(prompt).not.toContain('Ilustración de Apertura');
+    });
+});
+
+describe('buildSermonDraftPrompt — orientación al libro sólo si el sermón lo abre', () => {
+    const abre = { ...baseAnalysis, exegeticalStudy: { ...baseAnalysis.exegeticalStudy, passage: 'Jonás 1:1-3' } } as HomileticalAnalysis;
+    const medio = { ...baseAnalysis, exegeticalStudy: { ...baseAnalysis.exegeticalStudy, passage: 'Jonás 3:1-5' } } as HomileticalAnalysis;
+
+    it('en Jonás 1:1-3 pide ubicar el libro entero, anclado en el canon', () => {
+        const prompt = buildSermonDraftPrompt(abre, baseRules);
+        expect(prompt).toContain('EL LIBRO DE UN VISTAZO');
+        expect(prompt).toContain('divisiones más reconocidas');
+        expect(prompt).toContain('historia de la redención');
+        // Lo que pide es dato BÍBLICO, no reconstrucción académica: qué otro
+        // pasaje habla del libro, y quién más profetiza en el mismo escenario.
+        expect(prompt).toContain('ANCLA EN EL CANON');
+        expect(prompt).toContain('2 Reyes 14:25');
+        expect(prompt).toContain('Nahúm también profetiza');
+    });
+
+    it('en Jonás 3:1-5 NO la pide: en medio de una serie es relleno', () => {
+        expect(buildSermonDraftPrompt(medio, baseRules)).not.toContain('EL LIBRO DE UN VISTAZO');
+    });
+
+    it('PROHÍBE abrir un debate que el sermón no va a cerrar', () => {
+        // Una versión anterior de esta regla pedía "da el rango y nombra que hay
+        // discusión". El modelo obedeció y escribió "algunos estudiosos debaten
+        // su fecha" — académicamente honesto, pastoralmente equivocado: plantea
+        // una duda ante la congregación que nadie va a arbitrar y que se queda
+        // con ellos el resto del sermón. Ese foro es el paper, no el púlpito.
+        const prompt = buildSermonDraftPrompt(abre, baseRules);
+        expect(prompt).toContain('NO ABRAS DEBATES QUE NO VAS A CERRAR');
+        expect(prompt).toContain('algunos estudiosos debaten');
+        expect(prompt).toContain('PROHIBIDO');
+        // Y la salida cuando no hay respuesta simple sigue siendo omitir, no
+        // inventar: un párrafo más corto es mejor que un dato fabricado.
+        expect(prompt).toContain('OMITE ese punto');
+    });
+});
+
+describe('buildSermonDraftPrompt — el texto se lee de pie, en voz alta', () => {
+    it('exige párrafos cortos con ancla para reencontrar el lugar', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules);
+        expect(prompt).toContain('máximo 3 oraciones');
+        expect(prompt).toContain('ANCLA AL INICIO DE CADA PÁRRAFO');
+        expect(prompt).toContain('REENCONTRAR');
+    });
+});
+
+describe('buildSermonDraftPrompt — el pastor decide cuántas implicaciones', () => {
+    const conDos = (application: string): HomileticalAnalysis => ({
+        ...baseAnalysis,
+        outline: { mainPoints: [{ title: 'I. Dios habla', description: 'd', scriptureReferences: [], application }] },
+    }) as HomileticalAnalysis;
+
+    it('dos bloques separados por línea en blanco llegan numerados', () => {
+        const prompt = buildSermonDraftPrompt(
+            conDos('Vive consciente de su dirección.\n\nLee tu Biblia y ora.'),
+            baseRules,
+        );
+        expect(prompt).toContain('Aplicaciones aprobadas por el pastor (2');
+        expect(prompt).toContain('1. Vive consciente de su dirección.');
+        expect(prompt).toContain('2. Lee tu Biblia y ora.');
+    });
+
+    it('un solo bloque sigue siendo una aplicación, sin numerar', () => {
+        const prompt = buildSermonDraftPrompt(conDos('Reconoce dónde estás huyendo.'), baseRules);
+        expect(prompt).toContain('Aplicación aprobada por el pastor: Reconoce dónde estás huyendo.');
+        expect(prompt).not.toContain('Aplicaciones aprobadas');
+    });
+
+    it('la instrucción pide UNA implicación por aplicación aprobada, no una fija', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules);
+        expect(prompt).toContain('UNA ENTRADA POR CADA APLICACIÓN APROBADA');
+        expect(prompt).toContain('No las fusiones');
+    });
+});
+
+describe('buildSermonDraftPrompt — las referencias cruzadas tienen que cruzar', () => {
+    it('prohíbe repetir el pasaje predicado y pide de 2 a 3 de otros libros', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules);
+        expect(prompt).toContain('CRUCEN a OTROS');
+        expect(prompt).toContain('PROHIBIDO usar el pasaje que se está predicando');
+        expect(prompt).toContain('Tampoco cuenta otro capítulo del MISMO libro');
+        expect(prompt).toContain('CONSISTENTE CON EL');
+    });
+});
+
+describe('buildSermonDraftPrompt — la transición lleva UN solo rótulo', () => {
+    it('pide SÓLO el puente retórico: la proposición y los puntos se ensamblan', () => {
+        // El formato anterior decía `[Proposición, tal cual, como frase]`. Un
+        // corchete es una invitación a escribir, no a copiar — y el modelo puso
+        // un título inventado donde iba la proposición que el pastor aprobó.
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules);
+        expect(prompt).toContain('SÓLO la frase de transición');
+        expect(prompt).toContain('NO escribas la proposición ni la lista de puntos');
+        expect(prompt).toContain('copiadas palabra por palabra');
+        expect(prompt).not.toContain('**Recordatorio:**');
+    });
+
+    it('los campos ya no repiten su propia etiqueta', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules);
+        expect(prompt).not.toContain('"**Ilustración:** [Título]');
+        expect(prompt).not.toContain('**Cita de Autoridad:**\\n\\n>');
+    });
+});
+
+describe('buildSermonDraftPrompt — el dato léxico no es el comentario del pastor', () => {
+    const conAnalisis = {
+        ...baseRules,
+        pastoralSeed: {
+            observations: [],
+            parallels: [],
+            wordStudies: [
+                {
+                    word: 'לִבְרֹחַ',
+                    reference: 'Jonás 1:3',
+                    discovery: 'El acto de huir implica que Jonás entendió lo que Dios quería.',
+                    semanticRange: ['huir', 'escapar', 'ponerse a salvo'],
+                    useInVerse: 'Infinitivo constructo con lamed: expresa el propósito del movimiento.',
+                    theologicalWeight: 'La huida no es pánico sino decisión deliberada contra una orden clara.',
+                },
+            ],
+        },
+    } as GenerationRules;
+
+    it('el rango semántico y el uso llegan ETIQUETADOS', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, conAnalisis);
+        expect(prompt).toContain('Rango semántico: huir · escapar · ponerse a salvo');
+        expect(prompt).toContain('Uso en este versículo: Infinitivo constructo');
+        expect(prompt).toContain('Peso teológico: La huida no es pánico');
+    });
+
+    it('el descubrimiento del pastor se marca como SUYO, no como glosa', () => {
+        // El fallo: el borrador imprimía el comentario del pastor bajo el rótulo
+        // "Palabras Clave", como si fuera el significado de la palabra.
+        const prompt = buildSermonDraftPrompt(baseAnalysis, conAnalisis);
+        expect(prompt).toContain('Lo que descubrió EL PASTOR (es suyo, no es la glosa)');
+    });
+
+    it('sin análisis cacheado degrada al descubrimiento, pero rotulado', () => {
+        const sinAnalisis = {
+            ...baseRules,
+            pastoralSeed: {
+                observations: [],
+                parallels: [],
+                wordStudies: [{ word: 'לִבְרֹחַ', reference: 'Jonás 1:3', discovery: 'Su rebelión.' }],
+            },
+        } as GenerationRules;
+        const prompt = buildSermonDraftPrompt(baseAnalysis, sinAnalisis);
+        expect(prompt).toContain('Lo que descubrió EL PASTOR');
+        expect(prompt).not.toContain('Rango semántico:');
+    });
+
+    it('la instrucción pide rango + qué sentido usó el autor, y prohíbe la confusión', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, baseRules);
+        expect(prompt).toContain('RANGO SEMÁNTICO');
+        expect(prompt).toContain('QUÉ SENTIDO LE DIO EL AUTOR AQUÍ');
+        expect(prompt).toContain('PROHIBIDO presentar el comentario del pastor');
+        expect(prompt).toContain('asociación forzada');
     });
 });

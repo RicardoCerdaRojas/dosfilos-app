@@ -83,7 +83,7 @@ export function StepHomiletics() {
         selectedResourceIds: [],
     });
 
-    const contentHistory = useContentHistory('homiletics', config?.id);
+    const contentHistory = useContentHistory('homiletics', sermonId ?? undefined);
 
     const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
     const [modifiedSections, setModifiedSections] = useState<Set<string>>(new Set());

@@ -111,3 +111,50 @@ describe('injectNarrativeCitationAnchors (ADR-031)', () => {
         expect(out.conclusion).toBe('Algo sin fuente.'); // sin fuente → intacto
     });
 });
+
+describe('(c) marcador sin texto — el número solo no es una cita', () => {
+    const manifest = {
+        version: '1' as const,
+        entries: [
+            {
+                sourceId: 'S5',
+                resourceId: 'r5',
+                chunkId: 'c5',
+                title: 'A Literary and Theological Commentary',
+                author: 'Terence E. Fretheim',
+                excerpt: 'the phrase indicates the message is not human but a direct revelation from God',
+            },
+        ],
+    };
+
+    it('ancla el excerpt REAL cuando el modelo marcó [S5] sin nombrar al autor', () => {
+        // Lo que el pastor vio: los números ahí, las citas desaparecidas. La
+        // rama (b) sólo dispara si la prosa NOMBRA al autor; el modelo emitió el
+        // marcador sin la atribución narrativa y el texto quedó escondido en el
+        // popover — el "name-drop hueco" que la Opción A rechazó.
+        const r = injectNarrativeCitationAnchors(
+            { body: [{ point: 'I', content: 'La frase "vino palabra de Jehová" es una fórmula profética [S5].' }] } as any,
+            manifest as any,
+        );
+        const c = r.body[0]!.content;
+        expect(c).toContain('a direct revelation from God');
+        expect(c).toContain('Terence E. Fretheim');
+    });
+
+    it('no dobla cuando la prosa YA nombraba al autor', () => {
+        const r = injectNarrativeCitationAnchors(
+            { body: [{ point: 'I', content: 'Como señala Terence E. Fretheim, la frase indica revelación directa [S5].' }] } as any,
+            manifest as any,
+        );
+        const veces = (r.body[0]!.content.match(/a direct revelation from God/g) ?? []).length;
+        expect(veces).toBe(1);
+    });
+
+    it('sin marcador y sin nombre no inventa una cita', () => {
+        const r = injectNarrativeCitationAnchors(
+            { body: [{ point: 'I', content: 'Un texto sin ninguna referencia a fuentes.' }] } as any,
+            manifest as any,
+        );
+        expect(r.body[0]!.content).not.toContain('a direct revelation');
+    });
+});

@@ -1,0 +1,62 @@
+import type { HomileticalAnalysis, SermonContent } from '../entities/SermonGenerator';
+
+/**
+ * Reconstruye el cierre de cada transición con datos VERBATIM, no generados.
+ *
+ * EL FALLO QUE ARREGLA, visto en producción (Jonás 1:1-3): el formato del prompt
+ * decía `[Proposición, tal cual, como frase]`. Un corchete es una invitación a
+ * ESCRIBIR, no a copiar — y el modelo produjo "El Dios que se revela a todas las
+ * naciones y la rebeldía de su profeta": un título inventado en el lugar donde
+ * debía ir, palabra por palabra, la proposición que el pastor aprobó.
+ *
+ * Endurecer la instrucción no alcanza. La proposición y los títulos de los
+ * puntos son DATOS QUE YA TENEMOS: pedírselos al modelo es darle la oportunidad
+ * de reformularlos, y eventualmente la toma. Lo calculable se calcula.
+ *
+ * QUÉ SE CONSERVA DEL MODELO: la frase de transición, que sí es trabajo suyo —
+ * el puente retórico entre un punto y el siguiente. Es el primer bloque, hasta
+ * la primera línea en blanco. Todo lo que venga después se descarta y se
+ * reemplaza por el recordatorio armado desde el bosquejo.
+ *
+ * El último punto no lleva recordatorio: después de él viene la conclusión, no
+ * otro movimiento, y repetir ahí los puntos es ruido.
+ */
+export function assembleTransitions(
+    content: SermonContent,
+    homiletics: HomileticalAnalysis,
+): SermonContent {
+    const puntos = (homiletics.outline?.mainPoints ?? [])
+        .map((p) => p.title?.trim())
+        .filter((t): t is string => Boolean(t));
+    const proposicion = homiletics.homileticalProposition?.trim();
+    if (!content.body?.length || puntos.length === 0 || !proposicion) return content;
+
+    const recordatorio = [
+        proposicion,
+        `**Puntos:**\n${puntos.map((t, i) => `${i + 1}. ${t}`).join('\n')}`,
+    ].join('\n\n');
+
+    const body = content.body.map((punto, i) => {
+        const esUltimo = i === content.body.length - 1;
+        const frase = leadIn(punto.transition);
+        if (esUltimo) return { ...punto, transition: frase };
+        return { ...punto, transition: frase ? `${frase}\n\n${recordatorio}` : recordatorio };
+    });
+
+    return { ...content, body };
+}
+
+/**
+ * El puente retórico que escribió el modelo: el primer bloque, sin rótulos.
+ *
+ * Se limpian los rótulos que el modelo pueda anteponer ("Transición:",
+ * "**Recordatorio:**") porque la tarjeta ya rotula el campo, y tres etiquetas
+ * para un mismo bloque lo vuelven ilegible de un vistazo.
+ */
+function leadIn(transition: string | undefined): string {
+    if (!transition?.trim()) return '';
+    const primerBloque = transition.split(/\n\s*\n/)[0] ?? '';
+    return primerBloque
+        .replace(/^\s*\*{0,2}\s*(?:Transici[oó]n|Recordatorio)\s*:?\s*\*{0,2}\s*/i, '')
+        .trim();
+}

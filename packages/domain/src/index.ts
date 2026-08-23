@@ -79,6 +79,14 @@ export * from './sermon-judge/parseSustantivada';
 export * from './sermon-judge/applyPropositionContract';
 // La directiva del pastor por punto: el único campo del bosquejo que el agente no escribe.
 export * from './sermon-judge/pastorDirective';
+// ¿Las referencias cruzadas cruzan de verdad, o repiten el pasaje predicado?
+export * from './sermon-judge/crossReferences';
+// El pastor decide CUÁNTAS implicaciones: sus líneas en blanco son estructura.
+export * from './sermon-judge/splitApplication';
+// La proposición y los puntos del recordatorio se ENSAMBLAN verbatim, no se piden.
+export * from './sermon-judge/assembleTransitions';
+// ¿El pasaje abre el libro? Decide si la introducción debe orientar al libro entero.
+export * from './bible/canon/opensBook';
 // 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent
 export * from './guided-sermon/SocraticTurn';
 export * from './guided-sermon/GuidedSermonSession';
@@ -101,6 +109,7 @@ export * from './bible/inferLanguageFromBook'; // 🌱 Phase 1.5 — book → or
 export * from './bible/inferGenreFromBook'; // 🌱 Phase 1.6 — book → literary genre proposal (ADR-024)
 export * from './services/IPastoralWordStudyService'; // 🌱 Phase 1.5 — service port
 export * from './repositories/IPastoralWordAnalysisCacheRepository'; // 🌱 Phase 1.5 — analysis cache
+export * from './repositories/IContentHistoryRepository'; // Historial de versiones durable (antes sólo localStorage)
 export * from './entities/HomileticalApproach';  // 🎯 NEW
 export * from './entities/DocumentChunk';
 export * from './entities/FileSearchStoreEntity'; // 🎯 File Search Stores

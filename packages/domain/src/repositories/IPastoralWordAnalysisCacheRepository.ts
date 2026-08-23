@@ -10,6 +10,16 @@ import type { PastoralWordAnalysisDoc, PastoralWordAnalysisCacheKey } from '../e
  */
 export interface IPastoralWordAnalysisCacheRepository {
     findByKey(key: PastoralWordAnalysisCacheKey): Promise<PastoralWordAnalysisDoc | null>;
+    /**
+     * Lee por id de documento.
+     *
+     * El `wordAnalysisId` que guarda cada estudio de palabra del seed YA ES esta
+     * clave (`buildPastoralWordAnalysisCacheKey`). Sin este método, recuperar el
+     * análisis desde el seed obligaría a reconstruir la clave — y por lo tanto a
+     * conocer el hash del pasaje y la versión curada vigentes al momento en que
+     * se guardó, que es justo lo que el id ya resuelve.
+     */
+    findById(id: string): Promise<PastoralWordAnalysisDoc | null>;
     save(doc: PastoralWordAnalysisDoc): Promise<void>;
 }
 

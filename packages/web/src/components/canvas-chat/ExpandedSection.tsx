@@ -35,6 +35,16 @@ interface ExpandedSectionProps {
   versions?: SectionVersion[];
   currentVersionId?: string;
   onRestoreVersion?: (versionId: string) => void;
+  /**
+   * Abre el historial apenas se monta la sección.
+   *
+   * El botón de historial vive DENTRO de esta vista, así que quien llega desde
+   * fuera —el aviso tras regenerar, o el indicador de la tarjeta— necesita que
+   * se abra solo. Sin esto, el pastor aterriza en la sección expandida y
+   * todavía tiene que encontrar el botón: el mismo problema que veníamos a
+   * resolver, un paso más adelante.
+   */
+  initialShowHistory?: boolean;
   onSave?: (newContent: any) => void;
   onRegenerate?: (itemIndex?: number) => void;
 }
@@ -58,12 +68,13 @@ export function ExpandedSection({
   versions = [],
   currentVersionId,
   onRestoreVersion,
+  initialShowHistory = false,
   onSave,
   onRegenerate
 }: ExpandedSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState<string>('');
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(initialShowHistory);
   const [selectedReference, setSelectedReference] = useState<string | null>(null);
 
   // Helper function to render text with clickable Bible references
@@ -300,7 +311,7 @@ export function ExpandedSection({
 
     if (section.type === 'text') {
       // console.log(`📝 Text content preview:`, content?.substring(0, 100));
-      return <MarkdownRenderer content={content || 'Sin contenido'} />;
+      return <MarkdownRenderer content={content || 'Sin contenido'} reading />;
     }
 
     if (section.type === 'array') {

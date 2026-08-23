@@ -18,7 +18,10 @@ const COLLECTION = 'pastoralWordAnalyses';
  */
 export class FirestorePastoralWordAnalysisCacheRepository implements IPastoralWordAnalysisCacheRepository {
     async findByKey(key: PastoralWordAnalysisCacheKey): Promise<PastoralWordAnalysisDoc | null> {
-        const id = buildPastoralWordAnalysisCacheKey(key);
+        return this.findById(buildPastoralWordAnalysisCacheKey(key));
+    }
+
+    async findById(id: string): Promise<PastoralWordAnalysisDoc | null> {
         const ref = doc(getFirestore(), COLLECTION, id);
         const snap = await getDoc(ref);
         if (!snap.exists()) return null;

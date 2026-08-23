@@ -344,7 +344,35 @@ export interface GenerationRules {
         doxologicalApplication: string;
         mainClauseReference: string;
         mainClauseNote: string;
-        wordStudies: { word: string; reference: string; discovery: string }[];
+        /**
+         * El estudio de palabra del pastor, y —cuando existe— EL DATO LÉXICO
+         * REAL que lo respalda.
+         *
+         * DOS COSAS DISTINTAS QUE NO PUEDEN CONFUNDIRSE. `discovery` es lo que
+         * el pastor vio; `semanticRange` y `useInVerse` son el análisis
+         * cacheado (`PastoralWordAnalysis`, Fase 1.5). Antes sólo viajaba
+         * `discovery`, así que el borrador imprimía el comentario del pastor
+         * bajo el rótulo "Palabras Clave" — como si fuera la glosa léxica. El
+         * fundador lo llamó por su nombre: una asociación forzada.
+         *
+         * El análisis ya existía, cacheado por palabra, y el prompt del sermón
+         * nunca lo leía. Misma clase que `contemporaryApplication`: un dato que
+         * se genera, se guarda, y ningún consumidor abre.
+         */
+        wordStudies: {
+            word: string;
+            reference: string;
+            /** Lo que el PASTOR descubrió. Nunca es la glosa. */
+            discovery: string;
+            /** 3-5 sentidos, ordenados por relevancia al versículo. */
+            semanticRange?: string[];
+            /** Función gramatical EN ESTE VERSÍCULO — no un paradigma. */
+            useInVerse?: string;
+            /** Por qué la palabra pesa acá, en 2-3 frases. */
+            theologicalWeight?: string;
+            /** Léxico usado como fuente primaria, para atribuir. */
+            lexiconSource?: string;
+        }[];
         parallels: { reference: string; relevance: string }[];
         originalAudienceFunction: string;
         /**

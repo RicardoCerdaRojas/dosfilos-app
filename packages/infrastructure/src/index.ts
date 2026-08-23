@@ -15,6 +15,7 @@ export * from './firebase/FirebaseVerifiedMisreadingRepository'; // 🌱 ADR-036
 export * from './firebase/FirebaseCrossReferenceRepository';
 export * from './firebase/FirestorePastoralSeedRepository'; // 🌱 Pastoral Fidelity Phase 1 — top-level seed repo
 export * from './firebase/FirestorePastoralWordAnalysisCacheRepository'; // 🌱 Phase 1.5 — pastoral word analysis cache
+export * from './firebase/FirestoreContentHistoryRepository'; // Historial de versiones durable
 export * from './firebase/FirebasePlanRepository';
 export * from './firebase/FirebaseAnalyticsRepository'; // 📊 Analytics Repository
 export * from './firebase/FirebaseUserRepository'; // 📊 Admin User Repository

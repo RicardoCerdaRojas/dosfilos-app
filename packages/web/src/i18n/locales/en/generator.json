@@ -362,7 +362,75 @@
       "manualEdit": "Manual edit",
       "manualEditSummary": "Changes saved manually",
       "beforeRefinement": "Before: {{summary}}...",
-      "refinedSummary": "✅ Section \"{{section}}\" refined successfully."
-    }
+      "refinedSummary": "✅ Section \"{{section}}\" refined successfully.",
+      "beforeRegenerate": "Before regenerating the draft",
+      "seePrevious": "View previous version"
+    },
+    "afterGenerateTitle": "Once it's generated you can:",
+    "afterGenerateList": [
+      "Refine the introduction, points and conclusion by talking with the assistant",
+      "Regenerate a point you're not convinced by, without redoing the sermon",
+      "Go back to any earlier version of each section",
+      "Publish the sermon when it's ready"
+    ],
+    "skeleton": {
+      "introduction": "Introduction",
+      "introductionParts": [
+        "Historical context",
+        "·",
+        "Present-day connection",
+        "·",
+        "Proposition and points"
+      ],
+      "pointsPending": "Sermon points",
+      "pointParts": [
+        "Exposition",
+        "·",
+        "References",
+        "·",
+        "Illustration",
+        "·",
+        "Application",
+        "·",
+        "Transition"
+      ],
+      "conclusion": "Conclusion",
+      "conclusionParts": [
+        "Summary",
+        "·",
+        "Closing call"
+      ],
+      "callToAction": "Call to action",
+      "callToActionParts": [
+        "1 to 3 concrete steps for this week"
+      ],
+      "yourApplication": "your application",
+      "yourDirective": "your direction",
+      "title": "How your sermon will be shaped"
+    },
+    "scanningLibrary": "Scanning your library…"
+  },
+  "pastoralContext": {
+    "title": "Pastoral context (optional)",
+    "hint": "Funeral, wedding, crisis, emphasis, anecdotes… the more you tell it, the more the sermon fits.",
+    "filled_one": "{{count}} field filled",
+    "filled_other": "{{count}} fields filled",
+    "active": "Active",
+    "intro": "None of this gets filed away: it goes into the sermon being written. Your illustrations are used as you wrote them, and the draft takes your congregation's language.",
+    "languageLabel": "Sermon language",
+    "languageEveryday": "Everyday",
+    "languageEverydayHint": "Explains theological terms as it uses them. Greek and Hebrew only where they help. Illustrations from daily life.",
+    "languageTechnical": "Technical",
+    "languageTechnicalHint": "Greek, Hebrew and morphology where the text calls for it. Assumes systematic categories. Established Reformed authors.",
+    "situational": "Situational context",
+    "situationalPlaceholder": "e.g. It will be preached at a funeral service, or after a crisis in the community…",
+    "congregation": "Congregation",
+    "congregationPlaceholder": "e.g. 80 people, Reformed, medium-high theological level",
+    "emphasis": "Pastoral emphasis",
+    "emphasisPlaceholder": "What do you want the congregation to feel, understand, or do when the sermon ends?",
+    "illustrations": "Preacher's illustrations",
+    "illustrationsPlaceholder": "Personal anecdotes, congregation stories, or testimonies you want to include…",
+    "notes": "Preacher's notes",
+    "notesPlaceholder": "Loose ideas, arguments you want to develop, particular emphases…"
   }
 }
