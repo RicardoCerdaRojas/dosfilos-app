@@ -1,155 +1,159 @@
 {
-    "header": {
-        "title": "Sermons",
-        "subtitle": "Manage your sermons and pastoral content",
-        "newButton": "New Sermon",
-        "generateWithTutor": "Generate with Tutor",
-        "createBlank": "Blank Sermon",
-        "createBlankHint": "I've already studied — I just want to write."
-    },
-    "sermonCreatedSuccess": "Sermon created successfully",
-    "sermonCreatedError": "Error creating sermon",
-    "tutor": {
-        "welcome": "Hi! I'm your preaching assistant.",
-        "welcomeSubtitle": "Tell me what's on your mind, or ask for suggestions.",
-        "prompts": {
-            "idea": "Help me find a sermon idea for Sunday",
-            "passage": "I have a topic but need a bible passage",
-            "example": "I want to preach on grace, any suggestions?"
-        },
-        "actions": {
-            "idea": "Need an idea",
-            "passage": "Suggest passage",
-            "example": "Example: Grace"
-        },
-        "inputPlaceholder": "Type your idea or question...",
-        "detailsTitle": "Sermon Details",
-        "passageLabel": "Biblical Passage",
-        "passagePlaceholder": "e.g. John 3:16",
-        "ideaLabel": "Central Idea / Theme",
-        "ideaPlaceholder": "What do you want to preach about?",
-        "generating": "Generating Sermon...",
-        "generateButton": "Generate Full Sermon",
-        "disclaimer": "Generation will create a full exegetical and homiletical analysis in the background.",
-        "steps": {
-            "exegesis": "Performing exegetical analysis...",
-            "homiletics": "Structuring the sermon...",
-            "drafting": "Drafting full content...",
-            "success": "Sermon ready!"
-        },
-        "errors": {
-            "missingFields": "Please define a passage and central idea first.",
-            "generationFailed": "Error generating sermon. Please try again."
-        }
-    },
-    "loading": "Loading sermons...",
-    "empty": {
-        "title": "Start your next sermon",
-        "description": "Your sermon is born from study. Choose where to begin:",
-        "footer": "When you're ready, your sermon will emerge from the work you've done.",
-        "paths": {
-            "step": "Step {{n}}",
-            "project": {
-                "title": "Preaching project",
-                "description": "Plan a complete series with pastoral vision, calendar, and passages to cover.",
-                "cta": "Create project"
-            },
-            "exegesis": {
-                "title": "Exegetical study",
-                "description": "Dive into a passage with academic methodology: context, original language, thesis.",
-                "cta": "Start exegesis"
-            },
-            "tutor": {
-                "title": "Tutor conversation",
-                "description": "Discuss the text, theme, or question you're working on with AI experts.",
-                "cta": "Start session"
-            }
-        }
-    },
-    "filters": {
-        "search": "Search sermons...",
-        "status": "Status",
-        "allPlans": "All plans",
-        "noPlan": "No plan",
-        "plan": "Plan"
-    },
-    "statusOptions": {
-        "all": "All",
-        "drafts": "Drafts",
-        "published": "Published",
-        "archived": "Archived"
-    },
-    "statusLabels": {
-        "draft": "Draft",
-        "published": "Published",
-        "archived": "Archived"
-    },
-    "results": {
-        "sermon": "sermon",
-        "sermons": "sermons",
-        "inPlan": "in",
-        "noPlanAssigned": "with no plan assigned"
-    },
-    "noResults": "No sermons found with the selected filters.",
-    "table": {
-        "title": "Title",
-        "plan": "Plan",
-        "status": "Status",
-        "date": "Date",
-        "actions": "Actions"
-    },
-    "grid": {
-        "references": "references"
+  "header": {
+    "title": "Sermons",
+    "subtitle": "Manage your sermons and pastoral content",
+    "newButton": "New Sermon",
+    "generateWithTutor": "Generate with Tutor",
+    "createBlank": "Blank Sermon",
+    "createBlankHint": "I've already studied — I just want to write."
+  },
+  "sermonCreatedSuccess": "Sermon created successfully",
+  "sermonCreatedError": "Error creating sermon",
+  "tutor": {
+    "welcome": "Hi! I'm your preaching assistant.",
+    "welcomeSubtitle": "Tell me what's on your mind, or ask for suggestions.",
+    "prompts": {
+      "idea": "Help me find a sermon idea for Sunday",
+      "passage": "I have a topic but need a bible passage",
+      "example": "I want to preach on grace, any suggestions?"
     },
     "actions": {
-        "delete": "Delete",
-        "view": "View sermon",
-        "edit": "Edit",
-        "preachMode": "Preach mode",
-        "linkToProject": "Link to project…",
-        "createVersion": "Create new version…",
-        "viewProject": "View project \"{{title}}\""
+      "idea": "Need an idea",
+      "passage": "Suggest passage",
+      "example": "Example: Grace"
     },
-    "deleteDialog": {
-        "title": "Are you sure?",
-        "description": "This action cannot be undone. The sermon will be permanently deleted.",
-        "cancel": "Cancel",
-        "confirm": "Delete",
-        "deleting": "Deleting..."
+    "inputPlaceholder": "Type your idea or question...",
+    "detailsTitle": "Sermon Details",
+    "passageLabel": "Biblical Passage",
+    "passagePlaceholder": "e.g. John 3:16",
+    "ideaLabel": "Central Idea / Theme",
+    "ideaPlaceholder": "What do you want to preach about?",
+    "generating": "Generating Sermon...",
+    "generateButton": "Generate Full Sermon",
+    "disclaimer": "Generation will create a full exegetical and homiletical analysis in the background.",
+    "steps": {
+      "exegesis": "Performing exegetical analysis...",
+      "homiletics": "Structuring the sermon...",
+      "drafting": "Drafting full content...",
+      "success": "Sermon ready!"
     },
-    "linkProject": {
-        "eyebrow": "Link to project",
-        "fallbackTitle": "Sermon",
-        "description": "Move this sermon into a project so it appears in that workspace alongside the related sources, conversations and material.",
-        "noProjects": "You don't have any projects yet.",
-        "createOne": "Create one →",
-        "noProject": "No project",
-        "unlink": "Unlink from any project",
-        "linkSuccess": "Sermon linked to project",
-        "unlinkSuccess": "Sermon unlinked from project",
-        "error": "Linking failed"
-    },
-    "versions": {
-        "badge": "Version",
-        "count_one": "{{count}} version",
-        "count_other": "{{count}} versions",
-        "original": "Original",
-        "prev": "Previous version",
-        "next": "Next version",
-        "pagerLabel": "Sermon versions",
-        "bannerOf": "of “{{title}}”",
-        "bannerOfGeneric": "of another sermon",
-        "viewOriginal": "View original",
-        "dialogEyebrow": "New version",
-        "dialogFallbackTitle": "Sermon",
-        "dialogDescription": "Create an editable copy to preach this message again in another context. Title, content and references are copied; you can tweak it without affecting the original.",
-        "labelField": "Occasion label (optional)",
-        "labelPlaceholder": "e.g. Youth retreat 2026",
-        "labelHint": "Helps you tell this version apart from the original in the list.",
-        "cancel": "Cancel",
-        "confirm": "Create version",
-        "creating": "Creating…",
-        "createSuccess": "Version created",
-        "createError": "Failed to create version"
+    "errors": {
+      "missingFields": "Please define a passage and central idea first.",
+      "generationFailed": "Error generating sermon. Please try again."
     }
+  },
+  "loading": "Loading sermons...",
+  "empty": {
+    "title": "Start your next sermon",
+    "description": "Your sermon is born from study. Choose where to begin:",
+    "footer": "When you're ready, your sermon will emerge from the work you've done.",
+    "paths": {
+      "step": "Step {{n}}",
+      "project": {
+        "title": "Preaching project",
+        "description": "Plan a complete series with pastoral vision, calendar, and passages to cover.",
+        "cta": "Create project"
+      },
+      "exegesis": {
+        "title": "Exegetical study",
+        "description": "Dive into a passage with academic methodology: context, original language, thesis.",
+        "cta": "Start exegesis"
+      },
+      "tutor": {
+        "title": "Tutor conversation",
+        "description": "Discuss the text, theme, or question you're working on with AI experts.",
+        "cta": "Start session"
+      }
+    }
+  },
+  "filters": {
+    "search": "Search sermons...",
+    "status": "Status",
+    "allPlans": "All plans",
+    "noPlan": "No plan",
+    "plan": "Plan"
+  },
+  "statusOptions": {
+    "all": "All",
+    "drafts": "Drafts",
+    "published": "Published",
+    "archived": "Archived"
+  },
+  "statusLabels": {
+    "draft": "Draft",
+    "published": "Published",
+    "archived": "Archived"
+  },
+  "results": {
+    "sermon": "sermon",
+    "sermons": "sermons",
+    "inPlan": "in",
+    "noPlanAssigned": "with no plan assigned"
+  },
+  "noResults": "No sermons found with the selected filters.",
+  "table": {
+    "title": "Title",
+    "plan": "Plan",
+    "status": "Status",
+    "date": "Date",
+    "actions": "Actions"
+  },
+  "grid": {
+    "references": "references"
+  },
+  "actions": {
+    "delete": "Delete",
+    "view": "View sermon",
+    "edit": "Edit",
+    "preachMode": "Preach mode",
+    "linkToProject": "Link to project…",
+    "createVersion": "Create new version…",
+    "viewProject": "View project \"{{title}}\""
+  },
+  "deleteDialog": {
+    "title": "Are you sure?",
+    "description": "This action cannot be undone. The sermon will be permanently deleted.",
+    "cancel": "Cancel",
+    "confirm": "Delete",
+    "deleting": "Deleting..."
+  },
+  "linkProject": {
+    "eyebrow": "Link to project",
+    "fallbackTitle": "Sermon",
+    "description": "Move this sermon into a project so it appears in that workspace alongside the related sources, conversations and material.",
+    "noProjects": "You don't have any projects yet.",
+    "createOne": "Create one →",
+    "noProject": "No project",
+    "unlink": "Unlink from any project",
+    "linkSuccess": "Sermon linked to project",
+    "unlinkSuccess": "Sermon unlinked from project",
+    "error": "Linking failed"
+  },
+  "versions": {
+    "badge": "Version",
+    "count_one": "{{count}} version",
+    "count_other": "{{count}} versions",
+    "original": "Original",
+    "prev": "Previous version",
+    "next": "Next version",
+    "pagerLabel": "Sermon versions",
+    "bannerOf": "of “{{title}}”",
+    "bannerOfGeneric": "of another sermon",
+    "viewOriginal": "View original",
+    "dialogEyebrow": "New version",
+    "dialogFallbackTitle": "Sermon",
+    "dialogDescription": "Create an editable copy to preach this message again in another context. Title, content and references are copied; you can tweak it without affecting the original.",
+    "labelField": "Occasion label (optional)",
+    "labelPlaceholder": "e.g. Youth retreat 2026",
+    "labelHint": "Helps you tell this version apart from the original in the list.",
+    "cancel": "Cancel",
+    "confirm": "Create version",
+    "creating": "Creating…",
+    "createSuccess": "Version created",
+    "createError": "Failed to create version"
+  },
+  "studies": {
+    "finishedTab": "Finished studies ({{count}})",
+    "finishedEmpty": "You haven't finished a study yet. When you publish a sermon, its study will live here."
+  }
 }

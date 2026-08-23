@@ -66,6 +66,24 @@ export function useSermonContraScan({ onCleared }: Options) {
                 const chunks = await scan(centralIdea);
                 setPending({ sermonId, centralIdea, chunks });
                 setModalOpen(true);
+            } catch (err) {
+                // UN FALLO DE LA REVISIÓN NO PUEDE TERMINAR EN SILENCIO.
+                //
+                // Este `try` tenía `finally` pero NO `catch`: si el escaneo
+                // fallaba, la excepción subía a `handlePublish` —que tampoco
+                // captura— y moría como promesa rechazada sin manejar. El
+                // spinner se apagaba y no pasaba nada: ni aviso, ni modal, ni
+                // publicación. El pastor se quedaba mirando un botón normal sin
+                // saber si su sermón se publicó.
+                //
+                // SE AVISA Y SE SIGUE, no se bloquea. La revisión de posiciones
+                // contrarias es una red formativa, no un peaje: castigar al
+                // pastor por una falla de infraestructura nuestra sería el trato
+                // equivocado, y es el mismo criterio con que el verificador de
+                // citas deja publicar cuando él mismo no puede correr.
+                console.error('[contraScan] el escaneo falló — se avisa y se continúa', err);
+                toast.error(t('contraScan.toast.scanFailed'));
+                await onCleared(sermonId);
             } finally {
                 setScanning(false);
             }

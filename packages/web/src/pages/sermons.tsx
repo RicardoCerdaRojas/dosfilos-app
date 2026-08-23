@@ -72,7 +72,7 @@ export function SermonsPage() {
     // the pastor's labor (manifesto P1) instead of hiding it behind
     // the wizard. Tab is suppressed entirely when no in-progress
     // seeds exist, so legacy users see no change.
-    const [activeTab, setActiveTab] = useState<'published' | 'in_progress'>('published');
+    const [activeTab, setActiveTab] = useState<'published' | 'in_progress' | 'finished'>('published');
     const { bySermonId: seedsBySermonId, seeds: pastoralSeeds, refetch: refetchSeeds } = usePastoralSeedsByUser();
     const [sermonToDelete, setSermonToDelete] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -90,7 +90,11 @@ export function SermonsPage() {
     // same dialog + delete handler so the UX stays uniform.
     const publishedSelection = useBulkSelection();
     const inProgressSelection = useBulkSelection();
-    const [bulkConfirm, setBulkConfirm] = useState<null | { ids: string[]; surface: 'published' | 'in_progress' }>(null);
+    // Selección propia: una compartida haría que marcar en una pestaña
+    // arrastrara la selección a la otra, y el borrado masivo actuaría sobre
+    // estudios que el pastor no está viendo.
+    const finishedSelection = useBulkSelection();
+    const [bulkConfirm, setBulkConfirm] = useState<null | { ids: string[]; surface: 'published' | 'in_progress' | 'finished' }>(null);
     const [bulkDeleting, setBulkDeleting] = useState(false);
     const { projects } = useFacultyProjects();
     const projectById = new Map(projects?.map((p) => [p.id, p]) ?? []);
@@ -169,7 +173,169 @@ export function SermonsPage() {
             return bDate.getTime() - aDate.getTime();
         });
 
-    const hasInProgress = inProgressSermons.length > 0;
+    /**
+     * Lista de estudios — la MISMA para "en curso" y "terminados".
+     *
+     * Se extrajo en vez de duplicarse: son ~110 líneas con dos modos de vista,
+     * selección múltiple y borrado. Dos copias divergen —lo vimos hoy con el
+     * prompt de regenerar un punto— y el segundo tab habría nacido ya como
+     * deuda.
+     */
+    const renderStudyList = (
+        list: typeof sermons,
+        selection: typeof inProgressSelection,
+        surface: 'in_progress' | 'finished',
+        emptyMessage: string,
+    ) => (
+        <>
+                        <BulkSelectionBar
+                            count={selection.count}
+                            poolSize={list.length}
+                            allSelected={selection.allSelected(list.map((s) => s.id))}
+                            onToggleAll={() => selection.toggleAll(list.map((s) => s.id))}
+                            onClear={selection.clear}
+                            onDelete={() =>
+                                setBulkConfirm({
+                                    ids: Array.from(selection.selected),
+                                    surface,
+                                })
+                            }
+                            deleting={bulkDeleting}
+                            label="estudios"
+                        />
+                        {list.length === 0 ? (
+                            <Card className="p-8 text-center">
+                                <p className="text-muted-foreground">
+                                    {emptyMessage}
+                                </p>
+                            </Card>
+                        ) : viewMode === 'table' ? (
+                            <Card>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-[40%]">{t('table.title')}</TableHead>
+                                            <TableHead>Pasaje</TableHead>
+                                            <TableHead>Progreso</TableHead>
+                                            <TableHead>Actualizado</TableHead>
+                                            <TableHead className="text-right">{t('table.actions')}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {list.map((sermon) => {
+                                            const seed = seedsBySermonId.get(sermon.id)!;
+                                            const pct = Math.round((seed.completedSteps / seed.totalSteps) * 100);
+                                            return (
+                                                <TableRow key={sermon.id} className="hover:bg-muted/30">
+                                                    <td className="p-3 align-middle">
+                                                        <div className="flex items-center gap-2">
+                                                            <Sprout className="h-4 w-4 text-emerald-600 shrink-0" />
+                                                            <span className="font-medium truncate" title={sermon.title}>
+                                                                {sermon.title}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3 align-middle text-sm">
+                                                        {sermon.bibleReferences?.[0] ?? seed.passage}
+                                                    </td>
+                                                    <td className="p-3 align-middle">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden">
+                                                                <div
+                                                                    className={`h-full ${seed.completed ? 'bg-emerald-600' : 'bg-amber-500'}`}
+                                                                    style={{ width: `${pct}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className="text-xs text-muted-foreground tabular-nums">
+                                                                {seed.completedSteps}/{seed.totalSteps}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3 align-middle text-xs text-muted-foreground">
+                                                        {seed.updatedAt.toLocaleString()}
+                                                    </td>
+                                                    <td className="p-3 align-middle text-right">
+                                                        <div className="flex items-center justify-end gap-1">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => setSermonToDelete(sermon.id)}
+                                                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => navigate(`/dashboard/sermons/generate?id=${sermon.id}`)}
+                                                                className="bg-emerald-600 hover:bg-emerald-700 h-7"
+                                                            >
+                                                                Continuar
+                                                            </Button>
+                                                        </div>
+                                                    </td>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </Card>
+                        ) : (
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {list.map((sermon) => {
+                                    const seed = seedsBySermonId.get(sermon.id)!;
+                                    return (
+                                        <SermonInProgressCard
+                                            key={sermon.id}
+                                            sermonId={sermon.id}
+                                            title={sermon.title}
+                                            passage={sermon.bibleReferences?.[0] ?? seed.passage}
+                                            seed={seed}
+                                            onDelete={() => setSermonToDelete(sermon.id)}
+                                            selected={selection.isSelected(sermon.id)}
+                                            onToggleSelect={selection.toggle}
+                                            selectionActive={selection.count > 0}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        )}
+        </>
+    );
+
+
+    /**
+     * Estudios TERMINADOS: la semilla existe y el trabajo ya rindió sermón.
+     *
+     * Al publicar, el sermón conserva su `pastoralSeed` pero gana contenido, y
+     * la regla de "en curso" lo excluye por `hasContent`. El estudio no se
+     * borra —sigue como `draft` en la base— pero deja de tener puerta desde la
+     * lista: el pastor lo ve desaparecer y asume que se perdió.
+     *
+     * Es el complemento exacto de `inProgressSermons`: mismos filtros de
+     * búsqueda y plan, misma exigencia de semilla, condición de avance
+     * invertida.
+     */
+    const finishedStudies = sermons.filter((sermon) => {
+        if (sermon.status === 'working') return false;
+        if (!seedsBySermonId.has(sermon.id)) return false;
+        // Terminado = ya rindió contenido, o se publicó/archivó.
+        const terminado = sermon.hasContent || sermon.status === 'published' || sermon.status === 'archived';
+        if (!terminado) return false;
+        const seed = seedsBySermonId.get(sermon.id)!;
+        const q = searchQuery.toLowerCase();
+        const matchesSearch =
+            !q
+            || sermon.title.toLowerCase().includes(q)
+            || (sermon.bibleReferences?.[0] ?? seed.passage).toLowerCase().includes(q);
+        const matchesPlan = planFilter === 'all'
+            ? true
+            : planFilter === 'none'
+                ? !sermon.seriesId
+                : sermon.seriesId === planFilter;
+        return matchesSearch && matchesPlan;
+    });
+
+    const hasInProgress = inProgressSermons.length > 0 || finishedStudies.length > 0;
 
     /**
      * Renders the canonical "published / finished" list (table or grid)
@@ -285,11 +451,12 @@ export function SermonsPage() {
         if (failed > 0) {
             toast.error(`No se pudieron eliminar ${failed}. Reintenta los que quedaron.`);
         }
-        if (surface === 'published') {
-            publishedSelection.clear();
-        } else {
-            inProgressSelection.clear();
-        }
+        // Se limpia LA selección de la superficie que borró. Un `else` que
+        // limpiara siempre la de "en curso" dejaría marcados los estudios ya
+        // borrados en la otra pestaña.
+        if (surface === 'published') publishedSelection.clear();
+        else if (surface === 'finished') finishedSelection.clear();
+        else inProgressSelection.clear();
         setBulkConfirm(null);
         refetch();
         void refetchSeeds();
@@ -435,7 +602,7 @@ export function SermonsPage() {
             </div>
 
             {hasInProgress ? (
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'published' | 'in_progress')}>
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'published' | 'in_progress' | 'finished')}>
                     <TabsList className="mb-3">
                         <TabsTrigger value="published">
                             Sermones ({filteredSermons.length})
@@ -444,6 +611,10 @@ export function SermonsPage() {
                             <Sprout className="h-3.5 w-3.5 text-emerald-600" />
                             Estudios en curso ({inProgressSermons.length})
                         </TabsTrigger>
+                        <TabsTrigger value="finished" className="gap-1.5">
+                            <Sprout className="h-3.5 w-3.5 text-muted-foreground" />
+                            {t('studies.finishedTab', { count: finishedStudies.length })}
+                        </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="published" className="mt-0">
@@ -451,116 +622,26 @@ export function SermonsPage() {
                     </TabsContent>
 
                     <TabsContent value="in_progress" className="mt-0">
-                        <BulkSelectionBar
-                            count={inProgressSelection.count}
-                            poolSize={inProgressSermons.length}
-                            allSelected={inProgressSelection.allSelected(inProgressSermons.map((s) => s.id))}
-                            onToggleAll={() => inProgressSelection.toggleAll(inProgressSermons.map((s) => s.id))}
-                            onClear={inProgressSelection.clear}
-                            onDelete={() =>
-                                setBulkConfirm({
-                                    ids: Array.from(inProgressSelection.selected),
-                                    surface: 'in_progress',
-                                })
-                            }
-                            deleting={bulkDeleting}
-                            label="estudios"
-                        />
-                        {inProgressSermons.length === 0 ? (
-                            <Card className="p-8 text-center">
-                                <p className="text-muted-foreground">
-                                    No tienes estudios en curso. Comienza un sermón para iniciar tu estudio personal.
-                                </p>
-                            </Card>
-                        ) : viewMode === 'table' ? (
-                            <Card>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="w-[40%]">{t('table.title')}</TableHead>
-                                            <TableHead>Pasaje</TableHead>
-                                            <TableHead>Progreso</TableHead>
-                                            <TableHead>Actualizado</TableHead>
-                                            <TableHead className="text-right">{t('table.actions')}</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {inProgressSermons.map((sermon) => {
-                                            const seed = seedsBySermonId.get(sermon.id)!;
-                                            const pct = Math.round((seed.completedSteps / seed.totalSteps) * 100);
-                                            return (
-                                                <TableRow key={sermon.id} className="hover:bg-muted/30">
-                                                    <td className="p-3 align-middle">
-                                                        <div className="flex items-center gap-2">
-                                                            <Sprout className="h-4 w-4 text-emerald-600 shrink-0" />
-                                                            <span className="font-medium truncate" title={sermon.title}>
-                                                                {sermon.title}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-3 align-middle text-sm">
-                                                        {sermon.bibleReferences?.[0] ?? seed.passage}
-                                                    </td>
-                                                    <td className="p-3 align-middle">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden">
-                                                                <div
-                                                                    className={`h-full ${seed.completed ? 'bg-emerald-600' : 'bg-amber-500'}`}
-                                                                    style={{ width: `${pct}%` }}
-                                                                />
-                                                            </div>
-                                                            <span className="text-xs text-muted-foreground tabular-nums">
-                                                                {seed.completedSteps}/{seed.totalSteps}
-                                                            </span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-3 align-middle text-xs text-muted-foreground">
-                                                        {seed.updatedAt.toLocaleString()}
-                                                    </td>
-                                                    <td className="p-3 align-middle text-right">
-                                                        <div className="flex items-center justify-end gap-1">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => setSermonToDelete(sermon.id)}
-                                                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                                            >
-                                                                <Trash2 className="h-3.5 w-3.5" />
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                onClick={() => navigate(`/dashboard/sermons/generate?id=${sermon.id}`)}
-                                                                className="bg-emerald-600 hover:bg-emerald-700 h-7"
-                                                            >
-                                                                Continuar
-                                                            </Button>
-                                                        </div>
-                                                    </td>
-                                                </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </Card>
-                        ) : (
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                {inProgressSermons.map((sermon) => {
-                                    const seed = seedsBySermonId.get(sermon.id)!;
-                                    return (
-                                        <SermonInProgressCard
-                                            key={sermon.id}
-                                            sermonId={sermon.id}
-                                            title={sermon.title}
-                                            passage={sermon.bibleReferences?.[0] ?? seed.passage}
-                                            seed={seed}
-                                            onDelete={() => setSermonToDelete(sermon.id)}
-                                            selected={inProgressSelection.isSelected(sermon.id)}
-                                            onToggleSelect={inProgressSelection.toggle}
-                                            selectionActive={inProgressSelection.count > 0}
-                                        />
-                                    );
-                                })}
-                            </div>
+                        {renderStudyList(
+                            inProgressSermons,
+                            inProgressSelection,
+                            'in_progress',
+                            'No tienes estudios en curso. Comienza un sermón para iniciar tu estudio personal.',
+                        )}
+                    </TabsContent>
+
+                    {/* ESTUDIOS TERMINADOS — el trabajo no desaparece al publicar.
+                        Al publicar, el sermón conserva su semilla pero gana
+                        contenido, y la regla de "en curso" lo esconde. Sin esta
+                        pestaña, meses de estudio quedaban inalcanzables desde la
+                        lista: el pastor veía desaparecer su trabajo sin saber que
+                        seguía ahí. */}
+                    <TabsContent value="finished" className="mt-0">
+                        {renderStudyList(
+                            finishedStudies,
+                            finishedSelection,
+                            'finished',
+                            t('studies.finishedEmpty'),
                         )}
                     </TabsContent>
                 </Tabs>
