@@ -3,6 +3,7 @@ import {
     collection,
     doc,
     getDoc,
+    runTransaction,
     getDocs,
     limit as fsLimit,
     orderBy,
@@ -66,17 +67,55 @@ export class FirestorePastoralSeedRepository implements IPastoralSeedRepository 
         return this.toSeed(snap.id, snap.data());
     }
 
+    /**
+     * Crea el seed del sermón. IDEMPOTENTE POR `sermonId`.
+     *
+     * El id del documento ES el `sermonId`, y la creación va en transacción: si
+     * el documento ya existe, se devuelve el existente en vez de crear un
+     * gemelo.
+     *
+     * POR QUÉ ASÍ, Y NO SINCRONIZANDO A LOS LLAMADORES: `ensureForSermon` hacía
+     * `findBySermonId` y, si no había, `create`. Dos llamadas concurrentes
+     * —dos montajes del wizard, un StrictMode, un doble click— leían las dos
+     * "no existe" y creaban DOS seeds para el mismo sermón. Pasó de verdad el
+     * 2026-08-22: dos seeds del mismo sermón, creados en el mismo segundo.
+     *
+     * Un lock o una bandera no lo arreglan: cualquier reintento los elude. La
+     * regla del proyecto para esta clase de bug es sacar la disputa del azar
+     * FIJANDO EL RECURSO — y el propio comentario que había acá ya decía que
+     * "sermonId es la clave natural". Ahora también es la clave del documento,
+     * así que dos creaciones colisionan en vez de duplicar.
+     *
+     * El seed es la unidad de estudio: dos seeds parten el trabajo del pastor
+     * entre dos documentos y el gate lee el que no lo tiene.
+     *
+     * Compatible hacia atrás: los seeds anteriores conservan su id aleatorio y
+     * se siguen encontrando por `findBySermonId`, que consulta el CAMPO.
+     */
     async create(seed: PastoralSeed): Promise<PastoralSeed> {
         const payload = {
             ...this.toFirestore(seed),
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         };
-        // The caller may pass an id but we let Firestore allocate one so
-        // top-level audit queries stay simple — the doc id is opaque and
-        // sermonId is the natural key.
         delete (payload as any).id;
-        const ref = await addDoc(collection(db, this.collectionName), payload);
+
+        // Sin `sermonId` no hay clave natural que fijar: se cae al id opaco.
+        if (!seed.sermonId) {
+            const ref = await addDoc(collection(db, this.collectionName), payload);
+            return { ...seed, id: ref.id };
+        }
+
+        const ref = doc(db, this.collectionName, seed.sermonId);
+        const existing = await runTransaction(db, async (tx) => {
+            const snap = await tx.get(ref);
+            if (snap.exists()) return snap;
+            tx.set(ref, payload);
+            return null;
+        });
+        // Si otra llamada ganó la carrera, se devuelve LO SUYO — no se pisa su
+        // trabajo ni se crea un segundo documento.
+        if (existing) return this.toSeed(existing.id, existing.data() as Record<string, unknown>);
         return { ...seed, id: ref.id };
     }
 
