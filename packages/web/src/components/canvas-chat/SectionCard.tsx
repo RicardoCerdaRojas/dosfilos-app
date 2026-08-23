@@ -32,12 +32,19 @@ const BIBLE_REF_PATTERN = /(?:^|[^\wáéíóúñ])((?:[1-3]\s?)?(?:Génesis|Gene
 interface SectionCardProps {
   section: SectionConfig;
   content: any;
-  fullContent?: any; // 🎯 NEW: Full content object for accessing related fields
-  contentType?: string; // 🎯 NEW: Type of content (homiletics, sermon, etc.)
   onExpand: () => void;
   isModified?: boolean;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  /**
+   * Cuerpo propio para esta sección, en vez del render genérico por tipo.
+   *
+   * Existe para que una sección pueda tener su propio editor CONSERVANDO lo que
+   * la tarjeta ya le da: refinar por chat, historial de versiones, undo/redo.
+   * Sin esto, un editor a medida tendría que vivir fuera de la tarjeta y
+   * duplicaría en pantalla lo que la tarjeta ya muestra.
+   */
+  customBody?: React.ReactNode;
 }
 
 /**
@@ -53,11 +60,10 @@ interface SectionCardProps {
 export function SectionCard({
   section,
   content,
-  fullContent,
-  contentType,
   onExpand,
   isModified = false,
   isCollapsed = false,
+  customBody,
   onToggleCollapse
 }: SectionCardProps) {
   const [selectedReference, setSelectedReference] = useState<string | null>(null);
@@ -223,29 +229,11 @@ export function SectionCard({
       // If expanded, render markdown
       const rendered = <MarkdownRenderer content={text} />;
       
-      // 🎯 Special case: If this is homiletics proposition, also show outline points
-      // Use live outline.mainPoints instead of static outlinePreview to reflect edits
-      if (contentType === 'homiletics' && section.id === 'proposition' && fullContent?.outline?.mainPoints?.length > 0) {
-        return (
-          <div>
-            {rendered}
-            <div className="mt-4 pt-4 border-t border-border/50">
-              <h4 className="font-semibold text-sm text-muted-foreground mb-2">
-                Puntos del Sermón:
-              </h4>
-              <ul className="space-y-1.5 text-sm">
-                {fullContent.outline.mainPoints.map((point: any, index: number) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <span className="text-primary mt-0.5">▪</span>
-                    <span className="text-foreground/90">{point.title}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        );
-      }
-      
+      // (Se quitó el parche que metía los puntos del bosquejo dentro de la
+      // tarjeta de proposición. Existía porque no había forma de verlos juntos;
+      // ahora el editor del contrato los muestra y editarlos ahí, y repetirlos
+      // acá los mostraba una tercera vez en la misma pantalla.)
+
       return rendered;
     }
 
@@ -456,7 +444,12 @@ export function SectionCard({
 
   return (
     <Card className={cn(
-      "transition-all duration-200 hover:shadow-md",
+      // `py-0 gap-0` neutraliza el padding vertical y el gap que la Card base
+      // trae por defecto (`py-6 gap-6`). Esta tarjeta pone su propio espaciado
+      // en el header (`p-4`) y en el cuerpo (`pb-4 pt-3`), así que el de la base
+      // se sumaba: colapsada arrastraba ~80px de aire muerto y la lista entera
+      // se veía deformada.
+      "py-0 gap-0 overflow-hidden transition-all duration-200 hover:shadow-md",
       isModified && "border-primary/50"
     )}>
       {/* Header */}
@@ -510,7 +503,7 @@ export function SectionCard({
       {/* Content */}
       {!isCollapsed && (
         <div className="px-4 pb-4 border-t pt-3">
-          {renderContent()}
+          {customBody ?? renderContent()}
         </div>
       )}
 

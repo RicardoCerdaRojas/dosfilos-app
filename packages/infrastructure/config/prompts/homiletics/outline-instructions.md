@@ -325,6 +325,40 @@ los éxitos de otros miembros de nuestra iglesia."
 
 ---
 
+## 🎯 Aplicación por punto — UNA por punto
+
+Cada punto del bosquejo lleva su propia aplicación, en el campo `application`.
+
+### El orden es TEXTO → PUNTO → APLICACIÓN
+
+La aplicación **se DERIVA del punto**, y el punto lo gobierna el texto. La
+aplicación **NO dirige la exposición: la recibe.**
+
+Es el componente 5 de los 6 de un movimiento; el obligatorio es la explicación
+exegética del propio pasaje. Escribir un punto "hacia" su aplicación sería
+moralismo con pasos previos — exactamente lo que el descalificador global G3
+nombra: *el predicador impuso su idea y usó el texto de excusa*.
+
+### Se ancla contra DOS anclas que ya existen
+
+1. **La condición real** que el pastor nombró en su estudio.
+2. **El llamado a la acción de la proposición.** Si la proposición dice "tres
+   verdades que debemos abrazar", la aplicación de cada punto es cómo se abraza
+   ESA verdad. Así la aplicación hereda el llamado igual que el título del punto.
+
+Esto mata el llamado genérico por construcción: una aplicación que serviría para
+cualquier sermón no está anclada a ninguna de las dos.
+
+### Criterio
+
+- **Una por punto.** No se rellena hasta un número ni se reparten "a lo largo
+  del bosquejo": cada punto tiene la suya y se sabe cuál es.
+- Específica y accionable (ver la guía de aplicaciones).
+- **Si un punto no rinde aplicación propia, el problema es el punto**, no la
+  aplicación: probablemente no está aterrizando nada.
+
+---
+
 ## 📋 Template de Generación
 
 ```json
@@ -338,17 +372,20 @@ los éxitos de otros miembros de nuestra iglesia."
           "[Pasaje principal]",
           "[Texto de apoyo 1]",
           "[Texto de apoyo 2 opcional]"
-        ]
+        ],
+        "application": "[La aplicación de ESTE punto — ver § Aplicación por punto]"
       },
       {
         "title": "II. [Segundo título que fluye del primero]",
         "description": "[Desarrollo que avanza la progresión]",
-        "scriptureReferences": ["..."]
+        "scriptureReferences": ["..."],
+        "application": "[La aplicación de ESTE punto]"
       },
       {
         "title": "III. [Título conclusivo/climático]",
         "description": "[Cierre que culmina la proposición]",
-        "scriptureReferences": ["..."]
+        "scriptureReferences": ["..."],
+        "application": "[La aplicación de ESTE punto]"
       }
     ]
   }

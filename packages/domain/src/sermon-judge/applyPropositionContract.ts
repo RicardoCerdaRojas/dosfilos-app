@@ -14,6 +14,8 @@ import type { HomileticalAnalysis } from '../entities/SermonGenerator';
 
 export interface PointPatch {
     title: string;
+    /** La aplicación de ESTE punto. Una por punto. */
+    application?: string;
     /**
      * Posición ORIGINAL del punto, o `null` si es nuevo.
      *
@@ -34,9 +36,14 @@ export function applyPropositionContract(
         const src = p.srcIndex !== null ? prev[p.srcIndex] : undefined;
         // Un punto nuevo nace VACÍO: el sistema abre el espacio para que el
         // pastor lo escriba, no le inventa el contenido.
+        const application = (p.application ?? '').trim();
+        // La clave se OMITE si está vacía en vez de viajar como '' — el campo es
+        // opcional y un string vacío en Firestore se lee como "hay aplicación,
+        // pero es nada", que es distinto de "todavía no hay".
+        const app = application ? { application } : {};
         return src
-            ? { ...src, title: p.title }
-            : { title: p.title, description: '', scriptureReferences: [] };
+            ? { ...src, title: p.title, ...app }
+            : { title: p.title, description: '', scriptureReferences: [], ...app };
     });
     return {
         ...homiletics,

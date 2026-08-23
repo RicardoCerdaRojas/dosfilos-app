@@ -156,6 +156,12 @@ export interface HomileticalAnalysis {
      */
     homileticalApproach?: ApproachType;
 
+    /**
+     * LEGADO. La aplicación ahora vive en cada punto del bosquejo
+     * (`outline.mainPoints[].application`), que es lo que permite saber dónde
+     * va en el sermón. Este campo se conserva para los sermones anteriores y
+     * para las vistas previas de enfoque; no se escribe contenido nuevo acá.
+     */
     contemporaryApplication: string[];
     homileticalProposition: string;
     outlinePreview?: string[]; // 🎯 NEW: Preview of outline points for congregation
@@ -172,6 +178,60 @@ export interface SermonOutline {
         title: string;
         description: string;
         scriptureReferences: string[];
+        /**
+         * La aplicación de ESTE punto — una por punto (decisión del fundador,
+         * 2026-08-23).
+         *
+         * Vive EN el punto, no en una lista aparte, y eso responde por
+         * construcción la pregunta que la lista suelta no podía responder:
+         * dónde va cada aplicación en el sermón. Antes existía
+         * `contemporaryApplication: string[]` a nivel del análisis: se generaba,
+         * el pastor la editaba, y el prompt del borrador NUNCA la leía —
+         * el borrador inventaba sus propias `implications` desde cero.
+         *
+         * ORDEN HERMENÉUTICO, no negociable: `texto → punto → aplicación`.
+         * La aplicación se DERIVA del punto (que el texto ya gobierna); NO
+         * dirige la exposición, la recibe. Es el componente 5 de los 6 de la
+         * anatomía del movimiento (Redacción v2 §5); el obligatorio es la
+         * explicación exegética. Escribir el punto "hacia" su aplicación sería
+         * moralismo con pasos previos — exactamente lo que el descalificador
+         * global G3 nombra.
+         *
+         * Se ancla contra dos anclas que ya existen (§5): la condición real que
+         * el pastor nombró y el llamado a la acción de la proposición.
+         */
+        application?: string;
+        /**
+         * La DIRECTIVA DEL PASTOR para este punto (decisión del fundador,
+         * 2026-08-23). El agente NUNCA la escribe: ni al generar el bosquejo
+         * ni al refinarlo por chat. Es el único campo del punto que es voz del
+         * pastor, y por eso es atribuible por construcción — sin necesidad de
+         * marcar procedencia campo por campo.
+         *
+         * POR QUÉ NO SE REUSÓ `description`: la descripción la redacta el
+         * agente. Volverla vinculante ataría el borrador a la salida anterior
+         * del propio modelo y amplificaría su deriva en lugar de la intención
+         * del pastor. Un campo que sólo él escribe no tiene ese problema.
+         *
+         * Son DOS COSAS DISTINTAS, y por eso son dos campos:
+         *
+         * - `emphasis` MODULA. Es el ángulo desde el cual se expone el punto
+         *   ("Dios habla, pero su palabra no es sin propósito: habla para
+         *   dirigir a su pueblo"). Gobierna toda la exposición del punto.
+         *
+         * - `exegeticalNotes` OBLIGA. Son datos del texto que deben aparecer
+         *   sí o sí ("'y pagando su pasaje': el hebreo no dice pasaje personal,
+         *   personifica a la nave"). Entran al bloque de palabras clave del
+         *   borrador, no al fondo de un JSON donde compiten con las que el
+         *   modelo eligió por su cuenta.
+         *
+         * NO altera el orden hermenéutico: la directiva dirige cómo se EXPONE
+         * el texto, nunca sustituye lo que el texto dice.
+         */
+        pastorDirective?: {
+            emphasis?: string;
+            exegeticalNotes?: string[];
+        };
     }[];
 }
 

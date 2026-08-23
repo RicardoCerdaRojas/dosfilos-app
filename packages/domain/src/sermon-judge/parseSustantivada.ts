@@ -93,11 +93,21 @@ export function parseSustantivada(
     const mNexo = norm.match(/\b(por las que|por los que|a fin de|para que|para|que)\b/);
     if (mNexo?.[1]) draft.elementoProposicional = mNexo[1];
 
-    // 6. IDEA CENTRAL — lo que queda tras el nexo. No se recorta ni se
-    // reinterpreta: es la afirmación del pastor.
+    // 6. LLAMADO A LA ACCIÓN + 7. IDEA CENTRAL — los dos viven DESPUÉS del nexo.
+    //
+    // "…tres verdades **que deben modelar nuestra confianza en Dios**"
+    // "…dos realidades **que deben guiarnos a la obediencia**"
+    //
+    // No se intenta separarlos con precisión gramatical: el llamado y la idea
+    // central se enredan en la misma cláusula y partirlos a la fuerza produce
+    // recortes falsos. Se toma la cola entera como llamado, y la misma cola
+    // como idea central. Lo que importa acá es SI ESTÁN, no dónde termina uno.
     if (mNexo?.index !== undefined) {
         const resto = t.slice(mNexo.index + mNexo[1]!.length).replace(/^[\s,]+/, '').replace(/[.\s]+$/, '');
-        if (resto.length > 10) draft.ideaCentral = resto;
+        if (resto.length > 10) {
+            draft.llamadoALaAccion = resto;
+            draft.ideaCentral = resto;
+        }
     }
 
     return { draft, verboEnSegundaPersona, ...(verbo ? { verbo } : {}) };

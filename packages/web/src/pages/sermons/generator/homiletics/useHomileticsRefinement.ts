@@ -138,6 +138,18 @@ FORMATO: Devuelve un objeto JSON con esta estructura exacta:
     }
   ]
 }`;
+                        case 'application':
+                            // Sin esto el modelo devolvía prosa y el array se
+                            // sobrescribía con un string: la sección quedaba en
+                            // "Sin elementos" y el chat decía "refinada
+                            // exitosamente". Pérdida de datos con acuse de éxito.
+                            return `
+FORMATO: Devuelve SOLO un array JSON de strings, una aplicación por elemento:
+["Primera aplicación...", "Segunda aplicación..."]
+
+CADA APLICACIÓN DEBE CORRESPONDER A UN PUNTO DEL SERMÓN, en el mismo orden que
+los puntos del bosquejo, y aterrizar lo que ESE punto predica. Una aplicación
+que no se puede rastrear a un punto no pertenece a este sermón.`;
                         default:
                             return `
 FORMATO: Usa markdown para mejor legibilidad:
@@ -177,20 +189,45 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                     temperature: config?.[WorkflowPhase.HOMILETICS]?.temperature || config?.advanced?.globalTemperature,
                 });
 
+                const stripFences = (raw: string): string =>
+                    raw
+                        .trim()
+                        .replace(/^```json\s*/i, '')
+                        .replace(/^```\s*/, '')
+                        .replace(/\s*```$/, '')
+                        .trim();
+
                 let parsedContent: any;
-                if (sectionConfig.type === 'object') {
+                if (sectionConfig.type === 'object' || sectionConfig.type === 'array') {
                     try {
-                        let cleanedResponse = aiResponse.trim();
-                        cleanedResponse = cleanedResponse.replace(/^```json\s*/i, '').replace(/^```\s*/, '');
-                        cleanedResponse = cleanedResponse.replace(/\s*```$/, '');
-                        cleanedResponse = cleanedResponse.trim();
-                        parsedContent = JSON.parse(cleanedResponse);
+                        parsedContent = JSON.parse(stripFences(aiResponse));
                     } catch (parseError) {
-                        console.error('Failed to parse object response:', parseError);
-                        parsedContent = aiResponse;
+                        console.error(`Failed to parse ${sectionConfig.type} response:`, parseError);
+                        // NO se cae al string crudo. Antes, un objeto ilegible se
+                        // escribía tal cual y rompía la sección igual que el
+                        // array. Se deja `undefined` y la guarda de abajo aborta.
+                        parsedContent = undefined;
                     }
                 } else {
                     parsedContent = aiResponse.trim();
+                }
+
+                // GUARDA DE FORMA — antes de escribir nada.
+                //
+                // El refinamiento reportaba éxito sin mirar QUÉ había devuelto el
+                // modelo. Si la forma no era la que la sección declara, el
+                // contenido bueno se sobrescribía con basura y el chat decía
+                // "refinada exitosamente". Un borrado silencioso con acuse de
+                // recibo es peor que un error.
+                const shapeOk =
+                    sectionConfig.type === 'array'
+                        ? Array.isArray(parsedContent) && parsedContent.length > 0
+                        : sectionConfig.type === 'object'
+                          ? !!parsedContent && typeof parsedContent === 'object' && !Array.isArray(parsedContent)
+                          : typeof parsedContent === 'string' && parsedContent.trim().length > 0;
+
+                if (!shapeOk) {
+                    throw new Error(t('homiletics.errors.refineShape', { section: sectionConfig.label }));
                 }
 
                 const updatedHomiletics = JSON.parse(JSON.stringify(formattedHomiletics));

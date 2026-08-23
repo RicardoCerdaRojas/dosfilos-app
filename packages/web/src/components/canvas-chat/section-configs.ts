@@ -17,6 +17,13 @@ export interface SectionConfig {
     /** Optional description for UI tooltips */
     description?: string;
 
+    /**
+     * Arranca colapsada. Para secciones que son CONTEXTO de referencia y no
+     * contenido que el pastor trabaje ahí: abiertas compiten por atención con
+     * lo que sí está editando.
+     */
+    collapsedByDefault?: boolean;
+
     /** Data type of the section */
     type: 'text' | 'array' | 'object';
 
@@ -100,6 +107,9 @@ export const SECTION_CONFIGS: Record<ContentType, SectionConfig[]> = {
     homiletics: [
         {
             id: 'approach',
+            // Contexto de referencia, no contenido que el pastor trabaje acá:
+            // arranca colapsado para no competir con el contrato.
+            collapsedByDefault: true,
             label: 'Enfoque Homilético',
             path: 'approachDisplay', // 🎯 FIX: Use display field, not selectedApproachId
             description: 'Enfoque homilético seleccionado',
@@ -110,9 +120,13 @@ export const SECTION_CONFIGS: Record<ContentType, SectionConfig[]> = {
         },
         {
             id: 'proposition',
-            label: 'Proposición Homilética',
+            label: 'Proposición y bosquejo',
             path: 'homileticalProposition',
-            description: 'Proposición homilética del sermón',
+            // Su cuerpo lo aporta `sectionBodies` (el editor del contrato):
+            // proposición y títulos de los puntos se editan juntos porque son
+            // un solo contrato. El `path` se mantiene: es lo que refina el chat
+            // y lo que versiona el historial.
+            description: 'Se editan juntos: los puntos heredan el llamado de la proposición',
             type: 'text',
             required: true,
             version: 1
@@ -126,16 +140,15 @@ export const SECTION_CONFIGS: Record<ContentType, SectionConfig[]> = {
             required: true,
             version: 1
         },
-        {
-            id: 'application',
-            label: 'Aplicación Contemporánea',
-            path: 'contemporaryApplication',
-            description: 'Aplicaciones para la audiencia contemporánea',
-            type: 'array',
-            required: true,
-            defaultValue: [],
-            version: 1
-        }
+        // La sección suelta de "Aplicación Contemporánea" se retiró el
+        // 2026-08-23. La aplicación pasó a vivir EN cada punto del bosquejo
+        // (`outline.mainPoints[].application`), una por punto, que es lo que
+        // permite saber a qué punto pertenece cada una.
+        //
+        // Como lista aparte no tenía destino: el prompt del borrador NUNCA leía
+        // `contemporaryApplication` —lo verifiqué recorriendo la función— así
+        // que se generaba, el pastor la editaba, y el sermón se escribía
+        // inventando otras implicaciones desde cero.
     ],
 
     sermon: [

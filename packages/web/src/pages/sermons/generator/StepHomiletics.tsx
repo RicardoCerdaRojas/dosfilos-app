@@ -9,9 +9,10 @@ import { Card } from '@/components/ui/card';
 import { Loader2, ArrowRight, ArrowLeft, Mic2, Sparkles, BookOpen, RefreshCw } from 'lucide-react';
 import { sermonGeneratorService, generatorChatService } from '@dosfilos/application';
 import { toast } from 'sonner';
-import { applyPropositionContract } from '@dosfilos/domain';
+import { applyPropositionContract, applyPastorDirectives, type PastorDirective } from '@dosfilos/domain';
 import { ContentCanvas } from '@/components/canvas-chat/ContentCanvas';
 import { PropositionContractPanel } from './homiletics/PropositionContractPanel';
+import { OutlineDirectivePanel } from './homiletics/OutlineDirectivePanel';
 import { ChatInterface } from '@/components/canvas-chat/ChatInterface';
 import { ResizableChatPanel } from '@/components/canvas-chat/ResizableChatPanel';
 import { useFirebase } from '@/context/firebase-context';
@@ -109,6 +110,19 @@ export function StepHomiletics() {
     const applyContract = (patch: { proposition: string; points: { title: string; srcIndex: number | null }[] }) => {
         if (!homiletics) return;
         setHomiletics(applyPropositionContract(homiletics, patch));
+    };
+
+    /**
+     * Las directivas del pastor, EN UNA SOLA ESCRITURA.
+     *
+     * Escribe sólo los puntos que llegan en `entries`, así el refinamiento por
+     * chat sobre los demás no se pisa. Y llegan juntos a propósito: una llamada
+     * por punto calcularía cada una desde este mismo `homiletics` del render, y
+     * sólo sobreviviría la última.
+     */
+    const applyDirective = (entries: { index: number; directive: PastorDirective | undefined }[]) => {
+        if (!homiletics) return;
+        setHomiletics(applyPastorDirectives(homiletics, entries));
     };
 
     const formattedHomiletics = useMemo(() => {
@@ -368,7 +382,11 @@ export function StepHomiletics() {
             </Card>
         </div>
     ) : (
-        <div className="h-full flex flex-col overflow-hidden">
+        // `flex-1 min-w-0`: esta columna es un ítem flex y sin crecer se ajusta
+        // a su contenido. Al colapsar las tarjetas se encogía y dejaba una
+        // franja muerta a la derecha, con la ventana a medio usar. `min-w-0`
+        // permite que su contenido se recorte en vez de empujar el ancho.
+        <div className="flex-1 min-w-0 h-full flex flex-col overflow-hidden">
             <div className="mb-4 flex-shrink-0 flex items-center justify-between">
                 <div>
                     <h3 className="text-lg font-semibold">{t('homiletics.proposalTitle')}</h3>
@@ -421,24 +439,36 @@ export function StepHomiletics() {
                     </AlertDialog>
                 </div>
             </div>
-            {/* El contrato va ARRIBA del canvas: primero se alinea proposición
-                con puntos, después se refina el detalle de cada punto por chat.
-                No reemplaza al canvas — resuelve lo que el canvas no puede,
-                que es verlos juntos. */}
-            {homiletics && (
-                <div className="flex-shrink-0 pb-4">
-                    <PropositionContractPanel
-                        homiletics={homiletics}
-                        {...(rules?.pastoralSeed?.genre ? { genre: rules.pastoralSeed.genre } : {})}
-                        onApply={applyContract}
-                    />
-                </div>
-            )}
-
             <div className="flex-1 min-h-0">
                 <ContentCanvas
                     content={formattedHomiletics}
                     contentType="homiletics"
+                    // El editor del contrato es el CUERPO de la sección
+                    // 'proposition', no un bloque aparte: así conserva refinar
+                    // por chat, historial y undo/redo, y deja de duplicar en
+                    // pantalla lo que la tarjeta ya mostraba.
+                    sectionBodies={
+                        homiletics
+                            ? {
+                                  proposition: (
+                                      <PropositionContractPanel
+                                          homiletics={homiletics}
+                                          {...(rules?.pastoralSeed?.genre ? { genre: rules.pastoralSeed.genre } : {})}
+                                          onApply={applyContract}
+                                      />
+                                  ),
+                                  // El bosquejo era solo-lectura: no había
+                                  // dónde el pastor escribiera su dirección
+                                  // sobre cada punto, sólo pedírsela al chat.
+                                  outline: (
+                                      <OutlineDirectivePanel
+                                          homiletics={homiletics}
+                                          onApply={applyDirective}
+                                      />
+                                  ),
+                              }
+                            : {}
+                    }
                     expandedSectionId={expandedSectionId}
                     onSectionExpand={(sectionId) => {
                         setExpandedSectionId(sectionId);

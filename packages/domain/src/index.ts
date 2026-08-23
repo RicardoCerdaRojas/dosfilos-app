@@ -77,6 +77,8 @@ export * from './sermon-judge/propositionContract';
 // Puente entre la proposición YA ESCRITA y los 8 elementos que el contrato juzga.
 export * from './sermon-judge/parseSustantivada';
 export * from './sermon-judge/applyPropositionContract';
+// La directiva del pastor por punto: el único campo del bosquejo que el agente no escribe.
+export * from './sermon-judge/pastorDirective';
 // 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent
 export * from './guided-sermon/SocraticTurn';
 export * from './guided-sermon/GuidedSermonSession';

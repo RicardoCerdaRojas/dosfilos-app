@@ -27,6 +27,16 @@ interface ContentCanvasProps<T = any> {
   modifiedSections?: Set<string>;
   onSectionUpdate?: (sectionId: string, newContent: any) => void;
   onRegenerate?: (sectionId: string, itemIndex?: number) => void;
+  /**
+   * Cuerpo propio por sección, en vez del render genérico por tipo.
+   *
+   * Permite que una sección tenga su editor a medida SIN salir de la tarjeta,
+   * conservando refinar por chat, historial y undo/redo. La alternativa —
+   * renderizarlo al lado del canvas— duplicaba en pantalla lo que la tarjeta ya
+   * mostraba, y encima le comía la altura al canvas (es `h-full` con su propio
+   * scroll), dejando las tarjetas de abajo inalcanzables.
+   */
+  sectionBodies?: Record<string, React.ReactNode>;
 }
 
 /**
@@ -53,10 +63,13 @@ export function ContentCanvas<T = any>({
   onRestoreVersion,
   modifiedSections = new Set(),
   onSectionUpdate,
-  onRegenerate
+  onRegenerate,
+  sectionBodies,
 }: ContentCanvasProps<T>) {
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const sections: SectionConfig[] = getSectionsForType(contentType);
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+    () => new Set(sections.filter((x) => x.collapsedByDefault).map((x) => x.id)),
+  );
 
   // 🎯 Initialize readonly sections as collapsed
   useEffect(() => {
@@ -147,12 +160,11 @@ export function ContentCanvas<T = any>({
               key={section.id}
               section={section}
               content={sectionContent}
-              fullContent={content} // 🎯 NEW: Pass full content for related fields
-              contentType={contentType} // 🎯 NEW: Pass content type
               onExpand={() => onSectionExpand(section.id)}
               isModified={isModified}
               isCollapsed={isCollapsed}
               onToggleCollapse={() => toggleCollapse(section.id)}
+              {...(sectionBodies?.[section.id] ? { customBody: sectionBodies[section.id] } : {})}
             />
           );
         })}

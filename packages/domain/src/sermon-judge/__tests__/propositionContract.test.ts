@@ -105,15 +105,19 @@ describe('confrontProposition — contra los 8', () => {
 });
 
 describe('elemento 8 — los puntos heredan el llamado (G3 en miniatura)', () => {
-    it('un punto que no recoge el llamado se confronta y refina G3', () => {
+    it('un punto que no recoge el llamado se SEÑALA, pero no descalifica', () => {
         const r = confrontProposition({
             draft: draftCompleto({
                 puntos: ['Debes obedecer yendo', 'La iglesia primitiva creció mucho', 'Debes obedecer reconociendo su autoridad'],
             }),
             estructura: epistola,
         });
+        // GUÍA, no violación: el cotejo es por raíz verbal, una vara tosca sobre
+        // una relación sutil. Una proposición correcta cuyos puntos heredan por
+        // el SUSTANTIVO ("dos realidades" → "Dios habla…", "El hombre
+        // desobedece…") no debe ser acusada de incumplir.
         const h = r.hallazgos.find(x => x.clase === 'punto-sin-llamado')!;
-        expect(h).toMatchObject({ esViolacion: true, refina: 'G3', referencia: 'punto 2' });
+        expect(h).toMatchObject({ esViolacion: false, referencia: 'punto 2' });
     });
 
     it('la herencia se coteja por RAÍZ: "obedecer" engancha "obedeciendo" y "obedece"', () => {
@@ -176,5 +180,35 @@ describe('assemblePropositionDraft', () => {
 
     it('null si falta un obligatorio: una proposición con huecos invita a aceptarla como está', () => {
         expect(assemblePropositionDraft({ pasaje: 'Mateo 28' })).toBeNull();
+    });
+});
+
+describe('herencia del llamado — se señala la INCONSISTENCIA, no la ausencia', () => {
+    it('si NINGÚN punto recoge el verbo, no se dice nada (hereda por otra ruta)', () => {
+        // Caso real del fundador: "dos REALIDADES del conflicto que deben
+        // guiarnos a la obediencia", con puntos "Dios habla…" / "El hombre
+        // desobedece…". Heredan por el SUSTANTIVO. Marcar los dos entrena al
+        // pastor a ignorar el panel.
+        const r = confrontProposition({
+            draft: draftCompleto({
+                llamadoALaAccion: 'guiar',
+                puntos: ['I. Dios habla y revela su voluntad', 'II. El hombre desobedece'],
+                cantidadDePuntos: 2,
+            }),
+            estructura: null,
+        });
+        expect(r.hallazgos.some(h => h.clase === 'punto-sin-llamado')).toBe(false);
+    });
+
+    it('si unos heredan y otros no, SÍ se señala: eso es inconsistencia dentro del bosquejo', () => {
+        const r = confrontProposition({
+            draft: draftCompleto({
+                puntos: ['Debes obedecer yendo', 'La iglesia creció mucho', 'Debes obedecer reconociendo'],
+            }),
+            estructura: null,
+        });
+        const marcados = r.hallazgos.filter(h => h.clase === 'punto-sin-llamado');
+        expect(marcados).toHaveLength(1);
+        expect(marcados[0]!.referencia).toBe('punto 2');
     });
 });

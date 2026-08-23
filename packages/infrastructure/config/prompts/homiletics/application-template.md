@@ -13,10 +13,20 @@ Las aplicaciones contemporáneas son **acciones específicas y concretas** que l
 
 ## 📐 Estructura Requerida
 
-### **Cantidad**
-- **Mínimo:** 3 aplicaciones
-- **Óptimo:** 4-5 aplicaciones
-- **Distribución:** Repartidas a lo largo del bosquejo
+### **Cantidad — la marca el BOSQUEJO, no un número fijo**
+
+> **Corrección 2026-08-22.** Antes se pedían "4-5 aplicaciones repartidas a lo largo
+> del bosquejo". Un número fijo produce aplicaciones que no corresponden a nada: con
+> tres puntos salían cinco aplicaciones sueltas, y el pastor no podía saber cuál
+> aterrizaba cuál punto.
+
+- **UNA APLICACIÓN POR PUNTO DEL BOSQUEJO**, en el MISMO ORDEN que los puntos.
+- Cada una aterriza lo que **ESE** punto predica, no el sermón en general.
+- **Una aplicación que no se puede rastrear a un punto no pertenece a este sermón.**
+  Si sobra, es que estás predicando algo que el bosquejo no dice.
+- Si un punto rinde dos aplicaciones genuinamente distintas, pueden ir dos — pero
+  cada una sigue perteneciendo a su punto. Lo que no se hace es rellenar hasta un
+  número.
 
 ### **Características de Cada Aplicación**
 
