@@ -259,16 +259,49 @@ export function SectionElementsPanel(props: Props) {
                     <ul className="space-y-1.5">
                         {decided.map((e) => (
                             <li key={e.id} className="flex items-start gap-2 text-sm">
-                                <button
-                                    type="button"
-                                    onClick={() => flipKind(e.id)}
-                                    className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${e.kind === 'directiva' ? 'bg-muted text-muted-foreground' : BADGE[e.provenance]}`}
-                                    title={t('drafting.elements.flipKind')}
+                                {/* UN INTERRUPTOR DE DOS ESTADOS, NO UNA ETIQUETA.
+                                    Antes esto era una sola insignia que cambiaba
+                                    al hacerle clic. Funcionaba, pero PARECÍA una
+                                    etiqueta: nada decía que se podía tocar, así
+                                    que una mala clasificación se quedaba puesta
+                                    y desmedía la autoría en silencio.
+
+                                    Mostrar los dos estados a la vez —el activo
+                                    resaltado, el otro apagado— hace visible que
+                                    hay una elección, sin una línea de texto
+                                    explicativo. La cara de "idea" lleva la
+                                    PROCEDENCIA (Tuya · Elegida · Editada), así
+                                    que el interruptor no pierde información. */}
+                                <span
+                                    role="group"
+                                    aria-label={t('drafting.elements.flipKind')}
+                                    className="shrink-0 inline-flex rounded border border-border/70 overflow-hidden text-[11px] leading-none"
                                 >
-                                    {e.kind === 'directiva'
-                                        ? t('drafting.elements.kind.directiva')
-                                        : t(`drafting.elements.provenance.${e.provenance}`)}
-                                </button>
+                                    <button
+                                        type="button"
+                                        aria-pressed={e.kind === 'elemento'}
+                                        onClick={() => e.kind !== 'elemento' && flipKind(e.id)}
+                                        className={`px-1.5 py-1 transition-colors ${
+                                            e.kind === 'elemento'
+                                                ? BADGE[e.provenance]
+                                                : 'text-muted-foreground/60 hover:bg-muted/60'
+                                        }`}
+                                    >
+                                        {t(`drafting.elements.provenance.${e.provenance}`)}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        aria-pressed={e.kind === 'directiva'}
+                                        onClick={() => e.kind !== 'directiva' && flipKind(e.id)}
+                                        className={`px-1.5 py-1 transition-colors border-l border-border/70 ${
+                                            e.kind === 'directiva'
+                                                ? 'bg-muted text-foreground'
+                                                : 'text-muted-foreground/60 hover:bg-muted/60'
+                                        }`}
+                                    >
+                                        {t('drafting.elements.kind.directiva')}
+                                    </button>
+                                </span>
                                 <span className="text-foreground/90 flex-1">{e.text}</span>
                                 <button
                                     type="button"

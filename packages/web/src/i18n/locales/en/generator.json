@@ -440,7 +440,7 @@
       "kind": {
         "directiva": "Topic"
       },
-      "flipKind": "Is this your own idea, not a topic? Click to change it."
+      "flipKind": "Switch between your own idea and a topic to cover"
     },
     "sections": {
       "exposition": {
