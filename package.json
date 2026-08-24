@@ -25,6 +25,7 @@
     "compliance:staged": "./scripts/check-compliance.sh --staged",
     "compliance:gemini-sdk": "./scripts/check-gemini-sdk-boundary.sh",
     "compliance:i18n": "./scripts/check-i18n-hardcoded.sh",
+    "compliance:secrets": "./scripts/check-functions-secrets.sh",
     "compliance:soft": "./scripts/check-compliance.sh --soft",
     "prepare": "husky install",
     "migrate:plans": "node scripts/migrate-plans-phase1.js",
