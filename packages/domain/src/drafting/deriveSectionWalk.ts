@@ -150,15 +150,23 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
         status: 'pendiente',
     });
 
-    // El título nombra lo que ya se dijo, así que va al final — y si la
-    // proposición ya está escrita, no hay nada que decidir acá.
-    const prop = cubierta([input.proposition]);
+    // EL TÍTULO SIEMPRE SE PREGUNTA, y la proposición NO lo responde.
+    //
+    // Son cosas distintas: la proposición es la TESIS del sermón —qué afirma—;
+    // el título es cómo se LLAMA. Darlo por cubierto con la proposición fue un
+    // error: el fundador nunca escribe el título en todo el proceso, lo produce
+    // el generador del borrador ("El Dios que Persigue al Rebelde"). Es
+    // exactamente lo que este flujo existe para corregir — una decisión que
+    // aparece en el sermón sin que nadie la haya tomado.
+    //
+    // La proposición viaja como CONTEXTO, igual que las directivas del bosquejo:
+    // orienta el título sin sustituirlo.
     secciones.push({
         id: 'title',
         labelKey: `${NS}.title.label`,
         jobKey: `${NS}.title.job`,
-        status: prop.length > 0 ? 'cubierta' : 'pendiente',
-        coveredBy: prop.length > 0 ? prop : undefined,
+        status: 'pendiente',
+        coveredBy: cubierta([input.proposition]),
     });
 
     return secciones;

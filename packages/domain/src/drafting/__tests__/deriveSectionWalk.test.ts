@@ -68,8 +68,13 @@ describe('deriveSectionWalk — con el bosquejo real de Jonás', () => {
         expect(exp?.coveredBy?.join(' ')).toContain('personifica a la nave');
     });
 
-    it('el título está cubierto porque su proposición ya existe', () => {
-        expect(walk.find((s) => s.id === 'title')?.status).toBe('cubierta');
+    it('el título SIEMPRE se pregunta: la proposición no lo responde', () => {
+        // Son cosas distintas —la proposición afirma, el título nombra— y hoy
+        // el título lo produce el generador sin que el pastor lo decida nunca.
+        const titulo = walk.find((s) => s.id === 'title');
+        expect(titulo?.status).toBe('pendiente');
+        // Pero la proposición viaja como contexto para orientarlo.
+        expect(titulo?.coveredBy?.[0]).toContain('dos realidades del conflicto');
     });
 
     it('la ilustración de apertura queda pendiente si no la escribió en el paso 8', () => {
@@ -115,7 +120,7 @@ describe('deriveSectionWalk — bordes', () => {
     it('pendingSections deja fuera lo que ya es suyo', () => {
         const pendientes = pendingSections(deriveSectionWalk(JONAS)).map((s) => s.id);
         expect(pendientes).not.toContain('point.1.application');
-        expect(pendientes).not.toContain('title');
+        expect(pendientes).toContain('title');
         expect(pendientes).toContain('point.1.exposition');
     });
 });
