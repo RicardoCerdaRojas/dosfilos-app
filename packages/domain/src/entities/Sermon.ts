@@ -89,6 +89,18 @@ export interface Sermon {
          * autoría debe distinguir "sin medir" de "medido en cero".
          */
         sectionElements?: Record<string, SermonElement[]>;
+        /**
+         * ADR-037 — la prosa escrita a partir de las decisiones, por sección.
+         *
+         * Se guarda APARTE de `sectionElements` a propósito. Son dos cosas con
+         * ciclos de vida distintos: las decisiones son del pastor y persisten;
+         * la prosa es derivada y se puede volver a escribir sin perderlas. Si
+         * vivieran juntas, reescribir una sección arriesgaría pisar lo decidido.
+         *
+         * Mismas claves y las mismas cautelas que `sectionElements`: se escribe
+         * el mapa entero, nunca por ruta de campo.
+         */
+        sectionProse?: Record<string, string>;
         // Track if this draft has been published
         publishedCopyId?: string;  // ID of the most recent published copy
         lastPublishedAt?: Date;    // When it was last published

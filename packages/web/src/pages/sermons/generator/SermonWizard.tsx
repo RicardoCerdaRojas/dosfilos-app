@@ -18,7 +18,7 @@ import { pastoralSeedService } from '@dosfilos/application';
 import { toast } from 'sonner';
 
 function WizardContent() {
-    const { step, setStep, passage, setPassage, setExegesis, setHomiletics, setDraft, sermonId, setSermonId, derivedContext, setDerivedContext, restoreSectionElements, rules, setRules, reset } = useWizard();
+    const { step, setStep, passage, setPassage, setExegesis, setHomiletics, setDraft, sermonId, setSermonId, derivedContext, setDerivedContext, restoreSectionElements, restoreSectionProse, rules, setRules, reset } = useWizard();
     const { user } = useFirebase();
     const [searchParams] = useSearchParams();
     const [inProgressSermons, setInProgressSermons] = useState<SermonEntity[]>([]);
@@ -131,6 +131,7 @@ function WizardContent() {
                             if (progress.derivedContext) setDerivedContext(progress.derivedContext);
                             // ADR-037 — las decisiones de redacción sobreviven la recarga.
                             if (progress.sectionElements) restoreSectionElements(progress.sectionElements);
+                            if (progress.sectionProse) restoreSectionProse(progress.sectionProse);
                             if (progress.personalization || progress.audienceRigor) {
                                 setRules({
                                     ...rules,
@@ -211,6 +212,7 @@ function WizardContent() {
         if (progress.derivedContext) setDerivedContext(progress.derivedContext);
                             // ADR-037 — las decisiones de redacción sobreviven la recarga.
                             if (progress.sectionElements) restoreSectionElements(progress.sectionElements);
+                            if (progress.sectionProse) restoreSectionProse(progress.sectionProse);
         if (progress.personalization || progress.audienceRigor) {
             setRules({
                 ...rules,

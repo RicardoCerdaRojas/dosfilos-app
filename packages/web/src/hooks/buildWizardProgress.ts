@@ -13,6 +13,7 @@ export interface WizardState {
     personalization?: SermonPersonalization | null;
     audienceRigor?: 'beginner' | 'seminary' | null;
     sectionElements?: Record<string, SermonElement[]> | null;
+    sectionProse?: Record<string, string> | null;
 }
 
 function hasAnyField(p: SermonPersonalization): boolean {
@@ -88,6 +89,12 @@ export function buildWizardProgress(wizardState: WizardState): WizardProgress {
     // regla: omitir una clave nunca es una forma de borrarla.
     if (wizardState.sectionElements) {
         progress.sectionElements = wizardState.sectionElements;
+    }
+
+    // Misma regla que arriba: una sección cuya prosa se borró se escribe vacía,
+    // porque omitirla dejaría intacta la anterior.
+    if (wizardState.sectionProse) {
+        progress.sectionProse = wizardState.sectionProse;
     }
 
     return progress;

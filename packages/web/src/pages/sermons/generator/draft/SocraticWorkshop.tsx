@@ -11,6 +11,9 @@ interface Props {
     elements: Record<string, SermonElement[]>;
     onSelectSection: (sectionId: string) => void;
     onChangeElements: (sectionId: string, elements: SermonElement[]) => void;
+    prose: Record<string, string>;
+    onChangeProse: (sectionId: string, prose: string) => void;
+    audienceRigor?: 'beginner' | 'seminary';
     passage: string;
     proposition?: string;
     points?: readonly string[];
@@ -89,6 +92,9 @@ export function SocraticWorkshop(props: Props) {
                     points={props.points}
                     elements={props.elements[props.activeSection.id] ?? []}
                     onChange={(els) => props.onChangeElements(props.activeSection.id, els)}
+                    prose={props.prose[props.activeSection.id]}
+                    onProseChange={(texto) => props.onChangeProse(props.activeSection.id, texto)}
+                    audienceRigor={props.audienceRigor}
                 />
             </div>
         </div>

@@ -112,3 +112,29 @@ describe('sectionElements — las claves con punto son seguras SÓLO escritas en
         ]);
     });
 });
+
+describe('sectionProse — la prosa se guarda APARTE de las decisiones', () => {
+    const base = { step: 3, passage: 'Jonás 1:1-3', exegesis: null, homiletics: null, draft: null };
+
+    it('un sermón sin prosa escrita no crea la clave', () => {
+        expect(buildWizardProgress({ ...base }).sectionProse).toBeUndefined();
+    });
+
+    it('persiste la prosa junto a las decisiones, sin mezclarlas', () => {
+        // Ciclos de vida distintos: las decisiones son del pastor y persisten;
+        // la prosa es derivada y se reescribe. Juntas, reescribir arriesgaría
+        // pisar lo decidido.
+        const p = buildWizardProgress({
+            ...base,
+            sectionElements: { 'point.1.exposition': [] },
+            sectionProse: { 'point.1.exposition': 'Dios habló a Jonás sin rodeos.' },
+        });
+        expect(p.sectionElements).toBeDefined();
+        expect(p.sectionProse).toEqual({ 'point.1.exposition': 'Dios habló a Jonás sin rodeos.' });
+    });
+
+    it('una sección cuya prosa se borró se escribe vacía, no se omite', () => {
+        const p = buildWizardProgress({ ...base, sectionProse: { 'point.1.exposition': '' } });
+        expect(p.sectionProse).toEqual({ 'point.1.exposition': '' });
+    });
+});

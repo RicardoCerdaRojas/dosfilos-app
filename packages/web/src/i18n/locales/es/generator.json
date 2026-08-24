@@ -498,6 +498,12 @@
     "tabs": {
       "draft": "Borrador",
       "workshop": "Taller"
+    },
+    "prose": {
+      "write": "Escribir esta sección",
+      "rewrite": "Volver a escribirla",
+      "label": "La prosa de esta sección",
+      "failed": "No se pudo escribir. Tus decisiones siguen guardadas."
     }
   },
   "pastoralContext": {
