@@ -8,7 +8,7 @@ import { DraftSkeletonPreview } from './DraftSkeletonPreview';
 import { IllustrationDuplicateBanner } from './IllustrationDuplicateBanner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload, BookOpen, RefreshCw, Lightbulb } from 'lucide-react';
+import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload, BookOpen, RefreshCw } from 'lucide-react';
 import {
     sermonGeneratorService,
     sermonService,
@@ -42,6 +42,7 @@ import { useContentHistory } from '@/hooks/useContentHistory';
 import { useGeneratorChat } from '@/hooks/useGeneratorChat';
 import { MarkdownRenderer } from '@/components/canvas-chat/MarkdownRenderer';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
 import { SermonBibliographySection } from '@/components/sermons/SermonBibliographySection';
@@ -67,8 +68,7 @@ import { buildSermonCitationManifest } from './draft/buildSermonCitationManifest
 import { CitationManifestContext } from '@/lib/citationMarkers';
 import { useDraftRefinement } from './draft/useDraftRefinement';
 import { useDraftVersions } from './draft/useDraftVersions';
-import { SectionElementsPanel } from './draft/SectionElementsPanel';
-import { SermonMap } from './draft/SermonMap';
+import { SocraticWorkshop } from './draft/SocraticWorkshop';
 import { HomileticsSavedIndicator } from './homiletics/HomileticsLoadingScreen';
 
 export function StepDraft() {
@@ -83,7 +83,6 @@ export function StepDraft() {
     // bien, así que el esquema deja de ser provisional.
     const socraticGate = useFeatureFlag('socratic_drafting');
     const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-    const [socraticOpen, setSocraticOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
     // Pre-publish citation verification state (PR #218).
@@ -533,105 +532,23 @@ export function StepDraft() {
         socraticWalk[0];
 
     const socraticPanel = socraticGate.enabled && homiletics && activeSection ? (
-        <div className="flex gap-4 items-start">
-            <SermonMap
-                walk={socraticWalk}
-                elements={sectionElements}
-                activeId={activeSection.id}
-                onSelect={setActiveSectionId}
-            />
-            <div className="flex-1 min-w-0">
-                <SectionElementsPanel
-                    section={activeSection}
-                    passage={passage}
-                    proposition={homiletics.homileticalProposition}
-                    points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
-                    elements={sectionElements[activeSection.id] ?? []}
-                    onChange={(els) => setSectionElements(activeSection.id, els)}
-                />
-            </div>
-        </div>
+        <SocraticWorkshop
+            walk={socraticWalk}
+            activeSection={activeSection}
+            elements={sectionElements}
+            onSelectSection={setActiveSectionId}
+            onChangeElements={setSectionElements}
+            passage={passage}
+            proposition={homiletics.homileticalProposition}
+            points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
+        />
     ) : null;
 
-    const leftPanel = !draft ? (
-        // overflow-y-auto so the "Generar Borrador" CTA stays reachable
-        // when SermonPersonalizationPanel is expanded — without scroll
-        // the panel's accordion body pushes the button below the
-        // viewport with no way to reach it short of collapsing the panel.
-        <div className="h-full flex flex-col overflow-y-auto">
-            <div className="space-y-4 mb-6">
-                <div className="flex items-center gap-2">
-                    <FileText className="h-6 w-6 text-primary" />
-                    <h2 className="text-2xl font-bold">{t('drafting.title')}</h2>
-                </div>
-                <p className="text-muted-foreground">{t('drafting.subtitle')}</p>
-            </div>
-
-            <Card className="p-6 space-y-4 bg-muted/50 mb-6">
-                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-                    {t('drafting.homileticalProposition')}
-                </h3>
-                <div className="text-lg font-medium italic">
-                    <MarkdownRenderer content={homiletics.homileticalProposition} />
-                </div>
-
-                {homiletics.outline?.mainPoints && homiletics.outline.mainPoints.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-border/50">
-                        <h4 className="font-semibold text-sm text-muted-foreground mb-2">
-                            {t('drafting.outlinePoints')}
-                        </h4>
-                        <ul className="space-y-1.5 text-sm">
-                            {homiletics.outline.mainPoints.map((point: any, index: number) => (
-                                <li key={index} className="flex items-start gap-2">
-                                    <span className="text-primary mt-0.5">▪</span>
-                                    <span className="text-foreground/90">{point.title}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-            </Card>
-
-            {socraticPanel}
-
-            <div className="mb-6">
-                <SermonPersonalizationPanel />
-            </div>
-
-            <Card className="p-6 flex-1 flex flex-col justify-center">
-                <div className="text-center space-y-6">
-                    <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                        <FileText className="h-8 w-8 text-primary" />
-                    </div>
-                    <div>
-                        <h3 className="font-semibold mb-2">{t('drafting.readyToGenerate')}</h3>
-                        <p className="text-sm text-muted-foreground">{t('drafting.readyDesc')}</p>
-                    </div>
-                    <Button onClick={handleGenerate} disabled={loading} size="lg" className="w-full max-w-md mx-auto">
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        {t('drafting.generateBtn')}
-                    </Button>
-                </div>
-            </Card>
-        </div>
-    ) : (
-        <div className="flex flex-col gap-4 overflow-hidden p-4" style={{ height: 'calc(100vh - 130px)' }}>
-            {socraticPanel && (
-                <div className="shrink-0">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSocraticOpen((v) => !v)}
-                        className="mb-2"
-                    >
-                        <Lightbulb className="h-4 w-4 mr-1.5" />
-                        {t('drafting.elements.toggle')}
-                    </Button>
-                    {socraticOpen && (
-                        <div className="max-h-[45vh] overflow-y-auto">{socraticPanel}</div>
-                    )}
-                </div>
-            )}
+    // Se define acá arriba para poder envolverlo en pestañas sin re-indentar
+    // 180 líneas. El ternario estrecha `draft`: dentro de la rama verdadera ya
+    // no es null, igual que en la rama original del render.
+    const draftBody = draft ? (
+        <>
             <IllustrationDuplicateBanner draft={draft} />
             <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
                 <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
@@ -800,6 +717,95 @@ export function StepDraft() {
                     )}
                 </ResizableChatPanel>
             </div>
+        </>
+    ) : null;
+
+    const leftPanel = !draft ? (
+        // overflow-y-auto so the "Generar Borrador" CTA stays reachable
+        // when SermonPersonalizationPanel is expanded — without scroll
+        // the panel's accordion body pushes the button below the
+        // viewport with no way to reach it short of collapsing the panel.
+        <div className="h-full flex flex-col overflow-y-auto">
+            <div className="space-y-4 mb-6">
+                <div className="flex items-center gap-2">
+                    <FileText className="h-6 w-6 text-primary" />
+                    <h2 className="text-2xl font-bold">{t('drafting.title')}</h2>
+                </div>
+                <p className="text-muted-foreground">{t('drafting.subtitle')}</p>
+            </div>
+
+            <Card className="p-6 space-y-4 bg-muted/50 mb-6">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
+                    {t('drafting.homileticalProposition')}
+                </h3>
+                <div className="text-lg font-medium italic">
+                    <MarkdownRenderer content={homiletics.homileticalProposition} />
+                </div>
+
+                {homiletics.outline?.mainPoints && homiletics.outline.mainPoints.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-border/50">
+                        <h4 className="font-semibold text-sm text-muted-foreground mb-2">
+                            {t('drafting.outlinePoints')}
+                        </h4>
+                        <ul className="space-y-1.5 text-sm">
+                            {homiletics.outline.mainPoints.map((point: any, index: number) => (
+                                <li key={index} className="flex items-start gap-2">
+                                    <span className="text-primary mt-0.5">▪</span>
+                                    <span className="text-foreground/90">{point.title}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </Card>
+
+            {socraticPanel}
+
+            <div className="mb-6">
+                <SermonPersonalizationPanel />
+            </div>
+
+            <Card className="p-6 flex-1 flex flex-col justify-center">
+                <div className="text-center space-y-6">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                        <FileText className="h-8 w-8 text-primary" />
+                    </div>
+                    <div>
+                        <h3 className="font-semibold mb-2">{t('drafting.readyToGenerate')}</h3>
+                        <p className="text-sm text-muted-foreground">{t('drafting.readyDesc')}</p>
+                    </div>
+                    <Button onClick={handleGenerate} disabled={loading} size="lg" className="w-full max-w-md mx-auto">
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        {t('drafting.generateBtn')}
+                    </Button>
+                </div>
+            </Card>
+        </div>
+    ) : (
+        <div className="flex flex-col gap-4 overflow-hidden p-4" style={{ height: 'calc(100vh - 130px)' }}>
+            {/* PESTAÑAS Y NO UN PANEL ENCIMA. Con el taller abierto sobre el
+                borrador los dos competían por la misma altura y ninguno se leía
+                entero. Son dos modos de trabajo —decidir ideas versus revisar
+                prosa— y ninguno necesita ver al otro a la vez. El borrador queda
+                de primero: es donde el pastor ya estaba.
+                Los botones del paso quedan FUERA de las pestañas: navegar y
+                publicar no dependen del modo en que se esté trabajando. */}
+            {socraticPanel ? (
+                <Tabs defaultValue="draft" className="flex-1 min-h-0 flex flex-col">
+                    <TabsList className="self-start shrink-0">
+                        <TabsTrigger value="draft">{t('drafting.tabs.draft')}</TabsTrigger>
+                        <TabsTrigger value="workshop">{t('drafting.tabs.workshop')}</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="draft" className="flex-1 min-h-0 flex flex-col gap-4 mt-3">
+                        {draftBody}
+                    </TabsContent>
+                    <TabsContent value="workshop" className="flex-1 min-h-0 overflow-y-auto mt-3">
+                        {socraticPanel}
+                    </TabsContent>
+                </Tabs>
+            ) : (
+                draftBody
+            )}
 
             <div className="flex-shrink-0 flex gap-2">
                 <Button onClick={() => setStep(2)} variant="outline" size="lg" className="flex-1">

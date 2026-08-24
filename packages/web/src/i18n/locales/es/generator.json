@@ -429,7 +429,6 @@
         "editado": "Editada",
         "descartado": "Descartada"
       },
-      "toggle": "Taller de contexto histórico",
       "onePerLine": "Una idea por línea. Puedes escribir varias y agregarlas de una vez.",
       "remove": "Quitar",
       "shape": {
@@ -487,6 +486,10 @@
       "statusDone": "Lista",
       "statusPending": "Pendiente",
       "statusCovered": "Tuya"
+    },
+    "tabs": {
+      "draft": "Borrador",
+      "workshop": "Taller"
     }
   },
   "pastoralContext": {

@@ -429,7 +429,6 @@
         "editado": "Edited",
         "descartado": "Discarded"
       },
-      "toggle": "Historical-context workshop",
       "onePerLine": "One idea per line. Write several and add them all at once.",
       "remove": "Remove",
       "shape": {
@@ -487,6 +486,10 @@
       "statusDone": "Done",
       "statusPending": "Pending",
       "statusCovered": "Yours"
+    },
+    "tabs": {
+      "draft": "Draft",
+      "workshop": "Workshop"
     }
   },
   "pastoralContext": {
