@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { cn } from '@/lib/utils';
+import { CitationQuote } from './CitationQuote';
 import { BiblePassageViewer } from '@/components/bible/BiblePassageViewer';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import { CitationManifestContext, CitationMarker, wrapCitationMarkers } from '@/lib/citationMarkers';
@@ -124,6 +125,23 @@ export function MarkdownRenderer({ content, className, enableBibleLinks = true, 
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeRaw]}
           components={{
+            /**
+             * Sólo las CITAS DE LA BIBLIOTECA reciben el botón de traducción.
+             *
+             * El sermón usa blockquotes para otras cosas —el texto de las
+             * referencias cruzadas, sobre todo—, y ofrecer "traducir" sobre un
+             * versículo en español sería ruido. La firma de una cita la pone
+             * `injectNarrativeCitationAnchors`: el texto va entre «» y la última
+             * línea es la atribución, que empieza con raya.
+             */
+            blockquote: ({ node, children, ...props }: any) => {
+              const crudo = String((node?.children ?? [])
+                .map((c: any) => (c.children ?? []).map((g: any) => g.value ?? '').join(''))
+                .join('\n'));
+              const esCita = crudo.includes('«') && /^—/m.test(crudo);
+              if (!esCita) return <blockquote {...props}>{children}</blockquote>;
+              return <CitationQuote {...props}>{children}</CitationQuote>;
+            },
             span: ({ node, ...props }: any) => {
               if (hasCitations && props['data-cite-id']) {
                 return <CitationMarker {...props} />;

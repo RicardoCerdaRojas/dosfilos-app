@@ -82,6 +82,12 @@ export const PROXY_FEATURES = [
     'sermon.generateHomiletics',
     'sermon.generateDraft',
     'sermon.regeneratePoint',
+    // Traducir una cita de la biblioteca al idioma del pastor, BAJO DEMANDA.
+    // Llamada corta y esporádica: se dispara sólo cuando él pulsa "Ver en
+    // español" sobre un excerpt en otro idioma, no al generar el borrador.
+    // Corte propio en el panel de costos para poder distinguirla de las
+    // llamadas grandes del wizard, con las que no tiene nada que ver.
+    'sermon.translateCitation',
     'sermon.homileticsPreview',
     'sermon.developApproach',
     // Tanda 3 (exégesis), parte 1 — compositores de sección y de artefactos
