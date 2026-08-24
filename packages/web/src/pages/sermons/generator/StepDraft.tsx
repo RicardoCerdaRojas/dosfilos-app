@@ -8,7 +8,7 @@ import { DraftSkeletonPreview } from './DraftSkeletonPreview';
 import { IllustrationDuplicateBanner } from './IllustrationDuplicateBanner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload, BookOpen, RefreshCw } from 'lucide-react';
+import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload, BookOpen, RefreshCw, Lightbulb } from 'lucide-react';
 import {
     sermonGeneratorService,
     sermonService,
@@ -82,6 +82,7 @@ export function StepDraft() {
     // esquema en Firestore sería comprometerse con una forma que quizá cambie.
     const socraticGate = useFeatureFlag('socratic_drafting');
     const [contextElements, setContextElements] = useState<SermonElement[]>([]);
+    const [socraticOpen, setSocraticOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
     // Pre-publish citation verification state (PR #218).
@@ -495,6 +496,28 @@ export function StepDraft() {
         );
     }
 
+    /**
+     * ADR-037 — el taller socrático. Alcanzable en LAS DOS ramas del paso.
+     *
+     * Montarlo sólo antes de generar lo dejaba invisible para todo sermón que
+     * ya tiene borrador, que es justamente el caso donde el pastor tiene
+     * proposición y puntos — el material que hace útil la propuesta. Sobre el
+     * borrador va PLEGADO: el canvas ya ocupa la altura completa y un panel
+     * abierto encima empujaría el texto fuera de la vista.
+     */
+    const socraticPanel = socraticGate.enabled && homiletics ? (
+        <SectionElementsPanel
+            sectionId="introduction.historicalContext"
+            sectionLabel={t('drafting.elements.sectionLabel')}
+            sectionJob={t('drafting.elements.sectionJob')}
+            passage={passage}
+            proposition={homiletics.homileticalProposition}
+            points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
+            elements={contextElements}
+            onChange={setContextElements}
+        />
+    ) : null;
+
     const leftPanel = !draft ? (
         // overflow-y-auto so the "Generar Borrador" CTA stays reachable
         // when SermonPersonalizationPanel is expanded — without scroll
@@ -534,18 +557,7 @@ export function StepDraft() {
                 )}
             </Card>
 
-            {socraticGate.enabled && (
-                <SectionElementsPanel
-                    sectionId="introduction.historicalContext"
-                    sectionLabel={t('drafting.elements.sectionLabel')}
-                    sectionJob={t('drafting.elements.sectionJob')}
-                    passage={passage}
-                    proposition={homiletics.homileticalProposition}
-                    points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
-                    elements={contextElements}
-                    onChange={setContextElements}
-                />
-            )}
+            {socraticPanel}
 
             <div className="mb-6">
                 <SermonPersonalizationPanel />
@@ -569,6 +581,22 @@ export function StepDraft() {
         </div>
     ) : (
         <div className="flex flex-col gap-4 overflow-hidden p-4" style={{ height: 'calc(100vh - 130px)' }}>
+            {socraticPanel && (
+                <div className="shrink-0">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSocraticOpen((v) => !v)}
+                        className="mb-2"
+                    >
+                        <Lightbulb className="h-4 w-4 mr-1.5" />
+                        {t('drafting.elements.toggle')}
+                    </Button>
+                    {socraticOpen && (
+                        <div className="max-h-[45vh] overflow-y-auto">{socraticPanel}</div>
+                    )}
+                </div>
+            )}
             <IllustrationDuplicateBanner draft={draft} />
             <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
                 <div className="flex-1 min-w-0 flex flex-col overflow-hidden">

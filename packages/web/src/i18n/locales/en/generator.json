@@ -429,7 +429,8 @@
         "elegido": "Chosen",
         "editado": "Edited",
         "descartado": "Discarded"
-      }
+      },
+      "toggle": "Historical-context workshop"
     }
   },
   "pastoralContext": {

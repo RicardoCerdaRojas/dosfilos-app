@@ -429,7 +429,8 @@
         "elegido": "Elegida",
         "editado": "Editada",
         "descartado": "Descartada"
-      }
+      },
+      "toggle": "Taller de contexto histórico"
     }
   },
   "pastoralContext": {
