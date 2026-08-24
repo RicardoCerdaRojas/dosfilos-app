@@ -52,6 +52,28 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
         ? `\nTEMAS QUE ÉL MANDÓ CUBRIR (acá SÍ aportas el contenido, porque eso te pidió):\n${temas.map((e) => VINETA(e.text)).join('\n')}\n`
         : '';
 
+    /**
+     * UN ELEMENTO, UN MOVIMIENTO — cuando hay varios.
+     *
+     * La prosa corrida FUNDE las ideas: el oyente no puede seguir dónde termina
+     * una y empieza la otra, y el pastor pierde la estructura con la que las
+     * pensó. Desarrollar una por una es cómo se predica un punto con varias
+     * partes, y además deja el texto AUDITABLE contra las decisiones: se ve qué
+     * párrafo salió de qué idea.
+     *
+     * Con UNA sola idea no hay nada que separar: ahí la lista sería andamiaje
+     * vacío, y una ilustración partida en viñetas deja de ser una ilustración.
+     */
+    const estructura =
+        ideas.length + temas.length > 1
+            ? `   Abre citando el texto bíblico que se está exponiendo, si la sección lo
+   expone. Después desarrolla UNA IDEA POR MOVIMIENTO, en el orden en que
+   están arriba: cada idea recibe su propio bloque, con su propio desarrollo.
+   Puedes usar viñetas para separarlos. NO fundas dos ideas en un mismo
+   párrafo — el oyente tiene que poder seguir una a la vez.`
+            : `   Es una sola idea: escríbela como un párrafo continuo. No la partas en
+   viñetas — sin varias partes que separar, la lista es andamiaje vacío.`;
+
     const registro =
         input.audienceRigor === 'seminary'
             ? 'Registro técnico: puedes usar vocabulario exegético sin explicarlo.'
@@ -79,12 +101,14 @@ REGLAS — LAS TRES PRIMERAS NO SON NEGOCIABLES:
    púlpito destruye la credibilidad del predicador. Si un dato haría falta y no
    lo tienes, escribe la frase sin él.
 
-4. Prosa para SER LEÍDA EN VOZ ALTA: frases cortas, sin subtítulos, sin viñetas,
-   sin numeración. Es un párrafo continuo o dos, no una lista.
+4. **LA FORMA DEL TEXTO SIGUE LA FORMA DE LO DECIDIDO.**
+${estructura}
 
 5. ${registro}
 
-6. Escribe en la voz del predicador dirigiéndose a su congregación. Nada de
+6. Frases para SER LEÍDAS EN VOZ ALTA: cortas, sin subtítulos.
+
+7. Escribe en la voz del predicador dirigiéndose a su congregación. Nada de
    meta-comentarios ("en esta sección veremos"), nada de encabezados.
 
 SALIDA: sólo la prosa de la sección. Sin título, sin comillas, sin explicación.`;

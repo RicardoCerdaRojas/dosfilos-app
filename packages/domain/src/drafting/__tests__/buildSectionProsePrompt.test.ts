@@ -96,9 +96,43 @@ describe('buildSectionProsePrompt', () => {
         expect(tecnico).toContain('sin explicarlo');
     });
 
-    it('pide prosa para leer en voz alta, no una lista', () => {
+    it('pide frases para leer en voz alta', () => {
+        // Ya NO prohíbe viñetas: esa regla imponía una forma de predicar que no
+        // era la del pastor. La forma la decide ahora la estructura de lo
+        // decidido — ver el describe de más abajo.
         const p = buildSectionProsePrompt({ ...base, elements: [el('x')] });
         expect(p).toContain('VOZ ALTA');
-        expect(p).toContain('sin viñetas');
+        expect(p).not.toContain('sin viñetas');
+    });
+});
+
+describe('la forma del texto sigue la forma de lo decidido', () => {
+    it('con VARIAS ideas pide una por movimiento, en orden', () => {
+        // Estructura real del fundador (2026-08-24): sus cinco elementos
+        // salieron como cinco viñetas, una a una. La prosa corrida los funde y
+        // el oyente no puede seguir dónde termina uno y empieza el otro.
+        const p = buildSectionProsePrompt({
+            ...base,
+            elements: [el('La formulación muestra el mandato directo'), el('Hijo de Amitai lo sitúa como profeta'), el('Nínive era capital asiria')],
+        });
+        expect(p).toContain('UNA IDEA POR MOVIMIENTO');
+        expect(p).toContain('en el orden en que');
+        expect(p).toContain('NO fundas dos ideas');
+    });
+
+    it('con UNA sola idea pide párrafo continuo, no viñetas', () => {
+        // Sin varias partes que separar, la lista es andamiaje vacío — y una
+        // ilustración partida en viñetas deja de ser una ilustración.
+        const p = buildSectionProsePrompt({ ...base, elements: [el('¿Han visto a los niños cuando hacen rabietas?')] });
+        expect(p).toContain('párrafo continuo');
+        expect(p).toContain('No la partas en');
+    });
+
+    it('un tema también cuenta para decidir la forma', () => {
+        const p = buildSectionProsePrompt({
+            ...base,
+            elements: [el('Nínive era capital asiria'), el('Fecha del libro', 'directiva')],
+        });
+        expect(p).toContain('UNA IDEA POR MOVIMIENTO');
     });
 });
