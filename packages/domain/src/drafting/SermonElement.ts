@@ -135,3 +135,20 @@ export function describeSectionAuthorship(elements: readonly SermonElement[]): S
     if (suyos === t.inSermon) return 'propia';
     return 'mixta';
 }
+
+
+/**
+ * ¿El pastor decidió ALGO en esta sección? Completitud, no autoría.
+ *
+ * CUENTA LAS DIRECTIVAS. Una directiva es una decisión —"acá va el trasfondo
+ * asirio"— aunque no sea una idea originada. Usar la autoría para medir avance
+ * dejaba una sección llena de temas marcada como vacía en el mapa, y el pastor
+ * veía un círculo donde acababa de trabajar.
+ *
+ * Son dos preguntas distintas y necesitan dos funciones distintas:
+ * `describeSectionAuthorship` responde DE QUIÉN son las ideas;
+ * ésta responde SI YA HAY algo decidido.
+ */
+export function hasDecisions(elements: readonly SermonElement[]): boolean {
+    return elements.some((e) => e.provenance !== 'descartado');
+}

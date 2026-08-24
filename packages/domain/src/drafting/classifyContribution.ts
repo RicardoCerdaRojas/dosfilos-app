@@ -72,7 +72,13 @@ export function classifyContribution(text: string): ContributionKind {
     if (!limpio) return 'elemento';
 
     // Una pregunta nunca afirma nada: pide que se cubra algo.
-    if (INTERROGATIVOS.test(sinTildes(limpio)) || limpio.endsWith('?')) return 'directiva';
+    // SÓLO la pregunta TEMÁTICA —la que abre con un interrogativo— es directiva.
+    //
+    // El signo de cierre por sí solo no alcanza: una ilustración se escribe muy
+    // seguido como pregunta retórica ("¿Han visto a los niños cuando hacen
+    // rabietas?"), y ésa SÍ es una idea decidible — podría ser otra imagen. Con
+    // la regla vieja quedaba marcada como tema y le quitaba autoría real.
+    if (INTERROGATIVOS.test(sinTildes(limpio))) return 'directiva';
 
     // "Citemos el versículo donde…" — le habla al motor, no a la congregación.
     if (EXHORTATIVO.test(sinTildes(limpio))) return 'directiva';

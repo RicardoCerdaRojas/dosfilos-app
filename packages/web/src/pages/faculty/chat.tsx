@@ -13,7 +13,7 @@ import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
 import { type SermonOutline } from '@/components/faculty/SermonOutlinePreviewModal';
 import { FacultySessionSidebar } from '@/components/faculty/FacultySessionSidebar';
 import { FacultyExtractionPanel } from '@/components/faculty/FacultyExtractionPanel';
-import { RailDivider } from '@/components/faculty/RailDivider';
+import { RailDivider } from '@/components/ui/RailDivider';
 import { FacultyChatMessages } from '@/components/faculty/FacultyChatMessages';
 import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
 import { GuidedSermonHeader } from '@/components/faculty/GuidedSermonHeader';

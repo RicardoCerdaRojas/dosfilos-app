@@ -429,7 +429,6 @@
         "editado": "Edited",
         "descartado": "Discarded"
       },
-      "toggle": "Historical-context workshop",
       "onePerLine": "One idea per line. Write several and add them all at once.",
       "remove": "Remove",
       "shape": {
@@ -441,7 +440,64 @@
       "kind": {
         "directiva": "Topic"
       },
-      "flipKind": "Is this your own idea, not a topic? Click to change it."
+      "flipKind": "Switch between your own idea and a topic to cover",
+      "verbatimLabel": "The sermon title",
+      "verbatimPlaceholder": "Write it exactly as you want it to appear.",
+      "verbatimAdd": "Use this title",
+      "verbatimPropose": "Suggest titles",
+      "verbatimProposeMore": "Suggest others",
+      "verbatimDecided": "Your title"
+    },
+    "sections": {
+      "exposition": {
+        "label": "Point {{n}} — exposition",
+        "job": "Say what the text says and why it matters. This is the point's content."
+      },
+      "illustration": {
+        "label": "Point {{n}} — illustration",
+        "job": "Make the idea visible with something the congregation recognizes."
+      },
+      "application": {
+        "label": "Point {{n}} — application",
+        "job": "What changes Monday morning if this is true."
+      },
+      "recap": {
+        "label": "Conclusion — recap",
+        "job": "Gather the thread of the points without repeating them."
+      },
+      "callToAction": {
+        "label": "Conclusion — call",
+        "job": "Ask for a concrete response, not a feeling."
+      },
+      "openingIllustration": {
+        "label": "Introduction — opening illustration",
+        "job": "Open a question the sermon will answer."
+      },
+      "bookOverview": {
+        "label": "Introduction — the book at a glance",
+        "job": "Place the passage within the whole book."
+      },
+      "historicalContext": {
+        "label": "Introduction — historical context",
+        "job": "Place the listener in the world of the text: what its first hearers knew, and what they feared."
+      },
+      "title": {
+        "label": "Title",
+        "job": "Name the sermon. Your proposition is below to guide you, but a title is a different thing: it does not assert, it names.",
+        "context": "Your proposition, to help you think it through:"
+      },
+      "coveredNote": "Already yours, from the study or the outline. Nothing to decide here.",
+      "contextNote": "Your notes for this section:",
+      "mapTitle": "Your sermon",
+      "pendingCount": "{{done}} of {{total}} done",
+      "statusDone": "Done",
+      "statusPending": "Pending",
+      "statusCovered": "Yours",
+      "directiveContext": "Your notes for this section:"
+    },
+    "tabs": {
+      "draft": "Draft",
+      "workshop": "Workshop"
     }
   },
   "pastoralContext": {

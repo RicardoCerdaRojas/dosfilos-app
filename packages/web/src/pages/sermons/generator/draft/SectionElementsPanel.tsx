@@ -11,13 +11,12 @@ import {
     type SermonElement,
     type ElementProvenance,
     type ContributionKind,
+    type WalkSection,
 } from '@dosfilos/domain';
 import { useProposeElements, type ProposedElement } from '@/hooks/useProposeElements';
 
 interface Props {
-    sectionId: string;
-    sectionLabel: string;
-    sectionJob: string;
+    section: WalkSection;
     passage: string;
     proposition?: string;
     points?: readonly string[];
@@ -47,6 +46,9 @@ const nextId = () => `el-${Date.now().toString(36)}-${seq++}`;
  */
 export function SectionElementsPanel(props: Props) {
     const { t } = useTranslation('generator');
+    const { section } = props;
+    /** En `verbatim` lo que escribe ES el texto final del sermón, no una idea sobre él. */
+    const esVerbatim = section.mode === 'verbatim';
     const { propose, loading, error } = useProposeElements();
     const [mine, setMine] = useState('');
     const [proposals, setProposals] = useState<ProposedElement[]>([]);
@@ -74,7 +76,7 @@ export function SectionElementsPanel(props: Props) {
                 const kind = classifyContribution(text);
                 return {
                     id: nextId(),
-                    sectionId: props.sectionId,
+                    sectionId: section.id,
                     text,
                     provenance,
                     kind,
@@ -84,7 +86,7 @@ export function SectionElementsPanel(props: Props) {
                 };
             });
         if (nuevos.length === 0) return;
-        props.onChange([...props.elements, ...nuevos]);
+        props.onChange(esVerbatim ? nuevos : [...props.elements, ...nuevos]);
     };
 
     const remove = (id: string) => props.onChange(props.elements.filter((e) => e.id !== id));
@@ -102,13 +104,15 @@ export function SectionElementsPanel(props: Props) {
     const handlePropose = async () => {
         const nuevos = await propose({
             passage: props.passage,
-            sectionLabel: props.sectionLabel,
-            sectionJob: props.sectionJob,
+            sectionLabel: t(section.labelKey, section.labelParams),
+            sectionJob: t(section.jobKey),
             proposition: props.proposition,
             points: props.points,
             // Lo ya decidido viaja al prompt: re-proponer su propio trabajo es
             // la forma más rápida de que abandone el flujo.
-            alreadyDecided: decided.map((e) => e.text),
+            // Sus indicaciones del bosquejo cuentan como ya decidido: proponerle
+            // de vuelta lo que él mismo escribió vacía el flujo.
+            alreadyDecided: [...(section.coveredBy ?? []), ...decided.map((e) => e.text)],
         });
         setProposals(nuevos);
     };
@@ -119,35 +123,69 @@ export function SectionElementsPanel(props: Props) {
         <Card className="p-6 space-y-5 mb-6 border-primary/30">
             <div className="space-y-1">
                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
-                    {props.sectionLabel}
+                    {t(section.labelKey, section.labelParams)}
                 </h3>
-                <p className="text-sm text-muted-foreground">{props.sectionJob}</p>
+                <p className="text-sm text-muted-foreground">{t(section.jobKey)}</p>
             </div>
 
+            {/* Lo que ya escribió: SE MUESTRA, NO SE PREGUNTA. Cuando la sección
+                está cubierta es la respuesta; cuando está pendiente son sus
+                indicaciones, y viajan al prompt como contexto. */}
+            {section.coveredBy && section.coveredBy.length > 0 && (
+                <div className="rounded-md bg-muted/50 p-3 space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">
+                        {t(
+                            section.status === 'cubierta'
+                                ? 'drafting.sections.coveredNote'
+                                : (section.contextKey ?? 'drafting.sections.contextNote'),
+                        )}
+                    </p>
+                    <ul className="space-y-1 text-sm text-foreground/90">
+                        {section.coveredBy.map((texto, i) => (
+                            <li key={i} className="flex gap-2">
+                                <span className="text-primary shrink-0">▪</span>
+                                <span>{texto}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {/* SECCIÓN CUBIERTA: se muestra y se corta acá. Volver a preguntar lo
+                que ya decidió le pediría decidir dos veces la misma cosa, con el
+                riesgo de que la segunda contradiga a la primera. */}
+            {section.status === 'cubierta' ? null : (
+              <>
             {/* Camino 1 — su idea. Primero y siempre abierto. */}
             <div className="space-y-2">
                 <label htmlFor="mi-idea" className="text-sm font-medium">
-                    {t('drafting.elements.myIdeaLabel')}
+                    {esVerbatim ? t('drafting.elements.verbatimLabel') : t('drafting.elements.myIdeaLabel')}
                 </label>
                 <Textarea
                     id="mi-idea"
                     value={mine}
                     onChange={(e) => setMine(e.target.value)}
-                    placeholder={t('drafting.elements.myIdeaPlaceholder')}
-                    rows={4}
+                    placeholder={t(esVerbatim ? 'drafting.elements.verbatimPlaceholder' : 'drafting.elements.myIdeaPlaceholder')}
+                    rows={esVerbatim ? 2 : 4}
                     className="resize-none"
                 />
-                <p className="text-xs text-muted-foreground">{t('drafting.elements.onePerLine')}</p>
+                {!esVerbatim && (
+                    <p className="text-xs text-muted-foreground">{t('drafting.elements.onePerLine')}</p>
+                )}
                 <Button
                     size="sm"
                     onClick={() => {
-                        add(splitElementLines(mine), 'pastor');
+                        // En `verbatim` hay UN texto final: escribir otro reemplaza
+                        // el anterior en vez de acumular. Un sermón no tiene dos
+                        // títulos, y dejar los dos obligaría a borrar a mano el
+                        // que sobra.
+                        add(esVerbatim ? [mine] : splitElementLines(mine), 'pastor');
                         setMine('');
                     }}
-                    disabled={splitElementLines(mine).length === 0}
+                    disabled={(esVerbatim ? [mine.trim()].filter(Boolean) : splitElementLines(mine)).length === 0}
                 >
                     <Plus className="h-4 w-4 mr-1.5" />
-                    {t('drafting.elements.addMine')}
+                    {esVerbatim ? t('drafting.elements.verbatimAdd') : t('drafting.elements.addMine')}
                 </Button>
             </div>
 
@@ -155,7 +193,9 @@ export function SectionElementsPanel(props: Props) {
             <div className="pt-4 border-t border-border/50 space-y-3">
                 <Button variant="outline" size="sm" onClick={handlePropose} disabled={loading}>
                     {loading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Lightbulb className="h-4 w-4 mr-1.5" />}
-                    {proposals.length > 0 ? t('drafting.elements.proposeMore') : t('drafting.elements.propose')}
+                    {esVerbatim
+                        ? t(proposals.length > 0 ? 'drafting.elements.verbatimProposeMore' : 'drafting.elements.verbatimPropose')
+                        : t(proposals.length > 0 ? 'drafting.elements.proposeMore' : 'drafting.elements.propose')}
                 </Button>
 
                 {error && <p className="text-sm text-muted-foreground">{t('drafting.elements.proposeFailed')}</p>}
@@ -224,22 +264,66 @@ export function SectionElementsPanel(props: Props) {
                 ))}
             </div>
 
+              </>
+            )}
+
             {decided.length > 0 && (
                 <div className="pt-4 border-t border-border/50 space-y-2">
-                    <h4 className="text-sm font-medium">{t('drafting.elements.decidedTitle')}</h4>
+                    <h4 className="text-sm font-medium">
+                        {esVerbatim ? t('drafting.elements.verbatimDecided') : t('drafting.elements.decidedTitle')}
+                    </h4>
                     <ul className="space-y-1.5">
                         {decided.map((e) => (
                             <li key={e.id} className="flex items-start gap-2 text-sm">
-                                <button
-                                    type="button"
-                                    onClick={() => flipKind(e.id)}
-                                    className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${e.kind === 'directiva' ? 'bg-muted text-muted-foreground' : BADGE[e.provenance]}`}
-                                    title={t('drafting.elements.flipKind')}
+                                {/* UN INTERRUPTOR DE DOS ESTADOS, NO UNA ETIQUETA.
+                                    Antes esto era una sola insignia que cambiaba
+                                    al hacerle clic. Funcionaba, pero PARECÍA una
+                                    etiqueta: nada decía que se podía tocar, así
+                                    que una mala clasificación se quedaba puesta
+                                    y desmedía la autoría en silencio.
+
+                                    Mostrar los dos estados a la vez —el activo
+                                    resaltado, el otro apagado— hace visible que
+                                    hay una elección, sin una línea de texto
+                                    explicativo. La cara de "idea" lleva la
+                                    PROCEDENCIA (Tuya · Elegida · Editada), así
+                                    que el interruptor no pierde información. */}
+                                {esVerbatim ? (
+                                    <span className={`shrink-0 rounded px-1.5 py-1 text-[11px] leading-none ${BADGE[e.provenance]}`}>
+                                        {t(`drafting.elements.provenance.${e.provenance}`)}
+                                    </span>
+                                ) : (
+                                <span
+                                    role="group"
+                                    aria-label={t('drafting.elements.flipKind')}
+                                    className="shrink-0 inline-flex rounded border border-border/70 overflow-hidden text-[11px] leading-none"
                                 >
-                                    {e.kind === 'directiva'
-                                        ? t('drafting.elements.kind.directiva')
-                                        : t(`drafting.elements.provenance.${e.provenance}`)}
-                                </button>
+                                    <button
+                                        type="button"
+                                        aria-pressed={e.kind === 'elemento'}
+                                        onClick={() => e.kind !== 'elemento' && flipKind(e.id)}
+                                        className={`px-1.5 py-1 transition-colors ${
+                                            e.kind === 'elemento'
+                                                ? BADGE[e.provenance]
+                                                : 'text-muted-foreground/60 hover:bg-muted/60'
+                                        }`}
+                                    >
+                                        {t(`drafting.elements.provenance.${e.provenance}`)}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        aria-pressed={e.kind === 'directiva'}
+                                        onClick={() => e.kind !== 'directiva' && flipKind(e.id)}
+                                        className={`px-1.5 py-1 transition-colors border-l border-border/70 ${
+                                            e.kind === 'directiva'
+                                                ? 'bg-muted text-foreground'
+                                                : 'text-muted-foreground/60 hover:bg-muted/60'
+                                        }`}
+                                    >
+                                        {t('drafting.elements.kind.directiva')}
+                                    </button>
+                                </span>
+                                )}
                                 <span className="text-foreground/90 flex-1">{e.text}</span>
                                 <button
                                     type="button"
