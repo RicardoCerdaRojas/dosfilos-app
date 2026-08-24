@@ -15,7 +15,7 @@ import { appCheckCallableOptions } from '../config/appCheckOptions';
  * should be hidden in that case, but a defensive check keeps us from
  * spamming verified users if state gets stale on the client.
  */
-export const resendVerificationEmail = onCall(appCheckCallableOptions(), async (request) => {
+export const resendVerificationEmail = onCall({ ...appCheckCallableOptions(), secrets: ['RESEND_API_KEY'] }, async (request) => {
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'Sign in required');
     }

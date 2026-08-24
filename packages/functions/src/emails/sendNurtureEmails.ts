@@ -60,7 +60,7 @@ async function runStage(name: string, stage: () => Promise<void>): Promise<void>
     }
 }
 
-export const sendNurtureEmails = onSchedule('every day 10:00', async () => {
+export const sendNurtureEmails = onSchedule({ schedule: 'every day 10:00', secrets: ['RESEND_API_KEY'] }, async () => {
     console.log('Starting daily nurture email check...');
 
     await runStage('day3', processDay3Emails);

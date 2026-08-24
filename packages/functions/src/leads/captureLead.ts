@@ -68,12 +68,11 @@ export const captureLead = onCall<CaptureLeadRequest, Promise<CaptureLeadRespons
     {
         ...appCheckCallableOptions(),
         region: 'us-central1',
-        // RESEND_API_KEY is read from process.env to match the rest
-        // of the email stack (sendVerificationEmail / EmailService /
-        // sendWelcomeEmail). Firebase Functions v2 loads the value
-        // from packages/functions/.env at deploy time. Migrating to
-        // Secret Manager (`secrets: ['RESEND_API_KEY']`) is tracked
-        // tech-debt for the whole email stack — not a per-function fix.
+        // RESEND_API_KEY viene de Secret Manager (migrado 2026-08-24). Antes se
+        // leía de `process.env`, horneado desde `packages/functions/.env` en el
+        // deploy — un archivo que CI no tiene, así que producción se quedaba sin
+        // clave en cada despliegue automático.
+        secrets: ['RESEND_API_KEY'],
     },
     async (request) => {
         const { email, name, leadMagnet, utm, sessionId, website } = request.data;

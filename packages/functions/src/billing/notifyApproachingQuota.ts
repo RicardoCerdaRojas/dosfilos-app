@@ -50,6 +50,7 @@ type Mode = 'standard' | 'premium';
 export const notifyApproachingQuota = onSchedule(
     {
         schedule: 'every day 09:00',
+        secrets: ['RESEND_API_KEY'],
         timeZone: 'America/Argentina/Buenos_Aires',
         // RESEND_API_KEY is loaded via packages/functions/.env at deploy
         // time (same pattern as sendNurtureEmails). Don't declare it as

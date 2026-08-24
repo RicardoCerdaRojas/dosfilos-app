@@ -255,7 +255,7 @@ async function markRegistrationCompleted(sessionId: string): Promise<void> {
 
 
 export const completeRegistration = onCall<CompleteRegistrationRequest>(
-    appCheckCallableOptions(),
+    { ...appCheckCallableOptions(), secrets: ['RESEND_API_KEY'] },
     async (request): Promise<CompleteRegistrationResponse> => {
         const { sessionId, locale = 'es' } = request.data;
 

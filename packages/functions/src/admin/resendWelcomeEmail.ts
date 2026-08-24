@@ -9,7 +9,7 @@ import { APP_URL } from '../config/urls';
 const SENDER_EMAIL = 'DosFilos <onboarding@dosfilos.com>';
 const DASHBOARD_URL = `${APP_URL}/dashboard`;
 
-export const resendWelcomeEmail = onCall(appCheckCallableOptions(), async (request) => {
+export const resendWelcomeEmail = onCall({ ...appCheckCallableOptions(), secrets: ['RESEND_API_KEY'] }, async (request) => {
     // 1. Verify Authentication
     if (!request.auth) {
         throw new HttpsError('unauthenticated', 'User must be authenticated');
