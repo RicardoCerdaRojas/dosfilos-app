@@ -20,6 +20,7 @@ const ALERT_THRESHOLD = 0.9;
 export const alertLlamaParseUsage = onSchedule(
     {
         schedule: 'every day 06:30',
+        secrets: ['RESEND_API_KEY'],
         timeZone: 'UTC',
         region: 'us-central1',
         memory: '256MiB',

@@ -32,7 +32,7 @@ interface ResendLeadMagnetResponse {
  * is preserved — operators can still see when the lead first arrived.
  */
 export const resendLeadMagnet = onCall<ResendLeadMagnetRequest, Promise<ResendLeadMagnetResponse>>(
-    { ...appCheckCallableOptions(), region: 'us-central1' },
+    { ...appCheckCallableOptions(), region: 'us-central1', secrets: ['RESEND_API_KEY'] },
     async (request) => {
         // Auth gate — both must be present.
         if (!request.auth || request.auth.token?.email !== ADMIN_EMAIL) {

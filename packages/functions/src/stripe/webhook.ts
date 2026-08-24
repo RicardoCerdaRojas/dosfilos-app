@@ -39,7 +39,7 @@ async function findPlanIdByPriceId(db: Firestore, priceId: string): Promise<stri
 
 export const stripeWebhook = onRequest(
     {
-        secrets: ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'],
+        secrets: ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'RESEND_API_KEY'],
     },
     async (request, response) => {
     const sig = request.headers['stripe-signature'];

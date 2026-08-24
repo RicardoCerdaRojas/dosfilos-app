@@ -22,13 +22,18 @@ import { usageMonthKey } from './llmUsageRecorder';
 const SENDER = 'Preach <onboarding@dosfilos.com>';
 
 export const checkLlmBudget = onSchedule(
-    // NO declarar `secrets: ['RESEND_API_KEY']`: en este proyecto la clave de
-    // Resend se inyecta como variable de entorno, NO vive en Secret Manager.
-    // Declararla hace que el deploy valide un secreto inexistente y tumbe el
-    // deploy COMPLETO de functions (pasó: run #446). El resto del stack de correo
-    // (sendNurtureEmails, sendWelcomeEmail, leadMagnetMailer) tampoco la declara.
-    // Cuando se migre el stack a Secret Manager se agrega en todas a la vez.
-    { schedule: 'every 60 minutes' },
+    // MIGRADO A SECRET MANAGER (2026-08-24). Este comentario decía que NO se
+    // declarara porque el secreto no existía y declararlo tumbaba el deploy
+    // COMPLETO de functions (run #446), y cerraba con "cuando se migre el stack
+    // se agrega en todas a la vez". Es ahora: el secreto existe y las 14
+    // funciones que envían correo lo declaran en este mismo cambio.
+    //
+    // POR QUÉ HABÍA QUE MIGRAR: como variable de entorno plana, la clave se
+    // horneaba desde `packages/functions/.env` EN EL DEPLOY — y CI despliega sin
+    // ese archivo, porque está en `.gitignore`. Producción llevaba tiempo sin
+    // clave: los logs mostraban "RESEND_API_KEY is not set" en función tras
+    // función, y `leadMagnetMailer` lanza excepción cuando falta.
+    { schedule: 'every 60 minutes', secrets: ['RESEND_API_KEY'] },
     async () => {
         const db = admin.firestore();
         const now = new Date();

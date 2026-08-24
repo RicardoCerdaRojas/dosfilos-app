@@ -126,12 +126,16 @@ export async function sendOnboardingEmail(user: UserRecord): Promise<void> {
     console.log(`[sendOnboardingEmail] Sent to ${email} (${locale}). ID: ${data?.id}`);
 }
 
-export const sendWelcomeEmail = functions.auth.user().onCreate(async (user) => {
-    try {
-        await sendOnboardingEmail(user);
-    } catch (err) {
-        // Trigger errors are not retried by Firebase Auth onCreate, so we
-        // swallow here and rely on the resend flow if delivery failed.
-        console.error('[sendWelcomeEmail] Unexpected error:', err);
-    }
-});
+// v1 declara secretos con `runWith`, no con un objeto de opciones como v2.
+export const sendWelcomeEmail = functions
+    .runWith({ secrets: ['RESEND_API_KEY'] })
+    .auth.user()
+    .onCreate(async (user) => {
+        try {
+            await sendOnboardingEmail(user);
+        } catch (err) {
+            // Trigger errors are not retried by Firebase Auth onCreate, so we
+            // swallow here and rely on the resend flow if delivery failed.
+            console.error('[sendWelcomeEmail] Unexpected error:', err);
+        }
+    });

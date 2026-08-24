@@ -39,7 +39,7 @@ const CONTINUE_URL = `${APP_URL}/auth/verify-email`;
  * the email stack to Secret Manager, add `{ secrets: ['RESEND_API_KEY'] }`
  * here and to the other senders.
  */
-export const sendVerificationEmail = onCall(appCheckCallableOptions(), async (request) => {
+export const sendVerificationEmail = onCall({ ...appCheckCallableOptions(), secrets: ['RESEND_API_KEY'] }, async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Must be signed in to request verification.');
         }

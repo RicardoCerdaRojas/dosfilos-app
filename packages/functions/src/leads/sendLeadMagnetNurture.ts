@@ -61,6 +61,7 @@ function inferLocale(utm: any): Locale {
 export const sendLeadMagnetNurture = onSchedule(
     {
         schedule: 'every day 11:00',
+        secrets: ['RESEND_API_KEY'],
         timeZone: 'America/Santiago',
         region: 'us-central1',
     },

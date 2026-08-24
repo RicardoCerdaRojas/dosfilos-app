@@ -37,7 +37,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * can show "Enviado a 12 personas hace 2 horas" without re-querying.
  */
 export const sendExtractionByEmail = onCall<SendExtractionByEmailRequest>(
-    { ...appCheckCallableOptions(), region: 'us-central1' },
+    { ...appCheckCallableOptions(), region: 'us-central1', secrets: ['RESEND_API_KEY'] },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError('unauthenticated', 'Sign-in required');
