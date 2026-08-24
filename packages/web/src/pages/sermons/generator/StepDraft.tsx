@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
 import { DerivedContextBanner } from './DerivedContextBanner';
 import { SermonPersonalizationPanel } from './SermonPersonalizationPanel';
+import { AuthorshipGateModal } from './AuthorshipGateModal';
+import { AuthorshipBadge } from './AuthorshipBadge';
 import { DraftSkeletonPreview } from './DraftSkeletonPreview';
 import { IllustrationDuplicateBanner } from './IllustrationDuplicateBanner';
 import { Button } from '@/components/ui/button';
@@ -47,7 +49,7 @@ import { SermonBibliographySection } from '@/components/sermons/SermonBibliograp
 import { SermonCitationVerificationDialog } from '@/components/sermons/SermonCitationVerificationDialog';
 import { ContraScanModal } from '@/components/sermons/ContraScanModal';
 import { useSermonContraScan } from '@/hooks/useSermonContraScan';
-import { WorkflowPhase, CoachingStyle, formatPassageReference, aggregateRagSourcesFlat, evaluatePastoralSeed, type GenerationRules, type Sermon } from '@dosfilos/domain';
+import { WorkflowPhase, CoachingStyle, formatPassageReference, aggregateRagSourcesFlat, evaluatePastoralSeed, sermonSectionTexts, computeAuthorship, pastorMaterialCorpus, type GenerationRules, type Sermon } from '@dosfilos/domain';
 import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
 import {
     AlertDialog,
@@ -73,7 +75,7 @@ export function StepDraft() {
     const activeLanguage = language === 'en' ? 'en' : 'es';
     const navigate = useNavigate();
     const { user } = useFirebase();
-    const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, sermonId, derivedContext, reset, saving } = useWizard();
+    const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, sermonId, derivedContext, reset, saving, authorshipBaseline, setAuthorshipBaseline } = useWizard();
     const draftShadowGate = useFeatureFlag('sermon_draft_shadow');
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
@@ -91,7 +93,7 @@ export function StepDraft() {
     // Phase 4 PR 1 (ADR-033) — contra-scan runs as the FIRST pre-publish gate
     // here too (the wizard publishes via the copy path). Once it clears, the
     // existing citation verifier runs. Flag off → onCleared fires immediately.
-    const contraScan = useSermonContraScan({ onCleared: () => runCitationVerifier() });
+    const contraScan = useSermonContraScan({ onCleared: () => runAuthorshipGate() });
     const {
         messages,
         setMessages,
@@ -118,6 +120,25 @@ export function StepDraft() {
     // caminos de entrada —el aviso tras regenerar y el indicador de la tarjeta—
     // y se limpia al cerrar, para que volver a expandir no reabra el modal.
     const [openHistoryFor, setOpenHistoryFor] = useState<string | null>(null);
+    // El informe se DERIVA del borrador vivo: no hay estado que sincronizar, y
+    // el badge se mueve mientras el pastor edita.
+    const authorship = useMemo(
+        () =>
+            draft
+                ? computeAuthorship(
+                      authorshipBaseline ?? {},
+                      sermonSectionTexts(draft),
+                      undefined,
+                      // Su material cuenta como suyo aunque lo haya emitido el
+                      // generador: la ilustración verbatim, las aplicaciones, la
+                      // proposición y los títulos de puntos los TRANSCRIBE por
+                      // instrucción explícita, no los origina.
+                      pastorMaterialCorpus(rules.pastoralSeed, homiletics, rules.personalization),
+                  )
+                : null,
+        [draft, authorshipBaseline, rules.pastoralSeed, rules.personalization, homiletics],
+    );
+    const [authorshipGateOpen, setAuthorshipGateOpen] = useState(false);
     const abrirHistorial = (sectionId: string) => {
         setOpenHistoryFor(sectionId);
         setExpandedSectionId(sectionId);
@@ -256,6 +277,15 @@ export function StepDraft() {
             }
 
             setDraft(result);
+            // LA REFERENCIA DE AUTORÍA SE FIJA ACÁ, no al publicar.
+            //
+            // Es el texto tal como salió del generador: todo lo que el pastor
+            // escriba de ahora en adelante se mide contra esto. Se REEMPLAZA en
+            // cada regeneración porque la referencia es la ÚLTIMA entrega, no la
+            // primera — si pidió texto nuevo, su trabajo anterior sobre ese
+            // párrafo ya no está en el sermón y no puede seguir contando.
+            setAuthorshipBaseline(sermonSectionTexts(result));
+
             // EL AVISO OFRECE EL SEGURO EN EL MOMENTO EN QUE HACE FALTA.
             // Justo después de regenerar es cuando el pastor quiere comparar o
             // volver — y es justo cuando está mirando el canvas, no una sección
@@ -385,6 +415,23 @@ export function StepDraft() {
         await contraScan.attempt(sermonId, centralIdea);
     };
 
+    /**
+     * Confrontación de autoría — entre el contra-scan y el verificador de citas.
+     *
+     * Va DESPUÉS del contra-scan porque ése ya tiene su propio modal y encadenar
+     * dos ventanas seguidas antes de que el pastor vea nada sería hostil. Y
+     * ANTES del verificador de citas porque la pregunta de autoría es sobre el
+     * sermón entero: si va a volver a editarlo, verificar citas primero sería
+     * trabajo tirado.
+     */
+    const runAuthorshipGate = async () => {
+        if (authorship?.gateStatus === 'confront') {
+            setAuthorshipGateOpen(true);
+            return;
+        }
+        await runCitationVerifier();
+    };
+
     /** Pre-publish citation verifier (PR #218) — runs after contra-scan clears. */
     const runCitationVerifier = async () => {
         if (!draft || !user || !exegesis || !sermonId) return;
@@ -413,9 +460,10 @@ export function StepDraft() {
         }
     };
 
-    const performPublish = async () => {
+    const performPublish = async (overrideNote?: string) => {
         if (!draft || !user || !exegesis || !sermonId) return;
         setVerificationDialogOpen(false);
+        setAuthorshipGateOpen(false);
         setPublishing(true);
         try {
             const content = getFullContent();
@@ -427,6 +475,27 @@ export function StepDraft() {
             });
 
             const publishedSermon = await sermonService.publishSermonAsCopy(sermonId);
+
+            // El informe y la nota quedan EN EL SERMÓN PUBLICADO, no sólo en el
+            // borrador: es el registro de con cuánta autoría propia se llevó
+            // este texto al púlpito. Best-effort — si falla, el sermón ya está
+            // publicado y eso es lo que importa.
+            if (authorship) {
+                try {
+                    await sermonService.updateSermon(publishedSermon.id, {
+                        authorshipReport: {
+                            overall: authorship.overall,
+                            floor: authorship.floor,
+                            gateStatus: authorship.gateStatus,
+                            bySection: authorship.bySection,
+                            ...(overrideNote ? { overrideNote } : {}),
+                            measuredAt: new Date(),
+                        },
+                    } as Partial<Sermon>);
+                } catch (err) {
+                    console.warn('[StepDraft] no se pudo guardar el informe de autoría', err);
+                }
+            }
 
             toast.success(t('drafting.success.published'));
             reset();
@@ -552,14 +621,18 @@ export function StepDraft() {
             <IllustrationDuplicateBanner draft={draft} />
             <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
                 <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-                    <div className="mb-4 flex-shrink-0 flex items-center justify-between">
-                        <div>
-                            <h3 className="text-lg font-semibold">{draft.title}</h3>
+                    {/* `min-w-0` + `truncate` en el título: los controles de la
+                        derecha son fijos y el título es lo que debe ceder. Sin
+                        esto, agregar un elemento a la barra parte el encabezado
+                        en dos líneas. */}
+                    <div className="mb-4 flex-shrink-0 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <h3 className="text-lg font-semibold truncate" title={draft.title}>{draft.title}</h3>
                             <p className="text-sm text-muted-foreground">
                                 {expandedSectionId ? t('drafting.refiningStatus') : t('drafting.defaultStatus')}
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex shrink-0 items-center gap-2">
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -569,6 +642,12 @@ export function StepDraft() {
                                 <BookOpen className="h-4 w-4" />
                                 <span className="text-xs font-medium">{passage}</span>
                             </Button>
+
+                            {/* Junto a "Regenerar" a propósito: es donde el
+                                pastor decide si vuelve a pedirle texto a la
+                                máquina, y el número de autoría es justo el dato
+                                que debería pesar en esa decisión. */}
+                            {authorship && <AuthorshipBadge report={authorship} />}
 
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
@@ -863,8 +942,18 @@ export function StepDraft() {
                 onOpenChange={setVerificationDialogOpen}
                 result={verificationResult}
                 loading={verifying}
-                onProceedAnyway={performPublish}
+                onProceedAnyway={() => performPublish()}
                 onEditSermon={() => setVerificationDialogOpen(false)}
+            />
+
+            {/* Confrontación de autoría: entre el contra-scan y el verificador
+                de citas. Ver `runAuthorshipGate`. */}
+            <AuthorshipGateModal
+                open={authorshipGateOpen}
+                report={authorship}
+                publishing={publishing}
+                onBack={() => setAuthorshipGateOpen(false)}
+                onPublishAnyway={(nota) => { void performPublish(nota); }}
             />
         </>
     );

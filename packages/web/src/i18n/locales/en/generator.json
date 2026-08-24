@@ -440,5 +440,22 @@
     "translating": "Translating…",
     "ownTranslation": "Our translation · the original is one click away",
     "translateFailed": "Couldn't translate. The original is still above."
+  },
+  "authorship": {
+    "badge": "{{pct}}% yours",
+    "section": {
+      "introduction": "Introduction",
+      "body": "Points",
+      "conclusion": "Conclusion"
+    },
+    "gateTitle": "Much of this sermon came straight from the generator",
+    "gateBody": "You measured {{pct}}% of your own authorship, below the {{floor}}% minimum. This is not a blocker: it's a question. Is this the sermon you want to take to the pulpit?",
+    "gateNoteLabel": "If you publish it as is, tell us why (minimum {{min}} characters)",
+    "gateNotePlaceholder": "e.g. the draft captured exactly what I wanted to say and I reviewed it line by line…",
+    "gateBack": "Go back and edit",
+    "gatePublish": "Publish anyway",
+    "gateNoteShort": "{{n}} characters short",
+    "tooltip": "Authorship: {{pct}}% of the sermon is yours",
+    "partialHint": "* a section has no baseline: counted as yours, but not measured"
   }
 }

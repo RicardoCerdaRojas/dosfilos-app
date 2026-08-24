@@ -18,7 +18,7 @@ import { pastoralSeedService } from '@dosfilos/application';
 import { toast } from 'sonner';
 
 function WizardContent() {
-    const { step, setStep, passage, setPassage, setExegesis, setHomiletics, setDraft, sermonId, setSermonId, derivedContext, setDerivedContext, rules, setRules, reset } = useWizard();
+    const { step, setStep, passage, setPassage, setExegesis, setHomiletics, setDraft, sermonId, setSermonId, derivedContext, setDerivedContext, rules, setRules, reset, setAuthorshipBaseline } = useWizard();
     const { user } = useFirebase();
     const [searchParams] = useSearchParams();
     const [inProgressSermons, setInProgressSermons] = useState<SermonEntity[]>([]);
@@ -128,6 +128,9 @@ function WizardContent() {
                             if (progress.exegesis) setExegesis(progress.exegesis);
                             if (progress.homiletics) setHomiletics(progress.homiletics);
                             if (progress.draft) setDraft(progress.draft);
+        // La referencia de autoría viaja con el progreso: sin ella, reabrir un
+        // sermón mediría 100% de autoría sobre texto que generó la máquina.
+        if (progress.authorshipBaseline) setAuthorshipBaseline(progress.authorshipBaseline);
                             if (progress.derivedContext) setDerivedContext(progress.derivedContext);
                             if (progress.personalization || progress.audienceRigor) {
                                 setRules({
@@ -206,6 +209,9 @@ function WizardContent() {
         if (progress.exegesis) setExegesis(progress.exegesis);
         if (progress.homiletics) setHomiletics(progress.homiletics);
         if (progress.draft) setDraft(progress.draft);
+        // La referencia de autoría viaja con el progreso: sin ella, reabrir un
+        // sermón mediría 100% de autoría sobre texto que generó la máquina.
+        if (progress.authorshipBaseline) setAuthorshipBaseline(progress.authorshipBaseline);
         if (progress.derivedContext) setDerivedContext(progress.derivedContext);
         if (progress.personalization || progress.audienceRigor) {
             setRules({

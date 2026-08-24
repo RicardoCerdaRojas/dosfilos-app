@@ -63,6 +63,19 @@ export interface Sermon {
          * sermons untouched.
          */
         audienceRigor?: 'beginner' | 'seminary';
+        /**
+         * El texto GENERADO por sección, tal como salió la última vez.
+         *
+         * Es la referencia contra la que se mide la autoría del pastor (Fase 4,
+         * sub-feature 1). Se guarda al generar y se REEMPLAZA al regenerar:
+         * decisión del fundador (2026-08-24) — la referencia es la última
+         * generación, no la primera, porque mide "desde lo último que recibí,
+         * ¿cuánto puse yo?".
+         *
+         * Guarda sólo el texto plano por sección, no una copia del borrador:
+         * el documento del sermón ya carga `wizardProgress.draft` completo.
+         */
+        authorshipBaseline?: Record<string, string>;
         // Track if this draft has been published
         publishedCopyId?: string;  // ID of the most recent published copy
         lastPublishedAt?: Date;    // When it was last published
@@ -194,6 +207,21 @@ export interface Sermon {
      * with the flag off. Purely additive — mutators carry it forward unchanged.
      */
     contraScanReport?: ContraScanReport;
+    /**
+     * Con cuánta autoría propia se llevó este sermón al púlpito (Fase 4 sub-1).
+     *
+     * Se guarda EN EL SERMÓN PUBLICADO, no sólo en el borrador: es el registro
+     * del acto. `overrideNote` sólo existe cuando el pastor publicó por debajo
+     * del piso y explicó por qué — confronta, no bloquea (ADR-027).
+     */
+    authorshipReport?: {
+        overall: number;
+        floor: number;
+        gateStatus: 'pass' | 'confront';
+        bySection: { sectionId: string; pastorRatio: number; words: number; withoutBaseline: boolean }[];
+        overrideNote?: string;
+        measuredAt: Date;
+    };
 
     /**
      * Version grouping — set on a sermon that is a re-preaching VERSION of an

@@ -440,5 +440,22 @@
     "translating": "Traduciendo…",
     "ownTranslation": "Traducción propia · el original está a un clic",
     "translateFailed": "No se pudo traducir. El original sigue arriba."
+  },
+  "authorship": {
+    "badge": "{{pct}}% tuyo",
+    "section": {
+      "introduction": "Introducción",
+      "body": "Puntos",
+      "conclusion": "Conclusión"
+    },
+    "gateTitle": "Buena parte de este sermón salió tal cual del generador",
+    "gateBody": "Mediste {{pct}}% de autoría propia, bajo el mínimo de {{floor}}%. No es un impedimento: es una pregunta. ¿Es este el sermón que quieres llevar al púlpito?",
+    "gateNoteLabel": "Si decides publicarlo así, cuéntanos por qué (mínimo {{min}} caracteres)",
+    "gateNotePlaceholder": "Ej.: el borrador captó exactamente lo que quería decir y lo revisé línea por línea…",
+    "gateBack": "Volver a editar",
+    "gatePublish": "Publicar igual",
+    "gateNoteShort": "Faltan {{n}} caracteres",
+    "tooltip": "Autoría: {{pct}}% del sermón es tuyo",
+    "partialHint": "* alguna sección no tiene referencia: se cuenta como tuya, pero no fue medida"
   }
 }

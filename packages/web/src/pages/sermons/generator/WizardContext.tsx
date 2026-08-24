@@ -39,6 +39,9 @@ interface WizardContextType extends WizardState {
      * impedía que un llamador hiciera lo que el contexto sí hace.
      */
     setHomiletics: (homiletics: HomileticalAnalysis | null) => void;
+    /** Texto generado por sección — referencia para medir la autoría del pastor. */
+    authorshipBaseline: Record<string, string> | null;
+    setAuthorshipBaseline: (b: Record<string, string> | null) => void;
     setDraft: (draft: SermonContent) => void;
     setSermonId: (id: string | null) => void;
     setDerivedContext: (ctx: DerivedContext | null) => void;
@@ -75,6 +78,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     });
     const [exegesis, setExegesis] = useState<ExegeticalStudy | null>(null);
     const [homiletics, setHomiletics] = useState<HomileticalAnalysis | null>(null);
+    const [authorshipBaseline, setAuthorshipBaseline] = useState<Record<string, string> | null>(null);
     const [draft, setDraft] = useState<SermonContent | null>(null);
     const [config, setConfig] = useState<WorkflowConfiguration | null>(null);
     const [sermonId, setSermonId] = useState<string | null>(null);
@@ -122,7 +126,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     // Auto-save hook
     const { saving, lastSaved } = useAutoSave(
         sermonId,
-        { step, passage, exegesis, homiletics, draft, derivedContext, personalization: rules.personalization ?? null, audienceRigor: rules.audienceRigor ?? null },
+        { step, passage, exegesis, homiletics, draft, derivedContext, personalization: rules.personalization ?? null, audienceRigor: rules.audienceRigor ?? null, authorshipBaseline },
         user?.uid || ''
     );
 
@@ -244,7 +248,9 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         lastSaved,
         seedCompletedSteps,
         setSeedCompletedSteps,
-    }), [step, passage, rules, exegesis, homiletics, draft, config, derivedContext, saving, lastSaved, sermonId, seedCompletedSteps]);
+        authorshipBaseline,
+        setAuthorshipBaseline,
+    }), [step, passage, rules, exegesis, homiletics, draft, config, derivedContext, saving, lastSaved, sermonId, seedCompletedSteps, authorshipBaseline]);
 
     return (
         <WizardContext.Provider value={contextValue}>

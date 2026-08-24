@@ -88,6 +88,10 @@ export * from './sermon-judge/assembleTransitions';
 // ¿La cita está en un idioma que el lector no lee? Decide si ofrecer traducción.
 export * from './citations/citationLanguage';
 export * from './citations/buildTranslationPrompt';
+// Fase 4 sub-feature 1 — cuánto del sermón lo escribió el pastor.
+export * from './authorship/computeAuthorship';
+export * from './authorship/sermonSectionTexts';
+export * from './authorship/pastorMaterial';
 // ¿El pasaje abre el libro? Decide si la introducción debe orientar al libro entero.
 export * from './bible/canon/opensBook';
 // 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent

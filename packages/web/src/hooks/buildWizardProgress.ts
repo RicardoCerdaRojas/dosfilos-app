@@ -12,6 +12,7 @@ export interface WizardState {
     derivedContext?: DerivedContext | null;
     personalization?: SermonPersonalization | null;
     audienceRigor?: 'beginner' | 'seminary' | null;
+    authorshipBaseline?: Record<string, string> | null;
 }
 
 function hasAnyField(p: SermonPersonalization): boolean {
@@ -63,6 +64,12 @@ export function buildWizardProgress(wizardState: WizardState): WizardProgress {
     // volver a su default.
     if (wizardState.personalization && hasAnyField(wizardState.personalization)) {
         progress.personalization = wizardState.personalization;
+    }
+
+    // La referencia de autoría: el texto generado por sección. Se persiste tal
+    // cual llega; vaciarla no tiene sentido, así que sólo se escribe si hay algo.
+    if (wizardState.authorshipBaseline && Object.keys(wizardState.authorshipBaseline).length > 0) {
+        progress.authorshipBaseline = wizardState.authorshipBaseline;
     }
 
     // SE PERSISTEN LOS DOS VALORES, no sólo el no-default.
