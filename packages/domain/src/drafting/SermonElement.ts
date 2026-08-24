@@ -75,3 +75,33 @@ export function tallyProvenance(elements: readonly SermonElement[]): ProvenanceT
         originatedRatio: inSermon === 0 ? 0 : suyos / inSermon,
     };
 }
+
+
+/**
+ * Lectura CUALITATIVA de la procedencia de una sección.
+ *
+ * NO SE MUESTRA UN PORCENTAJE, y no es cosmética la decisión.
+ *
+ * El número es un NIVEL, y el nivel de una sección aislada no significa nada:
+ * un pastor que empieza SELECCIONA mucho, porque está aprendiendo qué se puede
+ * decir de esa sección — y seleccionar es el mecanismo por el que se forma.
+ * "0 de 4 ideas son tuyas" en el primer uso se lee como un reproche por hacer
+ * exactamente lo que corresponde hacer al principio.
+ *
+ * Lo que sí significa algo es la TRAYECTORIA a través de muchos sermones: si
+ * con el tiempo el aporte propio crece. Eso requiere historia, no una sección.
+ * Hasta que la historia exista, la sección se describe, no se puntúa.
+ *
+ * Mismo precedente anti-gamificación que `StudyDepthBadge`: un número visible
+ * se convierte en la meta, y la meta pasa a ser el número en vez del sermón.
+ */
+export type SectionAuthorshipShape = 'vacia' | 'propia' | 'mixta' | 'seleccionada';
+
+export function describeSectionAuthorship(elements: readonly SermonElement[]): SectionAuthorshipShape {
+    const t = tallyProvenance(elements);
+    if (t.inSermon === 0) return 'vacia';
+    const suyos = t.pastor + t.editado;
+    if (suyos === 0) return 'seleccionada';
+    if (suyos === t.inSermon) return 'propia';
+    return 'mixta';
+}

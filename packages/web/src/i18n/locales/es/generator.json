@@ -423,7 +423,6 @@
       "saveEdit": "Guardar mi versión",
       "discard": "Descartar",
       "decidedTitle": "Lo que decidiste para esta sección",
-      "tally": "{{mine}} de {{total}} ideas son tuyas.",
       "provenance": {
         "pastor": "Tuya",
         "elegido": "Elegida",
@@ -432,7 +431,13 @@
       },
       "toggle": "Taller de contexto histórico",
       "onePerLine": "Una idea por línea. Puedes escribir varias y agregarlas de una vez.",
-      "remove": "Quitar"
+      "remove": "Quitar",
+      "shape": {
+        "vacia": "",
+        "propia": "Las ideas de esta sección son tuyas.",
+        "mixta": "Esta sección mezcla ideas tuyas con otras que elegiste.",
+        "seleccionada": "Esta sección se armó eligiendo. Con el tiempo, más de esto va a salir de ti."
+      }
     }
   },
   "pastoralContext": {

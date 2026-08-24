@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { tallyProvenance, type SermonElement } from '../SermonElement';
+import { tallyProvenance, describeSectionAuthorship, type SermonElement } from '../SermonElement';
 import { buildElementsPrompt } from '../buildElementsPrompt';
 import { parseProposedElements } from '../parseProposedElements';
 import { splitElementLines } from '../splitElementLines';
@@ -130,5 +130,28 @@ describe('splitElementLines', () => {
         expect(splitElementLines('')).toEqual([]);
         expect(splitElementLines('   \n  ')).toEqual([]);
         expect(splitElementLines(undefined)).toEqual([]);
+    });
+});
+
+describe('describeSectionAuthorship', () => {
+    it('sin elementos, vacía', () => {
+        expect(describeSectionAuthorship([])).toBe('vacia');
+    });
+
+    it('todo elegido describe la sección, no la reprocha', () => {
+        // El caso del primer uso. Antes mostraba "0 de 4 ideas son tuyas".
+        expect(describeSectionAuthorship([el('elegido'), el('elegido')])).toBe('seleccionada');
+    });
+
+    it('todo propio (aportado o editado) es propia', () => {
+        expect(describeSectionAuthorship([el('pastor'), el('editado')])).toBe('propia');
+    });
+
+    it('mezcla es mixta', () => {
+        expect(describeSectionAuthorship([el('pastor'), el('elegido')])).toBe('mixta');
+    });
+
+    it('los descartados no mueven la forma de la sección', () => {
+        expect(describeSectionAuthorship([el('pastor'), el('descartado')])).toBe('propia');
     });
 });

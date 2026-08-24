@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/i18n';
-import { tallyProvenance, splitElementLines, type SermonElement, type ElementProvenance } from '@dosfilos/domain';
+import { describeSectionAuthorship, splitElementLines, type SermonElement, type ElementProvenance } from '@dosfilos/domain';
 import { useProposeElements, type ProposedElement } from '@/hooks/useProposeElements';
 
 interface Props {
@@ -46,7 +46,7 @@ export function SectionElementsPanel(props: Props) {
     const [editing, setEditing] = useState<{ index: number; text: string } | null>(null);
 
     const decided = props.elements.filter((e) => e.provenance !== 'descartado');
-    const tally = tallyProvenance(props.elements);
+    const shape = describeSectionAuthorship(props.elements);
 
     /**
      * Agrega VARIAS ideas de un tirón.
@@ -222,10 +222,7 @@ export function SectionElementsPanel(props: Props) {
                         ))}
                     </ul>
                     <p className="text-xs text-muted-foreground pt-1">
-                        {t('drafting.elements.tally', {
-                            mine: tally.pastor + tally.editado,
-                            total: tally.inSermon,
-                        })}
+                        {t(`drafting.elements.shape.${shape}`)}
                     </p>
                 </div>
             )}
