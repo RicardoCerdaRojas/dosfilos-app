@@ -88,6 +88,12 @@ export const PROXY_FEATURES = [
     // Corte propio en el panel de costos para poder distinguirla de las
     // llamadas grandes del wizard, con las que no tiene nada que ver.
     'sermon.translateCitation',
+    // ADR-037 — el acompañante socrático propone ELEMENTOS (ideas decidibles)
+    // para una sección, no prosa. Llamada corta y MUY frecuente: se dispara una
+    // vez por sección y por "propóneme más", así que su costo escala con las
+    // secciones del sermón, no con el sermón. Corte propio para poder medir
+    // exactamente eso antes de extender el flujo a las 26 secciones.
+    'sermon.proposeElements',
     'sermon.homileticsPreview',
     'sermon.developApproach',
     // Tanda 3 (exégesis), parte 1 — compositores de sección y de artefactos
