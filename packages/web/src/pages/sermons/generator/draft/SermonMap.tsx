@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronRight, Check, Circle, CircleDot } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { describeSectionAuthorship, type SermonElement, type WalkSection } from '@dosfilos/domain';
+import { hasDecisions, type SermonElement, type WalkSection } from '@dosfilos/domain';
 
 interface Props {
     walk: readonly WalkSection[];
@@ -28,8 +28,10 @@ export function SermonMap({ walk, elements, activeId, onSelect }: Props) {
     const { t } = useTranslation('generator');
     const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
-    const isDone = (s: WalkSection) =>
-        s.status === 'cubierta' || describeSectionAuthorship(elements[s.id] ?? []) !== 'vacia';
+    // COMPLETITUD, no autoría: una directiva también es una decisión. Medirlo
+    // con la autoría dejaba en círculo una sección donde el pastor acababa de
+    // trabajar, sólo porque lo que escribió era un tema y no una idea.
+    const isDone = (s: WalkSection) => s.status === 'cubierta' || hasDecisions(elements[s.id] ?? []);
 
     const done = walk.filter(isDone).length;
 

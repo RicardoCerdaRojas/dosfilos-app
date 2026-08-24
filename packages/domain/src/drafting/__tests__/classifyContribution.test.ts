@@ -47,3 +47,21 @@ describe('classifyContribution', () => {
         expect(classifyContribution('Geografía del Mediterráneo')).toBe('directiva');
     });
 });
+
+describe('la pregunta RETÓRICA es una idea, no un tema', () => {
+    it('la ilustración del fundador (2026-08-24) es elemento', () => {
+        // Empieza con verbo, no con interrogativo: no pide cobertura, propone
+        // una imagen. La regla vieja —"termina en ?"— se la marcaba como tema y
+        // le quitaba autoría real.
+        expect(
+            classifyContribution(
+                '¿Han visto a los niños cuando hacen rabietas o cuando dicen que se van de casa? ¿qué posibilidades hay de que logren sus objetivos ante padres sabios?',
+            ),
+        ).toBe('elemento');
+    });
+
+    it('la pregunta TEMÁTICA sigue siendo directiva', () => {
+        expect(classifyContribution('¿Por qué Jonás huye a Tarsis?')).toBe('directiva');
+        expect(classifyContribution('¿Cuándo se escribió el libro?')).toBe('directiva');
+    });
+});
