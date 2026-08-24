@@ -408,7 +408,29 @@
       "yourDirective": "your direction",
       "title": "How your sermon will be shaped"
     },
-    "scanningLibrary": "Scanning your library…"
+    "scanningLibrary": "Scanning your library…",
+    "elements": {
+      "sectionLabel": "Historical context",
+      "sectionJob": "Place the listener in the world of the text: what its first hearers knew, and what they feared.",
+      "myIdeaLabel": "Your idea for this section",
+      "myIdeaPlaceholder": "Write the idea you want this section to carry. One or two sentences — the prose comes later.",
+      "addMine": "Add my idea",
+      "propose": "Suggest ideas",
+      "proposeMore": "Suggest others",
+      "proposeFailed": "Couldn't fetch suggestions. Your own idea is still the main path — write it above.",
+      "use": "Use",
+      "edit": "Edit",
+      "saveEdit": "Save my version",
+      "discard": "Discard",
+      "decidedTitle": "What you decided for this section",
+      "tally": "{{mine}} of {{total}} ideas are yours.",
+      "provenance": {
+        "pastor": "Yours",
+        "elegido": "Chosen",
+        "editado": "Edited",
+        "descartado": "Discarded"
+      }
+    }
   },
   "pastoralContext": {
     "title": "Pastoral context (optional)",

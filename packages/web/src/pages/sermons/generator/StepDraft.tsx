@@ -29,6 +29,7 @@ import {
     GENRE_COMPLIANCE_GENRES,
     JUDGE_SHADOW_SAMPLE_1_IN,
     type LiteraryGenre,
+    type SermonElement,
 } from '@dosfilos/domain';
 import { createProxyLlmClient } from '@dosfilos/infrastructure';
 import { useFirebase } from '@/context/firebase-context';
@@ -66,6 +67,7 @@ import { buildSermonCitationManifest } from './draft/buildSermonCitationManifest
 import { CitationManifestContext } from '@/lib/citationMarkers';
 import { useDraftRefinement } from './draft/useDraftRefinement';
 import { useDraftVersions } from './draft/useDraftVersions';
+import { SectionElementsPanel } from './draft/SectionElementsPanel';
 import { HomileticsSavedIndicator } from './homiletics/HomileticsLoadingScreen';
 
 export function StepDraft() {
@@ -75,6 +77,11 @@ export function StepDraft() {
     const { user } = useFirebase();
     const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, sermonId, derivedContext, reset, saving } = useWizard();
     const draftShadowGate = useFeatureFlag('sermon_draft_shadow');
+    // ADR-037 — spike de UNA sección. El estado vive en el componente a
+    // propósito: hasta adjudicar si el modelo propone algo útil, persistir el
+    // esquema en Firestore sería comprometerse con una forma que quizá cambie.
+    const socraticGate = useFeatureFlag('socratic_drafting');
+    const [contextElements, setContextElements] = useState<SermonElement[]>([]);
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
     // Pre-publish citation verification state (PR #218).
@@ -526,6 +533,19 @@ export function StepDraft() {
                     </div>
                 )}
             </Card>
+
+            {socraticGate.enabled && (
+                <SectionElementsPanel
+                    sectionId="introduction.historicalContext"
+                    sectionLabel={t('drafting.elements.sectionLabel')}
+                    sectionJob={t('drafting.elements.sectionJob')}
+                    passage={passage}
+                    proposition={homiletics.homileticalProposition}
+                    points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
+                    elements={contextElements}
+                    onChange={setContextElements}
+                />
+            )}
 
             <div className="mb-6">
                 <SermonPersonalizationPanel />

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { tallyProvenance, type SermonElement } from '../SermonElement';
 import { buildElementsPrompt } from '../buildElementsPrompt';
+import { parseProposedElements } from '../parseProposedElements';
 
 let n = 0;
 const el = (provenance: SermonElement['provenance'], text = 'x'): SermonElement => ({
@@ -72,5 +73,31 @@ describe('buildElementsPrompt', () => {
         // Sin esto el modelo rellena hasta el número pedido: es el mismo
         // mecanismo por el que una cita de autoridad obligatoria se fabrica.
         expect(buildElementsPrompt(base)).toContain('PROPÓN MENOS');
+    });
+});
+
+describe('parseProposedElements', () => {
+    const ok = '{"elements":[{"text":"La crueldad asiria","why":"Explica el miedo de Jonás"}]}';
+
+    it('lee la respuesta limpia', () => {
+        expect(parseProposedElements(ok)).toEqual([
+            { text: 'La crueldad asiria', why: 'Explica el miedo de Jonás' },
+        ]);
+    });
+
+    it('sobrevive al envoltorio ```json y a una frase antes', () => {
+        // El modelo los pone. Sin esto la pantalla del pastor queda vacía.
+        expect(parseProposedElements('Claro, aquí tienes:\n```json\n' + ok + '\n```')).toHaveLength(1);
+    });
+
+    it('descarta elementos sin texto en vez de renderizar filas vacías', () => {
+        const sucio = '{"elements":[{"text":"  "},{"text":"Nínive","why":null}]}';
+        expect(parseProposedElements(sucio)).toEqual([{ text: 'Nínive', why: '' }]);
+    });
+
+    it('devuelve lista vacía —no lanza— con basura', () => {
+        expect(parseProposedElements('no soy json')).toEqual([]);
+        expect(parseProposedElements('{roto')).toEqual([]);
+        expect(parseProposedElements('{"elements":"no es lista"}')).toEqual([]);
     });
 });

@@ -408,7 +408,29 @@
       "yourDirective": "tu indicación",
       "title": "Así quedará tu sermón"
     },
-    "scanningLibrary": "Revisando tu biblioteca…"
+    "scanningLibrary": "Revisando tu biblioteca…",
+    "elements": {
+      "sectionLabel": "Contexto histórico",
+      "sectionJob": "Situar al oyente en el mundo del texto: qué sabía y qué temía quien lo escuchó primero.",
+      "myIdeaLabel": "Tu idea para esta sección",
+      "myIdeaPlaceholder": "Escribe la idea que quieres que esta sección lleve. Una o dos frases: la prosa se escribe después.",
+      "addMine": "Agregar mi idea",
+      "propose": "Propónme ideas",
+      "proposeMore": "Propónme otras",
+      "proposeFailed": "No se pudieron traer propuestas. Tu idea sigue siendo el camino principal — escríbela arriba.",
+      "use": "Usar",
+      "edit": "Editar",
+      "saveEdit": "Guardar mi versión",
+      "discard": "Descartar",
+      "decidedTitle": "Lo que decidiste para esta sección",
+      "tally": "{{mine}} de {{total}} ideas son tuyas.",
+      "provenance": {
+        "pastor": "Tuya",
+        "elegido": "Elegida",
+        "editado": "Editada",
+        "descartado": "Descartada"
+      }
+    }
   },
   "pastoralContext": {
     "title": "Contexto Pastoral (Opcional)",
