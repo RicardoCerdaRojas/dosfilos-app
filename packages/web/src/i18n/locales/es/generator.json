@@ -442,6 +442,51 @@
         "directiva": "Tema"
       },
       "flipKind": "¿Es una idea tuya, no un tema? Haz clic para cambiarlo."
+    },
+    "sections": {
+      "exposition": {
+        "label": "Punto {{n}} — exposición",
+        "job": "Decir lo que el texto dice y por qué importa. Es el contenido del punto."
+      },
+      "illustration": {
+        "label": "Punto {{n}} — ilustración",
+        "job": "Hacer visible la idea con algo que la congregación reconozca."
+      },
+      "application": {
+        "label": "Punto {{n}} — aplicación",
+        "job": "Qué cambia el lunes por la mañana si esto es verdad."
+      },
+      "recap": {
+        "label": "Conclusión — recapitulación",
+        "job": "Recoger el hilo de los puntos sin repetirlos."
+      },
+      "callToAction": {
+        "label": "Conclusión — llamado",
+        "job": "Pedir una respuesta concreta, no un sentimiento."
+      },
+      "openingIllustration": {
+        "label": "Introducción — ilustración de apertura",
+        "job": "Abrir una pregunta que el sermón va a responder."
+      },
+      "bookOverview": {
+        "label": "Introducción — el libro de un vistazo",
+        "job": "Ubicar el pasaje dentro del libro completo."
+      },
+      "historicalContext": {
+        "label": "Introducción — contexto histórico",
+        "job": "Situar al oyente en el mundo del texto: qué sabía y qué temía quien lo escuchó primero."
+      },
+      "title": {
+        "label": "Título",
+        "job": "Nombrar lo que el sermón ya dice. Por eso va al final."
+      },
+      "coveredNote": "Ya es tuyo, del estudio o del bosquejo. No hay nada que decidir aquí.",
+      "contextNote": "Tus indicaciones para esta sección:",
+      "mapTitle": "Tu sermón",
+      "pendingCount": "{{done}} de {{total}} listas",
+      "statusDone": "Lista",
+      "statusPending": "Pendiente",
+      "statusCovered": "Tuya"
     }
   },
   "pastoralContext": {

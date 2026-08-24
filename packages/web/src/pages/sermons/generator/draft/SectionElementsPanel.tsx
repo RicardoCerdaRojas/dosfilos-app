@@ -11,13 +11,12 @@ import {
     type SermonElement,
     type ElementProvenance,
     type ContributionKind,
+    type WalkSection,
 } from '@dosfilos/domain';
 import { useProposeElements, type ProposedElement } from '@/hooks/useProposeElements';
 
 interface Props {
-    sectionId: string;
-    sectionLabel: string;
-    sectionJob: string;
+    section: WalkSection;
     passage: string;
     proposition?: string;
     points?: readonly string[];
@@ -47,6 +46,7 @@ const nextId = () => `el-${Date.now().toString(36)}-${seq++}`;
  */
 export function SectionElementsPanel(props: Props) {
     const { t } = useTranslation('generator');
+    const { section } = props;
     const { propose, loading, error } = useProposeElements();
     const [mine, setMine] = useState('');
     const [proposals, setProposals] = useState<ProposedElement[]>([]);
@@ -74,7 +74,7 @@ export function SectionElementsPanel(props: Props) {
                 const kind = classifyContribution(text);
                 return {
                     id: nextId(),
-                    sectionId: props.sectionId,
+                    sectionId: section.id,
                     text,
                     provenance,
                     kind,
@@ -102,13 +102,15 @@ export function SectionElementsPanel(props: Props) {
     const handlePropose = async () => {
         const nuevos = await propose({
             passage: props.passage,
-            sectionLabel: props.sectionLabel,
-            sectionJob: props.sectionJob,
+            sectionLabel: t(section.labelKey, section.labelParams),
+            sectionJob: t(section.jobKey),
             proposition: props.proposition,
             points: props.points,
             // Lo ya decidido viaja al prompt: re-proponer su propio trabajo es
             // la forma más rápida de que abandone el flujo.
-            alreadyDecided: decided.map((e) => e.text),
+            // Sus indicaciones del bosquejo cuentan como ya decidido: proponerle
+            // de vuelta lo que él mismo escribió vacía el flujo.
+            alreadyDecided: [...(section.coveredBy ?? []), ...decided.map((e) => e.text)],
         });
         setProposals(nuevos);
     };
@@ -119,11 +121,35 @@ export function SectionElementsPanel(props: Props) {
         <Card className="p-6 space-y-5 mb-6 border-primary/30">
             <div className="space-y-1">
                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
-                    {props.sectionLabel}
+                    {t(section.labelKey, section.labelParams)}
                 </h3>
-                <p className="text-sm text-muted-foreground">{props.sectionJob}</p>
+                <p className="text-sm text-muted-foreground">{t(section.jobKey)}</p>
             </div>
 
+            {/* Lo que ya escribió: SE MUESTRA, NO SE PREGUNTA. Cuando la sección
+                está cubierta es la respuesta; cuando está pendiente son sus
+                indicaciones, y viajan al prompt como contexto. */}
+            {section.coveredBy && section.coveredBy.length > 0 && (
+                <div className="rounded-md bg-muted/50 p-3 space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">
+                        {t(section.status === 'cubierta' ? 'drafting.sections.coveredNote' : 'drafting.sections.contextNote')}
+                    </p>
+                    <ul className="space-y-1 text-sm text-foreground/90">
+                        {section.coveredBy.map((texto, i) => (
+                            <li key={i} className="flex gap-2">
+                                <span className="text-primary shrink-0">▪</span>
+                                <span>{texto}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {/* SECCIÓN CUBIERTA: se muestra y se corta acá. Volver a preguntar lo
+                que ya decidió le pediría decidir dos veces la misma cosa, con el
+                riesgo de que la segunda contradiga a la primera. */}
+            {section.status === 'cubierta' ? null : (
+              <>
             {/* Camino 1 — su idea. Primero y siempre abierto. */}
             <div className="space-y-2">
                 <label htmlFor="mi-idea" className="text-sm font-medium">
@@ -223,6 +249,9 @@ export function SectionElementsPanel(props: Props) {
                     </div>
                 ))}
             </div>
+
+              </>
+            )}
 
             {decided.length > 0 && (
                 <div className="pt-4 border-t border-border/50 space-y-2">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
@@ -25,6 +25,7 @@ import {
 } from '@dosfilos/application';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import {
+    deriveSectionWalk,
     normalizeHomileticalApproach,
     GENRE_COMPLIANCE_GENRES,
     JUDGE_SHADOW_SAMPLE_1_IN,
@@ -67,10 +68,8 @@ import { CitationManifestContext } from '@/lib/citationMarkers';
 import { useDraftRefinement } from './draft/useDraftRefinement';
 import { useDraftVersions } from './draft/useDraftVersions';
 import { SectionElementsPanel } from './draft/SectionElementsPanel';
+import { SermonMap } from './draft/SermonMap';
 import { HomileticsSavedIndicator } from './homiletics/HomileticsLoadingScreen';
-
-/** ADR-037 — `sectionId` de la única sección cableada hoy. */
-const HISTORICAL_CONTEXT_SECTION = 'introduction.historicalContext';
 
 export function StepDraft() {
     const { t, language } = useTranslation('generator');
@@ -83,6 +82,7 @@ export function StepDraft() {
     // con el resto del progreso: el spike ya adjudicó que el modelo propone
     // bien, así que el esquema deja de ser provisional.
     const socraticGate = useFeatureFlag('socratic_drafting');
+    const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
     const [socraticOpen, setSocraticOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
@@ -506,17 +506,51 @@ export function StepDraft() {
      * borrador va PLEGADO: el canvas ya ocupa la altura completa y un panel
      * abierto encima empujaría el texto fuera de la vista.
      */
-    const socraticPanel = socraticGate.enabled && homiletics ? (
-        <SectionElementsPanel
-            sectionId={HISTORICAL_CONTEXT_SECTION}
-            sectionLabel={t('drafting.elements.sectionLabel')}
-            sectionJob={t('drafting.elements.sectionJob')}
-            passage={passage}
-            proposition={homiletics.homileticalProposition}
-            points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
-            elements={sectionElements[HISTORICAL_CONTEXT_SECTION] ?? []}
-            onChange={(els) => setSectionElements(HISTORICAL_CONTEXT_SECTION, els)}
-        />
+    /**
+     * ADR-037 — el taller socrático, con el recorrido derivado de SU bosquejo.
+     *
+     * El mapa y el taller viven juntos: elegir una sección en el mapa cambia el
+     * taller. Separarlos obligaría a recordar en cuál se estaba trabajando, que
+     * es exactamente lo que el mapa existe para evitar.
+     */
+    const socraticWalk = useMemo(
+        () =>
+            homiletics
+                ? deriveSectionWalk({
+                      points: (homiletics.outline?.mainPoints ?? []) as any[],
+                      proposition: homiletics.homileticalProposition,
+                  })
+                : [],
+        [homiletics],
+    );
+
+    // La sección activa por defecto es la PRIMERA PENDIENTE, no la primera del
+    // recorrido: abrir en una que ya es suya le haría creer que hay algo que
+    // decidir ahí.
+    const activeSection =
+        socraticWalk.find((s) => s.id === activeSectionId) ??
+        socraticWalk.find((s) => s.status === 'pendiente') ??
+        socraticWalk[0];
+
+    const socraticPanel = socraticGate.enabled && homiletics && activeSection ? (
+        <div className="flex gap-4 items-start">
+            <SermonMap
+                walk={socraticWalk}
+                elements={sectionElements}
+                activeId={activeSection.id}
+                onSelect={setActiveSectionId}
+            />
+            <div className="flex-1 min-w-0">
+                <SectionElementsPanel
+                    section={activeSection}
+                    passage={passage}
+                    proposition={homiletics.homileticalProposition}
+                    points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
+                    elements={sectionElements[activeSection.id] ?? []}
+                    onChange={(els) => setSectionElements(activeSection.id, els)}
+                />
+            </div>
+        </div>
     ) : null;
 
     const leftPanel = !draft ? (

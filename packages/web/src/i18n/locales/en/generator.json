@@ -442,6 +442,51 @@
         "directiva": "Topic"
       },
       "flipKind": "Is this your own idea, not a topic? Click to change it."
+    },
+    "sections": {
+      "exposition": {
+        "label": "Point {{n}} — exposition",
+        "job": "Say what the text says and why it matters. This is the point's content."
+      },
+      "illustration": {
+        "label": "Point {{n}} — illustration",
+        "job": "Make the idea visible with something the congregation recognizes."
+      },
+      "application": {
+        "label": "Point {{n}} — application",
+        "job": "What changes Monday morning if this is true."
+      },
+      "recap": {
+        "label": "Conclusion — recap",
+        "job": "Gather the thread of the points without repeating them."
+      },
+      "callToAction": {
+        "label": "Conclusion — call",
+        "job": "Ask for a concrete response, not a feeling."
+      },
+      "openingIllustration": {
+        "label": "Introduction — opening illustration",
+        "job": "Open a question the sermon will answer."
+      },
+      "bookOverview": {
+        "label": "Introduction — the book at a glance",
+        "job": "Place the passage within the whole book."
+      },
+      "historicalContext": {
+        "label": "Introduction — historical context",
+        "job": "Place the listener in the world of the text: what its first hearers knew, and what they feared."
+      },
+      "title": {
+        "label": "Title",
+        "job": "Name what the sermon already says. That is why it comes last."
+      },
+      "coveredNote": "Already yours, from the study or the outline. Nothing to decide here.",
+      "contextNote": "Your notes for this section:",
+      "mapTitle": "Your sermon",
+      "pendingCount": "{{done}} of {{total}} done",
+      "statusDone": "Done",
+      "statusPending": "Pending",
+      "statusCovered": "Yours"
     }
   },
   "pastoralContext": {
