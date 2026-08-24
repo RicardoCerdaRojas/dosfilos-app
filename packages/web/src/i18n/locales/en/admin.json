@@ -1,675 +1,677 @@
 {
-    "crossRefs": {
-        "title": "Cross-references (TSK)",
-        "ingestTitle": "Dataset ingest",
-        "ingestDescription": "Loads the bundled seed (~12 anchor verses) into the Firestore collection. The full TSK dataset (~340k links) lands in a follow-up PR.",
-        "ingestSample": "Ingest sample",
-        "lookupTitle": "Interactive lookup",
-        "lookupDescription": "Resolve parallels by exact verse or by pericope (startVerse..endVerse range).",
-        "book": "Book",
-        "chapter": "Chapter",
-        "verse": "Verse",
-        "verseEnd": "End verse",
-        "verseEndPlaceholder": "(optional, for pericope)",
-        "lookup": "Lookup",
-        "resultsTitle": "Results",
-        "noResults": "No parallels for that reference.",
-        "parallels": "parallels",
-        "toasts": {
-            "ingestSuccess": "Cross-references ingested: {{written}} verses from {{source}}",
-            "ingestError": "Failed to ingest dataset"
-        }
+  "crossRefs": {
+    "title": "Cross-references (TSK)",
+    "ingestTitle": "Dataset ingest",
+    "ingestDescription": "Loads the bundled seed (~12 anchor verses) into the Firestore collection. The full TSK dataset (~340k links) lands in a follow-up PR.",
+    "ingestSample": "Ingest sample",
+    "lookupTitle": "Interactive lookup",
+    "lookupDescription": "Resolve parallels by exact verse or by pericope (startVerse..endVerse range).",
+    "book": "Book",
+    "chapter": "Chapter",
+    "verse": "Verse",
+    "verseEnd": "End verse",
+    "verseEndPlaceholder": "(optional, for pericope)",
+    "lookup": "Lookup",
+    "resultsTitle": "Results",
+    "noResults": "No parallels for that reference.",
+    "parallels": "parallels",
+    "toasts": {
+      "ingestSuccess": "Cross-references ingested: {{written}} verses from {{source}}",
+      "ingestError": "Failed to ingest dataset"
+    }
+  },
+  "confessions": {
+    "title": "CORE Catalog — Confessions",
+    "description": "Confessional source catalog for the Pastoral Fidelity initiative (ADR-006). Ingested from the canonical JSON + per-source parsers.",
+    "totalCount": "{{count}} sources in catalog",
+    "ingestAll": "Ingest CORE v1",
+    "empty": "Catalog empty",
+    "emptyHint": "Click \"Ingest CORE v1\" to populate the catalog from the canonical JSON.",
+    "notFound": "Confession not found",
+    "viewSections": "View sections",
+    "reingest": "Re-ingest",
+    "tradition": "Tradition",
+    "year": "Year",
+    "license": "License",
+    "sectionCount": "Sections",
+    "noSections": "No sections persisted",
+    "pendingHint": "Content ingest not yet completed for this source. Scheduled for a follow-up PR.",
+    "filter": {
+      "all": "All",
+      "sectioned": "Sectioned",
+      "reference": "Reference"
     },
-    "confessions": {
-        "title": "CORE Catalog — Confessions",
-        "description": "Confessional source catalog for the Pastoral Fidelity initiative (ADR-006). Ingested from the canonical JSON + per-source parsers.",
-        "totalCount": "{{count}} sources in catalog",
-        "ingestAll": "Ingest CORE v1",
-        "empty": "Catalog empty",
-        "emptyHint": "Click \"Ingest CORE v1\" to populate the catalog from the canonical JSON.",
-        "notFound": "Confession not found",
-        "viewSections": "View sections",
-        "reingest": "Re-ingest",
-        "tradition": "Tradition",
-        "year": "Year",
-        "license": "License",
-        "sectionCount": "Sections",
-        "noSections": "No sections persisted",
-        "pendingHint": "Content ingest not yet completed for this source. Scheduled for a follow-up PR.",
-        "filter": {
-            "all": "All",
-            "sectioned": "Sectioned",
-            "reference": "Reference"
-        },
-        "status": {
-            "complete": "Complete",
-            "partial": "Partial",
-            "pending": "Content pending",
-            "not-applicable": "Metadata only"
-        },
-        "tagLlm": "Tag with LLM",
-        "tagLlmForce": "Re-tag all (force)",
-        "tagForceConfirm": "Re-tag every section from scratch? This overwrites assigned levels and resets reviewStatus.",
-        "taggingSummary": "{{total}} sections · {{untagged}} untagged · {{pendingReview}} pending review",
-        "reviewPending": "Pending review",
-        "reviewed": "Reviewed",
-        "rationale": "Rationale",
-        "levelLabel": "Doctrine level",
-        "levelPlaceholder": "No level",
-        "markReviewed": "Mark reviewed",
-        "toasts": {
-            "ingestSuccess": "Ingest complete: {{ingested}} with content, {{pending}} pending, {{reference}} metadata-only",
-            "ingestError": "Failed to ingest CORE catalog",
-            "tagSuccess": "Tagging complete: {{tagged}} tagged, {{skipped}} skipped, {{failed}} failed",
-            "tagError": "Failed to tag doctrine levels",
-            "reviewSuccess": "Level updated",
-            "reviewError": "Failed to update level"
-        }
+    "status": {
+      "complete": "Complete",
+      "partial": "Partial",
+      "pending": "Content pending",
+      "not-applicable": "Metadata only"
     },
-    "common": {
-        "accessDenied": {
-            "title": "Access Denied",
-            "description": "You don't have permission to view this page.",
-            "homeButton": "Back to home"
-        },
-        "noPermission": "You don't have permission to access this page",
-        "back": "Back",
-        "refresh": "Refresh"
+    "tagLlm": "Tag with LLM",
+    "tagLlmForce": "Re-tag all (force)",
+    "tagForceConfirm": "Re-tag every section from scratch? This overwrites assigned levels and resets reviewStatus.",
+    "taggingSummary": "{{total}} sections · {{untagged}} untagged · {{pendingReview}} pending review",
+    "reviewPending": "Pending review",
+    "reviewed": "Reviewed",
+    "rationale": "Rationale",
+    "levelLabel": "Doctrine level",
+    "levelPlaceholder": "No level",
+    "markReviewed": "Mark reviewed",
+    "toasts": {
+      "ingestSuccess": "Ingest complete: {{ingested}} with content, {{pending}} pending, {{reference}} metadata-only",
+      "ingestError": "Failed to ingest CORE catalog",
+      "tagSuccess": "Tagging complete: {{tagged}} tagged, {{skipped}} skipped, {{failed}} failed",
+      "tagError": "Failed to tag doctrine levels",
+      "reviewSuccess": "Level updated",
+      "reviewError": "Failed to update level"
+    }
+  },
+  "common": {
+    "accessDenied": {
+      "title": "Access Denied",
+      "description": "You don't have permission to view this page.",
+      "homeButton": "Back to home"
     },
-    "users": {
-        "title": "User Management",
-        "subtitle_one": "1 total user",
-        "subtitle_other": "{{total}} total users",
-        "subtitleVisible_one": "Showing 1 of {{total}}",
-        "subtitleVisible_other": "Showing {{visible}} of {{total}}",
-        "backToAnalytics": "Analytics",
-        "exportCsv": "Export CSV",
-        "exportCsvFiltered": "Export CSV ({{count}} filtered)",
-        "exportCsvAll": "Export CSV (all)",
-        "csvHeaders": {
-            "email": "Email",
-            "name": "Name",
-            "plan": "Plan",
-            "status": "Status",
-            "engagement": "Engagement",
-            "lastLogin": "Last Login",
-            "registeredAt": "Registered At"
-        },
-        "filters": {
-            "search": "Search by name or email...",
-            "plan": "Plan",
-            "status": "Status",
-            "allPlans": "All plans",
-            "allStatuses": "All statuses",
-            "active": "Active",
-            "trialing": "Trialing",
-            "cancelled": "Cancelled",
-            "pastDue": "Past due",
-            "disabled": "Disabled"
-        },
-        "loading": "Loading users...",
-        "loadingMore": "Loading more...",
-        "loadMore": "Load more",
-        "endOfList": "No more users to show",
-        "empty": {
-            "title": "No users found",
-            "noResults": "Try adjusting the filters",
-            "noUsers": "No registered users yet"
-        },
-        "table": {
-            "user": "User",
-            "plan": "Plan",
-            "status": "Status",
-            "activity": "Activity",
-            "engagement": "Engagement",
-            "lastLogin": "Last Login",
-            "registered": "Registered",
-            "actions": "Actions",
-            "noName": "No name",
-            "sermonsCount_one": "1 sermon",
-            "sermonsCount_other": "{{count}} sermons",
-            "tutorAndDrafts": "{{greek}} Greek · {{drafts}} drafts",
-            "neverLogged": "Never",
-            "defaultStatus": "Active",
-            "selectAria": "Select user {{email}}",
-            "selectAllAria": "Select all visible users",
-            "trialEndsIn": "Trial ends {{when}}",
-            "trialEnded": "Trial expired",
-            "disabledBadge": "Disabled",
-            "status": {
-                "active": "Active",
-                "trialing": "Trial",
-                "cancelled": "Cancelled",
-                "past_due": "Past due",
-                "incomplete": "Incomplete",
-                "incomplete_expired": "Expired",
-                "unpaid": "Unpaid",
-                "paused": "Paused",
-                "disabled": "Disabled"
-            }
-        },
-        "planLabels": {
-            "free": "Free",
-            "basic": "Personal",
-            "pro": "Pro",
-            "team": "Team",
-            "enterprise": "Enterprise"
-        },
-        "engagement": {
-            "low": "Low",
-            "medium": "Medium",
-            "high": "High",
-            "tooltip": "Engagement score: combines logins, recent activity, and feature usage. 0-32 Low, 33-65 Medium, 66-100 High."
-        },
-        "resetQuotaDialog": {
-            "title": "Reset monthly quotas for {{name}}",
-            "description": "Restore the plan buckets to the standard monthly allowance of the user's current plan. Prepaid packs are untouched.",
-            "currentPlan": "Current plan",
-            "willApply": "These values will be applied",
-            "standardPages": "Standard",
-            "premiumPages": "Premium",
-            "exegesisUsd": "Exegesis",
-            "pagesUnit": "pages/mo",
-            "packNote": "Prepaid packs are preserved. Only the monthly plan bucket is reset.",
-            "freePlanWarning": "This user is on the Free plan, whose quotas are 0. The reset will run but won't add balance. If you need to grant credits manually, use the Grant credits action.",
-            "reasonLabel": "Reason",
-            "reasonPlaceholder": "E.g. Stripe webhook missed on 5/16, manual renewal · Comp account post-upgrade · Bug ticket #523",
-            "reasonHint": "Logged in the audit trail with actorUid + timestamp.",
-            "cancel": "Cancel",
-            "confirm": "Reset quotas",
-            "loading": "Resetting..."
-        },
-        "sort": {
-            "name": "Name",
-            "registered": "Registered",
-            "lastLogin": "Last login",
-            "engagement": "Engagement",
-            "ascending": "ascending",
-            "descending": "descending",
-            "clickToSort": "Click to sort"
-        },
-        "rowActions": {
-            "activity": "View activity",
-            "view": "View",
-            "impersonate": "Log in as user",
-            "openDetail": "Full detail",
-            "viewActivity": "View detailed activity",
-            "changePlan": "Change plan",
-            "resetQuota": "Reset monthly quotas",
-            "resendEmail": "Resend welcome",
-            "enable": "Enable",
-            "disable": "Disable",
-            "delete": "Delete",
-            "more": "More actions"
-        },
-        "bulkActions": {
-            "selectedCount_one": "1 selected",
-            "selectedCount_other": "{{count}} selected",
-            "clearSelection": "Clear selection",
-            "disable": "Disable selected",
-            "enable": "Enable selected",
-            "confirmDisableTitle": "Disable {{count}} user(s)",
-            "confirmDisableDescription": "These users won't be able to sign in, but their data is preserved. You can re-enable them at any time.",
-            "confirmEnableTitle": "Enable {{count}} user(s)",
-            "confirmEnableDescription": "These users will recover full access to the platform.",
-            "running": "Processing {{done}} of {{total}}...",
-            "successAll": "{{count}} user(s) processed successfully",
-            "successPartial": "{{ok}} ok · {{failed}} failed",
-            "errorAll": "Could not process any user"
-        },
-        "disableDialog": {
-            "title": "Disable this user?",
-            "description": "The account for <strong>{{email}}</strong> will be locked. The user won't be able to sign in, but all their data (sermons, notes, sessions) will remain intact. You can reactivate the account at any time.",
-            "cancel": "Cancel",
-            "confirm": "Disable User",
-            "loading": "Disabling..."
-        },
-        "deleteDialog": {
-            "title": "⚠️ Delete permanently",
-            "warning": "This action <strong>cannot be undone</strong>. The following will be permanently deleted:",
-            "items": {
-                "auth": "The Firebase Auth account",
-                "content": "All sermons, series and drafts",
-                "history": "Session history and analytics",
-                "subscription": "The Stripe subscription"
-            },
-            "confirmPrompt": "To confirm, type the user's email:",
-            "placeholder": "Type the email to confirm...",
-            "cancel": "Cancel",
-            "confirm": "Delete Permanently",
-            "loading": "Deleting..."
-        },
-        "changePlanDialog": {
-            "title": "Change plan for {{name}}",
-            "description": "Pick the new plan. The change applies immediately and Stripe handles proration automatically.",
-            "currentPlan": "Current plan",
-            "newPlan": "New plan",
-            "billingCycle": "Billing cycle",
-            "monthly": "Monthly",
-            "yearly": "Yearly",
-            "proration": "Stripe will prorate the charge based on the time remaining in the current period.",
-            "noChange": "Pick a plan different from the current one.",
-            "cancel": "Cancel",
-            "confirm": "Apply change",
-            "loading": "Applying...",
-            "compAccountTitle": "Comp account — Stripe will not bill",
-            "compAccountBody": "This user never completed checkout (no Stripe payment method on file). The change applies only on our platform: they'll get the plan's features but no monthly charge. To enable real billing, the user must complete checkout with a card."
-        },
-        "details": {
-            "title": "User details",
-            "description": "Full information for {{name}}",
-            "sections": {
-                "basic": "Basic information",
-                "subscription": "Subscription",
-                "activity": "Activity & engagement",
-                "revenue": "Revenue",
-                "sensitive": "Internal identifiers"
-            },
-            "fields": {
-                "name": "Name",
-                "email": "Email",
-                "userId": "User ID",
-                "stripeCustomerId": "Stripe Customer ID",
-                "created": "Created",
-                "plan": "Plan",
-                "status": "Status",
-                "startDate": "Start date",
-                "nextBilling": "Next billing",
-                "trialEnd": "Trial end",
-                "engagementScore": "Engagement score",
-                "totalLogins": "Total logins",
-                "sermonsCreated": "Sermons created",
-                "lastLogin": "Last login",
-                "lastActivity": "Last activity",
-                "totalRevenue": "Total revenue"
-            },
-            "trialActive": "Trial active · ends {{when}}",
-            "trialExpired": "Trial expired · {{when}}",
-            "showSensitive": "Show internal identifiers",
-            "hideSensitive": "Hide internal identifiers",
-            "changePlanButton": "Change plan",
-            "close": "Close"
-        },
-        "detail": {
-            "backToList": "Users",
-            "noName": "No name",
-            "notFound": "User not found",
-            "disabled": "Disabled",
-            "tabs": {
-                "overview": "Overview",
-                "timeline": "Timeline",
-                "usage": "Usage & quotas",
-                "subscription": "Subscription",
-                "audit": "Audit log",
-                "flags": "Flags"
-            }
-        },
-        "timeline": {
-            "title": "Last {{days}} days",
-            "range": "{{days}} days",
-            "allTypes": "All types",
-            "itemCount_one": "1 event",
-            "itemCount_other": "{{count}} events",
-            "empty": "No activity in this range"
-        },
-        "usage": {
-            "period": "Current period",
-            "planLabel": "Plan: {{plan}}",
-            "loadError": "Could not load usage",
-            "pagesProcessed": "Pages processed",
-            "pagesHint": "Pages extracted via LlamaParse this month",
-            "queriesUsed": "Queries used",
-            "queriesHint": "Tutor messages sent this month",
-            "docsUploaded": "Documents uploaded",
-            "docsHint": "Documents in personal library",
-            "unlimited": "unlimited",
-            "noQuota": "no quota",
-            "remaining_one": "1 remaining",
-            "remaining_other": "{{count}} remaining",
-            "balance": {
-                "title": "Processing balance",
-                "standardAvailable": "Std available",
-                "premiumAvailable": "Premium available",
-                "standardSpent": "Std spent",
-                "premiumSpent": "Premium spent"
-            }
-        },
-        "subscription": {
-            "none": "This user has no active subscription",
-            "openStripe": "Open in Stripe",
-            "cancelAtPeriodEnd": "Cancels at period end",
-            "startDate": "Start date",
-            "currentPeriod": "Current period",
-            "trialEnd": "Trial end",
-            "cancelledAt": "Cancelled at",
-            "gracePeriodEnd": "Grace period end",
-            "paymentIssues": "Payment issues",
-            "failedAttempts_one": "1 failed payment attempt",
-            "failedAttempts_other": "{{count}} failed payment attempts",
-            "status": {
-                "active": "Active",
-                "trialing": "Trialing",
-                "past_due": "Past due",
-                "cancelled": "Cancelled",
-                "incomplete": "Incomplete"
-            }
-        },
-        "audit": {
-            "scopedHint": "Admin actions on this user",
-            "openFull": "Open full audit log",
-            "empty": "No actions recorded for this user"
-        },
-        "activity": {
-            "title": "User activity",
-            "loading": "Loading activity...",
-            "errorPrefix": "Error",
-            "notFound": "User information not found",
-            "noName": "No name",
-            "lastLoginRelative": "Last login: {{when}}",
-            "totalLogins_one": "1 total login",
-            "totalLogins_other": "{{count}} total logins",
-            "createdToday_one": "Created today (1)",
-            "createdToday_other": "Created today ({{count}})",
-            "createdThisWeek_one": "This week (1)",
-            "createdThisWeek_other": "This week ({{count}})",
-            "summary": {
-                "title": "Activity summary",
-                "sermons": "Sermons",
-                "published": "Published",
-                "series": "Series",
-                "plans": "Plans",
-                "greekTutor": "Greek Tutor",
-                "hebrewTutor": "Hebrew Tutor",
-                "faculty": "Faculty",
-                "projects": "Projects",
-                "library": "Library"
-            },
-            "recent": {
-                "defaultTitle": "Recent content",
-                "empty": "No recent content",
-                "itemCount_one": "1 item",
-                "itemCount_other": "{{count}} items",
-                "showMore": "Show {{count}} more...",
-                "showLess": "Show less",
-                "types": {
-                    "sermon": "Sermon",
-                    "greek_session": "Greek Tutor",
-                    "hebrew_session": "Hebrew Tutor",
-                    "faculty_session": "Faculty",
-                    "project": "Project",
-                    "series": "Series",
-                    "library_upload": "Library",
-                    "preaching_plan": "Plan"
-                },
-                "status": {
-                    "published": "Published",
-                    "draft": "Draft",
-                    "completed": "Completed",
-                    "in_progress": "In progress",
-                    "active": "Active"
-                }
-            }
-        },
-        "toasts": {
-            "deleteSuccess": "User deleted permanently",
-            "deleteError": "Error deleting user",
-            "disableSuccess": "User {{email}} disabled successfully",
-            "disableError": "Error disabling user",
-            "enableSuccess": "User {{email}} enabled successfully",
-            "enableError": "Error enabling user",
-            "resendSuccess": "Welcome email sent to {{email}}",
-            "resendError": "Error resending email",
-            "changePlanSuccess": "Plan updated successfully",
-            "changePlanError": "Error changing plan",
-            "grantSuccess": "Credits granted successfully",
-            "grantError": "Error granting pages",
-            "extendTrialSuccess": "Trial extended successfully",
-            "extendTrialError": "Error extending trial",
-            "resetQuotaSuccess": "Quotas reset: {{standard}} standard · {{premium}} premium",
-            "resetQuotaError": "Error resetting quotas",
-            "featureFlagsSuccess": "Flags updated",
-            "featureFlagsError": "Failed to update flags",
-            "impersonateSuccess": "You are now viewing {{name}}'s account",
-            "impersonateError": "Could not log in as this user",
-            "stopImpersonateSuccess": "Back to your admin account",
-            "stopImpersonateError": "Could not return to your admin account"
-        },
-        "impersonation": {
-            "banner": "You are viewing the platform as {{user}}",
-            "exit": "Exit"
-        },
-        "impersonateDialog": {
-            "title": "Log in as user",
-            "intro": "You are about to log in as {{name}} to see the platform exactly as this user sees it.",
-            "point1": "Your session will switch to this user.",
-            "point2": "You'll see their library, sermons and content — not the admin panel.",
-            "point3": "You can return to your account anytime with the \"Exit\" button in the top banner.",
-            "cancel": "Cancel",
-            "confirm": "Log in as user",
-            "loading": "Switching session..."
-        },
-        "featureFlags": {
-            "title": "Feature flags",
-            "description": "Enable or disable experimental features for this user. Each change is recorded in the audit log. Enabling a flag also enables its prerequisites.",
-            "dormantBadge": "Dormant",
-            "dormantNote": "Not enable-able — relocated to the paper in Phase 7 (ADR-032).",
-            "disableTitle": "Disable {{flag}}?",
-            "disableDescription": "{{flag}} has {{count}} active sub-flag(s) that depend on it: {{dependents}}. Disabling it disables them too. Disable all or cancel?",
-            "disableConfirm": "Disable all",
-            "cancel": "Cancel",
-            "flags": {
-                "pastoral_fidelity_flow": {
-                    "description": "Activates the reformed pastoral fidelity flow (six-step spine, three witnesses). Requires the user to have declared a confession."
-                },
-                "pastoral_word_study": {
-                    "description": "Replaces the embedded Greek tutor in Morphology with the Pastoral Word Study modal (Phase 1.5). Requires pastoral_fidelity_flow to also be on."
-                },
-                "study_depth": {
-                    "label": "Study Companion",
-                    "description": "Study-depth badge + per-step orientation in the wizard (Phase 2.5). Requires pastoral fidelity flow."
-                },
-                "fidelity_pass": {
-                    "label": "Fidelity pass",
-                    "description": "Claim/source fidelity pass — second-pass LLM that scores every `[N]` marker in a generated sermon and surfaces a review panel in the editor (Phase 3, ADR-029). Requires pastoral_fidelity_flow."
-                },
-                "contra_scan": {
-                    "label": "Contra-scan",
-                    "description": "Pre-publish confrontation: surfaces library chunks that dissent from the sermon's central idea and requires the pastor to consider at least one before publishing (Phase 4, ADR-033, Acts 20:27). Requires pastoral_fidelity_flow."
-                },
-                "conduccion_corazon": {
-                    "label": "Heart conduction",
-                    "description": "\"Conduct the heart\" button in the Master Study: guided C1–C5 conduction that elicits the affective application anchored to the text (formative conduction manifesto). Validated in prod — the heart exam is already deployed."
-                },
-                "three_witnesses": {
-                    "label": "Three witnesses",
-                    "description": "Three-witnesses gate after the pastoral seed is complete: immediate context, canonical parallels and the pastor's own declared confession validate the central idea before drafting (Phase 2, ADR-011)."
-                },
-                "passage_profile": {
-                    "label": "Passage profile (shadow)",
-                    "description": "Passage profile in SHADOW mode: the detector runs when the study starts and records what it would have said, without confronting or nudging. This is the MEASUREMENT flag — turn it on before any of its enforce flags (ADR-035)."
-                },
-                "passage_profile_enforce": {
-                    "label": "Passage profile (enforce)",
-                    "description": "Applies the profile live: per-step nudges, misreading confrontation and the coverage collector at close. Only after the detector's precision has been adjudicated in shadow (ADR-035)."
-                },
-                "anchor_fidelity_enforce": {
-                    "label": "Anchor fidelity (enforce)",
-                    "description": "Drops the misreadings the detector proposes without a verifiable anchor (the cited verse does not exist). The curated floor of reviewed misreadings does NOT depend on this flag — it is always verified (ADR-036)."
-                },
-                "sermon_draft_shadow": {
-                    "label": "Draft shadow",
-                    "description": "Draft shadow: measures fabricated authority quotes, wrong verse citations and homiletical-approach compliance. Blocks nothing — it is the instrumentation every validator depends on (Redacción v2)."
-                },
-                "genre_override_enforce": {
-                    "label": "Genre override (enforce)",
-                    "description": "The system confronts the pastor about the genre of their pericope in step 2 instead of only measuring it in shadow. Measurement runs under passage profile; this flag turns on the confrontation (Redacción v2 §4.4)."
-                },
-                "step3_genre_help": {
-                    "label": "Step 3 genre help",
-                    "description": "Genre-aware structural help in step 3: guidance and worked examples for the confirmed genre instead of the generic prompt. Formative scaffolding, not judgement (Redacción v2 §4.5)."
-                }
-            }
-        },
-        "grantCreditsDialog": {
-            "title": "Grant pages to {{name}}",
-            "description": "Add pages to the user's balance. This action is logged in the audit log with the reason you provide.",
-            "standardPages": "Standard pages (Gemini)",
-            "premiumPages": "Premium pages (LlamaParse)",
-            "reason": "Reason (logged in audit log)",
-            "reasonPlaceholder": "e.g., Compensation for extraction bug on 04/27, ticket #423",
-            "currentBalance": "Current balance",
-            "afterGrant": "After grant",
-            "missingValues": "Provide at least 1 page and a reason.",
-            "cancel": "Cancel",
-            "confirm": "Grant",
-            "loading": "Granting..."
-        },
-        "extendTrialDialog": {
-            "title": "Extend trial for {{name}}",
-            "description": "Add days to the trial period. If the trial has expired, it reopens from today + N days. Stripe is synced automatically.",
-            "days": "Days to add",
-            "currentTrialEnd": "Trial currently ends",
-            "newTrialEnd": "New trial end",
-            "noTrial": "No active trial (one will be created from today)",
-            "reason": "Reason (logged in audit log)",
-            "reasonPlaceholder": "e.g., Sales request, prospective Team customer",
-            "daysOutOfRange": "Days must be between 1 and 90.",
-            "cancel": "Cancel",
-            "confirm": "Extend",
-            "loading": "Extending..."
-        },
-        "stats": {
-            "total": "Total",
-            "subscribers": "Subscribers",
-            "subscribersHint": "Paying now",
-            "trialing": "Trialing",
-            "newThisMonth": "New this month",
-            "mrr": "Estimated MRR",
-            "conversion": "Conversion",
-            "conversionHint": "{{paying}} of {{total}} paying"
-        }
+    "noPermission": "You don't have permission to access this page",
+    "back": "Back",
+    "refresh": "Refresh"
+  },
+  "users": {
+    "title": "User Management",
+    "subtitle_one": "1 total user",
+    "subtitle_other": "{{total}} total users",
+    "subtitleVisible_one": "Showing 1 of {{total}}",
+    "subtitleVisible_other": "Showing {{visible}} of {{total}}",
+    "backToAnalytics": "Analytics",
+    "exportCsv": "Export CSV",
+    "exportCsvFiltered": "Export CSV ({{count}} filtered)",
+    "exportCsvAll": "Export CSV (all)",
+    "csvHeaders": {
+      "email": "Email",
+      "name": "Name",
+      "plan": "Plan",
+      "status": "Status",
+      "engagement": "Engagement",
+      "lastLogin": "Last Login",
+      "registeredAt": "Registered At"
+    },
+    "filters": {
+      "search": "Search by name or email...",
+      "plan": "Plan",
+      "status": "Status",
+      "allPlans": "All plans",
+      "allStatuses": "All statuses",
+      "active": "Active",
+      "trialing": "Trialing",
+      "cancelled": "Cancelled",
+      "pastDue": "Past due",
+      "disabled": "Disabled"
+    },
+    "loading": "Loading users...",
+    "loadingMore": "Loading more...",
+    "loadMore": "Load more",
+    "endOfList": "No more users to show",
+    "empty": {
+      "title": "No users found",
+      "noResults": "Try adjusting the filters",
+      "noUsers": "No registered users yet"
+    },
+    "table": {
+      "user": "User",
+      "plan": "Plan",
+      "status": {
+        "active": "Active",
+        "trialing": "Trial",
+        "cancelled": "Cancelled",
+        "past_due": "Past due",
+        "incomplete": "Incomplete",
+        "incomplete_expired": "Expired",
+        "unpaid": "Unpaid",
+        "paused": "Paused",
+        "disabled": "Disabled"
+      },
+      "activity": "Activity",
+      "engagement": "Engagement",
+      "lastLogin": "Last Login",
+      "registered": "Registered",
+      "actions": "Actions",
+      "noName": "No name",
+      "sermonsCount_one": "1 sermon",
+      "sermonsCount_other": "{{count}} sermons",
+      "tutorAndDrafts": "{{greek}} Greek · {{drafts}} drafts",
+      "neverLogged": "Never",
+      "defaultStatus": "Active",
+      "selectAria": "Select user {{email}}",
+      "selectAllAria": "Select all visible users",
+      "trialEndsIn": "Trial ends {{when}}",
+      "trialEnded": "Trial expired",
+      "disabledBadge": "Disabled"
+    },
+    "planLabels": {
+      "free": "Free",
+      "basic": "Personal",
+      "pro": "Pro",
+      "team": "Team",
+      "enterprise": "Enterprise"
+    },
+    "engagement": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "tooltip": "Engagement score: combines logins, recent activity, and feature usage. 0-32 Low, 33-65 Medium, 66-100 High."
+    },
+    "resetQuotaDialog": {
+      "title": "Reset monthly quotas for {{name}}",
+      "description": "Restore the plan buckets to the standard monthly allowance of the user's current plan. Prepaid packs are untouched.",
+      "currentPlan": "Current plan",
+      "willApply": "These values will be applied",
+      "standardPages": "Standard",
+      "premiumPages": "Premium",
+      "exegesisUsd": "Exegesis",
+      "pagesUnit": "pages/mo",
+      "packNote": "Prepaid packs are preserved. Only the monthly plan bucket is reset.",
+      "freePlanWarning": "This user is on the Free plan, whose quotas are 0. The reset will run but won't add balance. If you need to grant credits manually, use the Grant credits action.",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "E.g. Stripe webhook missed on 5/16, manual renewal · Comp account post-upgrade · Bug ticket #523",
+      "reasonHint": "Logged in the audit trail with actorUid + timestamp.",
+      "cancel": "Cancel",
+      "confirm": "Reset quotas",
+      "loading": "Resetting..."
+    },
+    "sort": {
+      "name": "Name",
+      "registered": "Registered",
+      "lastLogin": "Last login",
+      "engagement": "Engagement",
+      "ascending": "ascending",
+      "descending": "descending",
+      "clickToSort": "Click to sort"
+    },
+    "rowActions": {
+      "activity": "View activity",
+      "view": "View",
+      "impersonate": "Log in as user",
+      "openDetail": "Full detail",
+      "viewActivity": "View detailed activity",
+      "changePlan": "Change plan",
+      "resetQuota": "Reset monthly quotas",
+      "resendEmail": "Resend welcome",
+      "enable": "Enable",
+      "disable": "Disable",
+      "delete": "Delete",
+      "more": "More actions"
+    },
+    "bulkActions": {
+      "selectedCount_one": "1 selected",
+      "selectedCount_other": "{{count}} selected",
+      "clearSelection": "Clear selection",
+      "disable": "Disable selected",
+      "enable": "Enable selected",
+      "confirmDisableTitle": "Disable {{count}} user(s)",
+      "confirmDisableDescription": "These users won't be able to sign in, but their data is preserved. You can re-enable them at any time.",
+      "confirmEnableTitle": "Enable {{count}} user(s)",
+      "confirmEnableDescription": "These users will recover full access to the platform.",
+      "running": "Processing {{done}} of {{total}}...",
+      "successAll": "{{count}} user(s) processed successfully",
+      "successPartial": "{{ok}} ok · {{failed}} failed",
+      "errorAll": "Could not process any user"
+    },
+    "disableDialog": {
+      "title": "Disable this user?",
+      "description": "The account for <strong>{{email}}</strong> will be locked. The user won't be able to sign in, but all their data (sermons, notes, sessions) will remain intact. You can reactivate the account at any time.",
+      "cancel": "Cancel",
+      "confirm": "Disable User",
+      "loading": "Disabling..."
+    },
+    "deleteDialog": {
+      "title": "⚠️ Delete permanently",
+      "warning": "This action <strong>cannot be undone</strong>. The following will be permanently deleted:",
+      "items": {
+        "auth": "The Firebase Auth account",
+        "content": "All sermons, series and drafts",
+        "history": "Session history and analytics",
+        "subscription": "The Stripe subscription"
+      },
+      "confirmPrompt": "To confirm, type the user's email:",
+      "placeholder": "Type the email to confirm...",
+      "cancel": "Cancel",
+      "confirm": "Delete Permanently",
+      "loading": "Deleting..."
+    },
+    "changePlanDialog": {
+      "title": "Change plan for {{name}}",
+      "description": "Pick the new plan. The change applies immediately and Stripe handles proration automatically.",
+      "currentPlan": "Current plan",
+      "newPlan": "New plan",
+      "billingCycle": "Billing cycle",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "proration": "Stripe will prorate the charge based on the time remaining in the current period.",
+      "noChange": "Pick a plan different from the current one.",
+      "cancel": "Cancel",
+      "confirm": "Apply change",
+      "loading": "Applying...",
+      "compAccountTitle": "Comp account — Stripe will not bill",
+      "compAccountBody": "This user never completed checkout (no Stripe payment method on file). The change applies only on our platform: they'll get the plan's features but no monthly charge. To enable real billing, the user must complete checkout with a card."
+    },
+    "details": {
+      "title": "User details",
+      "description": "Full information for {{name}}",
+      "sections": {
+        "basic": "Basic information",
+        "subscription": "Subscription",
+        "activity": "Activity & engagement",
+        "revenue": "Revenue",
+        "sensitive": "Internal identifiers"
+      },
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "userId": "User ID",
+        "stripeCustomerId": "Stripe Customer ID",
+        "created": "Created",
+        "plan": "Plan",
+        "status": "Status",
+        "startDate": "Start date",
+        "nextBilling": "Next billing",
+        "trialEnd": "Trial end",
+        "engagementScore": "Engagement score",
+        "totalLogins": "Total logins",
+        "sermonsCreated": "Sermons created",
+        "lastLogin": "Last login",
+        "lastActivity": "Last activity",
+        "totalRevenue": "Total revenue"
+      },
+      "trialActive": "Trial active · ends {{when}}",
+      "trialExpired": "Trial expired · {{when}}",
+      "showSensitive": "Show internal identifiers",
+      "hideSensitive": "Hide internal identifiers",
+      "changePlanButton": "Change plan",
+      "close": "Close"
+    },
+    "detail": {
+      "backToList": "Users",
+      "noName": "No name",
+      "notFound": "User not found",
+      "disabled": "Disabled",
+      "tabs": {
+        "overview": "Overview",
+        "timeline": "Timeline",
+        "usage": "Usage & quotas",
+        "subscription": "Subscription",
+        "audit": "Audit log",
+        "flags": "Flags"
+      }
+    },
+    "timeline": {
+      "title": "Last {{days}} days",
+      "range": "{{days}} days",
+      "allTypes": "All types",
+      "itemCount_one": "1 event",
+      "itemCount_other": "{{count}} events",
+      "empty": "No activity in this range"
+    },
+    "usage": {
+      "period": "Current period",
+      "planLabel": "Plan: {{plan}}",
+      "loadError": "Could not load usage",
+      "pagesProcessed": "Pages processed",
+      "pagesHint": "Pages extracted via LlamaParse this month",
+      "queriesUsed": "Queries used",
+      "queriesHint": "Tutor messages sent this month",
+      "docsUploaded": "Documents uploaded",
+      "docsHint": "Documents in personal library",
+      "unlimited": "unlimited",
+      "noQuota": "no quota",
+      "remaining_one": "1 remaining",
+      "remaining_other": "{{count}} remaining",
+      "balance": {
+        "title": "Processing balance",
+        "standardAvailable": "Std available",
+        "premiumAvailable": "Premium available",
+        "standardSpent": "Std spent",
+        "premiumSpent": "Premium spent"
+      }
+    },
+    "subscription": {
+      "none": "This user has no active subscription",
+      "openStripe": "Open in Stripe",
+      "cancelAtPeriodEnd": "Cancels at period end",
+      "startDate": "Start date",
+      "currentPeriod": "Current period",
+      "trialEnd": "Trial end",
+      "cancelledAt": "Cancelled at",
+      "gracePeriodEnd": "Grace period end",
+      "paymentIssues": "Payment issues",
+      "failedAttempts_one": "1 failed payment attempt",
+      "failedAttempts_other": "{{count}} failed payment attempts",
+      "status": {
+        "active": "Active",
+        "trialing": "Trialing",
+        "past_due": "Past due",
+        "cancelled": "Cancelled",
+        "incomplete": "Incomplete"
+      }
     },
     "audit": {
-        "title": "Audit Log",
-        "subtitle": "Immutable record of every admin action against user accounts.",
-        "backToUsers": "Users",
-        "loading": "Loading log...",
-        "loadError": "Could not load audit log",
-        "empty": {
-            "title": "No entries",
-            "description": "No actions have been recorded yet — or your filters are too restrictive."
-        },
-        "filters": {
-            "search": "Search by email or uid...",
-            "action": "Action",
-            "allActions": "All actions",
-            "actor": "Actor",
-            "allActors": "All actors",
-            "dateFrom": "From",
-            "dateTo": "To",
-            "clear": "Clear filters"
-        },
-        "table": {
-            "when": "When",
-            "actor": "Admin",
-            "action": "Action",
-            "target": "Affected user",
-            "details": "Details"
-        },
-        "actions": {
-            "user.delete": "Deleted user",
-            "user.disable": "Disabled",
-            "user.enable": "Enabled",
-            "user.resend_welcome_email": "Resent welcome",
-            "user.change_plan": "Changed plan",
-            "user.bulk_disable": "Bulk: disabled",
-            "user.bulk_enable": "Bulk: enabled",
-            "user.grant_credits": "Granted pages",
-            "user.extend_trial": "Extended trial"
-        },
-        "viewForUser": "View full history",
-        "showingCount_one": "1 entry",
-        "showingCount_other": "{{count}} entries"
+      "scopedHint": "Admin actions on this user",
+      "openFull": "Open full audit log",
+      "empty": "No actions recorded for this user"
     },
-    "llamaParse": {
-        "title": "LlamaParse — Account monitoring",
-        "subtitle": "API key rotation and per-account credit consumption.",
-        "refresh": "Refresh",
-        "loadError": "Error loading accounts",
-        "toggleError": "Error toggling status",
-        "activated": "Account activated",
-        "deactivated": "Account deactivated",
-        "empty": "No accounts configured. Create docs in `llamaparseAccounts` to enable rotation.",
-        "summary": {
-            "accounts": "Accounts",
-            "totalRemaining": "Credits remaining (total)",
-            "totalUsed": "Period usage"
-        },
-        "table": {
-            "name": "Name",
-            "priority": "Priority",
-            "usage": "Usage",
-            "resetDate": "Next reset",
-            "status": "Status",
-            "actions": "Actions"
+    "activity": {
+      "title": "User activity",
+      "loading": "Loading activity...",
+      "errorPrefix": "Error",
+      "notFound": "User information not found",
+      "noName": "No name",
+      "lastLoginRelative": "Last login: {{when}}",
+      "totalLogins_one": "1 total login",
+      "totalLogins_other": "{{count}} total logins",
+      "createdToday_one": "Created today (1)",
+      "createdToday_other": "Created today ({{count}})",
+      "createdThisWeek_one": "This week (1)",
+      "createdThisWeek_other": "This week ({{count}})",
+      "summary": {
+        "title": "Activity summary",
+        "sermons": "Sermons",
+        "published": "Published",
+        "series": "Series",
+        "plans": "Plans",
+        "greekTutor": "Greek Tutor",
+        "hebrewTutor": "Hebrew Tutor",
+        "faculty": "Faculty",
+        "projects": "Projects",
+        "library": "Library"
+      },
+      "recent": {
+        "defaultTitle": "Recent content",
+        "empty": "No recent content",
+        "itemCount_one": "1 item",
+        "itemCount_other": "{{count}} items",
+        "showMore": "Show {{count}} more...",
+        "showLess": "Show less",
+        "types": {
+          "sermon": "Sermon",
+          "greek_session": "Greek Tutor",
+          "hebrew_session": "Hebrew Tutor",
+          "faculty_session": "Faculty",
+          "project": "Project",
+          "series": "Series",
+          "library_upload": "Library",
+          "preaching_plan": "Plan"
         },
         "status": {
-            "healthy": "Healthy",
-            "warning": "Warning",
-            "critical": "Critical",
-            "inactive": "Inactive"
-        },
-        "actions": {
-            "activate": "Activate",
-            "deactivate": "Deactivate"
+          "published": "Published",
+          "draft": "Draft",
+          "completed": "Completed",
+          "in_progress": "In progress",
+          "active": "Active"
         }
+      }
     },
-    "leads": {
-        "title": "Contact Leads",
-        "subtitle": "{{total}} total leads · {{newCount}} new",
-        "backToDashboard": "Dashboard",
-        "loading": "Loading leads...",
-        "loadError": "Error loading leads",
-        "filters": {
-            "search": "Search by name, email or church...",
-            "type": "Type",
-            "status": "Status",
-            "allTypes": "All types",
-            "allStatuses": "All statuses"
+    "toasts": {
+      "deleteSuccess": "User deleted permanently",
+      "deleteError": "Error deleting user",
+      "disableSuccess": "User {{email}} disabled successfully",
+      "disableError": "Error disabling user",
+      "enableSuccess": "User {{email}} enabled successfully",
+      "enableError": "Error enabling user",
+      "resendSuccess": "Welcome email sent to {{email}}",
+      "resendError": "Error resending email",
+      "changePlanSuccess": "Plan updated successfully",
+      "changePlanError": "Error changing plan",
+      "grantSuccess": "Credits granted successfully",
+      "grantError": "Error granting pages",
+      "extendTrialSuccess": "Trial extended successfully",
+      "extendTrialError": "Error extending trial",
+      "resetQuotaSuccess": "Quotas reset: {{standard}} standard · {{premium}} premium",
+      "resetQuotaError": "Error resetting quotas",
+      "featureFlagsSuccess": "Flags updated",
+      "featureFlagsError": "Failed to update flags",
+      "impersonateSuccess": "You are now viewing {{name}}'s account",
+      "impersonateError": "Could not log in as this user",
+      "stopImpersonateSuccess": "Back to your admin account",
+      "stopImpersonateError": "Could not return to your admin account"
+    },
+    "impersonation": {
+      "banner": "You are viewing the platform as {{user}}",
+      "exit": "Exit"
+    },
+    "impersonateDialog": {
+      "title": "Log in as user",
+      "intro": "You are about to log in as {{name}} to see the platform exactly as this user sees it.",
+      "point1": "Your session will switch to this user.",
+      "point2": "You'll see their library, sermons and content — not the admin panel.",
+      "point3": "You can return to your account anytime with the \"Exit\" button in the top banner.",
+      "cancel": "Cancel",
+      "confirm": "Log in as user",
+      "loading": "Switching session..."
+    },
+    "featureFlags": {
+      "title": "Feature flags",
+      "description": "Enable or disable experimental features for this user. Each change is recorded in the audit log. Enabling a flag also enables its prerequisites.",
+      "dormantBadge": "Dormant",
+      "dormantNote": "Not enable-able — relocated to the paper in Phase 7 (ADR-032).",
+      "disableTitle": "Disable {{flag}}?",
+      "disableDescription": "{{flag}} has {{count}} active sub-flag(s) that depend on it: {{dependents}}. Disabling it disables them too. Disable all or cancel?",
+      "disableConfirm": "Disable all",
+      "cancel": "Cancel",
+      "flags": {
+        "pastoral_fidelity_flow": {
+          "description": "Activates the reformed pastoral fidelity flow (six-step spine, three witnesses). Requires the user to have declared a confession."
         },
-        "types": {
-            "sales": "Sales",
-            "scholarship": "Scholarship",
-            "demo": "Demo",
-            "support": "Support"
+        "pastoral_word_study": {
+          "description": "Replaces the embedded Greek tutor in Morphology with the Pastoral Word Study modal (Phase 1.5). Requires pastoral_fidelity_flow to also be on."
         },
-        "statuses": {
-            "new": "New",
-            "contacted": "Contacted",
-            "converted": "Converted",
-            "closed": "Closed"
+        "study_depth": {
+          "label": "Study Companion",
+          "description": "Study-depth badge + per-step orientation in the wizard (Phase 2.5). Requires pastoral fidelity flow."
         },
-        "statusOptions": {
-            "new": "New",
-            "contacted": "Contacted",
-            "converted": "Converted",
-            "closed": "Closed"
+        "fidelity_pass": {
+          "label": "Fidelity pass",
+          "description": "Claim/source fidelity pass — second-pass LLM that scores every `[N]` marker in a generated sermon and surfaces a review panel in the editor (Phase 3, ADR-029). Requires pastoral_fidelity_flow."
         },
-        "empty": {
-            "title": "No leads",
-            "noResults": "No leads found with those filters",
-            "noLeads": "No contact leads yet"
+        "contra_scan": {
+          "label": "Contra-scan",
+          "description": "Pre-publish confrontation: surfaces library chunks that dissent from the sermon's central idea and requires the pastor to consider at least one before publishing (Phase 4, ADR-033, Acts 20:27). Requires pastoral_fidelity_flow."
         },
-        "actions": {
-            "delete": "Delete",
-            "deleteConfirm": "Are you sure you want to delete this lead?",
-            "updateSuccess": "Status updated",
-            "updateError": "Update failed",
-            "deleteSuccess": "Lead deleted",
-            "deleteError": "Delete failed"
+        "conduccion_corazon": {
+          "label": "Heart conduction",
+          "description": "\"Conduct the heart\" button in the Master Study: guided C1–C5 conduction that elicits the affective application anchored to the text (formative conduction manifesto). Validated in prod — the heart exam is already deployed."
         },
-        "card": {
-            "unknownDate": "Unknown date"
+        "three_witnesses": {
+          "label": "Three witnesses",
+          "description": "Three-witnesses gate after the pastoral seed is complete: immediate context, canonical parallels and the pastor's own declared confession validate the central idea before drafting (Phase 2, ADR-011)."
+        },
+        "passage_profile": {
+          "label": "Passage profile (shadow)",
+          "description": "Passage profile in SHADOW mode: the detector runs when the study starts and records what it would have said, without confronting or nudging. This is the MEASUREMENT flag — turn it on before any of its enforce flags (ADR-035)."
+        },
+        "passage_profile_enforce": {
+          "label": "Passage profile (enforce)",
+          "description": "Applies the profile live: per-step nudges, misreading confrontation and the coverage collector at close. Only after the detector's precision has been adjudicated in shadow (ADR-035)."
+        },
+        "anchor_fidelity_enforce": {
+          "label": "Anchor fidelity (enforce)",
+          "description": "Drops the misreadings the detector proposes without a verifiable anchor (the cited verse does not exist). The curated floor of reviewed misreadings does NOT depend on this flag — it is always verified (ADR-036)."
+        },
+        "sermon_draft_shadow": {
+          "label": "Draft shadow",
+          "description": "Draft shadow: measures fabricated authority quotes, wrong verse citations and homiletical-approach compliance. Blocks nothing — it is the instrumentation every validator depends on (Redacción v2)."
+        },
+        "genre_override_enforce": {
+          "label": "Genre override (enforce)",
+          "description": "The system confronts the pastor about the genre of their pericope in step 2 instead of only measuring it in shadow. Measurement runs under passage profile; this flag turns on the confrontation (Redacción v2 §4.4)."
+        },
+        "step3_genre_help": {
+          "label": "Step 3 genre help",
+          "description": "Genre-aware structural help in step 3: guidance and worked examples for the confirmed genre instead of the generic prompt. Formative scaffolding, not judgement (Redacción v2 §4.5)."
+        },
+        "socratic_drafting": {
+          "description": "ADR-037 — Socratic drafting by elements. The pastor decides which idea goes in each section (his own, or chosen/edited from a suggestion) and the prose is written afterwards. SPIKE: for now only the historical-context section, in the Drafting step."
         }
+      }
+    },
+    "grantCreditsDialog": {
+      "title": "Grant pages to {{name}}",
+      "description": "Add pages to the user's balance. This action is logged in the audit log with the reason you provide.",
+      "standardPages": "Standard pages (Gemini)",
+      "premiumPages": "Premium pages (LlamaParse)",
+      "reason": "Reason (logged in audit log)",
+      "reasonPlaceholder": "e.g., Compensation for extraction bug on 04/27, ticket #423",
+      "currentBalance": "Current balance",
+      "afterGrant": "After grant",
+      "missingValues": "Provide at least 1 page and a reason.",
+      "cancel": "Cancel",
+      "confirm": "Grant",
+      "loading": "Granting..."
+    },
+    "extendTrialDialog": {
+      "title": "Extend trial for {{name}}",
+      "description": "Add days to the trial period. If the trial has expired, it reopens from today + N days. Stripe is synced automatically.",
+      "days": "Days to add",
+      "currentTrialEnd": "Trial currently ends",
+      "newTrialEnd": "New trial end",
+      "noTrial": "No active trial (one will be created from today)",
+      "reason": "Reason (logged in audit log)",
+      "reasonPlaceholder": "e.g., Sales request, prospective Team customer",
+      "daysOutOfRange": "Days must be between 1 and 90.",
+      "cancel": "Cancel",
+      "confirm": "Extend",
+      "loading": "Extending..."
+    },
+    "stats": {
+      "total": "Total",
+      "subscribers": "Subscribers",
+      "subscribersHint": "Paying now",
+      "trialing": "Trialing",
+      "newThisMonth": "New this month",
+      "mrr": "Estimated MRR",
+      "conversion": "Conversion",
+      "conversionHint": "{{paying}} of {{total}} paying"
     }
+  },
+  "audit": {
+    "title": "Audit Log",
+    "subtitle": "Immutable record of every admin action against user accounts.",
+    "backToUsers": "Users",
+    "loading": "Loading log...",
+    "loadError": "Could not load audit log",
+    "empty": {
+      "title": "No entries",
+      "description": "No actions have been recorded yet — or your filters are too restrictive."
+    },
+    "filters": {
+      "search": "Search by email or uid...",
+      "action": "Action",
+      "allActions": "All actions",
+      "actor": "Actor",
+      "allActors": "All actors",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "clear": "Clear filters"
+    },
+    "table": {
+      "when": "When",
+      "actor": "Admin",
+      "action": "Action",
+      "target": "Affected user",
+      "details": "Details"
+    },
+    "actions": {
+      "user.delete": "Deleted user",
+      "user.disable": "Disabled",
+      "user.enable": "Enabled",
+      "user.resend_welcome_email": "Resent welcome",
+      "user.change_plan": "Changed plan",
+      "user.bulk_disable": "Bulk: disabled",
+      "user.bulk_enable": "Bulk: enabled",
+      "user.grant_credits": "Granted pages",
+      "user.extend_trial": "Extended trial"
+    },
+    "viewForUser": "View full history",
+    "showingCount_one": "1 entry",
+    "showingCount_other": "{{count}} entries"
+  },
+  "llamaParse": {
+    "title": "LlamaParse — Account monitoring",
+    "subtitle": "API key rotation and per-account credit consumption.",
+    "refresh": "Refresh",
+    "loadError": "Error loading accounts",
+    "toggleError": "Error toggling status",
+    "activated": "Account activated",
+    "deactivated": "Account deactivated",
+    "empty": "No accounts configured. Create docs in `llamaparseAccounts` to enable rotation.",
+    "summary": {
+      "accounts": "Accounts",
+      "totalRemaining": "Credits remaining (total)",
+      "totalUsed": "Period usage"
+    },
+    "table": {
+      "name": "Name",
+      "priority": "Priority",
+      "usage": "Usage",
+      "resetDate": "Next reset",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "healthy": "Healthy",
+      "warning": "Warning",
+      "critical": "Critical",
+      "inactive": "Inactive"
+    },
+    "actions": {
+      "activate": "Activate",
+      "deactivate": "Deactivate"
+    }
+  },
+  "leads": {
+    "title": "Contact Leads",
+    "subtitle": "{{total}} total leads · {{newCount}} new",
+    "backToDashboard": "Dashboard",
+    "loading": "Loading leads...",
+    "loadError": "Error loading leads",
+    "filters": {
+      "search": "Search by name, email or church...",
+      "type": "Type",
+      "status": "Status",
+      "allTypes": "All types",
+      "allStatuses": "All statuses"
+    },
+    "types": {
+      "sales": "Sales",
+      "scholarship": "Scholarship",
+      "demo": "Demo",
+      "support": "Support"
+    },
+    "statuses": {
+      "new": "New",
+      "contacted": "Contacted",
+      "converted": "Converted",
+      "closed": "Closed"
+    },
+    "statusOptions": {
+      "new": "New",
+      "contacted": "Contacted",
+      "converted": "Converted",
+      "closed": "Closed"
+    },
+    "empty": {
+      "title": "No leads",
+      "noResults": "No leads found with those filters",
+      "noLeads": "No contact leads yet"
+    },
+    "actions": {
+      "delete": "Delete",
+      "deleteConfirm": "Are you sure you want to delete this lead?",
+      "updateSuccess": "Status updated",
+      "updateError": "Update failed",
+      "deleteSuccess": "Lead deleted",
+      "deleteError": "Delete failed"
+    },
+    "card": {
+      "unknownDate": "Unknown date"
+    }
+  }
 }
