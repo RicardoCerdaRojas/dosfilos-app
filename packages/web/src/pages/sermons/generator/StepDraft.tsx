@@ -552,14 +552,21 @@ export function StepDraft() {
             <IllustrationDuplicateBanner draft={draft} />
             <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
                 <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-                    <div className="mb-4 flex-shrink-0 flex items-center justify-between">
-                        <div>
-                            <h3 className="text-lg font-semibold">{draft.title}</h3>
+                    {/* `min-w-0` + `truncate` en el título, `shrink-0` en los
+                        controles: la fila no tenía ninguno de los dos, así que
+                        el título competía por el espacio con el pasaje y el
+                        botón de regenerar. Agregar CUALQUIER elemento a esa
+                        barra partía el encabezado en dos líneas — se descubrió
+                        al montar un indicador ahí. El título es lo que debe
+                        ceder, y conserva el texto completo en el tooltip. */}
+                    <div className="mb-4 flex-shrink-0 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <h3 className="text-lg font-semibold truncate" title={draft.title}>{draft.title}</h3>
                             <p className="text-sm text-muted-foreground">
                                 {expandedSectionId ? t('drafting.refiningStatus') : t('drafting.defaultStatus')}
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex shrink-0 items-center gap-2">
                             <Button
                                 variant="outline"
                                 size="sm"

@@ -2,13 +2,13 @@
 
 ## Estado
 
-`in-progress` — PR 1 (contra-scan, sub-feature 2) en curso. ADR-033 emitido. Sub-features 1 (autoría verbatim) y 3 (voice fingerprint) siguen `planning`.
+`in-progress` — contra-scan (sub-feature 2) EN PRODUCCIÓN, ADR-033. Sub-feature 1 **re-scopeada por [ADR-037](../decisions/ADR-037-socratic-drafting-idea-provenance.md)**: la autoría deja de medirse por palabras y pasa a medirse por PROCEDENCIA DE IDEAS sobre un flujo socrático por elementos. Sub-feature 3 (voice fingerprint) sigue `planning`.
 
 ## Objetivo
 
 Tres sub-features que cierran el modelo de autoría pastoral:
 
-1. **Autoría verbatim tracker**: diff entre draft AI y final del pastor por sección; badge visible; gate publish ≥50% verbatim.
+1. ~~**Autoría verbatim tracker**: diff entre draft AI y final del pastor por sección; badge visible; gate publish ≥50% verbatim.~~ **SUPERADO por ADR-037.** Medir palabras mide DESARROLLO, no origen — y P2 dice que la IA desarrolla. Un sermón construido sobre el estudio de ocho pasos marcaba 18% incluso rastreando el material del pastor, y el piso de 50% resultó inalcanzable. Ahora: redacción socrática por elementos + autoría por procedencia de ideas.
 2. **Contra-scan obligatorio**: surface chunks de la biblioteca que disienten del claim central; pastor marca uno como "considerado" con nota ≥100 chars. Implementa Hch 20:27.
 3. **Voice fingerprint** (tardía): adapter de estilo desde sermones previos del pastor para que output suene a ÉL. Resuelve homogeneización + autenticidad.
 
