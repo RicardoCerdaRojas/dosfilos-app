@@ -68,6 +68,18 @@ jobs:
       - name: Trinquete de i18n (texto hardcodeado)
         run: ./scripts/check-i18n-hardcoded.sh
 
+      # Los correos de producción estuvieron caídos sin que nadie lo notara:
+      # ninguna función declaraba `secrets: ['RESEND_API_KEY']`, la clave
+      # dependía de `packages/functions/.env`, y CI despliega sin ese archivo.
+      #
+      # El diseño obvio —un health-check en runtime— NO lo habría atrapado: esa
+      # función declara los secretos que revisa, así que siempre los tiene.
+      # Reportaría verde con trece funciones sin clave.
+      #
+      # Esto es calculable, así que se calcula y bloquea ANTES del deploy.
+      - name: Secretos declarados por function
+        run: ./scripts/check-functions-secrets.sh
+
   test:
     name: Run Tests
     runs-on: ubuntu-latest
