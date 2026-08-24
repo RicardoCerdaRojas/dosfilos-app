@@ -51,6 +51,123 @@ Para cada sección el acompañante ofrece dos caminos:
 
 La IA redacta la prosa **desde los elementos decididos**, no desde cero. Eso además acota su margen de invención: escribe desde una lista aprobada.
 
+#### Qué es un elemento
+
+> Un **elemento** es una **idea decidible**: una afirmación o imagen que **podría
+> ser otra** y que cambia el sermón si cambia.
+
+No es un párrafo ni un campo del esquema. La prueba operativa:
+
+> ¿Podría un pastor competente elegir distinto y seguir siendo fiel al texto?
+
+Si sí, es elemento. Si no —porque lo determina el texto, o porque ya se decidió
+río arriba— no lo es, y preguntarlo es fricción sin contenido.
+
+De ahí salen cuatro estados, y sólo el primero se pregunta:
+
+| Estado | Significado |
+|---|---|
+| **◆ Elemento** | Lo decide el pastor, o elige entre propuestas |
+| **✓ Ya suyo** | Viene del estudio o la homilética: se MUESTRA, no se pregunta |
+| **~ Prosa** | La IA redacta desde los elementos; no hay decisión que tomar |
+| **⚙ Verificado** | Se calcula o se valida (referencias, anclas de cita); no se opina |
+
+#### El mapa aplicado a un sermón real
+
+Sobre el sermón de Jonás 1:1-3 del fundador — narrativa, pasaje que abre libro.
+
+**Introducción**
+
+| | Sección | Elementos |
+|---|---|---|
+| ✓ | Ilustración de Apertura | Suya, del paso 8 |
+| ◆ | └ puente al texto | **1** — cómo enlaza con el pasaje |
+| ◆ | El Libro de un Vistazo | **2-3** de: autor y época · qué otro pasaje habla del libro · divisiones · contemporáneos · lugar en la metanarrativa |
+| ◆ | Contexto Histórico | **2-4** — qué hechos importan *para este sermón* |
+| ◆ | Conexión Actual | **1-3** — su conocimiento de la congregación es insustituible |
+| ✓ | Proposición y puntos | Decididos en homilética |
+
+**Cada punto**
+
+| | Componente | Elementos |
+|---|---|---|
+| ◆ | Exposición | **2-4** — las afirmaciones exegéticas del punto |
+| ✓ | └ sus directivas | Énfasis y notas ya escritas |
+| ✓ | Palabras clave | Paso 4 + análisis cacheado |
+| ◆ | Referencias cruzadas | **2-3** — ver los tres caminos más abajo |
+| ◆ | Ilustración del punto | **1** |
+| ✓ | Aplicación | Suya, por punto |
+| ⚙ | Cita de autoridad | Se recupera de la biblioteca y se ancla |
+| ~ | Transición | La proposición se ensambla verbatim |
+| ◆ | Nota exegética | **0-1** — SÓLO si ninguna directiva la cubre |
+
+**Cierre**
+
+| | Sección | Elementos |
+|---|---|---|
+| ~ | Resumen | Se deriva de los puntos |
+| ◆ | Llamado final / cristocéntrico | **1-2** — decisión teológica mayor |
+| ✓ | └ aplicación doxológica | Suya, del paso 8 |
+| ◆ | Llamado a la acción | **1-3** — pasos concretos |
+| ◆ | Título | **1** — al final, propone 3 y elige |
+
+Total para un sermón de dos puntos: **~26 decisiones**. Ocho en la introducción,
+seis por punto, cinco en el cierre.
+
+#### La nota exegética es elemento SÓLO si ninguna directiva la cubre
+
+Caso real: la nota sobre "y pagando su pasaje" salió de una directiva del pastor,
+así que ya era suya. Preguntarla habría sido re-preguntar lo decidido.
+
+Regla: si el punto trae nota exegética en su `pastorDirective`, se muestra como
+suya. Si no, se pregunta.
+
+#### Referencias cruzadas: tres caminos, uno de ellos invierte la recuperación
+
+| Camino | Procedencia |
+|---|---|
+| El pastor escribe la referencia | `pastor` |
+| **El pastor DESCRIBE el versículo y el motor lo busca** | `pastor` |
+| Elige entre las que el motor propuso | `elegido` |
+
+El segundo camino es el importante y salió del fundador: *"citemos el versículo
+donde Jeremías dice que la palabra es como martillo que rompe la peña"*.
+
+Invierte la recuperación: en vez de "la IA propone y tú eliges", es **el pastor
+sabe lo que quiere y la IA lo encuentra**. Es P2 en su forma más limpia — él
+origina, la máquina sirve. Y produce naturalmente la procedencia más alta.
+
+**SALVAGUARDA NO NEGOCIABLE**: el modelo puede recordar mal una referencia. El
+flujo es `describe → el motor propone la referencia → el sistema trae el TEXTO
+REAL desde la Biblia → el pastor confirma`. **Nunca se acepta una referencia sin
+mostrar su texto real.** Si el modelo se equivoca de capítulo, se ve al instante
+en vez de descubrirse en el púlpito.
+
+El validador determinista (`checkCrossReferences`) sigue detrás en los tres
+caminos: que crucen a otro libro, que no repitan el pasaje predicado.
+
+#### Granularidad por SECCIÓN, no por sermón, y sin pantalla previa
+
+Veintiséis decisiones es mucho un sábado por la noche. La fricción es el riesgo
+real de este diseño, no un detalle de UI.
+
+El pastor arranca en **modo sección** —los 2-4 elementos de una sección juntos,
+~8 paradas— y cualquier sección ofrece **"trabajar en detalle"** para abrirla
+elemento por elemento.
+
+Se descartó una pantalla inicial que eligiera el modo para todo el sermón:
+
+- Pide decidir **a ciegas**: nadie sabe cómo se siente el modo granular hasta
+  estar dentro. Es fricción antes de la fricción.
+- **Un sermón no es homogéneo.** El Punto II puede merecer las seis decisiones
+  una por una y el vistazo al libro no. Un interruptor global impone una sola
+  velocidad.
+- La elección por sección es **reversible**: se abre, no aporta, se cierra.
+
+Encaja además con un precedente del propio producto: `EXPERT_MODE_UNLOCK_THRESHOLD`
+establece que los atajos **se ganan demostrando trabajo**, no se autodeclaran en
+un formulario. La profundidad se decide sobre el material.
+
 #### La salida por sección entrega elementos, NO prosa
 
 Si "genérame esta sección" produjera prosa terminada, la procedencia quedaría sin buena respuesta: si editarla la vuelve del pastor, la medición se burla sola (cambiar una palabra reclama la autoría de un párrafo que no pensó); si no, editar deja de servir y nadie edita.
@@ -132,7 +249,7 @@ Puede sobrevivir como señal secundaria ("cuánto reescribiste"), con esa etique
 
 ### Lo que queda abierto
 
-1. **¿Qué es un "elemento"?** Acotado a 3-7 por sección para que el conteo no sea ruido, pero falta definir su forma exacta por tipo de sección.
+1. ~~**¿Qué es un "elemento"?**~~ **RESUELTA** (2026-08-24) — definición, prueba operativa, los cuatro estados y el mapa por sección quedaron arriba. El fundador validó el marcado: "coincide con mi honestidad intelectual acerca de la responsabilidad del pastor y del espíritu del producto".
 2. **¿El gate de publicación usa procedencia?** Y con qué piso — que ahora sí puede salir de datos reales, porque la unidad es contable.
 3. **¿Los sermones existentes?** No tienen elementos. Probablemente muestran autoría "no medida", como hoy hace `withoutBaseline`.
 4. **Costo de LLM**: proponer elementos por sección son varias llamadas cortas en vez de una grande. Falta medir si sale más caro o más barato.
