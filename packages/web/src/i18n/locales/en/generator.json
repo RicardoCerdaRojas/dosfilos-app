@@ -432,5 +432,13 @@
     "illustrationsPlaceholder": "Personal anecdotes, congregation stories, or testimonies you want to include…",
     "notes": "Preacher's notes",
     "notesPlaceholder": "Loose ideas, arguments you want to develop, particular emphases…"
+  },
+  "citations": {
+    "translate": "View in English",
+    "seeTranslation": "View translation",
+    "seeOriginal": "View original",
+    "translating": "Translating…",
+    "ownTranslation": "Our translation · the original is one click away",
+    "translateFailed": "Couldn't translate. The original is still above."
   }
 }

@@ -85,6 +85,9 @@ export * from './sermon-judge/crossReferences';
 export * from './sermon-judge/splitApplication';
 // La proposición y los puntos del recordatorio se ENSAMBLAN verbatim, no se piden.
 export * from './sermon-judge/assembleTransitions';
+// ¿La cita está en un idioma que el lector no lee? Decide si ofrecer traducción.
+export * from './citations/citationLanguage';
+export * from './citations/buildTranslationPrompt';
 // ¿El pasaje abre el libro? Decide si la introducción debe orientar al libro entero.
 export * from './bible/canon/opensBook';
 // 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent

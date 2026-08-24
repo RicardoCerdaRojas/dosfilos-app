@@ -432,5 +432,13 @@
     "illustrationsPlaceholder": "Anécdotas personales, historias de la congregación, o testimonios que quieras incluir…",
     "notes": "Notas del predicador",
     "notesPlaceholder": "Ideas sueltas, argumentos que quieras desarrollar, énfasis particulares…"
+  },
+  "citations": {
+    "translate": "Ver en español",
+    "seeTranslation": "Ver traducción",
+    "seeOriginal": "Ver original",
+    "translating": "Traduciendo…",
+    "ownTranslation": "Traducción propia · el original está a un clic",
+    "translateFailed": "No se pudo traducir. El original sigue arriba."
   }
 }
