@@ -59,7 +59,7 @@ export function SocraticWorkshop(props: Props) {
     }, []);
 
     return (
-        <div className="flex items-stretch gap-0 min-h-[24rem]">
+        <div className="flex items-stretch gap-0 h-full min-h-[24rem]">
             {abierto && (
                 <div style={{ width: ancho }} className="shrink-0 overflow-hidden">
                     <SermonMap

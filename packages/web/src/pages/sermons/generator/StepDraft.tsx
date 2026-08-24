@@ -796,11 +796,19 @@ export function StepDraft() {
                         <TabsTrigger value="draft">{t('drafting.tabs.draft')}</TabsTrigger>
                         <TabsTrigger value="workshop">{t('drafting.tabs.workshop')}</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="draft" className="flex-1 min-h-0 flex flex-col gap-4 mt-3">
-                        {draftBody}
+                    {/* NINGUNA CLASE DE `display` EN `TabsContent`.
+                        Radix oculta el panel inactivo con el atributo `hidden`,
+                        que la hoja del navegador implementa como `display:none`
+                        — y cualquier clase de autor (`flex`, `block`) la pisa.
+                        Con `flex` acá, el panel oculto seguía ocupando su
+                        `flex-1` y los dos se repartían la altura: el taller
+                        quedaba empujado al fondo con un hueco enorme arriba.
+                        El layout va en un div INTERIOR. */}
+                    <TabsContent value="draft" className="flex-1 min-h-0 mt-3">
+                        <div className="h-full flex flex-col gap-4">{draftBody}</div>
                     </TabsContent>
-                    <TabsContent value="workshop" className="flex-1 min-h-0 overflow-y-auto mt-3">
-                        {socraticPanel}
+                    <TabsContent value="workshop" className="flex-1 min-h-0 mt-3">
+                        <div className="h-full overflow-y-auto">{socraticPanel}</div>
                     </TabsContent>
                 </Tabs>
             ) : (
