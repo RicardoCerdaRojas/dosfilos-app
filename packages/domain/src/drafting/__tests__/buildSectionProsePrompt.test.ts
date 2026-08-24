@@ -96,12 +96,17 @@ describe('buildSectionProsePrompt', () => {
         expect(tecnico).toContain('sin explicarlo');
     });
 
-    it('pide frases para leer en voz alta', () => {
+    it('pide frases cortas, sin encabezados ni meta-comentarios', () => {
         // Ya NO prohíbe viñetas: esa regla imponía una forma de predicar que no
-        // era la del pastor. La forma la decide ahora la estructura de lo
-        // decidido — ver el describe de más abajo.
+        // era la del pastor. La forma la decide la estructura de lo decidido.
+        //
+        // Y ya no dice "para leer en voz alta": el manuscrito NO es la
+        // transcripción de lo que dirá, es su documento de trabajo. Pedirle al
+        // modelo que escriba lo que se va a leer invita justamente al adorno
+        // que sobra.
         const p = buildSectionProsePrompt({ ...base, elements: [el('x')] });
-        expect(p).toContain('VOZ ALTA');
+        expect(p).toContain('Frases cortas');
+        expect(p).toContain('meta-comentarios');
         expect(p).not.toContain('sin viñetas');
     });
 });
@@ -134,5 +139,35 @@ describe('la forma del texto sigue la forma de lo decidido', () => {
             elements: [el('Nínive era capital asiria'), el('Fecha del libro', 'directiva')],
         });
         expect(p).toContain('UNA IDEA POR MOVIMIENTO');
+    });
+});
+
+describe('el manuscrito no es la predicación', () => {
+    const p = () => buildSectionProsePrompt({ ...base, elements: [el('Nínive era la capital asiria')] });
+
+    it('prohíbe los vocativos: el trato con la congregación lo pone él, vivo', () => {
+        // La prosa generada abría con "Hermanos, esta formulación inicial…".
+        // Escribirlo de antemano le pre-guioniza la entrega, que es suya.
+        expect(p()).toContain('Vocativos');
+        expect(p()).toContain('Hermanos');
+        expect(p()).toContain('pre-guioniza');
+    });
+
+    it('prohíbe el adorno retórico por su nombre, no en abstracto', () => {
+        // Nombrar los giros concretos que aparecieron ("Imaginen la profunda…",
+        // "de manera poderosa") funciona mejor que pedir "sé conciso".
+        const texto = p();
+        expect(texto).toContain('Imaginen la profunda');
+        expect(texto).toContain('de manera poderosa');
+    });
+
+    it('dice para QUÉ sirve la concisión, no sólo que se exige', () => {
+        // El propósito no es ahorrar tokens: es que el predicador vea la idea
+        // de un vistazo cuando repase su manuscrito.
+        expect(p()).toContain('DE UN VISTAZO');
+    });
+
+    it('da un largo orientativo por movimiento', () => {
+        expect(p()).toContain('Dos a cuatro frases');
     });
 });

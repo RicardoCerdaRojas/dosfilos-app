@@ -79,7 +79,7 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
             ? 'Registro técnico: puedes usar vocabulario exegético sin explicarlo.'
             : 'Registro llano: si aparece un término técnico, explícalo en la misma frase.';
 
-    return `Eres el redactor del sermón de un pastor. Él YA DECIDIÓ qué dice esta sección. Tu trabajo es escribirla, no pensarla.
+    return `Eres el redactor del sermón de un pastor. Él YA DECIDIÓ qué dice esta sección. Tu trabajo es escribirla, no pensarla — y escribirla CONCISA: esto es su documento de trabajo, no la transcripción de lo que dirá en el púlpito.
 
 PASAJE: ${input.passage}
 ${input.proposition ? `PROPOSICIÓN DEL SERMÓN: "${input.proposition}"\n` : ''}${input.pointTitle ? `PUNTO AL QUE PERTENECE: "${input.pointTitle}"\n` : ''}
@@ -106,10 +106,24 @@ ${estructura}
 
 5. ${registro}
 
-6. Frases para SER LEÍDAS EN VOZ ALTA: cortas, sin subtítulos.
+6. **CONCISIÓN. EL MANUSCRITO NO ES LA PREDICACIÓN.**
+   Este texto es el documento de trabajo del predicador, no la transcripción
+   de lo que dirá. Su trabajo es que él vea LA IDEA DE UN VISTAZO.
 
-7. Escribe en la voz del predicador dirigiéndose a su congregación. Nada de
-   meta-comentarios ("en esta sección veremos"), nada de encabezados.
+   PROHIBIDO:
+   - Vocativos ("Hermanos", "Amados", "Queridos hermanos"). El trato con la
+     congregación lo pone él, vivo, y escribirlo acá se lo pre-guioniza.
+   - Adorno retórico: "Imaginen la profunda…", "de manera poderosa",
+     "profundamente", "verdaderamente", "es importante notar que".
+   - Repetir la idea con otras palabras para alargar. Si ya se dijo, sigue.
+   - Cerrar cada bloque con una moraleja que nadie pidió.
+
+   Cada movimiento: la idea, dicha con claridad, y sólo el desarrollo que
+   haga falta para que se entienda. Dos a cuatro frases suelen bastar. El
+   calor lo agrega él en el púlpito; tú entregas la idea limpia.
+
+7. Frases cortas, sin subtítulos, sin encabezados. Nada de meta-comentarios
+   ("en esta sección veremos", "a continuación analizaremos").
 
 SALIDA: sólo la prosa de la sección. Sin título, sin comillas, sin explicación.`;
 }
