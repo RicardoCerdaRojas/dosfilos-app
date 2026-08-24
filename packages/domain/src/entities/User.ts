@@ -262,6 +262,20 @@ export const FEATURE_FLAG_NAMES = [
      * paso 3.
      */
     'step3_genre_help',
+    /**
+     * ADR-037 — redacción socrática por ELEMENTOS. El pastor decide qué idea va
+     * en cada sección (la aporta él, o elige/edita una propuesta) y la prosa se
+     * escribe DESPUÉS, a partir de esas decisiones. Es lo que hace medible la
+     * autoría: un texto generado de una vez no tiene costuras y no hay nada que
+     * atribuir dentro de él.
+     *
+     * Entra como SPIKE de una sola sección (contexto histórico) para adjudicar
+     * con datos —no con estimación— si el modelo propone elementos útiles o
+     * genéricos, y cuánto cuesta la llamada por sección. Si propone relleno, el
+     * diseño necesita otra vuelta, y es mejor saberlo con una sección que con
+     * veintiséis. Requiere `pastoral_fidelity_flow`. Default off.
+     */
+    'socratic_drafting',
 ] as const;
 
 export type FeatureFlagName = (typeof FEATURE_FLAG_NAMES)[number];
@@ -304,6 +318,7 @@ export const FEATURE_FLAG_PREREQUISITES: Record<FeatureFlagName, readonly Featur
     // funcional — no se puede encender la ayuda con el subsistema de género
     // apagado. Transitivo → passage_profile → pastoral_fidelity_flow.
     step3_genre_help: ['passage_profile'],
+    socratic_drafting: ['pastoral_fidelity_flow'],
 };
 
 /**

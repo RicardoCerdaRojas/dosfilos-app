@@ -26,6 +26,7 @@ export const ALLOWED_FLAGS = new Set<string>([
     'sermon_draft_shadow',
     'genre_override_enforce',
     'step3_genre_help',
+    'socratic_drafting',
 ]);
 
 /**

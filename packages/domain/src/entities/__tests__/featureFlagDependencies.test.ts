@@ -81,6 +81,7 @@ describe('getFlagDependents — descendientes activos (down con aviso)', () => {
                 'genre_override_enforce',
                 'step3_genre_help',
                 'anchor_fidelity_enforce',
+                'socratic_drafting',
             ].sort(),
         );
     });

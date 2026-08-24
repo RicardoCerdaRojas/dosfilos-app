@@ -91,6 +91,8 @@ export * from './citations/buildTranslationPrompt';
 // ADR-037 — la unidad de decisión de la redacción socrática.
 export * from './drafting/SermonElement';
 export * from './drafting/buildElementsPrompt';
+export * from './drafting/parseProposedElements';
+export * from './drafting/splitElementLines';
 // ¿El pasaje abre el libro? Decide si la introducción debe orientar al libro entero.
 export * from './bible/canon/opensBook';
 // 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent

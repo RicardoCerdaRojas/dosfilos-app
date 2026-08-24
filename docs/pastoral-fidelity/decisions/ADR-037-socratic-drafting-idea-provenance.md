@@ -250,9 +250,27 @@ Puede sobrevivir como señal secundaria ("cuánto reescribiste"), con esa etique
 ### Lo que queda abierto
 
 1. ~~**¿Qué es un "elemento"?**~~ **RESUELTA** (2026-08-24) — definición, prueba operativa, los cuatro estados y el mapa por sección quedaron arriba. El fundador validó el marcado: "coincide con mi honestidad intelectual acerca de la responsabilidad del pastor y del espíritu del producto".
-2. **¿El gate de publicación usa procedencia?** Y con qué piso — que ahora sí puede salir de datos reales, porque la unidad es contable.
-3. **¿Los sermones existentes?** No tienen elementos. Probablemente muestran autoría "no medida", como hoy hace `withoutBaseline`.
-4. **Costo de LLM**: proponer elementos por sección son varias llamadas cortas en vez de una grande. Falta medir si sale más caro o más barato.
+2. ~~**¿El gate de publicación usa procedencia? ¿Con qué piso?**~~ **RESUELTA** (2026-08-24, spike) — **no hay piso**, y la métrica no es un nivel. El fundador, al ver su primera sección (cuatro elementos, todos elegidos): *"al inicio hay mucho de selección y con el tiempo y la experiencia eso debería ir cambiando de dirección hacia mis propias ideas"*.
+
+   Eso reencuadra la medición: el porcentaje de una sección aislada no significa nada, porque **un pastor que empieza SELECCIONA mucho — y seleccionar es el mecanismo por el que se forma**. Lo que significa algo es la TRAYECTORIA a través de muchos sermones. Un piso castigaría exactamente al pastor que la herramienta existe para formar, y lo empujaría a escribir cualquier cosa propia para pasar el umbral: peor sermón y peor formación.
+
+   Consecuencia inmediata: la sección **se describe, no se puntúa** (`describeSectionAuthorship` → `vacia | propia | mixta | seleccionada`). Mismo precedente anti-gamificación que `StudyDepthBadge`. La lectura de trayectoria queda pendiente de que exista historia entre sermones.
+
+3. ~~**¿Los sermones existentes?**~~ **RESUELTA** (2026-08-24) — quedan como **legacy**: no se migran ni se les inventan elementos. Pero **regenerar entra por el pipeline nuevo**. Decisión del fundador: *"si yo como pastor voy a un sermón con estudio ya hecho y quiero rehacer una nueva versión, debería entrar por el pipeline que estamos construyendo"*.
+
+   El razonamiento: regenerar ES rehacer la decisión. Una versión nueva que se salta el flujo socrático es justamente la que no debería existir — si el pipeline existe para que las ideas sean del pastor, dejarle una puerta de atrás que produce el mismo artefacto sin decisiones vacía el pipeline por el uso, no por el diseño.
+
+   **TRAMPA A EVITAR, y es la mitad importante de esta decisión:** un sermón legacy no tiene elementos, y "sin elementos" NO es lo mismo que "todo elegido". Si la vista de un sermón legacy cae en el estado `seleccionada`, la app le dice a un pastor con noventa sermones propios que ninguna idea es suya — una acusación falsa, y falsa por ausencia de datos, no por medición. Hace falta un estado **`sin medir`** a nivel de sermón, distinto de las cuatro formas de sección. La ausencia de dato no es evidencia de cero.
+
+4. ~~**Costo de LLM**~~ **RESUELTA** (2026-08-24, medición real en `llmUsageDaily`) — **no es un bloqueador**. Una llamada de propuesta: 566 in + 476 out = **$0,00136**. Una generación completa de borrador: **$0,017** — doce veces más.
+
+   Honestidad sobre la extrapolación: el spike pasa poco contexto (proposición y puntos). La implementación real agrega exégesis y semilla pastoral, así que la entrada sube a ~2-4k por llamada. Con ~14 secciones y contando segundas propuestas, la cuenta realista queda en **$0,03–0,08 por sermón: dos a cuatro veces una generación de un tirón**. Se paga entre dos y cuatro veces por un sermón cuyas ideas son rastreables, en vez de uno sin costuras.
+
+5. **NUEVA (2026-08-24, spike) — las DIRECTIVAS no son elementos.** Puesto frente al campo, lo primero que el fundador escribió fue `Autor / Fecha del libro / Período histórico con años`. Eso no son ideas decidibles: son **temas a cubrir**. El contenido que los llena (Jonás hijo de Amitai, 2 Reyes 14:25, Jeroboam II, siglo VIII a.C.) no admite alternativa, así que no pasa la prueba operativa del elemento.
+
+   Y es revelador que fuera lo primero que salió: la pantalla asumía aporte de CONTENIDO; él aportó ESTRUCTURA.
+
+   Decidido: la directiva es un **tipo propio de aporte** — se registra como suya la *decisión de cobertura*, y el contenido que la llena entra como `elegido`. Enlaza con el mecanismo de directivas del bosquejo (`applyPastorDirectives`). Pendiente: el sistema debe distinguir tema de afirmación **sin pedirle al pastor que clasifique nada** — él sigue escribiendo como escribe.
 
 ## Alternativas consideradas
 

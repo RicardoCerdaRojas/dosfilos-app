@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { tallyProvenance, type SermonElement } from '../SermonElement';
+import { tallyProvenance, describeSectionAuthorship, type SermonElement } from '../SermonElement';
 import { buildElementsPrompt } from '../buildElementsPrompt';
+import { parseProposedElements } from '../parseProposedElements';
+import { splitElementLines } from '../splitElementLines';
 
 let n = 0;
 const el = (provenance: SermonElement['provenance'], text = 'x'): SermonElement => ({
@@ -72,5 +74,84 @@ describe('buildElementsPrompt', () => {
         // Sin esto el modelo rellena hasta el número pedido: es el mismo
         // mecanismo por el que una cita de autoridad obligatoria se fabrica.
         expect(buildElementsPrompt(base)).toContain('PROPÓN MENOS');
+    });
+});
+
+describe('parseProposedElements', () => {
+    const ok = '{"elements":[{"text":"La crueldad asiria","why":"Explica el miedo de Jonás"}]}';
+
+    it('lee la respuesta limpia', () => {
+        expect(parseProposedElements(ok)).toEqual([
+            { text: 'La crueldad asiria', why: 'Explica el miedo de Jonás' },
+        ]);
+    });
+
+    it('sobrevive al envoltorio ```json y a una frase antes', () => {
+        // El modelo los pone. Sin esto la pantalla del pastor queda vacía.
+        expect(parseProposedElements('Claro, aquí tienes:\n```json\n' + ok + '\n```')).toHaveLength(1);
+    });
+
+    it('descarta elementos sin texto en vez de renderizar filas vacías', () => {
+        const sucio = '{"elements":[{"text":"  "},{"text":"Nínive","why":null}]}';
+        expect(parseProposedElements(sucio)).toEqual([{ text: 'Nínive', why: '' }]);
+    });
+
+    it('devuelve lista vacía —no lanza— con basura', () => {
+        expect(parseProposedElements('no soy json')).toEqual([]);
+        expect(parseProposedElements('{roto')).toEqual([]);
+        expect(parseProposedElements('{"elements":"no es lista"}')).toEqual([]);
+    });
+});
+
+describe('splitElementLines', () => {
+    it('una idea por línea — así escribe la gente una lista', () => {
+        expect(splitElementLines('Quién es el autor\nCuándo se escribió\nEn qué contexto')).toEqual([
+            'Quién es el autor',
+            'Cuándo se escribió',
+            'En qué contexto',
+        ]);
+    });
+
+    it('limpia las viñetas: marcan estructura, no contenido', () => {
+        expect(splitElementLines('- uno\n* dos\n3) tres\n• cuatro')).toEqual(['uno', 'dos', 'tres', 'cuatro']);
+    });
+
+    it('ignora líneas vacías y espacios sueltos', () => {
+        expect(splitElementLines('  uno  \n\n\n   \n dos ')).toEqual(['uno', 'dos']);
+    });
+
+    it('una sola idea sigue siendo una', () => {
+        expect(splitElementLines('La crueldad asiria explica el miedo de Jonás.')).toEqual([
+            'La crueldad asiria explica el miedo de Jonás.',
+        ]);
+    });
+
+    it('campo vacío no produce elementos fantasma', () => {
+        expect(splitElementLines('')).toEqual([]);
+        expect(splitElementLines('   \n  ')).toEqual([]);
+        expect(splitElementLines(undefined)).toEqual([]);
+    });
+});
+
+describe('describeSectionAuthorship', () => {
+    it('sin elementos, vacía', () => {
+        expect(describeSectionAuthorship([])).toBe('vacia');
+    });
+
+    it('todo elegido describe la sección, no la reprocha', () => {
+        // El caso del primer uso. Antes mostraba "0 de 4 ideas son tuyas".
+        expect(describeSectionAuthorship([el('elegido'), el('elegido')])).toBe('seleccionada');
+    });
+
+    it('todo propio (aportado o editado) es propia', () => {
+        expect(describeSectionAuthorship([el('pastor'), el('editado')])).toBe('propia');
+    });
+
+    it('mezcla es mixta', () => {
+        expect(describeSectionAuthorship([el('pastor'), el('elegido')])).toBe('mixta');
+    });
+
+    it('los descartados no mueven la forma de la sección', () => {
+        expect(describeSectionAuthorship([el('pastor'), el('descartado')])).toBe('propia');
     });
 });
