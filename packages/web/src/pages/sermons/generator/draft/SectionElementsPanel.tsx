@@ -14,16 +14,10 @@ import {
     type WalkSection,
 } from '@dosfilos/domain';
 import { useProposeElements, type ProposedElement } from '@/hooks/useProposeElements';
-import { useWriteSection } from '@/hooks/useWriteSection';
-import { PenLine } from 'lucide-react';
 
 interface Props {
     section: WalkSection;
     passage: string;
-    /** Prosa ya escrita para esta sección, si existe. */
-    prose?: string;
-    onProseChange: (prose: string) => void;
-    audienceRigor?: 'beginner' | 'seminary';
     proposition?: string;
     points?: readonly string[];
     elements: SermonElement[];
@@ -56,7 +50,6 @@ export function SectionElementsPanel(props: Props) {
     /** En `verbatim` lo que escribe ES el texto final del sermón, no una idea sobre él. */
     const esVerbatim = section.mode === 'verbatim';
     const { propose, loading, error } = useProposeElements();
-    const { write, writingId, error: writeError } = useWriteSection();
     const [mine, setMine] = useState('');
     const [proposals, setProposals] = useState<ProposedElement[]>([]);
     const [editing, setEditing] = useState<{ index: number; text: string } | null>(null);
@@ -350,63 +343,6 @@ export function SectionElementsPanel(props: Props) {
                 </div>
             )}
 
-            {/* LA REDACCIÓN VIENE DESPUÉS DE DECIDIR, y sólo aparece cuando ya hay
-                algo que redactar. Ofrecerla antes invitaría a saltarse la
-                decisión, que es justamente lo que este flujo existe para evitar.
-                En `verbatim` no hay nada que redactar: lo que él escribió YA es
-                el texto final. */}
-            {!esVerbatim && decided.length > 0 && (
-                <div className="pt-4 border-t border-border/50 space-y-3">
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={async () => {
-                                const texto = await write({
-                                    section,
-                                    sectionLabel: t(section.labelKey, section.labelParams),
-                                    sectionJob: t(section.jobKey),
-                                    elements: props.elements,
-                                    passage: props.passage,
-                                    proposition: props.proposition,
-                                    pointTitle: section.parentLabel,
-                                    audienceRigor: props.audienceRigor,
-                                });
-                                if (texto) props.onProseChange(texto);
-                            }}
-                            disabled={writingId === section.id}
-                        >
-                            {writingId === section.id ? (
-                                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                            ) : (
-                                <PenLine className="h-4 w-4 mr-1.5" />
-                            )}
-                            {t(props.prose ? 'drafting.prose.rewrite' : 'drafting.prose.write')}
-                        </Button>
-                        {writeError && (
-                            <span className="text-xs text-muted-foreground">{t('drafting.prose.failed')}</span>
-                        )}
-                    </div>
-
-                    {props.prose && (
-                        <div className="space-y-1.5">
-                            <label htmlFor="prosa" className="text-sm font-medium">
-                                {t('drafting.prose.label')}
-                            </label>
-                            {/* EDITABLE. Ajustar la prosa es desarrollo, no
-                                origen: no cambia la procedencia de las ideas y
-                                no hay razón para bloquearlo. */}
-                            <Textarea
-                                id="prosa"
-                                value={props.prose}
-                                onChange={(e) => props.onProseChange(e.target.value)}
-                                rows={8}
-                                className="resize-y leading-relaxed"
-                            />
-                        </div>
-                    )}
-                </div>
-            )}
         </Card>
     );
 }

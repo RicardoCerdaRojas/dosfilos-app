@@ -503,7 +503,9 @@
       "write": "Write this section",
       "rewrite": "Write it again",
       "label": "This section's prose",
-      "failed": "Couldn't write it. Your decisions are still saved."
+      "failed": "Couldn't write it. Your decisions are still saved.",
+      "emptyNoDecisions": "First decide what goes in this section. The prose is written from that.",
+      "emptyReady": "You've decided. Press “Write this section” to draft it."
     }
   },
   "pastoralContext": {
