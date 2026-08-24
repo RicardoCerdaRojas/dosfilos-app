@@ -124,3 +124,31 @@ describe('deriveSectionWalk — bordes', () => {
         expect(pendientes).toContain('point.1.exposition');
     });
 });
+
+describe('modo de sección: se deciden ideas, o se decide el texto final', () => {
+    const walk = deriveSectionWalk(JONAS);
+
+    it('el título se escribe VERBATIM: no se decide una idea sobre él', () => {
+        // Nadie decide "ideas para el título". Pedirlas agrega un paso que no
+        // existe y hace que la pantalla mienta sobre lo que está pidiendo.
+        expect(walk.find((s) => s.id === 'title')?.mode).toBe('verbatim');
+    });
+
+    it('todo lo demás junta ideas y la prosa se escribe después', () => {
+        expect(walk.filter((s) => s.id !== 'title').every((s) => s.mode === 'elements')).toBe(true);
+    });
+
+    it('la proposición NO se etiqueta como indicación del pastor', () => {
+        // Es material para pensar el título, no una instrucción que él dejó.
+        // Confundirlos mezcla justo las dos cosas que este flujo distingue.
+        const titulo = walk.find((s) => s.id === 'title');
+        expect(titulo?.contextKey).toBe('drafting.sections.title.context');
+        expect(titulo?.contextKey).not.toContain('directive');
+    });
+
+    it('las directivas del bosquejo sí se etiquetan como suyas', () => {
+        expect(walk.find((s) => s.id === 'point.1.exposition')?.contextKey).toBe(
+            'drafting.sections.directiveContext',
+        );
+    });
+});

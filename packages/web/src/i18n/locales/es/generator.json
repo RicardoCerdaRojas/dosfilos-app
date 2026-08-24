@@ -440,7 +440,13 @@
       "kind": {
         "directiva": "Tema"
       },
-      "flipKind": "Cambia entre idea tuya y tema a cubrir"
+      "flipKind": "Cambia entre idea tuya y tema a cubrir",
+      "verbatimLabel": "El título del sermón",
+      "verbatimPlaceholder": "Escríbelo tal como quieres que aparezca.",
+      "verbatimAdd": "Usar este título",
+      "verbatimPropose": "Propónme títulos",
+      "verbatimProposeMore": "Propónme otros",
+      "verbatimDecided": "Tu título"
     },
     "sections": {
       "exposition": {
@@ -477,7 +483,8 @@
       },
       "title": {
         "label": "Título",
-        "job": "Nombrar el sermón. Tu proposición está abajo para orientarte, pero el título es otra cosa: no afirma, nombra."
+        "job": "Nombrar el sermón. Tu proposición está abajo para orientarte, pero el título es otra cosa: no afirma, nombra.",
+        "context": "Tu proposición, para ayudarte a pensarlo:"
       },
       "coveredNote": "Ya es tuyo, del estudio o del bosquejo. No hay nada que decidir aquí.",
       "contextNote": "Tus indicaciones para esta sección:",
@@ -485,7 +492,8 @@
       "pendingCount": "{{done}} de {{total}} listas",
       "statusDone": "Lista",
       "statusPending": "Pendiente",
-      "statusCovered": "Tuya"
+      "statusCovered": "Tuya",
+      "directiveContext": "Tus indicaciones para esta sección:"
     },
     "tabs": {
       "draft": "Borrador",

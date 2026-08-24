@@ -440,7 +440,13 @@
       "kind": {
         "directiva": "Topic"
       },
-      "flipKind": "Switch between your own idea and a topic to cover"
+      "flipKind": "Switch between your own idea and a topic to cover",
+      "verbatimLabel": "The sermon title",
+      "verbatimPlaceholder": "Write it exactly as you want it to appear.",
+      "verbatimAdd": "Use this title",
+      "verbatimPropose": "Suggest titles",
+      "verbatimProposeMore": "Suggest others",
+      "verbatimDecided": "Your title"
     },
     "sections": {
       "exposition": {
@@ -477,7 +483,8 @@
       },
       "title": {
         "label": "Title",
-        "job": "Name the sermon. Your proposition is below to guide you, but a title is a different thing: it does not assert, it names."
+        "job": "Name the sermon. Your proposition is below to guide you, but a title is a different thing: it does not assert, it names.",
+        "context": "Your proposition, to help you think it through:"
       },
       "coveredNote": "Already yours, from the study or the outline. Nothing to decide here.",
       "contextNote": "Your notes for this section:",
@@ -485,7 +492,8 @@
       "pendingCount": "{{done}} of {{total}} done",
       "statusDone": "Done",
       "statusPending": "Pending",
-      "statusCovered": "Yours"
+      "statusCovered": "Yours",
+      "directiveContext": "Your notes for this section:"
     },
     "tabs": {
       "draft": "Draft",

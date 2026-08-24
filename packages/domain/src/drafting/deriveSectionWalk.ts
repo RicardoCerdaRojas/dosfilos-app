@@ -19,8 +19,21 @@ export type SectionStatus =
      */
     | 'cubierta';
 
+/**
+ * Cómo se decide la sección.
+ *
+ * `elements` — se juntan ideas y la prosa se escribe después. Es el caso normal.
+ *
+ * `verbatim` — lo que el pastor escribe ES el texto final del sermón. El título
+ * es el ejemplo: nadie decide "ideas para el título", se decide el título. Pedir
+ * ideas ahí agrega un paso que no existe y hace la pantalla mentir sobre lo que
+ * está pidiendo.
+ */
+export type SectionMode = 'elements' | 'verbatim';
+
 export interface WalkSection {
     id: string;
+    mode: SectionMode;
     /** Clave i18n de la etiqueta. El dominio no habla ningún idioma. */
     labelKey: string;
     /** Clave i18n del trabajo que la sección tiene que hacer. */
@@ -28,8 +41,16 @@ export interface WalkSection {
     /** Parámetros de interpolación (p. ej. el número del punto). */
     labelParams?: Record<string, string | number>;
     status: SectionStatus;
-    /** Lo que el pastor ya escribió y cubre esta sección. Se muestra tal cual. */
+    /** Lo que el pastor ya escribió y alimenta esta sección. Se muestra tal cual. */
     coveredBy?: string[];
+    /**
+     * Clave i18n que introduce `coveredBy`.
+     *
+     * No siempre son "tus indicaciones": para el título, la proposición es
+     * material para pensarlo, no una instrucción que él dejó. Etiquetarlo mal
+     * confunde dos cosas que el flujo entero se dedica a distinguir.
+     */
+    contextKey?: string;
     /** Agrupa las secciones de un punto bajo él, para el mapa lateral. */
     parentId?: string;
     /** Título del punto, verbatim. Sólo en las secciones que SON un punto. */
@@ -84,10 +105,12 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
         secciones.push({
             ...base,
             id: `${parentId}.exposition`,
+            mode: 'elements',
             labelKey: `${NS}.exposition.label`,
             jobKey: `${NS}.exposition.job`,
             labelParams: { n },
             status: 'pendiente',
+            contextKey: `${NS}.directiveContext`,
             coveredBy: cubierta([
                 punto.pastorDirective?.emphasis,
                 ...(punto.pastorDirective?.exegeticalNotes ?? []),
@@ -97,6 +120,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
         secciones.push({
             ...base,
             id: `${parentId}.illustration`,
+            mode: 'elements',
             labelKey: `${NS}.illustration.label`,
             jobKey: `${NS}.illustration.job`,
             labelParams: { n },
@@ -108,6 +132,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
         secciones.push({
             ...base,
             id: `${parentId}.application`,
+            mode: 'elements',
             labelKey: `${NS}.application.label`,
             jobKey: `${NS}.application.job`,
             labelParams: { n },
@@ -118,12 +143,14 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
 
     secciones.push({
         id: 'conclusion.recap',
+        mode: 'elements',
         labelKey: `${NS}.recap.label`,
         jobKey: `${NS}.recap.job`,
         status: 'pendiente',
     });
     secciones.push({
         id: 'conclusion.callToAction',
+        mode: 'elements',
         labelKey: `${NS}.callToAction.label`,
         jobKey: `${NS}.callToAction.job`,
         status: 'pendiente',
@@ -132,6 +159,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
     const apertura = cubierta([input.openingIllustration]);
     secciones.push({
         id: 'introduction.openingIllustration',
+        mode: 'elements',
         labelKey: `${NS}.openingIllustration.label`,
         jobKey: `${NS}.openingIllustration.job`,
         status: apertura.length > 0 ? 'cubierta' : 'pendiente',
@@ -139,12 +167,14 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
     });
     secciones.push({
         id: 'introduction.bookOverview',
+        mode: 'elements',
         labelKey: `${NS}.bookOverview.label`,
         jobKey: `${NS}.bookOverview.job`,
         status: 'pendiente',
     });
     secciones.push({
         id: 'introduction.historicalContext',
+        mode: 'elements',
         labelKey: `${NS}.historicalContext.label`,
         jobKey: `${NS}.historicalContext.job`,
         status: 'pendiente',
@@ -163,10 +193,12 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
     // orienta el título sin sustituirlo.
     secciones.push({
         id: 'title',
+        mode: 'verbatim',
         labelKey: `${NS}.title.label`,
         jobKey: `${NS}.title.job`,
         status: 'pendiente',
         coveredBy: cubierta([input.proposition]),
+        contextKey: `${NS}.title.context`,
     });
 
     return secciones;
