@@ -100,17 +100,12 @@ jobs:
         # leniency npm had before the migration.
         run: yarn install --frozen-lockfile --ignore-engines
       
+      # Cada paquete con SU config: desde la raíz, `packages/web` no toma su
+      # entorno jsdom y sus tests fallan en falso. Ese falso rojo es lo que
+      # justificaba el `continue-on-error`, que a su vez hacía que este paso
+      # reportara verde pase lo que pase — y se tragaba las fallas reales.
       - name: Run unit tests
         run: npm run test:unit
-        continue-on-error: true  # Allow legacy test failures
-      
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
-        if: always()
-        with:
-          files: ./coverage/coverage-final.json
-          flags: unittests
-          name: codecov-umbrella
 
   build:
     name: Build

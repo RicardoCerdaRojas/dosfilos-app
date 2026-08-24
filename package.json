@@ -15,7 +15,7 @@
     "type-check:web": "./scripts/check-web-types.sh",
     "type-check:web:update": "./scripts/check-web-types.sh --update",
     "test": "vitest",
-    "test:unit": "vitest run",
+    "test:unit": "./scripts/test-all-packages.sh",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:run": "vitest run",
@@ -41,7 +41,8 @@
     "mobile:ios": "npm run ios --workspace=packages/mobile",
     "mobile:web": "npm run web --workspace=packages/mobile",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "test:root": "vitest run"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
