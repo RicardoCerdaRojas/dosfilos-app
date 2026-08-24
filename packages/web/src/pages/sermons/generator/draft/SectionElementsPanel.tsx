@@ -4,7 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/i18n';
-import { describeSectionAuthorship, splitElementLines, type SermonElement, type ElementProvenance } from '@dosfilos/domain';
+import {
+    describeSectionAuthorship,
+    splitElementLines,
+    classifyContribution,
+    type SermonElement,
+    type ElementProvenance,
+    type ContributionKind,
+} from '@dosfilos/domain';
 import { useProposeElements, type ProposedElement } from '@/hooks/useProposeElements';
 
 interface Props {
@@ -57,22 +64,40 @@ export function SectionElementsPanel(props: Props) {
      * React perdería todas las escrituras menos la última.
      */
     const add = (texts: readonly string[], provenance: ElementProvenance, proposedText?: string) => {
-        const nuevos = texts
+        const nuevos: SermonElement[] = texts
             .map((t) => t.trim())
             .filter((t) => t.length > 0)
-            .map((text) => ({
-                id: nextId(),
-                sectionId: props.sectionId,
-                text,
-                provenance,
-                proposedText,
-                decidedAt: new Date(),
-            }));
+            .map((text) => {
+                // El sistema clasifica; el pastor NO tiene que hacerlo. Si se
+                // equivoca, lo corrige con un clic y `kindAuto` conserva lo que
+                // se había propuesto, para saber cuánto se equivoca.
+                const kind = classifyContribution(text);
+                return {
+                    id: nextId(),
+                    sectionId: props.sectionId,
+                    text,
+                    provenance,
+                    kind,
+                    kindAuto: kind,
+                    proposedText,
+                    decidedAt: new Date(),
+                };
+            });
         if (nuevos.length === 0) return;
         props.onChange([...props.elements, ...nuevos]);
     };
 
     const remove = (id: string) => props.onChange(props.elements.filter((e) => e.id !== id));
+
+    /** El pastor corrige la clasificación. Su corrección manda siempre. */
+    const flipKind = (id: string) =>
+        props.onChange(
+            props.elements.map((e) =>
+                e.id === id
+                    ? { ...e, kind: (e.kind === 'elemento' ? 'directiva' : 'elemento') as ContributionKind }
+                    : e,
+            ),
+        );
 
     const handlePropose = async () => {
         const nuevos = await propose({
@@ -205,9 +230,16 @@ export function SectionElementsPanel(props: Props) {
                     <ul className="space-y-1.5">
                         {decided.map((e) => (
                             <li key={e.id} className="flex items-start gap-2 text-sm">
-                                <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${BADGE[e.provenance]}`}>
-                                    {t(`drafting.elements.provenance.${e.provenance}`)}
-                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => flipKind(e.id)}
+                                    className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${e.kind === 'directiva' ? 'bg-muted text-muted-foreground' : BADGE[e.provenance]}`}
+                                    title={t('drafting.elements.flipKind')}
+                                >
+                                    {e.kind === 'directiva'
+                                        ? t('drafting.elements.kind.directiva')
+                                        : t(`drafting.elements.provenance.${e.provenance}`)}
+                                </button>
                                 <span className="text-foreground/90 flex-1">{e.text}</span>
                                 <button
                                     type="button"
