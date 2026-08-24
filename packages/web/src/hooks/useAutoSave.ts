@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { sermonService } from '@dosfilos/application';
 import { buildWizardProgress, type WizardState } from './buildWizardProgress';
+import { hasWizardStateChanged } from './hasWizardStateChanged';
 
 
 export function useAutoSave(
@@ -73,20 +74,18 @@ export function useAutoSave(
             return;
         }
 
-        // Check if any content has actually changed
-        const changed =
-            prev.exegesis !== wizardState.exegesis ||
-            prev.homiletics !== wizardState.homiletics ||
-            prev.draft !== wizardState.draft ||
-            prev.step !== wizardState.step ||
-            prev.personalization !== wizardState.personalization ||
-            prev.audienceRigor !== wizardState.audienceRigor;
-
-        if (!changed) return;
+        if (!hasWizardStateChanged(prev, wizardState)) return;
 
         const timer = setTimeout(() => { void save(); }, 800);
         return () => clearTimeout(timer);
-    }, [wizardState.exegesis, wizardState.homiletics, wizardState.draft, wizardState.step, wizardState.personalization, wizardState.audienceRigor, sermonId, save]);
+        // DEPENDENCIAS DERIVADAS DEL PROPIO ESTADO, no enumeradas a mano.
+        //
+        // La lista escrita a mano es la mitad del bug que esto arregla: un campo
+        // nuevo que no figuraba acá no disparaba el efecto, así que no se
+        // guardaba nunca — en silencio. `Object.values` mantiene el tamaño
+        // estable porque el objeto se construye siempre con las mismas claves.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sermonId, save, ...Object.values(wizardState)]);
 
     return { saving, lastSaved, save };
 }
