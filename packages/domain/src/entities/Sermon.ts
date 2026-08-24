@@ -11,6 +11,8 @@ export interface PreachingLog {
     notes?: string;
 }
 
+import type { SermonElement } from '../drafting/SermonElement';
+
 export interface Sermon {
     id: string;
     userId: string;
@@ -63,6 +65,30 @@ export interface Sermon {
          * sermons untouched.
          */
         audienceRigor?: 'beginner' | 'seminary';
+        /**
+         * ADR-037 — las decisiones de redacción socrática, por sección.
+         *
+         * La clave es el `sectionId` (`introduction.historicalContext`,
+         * `point.1.exposition`…). El valor es la lista COMPLETA de esa sección:
+         * Firestore reemplaza arrays enteros en un merge, así que borrar un
+         * elemento funciona; lo que un merge NO hace es borrar una clave
+         * ausente, y por eso una sección vaciada se escribe como lista vacía en
+         * vez de omitirse.
+         *
+         * ⚠️ LAS CLAVES LLEVAN PUNTOS y eso es seguro SÓLO por cómo se escriben.
+         * `setDoc(..., { merge: true })` con un objeto anidado guarda la clave
+         * literal, punto incluido. Un `updateDoc` con RUTA DE CAMPO
+         * (`wizardProgress.sectionElements.introduction.historicalContext`)
+         * interpretaría cada punto como un nivel y crearía mapas anidados
+         * paralelos, dejando los datos reales huérfanos. Este mapa se escribe
+         * SIEMPRE entero, nunca por ruta.
+         *
+         * Ausente en todo sermón anterior al flujo. AUSENTE NO ES CERO: un
+         * sermón legacy no tiene elementos porque el modelo no existía, no
+         * porque el pastor no aportara ideas. Quien lea este campo para mostrar
+         * autoría debe distinguir "sin medir" de "medido en cero".
+         */
+        sectionElements?: Record<string, SermonElement[]>;
         // Track if this draft has been published
         publishedCopyId?: string;  // ID of the most recent published copy
         lastPublishedAt?: Date;    // When it was last published

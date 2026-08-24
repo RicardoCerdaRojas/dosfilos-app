@@ -29,7 +29,6 @@ import {
     GENRE_COMPLIANCE_GENRES,
     JUDGE_SHADOW_SAMPLE_1_IN,
     type LiteraryGenre,
-    type SermonElement,
 } from '@dosfilos/domain';
 import { createProxyLlmClient } from '@dosfilos/infrastructure';
 import { useFirebase } from '@/context/firebase-context';
@@ -70,18 +69,20 @@ import { useDraftVersions } from './draft/useDraftVersions';
 import { SectionElementsPanel } from './draft/SectionElementsPanel';
 import { HomileticsSavedIndicator } from './homiletics/HomileticsLoadingScreen';
 
+/** ADR-037 — `sectionId` de la única sección cableada hoy. */
+const HISTORICAL_CONTEXT_SECTION = 'introduction.historicalContext';
+
 export function StepDraft() {
     const { t, language } = useTranslation('generator');
     const activeLanguage = language === 'en' ? 'en' : 'es';
     const navigate = useNavigate();
     const { user } = useFirebase();
-    const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, sermonId, derivedContext, reset, saving } = useWizard();
+    const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, sermonId, derivedContext, sectionElements, setSectionElements, reset, saving } = useWizard();
     const draftShadowGate = useFeatureFlag('sermon_draft_shadow');
-    // ADR-037 — spike de UNA sección. El estado vive en el componente a
-    // propósito: hasta adjudicar si el modelo propone algo útil, persistir el
-    // esquema en Firestore sería comprometerse con una forma que quizá cambie.
+    // ADR-037 — las decisiones viven en el contexto del wizard y se persisten
+    // con el resto del progreso: el spike ya adjudicó que el modelo propone
+    // bien, así que el esquema deja de ser provisional.
     const socraticGate = useFeatureFlag('socratic_drafting');
-    const [contextElements, setContextElements] = useState<SermonElement[]>([]);
     const [socraticOpen, setSocraticOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
@@ -507,14 +508,14 @@ export function StepDraft() {
      */
     const socraticPanel = socraticGate.enabled && homiletics ? (
         <SectionElementsPanel
-            sectionId="introduction.historicalContext"
+            sectionId={HISTORICAL_CONTEXT_SECTION}
             sectionLabel={t('drafting.elements.sectionLabel')}
             sectionJob={t('drafting.elements.sectionJob')}
             passage={passage}
             proposition={homiletics.homileticalProposition}
             points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
-            elements={contextElements}
-            onChange={setContextElements}
+            elements={sectionElements[HISTORICAL_CONTEXT_SECTION] ?? []}
+            onChange={(els) => setSectionElements(HISTORICAL_CONTEXT_SECTION, els)}
         />
     ) : null;
 

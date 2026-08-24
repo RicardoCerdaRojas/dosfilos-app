@@ -5,11 +5,16 @@ import { parseProposedElements } from '../parseProposedElements';
 import { splitElementLines } from '../splitElementLines';
 
 let n = 0;
-const el = (provenance: SermonElement['provenance'], text = 'x'): SermonElement => ({
+const el = (
+    provenance: SermonElement['provenance'],
+    text = 'x',
+    kind: SermonElement['kind'] = 'elemento',
+): SermonElement => ({
     id: `e${n++}`,
     sectionId: 'introduction.historicalContext',
     text,
     provenance,
+    kind,
     decidedAt: new Date(),
 });
 
@@ -153,5 +158,30 @@ describe('describeSectionAuthorship', () => {
 
     it('los descartados no mueven la forma de la sección', () => {
         expect(describeSectionAuthorship([el('pastor'), el('descartado')])).toBe('propia');
+    });
+});
+
+
+describe('las directivas no cuentan como ideas originadas', () => {
+    it('una directiva no mueve la autoría de la sección', () => {
+        // "Fecha del libro" es una decisión de cobertura, no una idea: el
+        // contenido que la llena no admitía alternativa.
+        const t = tallyProvenance([el('pastor', 'Fecha del libro', 'directiva'), el('elegido')]);
+        expect(t.inSermon).toBe(1);
+        expect(t.originatedRatio).toBe(0);
+    });
+
+    it('llenar la sección de temas no infla el número', () => {
+        const soloTemas = [
+            el('pastor', 'Autor', 'directiva'),
+            el('pastor', 'Fecha del libro', 'directiva'),
+            el('pastor', 'Período histórico', 'directiva'),
+        ];
+        expect(describeSectionAuthorship(soloTemas)).toBe('vacia');
+    });
+
+    it('una idea suya junto a directivas sigue contando como propia', () => {
+        const mezcla = [el('pastor', 'Autor', 'directiva'), el('pastor', 'Nínive era la capital asiria')];
+        expect(describeSectionAuthorship(mezcla)).toBe('propia');
     });
 });

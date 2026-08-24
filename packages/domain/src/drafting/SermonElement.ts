@@ -1,3 +1,5 @@
+import type { ContributionKind } from './classifyContribution';
+
 /**
  * Un ELEMENTO del sermón: la unidad de decisión de la redacción socrática.
  *
@@ -20,6 +22,23 @@ export type ElementProvenance = 'pastor' | 'elegido' | 'editado' | 'descartado';
 
 export interface SermonElement {
     id: string;
+    /**
+     * Idea decidible (`elemento`) o tema a cubrir (`directiva`). ADR-037 Q5.
+     *
+     * Una DIRECTIVA no cuenta como idea originada: el pastor decidió que el
+     * tema pertenece a la sección, pero el contenido que lo llena no admitía
+     * alternativa. Contarla como idea suya inflaría la autoría con decisiones
+     * que no se tomaron.
+     */
+    kind: ContributionKind;
+    /**
+     * Lo que el clasificador propuso, cuando el pastor lo corrigió.
+     *
+     * Se guarda por lo mismo que `proposedText`: sin el valor original, la
+     * corrección no es auditable — y saber CUÁNTO se equivoca el clasificador
+     * es el único dato que dice si el catálogo de verbos necesita crecer.
+     */
+    kindAuto?: ContributionKind;
     /** Sección a la que pertenece: `introduction.historicalContext`, `point.1.exposition`… */
     sectionId: string;
     /** La idea, en una o dos frases. No es la prosa final. */
@@ -64,9 +83,20 @@ export interface ProvenanceTally {
     originatedRatio: number;
 }
 
+/**
+ * Cuenta procedencia SOBRE LAS IDEAS, no sobre las directivas.
+ *
+ * Una directiva es una decisión de cobertura, no una idea: "Fecha del libro"
+ * no admite alternativa una vez que se decide cubrirlo. Mezclarlas haría que
+ * llenar la sección de temas subiera la autoría sin que el pastor haya
+ * originado nada.
+ */
 export function tallyProvenance(elements: readonly SermonElement[]): ProvenanceTally {
     const t = { pastor: 0, elegido: 0, editado: 0, descartado: 0 };
-    for (const e of elements) t[e.provenance]++;
+    for (const e of elements) {
+        if (e.kind !== 'elemento') continue;
+        t[e.provenance]++;
+    }
     const inSermon = t.pastor + t.elegido + t.editado;
     const suyos = DEL_PASTOR.reduce((n, p) => n + t[p], 0);
     return {

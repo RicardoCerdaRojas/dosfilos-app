@@ -1,4 +1,4 @@
-import type { ExegeticalStudy, HomileticalAnalysis, Sermon, SermonContent, SermonPersonalization } from '@dosfilos/domain';
+import type { ExegeticalStudy, HomileticalAnalysis, Sermon, SermonContent, SermonElement, SermonPersonalization } from '@dosfilos/domain';
 
 type WizardProgress = NonNullable<Sermon['wizardProgress']>;
 type DerivedContext = NonNullable<WizardProgress['derivedContext']>;
@@ -12,6 +12,7 @@ export interface WizardState {
     derivedContext?: DerivedContext | null;
     personalization?: SermonPersonalization | null;
     audienceRigor?: 'beginner' | 'seminary' | null;
+    sectionElements?: Record<string, SermonElement[]> | null;
 }
 
 function hasAnyField(p: SermonPersonalization): boolean {
@@ -78,6 +79,15 @@ export function buildWizardProgress(wizardState: WizardState): WizardProgress {
     // `undefined` = nunca eligió · `'beginner'` = eligió Cotidiano. Distintos.
     if (wizardState.audienceRigor) {
         progress.audienceRigor = wizardState.audienceRigor;
+    }
+
+    // ADR-037 — SE ESCRIBE EN CUANTO HAY MAPA, aunque alguna sección esté
+    // vacía. Con merge, omitir una sección vaciada dejaría intactos los
+    // elementos viejos: el pastor borraría el último elemento, recargaría, y lo
+    // vería volver. Es el mismo fallo que tuvo `audienceRigor`, y la misma
+    // regla: omitir una clave nunca es una forma de borrarla.
+    if (wizardState.sectionElements) {
+        progress.sectionElements = wizardState.sectionElements;
     }
 
     return progress;

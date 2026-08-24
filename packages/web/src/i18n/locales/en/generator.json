@@ -437,7 +437,11 @@
         "propia": "The ideas in this section are yours.",
         "mixta": "This section mixes your own ideas with ones you chose.",
         "seleccionada": "This section was built by choosing. Over time, more of it will come from you."
-      }
+      },
+      "kind": {
+        "directiva": "Topic"
+      },
+      "flipKind": "Is this your own idea, not a topic? Click to change it."
     }
   },
   "pastoralContext": {

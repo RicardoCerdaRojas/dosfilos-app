@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ExegeticalStudy, HomileticalAnalysis, GenerationRules, Sermon, SermonContent, WorkflowConfiguration } from '@dosfilos/domain';
+import { ExegeticalStudy, HomileticalAnalysis, GenerationRules, Sermon, SermonContent, SermonElement, WorkflowConfiguration } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import { ConfigService } from '@dosfilos/application';
 import { FirebaseConfigRepository } from '@dosfilos/infrastructure';
@@ -25,9 +25,20 @@ interface WizardState {
      * user understands the data's provenance.
      */
     derivedContext: DerivedContext | null;
+    /**
+     * ADR-037 — decisiones de redacción socrática, por `sectionId`.
+     *
+     * Vive en el contexto y no en el paso, porque el recorrido cruza secciones
+     * (cuerpo → conclusión → introducción → título) y el mapa lateral las lee
+     * todas a la vez.
+     */
+    sectionElements: Record<string, SermonElement[]>;
 }
 
 interface WizardContextType extends WizardState {
+    setSectionElements: (sectionId: string, elements: SermonElement[]) => void;
+    /** Carga el mapa completo al restaurar un sermón guardado. */
+    restoreSectionElements: (map: Record<string, SermonElement[]>) => void;
     setStep: (step: number) => void;
     setPassage: (passage: string) => void;
     setRules: (rules: GenerationRules) => void;
@@ -80,6 +91,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     const [sermonId, setSermonId] = useState<string | null>(null);
     const [derivedContext, setDerivedContext] = useState<DerivedContext | null>(null);
     const [seedCompletedSteps, setSeedCompletedSteps] = useState<number>(0);
+    const [sectionElements, setSectionElementsState] = useState<Record<string, SermonElement[]>>({});
 
     // Ephemeral local persistence for Step 1 — the sermon doc only gets
     // created after exegesis is generated, so without this the passage
@@ -122,7 +134,15 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     // Auto-save hook
     const { saving, lastSaved } = useAutoSave(
         sermonId,
-        { step, passage, exegesis, homiletics, draft, derivedContext, personalization: rules.personalization ?? null, audienceRigor: rules.audienceRigor ?? null },
+        {
+            step, passage, exegesis, homiletics, draft, derivedContext,
+            personalization: rules.personalization ?? null,
+            audienceRigor: rules.audienceRigor ?? null,
+            // Sólo se manda cuando hay algo que guardar: un objeto vacío
+            // escribiría `sectionElements: {}` en todo sermón legacy y borraría
+            // la distinción entre "sin medir" y "medido en cero".
+            sectionElements: Object.keys(sectionElements).length > 0 ? sectionElements : null,
+        },
         user?.uid || ''
     );
 
@@ -176,6 +196,20 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         createDraftSermon();
     }, [exegesis, sermonId, user, passage, step]);
 
+    /**
+     * Reemplaza la lista COMPLETA de una sección, no agrega de a uno.
+     *
+     * El llamador arma la lista y la manda entera: encadenar un setter singular
+     * desde React perdería todas las escrituras menos la última cuando el
+     * pastor agrega varias ideas de un tirón — ya pasó con las directivas del
+     * bosquejo.
+     */
+    const setSectionElements = (sectionId: string, elements: SermonElement[]) => {
+        setSectionElementsState((prev) => ({ ...prev, [sectionId]: elements }));
+    };
+
+    const restoreSectionElements = (map: Record<string, SermonElement[]>) => setSectionElementsState(map);
+
     const reset = () => {
         setStep(1);
         setPassageState('');
@@ -187,6 +221,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setSermonId(null);
         setDerivedContext(null);
         setSeedCompletedSteps(0);
+        setSectionElementsState({});
     };
 
     // 🎯 NEW: Select homiletical approach and update derived fields
@@ -229,6 +264,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         draft,
         config,
         derivedContext,
+        sectionElements,
         sermonId, // 🎯 Expose to allow publishing
         setStep,
         setPassage,
@@ -238,13 +274,15 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setDraft,
         setSermonId,
         setDerivedContext,
+        setSectionElements,
+        restoreSectionElements,
         selectHomileticalApproach,  // 🎯 NEW
         reset,
         saving,
         lastSaved,
         seedCompletedSteps,
         setSeedCompletedSteps,
-    }), [step, passage, rules, exegesis, homiletics, draft, config, derivedContext, saving, lastSaved, sermonId, seedCompletedSteps]);
+    }), [step, passage, rules, exegesis, homiletics, draft, config, derivedContext, sectionElements, saving, lastSaved, sermonId, seedCompletedSteps]);
 
     return (
         <WizardContext.Provider value={contextValue}>
