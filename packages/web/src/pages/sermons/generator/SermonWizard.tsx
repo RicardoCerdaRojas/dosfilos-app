@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useCollapsedSidebar } from '@/hooks/useCollapsedSidebar';
 import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useWizard, WizardProvider } from './WizardContext';
 import { WizardHeader } from './WizardHeader';
@@ -18,6 +19,9 @@ import { pastoralSeedService } from '@dosfilos/application';
 import { toast } from 'sonner';
 
 function WizardContent() {
+    // El flujo del sermón usa el ancho completo; el menú se pliega al entrar
+    // y se devuelve al salir.
+    useCollapsedSidebar();
     const { step, setStep, passage, setPassage, setExegesis, setHomiletics, setDraft, sermonId, setSermonId, derivedContext, setDerivedContext, restoreSectionElements, restoreSectionProse, rules, setRules, reset } = useWizard();
     const { user } = useFirebase();
     const [searchParams] = useSearchParams();
