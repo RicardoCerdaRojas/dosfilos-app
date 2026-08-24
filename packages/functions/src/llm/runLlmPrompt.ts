@@ -94,6 +94,11 @@ export const PROXY_FEATURES = [
     // secciones del sermón, no con el sermón. Corte propio para poder medir
     // exactamente eso antes de extender el flujo a las 26 secciones.
     'sermon.proposeElements',
+    // ADR-037 — escribe la prosa de UNA sección a partir de lo que el pastor
+    // decidió. Corte propio: es la llamada que convierte decisiones en sermón, y
+    // su costo escala con las secciones escritas, no con el sermón. Separarla de
+    // `generateDraft` permite comparar las dos rutas de generación con datos.
+    'sermon.writeSection',
     'sermon.homileticsPreview',
     'sermon.developApproach',
     // Tanda 3 (exégesis), parte 1 — compositores de sección y de artefactos
