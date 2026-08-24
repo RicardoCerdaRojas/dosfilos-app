@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Loader2, Plus, Check, Pencil, X, Lightbulb } from 'lucide-react';
+import { Loader2, Plus, Check, Pencil, X, Lightbulb, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/i18n';
-import { tallyProvenance, type SermonElement, type ElementProvenance } from '@dosfilos/domain';
+import { tallyProvenance, splitElementLines, type SermonElement, type ElementProvenance } from '@dosfilos/domain';
 import { useProposeElements, type ProposedElement } from '@/hooks/useProposeElements';
 
 interface Props {
@@ -48,14 +48,31 @@ export function SectionElementsPanel(props: Props) {
     const decided = props.elements.filter((e) => e.provenance !== 'descartado');
     const tally = tallyProvenance(props.elements);
 
-    const add = (text: string, provenance: ElementProvenance, proposedText?: string) => {
-        const limpio = text.trim();
-        if (!limpio) return;
-        props.onChange([
-            ...props.elements,
-            { id: nextId(), sectionId: props.sectionId, text: limpio, provenance, proposedText, decidedAt: new Date() },
-        ]);
+    /**
+     * Agrega VARIAS ideas de un tirón.
+     *
+     * El pastor escribe listas —una idea por línea— y esperar que pulse el
+     * botón por cada una convierte en tedio lo que hace natural. El plural no
+     * es una comodidad: es un solo `onChange`, y encadenar el singular desde
+     * React perdería todas las escrituras menos la última.
+     */
+    const add = (texts: readonly string[], provenance: ElementProvenance, proposedText?: string) => {
+        const nuevos = texts
+            .map((t) => t.trim())
+            .filter((t) => t.length > 0)
+            .map((text) => ({
+                id: nextId(),
+                sectionId: props.sectionId,
+                text,
+                provenance,
+                proposedText,
+                decidedAt: new Date(),
+            }));
+        if (nuevos.length === 0) return;
+        props.onChange([...props.elements, ...nuevos]);
     };
+
+    const remove = (id: string) => props.onChange(props.elements.filter((e) => e.id !== id));
 
     const handlePropose = async () => {
         const nuevos = await propose({
@@ -92,16 +109,17 @@ export function SectionElementsPanel(props: Props) {
                     value={mine}
                     onChange={(e) => setMine(e.target.value)}
                     placeholder={t('drafting.elements.myIdeaPlaceholder')}
-                    rows={2}
+                    rows={4}
                     className="resize-none"
                 />
+                <p className="text-xs text-muted-foreground">{t('drafting.elements.onePerLine')}</p>
                 <Button
                     size="sm"
                     onClick={() => {
-                        add(mine, 'pastor');
+                        add(splitElementLines(mine), 'pastor');
                         setMine('');
                     }}
-                    disabled={!mine.trim()}
+                    disabled={splitElementLines(mine).length === 0}
                 >
                     <Plus className="h-4 w-4 mr-1.5" />
                     {t('drafting.elements.addMine')}
@@ -141,7 +159,7 @@ export function SectionElementsPanel(props: Props) {
                                         // El texto propuesto viaja con el elemento: sin el
                                         // original, `editado` no es auditable y la procedencia
                                         // deja de significar algo.
-                                        add(editing.text, 'editado', p.text);
+                                        add([editing.text], 'editado', p.text);
                                         setEditing(null);
                                         consume(i);
                                     }}
@@ -151,7 +169,7 @@ export function SectionElementsPanel(props: Props) {
                                 </Button>
                             ) : (
                                 <>
-                                    <Button size="sm" variant="ghost" onClick={() => { add(p.text, 'elegido'); consume(i); }}>
+                                    <Button size="sm" variant="ghost" onClick={() => { add([p.text], 'elegido'); consume(i); }}>
                                         <Check className="h-4 w-4 mr-1.5" />
                                         {t('drafting.elements.use')}
                                     </Button>
@@ -168,7 +186,7 @@ export function SectionElementsPanel(props: Props) {
                                 onClick={() => {
                                     // Descartar SE REGISTRA aunque no entre al sermón: qué
                                     // rechazó dice tanto como qué aceptó.
-                                    add(p.text, 'descartado');
+                                    add([p.text], 'descartado');
                                     setEditing(null);
                                     consume(i);
                                 }}
@@ -190,7 +208,16 @@ export function SectionElementsPanel(props: Props) {
                                 <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] ${BADGE[e.provenance]}`}>
                                     {t(`drafting.elements.provenance.${e.provenance}`)}
                                 </span>
-                                <span className="text-foreground/90">{e.text}</span>
+                                <span className="text-foreground/90 flex-1">{e.text}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => remove(e.id)}
+                                    className="shrink-0 text-muted-foreground/60 hover:text-foreground"
+                                    aria-label={t('drafting.elements.remove')}
+                                    title={t('drafting.elements.remove')}
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                </button>
                             </li>
                         ))}
                     </ul>

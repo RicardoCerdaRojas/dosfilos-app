@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { tallyProvenance, type SermonElement } from '../SermonElement';
 import { buildElementsPrompt } from '../buildElementsPrompt';
 import { parseProposedElements } from '../parseProposedElements';
+import { splitElementLines } from '../splitElementLines';
 
 let n = 0;
 const el = (provenance: SermonElement['provenance'], text = 'x'): SermonElement => ({
@@ -99,5 +100,35 @@ describe('parseProposedElements', () => {
         expect(parseProposedElements('no soy json')).toEqual([]);
         expect(parseProposedElements('{roto')).toEqual([]);
         expect(parseProposedElements('{"elements":"no es lista"}')).toEqual([]);
+    });
+});
+
+describe('splitElementLines', () => {
+    it('una idea por línea — así escribe la gente una lista', () => {
+        expect(splitElementLines('Quién es el autor\nCuándo se escribió\nEn qué contexto')).toEqual([
+            'Quién es el autor',
+            'Cuándo se escribió',
+            'En qué contexto',
+        ]);
+    });
+
+    it('limpia las viñetas: marcan estructura, no contenido', () => {
+        expect(splitElementLines('- uno\n* dos\n3) tres\n• cuatro')).toEqual(['uno', 'dos', 'tres', 'cuatro']);
+    });
+
+    it('ignora líneas vacías y espacios sueltos', () => {
+        expect(splitElementLines('  uno  \n\n\n   \n dos ')).toEqual(['uno', 'dos']);
+    });
+
+    it('una sola idea sigue siendo una', () => {
+        expect(splitElementLines('La crueldad asiria explica el miedo de Jonás.')).toEqual([
+            'La crueldad asiria explica el miedo de Jonás.',
+        ]);
+    });
+
+    it('campo vacío no produce elementos fantasma', () => {
+        expect(splitElementLines('')).toEqual([]);
+        expect(splitElementLines('   \n  ')).toEqual([]);
+        expect(splitElementLines(undefined)).toEqual([]);
     });
 });

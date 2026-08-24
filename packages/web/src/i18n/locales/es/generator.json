@@ -414,7 +414,7 @@
       "sectionJob": "Situar al oyente en el mundo del texto: qué sabía y qué temía quien lo escuchó primero.",
       "myIdeaLabel": "Tu idea para esta sección",
       "myIdeaPlaceholder": "Escribe la idea que quieres que esta sección lleve. Una o dos frases: la prosa se escribe después.",
-      "addMine": "Agregar mi idea",
+      "addMine": "Agregar mis ideas",
       "propose": "Propónme ideas",
       "proposeMore": "Propónme otras",
       "proposeFailed": "No se pudieron traer propuestas. Tu idea sigue siendo el camino principal — escríbela arriba.",
@@ -430,7 +430,9 @@
         "editado": "Editada",
         "descartado": "Descartada"
       },
-      "toggle": "Taller de contexto histórico"
+      "toggle": "Taller de contexto histórico",
+      "onePerLine": "Una idea por línea. Puedes escribir varias y agregarlas de una vez.",
+      "remove": "Quitar"
     }
   },
   "pastoralContext": {
