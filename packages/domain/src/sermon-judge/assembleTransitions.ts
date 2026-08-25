@@ -18,8 +18,14 @@ import type { HomileticalAnalysis, SermonContent } from '../entities/SermonGener
  * la primera línea en blanco. Todo lo que venga después se descarta y se
  * reemplaza por el recordatorio armado desde el bosquejo.
  *
- * El último punto no lleva recordatorio: después de él viene la conclusión, no
- * otro movimiento, y repetir ahí los puntos es ruido.
+ * TODOS LOS PUNTOS LO LLEVAN, el último incluido. Se excluía razonando que
+ * después de él viene la conclusión y no otro movimiento — y el fundador lo
+ * corrigió sobre su propio sermón: él hace la transición siempre, y el punto
+ * final quedaba sin nada donde los demás sí tenían.
+ *
+ * Recoger la tesis antes de la conclusión no es ruido: es el movimiento con el
+ * que un predicador cierra el cuerpo. Si además le resulta redundante con la
+ * recapitulación, eso lo decide él borrando una de las dos.
  */
 export function assembleTransitions(
     content: SermonContent,
@@ -33,10 +39,8 @@ export function assembleTransitions(
 
     const recordatorio = buildTransitionReminder(proposicion, puntos);
 
-    const body = content.body.map((punto, i) => {
-        const esUltimo = i === content.body.length - 1;
+    const body = content.body.map((punto) => {
         const frase = leadIn(punto.transition);
-        if (esUltimo) return { ...punto, transition: frase };
         return { ...punto, transition: frase ? `${frase}\n\n${recordatorio}` : recordatorio };
     });
 

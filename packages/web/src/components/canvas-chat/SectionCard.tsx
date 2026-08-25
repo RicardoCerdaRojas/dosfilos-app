@@ -371,7 +371,13 @@ export function SectionCard({
                             </span>
                             <span className="text-foreground block mt-1">
                               {Array.isArray(value) ? (
-                                <ul className="list-disc list-inside pl-2 space-y-1">
+                                // Las referencias cruzadas van SIN viñeta: cada una ocupa
+                                // dos líneas (cita y texto), y el marcador quedaba solo
+                                // arriba porque su contenido deja de ser inline.
+                                <ul className={cn(
+                                  'space-y-1',
+                                  key === 'scriptureReferences' ? 'space-y-3' : 'list-disc list-inside pl-2',
+                                )}>
                                   {value.map((v, idx) => {
                                     // Cross-refs arrive with a leading "> " blockquote prefix; inside a
                                     // list item it renders as a literal char, so strip it.
@@ -383,7 +389,7 @@ export function SectionCard({
                                         <li key={idx}>
                                           <ScriptureReferenceWithText
                                             reference={texto}
-                                            renderReference={(r) => renderTextWithBibleLinks(r)}
+                                            renderFallback={(r) => renderTextWithBibleLinks(r)}
                                           />
                                         </li>
                                       );

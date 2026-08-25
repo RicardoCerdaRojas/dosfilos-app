@@ -4,8 +4,8 @@ import { LocalBibleService } from '@/services/LocalBibleService';
 interface Props {
     /** Referencia tal como la escribió el pastor: "Salmo 139:7-12", "Jonás 1:3a". */
     reference: string;
-    /** Cómo renderizar la referencia en sí (enlace, chip, etc.). */
-    renderReference: (reference: string) => React.ReactNode;
+    /** Cómo renderizarla cuando su texto NO se pudo resolver. */
+    renderFallback: (reference: string) => React.ReactNode;
 }
 
 /**
@@ -24,14 +24,21 @@ interface Props {
  * ("1:3a" → "1:3"), que el parser bíblico rechaza. La ETIQUETA conserva lo que
  * él escribió: saber qué mitad predica es suyo.
  */
-export function ScriptureReferenceWithText({ reference, renderReference }: Props) {
+export function ScriptureReferenceWithText({ reference, renderFallback }: Props) {
     const texto = LocalBibleService.getVerses(scriptureLookupRef(reference) ?? '');
 
-    if (!texto) return <>{renderReference(reference)}</>;
+    // Sin texto, se conserva el enlace: sirve para ir a leerlo a otro lado.
+    if (!texto) return <>{renderFallback(reference)}</>;
 
     return (
-        <div className="space-y-0.5">
-            {renderReference(reference)}
+        <div className="space-y-1">
+            {/* LA REFERENCIA COMO ETIQUETA, NO COMO ENLACE.
+                Con el texto a la vista el enlace ya no aporta —existía para
+                poder leer el versículo— y además rompía la cita: el enlazador
+                reconoce hasta el número y dejaba la mitad afuera, mostrando
+                "Jonás 1:3 a" en dos pedazos. La etiqueta la muestra entera,
+                incluida la notación de medio versículo que él escribió. */}
+            <p className="text-sm font-medium text-primary">{reference}</p>
             <p className="text-sm text-muted-foreground leading-relaxed">{texto}</p>
         </div>
     );
