@@ -527,10 +527,11 @@
       "emptyReady": "You've decided. Press “Write this section” to draft it."
     },
     "assemble": {
-      "writeAll": "Draft the {{count}} without prose",
       "writingProgress": "Writing {{hechas}} of {{total}}…",
       "build": "Build the draft",
-      "missing": "{{count}} sections would come out EMPTY, starting with “{{first}}”. You can build anyway."
+      "missing": "{{count}} sections would come out EMPTY, starting with “{{first}}”. You can build anyway.",
+      "writeAndBuild": "Draft the {{count}} and build",
+      "buildPartial": "Build with what's there"
     }
   },
   "pastoralContext": {

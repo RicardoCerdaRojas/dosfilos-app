@@ -63,8 +63,30 @@ export function WorkshopDraftActions(props: Props) {
                 (s.coveredBy ?? []).length > 0),
     );
 
-    const escribirTodo = async () => {
+    /**
+     * Redacta lo pendiente y arma. UN SOLO PASO, porque es el caso normal.
+     *
+     * Estaban separados para permitir armar a medio camino, y eso sigue
+     * disponible en el botón secundario. Pero el fundador esperaba que armar
+     * escribiera primero —"¿primero se escriben las que faltan y luego se
+     * construye?"— y tenía razón: obligarlo a descubrir la secuencia hace que
+     * el camino habitual dependa de adivinarla, y quien no la adivine arma un
+     * esqueleto sin saber por qué.
+     */
+    const hayPendientes = redactables.length > 0;
+
+    const escribirYArmar = async () => {
+        const prosaNueva = await escribirTodo();
+        props.onAssemble(assembleDraft({ ...entrada, prose: { ...props.prose, ...prosaNueva } }));
+    };
+
+    const escribirTodo = async (): Promise<Record<string, string>> => {
         setEscribiendo({ hechas: 0, total: redactables.length });
+        // Se acumula acá y se devuelve: el estado de React no se habrá
+        // actualizado todavía cuando el ensamblado corra a continuación, y
+        // armar con el mapa viejo produciría el esqueleto que se acaba de
+        // evitar escribiendo.
+        const escritas: Record<string, string> = {};
         for (const [i, seccion] of redactables.entries()) {
             const proposicion = seccion.parentId
                 ? (props.elements[`${seccion.parentId}.proposition`] ?? [])
@@ -96,30 +118,45 @@ export function WorkshopDraftActions(props: Props) {
                     LocalBibleService.getVerses(scriptureLookupRef(seccion.scriptureRef) ?? '') ?? undefined,
                 audienceRigor: props.audienceRigor,
             });
-            if (texto) props.onProseChange(seccion.id, texto);
+            if (texto) {
+                escritas[seccion.id] = texto;
+                props.onProseChange(seccion.id, texto);
+            }
             setEscribiendo({ hechas: i + 1, total: redactables.length });
         }
         setEscribiendo(null);
+        return escritas;
     };
 
     return (
         <div className="shrink-0 border-t border-border/60 pt-3 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-                <Button variant="outline" size="sm" onClick={escribirTodo} disabled={!!escribiendo || redactables.length === 0}>
+                {/* La acción principal hace el camino completo. La parcial queda
+                    disponible al lado, sin que haya que adivinar el orden. */}
+                <Button size="sm" onClick={() => void (hayPendientes ? escribirYArmar() : props.onAssemble(assembleDraft(entrada)))} disabled={!!escribiendo}>
                     {escribiendo ? (
                         <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                     ) : (
-                        <PenLine className="h-4 w-4 mr-1.5" />
+                        <FileText className="h-4 w-4 mr-1.5" />
                     )}
                     {escribiendo
                         ? t('drafting.assemble.writingProgress', escribiendo)
-                        : t('drafting.assemble.writeAll', { count: redactables.length })}
+                        : hayPendientes
+                          ? t('drafting.assemble.writeAndBuild', { count: redactables.length })
+                          : t('drafting.assemble.build')}
                 </Button>
 
-                <Button size="sm" onClick={() => void props.onAssemble(assembleDraft(entrada))} disabled={!!escribiendo}>
-                    <FileText className="h-4 w-4 mr-1.5" />
-                    {t('drafting.assemble.build')}
-                </Button>
+                {hayPendientes && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void props.onAssemble(assembleDraft(entrada))}
+                        disabled={!!escribiendo}
+                    >
+                        <PenLine className="h-4 w-4 mr-1.5" />
+                        {t('drafting.assemble.buildPartial')}
+                    </Button>
+                )}
             </div>
 
             {/* SE AVISA LO QUE FALTA, PERO NO SE BLOQUEA. El pastor puede querer

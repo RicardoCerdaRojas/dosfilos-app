@@ -527,10 +527,11 @@
       "emptyReady": "Ya decidiste. Pulsa «Escribir esta sección» para redactarla."
     },
     "assemble": {
-      "writeAll": "Redactar las {{count}} sin prosa",
       "writingProgress": "Escribiendo {{hechas}} de {{total}}…",
       "build": "Armar el borrador",
-      "missing": "{{count}} secciones quedarían VACÍAS en el borrador, empezando por «{{first}}». Puedes armarlo igual."
+      "missing": "{{count}} secciones quedarían VACÍAS en el borrador, empezando por «{{first}}». Puedes armarlo igual.",
+      "writeAndBuild": "Redactar las {{count}} y armar el borrador",
+      "buildPartial": "Armar con lo que hay"
     }
   },
   "pastoralContext": {
