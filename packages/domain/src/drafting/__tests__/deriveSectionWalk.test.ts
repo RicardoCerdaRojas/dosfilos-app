@@ -6,6 +6,7 @@ import { deriveSectionWalk, pendingSections, type WalkInput } from '../deriveSec
  * Dos puntos, con sus directivas y aplicaciones tal como las escribió.
  */
 const JONAS: WalkInput = {
+    sermonPassage: 'Jonás 1:1-3',
     proposition:
         'En Jonás 1:1-3, veremos dos realidades del conflicto entre Jonás y Dios que deben guiarnos a la obediencia a Dios.',
     points: [
@@ -200,11 +201,12 @@ describe('el versículo del punto viaja con sus secciones', () => {
         // Resume lo que hay que ver EN el versículo: decidirla de memoria es
         // peor, y obligar a abrir otra pestaña es fricción justo al pensar.
         expect(walk.find((s) => s.id === 'point.1.proposition')?.scriptureRef).toBe('Jonás 1:1-2');
-        expect(walk.find((s) => s.id === 'point.2.proposition')?.scriptureRef).toBe('Jonás 1:3a');
+        // Sale de SU título "(vv. 3)", no de la referencia heredada "1:3a".
+        expect(walk.find((s) => s.id === 'point.2.proposition')?.scriptureRef).toBe('Jonás 1:3');
     });
 
     it('la exposición también, para que el modelo cite el texto real', () => {
-        expect(walk.find((s) => s.id === 'point.2.exposition')?.scriptureRef).toBe('Jonás 1:3a');
+        expect(walk.find((s) => s.id === 'point.2.exposition')?.scriptureRef).toBe('Jonás 1:3');
     });
 
     it('toma la PRIMERA referencia: las demás son cruzadas, no el pasaje', () => {

@@ -517,10 +517,11 @@ export function StepDraft() {
             homiletics
                 ? deriveSectionWalk({
                       points: (homiletics.outline?.mainPoints ?? []) as any[],
+                      sermonPassage: passage,
                       proposition: homiletics.homileticalProposition,
                   })
                 : [],
-        [homiletics],
+        [homiletics, passage],
     );
 
     // La sección activa por defecto es la PRIMERA PENDIENTE, no la primera del

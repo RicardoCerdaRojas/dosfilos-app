@@ -1,3 +1,5 @@
+import { pointPassageRef } from './pointPassageRef';
+
 /**
  * Deriva el RECORRIDO de secciones desde el bosquejo real del pastor.
  *
@@ -95,6 +97,8 @@ export interface WalkOutlinePoint {
 
 export interface WalkInput {
     points: readonly WalkOutlinePoint[];
+    /** Pasaje del sermón completo. Completa el "vv. 3" que traen los títulos. */
+    sermonPassage?: string;
     /** Ilustración de apertura, si el pastor ya la escribió en el paso 8. */
     openingIllustration?: string;
     /** Proposición homilética, verbatim. */
@@ -122,7 +126,13 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
         const n = i + 1;
         const parentId = `point.${n}`;
         const parentLabel = punto.title?.trim() || undefined;
-        const refPunto = punto.scriptureReferences?.[0]?.trim() || undefined;
+        // El título manda sobre `scriptureReferences`: uno lo mantiene el
+        // pastor, el otro quedó de la propuesta del generador.
+        const refPunto = pointPassageRef({
+            title: punto.title,
+            sermonPassage: input.sermonPassage,
+            scriptureReferences: punto.scriptureReferences,
+        });
         const base = { parentId, parentLabel };
 
         // LA PROPOSICIÓN DEL PUNTO VA PRIMERO, y es `verbatim`.
