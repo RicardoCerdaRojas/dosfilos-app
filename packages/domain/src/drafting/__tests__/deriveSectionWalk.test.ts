@@ -227,3 +227,20 @@ describe('el versículo del punto viaja con sus secciones', () => {
         expect(sinRefs.find((s) => s.id === 'point.1.proposition')?.scriptureRef).toBeUndefined();
     });
 });
+
+describe('una ilustración es UNA decisión, aunque ocupe varias frases', () => {
+    const walk = deriveSectionWalk(JONAS);
+
+    it('las ilustraciones se marcan como una sola idea', () => {
+        // Escribió su imagen en dos frases —el jefe de obras y el arquitecto— y
+        // se partió en dos elementos. Al quedar dos, la sección entró por la
+        // rama de "un movimiento por concepto" y salió con la estructura de una
+        // exposición: dejó de ser una ilustración.
+        expect(walk.find((s) => s.id === 'point.1.illustration')?.oneIdea).toBe(true);
+        expect(walk.find((s) => s.id === 'introduction.openingIllustration')?.oneIdea).toBe(true);
+    });
+
+    it('la exposición sí admite varias: ahí una lista es una lista', () => {
+        expect(walk.find((s) => s.id === 'point.1.exposition')?.oneIdea).toBeUndefined();
+    });
+});

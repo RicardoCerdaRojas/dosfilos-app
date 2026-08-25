@@ -441,7 +441,8 @@
         "directiva": "Tema"
       },
       "flipKind": "Cambia entre idea tuya y tema a cubrir",
-      "unsupported": "Sin apoyo directo en el texto"
+      "unsupported": "Sin apoyo directo en el texto",
+      "oneIdeaHint": "Escríbela completa, como la vas a contar. Los saltos de línea no la parten: es una sola imagen."
     },
     "sections": {
       "exposition": {

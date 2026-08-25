@@ -82,11 +82,20 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
      * Con UNA sola idea no hay nada que separar: ahí la lista sería andamiaje
      * vacío, y una ilustración partida en viñetas deja de ser una ilustración.
      */
-    const varias = ideas.length + temas.length > 1;
+    // UNA SECCIÓN DE UNA SOLA IDEA NUNCA SE ABRE EN MOVIMIENTOS, aunque el
+    // pastor haya escrito varias frases. Sin esto, una ilustración escrita en
+    // dos líneas tomaba la proposición del punto como espina y salía con la
+    // estructura de una exposición — dejando de ser una ilustración.
+    const varias = !input.section.oneIdea && ideas.length + temas.length > 1;
     const proposicionPunto = input.pointProposition?.trim();
 
     const estructura = !varias
-        ? `   Es una sola idea: escríbela como un párrafo continuo. No la partas en
+        ? input.section.oneIdea
+            ? `   Es UNA imagen, no un argumento. Cuéntala como un relato continuo, con
+   las palabras y los detalles que él eligió. NO la abras en viñetas, NO la
+   organices por conceptos y NO le agregues una moraleja: la aplicación va en
+   otra sección. Si él escribió varias frases, son partes de la MISMA imagen.`
+            : `   Es una sola idea: escríbela como un párrafo continuo. No la partas en
    viñetas — sin varias partes que separar, la lista es andamiaje vacío.`
         : proposicionPunto
           ? `   LOS MOVIMIENTOS SALEN DE LA PROPOSICIÓN, NO DE LA LISTA DE IDEAS.

@@ -259,3 +259,35 @@ describe('cada movimiento va como su propia viñeta', () => {
         expect(p).toContain('de un vistazo en cuántas partes');
     });
 });
+
+describe('una sección de una sola idea no se abre en movimientos', () => {
+    const ilustracion = { ...seccion, id: 'point.1.illustration', oneIdea: true };
+    const dosFrases = [el('Imagina que trabajas como jefe de obras.'), el('El arquitecto podría nunca ir a la obra.')];
+
+    it('con proposición y varias frases, sigue siendo un relato continuo', () => {
+        // Éste es el fallo: dos frases de la MISMA imagen la hacían entrar por
+        // la rama de conceptos y salía estructurada como exposición.
+        const p = buildSectionProsePrompt({
+            ...base,
+            section: ilustracion,
+            elements: dosFrases,
+            pointProposition: 'Dios se identifica, ordena y explica.',
+        });
+        expect(p).toContain('Es UNA imagen, no un argumento');
+        expect(p).not.toContain('POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA');
+    });
+
+    it('prohíbe la moraleja: la aplicación vive en otra sección', () => {
+        const p = buildSectionProsePrompt({ ...base, section: ilustracion, elements: dosFrases });
+        expect(p).toContain('NO le agregues una moraleja');
+    });
+
+    it('la exposición con varias ideas conserva sus movimientos', () => {
+        const p = buildSectionProsePrompt({
+            ...base,
+            elements: dosFrases,
+            pointProposition: 'Dios se identifica, ordena y explica.',
+        });
+        expect(p).toContain('POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA');
+    });
+});

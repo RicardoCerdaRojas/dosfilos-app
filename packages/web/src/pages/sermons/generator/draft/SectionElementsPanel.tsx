@@ -54,6 +54,13 @@ export function SectionElementsPanel(props: Props) {
     /** En `verbatim` lo que escribe ES el texto final del sermón, no una idea sobre él. */
     const esVerbatim = section.mode === 'verbatim';
     /**
+     * Una sección de UNA sola decisión: no se parte por líneas y escribir otra
+     * reemplaza. Lo que cuenta como unidad lo declara la sección.
+     */
+    const esUnaIdea = section.oneIdea === true;
+    /** Ni `verbatim` ni una imagen se trocean por saltos de línea. */
+    const unaSolaEntrada = esVerbatim || esUnaIdea;
+    /**
      * Texto propio de la sección verbatim. Cada una declara el suyo: compartir
      * uno hacía que la proposición del punto pidiera "El título del sermón".
      */
@@ -105,7 +112,7 @@ export function SectionElementsPanel(props: Props) {
                 };
             });
         if (nuevos.length === 0) return;
-        props.onChange(esVerbatim ? nuevos : [...props.elements, ...nuevos]);
+        props.onChange(unaSolaEntrada ? nuevos : [...props.elements, ...nuevos]);
     };
 
     const remove = (id: string) => props.onChange(props.elements.filter((e) => e.id !== id));
@@ -211,8 +218,11 @@ export function SectionElementsPanel(props: Props) {
                     rows={esVerbatim ? 2 : 4}
                     className="resize-none"
                 />
-                {!esVerbatim && (
+                {!unaSolaEntrada && (
                     <p className="text-xs text-muted-foreground">{t('drafting.elements.onePerLine')}</p>
+                )}
+                {esUnaIdea && (
+                    <p className="text-xs text-muted-foreground">{t('drafting.elements.oneIdeaHint')}</p>
                 )}
                 <Button
                     size="sm"
@@ -221,10 +231,10 @@ export function SectionElementsPanel(props: Props) {
                         // el anterior en vez de acumular. Un sermón no tiene dos
                         // títulos, y dejar los dos obligaría a borrar a mano el
                         // que sobra.
-                        add(esVerbatim ? [mine] : splitElementLines(mine), 'pastor');
+                        add(unaSolaEntrada ? [mine] : splitElementLines(mine), 'pastor');
                         setMine('');
                     }}
-                    disabled={(esVerbatim ? [mine.trim()].filter(Boolean) : splitElementLines(mine)).length === 0}
+                    disabled={(unaSolaEntrada ? [mine.trim()].filter(Boolean) : splitElementLines(mine)).length === 0}
                 >
                     <Plus className="h-4 w-4 mr-1.5" />
                     {esVerbatim ? t(vk('add')) : t('drafting.elements.addMine')}
@@ -335,7 +345,7 @@ export function SectionElementsPanel(props: Props) {
                                     explicativo. La cara de "idea" lleva la
                                     PROCEDENCIA (Tuya · Elegida · Editada), así
                                     que el interruptor no pierde información. */}
-                                {esVerbatim ? (
+                                {unaSolaEntrada ? (
                                     <span className={`shrink-0 rounded px-1.5 py-1 text-[11px] leading-none ${BADGE[e.provenance]}`}>
                                         {t(`drafting.elements.provenance.${e.provenance}`)}
                                     </span>

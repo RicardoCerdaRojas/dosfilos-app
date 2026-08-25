@@ -441,7 +441,8 @@
         "directiva": "Topic"
       },
       "flipKind": "Switch between your own idea and a topic to cover",
-      "unsupported": "No direct support in the text"
+      "unsupported": "No direct support in the text",
+      "oneIdeaHint": "Write it whole, as you will tell it. Line breaks don't split it — it's one image."
     },
     "sections": {
       "exposition": {
