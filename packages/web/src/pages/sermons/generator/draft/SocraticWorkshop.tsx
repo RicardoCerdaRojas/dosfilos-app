@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RailDivider } from '@/components/ui/RailDivider';
 import { useTranslation } from '@/i18n';
-import type { SermonContent, SermonElement, WalkSection } from '@dosfilos/domain';
+import type { HomileticalAnalysis, SermonContent, SermonElement, WalkSection } from '@dosfilos/domain';
 import { SermonMap } from './SermonMap';
 import { SectionElementsPanel } from './SectionElementsPanel';
 import { SectionProsePanel } from './SectionProsePanel';
@@ -21,7 +21,11 @@ interface Props {
     points?: readonly string[];
     /** Bosquejo, para armar el borrador con los títulos y aplicaciones reales. */
     outlinePoints: readonly { title?: string; application?: string; scriptureReferences?: string[] }[];
-    onAssemble: (draft: SermonContent) => void;
+    onAssemble: (draft: SermonContent) => void | Promise<void>;
+    hasDraft?: boolean;
+    /** Título del sermón, para el encabezado. */
+    sermonTitle?: string;
+    homiletics: HomileticalAnalysis;
 }
 
 const ANCHO_MIN = 200;
@@ -99,9 +103,49 @@ export function SocraticWorkshop(props: Props) {
               .trim() || undefined
         : undefined;
 
+    const listas = props.walk.filter(
+        (s) =>
+            s.status === 'cubierta' ||
+            (props.elements[s.id] ?? []).some((e) => e.provenance !== 'descartado'),
+    ).length;
+
     return (
-        <div className="flex flex-col h-full gap-3">
-        <div className="flex items-stretch gap-0 flex-1 min-h-[24rem]">
+        <div className="flex flex-col h-full min-h-[24rem]">
+        {/* MISMO PATRÓN QUE LA PESTAÑA BORRADOR: título a la izquierda,
+            acciones a la derecha, contenido debajo. El botón de armar vivía al
+            pie y se sentía fuera de lugar en cualquier posición que probara —
+            la razón era que el taller no seguía el patrón que el resto de la
+            app ya establece, no dónde estaba puesto exactamente.
+
+            Mismas clases que el encabezado del borrador: `min-w-0` + `truncate`
+            en el título y `shrink-0` en las acciones, porque agregar cualquier
+            cosa a esa fila partía el encabezado en dos líneas. */}
+        <div className="mb-4 flex-shrink-0 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+                <h3 className="text-lg font-semibold truncate" title={props.sermonTitle}>
+                    {props.sermonTitle || t('drafting.sections.mapTitle')}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                    {t('drafting.sections.pendingCount', { done: listas, total: props.walk.length })}
+                </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+                <WorkshopDraftActions
+                    walk={props.walk}
+                    elements={props.elements}
+                    prose={props.prose}
+                    points={props.outlinePoints}
+                    proposition={props.proposition}
+                    audienceRigor={props.audienceRigor}
+                    onProseChange={props.onChangeProse}
+                    onAssemble={props.onAssemble}
+                    hasDraft={props.hasDraft}
+                    homiletics={props.homiletics}
+                />
+            </div>
+        </div>
+
+        <div className="flex items-stretch gap-0 flex-1 min-h-0">
             {abierto && (
                 <div style={{ width: ancho }} className="shrink-0 overflow-hidden">
                     <SermonMap
@@ -123,7 +167,19 @@ export function SocraticWorkshop(props: Props) {
                 title={t('drafting.sections.mapTitle')}
             />
 
-            <div className="flex-1 min-w-0 pl-1 overflow-y-auto">
+            {/* COLUMNA DE TRABAJO: contenido acotado arriba, acciones al pie.
+                Las acciones vivían en una barra propia bajo TODO el taller, y
+                quedaban en una franja vacía compitiendo con la del paso. Acá
+                pertenecen a la columna que el pastor está usando. */}
+            <div className="flex-1 min-w-0 pl-1 flex flex-col">
+              <div className="flex-1 overflow-y-auto">
+                {/* MEDIDA DE LECTURA, ALINEADA A LA IZQUIERDA.
+                    A todo el ancho las líneas pasaban de 200 caracteres y el ojo
+                    pierde el renglón al volver. Pero CENTRAR el bloque fue peor:
+                    el contenido se despegó del mapa y quedó flotando con un
+                    vacío enorme a su izquierda. La medida se acota pegando el
+                    texto al borde donde empieza la columna, no al medio. */}
+                <div className="w-full max-w-3xl">
                 <SectionElementsPanel
                     section={props.activeSection}
                     passage={props.passage}
@@ -137,11 +193,16 @@ export function SocraticWorkshop(props: Props) {
                         props.activeSection.id.endsWith('.proposition') ? undefined : proposicionDelPunto
                     }
                 />
+                </div>
+              </div>
+
             </div>
 
             {/* El riel de prosa NO existe en las secciones `verbatim`: lo que el
                 pastor escribió allí YA es el texto final, y abrir un editor
                 vacío al lado sugeriría que falta redactarlo. */}
+            {/* También en las secciones `cubierta`: la decisión está tomada,
+                pero sus notas del bosquejo siguen necesitando redacción. */}
             {props.activeSection.mode === 'elements' && (
                 <>
                     <RailDivider
@@ -168,17 +229,6 @@ export function SocraticWorkshop(props: Props) {
                 </>
             )}
         </div>
-
-        <WorkshopDraftActions
-            walk={props.walk}
-            elements={props.elements}
-            prose={props.prose}
-            points={props.outlinePoints}
-            proposition={props.proposition}
-            audienceRigor={props.audienceRigor}
-            onProseChange={props.onChangeProse}
-            onAssemble={props.onAssemble}
-        />
         </div>
     );
 }

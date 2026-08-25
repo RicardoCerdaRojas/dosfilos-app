@@ -18,8 +18,14 @@ import type { HomileticalAnalysis, SermonContent } from '../entities/SermonGener
  * la primera línea en blanco. Todo lo que venga después se descarta y se
  * reemplaza por el recordatorio armado desde el bosquejo.
  *
- * El último punto no lleva recordatorio: después de él viene la conclusión, no
- * otro movimiento, y repetir ahí los puntos es ruido.
+ * TODOS LOS PUNTOS LO LLEVAN, el último incluido. Se excluía razonando que
+ * después de él viene la conclusión y no otro movimiento — y el fundador lo
+ * corrigió sobre su propio sermón: él hace la transición siempre, y el punto
+ * final quedaba sin nada donde los demás sí tenían.
+ *
+ * Recoger la tesis antes de la conclusión no es ruido: es el movimiento con el
+ * que un predicador cierra el cuerpo. Si además le resulta redundante con la
+ * recapitulación, eso lo decide él borrando una de las dos.
  */
 export function assembleTransitions(
     content: SermonContent,
@@ -31,15 +37,10 @@ export function assembleTransitions(
     const proposicion = homiletics.homileticalProposition?.trim();
     if (!content.body?.length || puntos.length === 0 || !proposicion) return content;
 
-    const recordatorio = [
-        proposicion,
-        `**Puntos:**\n${puntos.map((t, i) => `${i + 1}. ${t}`).join('\n')}`,
-    ].join('\n\n');
+    const recordatorio = buildTransitionReminder(proposicion, puntos);
 
-    const body = content.body.map((punto, i) => {
-        const esUltimo = i === content.body.length - 1;
+    const body = content.body.map((punto) => {
         const frase = leadIn(punto.transition);
-        if (esUltimo) return { ...punto, transition: frase };
         return { ...punto, transition: frase ? `${frase}\n\n${recordatorio}` : recordatorio };
     });
 
@@ -59,4 +60,24 @@ function leadIn(transition: string | undefined): string {
     return primerBloque
         .replace(/^\s*\*{0,2}\s*(?:Transici[oó]n|Recordatorio)\s*:?\s*\*{0,2}\s*/i, '')
         .trim();
+}
+
+
+/**
+ * El recordatorio que cierra cada transición: proposición + puntos, verbatim.
+ *
+ * EXPORTADO para que el taller pueda MOSTRARLE al pastor lo que la transición
+ * va a decir. Marcarla como resuelta sin enseñarle el texto cambia un pendiente
+ * falso por un "listo" mudo: el check afirma que está hecho y él no tiene cómo
+ * verificarlo ni cómo cambiarlo.
+ *
+ * Se calcula en un solo lugar porque es lo mismo que se ensambla: dos copias de
+ * este formato divergirían y el taller mostraría algo distinto de lo que el
+ * sermón termina diciendo.
+ */
+export function buildTransitionReminder(proposition: string, pointTitles: readonly string[]): string {
+    return [
+        proposition,
+        `**Puntos:**\n${pointTitles.map((t, i) => `${i + 1}. ${t}`).join('\n')}`,
+    ].join('\n\n');
 }

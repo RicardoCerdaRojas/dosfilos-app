@@ -399,6 +399,12 @@ export interface SermonContent {
     body: {
         point: string;
         content: string;
+        /**
+         * Pasaje que ESTE punto expone. Distinto de `scriptureReferences`, que
+         * son las de apoyo: el texto expuesto abre el punto, las cruzadas lo
+         * respaldan después.
+         */
+        mainPassageRef?: string;
         scriptureReferences?: string[]; // Referencias cruzadas
         illustration?: string;
         implications?: string[]; // Implicaciones (al menos 2)

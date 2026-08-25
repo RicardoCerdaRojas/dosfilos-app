@@ -1,15 +1,24 @@
 import { describe, it, expect } from 'vitest';
 import { buildSectionProsePrompt } from '../buildSectionProsePrompt';
 import type { SermonElement } from '../SermonElement';
-import type { WalkSection } from '../deriveSectionWalk';
+import { deriveSectionWalk, type WalkSection } from '../deriveSectionWalk';
 
-const seccion: WalkSection = {
-    id: 'point.2.exposition',
-    mode: 'elements',
-    labelKey: 'drafting.sections.exposition.label',
-    jobKey: 'drafting.sections.exposition.job',
-    status: 'pendiente',
+/**
+ * La sección se toma del RECORRIDO REAL, no se construye a mano: así el test
+ * usa la misma definición que produce el catálogo y no una copia que puede
+ * quedar desincronizada.
+ */
+const WALK = deriveSectionWalk({
+    points: [{ title: 'II. El hombre desobedece y revela su necedad (vv. 3)' }],
+    sermonPassage: 'Jonás 1:1-3',
+});
+const buscar = (sufijo: string): WalkSection => {
+    const s = WALK.find((x) => x.id.endsWith(sufijo));
+    if (!s) throw new Error(`No hay sección ${sufijo} en el recorrido`);
+    return s;
 };
+
+const seccion = buscar('.exposition');
 
 let n = 0;
 const el = (
@@ -261,7 +270,7 @@ describe('cada movimiento va como su propia viñeta', () => {
 });
 
 describe('una sección de una sola idea no se abre en movimientos', () => {
-    const ilustracion = { ...seccion, id: 'point.1.illustration', oneIdea: true };
+    const ilustracion = buscar('.illustration');
     const dosFrases = [el('Imagina que trabajas como jefe de obras.'), el('El arquitecto podría nunca ir a la obra.')];
 
     it('con proposición y varias frases, sigue siendo un relato continuo', () => {
@@ -289,5 +298,49 @@ describe('una sección de una sola idea no se abre en movimientos', () => {
             pointProposition: 'Dios se identifica, ordena y explica.',
         });
         expect(p).toContain('POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA');
+    });
+});
+
+describe('la proposición sólo estructura donde la sección la desglosa', () => {
+    const PROP = 'Dios se identifica, ordena y explica.';
+    const dos = [el('Vive consciente de su dirección'), el('Lee tu biblia, ora, escucha a tu pastor')];
+
+    it('la aplicación NO se estructura por conceptos de la proposición', () => {
+        const p = buildSectionProsePrompt({
+            ...base,
+            section: buscar('.application'),
+            elements: dos,
+            pointProposition: PROP,
+        });
+        expect(p).not.toContain('POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA');
+        expect(p).toContain('UNA IDEA POR MOVIMIENTO');
+    });
+
+    it('la exposición sí', () => {
+        const p = buildSectionProsePrompt({
+            ...base,
+            section: seccion,
+            elements: dos,
+            pointProposition: PROP,
+        });
+        expect(p).toContain('POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA');
+    });
+});
+
+describe('cada sección aporta SÓLO lo suyo', () => {
+    it('la exposición no repite la proposición: el ensamblador ya la puso', () => {
+        // El borrador armado la mostraba DOS VECES seguidas: el ensamblador
+        // antepone la sección `verbatim` de la proposición, y la prosa de la
+        // exposición volvía a enunciarla porque el prompt se lo pedía.
+        //
+        // Concatenar secciones sólo funciona si cada una aporta su parte y nada
+        // más. Que dos piezas crean que les toca lo mismo es el duplicado.
+        const p = buildSectionProsePrompt({
+            ...base,
+            elements: [el('una'), el('otra'), el('tercera')],
+            pointProposition: 'Dios se identifica, ordena y explica.',
+        });
+        expect(p).toContain('NO REPITAS LA PROPOSICIÓN');
+        expect(p).not.toContain('Enuncia la proposición del punto, tal cual');
     });
 });

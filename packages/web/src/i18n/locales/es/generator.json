@@ -355,7 +355,8 @@
     "saved": "Guardado",
     "fullContent": {
       "crossReferences": "Referencias Cruzadas",
-      "practicalImplications": "Implicaciones Prácticas"
+      "practicalImplications": "Implicaciones Prácticas",
+      "transition": "Transición"
     },
     "versions": {
       "beforeManualEdit": "Antes de edición manual",
@@ -364,7 +365,10 @@
       "beforeRefinement": "Antes de: {{summary}}...",
       "refinedSummary": "✅ Sección \"{{section}}\" refinada exitosamente.",
       "beforeRegenerate": "Antes de regenerar el borrador",
-      "seePrevious": "Ver versión anterior"
+      "seePrevious": "Ver versión anterior",
+      "beforeAssemble": "Antes de armar desde el taller",
+      "assembledWithBackup": "Borrador armado. El anterior quedó en el historial.",
+      "assembled": "Borrador armado desde tus decisiones."
     },
     "afterGenerateTitle": "Después de generar podrás:",
     "afterGenerateList": [
@@ -467,15 +471,18 @@
       },
       "openingIllustration": {
         "label": "Introducción — ilustración de apertura",
-        "job": "Abrir una pregunta que el sermón va a responder."
+        "job": "Abrir una pregunta que el sermón va a responder.",
+        "heading": "Ilustración de Apertura"
       },
       "bookOverview": {
         "label": "Introducción — el libro de un vistazo",
-        "job": "Ubicar el pasaje dentro del libro completo."
+        "job": "Ubicar el pasaje dentro del libro completo.",
+        "heading": "El Libro de un Vistazo"
       },
       "historicalContext": {
         "label": "Introducción — contexto histórico",
-        "job": "Situar al oyente en el mundo del texto: qué sabía y qué temía quien lo escuchó primero."
+        "job": "Situar al oyente en el mundo del texto: qué sabía y qué temía quien lo escuchó primero.",
+        "heading": "Contexto Histórico"
       },
       "title": {
         "label": "Título",
@@ -510,7 +517,35 @@
           "decided": "Tu proposición para este punto"
         }
       },
-      "pointPropositionContext": "Tu proposición para este punto — las ideas de esta sección la desglosan:"
+      "pointPropositionContext": "Tu proposición para este punto — las ideas de esta sección la desglosan:",
+      "currentConnection": {
+        "label": "Introducción — conexión actual",
+        "job": "Tender el puente entre el mundo del texto y el de tu congregación, sin todavía predicar el punto.",
+        "heading": "Conexión Actual"
+      },
+      "sermonProposition": {
+        "label": "Introducción — proposición homilética",
+        "job": "La tesis del sermón, tal como la escribiste en Homilética. Aterriza al final de la introducción.",
+        "heading": "Proposición Homilética",
+        "verbatim": {
+          "label": "La proposición del sermón",
+          "placeholder": "La tesis que el sermón entero sostiene.",
+          "add": "Usar esta proposición",
+          "propose": "Propónme proposiciones",
+          "proposeMore": "Propónme otras",
+          "decided": "Tu proposición"
+        }
+      },
+      "transition": {
+        "label": "Punto {{n}} — transición",
+        "job": "Retomar la proposición y anunciar el punto siguiente. Se deriva del bosquejo: no hay nada que decidir."
+      },
+      "keyWordsContext": "Las palabras que estudiaste, con lo que dijiste de cada una:",
+      "transitionContext": "Esto se compone solo desde tu bosquejo. Puedes agregar arriba la frase con que pasas al punto siguiente:",
+      "authorityQuote": {
+        "label": "Punto {{n}} — cita de autoridad",
+        "job": "Una voz que respalde lo que acabas de exponer. Sólo si tienes una verificable: una cita inventada en el púlpito destruye la credibilidad."
+      }
     },
     "tabs": {
       "draft": "Borrador",
@@ -522,13 +557,24 @@
       "label": "La prosa de esta sección",
       "failed": "No se pudo escribir. Tus decisiones siguen guardadas.",
       "emptyNoDecisions": "Primero decide qué va en esta sección. La prosa se escribe a partir de eso.",
-      "emptyReady": "Ya decidiste. Pulsa «Escribir esta sección» para redactarla."
+      "emptyReady": "Ya decidiste. Pulsa «Escribir esta sección» para redactarla.",
+      "propositionOpens": "En el sermón, tu proposición abre esta sección con tus palabras exactas. Acá se escribe sólo lo que la desarrolla."
     },
     "assemble": {
-      "writeAll": "Escribir las {{count}} que faltan",
       "writingProgress": "Escribiendo {{hechas}} de {{total}}…",
       "build": "Armar el borrador",
-      "missing": "Faltan {{count}} secciones por escribir, empezando por «{{first}}». Puedes armarlo igual: esas quedan vacías."
+      "missing": "{{count}} secciones quedarían VACÍAS en el borrador, empezando por «{{first}}». Puedes armarlo igual.",
+      "writeAndBuild": "Redactar las {{count}} y armar el borrador",
+      "buildPartial": "Armar con lo que hay",
+      "rebuild": "Volver a armar el borrador",
+      "upToDate": "Borrador al día"
+    },
+    "pointBlocks": {
+      "crossReferences": "Referencias cruzadas",
+      "illustration": "Ilustración",
+      "implications": "Implicaciones",
+      "transition": "Transición",
+      "authorityQuote": "Cita de autoridad"
     }
   },
   "pastoralContext": {

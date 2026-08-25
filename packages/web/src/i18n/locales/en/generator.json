@@ -355,7 +355,8 @@
     "saved": "Saved",
     "fullContent": {
       "crossReferences": "Cross References",
-      "practicalImplications": "Practical Implications"
+      "practicalImplications": "Practical Implications",
+      "transition": "Transition"
     },
     "versions": {
       "beforeManualEdit": "Before manual edit",
@@ -364,7 +365,10 @@
       "beforeRefinement": "Before: {{summary}}...",
       "refinedSummary": "✅ Section \"{{section}}\" refined successfully.",
       "beforeRegenerate": "Before regenerating the draft",
-      "seePrevious": "View previous version"
+      "seePrevious": "View previous version",
+      "beforeAssemble": "Before building from the workshop",
+      "assembledWithBackup": "Draft built. The previous one is in the history.",
+      "assembled": "Draft built from your decisions."
     },
     "afterGenerateTitle": "Once it's generated you can:",
     "afterGenerateList": [
@@ -467,15 +471,18 @@
       },
       "openingIllustration": {
         "label": "Introduction — opening illustration",
-        "job": "Open a question the sermon will answer."
+        "job": "Open a question the sermon will answer.",
+        "heading": "Opening Illustration"
       },
       "bookOverview": {
         "label": "Introduction — the book at a glance",
-        "job": "Place the passage within the whole book."
+        "job": "Place the passage within the whole book.",
+        "heading": "The Book at a Glance"
       },
       "historicalContext": {
         "label": "Introduction — historical context",
-        "job": "Place the listener in the world of the text: what its first hearers knew, and what they feared."
+        "job": "Place the listener in the world of the text: what its first hearers knew, and what they feared.",
+        "heading": "Historical Context"
       },
       "title": {
         "label": "Title",
@@ -510,7 +517,35 @@
           "decided": "Your proposition for this point"
         }
       },
-      "pointPropositionContext": "Your proposition for this point — this section's ideas unpack it:"
+      "pointPropositionContext": "Your proposition for this point — this section's ideas unpack it:",
+      "currentConnection": {
+        "label": "Introduction — current connection",
+        "job": "Bridge the world of the text and your congregation's, without preaching the point yet.",
+        "heading": "Current Connection"
+      },
+      "sermonProposition": {
+        "label": "Introduction — homiletical proposition",
+        "job": "The sermon's thesis, as you wrote it in Homiletics. It lands at the end of the introduction.",
+        "heading": "Homiletical Proposition",
+        "verbatim": {
+          "label": "The sermon's proposition",
+          "placeholder": "The thesis the whole sermon holds up.",
+          "add": "Use this proposition",
+          "propose": "Suggest propositions",
+          "proposeMore": "Suggest others",
+          "decided": "Your proposition"
+        }
+      },
+      "transition": {
+        "label": "Point {{n}} — transition",
+        "job": "Pick the proposition back up and announce the next point. Derived from the outline — nothing to decide."
+      },
+      "keyWordsContext": "The words you studied, with what you said about each:",
+      "transitionContext": "This composes itself from your outline. Above you can add the phrase you use to move to the next point:",
+      "authorityQuote": {
+        "label": "Point {{n}} — authority quote",
+        "job": "A voice that backs what you just expounded. Only if you have a verifiable one: an invented quote in the pulpit destroys credibility."
+      }
     },
     "tabs": {
       "draft": "Draft",
@@ -522,13 +557,24 @@
       "label": "This section's prose",
       "failed": "Couldn't write it. Your decisions are still saved.",
       "emptyNoDecisions": "First decide what goes in this section. The prose is written from that.",
-      "emptyReady": "You've decided. Press “Write this section” to draft it."
+      "emptyReady": "You've decided. Press “Write this section” to draft it.",
+      "propositionOpens": "In the sermon, your proposition opens this section in your exact words. Here you write only what unpacks it."
     },
     "assemble": {
-      "writeAll": "Write the {{count}} remaining",
       "writingProgress": "Writing {{hechas}} of {{total}}…",
       "build": "Build the draft",
-      "missing": "{{count}} sections still unwritten, starting with “{{first}}”. You can build anyway — those stay empty."
+      "missing": "{{count}} sections would come out EMPTY, starting with “{{first}}”. You can build anyway.",
+      "writeAndBuild": "Draft the {{count}} and build",
+      "buildPartial": "Build with what's there",
+      "rebuild": "Rebuild the draft",
+      "upToDate": "Draft up to date"
+    },
+    "pointBlocks": {
+      "crossReferences": "Cross-references",
+      "illustration": "Illustration",
+      "implications": "Implications",
+      "transition": "Transition",
+      "authorityQuote": "Authority quote"
     }
   },
   "pastoralContext": {

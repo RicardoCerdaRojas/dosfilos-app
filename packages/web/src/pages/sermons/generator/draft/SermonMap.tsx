@@ -28,12 +28,19 @@ export function SermonMap({ walk, elements, activeId, onSelect }: Props) {
     const { t } = useTranslation('generator');
     const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
-    // COMPLETITUD, no autoría: una directiva también es una decisión. Medirlo
-    // con la autoría dejaba en círculo una sección donde el pastor acababa de
-    // trabajar, sólo porque lo que escribió era un tema y no una idea.
+    /**
+     * ¿Esta sección le pide algo al pastor?
+     *
+     * COMPLETITUD, no autoría: una directiva también es una decisión. Medirlo
+     * con la autoría dejaba en círculo una sección donde acababa de trabajar,
+     * sólo porque lo que escribió era un tema y no una idea.
+     *
+     * La transición cuenta como lista porque SU TEXTO YA EXISTE —se compone
+     * desde el bosquejo— y llega como `cubierta`, no por una excepción de
+     * estado. Marcarla resuelta sin mostrar el texto sería un "listo" mudo.
+     */
     const isDone = (s: WalkSection) => s.status === 'cubierta' || hasDecisions(elements[s.id] ?? []);
 
-    const done = walk.filter(isDone).length;
 
     // Agrupa por punto conservando el orden del recorrido. Las secciones sin
     // punto (conclusión, introducción, título) van en su propio grupo suelto.
@@ -75,14 +82,7 @@ export function SermonMap({ walk, elements, activeId, onSelect }: Props) {
     };
 
     return (
-        <nav className="h-full w-full pr-2 overflow-y-auto" aria-label={t('drafting.sections.mapTitle')}>
-            <div className="mb-3 px-2">
-                <h3 className="text-sm font-semibold">{t('drafting.sections.mapTitle')}</h3>
-                <p className="text-xs text-muted-foreground">
-                    {t('drafting.sections.pendingCount', { done, total: walk.length })}
-                </p>
-            </div>
-
+        <nav className="h-full w-full py-4 pl-1 pr-2 overflow-y-auto" aria-label={t('drafting.sections.mapTitle')}>
             {grupos.map((g) => {
                 if (g.id === '__sueltas__') {
                     return (

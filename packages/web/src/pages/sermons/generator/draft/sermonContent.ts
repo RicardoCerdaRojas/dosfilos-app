@@ -1,4 +1,6 @@
 import type { TFunction } from 'i18next';
+import { scriptureLookupRef, sermonPointBlocks } from '@dosfilos/domain';
+import { LocalBibleService } from '@/services/LocalBibleService';
 
 interface SermonPoint {
     point: string;
@@ -27,32 +29,39 @@ export function buildFullContent(draft: SermonDraft | null, t: TFunction): strin
 
     const body = draft.body
         .map((point) => {
-            let pointContent = `## ${point.point}\n<br/>\n${point.content}`;
+            // LA FORMA DEL PUNTO LA DEFINE EL DOMINIO, no este serializador.
+            // Antes la definía acá y otra vez en el lienzo de edición, y las dos
+            // divergieron: el pastor revisaba una cosa y su congregación recibía
+            // otra.
+            const bloques = sermonPointBlocks(point)
+                .map((bloque) => {
+                    const encabezado = bloque.headingKey ? `### ${t(bloque.headingKey)}\n` : '';
 
-            if (point.scriptureReferences && point.scriptureReferences.length > 0) {
-                // Each generated ref carries a leading "> " blockquote prefix.
-                // Inside a markdown list item that ">" renders as a literal
-                // character, so strip it — the bullet IS the visual marker.
-                pointContent += `\n<br/>\n### ${t('drafting.fullContent.crossReferences')}\n${point.scriptureReferences.map((ref) => `- ${ref.replace(/^\s*>\s*/, '')}`).join('\n')}`;
-            }
+                    if (bloque.kind === 'mainPassage') {
+                        const ref = bloque.text ?? '';
+                        const texto = LocalBibleService.getVerses(scriptureLookupRef(ref) ?? '');
+                        return texto ? `> **${ref}** — ${texto}` : `> ${ref}`;
+                    }
 
-            if (point.illustration) {
-                pointContent += `\n<br/>\n**${t('drafting.illustrationLabel')}:**\n${point.illustration}`;
-            }
+                    if (bloque.kind === 'crossReferences') {
+                        // CON EL TEXTO DEL VERSÍCULO: sin él hay que abrir cada
+                        // cita para saber qué dice, también en el publicado.
+                        const items = (bloque.items ?? []).map((ref) => {
+                            const texto = LocalBibleService.getVerses(scriptureLookupRef(ref) ?? '');
+                            return texto ? `- **${ref}** — ${texto}` : `- ${ref}`;
+                        });
+                        return `${encabezado}${items.join('\n')}`;
+                    }
 
-            if (point.implications && point.implications.length > 0) {
-                pointContent += `\n<br/>\n### ${t('drafting.fullContent.practicalImplications')}\n${point.implications.map((impl, idx) => `${idx + 1}. ${impl}`).join('\n')}`;
-            }
+                    if (bloque.items) {
+                        return `${encabezado}${bloque.items.map((i, idx) => `${idx + 1}. ${i}`).join('\n')}`;
+                    }
 
-            if (point.authorityQuote) {
-                pointContent += `\n<br/>\n${point.authorityQuote}`;
-            }
+                    return `${encabezado}${bloque.text ?? ''}`;
+                })
+                .join('\n<br/>\n');
 
-            if (point.transition) {
-                pointContent += `\n<br/>\n*${point.transition}*`;
-            }
-
-            return pointContent;
+            return `## ${point.point}\n<br/>\n${bloques}`;
         })
         .join('\n<br/>\n---\n<br/>\n');
 

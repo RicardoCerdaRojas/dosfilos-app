@@ -69,7 +69,32 @@ export function SectionProsePanel(props: Props) {
         props.onProseChange(texto);
     };
 
-    const decididos = props.elements.filter((e) => e.provenance !== 'descartado');
+    /**
+     * Las ideas que alimentan la redacción.
+     *
+     * UNA SECCIÓN `cubierta` TAMBIÉN SE REDACTA. `cubierta` significa "la
+     * decisión ya está tomada", no "no queda nada que hacer": lo que el pastor
+     * escribió en el bosquejo son NOTAS —viñetas con asteriscos a la vista— y
+     * llevarlas al sermón tal cual sería publicar su borrador de trabajo.
+     *
+     * Sus notas entran como elementos suyos porque LO SON: procedencia `pastor`,
+     * decididas por él en el paso homilético.
+     *
+     * SÓLO cuando ese material ES contenido. El recordatorio de la transición
+     * es contexto: redactar desde él produciría prosa que repite la
+     * proposición, el duplicado que se acaba de corregir.
+     */
+    const desdeElBosquejo: SermonElement[] = (section.coveredIsContent ? (section.coveredBy ?? []) : []).map((text, i) => ({
+        id: `${section.id}.covered.${i}`,
+        sectionId: section.id,
+        text,
+        kind: 'elemento' as const,
+        provenance: 'pastor' as const,
+        decidedAt: new Date(),
+    }));
+
+    const propios = props.elements.filter((e) => e.provenance !== 'descartado');
+    const decididos = propios.length > 0 ? propios : desdeElBosquejo;
     const escribiendo = writingId === section.id;
 
     const escribir = async () => {
@@ -77,7 +102,7 @@ export function SectionProsePanel(props: Props) {
             section,
             sectionLabel: t(section.labelKey, section.labelParams),
             sectionJob: t(section.jobKey),
-            elements: props.elements,
+            elements: decididos,
             passage: props.passage,
             proposition: props.proposition,
             pointTitle: section.parentLabel,
@@ -93,7 +118,7 @@ export function SectionProsePanel(props: Props) {
     };
 
     return (
-        <section className="h-full flex flex-col gap-3 pl-1" aria-label={t('drafting.prose.label')}>
+        <section className="h-full flex flex-col gap-3 py-4 pl-2 pr-1" aria-label={t('drafting.prose.label')}>
             <div className="flex items-center gap-2 shrink-0">
                 <h3 className="text-sm font-semibold flex-1 min-w-0 truncate">{t('drafting.prose.label')}</h3>
                 <Button variant="outline" size="sm" onClick={escribir} disabled={escribiendo || decididos.length === 0}>
@@ -107,6 +132,19 @@ export function SectionProsePanel(props: Props) {
             </div>
 
             {error && <p className="text-xs text-muted-foreground shrink-0">{t('drafting.prose.failed')}</p>}
+
+            {/* LA SECCIÓN NO EMPIEZA DONDE EMPIEZA ESTE TEXTO.
+                La proposición del punto la aporta el ensamblador con las
+                palabras EXACTAS del pastor —si la escribiera el modelo podría
+                desviarse—, así que la prosa de acá arranca en el desarrollo.
+                Sin decirlo, leer esta sección sola parece que faltara la tesis:
+                el fundador lo reportó como error, y tenía razón en que la
+                pantalla no se lo explicaba. */}
+            {section.unpacksProposition && props.pointProposition && (
+                <p className="shrink-0 text-xs text-muted-foreground">
+                    {t('drafting.prose.propositionOpens')}
+                </p>
+            )}
 
             {/* MENSAJES DISTINTOS PARA DOS ESTADOS DISTINTOS: todavía no decidió
                 nada, o decidió y aún no pidió la redacción. Un solo mensaje

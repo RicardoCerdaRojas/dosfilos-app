@@ -87,7 +87,10 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
     // dos líneas tomaba la proposición del punto como espina y salía con la
     // estructura de una exposición — dejando de ser una ilustración.
     const varias = !input.section.oneIdea && ideas.length + temas.length > 1;
-    const proposicionPunto = input.pointProposition?.trim();
+    // La proposición gobierna la estructura SÓLO donde la sección la desglosa.
+    // Como contexto sigue viajando: una aplicación debe servir a la tesis del
+    // punto aunque no sea su desglose.
+    const proposicionPunto = input.section.unpacksProposition ? input.pointProposition?.trim() : undefined;
 
     const estructura = !varias
         ? input.section.oneIdea
@@ -100,9 +103,16 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
         : proposicionPunto
           ? `   LOS MOVIMIENTOS SALEN DE LA PROPOSICIÓN, NO DE LA LISTA DE IDEAS.
 
-   a) Cita el texto bíblico que se expone.
-   b) Enuncia la proposición del punto, tal cual está arriba.
-   c) UN MOVIMIENTO POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA, en el orden en
+   NO REPITAS LA PROPOSICIÓN: ya está escrita justo antes de este texto en el
+   sermón. Enunciarla acá la haría aparecer dos veces seguidas. Escribe SÓLO
+   lo que la desarrolla.
+
+   NO CITES EL TEXTO BÍBLICO al abrir: el sermón ya lo pone antes de esta
+   sección, con la Biblia real. Escribirlo acá lo duplicaría — y de memoria.
+   Puedes citar FRAGMENTOS dentro de un movimiento cuando estás comentando
+   esas palabras.
+
+   UN MOVIMIENTO POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA, en el orden en
       que ella los nombra, CADA UNO COMO SU PROPIA VIÑETA (guion al inicio de
       línea). Las ideas de arriba son el MATERIAL con que llenas esos
       movimientos: una idea puede servir a un concepto, y varias pueden
@@ -119,8 +129,8 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
    la idea con sinónimos, no aporta nada: la idea ya estaba escrita. DESARROLLAR
    es anclar en las palabras del texto bíblico y mostrar qué se sigue de ellas —
    sin agregar afirmaciones que él no decidió.`
-          : `   Abre citando el texto bíblico que se está exponiendo, si la sección lo
-   expone. Después desarrolla UNA IDEA POR MOVIMIENTO, en el orden en que están
+          : `   NO cites el texto bíblico al abrir: el sermón ya lo pone antes de esta
+   sección. Desarrolla UNA IDEA POR MOVIMIENTO, en el orden en que están
    arriba: cada idea recibe su propio bloque. Puedes usar viñetas.
    NO fundas dos ideas en un mismo párrafo: el oyente tiene que poder seguir
    una a la vez.`;

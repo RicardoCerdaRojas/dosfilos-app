@@ -83,6 +83,15 @@ export function StepDraft() {
     // bien, así que el esquema deja de ser provisional.
     const socraticGate = useFeatureFlag('socratic_drafting');
     const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+    /**
+     * Pestaña activa, CONTROLADA para poder llevarlo al borrador al armarlo.
+     *
+     * Sin esto, armar dejaba al pastor mirando el taller sin ninguna señal de
+     * que algo había pasado: el botón cambiaba de etiqueta —porque ya no quedaba
+     * nada pendiente— y ésa era toda la respuesta. Preguntó por qué, que es la
+     * pregunta de alguien que no sabe si su acción funcionó.
+     */
+    const [activeTab, setActiveTab] = useState<'draft' | 'workshop'>('draft');
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
     // Pre-publish citation verification state (PR #218).
@@ -130,6 +139,32 @@ export function StepDraft() {
         setOpenHistoryFor(sectionId);
         setExpandedSectionId(sectionId);
         setMessages([]);
+    };
+
+    /**
+     * Guarda el borrador actual en el historial ANTES de reemplazarlo.
+     *
+     * Lo usan las DOS rutas que se llevan por delante el sermón anterior:
+     * regenerar y armar desde el taller. Cuando vivía dentro de `handleGenerate`,
+     * armar el borrador reemplazaba sin dejar rastro — y armar con secciones sin
+     * redactar produce un esqueleto, así que el pastor podía perder un sermón
+     * completo con un clic y sin aviso.
+     *
+     * Por sección, no como bloque: es como funciona el historial, y permite
+     * rescatar sólo la introducción que le gustaba sin perder los puntos nuevos.
+     */
+    const archivarBorradorActual = async (etiqueta: string): Promise<boolean> => {
+        if (!draft) return false;
+        const { getSectionsForType } = await import('@/components/canvas-chat/section-configs');
+        const { getValueByPath } = await import('@/utils/path-utils');
+        let guardo = false;
+        for (const section of getSectionsForType('sermon')) {
+            const previo = getValueByPath(draft, section.path);
+            if (previo === undefined || previo === null) continue;
+            contentHistory.saveVersion(section.id, previo, etiqueta, undefined);
+            guardo = true;
+        }
+        return guardo;
     };
 
     const getSectionVersions = (sectionId: string) => contentHistory.getVersions(sectionId);
@@ -246,22 +281,7 @@ export function StepDraft() {
             // Se guarda POR SECCIÓN, no como bloque único, porque es como el
             // historial ya funciona y porque permite rescatar sólo la
             // introducción que le gustaba sin perder los puntos nuevos.
-            let guardoVersiones = false;
-            if (draft) {
-                const { getSectionsForType } = await import('@/components/canvas-chat/section-configs');
-                const { getValueByPath } = await import('@/utils/path-utils');
-                for (const section of getSectionsForType('sermon')) {
-                    const previo = getValueByPath(draft, section.path);
-                    if (previo === undefined || previo === null) continue;
-                    contentHistory.saveVersion(
-                        section.id,
-                        previo,
-                        t('drafting.versions.beforeRegenerate'),
-                        undefined,
-                    );
-                    guardoVersiones = true;
-                }
-            }
+            const guardoVersiones = await archivarBorradorActual(t('drafting.versions.beforeRegenerate'));
 
             setDraft(result);
             // EL AVISO OFRECE EL SEGURO EN EL MOMENTO EN QUE HACE FALTA.
@@ -519,9 +539,13 @@ export function StepDraft() {
                       points: (homiletics.outline?.mainPoints ?? []) as any[],
                       sermonPassage: passage,
                       proposition: homiletics.homileticalProposition,
+                      // Material del estudio de ocho pasos que antes no llegaba
+                      // a la redacción por ningún camino.
+                      openingIllustration: rules.pastoralSeed?.pastoralAnecdote,
+                      keyWords: homiletics.exegeticalStudy?.keyWords,
                   })
                 : [],
-        [homiletics, passage],
+        [homiletics, passage, rules.pastoralSeed?.pastoralAnecdote],
     );
 
     // La sección activa por defecto es la PRIMERA PENDIENTE, no la primera del
@@ -546,7 +570,22 @@ export function StepDraft() {
             proposition={homiletics.homileticalProposition}
             points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
             outlinePoints={(homiletics.outline?.mainPoints ?? []) as any[]}
-            onAssemble={setDraft}
+            hasDraft={!!draft}
+            homiletics={homiletics}
+            sermonTitle={draft?.title}
+            onAssemble={async (armado) => {
+                const guardo = await archivarBorradorActual(t('drafting.versions.beforeAssemble'));
+                setDraft(armado);
+                // Llevarlo a ver lo que acaba de armar. El resultado de esta
+                // acción ES el borrador: dejarlo en el taller lo obliga a
+                // buscarlo para saber si funcionó.
+                setActiveTab('draft');
+                toast.success(
+                    guardo
+                        ? t('drafting.versions.assembledWithBackup')
+                        : t('drafting.versions.assembled'),
+                );
+            }}
         />
     ) : null;
 
@@ -797,7 +836,7 @@ export function StepDraft() {
                 Los botones del paso quedan FUERA de las pestañas: navegar y
                 publicar no dependen del modo en que se esté trabajando. */}
             {socraticPanel ? (
-                <Tabs defaultValue="draft" className="flex-1 min-h-0 flex flex-col">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'draft' | 'workshop')} className="flex-1 min-h-0 flex flex-col">
                     <TabsList className="self-start shrink-0">
                         <TabsTrigger value="draft">{t('drafting.tabs.draft')}</TabsTrigger>
                         <TabsTrigger value="workshop">{t('drafting.tabs.workshop')}</TabsTrigger>

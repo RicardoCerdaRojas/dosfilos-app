@@ -43,10 +43,16 @@ describe('assembleTransitions — la proposición se copia, no se pide', () => {
         expect(r.body[0]!.transition).toContain('**Puntos:**\n1. I. Dios habla y revela su voluntad (vv. 1-2)\n2. II. El hombre desobedece y revela su necedad (v. 3)');
     });
 
-    it('el ÚLTIMO punto no lleva recordatorio: después viene la conclusión', () => {
-        const r = assembleTransitions(content(['frase 1', 'frase 2']), homiletics());
-        expect(r.body[1]!.transition).toBe('frase 2');
-        expect(r.body[1]!.transition).not.toContain('**Puntos:**');
+    it('TODOS los puntos llevan recordatorio, el último incluido', () => {
+        // Se excluía al último razonando que después viene la conclusión y no
+        // otro movimiento. El fundador lo corrigió sobre su propio sermón: él
+        // hace la transición siempre, y el punto final quedaba sin nada donde
+        // los demás sí tenían. Recoger la tesis antes de la conclusión es el
+        // movimiento con que un predicador cierra el cuerpo.
+        const salida = assembleTransitions(content(['frase 1', 'frase 2']), homiletics());
+        for (const [i, punto] of salida.body.entries()) {
+            expect(punto.transition, `punto ${i + 1}`).toContain('**Puntos:**');
+        }
     });
 
     it('quita los rótulos que el modelo anteponga', () => {
