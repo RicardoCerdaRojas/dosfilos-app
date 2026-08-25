@@ -4,6 +4,7 @@ import { useTranslation } from '@/i18n';
 import { useFirebase } from '@/context/firebase-context';
 import { useGeneratorChat } from '@/hooks/useGeneratorChat';
 import { WizardLayout } from './WizardLayout';
+import { WizardStepShell } from './WizardStepShell';
 import { DerivedContextBanner } from './DerivedContextBanner';
 import { GenerationProgress } from '@/components/sermons/GenerationProgress';
 import { Button } from '@/components/ui/button';
@@ -474,7 +475,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+            <div className="flex items-center justify-center h-full">
                 <GenerationProgress phase={WorkflowPhase.EXEGESIS} />
             </div>
         );
@@ -520,7 +521,7 @@ ${getFormattingInstructions(sectionConfig.id)}`;
             </Card>
         </div>
     ) : (
-        <div className="flex flex-col p-4" style={{ height: 'calc(100vh - 130px)' }}>
+        <div className="h-full flex flex-col p-4">
             {/* Header - fixed height */}
             <div className="mb-4 flex-shrink-0 flex items-center justify-between">
                 <div>
@@ -712,21 +713,16 @@ ${getFormattingInstructions(sectionConfig.id)}`;
                 </div>
             )}
 
-            <div className="px-2">
-                <DerivedContextBanner stepHintKey="exegesisHint" />
-            </div>
-
-            {/* Render layout based on whether exegesis exists */}
-            {exegesis ? (
-                // When exegesis exists, render integrated layout directly
-                leftPanel
-            ) : (
-                // When no exegesis, use WizardLayout with two panels
-                <WizardLayout
-                    leftPanel={leftPanel}
-                    rightPanel={rightPanel}
-                />
-            )}
+            <WizardStepShell banner={<DerivedContextBanner stepHintKey="exegesisHint" />}>
+                {/* Render layout based on whether exegesis exists */}
+                {exegesis ? (
+                    // When exegesis exists, render integrated layout directly
+                    leftPanel
+                ) : (
+                    // When no exegesis, use WizardLayout with two panels
+                    <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />
+                )}
+            </WizardStepShell>
         </>
     );
 }

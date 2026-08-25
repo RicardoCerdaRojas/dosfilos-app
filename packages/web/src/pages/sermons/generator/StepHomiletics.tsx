@@ -4,6 +4,7 @@ import { useTranslation } from '@/i18n';
 import { WizardStepHeader } from './WizardStepHeader';
 import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
+import { WizardStepShell } from './WizardStepShell';
 import { DerivedContextBanner } from './DerivedContextBanner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -556,14 +557,11 @@ export function StepHomiletics() {
         <>
             <HomileticsSavedIndicator visible={saving} />
 
-            <div className="px-2 pt-2">
-                <DerivedContextBanner stepHintKey="homileticsHint" />
-            </div>
-
+            <WizardStepShell banner={<DerivedContextBanner stepHintKey="homileticsHint" />}>
             {!homiletics ? (
                 <WizardLayout header={stepHeader} leftPanel={leftPanel} rightPanel={rightPanel} />
             ) : (
-                <div className="flex flex-col gap-4 overflow-hidden p-4" style={{ height: 'calc(100vh - 130px)' }}>
+                <div className="h-full flex flex-col gap-4 overflow-hidden p-4">
                     {/* LA BANDA VA EN LAS DOS RAMAS. Con el bosquejo ya
                         desarrollado este paso arma su propia fila en vez de
                         usar `WizardLayout`, así que pasarle `header` al layout
@@ -578,6 +576,7 @@ export function StepHomiletics() {
                     </div>
                 </div>
             )}
+            </WizardStepShell>
         </>
     );
 }

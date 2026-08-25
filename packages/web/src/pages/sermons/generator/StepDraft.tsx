@@ -73,6 +73,7 @@ import { useDraftVersions } from './draft/useDraftVersions';
 import { SocraticWorkshop } from './draft/SocraticWorkshop';
 import { HomileticsSavedIndicator } from './homiletics/HomileticsLoadingScreen';
 import { WizardStepHeader } from './WizardStepHeader';
+import { WizardStepShell } from './WizardStepShell';
 import { WorkshopDraftActions } from './draft/WorkshopDraftActions';
 
 export function StepDraft() {
@@ -510,7 +511,7 @@ export function StepDraft() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+            <div className="flex items-center justify-center h-full">
                 <div className="text-center space-y-4">
                     <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
                     <p className="text-lg font-medium">{t('drafting.loading')}</p>
@@ -920,7 +921,7 @@ export function StepDraft() {
             </Card>
         </div>
     ) : (
-        <div className="flex flex-col gap-4 overflow-hidden p-4" style={{ height: 'calc(100vh - 130px)' }}>
+        <div className="h-full flex flex-col gap-4 overflow-hidden p-4">
             {/* PESTAÑAS Y NO UN PANEL ENCIMA. Con el taller abierto sobre el
                 borrador los dos competían por la misma altura y ninguno se leía
                 entero. Son dos modos de trabajo —decidir ideas versus revisar
@@ -1004,15 +1005,13 @@ export function StepDraft() {
         <>
             <HomileticsSavedIndicator visible={saving} />
 
-            <div className="px-2 pt-2">
-                <DerivedContextBanner stepHintKey="draftHint" />
-            </div>
-
-            {/* ADR-031 — provide the citation manifest so [N] anchors in the
-                editor render as verifiable popovers (chunk + book + page). */}
-            <CitationManifestContext.Provider value={draft?.citationManifest}>
-                {draft ? leftPanel : <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />}
-            </CitationManifestContext.Provider>
+            <WizardStepShell banner={<DerivedContextBanner stepHintKey="draftHint" />}>
+                {/* ADR-031 — provide the citation manifest so [N] anchors in the
+                    editor render as verifiable popovers (chunk + book + page). */}
+                <CitationManifestContext.Provider value={draft?.citationManifest}>
+                    {draft ? leftPanel : <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />}
+                </CitationManifestContext.Provider>
+            </WizardStepShell>
 
             <Dialog open={showPreview} onOpenChange={setShowPreview}>
                 <DialogContent className="!max-w-[95vw] !w-full sm:!w-[1200px] lg:!w-[1600px] h-[90vh] max-h-[90vh] flex flex-col p-0 overflow-hidden">
