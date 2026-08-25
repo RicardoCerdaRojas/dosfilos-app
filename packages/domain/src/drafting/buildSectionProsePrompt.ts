@@ -103,9 +103,12 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
         : proposicionPunto
           ? `   LOS MOVIMIENTOS SALEN DE LA PROPOSICIÓN, NO DE LA LISTA DE IDEAS.
 
+   NO REPITAS LA PROPOSICIÓN: ya está escrita justo antes de este texto en el
+   sermón. Enunciarla acá la haría aparecer dos veces seguidas. Escribe SÓLO
+   lo que la desarrolla.
+
    a) Cita el texto bíblico que se expone.
-   b) Enuncia la proposición del punto, tal cual está arriba.
-   c) UN MOVIMIENTO POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA, en el orden en
+   b) UN MOVIMIENTO POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA, en el orden en
       que ella los nombra, CADA UNO COMO SU PROPIA VIÑETA (guion al inicio de
       línea). Las ideas de arriba son el MATERIAL con que llenas esos
       movimientos: una idea puede servir a un concepto, y varias pueden

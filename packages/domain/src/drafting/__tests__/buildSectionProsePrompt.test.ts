@@ -326,3 +326,21 @@ describe('la proposición sólo estructura donde la sección la desglosa', () =>
         expect(p).toContain('POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA');
     });
 });
+
+describe('cada sección aporta SÓLO lo suyo', () => {
+    it('la exposición no repite la proposición: el ensamblador ya la puso', () => {
+        // El borrador armado la mostraba DOS VECES seguidas: el ensamblador
+        // antepone la sección `verbatim` de la proposición, y la prosa de la
+        // exposición volvía a enunciarla porque el prompt se lo pedía.
+        //
+        // Concatenar secciones sólo funciona si cada una aporta su parte y nada
+        // más. Que dos piezas crean que les toca lo mismo es el duplicado.
+        const p = buildSectionProsePrompt({
+            ...base,
+            elements: [el('una'), el('otra'), el('tercera')],
+            pointProposition: 'Dios se identifica, ordena y explica.',
+        });
+        expect(p).toContain('NO REPITAS LA PROPOSICIÓN');
+        expect(p).not.toContain('Enuncia la proposición del punto, tal cual');
+    });
+});

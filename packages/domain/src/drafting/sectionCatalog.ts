@@ -99,6 +99,9 @@ export const SECTION_CATALOG: readonly SectionDefinition[] = [
         labelKey: `${NS}.pointProposition.label`,
         jobKey: `${NS}.pointProposition.job`,
         verbatimKey: `${NS}.pointProposition.verbatim`,
+        // ABRE el contenido del punto. La exposición aporta lo que la
+        // desarrolla, y su prosa NO la repite: cada sección aporta sólo lo
+        // suyo, que es lo que hace que concatenarlas no produzca duplicados.
         target: { kind: 'pointContent' },
         // Sus reflexiones del bosquejo son el insumo con que FORMA la frase.
         coveredFrom: 'pointDirectives',
