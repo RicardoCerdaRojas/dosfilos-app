@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RailDivider } from '@/components/ui/RailDivider';
 import { useTranslation } from '@/i18n';
-import type { SermonContent, SermonElement, WalkSection } from '@dosfilos/domain';
+import type { HomileticalAnalysis, SermonContent, SermonElement, WalkSection } from '@dosfilos/domain';
 import { SermonMap } from './SermonMap';
 import { SectionElementsPanel } from './SectionElementsPanel';
 import { SectionProsePanel } from './SectionProsePanel';
@@ -23,6 +23,7 @@ interface Props {
     outlinePoints: readonly { title?: string; application?: string; scriptureReferences?: string[] }[];
     onAssemble: (draft: SermonContent) => void | Promise<void>;
     hasDraft?: boolean;
+    homiletics: HomileticalAnalysis;
 }
 
 const ANCHO_MIN = 200;
@@ -182,6 +183,7 @@ export function SocraticWorkshop(props: Props) {
             onProseChange={props.onChangeProse}
             onAssemble={props.onAssemble}
             hasDraft={props.hasDraft}
+            homiletics={props.homiletics}
         />
         </div>
     );

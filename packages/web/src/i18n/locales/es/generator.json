@@ -470,15 +470,18 @@
       },
       "openingIllustration": {
         "label": "Introducción — ilustración de apertura",
-        "job": "Abrir una pregunta que el sermón va a responder."
+        "job": "Abrir una pregunta que el sermón va a responder.",
+        "heading": "Ilustración de Apertura"
       },
       "bookOverview": {
         "label": "Introducción — el libro de un vistazo",
-        "job": "Ubicar el pasaje dentro del libro completo."
+        "job": "Ubicar el pasaje dentro del libro completo.",
+        "heading": "El Libro de un Vistazo"
       },
       "historicalContext": {
         "label": "Introducción — contexto histórico",
-        "job": "Situar al oyente en el mundo del texto: qué sabía y qué temía quien lo escuchó primero."
+        "job": "Situar al oyente en el mundo del texto: qué sabía y qué temía quien lo escuchó primero.",
+        "heading": "Contexto Histórico"
       },
       "title": {
         "label": "Título",
@@ -513,7 +516,30 @@
           "decided": "Tu proposición para este punto"
         }
       },
-      "pointPropositionContext": "Tu proposición para este punto — las ideas de esta sección la desglosan:"
+      "pointPropositionContext": "Tu proposición para este punto — las ideas de esta sección la desglosan:",
+      "currentConnection": {
+        "label": "Introducción — conexión actual",
+        "job": "Tender el puente entre el mundo del texto y el de tu congregación, sin todavía predicar el punto.",
+        "heading": "Conexión Actual"
+      },
+      "sermonProposition": {
+        "label": "Introducción — proposición homilética",
+        "job": "La tesis del sermón, tal como la escribiste en Homilética. Aterriza al final de la introducción.",
+        "heading": "Proposición Homilética",
+        "verbatim": {
+          "label": "La proposición del sermón",
+          "placeholder": "La tesis que el sermón entero sostiene.",
+          "add": "Usar esta proposición",
+          "propose": "Propónme proposiciones",
+          "proposeMore": "Propónme otras",
+          "decided": "Tu proposición"
+        }
+      },
+      "transition": {
+        "label": "Punto {{n}} — transición",
+        "job": "Retomar la proposición y anunciar el punto siguiente. Se deriva del bosquejo: no hay nada que decidir."
+      },
+      "keyWordsContext": "Las palabras que estudiaste, con lo que dijiste de cada una:"
     },
     "tabs": {
       "draft": "Borrador",

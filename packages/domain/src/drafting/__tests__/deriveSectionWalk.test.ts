@@ -158,8 +158,15 @@ describe('modo de sección: se deciden ideas, o se decide el texto final', () =>
     });
 
     it('el resto junta ideas y la prosa se escribe después', () => {
+        // Las `verbatim` son las que llevan texto FINAL: las proposiciones —de
+        // cada punto y del sermón— y el título. Todo lo demás junta ideas.
         const verbatim = walk.filter((s) => s.mode === 'verbatim').map((s) => s.id);
-        expect(verbatim).toEqual(['point.1.proposition', 'point.2.proposition', 'title']);
+        expect(verbatim).toEqual([
+            'point.1.proposition',
+            'point.2.proposition',
+            'introduction.proposition',
+            'title',
+        ]);
     });
 
     it('la proposición NO se etiqueta como indicación del pastor', () => {
@@ -196,7 +203,9 @@ describe('toda sección verbatim declara su propio texto', () => {
         const claves = deriveSectionWalk(JONAS)
             .filter((s) => s.mode === 'verbatim')
             .map((s) => s.verbatimKey);
-        expect(new Set(claves).size).toBe(2); // proposición de punto y título
+        // Proposición de punto, proposición del sermón y título: tres textos
+        // distintos, tres prefijos distintos.
+        expect(new Set(claves).size).toBe(3);
     });
 });
 

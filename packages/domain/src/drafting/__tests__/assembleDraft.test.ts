@@ -28,8 +28,12 @@ const el = (text: string, provenance: SermonElement['provenance'] = 'pastor'): S
 
 const walk = deriveSectionWalk({ points: POINTS, sermonPassage: 'Jonás 1:1-3', proposition: 'La tesis.' });
 
+/** Traductor de prueba: devuelve la clave, así el test verifica QUÉ se pide. */
+const t = (key: string) => key;
+
 const COMPLETO: AssembleDraftInput = {
     walk,
+    t,
     points: POINTS,
     elements: {
         title: [el('El Dios que persigue al rebelde')],
@@ -40,6 +44,7 @@ const COMPLETO: AssembleDraftInput = {
         'introduction.openingIllustration': 'Cuando se estrenó LOST…',
         'introduction.bookOverview': 'Jonás es narrativa, no oráculo.',
         'introduction.historicalContext': 'Nínive era la capital asiria.',
+        'introduction.currentConnection': 'Nosotros también tenemos nuestra Tarsis.',
         'point.1.exposition': 'La formulación muestra un mandato directo.',
         'point.1.illustration': 'Como un padre que llama por su nombre.',
         'point.2.exposition': 'Jonás se levanta para huir.',
@@ -57,16 +62,35 @@ describe('assembleDraft', () => {
     });
 
     it('la proposición del punto ABRE su contenido, antes de la exposición', () => {
-        // Es la frase de la que se desprenden las partes: va antes de lo que la
-        // desarrolla, el mismo orden en que él la decide.
         const c = draft.body[0].content;
         expect(c.indexOf('Dios habla con intención')).toBeLessThan(c.indexOf('La formulación muestra'));
     });
 
-    it('la introducción une sus tres secciones en el orden del recorrido', () => {
-        expect(draft.introduction).toBe(
-            'Cuando se estrenó LOST…\n\nJonás es narrativa, no oráculo.\n\nNínive era la capital asiria.',
-        );
+    it('la transición sale DERIVADA del recorrido: no se le pregunta', () => {
+        // Retomar la proposición y nombrar el punto siguiente es mecánico, y el
+        // recordatorio lo compone `assembleTransitions` desde el bosquejo. Acá
+        // sólo se verifica que la sección exista y no pida decisión.
+        const seccion = walk.find((s) => s.id === 'point.1.transition');
+        expect(seccion?.status).toBe('derivada');
+        expect(missingForDraft(COMPLETO).map((s) => s.id)).not.toContain('point.1.transition');
+    });
+
+    it('la introducción lleva encabezados y sigue el orden del catálogo', () => {
+        // El generador clásico producía la introducción con encabezados markdown
+        // y por eso se leía como documento. Sin ellos el lienzo mostraba los
+        // nombres de campo crudos, que no son parte de un sermón.
+        const i = draft.introduction;
+        expect(i).toContain('### drafting.sections.openingIllustration.heading');
+        expect(i.indexOf('Cuando se estrenó LOST')).toBeLessThan(i.indexOf('Jonás es narrativa'));
+        expect(i.indexOf('Jonás es narrativa')).toBeLessThan(i.indexOf('Nínive era la capital asiria'));
+    });
+
+    it('una sección vacía no deja su encabezado anunciando algo que no está', () => {
+        const sinContexto = assembleDraft({
+            ...COMPLETO,
+            prose: { ...COMPLETO.prose, 'introduction.historicalContext': '' },
+        });
+        expect(sinContexto.introduction).not.toContain('historicalContext.heading');
     });
 
     it('las implicaciones son SUS viñetas, con su propio conteo', () => {

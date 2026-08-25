@@ -470,15 +470,18 @@
       },
       "openingIllustration": {
         "label": "Introduction — opening illustration",
-        "job": "Open a question the sermon will answer."
+        "job": "Open a question the sermon will answer.",
+        "heading": "Opening Illustration"
       },
       "bookOverview": {
         "label": "Introduction — the book at a glance",
-        "job": "Place the passage within the whole book."
+        "job": "Place the passage within the whole book.",
+        "heading": "The Book at a Glance"
       },
       "historicalContext": {
         "label": "Introduction — historical context",
-        "job": "Place the listener in the world of the text: what its first hearers knew, and what they feared."
+        "job": "Place the listener in the world of the text: what its first hearers knew, and what they feared.",
+        "heading": "Historical Context"
       },
       "title": {
         "label": "Title",
@@ -513,7 +516,30 @@
           "decided": "Your proposition for this point"
         }
       },
-      "pointPropositionContext": "Your proposition for this point — this section's ideas unpack it:"
+      "pointPropositionContext": "Your proposition for this point — this section's ideas unpack it:",
+      "currentConnection": {
+        "label": "Introduction — current connection",
+        "job": "Bridge the world of the text and your congregation's, without preaching the point yet.",
+        "heading": "Current Connection"
+      },
+      "sermonProposition": {
+        "label": "Introduction — homiletical proposition",
+        "job": "The sermon's thesis, as you wrote it in Homiletics. It lands at the end of the introduction.",
+        "heading": "Homiletical Proposition",
+        "verbatim": {
+          "label": "The sermon's proposition",
+          "placeholder": "The thesis the whole sermon holds up.",
+          "add": "Use this proposition",
+          "propose": "Suggest propositions",
+          "proposeMore": "Suggest others",
+          "decided": "Your proposition"
+        }
+      },
+      "transition": {
+        "label": "Point {{n}} — transition",
+        "job": "Pick the proposition back up and announce the next point. Derived from the outline — nothing to decide."
+      },
+      "keyWordsContext": "The words you studied, with what you said about each:"
     },
     "tabs": {
       "draft": "Draft",

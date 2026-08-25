@@ -539,9 +539,13 @@ export function StepDraft() {
                       points: (homiletics.outline?.mainPoints ?? []) as any[],
                       sermonPassage: passage,
                       proposition: homiletics.homileticalProposition,
+                      // Material del estudio de ocho pasos que antes no llegaba
+                      // a la redacción por ningún camino.
+                      openingIllustration: rules.pastoralSeed?.pastoralAnecdote,
+                      keyWords: homiletics.exegeticalStudy?.keyWords,
                   })
                 : [],
-        [homiletics, passage],
+        [homiletics, passage, rules.pastoralSeed?.pastoralAnecdote],
     );
 
     // La sección activa por defecto es la PRIMERA PENDIENTE, no la primera del
@@ -567,6 +571,7 @@ export function StepDraft() {
             points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
             outlinePoints={(homiletics.outline?.mainPoints ?? []) as any[]}
             hasDraft={!!draft}
+            homiletics={homiletics}
             onAssemble={async (armado) => {
                 const guardo = await archivarBorradorActual(t('drafting.versions.beforeAssemble'));
                 setDraft(armado);

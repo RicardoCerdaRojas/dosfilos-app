@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { Loader2, Plus, Check, Pencil, X, Lightbulb, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/i18n';
 import {
-    describeSectionAuthorship,
     splitElementLines,
     classifyContribution,
     type SermonElement,
@@ -15,6 +14,9 @@ import {
     type WalkSection,
 } from '@dosfilos/domain';
 import { useProposeElements, type ProposedElement } from '@/hooks/useProposeElements';
+import { SectionContextBlocks } from './SectionContextBlocks';
+import { ElementProposals } from './ElementProposals';
+import { DecidedElementsList } from './DecidedElementsList';
 import { LocalBibleService } from '@/services/LocalBibleService';
 
 interface Props {
@@ -27,13 +29,6 @@ interface Props {
     elements: SermonElement[];
     onChange: (elements: SermonElement[]) => void;
 }
-
-const BADGE: Record<ElementProvenance, string> = {
-    pastor: 'bg-primary/15 text-primary',
-    elegido: 'bg-muted text-muted-foreground',
-    editado: 'bg-primary/10 text-primary/80',
-    descartado: 'bg-transparent text-muted-foreground/60',
-};
 
 let seq = 0;
 const nextId = () => `el-${Date.now().toString(36)}-${seq++}`;
@@ -74,14 +69,13 @@ export function SectionElementsPanel(props: Props) {
      * pestaña para consultarlo es fricción en el momento exacto en que está
      * pensando. Lectura local y síncrona, sin llamada de red.
      */
+    /** Para el prompt de propuestas: proponer de memoria es lo que se evita. */
     const versiculo = LocalBibleService.getVerses(scriptureLookupRef(section.scriptureRef) ?? '');
     const { propose, loading, error } = useProposeElements();
     const [mine, setMine] = useState('');
     const [proposals, setProposals] = useState<ProposedElement[]>([]);
-    const [editing, setEditing] = useState<{ index: number; text: string } | null>(null);
 
     const decided = props.elements.filter((e) => e.provenance !== 'descartado');
-    const shape = describeSectionAuthorship(props.elements);
 
     /**
      * Agrega VARIAS ideas de un tirón.
@@ -159,46 +153,7 @@ export function SectionElementsPanel(props: Props) {
                 <p className="text-sm text-muted-foreground">{t(section.jobKey)}</p>
             </div>
 
-            {versiculo && (
-                <blockquote className="rounded-md border-l-2 border-primary/40 bg-muted/40 py-2 pl-3 pr-2 text-sm">
-                    <p className="text-foreground/90 leading-relaxed">{versiculo}</p>
-                    <cite className="mt-1 block text-xs not-italic text-muted-foreground">
-                        {section.scriptureRef}
-                    </cite>
-                </blockquote>
-            )}
-
-            {props.pointProposition && (
-                <div className="rounded-md bg-muted/50 p-3 space-y-1.5">
-                    <p className="text-xs font-medium text-muted-foreground">
-                        {t('drafting.sections.pointPropositionContext')}
-                    </p>
-                    <p className="text-sm text-foreground/90">{props.pointProposition}</p>
-                </div>
-            )}
-
-            {/* Lo que ya escribió: SE MUESTRA, NO SE PREGUNTA. Cuando la sección
-                está cubierta es la respuesta; cuando está pendiente son sus
-                indicaciones, y viajan al prompt como contexto. */}
-            {section.coveredBy && section.coveredBy.length > 0 && (
-                <div className="rounded-md bg-muted/50 p-3 space-y-1.5">
-                    <p className="text-xs font-medium text-muted-foreground">
-                        {t(
-                            section.status === 'cubierta'
-                                ? 'drafting.sections.coveredNote'
-                                : (section.contextKey ?? 'drafting.sections.contextNote'),
-                        )}
-                    </p>
-                    <ul className="space-y-1 text-sm text-foreground/90">
-                        {section.coveredBy.map((texto, i) => (
-                            <li key={i} className="flex gap-2">
-                                <span className="text-primary shrink-0">▪</span>
-                                <span>{texto}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
+            <SectionContextBlocks section={section} pointProposition={props.pointProposition} />
 
             {/* SECCIÓN CUBIERTA: se muestra y se corta acá. Volver a preguntar lo
                 que ya decidió le pediría decidir dos veces la misma cosa, con el
@@ -241,164 +196,41 @@ export function SectionElementsPanel(props: Props) {
                 </Button>
             </div>
 
-            {/* Camino 2 — pedir propuestas. Pull-first: nunca corre solo. */}
-            <div className="pt-4 border-t border-border/50 space-y-3">
-                <Button variant="outline" size="sm" onClick={handlePropose} disabled={loading}>
-                    {loading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Lightbulb className="h-4 w-4 mr-1.5" />}
-                    {esVerbatim
-                        ? t(proposals.length > 0 ? vk('proposeMore') : vk('propose'))
-                        : t(proposals.length > 0 ? 'drafting.elements.proposeMore' : 'drafting.elements.propose')}
-                </Button>
-
-                {error && <p className="text-sm text-muted-foreground">{t('drafting.elements.proposeFailed')}</p>}
-
-                {proposals.map((p, i) => (
-                    <div key={`${p.text}-${i}`} className="rounded-md border border-border/60 p-3 space-y-2">
-                        {editing?.index === i ? (
-                            <Textarea
-                                value={editing.text}
-                                onChange={(e) => setEditing({ index: i, text: e.target.value })}
-                                rows={3}
-                                className="resize-none text-sm"
-                            />
-                        ) : (
-                            <>
-                                {p.unsupported && (
-                                    <span className="inline-block rounded bg-warning/15 px-1.5 py-0.5 text-[11px] text-warning-foreground">
-                                        {t('drafting.elements.unsupported')}
-                                    </span>
-                                )}
-                                <p className="text-sm">{p.text}</p>
-                                {p.why && <p className="text-xs text-muted-foreground italic">{p.why}</p>}
-                            </>
-                        )}
-                        <div className="flex gap-1.5">
-                            {editing?.index === i ? (
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => {
-                                        // El texto propuesto viaja con el elemento: sin el
-                                        // original, `editado` no es auditable y la procedencia
-                                        // deja de significar algo.
-                                        add([editing.text], 'editado', p.text);
-                                        setEditing(null);
-                                        consume(i);
-                                    }}
-                                >
-                                    <Check className="h-4 w-4 mr-1.5" />
-                                    {t('drafting.elements.saveEdit')}
-                                </Button>
-                            ) : (
-                                <>
-                                    <Button size="sm" variant="ghost" onClick={() => { add([p.text], 'elegido'); consume(i); }}>
-                                        <Check className="h-4 w-4 mr-1.5" />
-                                        {t('drafting.elements.use')}
-                                    </Button>
-                                    <Button size="sm" variant="ghost" onClick={() => setEditing({ index: i, text: p.text })}>
-                                        <Pencil className="h-4 w-4 mr-1.5" />
-                                        {t('drafting.elements.edit')}
-                                    </Button>
-                                </>
-                            )}
-                            <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-muted-foreground"
-                                onClick={() => {
-                                    // Descartar SE REGISTRA aunque no entre al sermón: qué
-                                    // rechazó dice tanto como qué aceptó.
-                                    add([p.text], 'descartado');
-                                    setEditing(null);
-                                    consume(i);
-                                }}
-                            >
-                                <X className="h-4 w-4 mr-1.5" />
-                                {t('drafting.elements.discard')}
-                            </Button>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
+            <ElementProposals
+                proposeKey={esVerbatim ? vk('propose') : 'drafting.elements.propose'}
+                proposeMoreKey={esVerbatim ? vk('proposeMore') : 'drafting.elements.proposeMore'}
+                loading={loading}
+                error={error}
+                proposals={proposals}
+                onPropose={handlePropose}
+                onUse={(p, i) => {
+                    add([p.text], 'elegido');
+                    consume(i);
+                }}
+                onEdit={(p, i, texto) => {
+                    // El texto propuesto viaja con el elemento: sin el original,
+                    // `editado` no es auditable y la procedencia deja de
+                    // significar algo.
+                    add([texto], 'editado', p.text);
+                    consume(i);
+                }}
+                onDiscard={(p, i) => {
+                    // Descartar SE REGISTRA aunque no entre al sermón: qué
+                    // rechazó dice tanto como qué aceptó.
+                    add([p.text], 'descartado');
+                    consume(i);
+                }}
+            />
               </>
             )}
 
-            {decided.length > 0 && (
-                <div className="pt-4 border-t border-border/50 space-y-2">
-                    <h4 className="text-sm font-medium">
-                        {esVerbatim ? t(vk('decided')) : t('drafting.elements.decidedTitle')}
-                    </h4>
-                    <ul className="space-y-1.5">
-                        {decided.map((e) => (
-                            <li key={e.id} className="flex items-start gap-2 text-sm">
-                                {/* UN INTERRUPTOR DE DOS ESTADOS, NO UNA ETIQUETA.
-                                    Antes esto era una sola insignia que cambiaba
-                                    al hacerle clic. Funcionaba, pero PARECÍA una
-                                    etiqueta: nada decía que se podía tocar, así
-                                    que una mala clasificación se quedaba puesta
-                                    y desmedía la autoría en silencio.
-
-                                    Mostrar los dos estados a la vez —el activo
-                                    resaltado, el otro apagado— hace visible que
-                                    hay una elección, sin una línea de texto
-                                    explicativo. La cara de "idea" lleva la
-                                    PROCEDENCIA (Tuya · Elegida · Editada), así
-                                    que el interruptor no pierde información. */}
-                                {unaSolaEntrada ? (
-                                    <span className={`shrink-0 rounded px-1.5 py-1 text-[11px] leading-none ${BADGE[e.provenance]}`}>
-                                        {t(`drafting.elements.provenance.${e.provenance}`)}
-                                    </span>
-                                ) : (
-                                <span
-                                    role="group"
-                                    aria-label={t('drafting.elements.flipKind')}
-                                    className="shrink-0 inline-flex rounded border border-border/70 overflow-hidden text-[11px] leading-none"
-                                >
-                                    <button
-                                        type="button"
-                                        aria-pressed={e.kind === 'elemento'}
-                                        onClick={() => e.kind !== 'elemento' && flipKind(e.id)}
-                                        className={`px-1.5 py-1 transition-colors ${
-                                            e.kind === 'elemento'
-                                                ? BADGE[e.provenance]
-                                                : 'text-muted-foreground/60 hover:bg-muted/60'
-                                        }`}
-                                    >
-                                        {t(`drafting.elements.provenance.${e.provenance}`)}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        aria-pressed={e.kind === 'directiva'}
-                                        onClick={() => e.kind !== 'directiva' && flipKind(e.id)}
-                                        className={`px-1.5 py-1 transition-colors border-l border-border/70 ${
-                                            e.kind === 'directiva'
-                                                ? 'bg-muted text-foreground'
-                                                : 'text-muted-foreground/60 hover:bg-muted/60'
-                                        }`}
-                                    >
-                                        {t('drafting.elements.kind.directiva')}
-                                    </button>
-                                </span>
-                                )}
-                                <span className="text-foreground/90 flex-1">{e.text}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => remove(e.id)}
-                                    className="shrink-0 text-muted-foreground/60 hover:text-foreground"
-                                    aria-label={t('drafting.elements.remove')}
-                                    title={t('drafting.elements.remove')}
-                                >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                    <p className="text-xs text-muted-foreground pt-1">
-                        {t(`drafting.elements.shape.${shape}`)}
-                    </p>
-                </div>
-            )}
+            <DecidedElementsList
+                elements={props.elements}
+                titleKey={esVerbatim ? vk('decided') : 'drafting.elements.decidedTitle'}
+                singleEntry={unaSolaEntrada}
+                onFlipKind={flipKind}
+                onRemove={remove}
+            />
 
         </Card>
     );

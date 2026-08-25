@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import {
     assembleDraft,
+    assembleTransitions,
     missingForDraft,
     scriptureLookupRef,
     type SermonElement,
     type WalkSection,
 } from '@dosfilos/domain';
-import type { SermonContent } from '@dosfilos/domain';
+import type { HomileticalAnalysis, SermonContent } from '@dosfilos/domain';
 import { LocalBibleService } from '@/services/LocalBibleService';
 import { useWriteSection } from '@/hooks/useWriteSection';
 
@@ -18,6 +19,8 @@ interface Props {
     elements: Record<string, SermonElement[]>;
     prose: Record<string, string>;
     points: readonly { title?: string; application?: string; scriptureReferences?: string[] }[];
+    /** Bosquejo completo: `assembleTransitions` compone el recordatorio desde él. */
+    homiletics: HomileticalAnalysis;
     proposition?: string;
     audienceRigor?: 'beginner' | 'seminary';
     onProseChange: (sectionId: string, prose: string) => void;
@@ -58,7 +61,21 @@ export function WorkshopDraftActions(props: Props) {
         elements: props.elements,
         prose: props.prose,
         points: props.points,
+        // Los encabezados de la introducción son texto de cara al usuario: el
+        // dominio devuelve claves y la traducción se inyecta desde acá.
+        t,
     };
+
+    /**
+     * Ensamblar y COMPONER las transiciones.
+     *
+     * `assembleTransitions` ya existía y arma el recordatorio —proposición +
+     * puntos— con datos verbatim del bosquejo. Reusarlo evita una segunda forma
+     * de construir lo mismo: duplicarlo es exactamente cómo se llegó a tener dos
+     * prompts del regenerador que divergieron.
+     */
+    const componer = (prosa: Record<string, string>) =>
+        assembleTransitions(assembleDraft({ ...entrada, prose: prosa }), props.homiletics);
     const faltantes = missingForDraft(entrada);
     const primeraFaltante = faltantes[0];
 
@@ -106,7 +123,7 @@ export function WorkshopDraftActions(props: Props) {
     const sinCambios = huellaArmada === huellaActual;
 
     const armar = (prosa: Record<string, string>) => {
-        void props.onAssemble(assembleDraft({ ...entrada, prose: prosa }));
+        void props.onAssemble(componer(prosa));
         setHuellaArmada(
             JSON.stringify([
                 Object.entries(prosa)

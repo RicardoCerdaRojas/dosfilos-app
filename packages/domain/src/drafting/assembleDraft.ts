@@ -9,80 +9,145 @@ export interface AssembleDraftInput {
     prose: Readonly<Record<string, string>>;
     /** Decisiones por sección. Las `verbatim` traen el texto final acá. */
     elements: Readonly<Record<string, SermonElement[]>>;
-    /** Títulos de los puntos y sus referencias, del bosquejo. */
-    points: readonly { title?: string; application?: string; scriptureReferences?: string[] }[];
+    /** Títulos y referencias del bosquejo. */
+    points: readonly { title?: string; scriptureReferences?: string[] }[];
+    /** Traduce una clave i18n: los encabezados son texto de cara al usuario. */
+    t: (key: string) => string;
 }
+
+interface PartesDelPunto {
+    content: string[];
+    illustration: string;
+    implications: string;
+    transition: string;
+}
+
+const vacio = (): PartesDelPunto => ({ content: [], illustration: '', implications: '', transition: '' });
 
 /**
  * Arma el borrador a partir de lo que el pastor decidió y escribió.
  *
- * ES DETERMINISTA. NO HAY LLAMADA AL MODELO ACÁ, y es la decisión central de
- * este módulo: la prosa ya está escrita sección por sección, cada una desde sus
- * decisiones. Unirla es concatenación. Pedirle a un modelo que "arme el sermón"
- * con las piezas le daría permiso para reescribirlas — y entonces el texto
- * publicado dejaría de ser el que él revisó, con lo que toda la cadena de
- * procedencia se rompe en el último paso.
+ * ES DETERMINISTA. NO HAY LLAMADA AL MODELO, y es la decisión central: la prosa
+ * ya está escrita sección por sección desde sus decisiones. Unirla es
+ * concatenación. Pedirle a un modelo que "arme el sermón con las piezas" le
+ * daría permiso para reescribirlas, y el texto publicado dejaría de ser el que
+ * él revisó — la cadena de procedencia se rompería en el último paso.
  *
- * LO QUE FALTA, FALTA. Una sección sin prosa no se rellena ni se pide al
- * modelo: queda vacía. Rellenar sería exactamente la puerta de atrás que este
- * flujo existe para cerrar.
+ * NO CONOCE NINGÚN `sectionId`. Cada sección declara su destino en el catálogo
+ * y este módulo sólo lo obedece. Antes mapeaba ids a campos a mano, así que
+ * agregar una sección al taller y olvidarse acá la dejaba sin llegar al sermón
+ * — sin error y sin aviso.
+ *
+ * LO QUE FALTA, FALTA. Una sección sin contenido queda vacía: no se rellena ni
+ * se pide al modelo. Rellenar sería la puerta de atrás que este flujo cierra.
  */
 export function assembleDraft(input: AssembleDraftInput): SermonContent {
-    const prosa = (id: string) => input.prose[id]?.trim() ?? '';
-
-    /** Lo decidido en una sección `verbatim` ES su texto final. */
-    const verbatim = (id: string) =>
-        (input.elements[id] ?? [])
-            .filter((e) => e.provenance !== 'descartado')
-            .map((e) => e.text.trim())
-            .filter(Boolean)
-            .join(' ')
-            .trim();
+    /**
+     * El contenido de una sección: su prosa redactada o, si no la hay, lo que
+     * ya traía hecho.
+     *
+     * LA PROSA MANDA SOBRE LAS NOTAS. Lo que el pastor escribió en el bosquejo
+     * son notas de trabajo —viñetas con asteriscos a la vista— y llevarlas al
+     * púlpito tal cual sería publicar su borrador. Pero si todavía no redactó,
+     * es preferible su texto crudo a una sección vacía.
+     */
+    const contenido = (s: WalkSection): string => {
+        const redactada = input.prose[s.id]?.trim();
+        if (redactada) return redactada;
+        if (s.mode === 'verbatim') {
+            return (input.elements[s.id] ?? [])
+                .filter((e) => e.provenance !== 'descartado')
+                .map((e) => e.text.trim())
+                .filter(Boolean)
+                .join(' ')
+                .trim();
+        }
+        return (s.coveredBy ?? []).join('\n').trim();
+    };
 
     const unir = (partes: string[]) => partes.map((p) => p.trim()).filter(Boolean).join('\n\n');
 
-    const introduction = unir([
-        prosa('introduction.openingIllustration'),
-        prosa('introduction.bookOverview'),
-        prosa('introduction.historicalContext'),
-    ]);
+    const introduccion: string[] = [];
+    let title = '';
+    let conclusion = '';
+    let callToAction = '';
+
+    const porPunto = new Map<number, PartesDelPunto>();
+    const delPunto = (n: number): PartesDelPunto => {
+        const previo = porPunto.get(n);
+        if (previo) return previo;
+        const nuevo = vacio();
+        porPunto.set(n, nuevo);
+        return nuevo;
+    };
+    const numeroDe = (s: WalkSection) => Number(s.parentId?.split('.')[1] ?? 0);
+
+    for (const seccion of input.walk) {
+        const texto = contenido(seccion);
+        const destino = seccion.definition.target;
+
+        switch (destino.kind) {
+            case 'title':
+                title = texto;
+                break;
+            case 'introduction':
+                // El encabezado va SÓLO si hay contenido: un título sobre una
+                // sección vacía anuncia algo que no está.
+                if (texto) introduccion.push(`### ${input.t(destino.headingKey)}\n\n${texto}`);
+                break;
+            case 'conclusion':
+                conclusion = texto;
+                break;
+            case 'callToAction':
+                callToAction = texto;
+                break;
+            case 'pointContent':
+                if (texto) delPunto(numeroDe(seccion)).content.push(texto);
+                break;
+            case 'pointIllustration':
+                delPunto(numeroDe(seccion)).illustration = texto;
+                break;
+            case 'pointImplications':
+                delPunto(numeroDe(seccion)).implications = texto;
+                break;
+            case 'pointTransition':
+                // Sólo el puente retórico si el pastor lo escribió. El
+                // RECORDATORIO —proposición + puntos— lo agrega
+                // `assembleTransitions` desde el bosquejo: es dato que ya
+                // existe, y pedirlo al modelo es darle ocasión de reformularlo.
+                delPunto(numeroDe(seccion)).transition = texto;
+                break;
+        }
+    }
 
     const body = input.points.map((punto, i) => {
-        const n = i + 1;
-        const id = `point.${n}`;
+        const parte = porPunto.get(i + 1) ?? vacio();
         return {
             point: punto.title?.trim() ?? '',
-            // LA PROPOSICIÓN DEL PUNTO ABRE SU CONTENIDO. Es la frase de la que
-            // se desprenden las partes, así que va antes de la exposición que la
-            // desarrolla — el mismo orden en que él la decide.
-            content: unir([verbatim(`${id}.proposition`), prosa(`${id}.exposition`)]),
-            illustration: prosa(`${id}.illustration`) || undefined,
-            // LA PROSA REDACTADA MANDA SOBRE LAS NOTAS DEL BOSQUEJO. Sus viñetas
-            // son notas de trabajo —con los asteriscos a la vista— y llevarlas
-            // al sermón tal cual sería publicar su borrador. Si todavía no
-            // redactó la sección, se usan las notas: es preferible su texto
-            // crudo a un sermón sin aplicación.
-            implications: splitApplication(prosa(`${id}.application`) || punto.application),
+            content: unir(parte.content),
+            illustration: parte.illustration || undefined,
+            implications: splitApplication(parte.implications),
             scriptureReferences: punto.scriptureReferences,
-            // NUNCA se fabrica una cita de autoridad. Si no hay una verificable,
-            // `null` — es la regla que ya rige el resto del sermón.
+            // NUNCA se fabrica una cita de autoridad: es la regla que ya rige el
+            // resto del sermón.
             authorityQuote: null,
+            transition: parte.transition || undefined,
         };
     });
 
     return {
-        title: verbatim('title'),
-        introduction,
+        title,
+        introduction: unir(introduccion),
         body,
-        conclusion: prosa('conclusion.recap'),
-        callToAction: prosa('conclusion.callToAction') || undefined,
+        conclusion,
+        callToAction: callToAction || undefined,
     };
 }
 
-/** Secciones que aún no tienen prosa ni texto final. Para avisar antes de armar. */
+/** Secciones que aún no tienen contenido. Para avisar antes de armar. */
 export function missingForDraft(input: AssembleDraftInput): WalkSection[] {
     return input.walk.filter((s) => {
-        if (s.status === 'cubierta') return false;
+        if (s.status === 'cubierta' || s.status === 'derivada') return false;
         if (s.mode === 'verbatim') {
             return (input.elements[s.id] ?? []).every((e) => e.provenance === 'descartado');
         }
