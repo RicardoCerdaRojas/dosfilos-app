@@ -102,8 +102,7 @@ export function SocraticWorkshop(props: Props) {
         : undefined;
 
     return (
-        <div className="flex flex-col h-full gap-3">
-        <div className="flex items-stretch gap-0 flex-1 min-h-[24rem]">
+        <div className="flex items-stretch gap-0 h-full min-h-[24rem]">
             {abierto && (
                 <div style={{ width: ancho }} className="shrink-0 overflow-hidden">
                     <SermonMap
@@ -125,7 +124,18 @@ export function SocraticWorkshop(props: Props) {
                 title={t('drafting.sections.mapTitle')}
             />
 
-            <div className="flex-1 min-w-0 pl-1 overflow-y-auto">
+            {/* COLUMNA DE TRABAJO: contenido acotado arriba, acciones al pie.
+                Las acciones vivían en una barra propia bajo TODO el taller, y
+                quedaban en una franja vacía compitiendo con la del paso. Acá
+                pertenecen a la columna que el pastor está usando. */}
+            <div className="flex-1 min-w-0 pl-1 flex flex-col">
+              <div className="flex-1 overflow-y-auto">
+                {/* MEDIDA DE LECTURA. A todo el ancho las líneas pasaban de 200
+                    caracteres: el ojo pierde el renglón al volver. `max-w-3xl`
+                    deja el texto en la medida cómoda y el sobrante en blanco,
+                    que es lo correcto — estirar el texto no usa mejor el
+                    espacio, sólo lo hace más difícil de leer. */}
+                <div className="mx-auto w-full max-w-3xl">
                 <SectionElementsPanel
                     section={props.activeSection}
                     passage={props.passage}
@@ -139,6 +149,23 @@ export function SocraticWorkshop(props: Props) {
                         props.activeSection.id.endsWith('.proposition') ? undefined : proposicionDelPunto
                     }
                 />
+                </div>
+              </div>
+
+              <div className="mx-auto w-full max-w-3xl">
+                <WorkshopDraftActions
+                    walk={props.walk}
+                    elements={props.elements}
+                    prose={props.prose}
+                    points={props.outlinePoints}
+                    proposition={props.proposition}
+                    audienceRigor={props.audienceRigor}
+                    onProseChange={props.onChangeProse}
+                    onAssemble={props.onAssemble}
+                    hasDraft={props.hasDraft}
+                    homiletics={props.homiletics}
+                />
+              </div>
             </div>
 
             {/* El riel de prosa NO existe en las secciones `verbatim`: lo que el
@@ -171,24 +198,6 @@ export function SocraticWorkshop(props: Props) {
                     )}
                 </>
             )}
-        </div>
-
-        {/* LAS ACCIONES VAN A LA DERECHA Y CON EL ANCHO DEL CONTENIDO, no
-            cruzando toda la pantalla bajo el mapa. Como barra completa se leían
-            junto a la del paso como DOS barras apiladas, y la de arriba parecía
-            huérfana pegada al borde. */}
-        <WorkshopDraftActions
-            walk={props.walk}
-            elements={props.elements}
-            prose={props.prose}
-            points={props.outlinePoints}
-            proposition={props.proposition}
-            audienceRigor={props.audienceRigor}
-            onProseChange={props.onChangeProse}
-            onAssemble={props.onAssemble}
-            hasDraft={props.hasDraft}
-            homiletics={props.homiletics}
-        />
         </div>
     );
 }

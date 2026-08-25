@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/i18n';
 import {
@@ -144,8 +143,11 @@ export function SectionElementsPanel(props: Props) {
 
     const consume = (index: number) => setProposals((p) => p.filter((_, i) => i !== index));
 
+    // SIN MARCO. La tarjeta con borde de acento hacía que el panel se leyera
+    // como un objeto flotando junto al mapa, en vez de como la columna de
+    // trabajo del taller. El encabezado ya dice dónde está.
     return (
-        <Card className="p-6 space-y-5 mb-6 border-primary/30">
+        <div className="px-5 py-4 space-y-5">
             <div className="space-y-1">
                 <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
                     {t(section.labelKey, section.labelParams)}
@@ -232,6 +234,6 @@ export function SectionElementsPanel(props: Props) {
                 onRemove={remove}
             />
 
-        </Card>
+        </div>
     );
 }

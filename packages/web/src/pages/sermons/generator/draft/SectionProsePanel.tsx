@@ -118,7 +118,7 @@ export function SectionProsePanel(props: Props) {
     };
 
     return (
-        <section className="h-full flex flex-col gap-3 pl-1" aria-label={t('drafting.prose.label')}>
+        <section className="h-full flex flex-col gap-3 py-4 pl-2 pr-1" aria-label={t('drafting.prose.label')}>
             <div className="flex items-center gap-2 shrink-0">
                 <h3 className="text-sm font-semibold flex-1 min-w-0 truncate">{t('drafting.prose.label')}</h3>
                 <Button variant="outline" size="sm" onClick={escribir} disabled={escribiendo || decididos.length === 0}>
