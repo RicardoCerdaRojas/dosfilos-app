@@ -545,6 +545,8 @@ export function StepDraft() {
             passage={passage}
             proposition={homiletics.homileticalProposition}
             points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
+            outlinePoints={(homiletics.outline?.mainPoints ?? []) as any[]}
+            onAssemble={setDraft}
         />
     ) : null;
 

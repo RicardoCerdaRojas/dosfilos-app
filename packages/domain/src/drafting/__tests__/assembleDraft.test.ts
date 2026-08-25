@@ -1,0 +1,126 @@
+import { describe, it, expect } from 'vitest';
+import { assembleDraft, missingForDraft, type AssembleDraftInput } from '../assembleDraft';
+import { deriveSectionWalk } from '../deriveSectionWalk';
+import type { SermonElement } from '../SermonElement';
+
+const POINTS = [
+    {
+        title: 'I. Dios habla y revela su voluntad  (vv. 1-2)',
+        application: '* Dios habla, vive consciente de su dirección.\n* Lee tu biblia, ora, escucha a tu pastor.',
+        scriptureReferences: ['Jonás 1:1-2'],
+    },
+    {
+        title: 'II. El hombre desobedece y revela su necedad  (vv. 3)',
+        application: '* Recapacita de tus reacciones hostiles.',
+        scriptureReferences: ['Jonás 1:3a'],
+    },
+];
+
+let n = 0;
+const el = (text: string, provenance: SermonElement['provenance'] = 'pastor'): SermonElement => ({
+    id: `e${n++}`,
+    sectionId: 'x',
+    text,
+    kind: 'elemento',
+    provenance,
+    decidedAt: new Date('2026-08-24'),
+});
+
+const walk = deriveSectionWalk({ points: POINTS, sermonPassage: 'Jonás 1:1-3', proposition: 'La tesis.' });
+
+const COMPLETO: AssembleDraftInput = {
+    walk,
+    points: POINTS,
+    elements: {
+        title: [el('El Dios que persigue al rebelde')],
+        'point.1.proposition': [el('Dios habla con intención: se identifica, ordena y explica.')],
+        'point.2.proposition': [el('La rebeldía nace de una idea errónea de Dios.')],
+    },
+    prose: {
+        'introduction.openingIllustration': 'Cuando se estrenó LOST…',
+        'introduction.bookOverview': 'Jonás es narrativa, no oráculo.',
+        'introduction.historicalContext': 'Nínive era la capital asiria.',
+        'point.1.exposition': 'La formulación muestra un mandato directo.',
+        'point.1.illustration': 'Como un padre que llama por su nombre.',
+        'point.2.exposition': 'Jonás se levanta para huir.',
+        'point.2.illustration': '¿Han visto a los niños con rabietas?',
+        'conclusion.recap': 'Dios habló; el hombre huyó.',
+        'conclusion.callToAction': 'No tomes ese barco esta semana.',
+    },
+};
+
+describe('assembleDraft', () => {
+    const draft = assembleDraft(COMPLETO);
+
+    it('el título sale de lo que él escribió, no del generador', () => {
+        expect(draft.title).toBe('El Dios que persigue al rebelde');
+    });
+
+    it('la proposición del punto ABRE su contenido, antes de la exposición', () => {
+        // Es la frase de la que se desprenden las partes: va antes de lo que la
+        // desarrolla, el mismo orden en que él la decide.
+        const c = draft.body[0].content;
+        expect(c.indexOf('Dios habla con intención')).toBeLessThan(c.indexOf('La formulación muestra'));
+    });
+
+    it('la introducción une sus tres secciones en el orden del recorrido', () => {
+        expect(draft.introduction).toBe(
+            'Cuando se estrenó LOST…\n\nJonás es narrativa, no oráculo.\n\nNínive era la capital asiria.',
+        );
+    });
+
+    it('las implicaciones son SUS viñetas, con su propio conteo', () => {
+        expect(draft.body[0].implications).toEqual([
+            'Dios habla, vive consciente de su dirección.',
+            'Lee tu biblia, ora, escucha a tu pastor.',
+        ]);
+        expect(draft.body[1].implications).toHaveLength(1);
+    });
+
+    it('NUNCA fabrica una cita de autoridad', () => {
+        expect(draft.body.every((p) => p.authorityQuote === null)).toBe(true);
+    });
+
+    it('un elemento descartado no entra al sermón', () => {
+        const conDescarte = assembleDraft({
+            ...COMPLETO,
+            elements: { ...COMPLETO.elements, title: [el('El bueno'), el('El rechazado', 'descartado')] },
+        });
+        expect(conDescarte.title).toBe('El bueno');
+    });
+});
+
+describe('assembleDraft — lo que falta, falta', () => {
+    it('una sección sin prosa queda vacía, NO se rellena', () => {
+        // Rellenar sería la puerta de atrás que este flujo existe para cerrar.
+        const draft = assembleDraft({ ...COMPLETO, prose: {} });
+        expect(draft.introduction).toBe('');
+        expect(draft.body[0].content).toBe('Dios habla con intención: se identifica, ordena y explica.');
+        expect(draft.conclusion).toBe('');
+    });
+
+    it('una ilustración ausente se omite en vez de quedar en blanco', () => {
+        const draft = assembleDraft({ ...COMPLETO, prose: {} });
+        expect(draft.body[0].illustration).toBeUndefined();
+    });
+});
+
+describe('missingForDraft', () => {
+    it('con todo escrito no falta nada', () => {
+        expect(missingForDraft(COMPLETO)).toEqual([]);
+    });
+
+    it('nombra las secciones sin prosa y las verbatim sin decidir', () => {
+        const ids = missingForDraft({ ...COMPLETO, prose: {}, elements: {} }).map((s) => s.id);
+        expect(ids).toContain('point.1.exposition');
+        expect(ids).toContain('point.1.proposition');
+        expect(ids).toContain('title');
+    });
+
+    it('no reclama lo que ya es suyo del bosquejo', () => {
+        // Las aplicaciones llegan `cubierta`: pedirle que las escriba de nuevo
+        // sería exigirle trabajo que ya hizo.
+        const ids = missingForDraft({ ...COMPLETO, prose: {}, elements: {} }).map((s) => s.id);
+        expect(ids).not.toContain('point.1.application');
+    });
+});
