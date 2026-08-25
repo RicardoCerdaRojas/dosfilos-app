@@ -21,7 +21,7 @@ interface Props {
     points?: readonly string[];
     /** Bosquejo, para armar el borrador con los títulos y aplicaciones reales. */
     outlinePoints: readonly { title?: string; application?: string; scriptureReferences?: string[] }[];
-    onAssemble: (draft: SermonContent) => void;
+    onAssemble: (draft: SermonContent) => void | Promise<void>;
 }
 
 const ANCHO_MIN = 200;

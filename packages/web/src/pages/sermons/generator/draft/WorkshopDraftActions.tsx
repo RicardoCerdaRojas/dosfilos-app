@@ -21,7 +21,7 @@ interface Props {
     proposition?: string;
     audienceRigor?: 'beginner' | 'seminary';
     onProseChange: (sectionId: string, prose: string) => void;
-    onAssemble: (draft: SermonContent) => void;
+    onAssemble: (draft: SermonContent) => void | Promise<void>;
 }
 
 /**
@@ -116,7 +116,7 @@ export function WorkshopDraftActions(props: Props) {
                         : t('drafting.assemble.writeAll', { count: redactables.length })}
                 </Button>
 
-                <Button size="sm" onClick={() => props.onAssemble(assembleDraft(entrada))} disabled={!!escribiendo}>
+                <Button size="sm" onClick={() => void props.onAssemble(assembleDraft(entrada))} disabled={!!escribiendo}>
                     <FileText className="h-4 w-4 mr-1.5" />
                     {t('drafting.assemble.build')}
                 </Button>

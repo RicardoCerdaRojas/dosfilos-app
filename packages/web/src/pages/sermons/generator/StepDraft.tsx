@@ -132,6 +132,32 @@ export function StepDraft() {
         setMessages([]);
     };
 
+    /**
+     * Guarda el borrador actual en el historial ANTES de reemplazarlo.
+     *
+     * Lo usan las DOS rutas que se llevan por delante el sermón anterior:
+     * regenerar y armar desde el taller. Cuando vivía dentro de `handleGenerate`,
+     * armar el borrador reemplazaba sin dejar rastro — y armar con secciones sin
+     * redactar produce un esqueleto, así que el pastor podía perder un sermón
+     * completo con un clic y sin aviso.
+     *
+     * Por sección, no como bloque: es como funciona el historial, y permite
+     * rescatar sólo la introducción que le gustaba sin perder los puntos nuevos.
+     */
+    const archivarBorradorActual = async (etiqueta: string): Promise<boolean> => {
+        if (!draft) return false;
+        const { getSectionsForType } = await import('@/components/canvas-chat/section-configs');
+        const { getValueByPath } = await import('@/utils/path-utils');
+        let guardo = false;
+        for (const section of getSectionsForType('sermon')) {
+            const previo = getValueByPath(draft, section.path);
+            if (previo === undefined || previo === null) continue;
+            contentHistory.saveVersion(section.id, previo, etiqueta, undefined);
+            guardo = true;
+        }
+        return guardo;
+    };
+
     const getSectionVersions = (sectionId: string) => contentHistory.getVersions(sectionId);
     const getCurrentVersionId = (sectionId: string) => contentHistory.getCurrentVersion(sectionId)?.id;
 
@@ -246,22 +272,7 @@ export function StepDraft() {
             // Se guarda POR SECCIÓN, no como bloque único, porque es como el
             // historial ya funciona y porque permite rescatar sólo la
             // introducción que le gustaba sin perder los puntos nuevos.
-            let guardoVersiones = false;
-            if (draft) {
-                const { getSectionsForType } = await import('@/components/canvas-chat/section-configs');
-                const { getValueByPath } = await import('@/utils/path-utils');
-                for (const section of getSectionsForType('sermon')) {
-                    const previo = getValueByPath(draft, section.path);
-                    if (previo === undefined || previo === null) continue;
-                    contentHistory.saveVersion(
-                        section.id,
-                        previo,
-                        t('drafting.versions.beforeRegenerate'),
-                        undefined,
-                    );
-                    guardoVersiones = true;
-                }
-            }
+            const guardoVersiones = await archivarBorradorActual(t('drafting.versions.beforeRegenerate'));
 
             setDraft(result);
             // EL AVISO OFRECE EL SEGURO EN EL MOMENTO EN QUE HACE FALTA.
@@ -546,7 +557,11 @@ export function StepDraft() {
             proposition={homiletics.homileticalProposition}
             points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
             outlinePoints={(homiletics.outline?.mainPoints ?? []) as any[]}
-            onAssemble={setDraft}
+            onAssemble={async (armado) => {
+                const guardo = await archivarBorradorActual(t('drafting.versions.beforeAssemble'));
+                setDraft(armado);
+                if (guardo) toast.success(t('drafting.versions.assembledWithBackup'));
+            }}
         />
     ) : null;
 

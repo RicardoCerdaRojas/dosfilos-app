@@ -364,7 +364,9 @@
       "beforeRefinement": "Before: {{summary}}...",
       "refinedSummary": "✅ Section \"{{section}}\" refined successfully.",
       "beforeRegenerate": "Before regenerating the draft",
-      "seePrevious": "View previous version"
+      "seePrevious": "View previous version",
+      "beforeAssemble": "Before building from the workshop",
+      "assembledWithBackup": "Draft built. The previous one is in the history."
     },
     "afterGenerateTitle": "Once it's generated you can:",
     "afterGenerateList": [
@@ -525,10 +527,10 @@
       "emptyReady": "You've decided. Press “Write this section” to draft it."
     },
     "assemble": {
-      "writeAll": "Write the {{count}} remaining",
+      "writeAll": "Draft the {{count}} without prose",
       "writingProgress": "Writing {{hechas}} of {{total}}…",
       "build": "Build the draft",
-      "missing": "{{count}} sections still unwritten, starting with “{{first}}”. You can build anyway — those stay empty."
+      "missing": "{{count}} sections would come out EMPTY, starting with “{{first}}”. You can build anyway."
     }
   },
   "pastoralContext": {
