@@ -87,7 +87,10 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
     // dos líneas tomaba la proposición del punto como espina y salía con la
     // estructura de una exposición — dejando de ser una ilustración.
     const varias = !input.section.oneIdea && ideas.length + temas.length > 1;
-    const proposicionPunto = input.pointProposition?.trim();
+    // La proposición gobierna la estructura SÓLO donde la sección la desglosa.
+    // Como contexto sigue viajando: una aplicación debe servir a la tesis del
+    // punto aunque no sea su desglose.
+    const proposicionPunto = input.section.unpacksProposition ? input.pointProposition?.trim() : undefined;
 
     const estructura = !varias
         ? input.section.oneIdea

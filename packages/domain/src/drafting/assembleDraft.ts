@@ -57,10 +57,12 @@ export function assembleDraft(input: AssembleDraftInput): SermonContent {
             // desarrolla — el mismo orden en que él la decide.
             content: unir([verbatim(`${id}.proposition`), prosa(`${id}.exposition`)]),
             illustration: prosa(`${id}.illustration`) || undefined,
-            // La aplicación la escribió él en el bosquejo, en viñetas. Se parte
-            // con el mismo criterio que ya usa el sermón, para que el conteo de
-            // implicaciones sea el suyo y no otro.
-            implications: splitApplication(punto.application),
+            // LA PROSA REDACTADA MANDA SOBRE LAS NOTAS DEL BOSQUEJO. Sus viñetas
+            // son notas de trabajo —con los asteriscos a la vista— y llevarlas
+            // al sermón tal cual sería publicar su borrador. Si todavía no
+            // redactó la sección, se usan las notas: es preferible su texto
+            // crudo a un sermón sin aplicación.
+            implications: splitApplication(prosa(`${id}.application`) || punto.application),
             scriptureReferences: punto.scriptureReferences,
             // NUNCA se fabrica una cita de autoridad. Si no hay una verificable,
             // `null` — es la regla que ya rige el resto del sermón.

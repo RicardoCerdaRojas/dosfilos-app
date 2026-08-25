@@ -6,6 +6,8 @@ import type { WalkSection } from '../deriveSectionWalk';
 const seccion: WalkSection = {
     id: 'point.2.exposition',
     mode: 'elements',
+    // Es una EXPOSICIÓN: la única sección que desglosa la proposición del punto.
+    unpacksProposition: true,
     labelKey: 'drafting.sections.exposition.label',
     jobKey: 'drafting.sections.exposition.job',
     status: 'pendiente',
@@ -287,6 +289,32 @@ describe('una sección de una sola idea no se abre en movimientos', () => {
             ...base,
             elements: dosFrases,
             pointProposition: 'Dios se identifica, ordena y explica.',
+        });
+        expect(p).toContain('POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA');
+    });
+});
+
+describe('la proposición sólo estructura donde la sección la desglosa', () => {
+    const PROP = 'Dios se identifica, ordena y explica.';
+    const dos = [el('Vive consciente de su dirección'), el('Lee tu biblia, ora, escucha a tu pastor')];
+
+    it('la aplicación NO se estructura por conceptos de la proposición', () => {
+        const p = buildSectionProsePrompt({
+            ...base,
+            section: { ...seccion, id: 'point.1.application', unpacksProposition: undefined },
+            elements: dos,
+            pointProposition: PROP,
+        });
+        expect(p).not.toContain('POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA');
+        expect(p).toContain('UNA IDEA POR MOVIMIENTO');
+    });
+
+    it('la exposición sí', () => {
+        const p = buildSectionProsePrompt({
+            ...base,
+            section: { ...seccion, unpacksProposition: true },
+            elements: dos,
+            pointProposition: PROP,
         });
         expect(p).toContain('POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA');
     });

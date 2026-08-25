@@ -142,6 +142,8 @@ export function SocraticWorkshop(props: Props) {
             {/* El riel de prosa NO existe en las secciones `verbatim`: lo que el
                 pastor escribió allí YA es el texto final, y abrir un editor
                 vacío al lado sugeriría que falta redactarlo. */}
+            {/* También en las secciones `cubierta`: la decisión está tomada,
+                pero sus notas del bosquejo siguen necesitando redacción. */}
             {props.activeSection.mode === 'elements' && (
                 <>
                     <RailDivider

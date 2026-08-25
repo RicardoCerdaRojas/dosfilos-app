@@ -124,3 +124,28 @@ describe('missingForDraft', () => {
         expect(ids).not.toContain('point.1.application');
     });
 });
+
+describe('la prosa redactada manda sobre las notas del bosquejo', () => {
+    it('usa la aplicación redactada cuando existe', () => {
+        // Sus viñetas del bosquejo son notas de trabajo, con los asteriscos a la
+        // vista. Llevarlas al sermón tal cual sería publicar su borrador.
+        const draft = assembleDraft({
+            ...COMPLETO,
+            prose: {
+                ...COMPLETO.prose,
+                'point.1.application': '- Vive consciente de su dirección esta semana.\n- Abre tu Biblia antes de decidir.',
+            },
+        });
+        expect(draft.body[0].implications).toEqual([
+            'Vive consciente de su dirección esta semana.',
+            'Abre tu Biblia antes de decidir.',
+        ]);
+    });
+
+    it('sin prosa cae a sus notas: mejor su texto crudo que un sermón sin aplicación', () => {
+        expect(assembleDraft(COMPLETO).body[0].implications).toEqual([
+            'Dios habla, vive consciente de su dirección.',
+            'Lee tu biblia, ora, escucha a tu pastor.',
+        ]);
+    });
+});

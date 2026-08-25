@@ -244,3 +244,20 @@ describe('una ilustración es UNA decisión, aunque ocupe varias frases', () => 
         expect(walk.find((s) => s.id === 'point.1.exposition')?.oneIdea).toBeUndefined();
     });
 });
+
+describe('sólo la exposición desglosa la proposición del punto', () => {
+    const walk = deriveSectionWalk(JONAS);
+
+    it('la exposición sí', () => {
+        expect(walk.find((s) => s.id === 'point.1.exposition')?.unpacksProposition).toBe(true);
+    });
+
+    it('la ilustración y la aplicación NO', () => {
+        // La regla se coló dos veces donde no correspondía: la ilustración salió
+        // estructurada por conceptos en vez de contada, y la aplicación iba
+        // camino de lo mismo. Una imagen hace visible UNA idea; una aplicación
+        // dice qué cambia el lunes. Ninguna es el desglose de la tesis.
+        expect(walk.find((s) => s.id === 'point.1.illustration')?.unpacksProposition).toBeUndefined();
+        expect(walk.find((s) => s.id === 'point.1.application')?.unpacksProposition).toBeUndefined();
+    });
+});

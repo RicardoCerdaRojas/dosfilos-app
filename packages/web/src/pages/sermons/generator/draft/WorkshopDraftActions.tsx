@@ -48,13 +48,19 @@ export function WorkshopDraftActions(props: Props) {
     const faltantes = missingForDraft(entrada);
     const primeraFaltante = faltantes[0];
 
-    /** Con decisiones y sin prosa: son las que este botón puede redactar. */
+    /**
+     * Con decisiones y sin prosa: son las que este botón puede redactar.
+     *
+     * Las `cubierta` ENTRAN: la decisión ya está tomada, pero lo que él escribió
+     * en el bosquejo son notas y llevarlas al sermón tal cual sería publicar su
+     * borrador de trabajo.
+     */
     const redactables = props.walk.filter(
         (s) =>
             s.mode === 'elements' &&
-            s.status !== 'cubierta' &&
             !props.prose[s.id]?.trim() &&
-            (props.elements[s.id] ?? []).some((e) => e.provenance !== 'descartado'),
+            ((props.elements[s.id] ?? []).some((e) => e.provenance !== 'descartado') ||
+                (s.coveredBy ?? []).length > 0),
     );
 
     const escribirTodo = async () => {
@@ -67,11 +73,21 @@ export function WorkshopDraftActions(props: Props) {
                       .join(' ')
                       .trim() || undefined
                 : undefined;
+            const desdeElBosquejo = (seccion.coveredBy ?? []).map((text, i) => ({
+                id: `${seccion.id}.covered.${i}`,
+                sectionId: seccion.id,
+                text,
+                kind: 'elemento' as const,
+                provenance: 'pastor' as const,
+                decidedAt: new Date(),
+            }));
+            const propios = (props.elements[seccion.id] ?? []).filter((e) => e.provenance !== 'descartado');
+
             const texto = await write({
                 section: seccion,
                 sectionLabel: t(seccion.labelKey, seccion.labelParams),
                 sectionJob: t(seccion.jobKey),
-                elements: props.elements[seccion.id] ?? [],
+                elements: propios.length > 0 ? propios : desdeElBosquejo,
                 passage: '',
                 proposition: props.proposition,
                 pointTitle: seccion.parentLabel,

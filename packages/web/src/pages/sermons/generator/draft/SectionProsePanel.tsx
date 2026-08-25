@@ -69,7 +69,28 @@ export function SectionProsePanel(props: Props) {
         props.onProseChange(texto);
     };
 
-    const decididos = props.elements.filter((e) => e.provenance !== 'descartado');
+    /**
+     * Las ideas que alimentan la redacción.
+     *
+     * UNA SECCIÓN `cubierta` TAMBIÉN SE REDACTA. `cubierta` significa "la
+     * decisión ya está tomada", no "no queda nada que hacer": lo que el pastor
+     * escribió en el bosquejo son NOTAS —viñetas con asteriscos a la vista— y
+     * llevarlas al sermón tal cual sería publicar su borrador de trabajo.
+     *
+     * Sus notas entran como elementos suyos porque LO SON: procedencia `pastor`,
+     * decididas por él en el paso homilético.
+     */
+    const desdeElBosquejo: SermonElement[] = (section.coveredBy ?? []).map((text, i) => ({
+        id: `${section.id}.covered.${i}`,
+        sectionId: section.id,
+        text,
+        kind: 'elemento' as const,
+        provenance: 'pastor' as const,
+        decidedAt: new Date(),
+    }));
+
+    const propios = props.elements.filter((e) => e.provenance !== 'descartado');
+    const decididos = propios.length > 0 ? propios : desdeElBosquejo;
     const escribiendo = writingId === section.id;
 
     const escribir = async () => {
@@ -77,7 +98,7 @@ export function SectionProsePanel(props: Props) {
             section,
             sectionLabel: t(section.labelKey, section.labelParams),
             sectionJob: t(section.jobKey),
-            elements: props.elements,
+            elements: decididos,
             passage: props.passage,
             proposition: props.proposition,
             pointTitle: section.parentLabel,

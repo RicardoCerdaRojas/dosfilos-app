@@ -85,6 +85,17 @@ export interface WalkSection {
      * Lo que cuenta como unidad depende de la SECCIÓN, no del formato del texto.
      */
     oneIdea?: boolean;
+    /**
+     * La sección DESGLOSA la proposición del punto: sus movimientos salen de los
+     * conceptos de esa frase.
+     *
+     * SÓLO LA EXPOSICIÓN. Se declara en positivo y no por exclusión porque la
+     * regla ya se coló dos veces donde no correspondía: la ilustración salió
+     * estructurada por conceptos en vez de contada, y la aplicación iba camino
+     * de lo mismo. Una ilustración hace visible UNA idea; una aplicación dice
+     * qué cambia el lunes. Ninguna de las dos es el desglose de la tesis.
+     */
+    unpacksProposition?: boolean;
     /** Agrupa las secciones de un punto bajo él, para el mapa lateral. */
     parentId?: string;
     /** Título del punto, verbatim. Sólo en las secciones que SON un punto. */
@@ -186,6 +197,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
             ...base,
             id: `${parentId}.exposition`,
             mode: 'elements',
+            unpacksProposition: true,
             scriptureRef: refPunto,
             labelKey: `${NS}.exposition.label`,
             jobKey: `${NS}.exposition.job`,
