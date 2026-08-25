@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { usePastoralFidelityGate } from '@/hooks/usePastoralFidelityGate';
 import { useTranslation } from '@/i18n';
+import { WizardStepHeader } from './WizardStepHeader';
 import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
 import { DerivedContextBanner } from './DerivedContextBanner';
@@ -387,58 +388,65 @@ export function StepHomiletics() {
         // franja muerta a la derecha, con la ventana a medio usar. `min-w-0`
         // permite que su contenido se recorte en vez de empujar el ancho.
         <div className="flex-1 min-w-0 h-full flex flex-col overflow-hidden">
-            <div className="mb-4 flex-shrink-0 flex items-center justify-between">
-                <div>
-                    <h3 className="text-lg font-semibold">{t('homiletics.proposalTitle')}</h3>
-                    <p className="text-sm text-muted-foreground">{t('homiletics.proposalDesc')}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
-                        onClick={() => setRightPanelMode(prev => (prev === 'bible' ? 'chat' : 'bible'))}
-                    >
-                        <BookOpen className="h-4 w-4" />
-                        <span className="text-xs font-medium">{passage}</span>
+            <WizardStepHeader
+                title={t('homiletics.proposalTitle')}
+                documentActions={<>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
+                            onClick={() => setRightPanelMode(prev => (prev === 'bible' ? 'chat' : 'bible'))}
+                        >
+                            <BookOpen className="h-4 w-4" />
+                            <span className="text-xs font-medium">{passage}</span>
+                        </Button>
+    
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm" disabled={loading}>
+                                    {loading ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            {t('homiletics.regeneratingBtn')}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <RefreshCw className="mr-2 h-4 w-4" />
+                                            {t('homiletics.regenerateShort')}
+                                        </>
+                                    )}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>{t('homiletics.regenerateConfirm.title')}</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        {t('homiletics.regenerateConfirm.description')}
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>{t('homiletics.regenerateConfirm.cancel')}</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={handleGenerate}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                        {t('homiletics.regenerateConfirm.confirm')}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                </>}
+                navigationActions={<>
+                    <Button onClick={handleContinue} size="sm">
+                        {t('homiletics.continueToDrafting')}
+                        <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
-
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm" disabled={loading}>
-                                {loading ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        {t('homiletics.regeneratingBtn')}
-                                    </>
-                                ) : (
-                                    <>
-                                        <RefreshCw className="mr-2 h-4 w-4" />
-                                        {t('homiletics.regenerateShort')}
-                                    </>
-                                )}
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>{t('homiletics.regenerateConfirm.title')}</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    {t('homiletics.regenerateConfirm.description')}
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>{t('homiletics.regenerateConfirm.cancel')}</AlertDialogCancel>
-                                <AlertDialogAction
-                                    onClick={handleGenerate}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                    {t('homiletics.regenerateConfirm.confirm')}
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                </div>
-            </div>
+                    <Button onClick={() => setStep(1)} variant="ghost" size="sm">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        {t('homiletics.backToExegesis')}
+                    </Button>
+                </>}
+            />
             <div className="flex-1 min-h-0">
                 <ContentCanvas
                     content={formattedHomiletics}
@@ -490,16 +498,6 @@ export function StepHomiletics() {
                 />
             </div>
 
-            <div className="flex-shrink-0 pt-4 border-t space-y-2">
-                <Button onClick={handleContinue} size="lg" className="w-full">
-                    {t('homiletics.continueToDrafting')}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button onClick={() => setStep(1)} variant="outline" size="sm" className="w-full">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    {t('homiletics.backToExegesis')}
-                </Button>
-            </div>
         </div>
     );
 

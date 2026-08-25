@@ -70,6 +70,7 @@ import { useDraftRefinement } from './draft/useDraftRefinement';
 import { useDraftVersions } from './draft/useDraftVersions';
 import { SocraticWorkshop } from './draft/SocraticWorkshop';
 import { HomileticsSavedIndicator } from './homiletics/HomileticsLoadingScreen';
+import { WizardStepHeader } from './WizardStepHeader';
 
 export function StepDraft() {
     const { t, language } = useTranslation('generator');
@@ -604,60 +605,97 @@ export function StepDraft() {
                         barra partía el encabezado en dos líneas — se descubrió
                         al montar un indicador ahí. El título es lo que debe
                         ceder, y conserva el texto completo en el tooltip. */}
-                    <div className="mb-4 flex-shrink-0 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                            <h3 className="text-lg font-semibold truncate" title={draft.title}>{draft.title}</h3>
-                            <p className="text-sm text-muted-foreground">
-                                {expandedSectionId ? t('drafting.refiningStatus') : t('drafting.defaultStatus')}
-                            </p>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
-                                onClick={() => setRightPanelMode((prev) => (prev === 'bible' ? 'chat' : 'bible'))}
-                            >
-                                <BookOpen className="h-4 w-4" />
-                                <span className="text-xs font-medium">{passage}</span>
-                            </Button>
-
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="outline" size="sm" disabled={loading}>
-                                        {loading ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                {t('drafting.regeneratingBtn')}
-                                            </>
-                                        ) : (
-                                            <>
-                                                <RefreshCw className="mr-2 h-4 w-4" />
-                                                {t('drafting.regenerateBtn')}
-                                            </>
-                                        )}
+                    <WizardStepHeader
+                        title={draft.title}
+                        documentActions={<>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
+                                        onClick={() => setRightPanelMode((prev) => (prev === 'bible' ? 'chat' : 'bible'))}
+                                    >
+                                        <BookOpen className="h-4 w-4" />
+                                        <span className="text-xs font-medium">{passage}</span>
                                     </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>{t('drafting.regenerateConfirm.title')}</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            {t('drafting.regenerateConfirm.description')}
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>{t('drafting.regenerateConfirm.cancel')}</AlertDialogCancel>
-                                        <AlertDialogAction
-                                            onClick={handleGenerate}
-                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                        >
-                                            {t('drafting.regenerateConfirm.confirm')}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </div>
-                    </div>
+        
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="outline" size="sm" disabled={loading}>
+                                                {loading ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        {t('drafting.regeneratingBtn')}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <RefreshCw className="mr-2 h-4 w-4" />
+                                                        {t('drafting.regenerateBtn')}
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>{t('drafting.regenerateConfirm.title')}</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    {t('drafting.regenerateConfirm.description')}
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>{t('drafting.regenerateConfirm.cancel')}</AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    onClick={handleGenerate}
+                                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                >
+                                                    {t('drafting.regenerateConfirm.confirm')}
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                        </>}
+                        navigationActions={<>
+                        <Button onClick={() => setStep(2)} variant="outline" size="sm">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            {t('drafting.backToHomiletics')}
+                        </Button>
+        
+                        <Button onClick={() => setShowPreview(true)} variant="outline" size="sm">
+                            <Eye className="mr-2 h-4 w-4" />
+                            {t('drafting.preview')}
+                        </Button>
+        
+                        <Button onClick={handleSaveAndExit} variant="outline" size="sm">
+                            <Save className="mr-2 h-4 w-4" />
+                            {t('drafting.saveAndExit')}
+                        </Button>
+        
+                        <Button onClick={handlePublish} disabled={publishing || contraScan.scanning || !sermonId} size="sm">
+                            {/* EL BOTÓN DICE LO QUE ESTÁ PASANDO, NO LO QUE SE PIDIÓ.
+                                Antes mostraba "Publicando…" también durante el
+                                contra-scan, que es la etapa LENTA (un callable de 1 GB
+                                que recorre la biblioteca: ~11 s en el caso real). El
+                                pastor leía "Publicando", esperaba, no veía nada, y
+                                concluía que se había roto — cuando sólo estaba
+                                trabajando. Le costó un intento entero. */}
+                            {contraScan.scanning ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    {t('drafting.scanningLibrary')}
+                                </>
+                            ) : publishing ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    {t('drafting.publishing')}
+                                </>
+                            ) : (
+                                <>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    {t('drafting.publishSermon')}
+                                </>
+                            )}
+                        </Button>
+                        </>}
+                    />
                     <div className="flex-1 min-h-0">
                         <ContentCanvas
                             content={draft}
@@ -860,48 +898,6 @@ export function StepDraft() {
                 draftBody
             )}
 
-            <div className="flex-shrink-0 flex gap-2">
-                <Button onClick={() => setStep(2)} variant="outline" size="lg" className="flex-1">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    {t('drafting.backToHomiletics')}
-                </Button>
-
-                <Button onClick={() => setShowPreview(true)} variant="outline" size="lg" className="flex-1">
-                    <Eye className="mr-2 h-4 w-4" />
-                    {t('drafting.preview')}
-                </Button>
-
-                <Button onClick={handleSaveAndExit} variant="secondary" size="lg" className="flex-1">
-                    <Save className="mr-2 h-4 w-4" />
-                    {t('drafting.saveAndExit')}
-                </Button>
-
-                <Button onClick={handlePublish} disabled={publishing || contraScan.scanning || !sermonId} size="lg" className="flex-1">
-                    {/* EL BOTÓN DICE LO QUE ESTÁ PASANDO, NO LO QUE SE PIDIÓ.
-                        Antes mostraba "Publicando…" también durante el
-                        contra-scan, que es la etapa LENTA (un callable de 1 GB
-                        que recorre la biblioteca: ~11 s en el caso real). El
-                        pastor leía "Publicando", esperaba, no veía nada, y
-                        concluía que se había roto — cuando sólo estaba
-                        trabajando. Le costó un intento entero. */}
-                    {contraScan.scanning ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {t('drafting.scanningLibrary')}
-                        </>
-                    ) : publishing ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {t('drafting.publishing')}
-                        </>
-                    ) : (
-                        <>
-                            <Upload className="mr-2 h-4 w-4" />
-                            {t('drafting.publishSermon')}
-                        </>
-                    )}
-                </Button>
-            </div>
         </div>
     );
 
