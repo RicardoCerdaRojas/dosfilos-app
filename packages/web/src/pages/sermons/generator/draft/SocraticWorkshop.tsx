@@ -173,6 +173,10 @@ export function SocraticWorkshop(props: Props) {
             )}
         </div>
 
+        {/* LAS ACCIONES VAN A LA DERECHA Y CON EL ANCHO DEL CONTENIDO, no
+            cruzando toda la pantalla bajo el mapa. Como barra completa se leían
+            junto a la del paso como DOS barras apiladas, y la de arriba parecía
+            huérfana pegada al borde. */}
         <WorkshopDraftActions
             walk={props.walk}
             elements={props.elements}
