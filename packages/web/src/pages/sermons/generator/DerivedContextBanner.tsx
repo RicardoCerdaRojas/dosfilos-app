@@ -58,7 +58,7 @@ export function DerivedContextBanner({ stepHintKey }: DerivedContextBannerProps)
     }
 
     return (
-        <div className="mb-3 rounded-md border border-emerald-300 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/20 px-3 py-2 text-[12px]">
+        <div className="mx-2 mt-2 mb-3 rounded-md border border-emerald-300 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-950/20 px-3 py-2 text-[12px]">
             <div className="flex items-start gap-2">
                 <Icon className="h-3.5 w-3.5 mt-0.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <div className="flex-1 min-w-0">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Check, Pencil, X, Lightbulb } from 'lucide-react';
+import { Loader2, Check, Pencil, X, Lightbulb, PenLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/i18n';
@@ -18,6 +18,16 @@ interface Props {
     /** Usarla con el texto que el pastor reescribió. */
     onEdit: (p: ProposedElement, index: number, texto: string) => void;
     onDiscard: (p: ProposedElement, index: number) => void;
+    /**
+     * Redactar la sección. Comparte fila con "propónme" porque son la MISMA
+     * clase de acción —pedirle ayuda al modelo sobre esta sección— y estaban
+     * repartidas en dos columnas.
+     */
+    onWriteSection?: () => void;
+    writing?: boolean;
+    hasProse?: boolean;
+    /** Sin decisiones no hay de dónde redactar. */
+    canWrite?: boolean;
 }
 
 /**
@@ -36,10 +46,28 @@ export function ElementProposals(props: Props) {
     // Pull-first: nunca corre solo, el pastor lo pide.
     return (
         <div className="pt-4 border-t border-border/50 space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={props.onPropose} disabled={props.loading}>
                 {props.loading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Lightbulb className="h-4 w-4 mr-1.5" />}
                 {t(props.proposals.length > 0 ? props.proposeMoreKey : props.proposeKey)}
             </Button>
+
+            {props.onWriteSection && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={props.onWriteSection}
+                    disabled={props.writing || !props.canWrite}
+                >
+                    {props.writing ? (
+                        <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                    ) : (
+                        <PenLine className="h-4 w-4 mr-1.5" />
+                    )}
+                    {t(props.hasProse ? 'drafting.prose.rewrite' : 'drafting.prose.write')}
+                </Button>
+            )}
+            </div>
 
             {props.error && <p className="text-sm text-muted-foreground">{t('drafting.elements.proposeFailed')}</p>}
 

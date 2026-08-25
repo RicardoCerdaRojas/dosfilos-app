@@ -1,12 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { Loader2, PenLine } from 'lucide-react';
 import type { MDXEditorMethods } from '@mdxeditor/editor';
-import { Button } from '@/components/ui/button';
 import { RichSermonEditor } from '@/components/ui/RichSermonEditor';
 import { useTranslation } from '@/i18n';
-import { scriptureLookupRef, type SermonElement, type WalkSection } from '@dosfilos/domain';
+import type { SermonElement, WalkSection } from '@dosfilos/domain';
 import { useWriteSection } from '@/hooks/useWriteSection';
-import { LocalBibleService } from '@/services/LocalBibleService';
 
 interface Props {
     section: WalkSection;
@@ -40,7 +37,7 @@ interface Props {
  */
 export function SectionProsePanel(props: Props) {
     const { t } = useTranslation('generator');
-    const { write, writingId, error } = useWriteSection();
+    const { error } = useWriteSection();
     const { section } = props;
 
     /**
@@ -95,41 +92,15 @@ export function SectionProsePanel(props: Props) {
 
     const propios = props.elements.filter((e) => e.provenance !== 'descartado');
     const decididos = propios.length > 0 ? propios : desdeElBosquejo;
-    const escribiendo = writingId === section.id;
 
-    const escribir = async () => {
-        const texto = await write({
-            section,
-            sectionLabel: t(section.labelKey, section.labelParams),
-            sectionJob: t(section.jobKey),
-            elements: decididos,
-            passage: props.passage,
-            proposition: props.proposition,
-            pointTitle: section.parentLabel,
-            pointProposition: props.pointProposition,
-            // El texto REAL, no el que el modelo recuerde. Una cita bíblica mal
-            // recordada en el púlpito es de la misma familia que una cita de
-            // autor inventada.
-            scriptureText:
-                LocalBibleService.getVerses(scriptureLookupRef(section.scriptureRef) ?? '') ?? undefined,
-            audienceRigor: props.audienceRigor,
-        });
-        if (texto) props.onProseChange(texto);
-    };
 
     return (
         <section className="h-full flex flex-col gap-3 py-4 pl-2 pr-1" aria-label={t('drafting.prose.label')}>
-            <div className="flex items-center gap-2 shrink-0">
-                <h3 className="text-sm font-semibold flex-1 min-w-0 truncate">{t('drafting.prose.label')}</h3>
-                <Button variant="outline" size="sm" onClick={escribir} disabled={escribiendo || decididos.length === 0}>
-                    {escribiendo ? (
-                        <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                    ) : (
-                        <PenLine className="h-4 w-4 mr-1.5" />
-                    )}
-                    {t(props.prose ? 'drafting.prose.rewrite' : 'drafting.prose.write')}
-                </Button>
-            </div>
+            {/* SÓLO EL RESULTADO. El botón de redactar vive con las demás
+                acciones de la sección, en el panel de decisiones: acá quedaba
+                separado de "propónme ideas" cuando ambos son lo mismo — pedirle
+                ayuda al modelo sobre esta sección. */}
+            <h3 className="text-sm font-semibold shrink-0">{t('drafting.prose.label')}</h3>
 
             {error && <p className="text-xs text-muted-foreground shrink-0">{t('drafting.prose.failed')}</p>}
 

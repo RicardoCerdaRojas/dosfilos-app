@@ -13,6 +13,9 @@ import {
     type WalkSection,
 } from '@dosfilos/domain';
 import { useProposeElements, type ProposedElement } from '@/hooks/useProposeElements';
+import { useProposeAuthorityQuotes } from '@/hooks/useProposeAuthorityQuotes';
+import { useFirebase } from '@/context/firebase-context';
+import { toast } from 'sonner';
 import { SectionContextBlocks } from './SectionContextBlocks';
 import { ElementProposals } from './ElementProposals';
 import { DecidedElementsList } from './DecidedElementsList';
@@ -25,6 +28,19 @@ interface Props {
     points?: readonly string[];
     /** Proposición decidida para el punto, si la sección no es esa misma. */
     pointProposition?: string;
+    /**
+     * Lo que él decidió decir en la exposición del punto.
+     *
+     * Es la declaración MÁS ESPECÍFICA de lo que el punto dice —"hijo de
+     * Amitai", "capital del Imperio Asirio"— y por eso es mejor consulta para
+     * buscar en su biblioteca que la frase-tesis sola, que encuentra lo
+     * genérico del tema.
+     */
+    pointExpositionIdeas?: readonly string[];
+    /** Redacta la sección. Vive acá para que las acciones de la sección no se repartan. */
+    onWriteSection?: () => void;
+    writing?: boolean;
+    hasProse?: boolean;
     elements: SermonElement[];
     onChange: (elements: SermonElement[]) => void;
 }
@@ -71,6 +87,10 @@ export function SectionElementsPanel(props: Props) {
     /** Para el prompt de propuestas: proponer de memoria es lo que se evita. */
     const versiculo = LocalBibleService.getVerses(scriptureLookupRef(section.scriptureRef) ?? '');
     const { propose, loading, error } = useProposeElements();
+    const { propose: proponerCitas, loading: buscandoCitas } = useProposeAuthorityQuotes();
+    const { user } = useFirebase();
+    /** La cita se SELECCIONA de su biblioteca; no se pide "una idea de cita". */
+    const esCitaDeAutoridad = section.id.endsWith('.authorityQuote');
     const [mine, setMine] = useState('');
     const [proposals, setProposals] = useState<ProposedElement[]>([]);
 
@@ -121,6 +141,31 @@ export function SectionElementsPanel(props: Props) {
         );
 
     const handlePropose = async () => {
+        if (esCitaDeAutoridad) {
+            const r = await proponerCitas({
+                // La cita debe respaldar lo que el punto AFIRMA, no el pasaje
+                // en general: la proposición es la mejor consulta que hay.
+                // La consulta suma la tesis del punto y lo que decidió decir en
+                // él: cuanto más específica, más probable que NO encuentre nada
+                // — y decirle la verdad sobre lo que va a predicar es mejor que
+                // traerle algo tangencial al tema general.
+                query: [props.pointProposition, ...(props.pointExpositionIdeas ?? [])]
+                    .filter(Boolean)
+                    .join(' ')
+                    .trim() || section.parentLabel || props.passage,
+                userId: user?.uid,
+                passage: props.passage,
+                pointTitle: section.parentLabel,
+                pointProposition: props.pointProposition,
+            });
+            if (r.kind === 'ok') setProposals(r.quotes);
+            // Los tres casos sin resultado se distinguen: que su biblioteca no
+            // tenga nada del tema no es lo mismo que tener y que no encaje, y
+            // ninguno de los dos es un error.
+            else toast.info(t(`drafting.elements.quotes.${r.kind}`));
+            return;
+        }
+
         const nuevos = await propose({
             passage: props.passage,
             sectionLabel: t(section.labelKey, section.labelParams),
@@ -199,9 +244,21 @@ export function SectionElementsPanel(props: Props) {
             </div>
 
             <ElementProposals
-                proposeKey={esVerbatim ? vk('propose') : 'drafting.elements.propose'}
-                proposeMoreKey={esVerbatim ? vk('proposeMore') : 'drafting.elements.proposeMore'}
-                loading={loading}
+                proposeKey={
+                    esCitaDeAutoridad
+                        ? 'drafting.elements.quotes.propose'
+                        : esVerbatim
+                          ? vk('propose')
+                          : 'drafting.elements.propose'
+                }
+                proposeMoreKey={
+                    esCitaDeAutoridad
+                        ? 'drafting.elements.quotes.proposeMore'
+                        : esVerbatim
+                          ? vk('proposeMore')
+                          : 'drafting.elements.proposeMore'
+                }
+                loading={loading || buscandoCitas}
                 error={error}
                 proposals={proposals}
                 onPropose={handlePropose}
@@ -216,6 +273,10 @@ export function SectionElementsPanel(props: Props) {
                     add([texto], 'editado', p.text);
                     consume(i);
                 }}
+                onWriteSection={props.onWriteSection}
+                writing={props.writing}
+                hasProse={props.hasProse}
+                canWrite={decided.length > 0}
                 onDiscard={(p, i) => {
                     // Descartar SE REGISTRA aunque no entre al sermón: qué
                     // rechazó dice tanto como qué aceptó.

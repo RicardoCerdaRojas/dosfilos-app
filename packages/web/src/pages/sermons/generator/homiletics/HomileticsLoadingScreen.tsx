@@ -18,7 +18,7 @@ export const HomileticsLoadingScreen: React.FC<HomileticsLoadingScreenProps> = (
     const subKey = phase === 1 ? 'homiletics.phase1Sub' : 'homiletics.phase2Sub';
 
     return (
-        <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+        <div className="flex items-center justify-center h-full">
             <div className="text-center space-y-4">
                 <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
                 <p className="text-lg font-medium">{t(titleKey)}</p>

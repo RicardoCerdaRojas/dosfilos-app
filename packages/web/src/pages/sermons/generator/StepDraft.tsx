@@ -25,7 +25,9 @@ import {
 } from '@dosfilos/application';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import {
+    countReadySections,
     deriveSectionWalk,
+    type SermonContent,
     normalizeHomileticalApproach,
     GENRE_COMPLIANCE_GENRES,
     JUDGE_SHADOW_SAMPLE_1_IN,
@@ -70,6 +72,9 @@ import { useDraftRefinement } from './draft/useDraftRefinement';
 import { useDraftVersions } from './draft/useDraftVersions';
 import { SocraticWorkshop } from './draft/SocraticWorkshop';
 import { HomileticsSavedIndicator } from './homiletics/HomileticsLoadingScreen';
+import { WizardStepHeader } from './WizardStepHeader';
+import { WizardStepShell } from './WizardStepShell';
+import { WorkshopDraftActions } from './draft/WorkshopDraftActions';
 
 export function StepDraft() {
     const { t, language } = useTranslation('generator');
@@ -506,7 +511,7 @@ export function StepDraft() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+            <div className="flex items-center justify-center h-full">
                 <div className="text-center space-y-4">
                     <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
                     <p className="text-lg font-medium">{t('drafting.loading')}</p>
@@ -556,6 +561,19 @@ export function StepDraft() {
         socraticWalk.find((s) => s.status === 'pendiente') ??
         socraticWalk[0];
 
+    // Armar el borrador: lo dispara la banda del paso.
+    const armarBorrador = async (armado: SermonContent) => {
+        const guardo = await archivarBorradorActual(t('drafting.versions.beforeAssemble'));
+        setDraft(armado);
+        // Llevarlo a ver lo que acaba de armar. El resultado de esta acción ES
+        // el borrador: dejarlo en el taller lo obliga a buscarlo para saber si
+        // funcionó.
+        setActiveTab('draft');
+        toast.success(
+            guardo ? t('drafting.versions.assembledWithBackup') : t('drafting.versions.assembled'),
+        );
+    };
+
     const socraticPanel = socraticGate.enabled && homiletics && activeSection ? (
         <SocraticWorkshop
             walk={socraticWalk}
@@ -569,49 +587,71 @@ export function StepDraft() {
             passage={passage}
             proposition={homiletics.homileticalProposition}
             points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
-            outlinePoints={(homiletics.outline?.mainPoints ?? []) as any[]}
-            hasDraft={!!draft}
-            homiletics={homiletics}
-            sermonTitle={draft?.title}
-            onAssemble={async (armado) => {
-                const guardo = await archivarBorradorActual(t('drafting.versions.beforeAssemble'));
-                setDraft(armado);
-                // Llevarlo a ver lo que acaba de armar. El resultado de esta
-                // acción ES el borrador: dejarlo en el taller lo obliga a
-                // buscarlo para saber si funcionó.
-                setActiveTab('draft');
-                toast.success(
-                    guardo
-                        ? t('drafting.versions.assembledWithBackup')
-                        : t('drafting.versions.assembled'),
-                );
-            }}
         />
     ) : null;
 
-    // Se define acá arriba para poder envolverlo en pestañas sin re-indentar
-    // 180 líneas. El ternario estrecha `draft`: dentro de la rama verdadera ya
-    // no es null, igual que en la rama original del render.
-    const draftBody = draft ? (
-        <>
-            <IllustrationDuplicateBanner draft={draft} />
-            <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
-                <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-                    {/* `min-w-0` + `truncate` en el título, `shrink-0` en los
-                        controles: la fila no tenía ninguno de los dos, así que
-                        el título competía por el espacio con el pasaje y el
-                        botón de regenerar. Agregar CUALQUIER elemento a esa
-                        barra partía el encabezado en dos líneas — se descubrió
-                        al montar un indicador ahí. El título es lo que debe
-                        ceder, y conserva el texto completo en el tooltip. */}
-                    <div className="mb-4 flex-shrink-0 flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                            <h3 className="text-lg font-semibold truncate" title={draft.title}>{draft.title}</h3>
-                            <p className="text-sm text-muted-foreground">
-                                {expandedSectionId ? t('drafting.refiningStatus') : t('drafting.defaultStatus')}
-                            </p>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
+    // ARMAR EL BORRADOR ES ACCIÓN DEL PASO, NO DEL PANEL. Vivía dentro del
+    // taller, que es la razón por la que se perdía al cambiar de pestaña.
+    const workshopActions = homiletics ? (
+        <WorkshopDraftActions
+            walk={socraticWalk}
+            elements={sectionElements}
+            prose={sectionProse}
+            points={(homiletics.outline?.mainPoints ?? []) as any[]}
+            proposition={homiletics.homileticalProposition}
+            audienceRigor={rules.audienceRigor}
+            onProseChange={setSectionProse}
+            onAssemble={armarBorrador}
+            hasDraft={!!draft}
+            homiletics={homiletics}
+        />
+    ) : null;
+
+    // LA BANDA DEL PASO ES UNA SOLA Y LAS PESTAÑAS VAN DENTRO. Vivía adentro de
+    // `draftBody`, o sea dentro de la pestaña Borrador: al pasar al Taller
+    // desaparecían el título y TODOS los botones del paso —publicar incluido—
+    // y no quedaba forma de publicar sin volver a la otra pestaña.
+    const stepHeader = draft ? (
+            <WizardStepHeader
+                leading={
+                    socraticPanel ? (
+                        /* EL TALLER VA PRIMERO: se lee de izquierda a derecha
+                           en el orden del trabajo —decidir y después armar—, el
+                           mismo que el asistente ya usa arriba. El borrador es
+                           el resultado, no el punto de partida.
+                           ABRE EN BORRADOR de todos modos, porque estas
+                           pestañas sólo existen cuando YA hay uno: sin borrador
+                           el taller es lo único que se muestra, así que el
+                           primer trabajo empieza ahí por sí solo. Volver a
+                           entrar y aterrizar en el taller lo obligaría a buscar
+                           su sermón cada vez. */
+                        <TabsList>
+                            <TabsTrigger value="workshop">{t('drafting.tabs.workshop')}</TabsTrigger>
+                            <TabsTrigger value="draft">{t('drafting.tabs.draft')}</TabsTrigger>
+                        </TabsList>
+                    ) : undefined
+                }
+                title={draft.title}
+                meta={
+                    activeTab === 'workshop'
+                        ? t('drafting.sections.pendingCount', {
+                              done: countReadySections(socraticWalk, sectionElements),
+                              total: socraticWalk.length,
+                          })
+                        : undefined
+                }
+                documentActions={
+                    /* LA ACCIÓN PROPIA DE LA PESTAÑA VIAJA EN LA MISMA BANDA.
+                       En el taller la acción es armar el borrador; en el
+                       borrador son el pasaje y regenerar. Lo que NO cambia con
+                       la pestaña —publicar, guardar, volver— queda del otro
+                       lado del separador, porque son del sermón y no del modo
+                       en que se esté trabajando. */
+                    activeTab === 'workshop' ? (
+                        workshopActions
+                    ) : (
+                        <>
+
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -621,7 +661,7 @@ export function StepDraft() {
                                 <BookOpen className="h-4 w-4" />
                                 <span className="text-xs font-medium">{passage}</span>
                             </Button>
-
+        
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="outline" size="sm" disabled={loading}>
@@ -656,8 +696,62 @@ export function StepDraft() {
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
-                        </div>
-                    </div>
+                        </>
+                    )
+                }
+                navigationActions={<>
+                <Button onClick={() => setStep(2)} variant="outline" size="sm">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {t('drafting.backToHomiletics')}
+                </Button>
+        
+                <Button onClick={() => setShowPreview(true)} variant="outline" size="sm">
+                    <Eye className="mr-2 h-4 w-4" />
+                    {t('drafting.preview')}
+                </Button>
+        
+                <Button onClick={handleSaveAndExit} variant="outline" size="sm">
+                    <Save className="mr-2 h-4 w-4" />
+                    {t('drafting.saveAndExit')}
+                </Button>
+        
+                <Button onClick={handlePublish} disabled={publishing || contraScan.scanning || !sermonId} size="sm">
+                    {/* EL BOTÓN DICE LO QUE ESTÁ PASANDO, NO LO QUE SE PIDIÓ.
+                        Antes mostraba "Publicando…" también durante el
+                        contra-scan, que es la etapa LENTA (un callable de 1 GB
+                        que recorre la biblioteca: ~11 s en el caso real). El
+                        pastor leía "Publicando", esperaba, no veía nada, y
+                        concluía que se había roto — cuando sólo estaba
+                        trabajando. Le costó un intento entero. */}
+                    {contraScan.scanning ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t('drafting.scanningLibrary')}
+                        </>
+                    ) : publishing ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t('drafting.publishing')}
+                        </>
+                    ) : (
+                        <>
+                            <Upload className="mr-2 h-4 w-4" />
+                            {t('drafting.publishSermon')}
+                        </>
+                    )}
+                </Button>
+                </>}
+            />
+    ) : null;
+
+    // Se define acá arriba para poder envolverlo en pestañas sin re-indentar
+    // 180 líneas. El ternario estrecha `draft`: dentro de la rama verdadera ya
+    // no es null, igual que en la rama original del render.
+    const draftBody = draft ? (
+        <>
+            <IllustrationDuplicateBanner draft={draft} />
+            <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
+                <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
                     <div className="flex-1 min-h-0">
                         <ContentCanvas
                             content={draft}
@@ -827,7 +921,7 @@ export function StepDraft() {
             </Card>
         </div>
     ) : (
-        <div className="flex flex-col gap-4 overflow-hidden p-4" style={{ height: 'calc(100vh - 130px)' }}>
+        <div className="h-full flex flex-col gap-4 overflow-hidden p-4">
             {/* PESTAÑAS Y NO UN PANEL ENCIMA. Con el taller abierto sobre el
                 borrador los dos competían por la misma altura y ninguno se leía
                 entero. Son dos modos de trabajo —decidir ideas versus revisar
@@ -836,11 +930,14 @@ export function StepDraft() {
                 Los botones del paso quedan FUERA de las pestañas: navegar y
                 publicar no dependen del modo en que se esté trabajando. */}
             {socraticPanel ? (
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'draft' | 'workshop')} className="flex-1 min-h-0 flex flex-col">
-                    <TabsList className="self-start shrink-0">
-                        <TabsTrigger value="draft">{t('drafting.tabs.draft')}</TabsTrigger>
-                        <TabsTrigger value="workshop">{t('drafting.tabs.workshop')}</TabsTrigger>
-                    </TabsList>
+                <Tabs
+                    value={activeTab}
+                    onValueChange={(v) => setActiveTab(v as 'draft' | 'workshop')}
+                    className="flex-1 min-h-0 flex flex-col gap-4"
+                >
+                    {/* La banda va DENTRO de `Tabs` porque lleva el `TabsList`:
+                        las pestañas necesitan el contexto de Radix. */}
+                    {stepHeader}
                     {/* NINGUNA CLASE DE `display` EN `TabsContent`.
                         Radix oculta el panel inactivo con el atributo `hidden`,
                         que la hoja del navegador implementa como `display:none`
@@ -849,59 +946,20 @@ export function StepDraft() {
                         `flex-1` y los dos se repartían la altura: el taller
                         quedaba empujado al fondo con un hueco enorme arriba.
                         El layout va en un div INTERIOR. */}
-                    <TabsContent value="draft" className="flex-1 min-h-0 mt-3">
+                    <TabsContent value="draft" className="flex-1 min-h-0">
                         <div className="h-full flex flex-col gap-4">{draftBody}</div>
                     </TabsContent>
-                    <TabsContent value="workshop" className="flex-1 min-h-0 mt-3">
+                    <TabsContent value="workshop" className="flex-1 min-h-0">
                         <div className="h-full overflow-y-auto">{socraticPanel}</div>
                     </TabsContent>
                 </Tabs>
             ) : (
-                draftBody
+                <>
+                    {stepHeader}
+                    {draftBody}
+                </>
             )}
 
-            <div className="flex-shrink-0 flex gap-2">
-                <Button onClick={() => setStep(2)} variant="outline" size="lg" className="flex-1">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    {t('drafting.backToHomiletics')}
-                </Button>
-
-                <Button onClick={() => setShowPreview(true)} variant="outline" size="lg" className="flex-1">
-                    <Eye className="mr-2 h-4 w-4" />
-                    {t('drafting.preview')}
-                </Button>
-
-                <Button onClick={handleSaveAndExit} variant="secondary" size="lg" className="flex-1">
-                    <Save className="mr-2 h-4 w-4" />
-                    {t('drafting.saveAndExit')}
-                </Button>
-
-                <Button onClick={handlePublish} disabled={publishing || contraScan.scanning || !sermonId} size="lg" className="flex-1">
-                    {/* EL BOTÓN DICE LO QUE ESTÁ PASANDO, NO LO QUE SE PIDIÓ.
-                        Antes mostraba "Publicando…" también durante el
-                        contra-scan, que es la etapa LENTA (un callable de 1 GB
-                        que recorre la biblioteca: ~11 s en el caso real). El
-                        pastor leía "Publicando", esperaba, no veía nada, y
-                        concluía que se había roto — cuando sólo estaba
-                        trabajando. Le costó un intento entero. */}
-                    {contraScan.scanning ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {t('drafting.scanningLibrary')}
-                        </>
-                    ) : publishing ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {t('drafting.publishing')}
-                        </>
-                    ) : (
-                        <>
-                            <Upload className="mr-2 h-4 w-4" />
-                            {t('drafting.publishSermon')}
-                        </>
-                    )}
-                </Button>
-            </div>
         </div>
     );
 
@@ -947,15 +1005,13 @@ export function StepDraft() {
         <>
             <HomileticsSavedIndicator visible={saving} />
 
-            <div className="px-2 pt-2">
-                <DerivedContextBanner stepHintKey="draftHint" />
-            </div>
-
-            {/* ADR-031 — provide the citation manifest so [N] anchors in the
-                editor render as verifiable popovers (chunk + book + page). */}
-            <CitationManifestContext.Provider value={draft?.citationManifest}>
-                {draft ? leftPanel : <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />}
-            </CitationManifestContext.Provider>
+            <WizardStepShell banner={<DerivedContextBanner stepHintKey="draftHint" />}>
+                {/* ADR-031 — provide the citation manifest so [N] anchors in the
+                    editor render as verifiable popovers (chunk + book + page). */}
+                <CitationManifestContext.Provider value={draft?.citationManifest}>
+                    {draft ? leftPanel : <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />}
+                </CitationManifestContext.Provider>
+            </WizardStepShell>
 
             <Dialog open={showPreview} onOpenChange={setShowPreview}>
                 <DialogContent className="!max-w-[95vw] !w-full sm:!w-[1200px] lg:!w-[1600px] h-[90vh] max-h-[90vh] flex flex-col p-0 overflow-hidden">

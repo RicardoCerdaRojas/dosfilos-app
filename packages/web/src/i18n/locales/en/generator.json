@@ -446,7 +446,15 @@
       },
       "flipKind": "Switch between your own idea and a topic to cover",
       "unsupported": "No direct support in the text",
-      "oneIdeaHint": "Write it whole, as you will tell it. Line breaks don't split it — it's one image."
+      "oneIdeaHint": "Write it whole, as you will tell it. Line breaks don't split it — it's one image.",
+      "quotes": {
+        "propose": "Search my library for quotes",
+        "proposeMore": "Search for others",
+        "sinFuentes": "Your library has nothing on this point. Write the quote yourself, or leave it without one — better than quoting something off-point.",
+        "sinCoincidencias": "There is material in your library, but none supports what this point claims.",
+        "falló": "Couldn't search your library. Try again.",
+        "showSource": "Show the source excerpt"
+      }
     },
     "sections": {
       "exposition": {

@@ -446,7 +446,15 @@
       },
       "flipKind": "Cambia entre idea tuya y tema a cubrir",
       "unsupported": "Sin apoyo directo en el texto",
-      "oneIdeaHint": "Escríbela completa, como la vas a contar. Los saltos de línea no la parten: es una sola imagen."
+      "oneIdeaHint": "Escríbela completa, como la vas a contar. Los saltos de línea no la parten: es una sola imagen.",
+      "quotes": {
+        "propose": "Buscar citas en mi biblioteca",
+        "proposeMore": "Buscar otras",
+        "sinFuentes": "Tu biblioteca no tiene material sobre este punto. Escribe la cita tú, o déjalo sin cita: es preferible a citar algo que no viene al caso.",
+        "sinCoincidencias": "Hay material en tu biblioteca, pero ninguno respalda lo que este punto afirma.",
+        "falló": "No se pudo buscar en tu biblioteca. Intenta de nuevo.",
+        "showSource": "Ver el fragmento de origen"
+      }
     },
     "sections": {
       "exposition": {
