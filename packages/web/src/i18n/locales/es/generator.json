@@ -441,7 +441,8 @@
         "directiva": "Tema"
       },
       "flipKind": "Cambia entre idea tuya y tema a cubrir",
-      "unsupported": "Sin apoyo directo en el texto"
+      "unsupported": "Sin apoyo directo en el texto",
+      "oneIdeaHint": "Escríbela completa, como la vas a contar. Los saltos de línea no la parten: es una sola imagen."
     },
     "sections": {
       "exposition": {
@@ -522,6 +523,12 @@
       "failed": "No se pudo escribir. Tus decisiones siguen guardadas.",
       "emptyNoDecisions": "Primero decide qué va en esta sección. La prosa se escribe a partir de eso.",
       "emptyReady": "Ya decidiste. Pulsa «Escribir esta sección» para redactarla."
+    },
+    "assemble": {
+      "writeAll": "Escribir las {{count}} que faltan",
+      "writingProgress": "Escribiendo {{hechas}} de {{total}}…",
+      "build": "Armar el borrador",
+      "missing": "Faltan {{count}} secciones por escribir, empezando por «{{first}}». Puedes armarlo igual: esas quedan vacías."
     }
   },
   "pastoralContext": {

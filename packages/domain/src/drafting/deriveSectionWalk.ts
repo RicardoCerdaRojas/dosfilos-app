@@ -73,6 +73,18 @@ export interface WalkSection {
      * modelo, para que lo cite en vez de recordarlo.
      */
     scriptureRef?: string;
+    /**
+     * La sección lleva UNA sola decisión, aunque ocupe varias frases.
+     *
+     * La ilustración es el caso: una imagen se escribe en dos o tres frases y
+     * sigue siendo UNA. Partirla por saltos de línea —la regla que sirve para
+     * las listas de ideas— la trocea, y peor: al quedar varios elementos la
+     * sección entra por la rama de "un movimiento por concepto" y sale con la
+     * estructura de una exposición.
+     *
+     * Lo que cuenta como unidad depende de la SECCIÓN, no del formato del texto.
+     */
+    oneIdea?: boolean;
     /** Agrupa las secciones de un punto bajo él, para el mapa lateral. */
     parentId?: string;
     /** Título del punto, verbatim. Sólo en las secciones que SON un punto. */
@@ -187,6 +199,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
             ...base,
             id: `${parentId}.illustration`,
             mode: 'elements',
+            oneIdea: true,
             labelKey: `${NS}.illustration.label`,
             jobKey: `${NS}.illustration.job`,
             labelParams: { n },
@@ -226,6 +239,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
     secciones.push({
         id: 'introduction.openingIllustration',
         mode: 'elements',
+        oneIdea: true,
         labelKey: `${NS}.openingIllustration.label`,
         jobKey: `${NS}.openingIllustration.job`,
         status: apertura.length > 0 ? 'cubierta' : 'pendiente',

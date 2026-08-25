@@ -441,7 +441,8 @@
         "directiva": "Topic"
       },
       "flipKind": "Switch between your own idea and a topic to cover",
-      "unsupported": "No direct support in the text"
+      "unsupported": "No direct support in the text",
+      "oneIdeaHint": "Write it whole, as you will tell it. Line breaks don't split it — it's one image."
     },
     "sections": {
       "exposition": {
@@ -522,6 +523,12 @@
       "failed": "Couldn't write it. Your decisions are still saved.",
       "emptyNoDecisions": "First decide what goes in this section. The prose is written from that.",
       "emptyReady": "You've decided. Press “Write this section” to draft it."
+    },
+    "assemble": {
+      "writeAll": "Write the {{count}} remaining",
+      "writingProgress": "Writing {{hechas}} of {{total}}…",
+      "build": "Build the draft",
+      "missing": "{{count}} sections still unwritten, starting with “{{first}}”. You can build anyway — those stay empty."
     }
   },
   "pastoralContext": {

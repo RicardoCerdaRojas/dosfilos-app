@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RailDivider } from '@/components/ui/RailDivider';
 import { useTranslation } from '@/i18n';
-import type { SermonElement, WalkSection } from '@dosfilos/domain';
+import type { SermonContent, SermonElement, WalkSection } from '@dosfilos/domain';
 import { SermonMap } from './SermonMap';
 import { SectionElementsPanel } from './SectionElementsPanel';
 import { SectionProsePanel } from './SectionProsePanel';
+import { WorkshopDraftActions } from './WorkshopDraftActions';
 
 interface Props {
     walk: readonly WalkSection[];
@@ -18,6 +19,9 @@ interface Props {
     passage: string;
     proposition?: string;
     points?: readonly string[];
+    /** Bosquejo, para armar el borrador con los títulos y aplicaciones reales. */
+    outlinePoints: readonly { title?: string; application?: string; scriptureReferences?: string[] }[];
+    onAssemble: (draft: SermonContent) => void;
 }
 
 const ANCHO_MIN = 200;
@@ -96,7 +100,8 @@ export function SocraticWorkshop(props: Props) {
         : undefined;
 
     return (
-        <div className="flex items-stretch gap-0 h-full min-h-[24rem]">
+        <div className="flex flex-col h-full gap-3">
+        <div className="flex items-stretch gap-0 flex-1 min-h-[24rem]">
             {abierto && (
                 <div style={{ width: ancho }} className="shrink-0 overflow-hidden">
                     <SermonMap
@@ -162,6 +167,18 @@ export function SocraticWorkshop(props: Props) {
                     )}
                 </>
             )}
+        </div>
+
+        <WorkshopDraftActions
+            walk={props.walk}
+            elements={props.elements}
+            prose={props.prose}
+            points={props.outlinePoints}
+            proposition={props.proposition}
+            audienceRigor={props.audienceRigor}
+            onProseChange={props.onChangeProse}
+            onAssemble={props.onAssemble}
+        />
         </div>
     );
 }
