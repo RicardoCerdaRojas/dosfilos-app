@@ -596,106 +596,104 @@ export function StepDraft() {
     const draftBody = draft ? (
         <>
             <IllustrationDuplicateBanner draft={draft} />
+            {/* EL ENCABEZADO CRUZA LAS DOS COLUMNAS.
+                Vivía dentro de la izquierda, así que el chat arrancaba más
+                arriba que el contenido y las columnas no encuadraban. Como
+                banda sobre ambas, el borde superior es uno solo y el chat
+                empieza donde empieza el trabajo. */}
+            <WizardStepHeader
+                title={draft.title}
+                documentActions={<>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
+                                onClick={() => setRightPanelMode((prev) => (prev === 'bible' ? 'chat' : 'bible'))}
+                            >
+                                <BookOpen className="h-4 w-4" />
+                                <span className="text-xs font-medium">{passage}</span>
+                            </Button>
+        
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="outline" size="sm" disabled={loading}>
+                                        {loading ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                {t('drafting.regeneratingBtn')}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <RefreshCw className="mr-2 h-4 w-4" />
+                                                {t('drafting.regenerateBtn')}
+                                            </>
+                                        )}
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>{t('drafting.regenerateConfirm.title')}</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            {t('drafting.regenerateConfirm.description')}
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>{t('drafting.regenerateConfirm.cancel')}</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={handleGenerate}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                            {t('drafting.regenerateConfirm.confirm')}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                </>}
+                navigationActions={<>
+                <Button onClick={() => setStep(2)} variant="outline" size="sm">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {t('drafting.backToHomiletics')}
+                </Button>
+        
+                <Button onClick={() => setShowPreview(true)} variant="outline" size="sm">
+                    <Eye className="mr-2 h-4 w-4" />
+                    {t('drafting.preview')}
+                </Button>
+        
+                <Button onClick={handleSaveAndExit} variant="outline" size="sm">
+                    <Save className="mr-2 h-4 w-4" />
+                    {t('drafting.saveAndExit')}
+                </Button>
+        
+                <Button onClick={handlePublish} disabled={publishing || contraScan.scanning || !sermonId} size="sm">
+                    {/* EL BOTÓN DICE LO QUE ESTÁ PASANDO, NO LO QUE SE PIDIÓ.
+                        Antes mostraba "Publicando…" también durante el
+                        contra-scan, que es la etapa LENTA (un callable de 1 GB
+                        que recorre la biblioteca: ~11 s en el caso real). El
+                        pastor leía "Publicando", esperaba, no veía nada, y
+                        concluía que se había roto — cuando sólo estaba
+                        trabajando. Le costó un intento entero. */}
+                    {contraScan.scanning ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t('drafting.scanningLibrary')}
+                        </>
+                    ) : publishing ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t('drafting.publishing')}
+                        </>
+                    ) : (
+                        <>
+                            <Upload className="mr-2 h-4 w-4" />
+                            {t('drafting.publishSermon')}
+                        </>
+                    )}
+                </Button>
+                </>}
+            />
             <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
                 <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-                    {/* `min-w-0` + `truncate` en el título, `shrink-0` en los
-                        controles: la fila no tenía ninguno de los dos, así que
-                        el título competía por el espacio con el pasaje y el
-                        botón de regenerar. Agregar CUALQUIER elemento a esa
-                        barra partía el encabezado en dos líneas — se descubrió
-                        al montar un indicador ahí. El título es lo que debe
-                        ceder, y conserva el texto completo en el tooltip. */}
-                    <WizardStepHeader
-                        title={draft.title}
-                        documentActions={<>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
-                                        onClick={() => setRightPanelMode((prev) => (prev === 'bible' ? 'chat' : 'bible'))}
-                                    >
-                                        <BookOpen className="h-4 w-4" />
-                                        <span className="text-xs font-medium">{passage}</span>
-                                    </Button>
-        
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="outline" size="sm" disabled={loading}>
-                                                {loading ? (
-                                                    <>
-                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                        {t('drafting.regeneratingBtn')}
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <RefreshCw className="mr-2 h-4 w-4" />
-                                                        {t('drafting.regenerateBtn')}
-                                                    </>
-                                                )}
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>{t('drafting.regenerateConfirm.title')}</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    {t('drafting.regenerateConfirm.description')}
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>{t('drafting.regenerateConfirm.cancel')}</AlertDialogCancel>
-                                                <AlertDialogAction
-                                                    onClick={handleGenerate}
-                                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                                >
-                                                    {t('drafting.regenerateConfirm.confirm')}
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                        </>}
-                        navigationActions={<>
-                        <Button onClick={() => setStep(2)} variant="outline" size="sm">
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            {t('drafting.backToHomiletics')}
-                        </Button>
-        
-                        <Button onClick={() => setShowPreview(true)} variant="outline" size="sm">
-                            <Eye className="mr-2 h-4 w-4" />
-                            {t('drafting.preview')}
-                        </Button>
-        
-                        <Button onClick={handleSaveAndExit} variant="outline" size="sm">
-                            <Save className="mr-2 h-4 w-4" />
-                            {t('drafting.saveAndExit')}
-                        </Button>
-        
-                        <Button onClick={handlePublish} disabled={publishing || contraScan.scanning || !sermonId} size="sm">
-                            {/* EL BOTÓN DICE LO QUE ESTÁ PASANDO, NO LO QUE SE PIDIÓ.
-                                Antes mostraba "Publicando…" también durante el
-                                contra-scan, que es la etapa LENTA (un callable de 1 GB
-                                que recorre la biblioteca: ~11 s en el caso real). El
-                                pastor leía "Publicando", esperaba, no veía nada, y
-                                concluía que se había roto — cuando sólo estaba
-                                trabajando. Le costó un intento entero. */}
-                            {contraScan.scanning ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    {t('drafting.scanningLibrary')}
-                                </>
-                            ) : publishing ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    {t('drafting.publishing')}
-                                </>
-                            ) : (
-                                <>
-                                    <Upload className="mr-2 h-4 w-4" />
-                                    {t('drafting.publishSermon')}
-                                </>
-                            )}
-                        </Button>
-                        </>}
-                    />
                     <div className="flex-1 min-h-0">
                         <ContentCanvas
                             content={draft}

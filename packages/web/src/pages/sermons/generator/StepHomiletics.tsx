@@ -349,6 +349,68 @@ export function StepHomiletics() {
     }
 
     // ── Sub-step 2b: proposition development ────────────────────────────
+    const stepHeader = (
+        <WizardStepHeader
+            title={t('homiletics.proposalTitle')}
+            documentActions={<>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
+                        onClick={() => setRightPanelMode(prev => (prev === 'bible' ? 'chat' : 'bible'))}
+                    >
+                        <BookOpen className="h-4 w-4" />
+                        <span className="text-xs font-medium">{passage}</span>
+                    </Button>
+    
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" disabled={loading}>
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        {t('homiletics.regeneratingBtn')}
+                                    </>
+                                ) : (
+                                    <>
+                                        <RefreshCw className="mr-2 h-4 w-4" />
+                                        {t('homiletics.regenerateShort')}
+                                    </>
+                                )}
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>{t('homiletics.regenerateConfirm.title')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    {t('homiletics.regenerateConfirm.description')}
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>{t('homiletics.regenerateConfirm.cancel')}</AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={handleGenerate}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                    {t('homiletics.regenerateConfirm.confirm')}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+            </>}
+            navigationActions={<>
+                <Button onClick={handleContinue} size="sm">
+                    {t('homiletics.continueToDrafting')}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button onClick={() => setStep(1)} variant="ghost" size="sm">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {t('homiletics.backToExegesis')}
+                </Button>
+            </>}
+        />
+    );
+
     const leftPanel = !homiletics ? (
         <div className="h-full flex flex-col">
             <div className="space-y-4 mb-6">
@@ -388,65 +450,6 @@ export function StepHomiletics() {
         // franja muerta a la derecha, con la ventana a medio usar. `min-w-0`
         // permite que su contenido se recorte en vez de empujar el ancho.
         <div className="flex-1 min-w-0 h-full flex flex-col overflow-hidden">
-            <WizardStepHeader
-                title={t('homiletics.proposalTitle')}
-                documentActions={<>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-2 bg-background border-primary/20 text-primary hover:text-primary hover:bg-primary/5"
-                            onClick={() => setRightPanelMode(prev => (prev === 'bible' ? 'chat' : 'bible'))}
-                        >
-                            <BookOpen className="h-4 w-4" />
-                            <span className="text-xs font-medium">{passage}</span>
-                        </Button>
-    
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="outline" size="sm" disabled={loading}>
-                                    {loading ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            {t('homiletics.regeneratingBtn')}
-                                        </>
-                                    ) : (
-                                        <>
-                                            <RefreshCw className="mr-2 h-4 w-4" />
-                                            {t('homiletics.regenerateShort')}
-                                        </>
-                                    )}
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>{t('homiletics.regenerateConfirm.title')}</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        {t('homiletics.regenerateConfirm.description')}
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>{t('homiletics.regenerateConfirm.cancel')}</AlertDialogCancel>
-                                    <AlertDialogAction
-                                        onClick={handleGenerate}
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                        {t('homiletics.regenerateConfirm.confirm')}
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                </>}
-                navigationActions={<>
-                    <Button onClick={handleContinue} size="sm">
-                        {t('homiletics.continueToDrafting')}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                    <Button onClick={() => setStep(1)} variant="ghost" size="sm">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        {t('homiletics.backToExegesis')}
-                    </Button>
-                </>}
-            />
             <div className="flex-1 min-h-0">
                 <ContentCanvas
                     content={formattedHomiletics}
@@ -558,7 +561,7 @@ export function StepHomiletics() {
             </div>
 
             {!homiletics ? (
-                <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />
+                <WizardLayout header={stepHeader} leftPanel={leftPanel} rightPanel={rightPanel} />
             ) : (
                 <div className="flex flex-col gap-4 overflow-hidden p-4" style={{ height: 'calc(100vh - 130px)' }}>
                     <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">

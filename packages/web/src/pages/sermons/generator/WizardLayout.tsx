@@ -4,13 +4,23 @@ import { cn } from '@/lib/utils';
 interface WizardLayoutProps {
   leftPanel: ReactNode;
   rightPanel: ReactNode;
+  /**
+   * Banda superior que CRUZA LAS DOS COLUMNAS.
+   *
+   * El encabezado del paso vivía dentro de la columna izquierda, así que el
+   * chat arrancaba más arriba que el contenido y las dos columnas no
+   * encuadraban. Acá el borde superior es uno solo y el chat empieza donde
+   * empieza el trabajo.
+   */
+  header?: ReactNode;
   className?: string;
 }
 
-export function WizardLayout({ leftPanel, rightPanel, className }: WizardLayoutProps) {
-  return (
+export function WizardLayout({ leftPanel, rightPanel, header, className }: WizardLayoutProps) {
+  const columnas = (
     <div className={cn(
-      "flex flex-col lg:flex-row gap-4 h-full overflow-hidden",
+      "flex flex-col lg:flex-row gap-4 flex-1 min-h-0 overflow-hidden",
+      !header && "h-full",
       className
     )}>
       {/* Left Panel - Canvas */}
@@ -35,6 +45,15 @@ export function WizardLayout({ leftPanel, rightPanel, className }: WizardLayoutP
       <div className="w-full lg:w-auto lg:min-w-[320px] lg:max-w-[60%] flex-shrink-0 flex flex-col overflow-hidden">
         {rightPanel}
       </div>
+    </div>
+  );
+
+  if (!header) return columnas;
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden">
+      {header}
+      {columnas}
     </div>
   );
 }
