@@ -31,13 +31,17 @@ interface Props {
  * que deja de servir después del primer uso y costaba una línea en cada
  * pantalla.
  *
+ * SIN MARGEN PROPIO. Lo separa el `gap` de la columna que lo contiene, que es
+ * la misma en los tres pasos. Con `mb-4` acá y `gap-4` afuera la banda quedaba
+ * al doble de distancia en unos pasos y no en otros.
+ *
  * `min-w-0` + `truncate` en el título y `shrink-0` en los grupos de acciones:
  * la fila se parte en dos líneas apenas se le agrega algo, y este archivo ya
  * lo advertía antes de que el encabezado se compartiera.
  */
 export function WizardStepHeader({ title, documentActions, navigationActions, className }: Props) {
     return (
-        <div className={cn('mb-4 flex-shrink-0 flex flex-wrap items-center gap-x-3 gap-y-2', className)}>
+        <div className={cn('flex-shrink-0 flex flex-wrap items-center gap-x-3 gap-y-2', className)}>
             <h2 className="min-w-0 flex-1 truncate text-lg font-semibold" title={title}>
                 {title}
             </h2>

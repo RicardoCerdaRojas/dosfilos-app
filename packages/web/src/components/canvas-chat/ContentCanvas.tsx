@@ -161,7 +161,11 @@ export function ContentCanvas<T = any>({
   // List mode: Show all sections
   return (
     <ScrollArea className="h-full">
-      <div className="space-y-3 p-4">
+      {/* SIN PADDING SUPERIOR: la primera tarjeta tiene que arrancar a la
+          misma altura que el panel de chat de la columna de al lado, que no
+          lo lleva. Con `p-4` la columna de trabajo quedaba 16px más abajo y
+          las dos columnas no encuadraban — visible en los tres pasos. */}
+      <div className="space-y-3 px-4 pb-4">
         {sections.map((section) => {
           const sectionContent = getValueByPath(content, section.path);
           const isModified = modifiedSections.has(section.id);

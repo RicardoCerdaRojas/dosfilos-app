@@ -51,7 +51,7 @@ export function WizardLayout({ leftPanel, rightPanel, header, className }: Wizar
   if (!header) return columnas;
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col gap-4 overflow-hidden">
       {header}
       {columnas}
     </div>

@@ -564,6 +564,14 @@ export function StepHomiletics() {
                 <WizardLayout header={stepHeader} leftPanel={leftPanel} rightPanel={rightPanel} />
             ) : (
                 <div className="flex flex-col gap-4 overflow-hidden p-4" style={{ height: 'calc(100vh - 130px)' }}>
+                    {/* LA BANDA VA EN LAS DOS RAMAS. Con el bosquejo ya
+                        desarrollado este paso arma su propia fila en vez de
+                        usar `WizardLayout`, así que pasarle `header` al layout
+                        sólo lo mostraba en el estado VACÍO: en la pantalla
+                        donde el pastor trabaja de verdad no había ni pasaje ni
+                        continuar. Mientras las dos ramas existan, lo que se
+                        agregue arriba hay que ponerlo en las dos. */}
+                    {stepHeader}
                     <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
                         {leftPanel}
                         {rightPanel}
