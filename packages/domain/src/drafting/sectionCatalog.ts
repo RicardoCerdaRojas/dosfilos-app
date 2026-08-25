@@ -37,6 +37,14 @@ export type CoveredSource =
     | 'pointApplication'
     /** La proposición homilética del sermón. */
     | 'sermonProposition'
+    /**
+     * La proposición MÁS los puntos que anuncia.
+     *
+     * Fuente aparte de `sermonProposition` porque no todos los que usan la
+     * proposición quieren el anuncio: el título se orienta con ella y sumarle
+     * el bosquejo lo volvería un párrafo.
+     */
+    | 'sermonPropositionWithPoints'
     /** La anécdota que el pastor escribió en el paso 8. */
     | 'openingIllustration'
     /** Las palabras clave del estudio, con su significancia. */
@@ -255,7 +263,10 @@ export const SECTION_CATALOG: readonly SectionDefinition[] = [
         verbatimKey: `${NS}.sermonProposition.verbatim`,
         target: { kind: 'introduction', headingKey: `${NS}.sermonProposition.heading` },
         // La escribió en el paso homilético: se muestra, no se vuelve a pedir.
-        coveredFrom: 'sermonProposition',
+        // CON LOS PUNTOS QUE ANUNCIA. Enunciar la tesis y enseguida las
+        // divisiones es lo que hace el predicador al terminar la introducción;
+        // la proposición sola deja al oyente sin saber por dónde va el sermón.
+        coveredFrom: 'sermonPropositionWithPoints',
         contextKey: `${NS}.coveredNote`,
         coveredMeansDone: true,
         coveredIsContent: true,

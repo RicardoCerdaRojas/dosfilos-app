@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { HomileticalAnalysis, SermonContent } from '../../entities/SermonGenerator';
-import { assembleTransitions } from '../assembleTransitions';
+import { assembleTransitions, buildTransitionReminder } from '../assembleTransitions';
 
 const homiletics = (): HomileticalAnalysis =>
     ({
@@ -38,9 +38,12 @@ describe('assembleTransitions — la proposición se copia, no se pide', () => {
         expect(r.body[0]!.transition).toContain('Hemos visto que Dios habla. ¿Y el hombre?');
     });
 
-    it('los puntos salen del bosquejo, verbatim y numerados', () => {
+    it('los puntos salen del bosquejo verbatim, sin renumerar los que ya traen romano', () => {
+        // Este test afirmaba "1. I. Dios habla…": había fijado la duplicación
+        // como si fuera el contrato. El pastor numera sus puntos en el
+        // bosquejo; anteponerle otro número lo hace leer dos veces la cifra.
         const r = assembleTransitions(content(['frase', 'x']), homiletics());
-        expect(r.body[0]!.transition).toContain('**Puntos:**\n1. I. Dios habla y revela su voluntad (vv. 1-2)\n2. II. El hombre desobedece y revela su necedad (v. 3)');
+        expect(r.body[0]!.transition).toContain('**Puntos:**\nI. Dios habla y revela su voluntad (vv. 1-2)\nII. El hombre desobedece y revela su necedad (v. 3)');
     });
 
     it('TODOS los puntos llevan recordatorio, el último incluido', () => {
@@ -69,5 +72,27 @@ describe('assembleTransitions — la proposición se copia, no se pide', () => {
         const sinProp = { ...homiletics(), homileticalProposition: '' } as HomileticalAnalysis;
         const c = content(['a', 'b']);
         expect(assembleTransitions(c, sinProp)).toEqual(c);
+    });
+});
+
+describe('buildTransitionReminder — numeración', () => {
+    it('no vuelve a numerar un título que ya trae su romano', () => {
+        const out = buildTransitionReminder('Tesis.', [
+            'I. Dios habla y revela su voluntad (vv. 1-2)',
+            'II. El hombre desobedece (v. 3)',
+        ]);
+        expect(out).toContain('I. Dios habla y revela su voluntad (vv. 1-2)');
+        expect(out).not.toContain('1. I. Dios habla');
+    });
+
+    it('numera cuando el título viene sin número', () => {
+        const out = buildTransitionReminder('Tesis.', ['Dios habla', 'El hombre desobedece']);
+        expect(out).toContain('1. Dios habla');
+        expect(out).toContain('2. El hombre desobedece');
+    });
+
+    it('respeta la numeración arábiga del pastor', () => {
+        const out = buildTransitionReminder('Tesis.', ['2) El hombre desobedece']);
+        expect(out).not.toContain('1. 2)');
     });
 });

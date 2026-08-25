@@ -115,6 +115,17 @@ function resolverCubierto(
             return limpiar([punto?.application]);
         case 'sermonProposition':
             return limpiar([input.proposition]);
+        case 'sermonPropositionWithPoints': {
+            // MISMO COMPOSITOR QUE LA TRANSICIÓN, a propósito: "proposición más
+            // puntos" es una sola forma y escribirla dos veces es cómo se llega
+            // a que la introducción anuncie el bosquejo de una manera y el
+            // recordatorio de otra.
+            const proposicion = input.proposition?.trim();
+            if (!proposicion) return [];
+            const titulos = input.points.map((p) => p.title?.trim()).filter((t): t is string => Boolean(t));
+            if (titulos.length === 0) return [proposicion];
+            return [buildTransitionReminder(proposicion, titulos)];
+        }
         case 'openingIllustration':
             return limpiar([input.openingIllustration]);
         case 'transitionReminder': {
