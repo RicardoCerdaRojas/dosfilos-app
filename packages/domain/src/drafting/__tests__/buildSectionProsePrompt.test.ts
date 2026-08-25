@@ -245,3 +245,17 @@ describe('la proposición es la espina, no una decoración', () => {
         expect(texto).toContain('NO inventes un concepto');
     });
 });
+
+describe('cada movimiento va como su propia viñeta', () => {
+    it('lo pide explícitamente y dice para qué sirve', () => {
+        // La espina funcionó pero salieron párrafos corridos: al reescribir el
+        // bloque quedó dicho CUÁNTOS movimientos hacer y no CÓMO separarlos.
+        const p = buildSectionProsePrompt({
+            ...base,
+            elements: [el('una'), el('otra'), el('tercera')],
+            pointProposition: 'Dios se identifica, ordena y explica.',
+        });
+        expect(p).toContain('CADA UNO COMO SU PROPIA VIÑETA');
+        expect(p).toContain('de un vistazo en cuántas partes');
+    });
+});

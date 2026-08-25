@@ -94,9 +94,14 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
    a) Cita el texto bíblico que se expone.
    b) Enuncia la proposición del punto, tal cual está arriba.
    c) UN MOVIMIENTO POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA, en el orden en
-      que ella los nombra. Las ideas de arriba son el MATERIAL con que llenas
-      esos movimientos: una idea puede servir a un concepto, y varias pueden
+      que ella los nombra, CADA UNO COMO SU PROPIA VIÑETA (guion al inicio de
+      línea). Las ideas de arriba son el MATERIAL con que llenas esos
+      movimientos: una idea puede servir a un concepto, y varias pueden
       combinarse en uno. NO hagas un movimiento por idea.
+
+      La viñeta no es decoración: separa visualmente los conceptos para que el
+      predicador vea de un vistazo en cuántas partes se abre su proposición.
+      Como párrafos corridos se funden y hay que contarlos leyendo.
    d) Si una idea decidida no sirve a ningún concepto de la proposición, úsala
       donde mejor apoye, al final. NO la descartes y NO inventes un concepto
       para acomodarla.
