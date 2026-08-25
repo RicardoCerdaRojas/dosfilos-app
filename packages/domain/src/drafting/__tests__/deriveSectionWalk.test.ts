@@ -6,11 +6,13 @@ import { deriveSectionWalk, pendingSections, type WalkInput } from '../deriveSec
  * Dos puntos, con sus directivas y aplicaciones tal como las escribió.
  */
 const JONAS: WalkInput = {
+    sermonPassage: 'Jonás 1:1-3',
     proposition:
         'En Jonás 1:1-3, veremos dos realidades del conflicto entre Jonás y Dios que deben guiarnos a la obediencia a Dios.',
     points: [
         {
             title: 'I. Dios habla y revela su voluntad  (vv. 1-2)',
+            scriptureReferences: ['Jonás 1:1-2', 'Salmo 139:7-12', 'Jeremías 23:23-24'],
             application:
                 '* Dios habla, asi que vive consciente de su dirección.\n* Dios habla, lee tu biblia, ora, escucha a tu pastor.',
             pastorDirective: {
@@ -24,6 +26,7 @@ const JONAS: WalkInput = {
         },
         {
             title: 'II. El hombre desobedece y revela su necedad  (vv. 3)',
+            scriptureReferences: ['Jonás 1:3a', 'Proverbios 19:21', 'Hechos 9:1-6'],
             application:
                 '* Recapacita de tus reacciones hostiles a la voluntad de Dios.\n* Si te resistes a lo que Dios quiere hacer con tus enemigos usandote, pide a Dios que te haga mas parecido a Cristo.',
             pastorDirective: {
@@ -59,13 +62,20 @@ describe('deriveSectionWalk — con el bosquejo real de Jonás', () => {
         expect(app?.coveredBy?.[0]).toContain('vive consciente de su dirección');
     });
 
-    it('sus directivas viajan como CONTEXTO de la exposición, que sigue pendiente', () => {
-        // Una directiva dice QUÉ cubrir; la exposición es la idea que lo cubre.
-        // Darla por respondida dejaría el punto sin contenido decidido.
+    it('sus directivas alimentan la PROPOSICIÓN del punto, no la exposición', () => {
+        // Son las reflexiones iniciales con las que FORMA la proposición.
+        // Estaban en la exposición, donde ya no se usan: ahí eran decoración, y
+        // la sección donde de verdad hacen falta quedaba sin insumo.
+        const prop = walk.find((s) => s.id === 'point.2.proposition');
+        expect(prop?.coveredBy).toHaveLength(3); // emphasis + 2 notas
+        expect(prop?.coveredBy?.join(' ')).toContain('personifica a la nave');
+        expect(prop?.contextKey).toBe('drafting.sections.directiveContext');
+    });
+
+    it('la exposición no las repite: su insumo es la proposición ya decidida', () => {
         const exp = walk.find((s) => s.id === 'point.2.exposition');
         expect(exp?.status).toBe('pendiente');
-        expect(exp?.coveredBy).toHaveLength(3); // emphasis + 2 notas
-        expect(exp?.coveredBy?.join(' ')).toContain('personifica a la nave');
+        expect(exp?.coveredBy).toBeUndefined();
     });
 
     it('el título SIEMPRE se pregunta: la proposición no lo responde', () => {
@@ -134,8 +144,22 @@ describe('modo de sección: se deciden ideas, o se decide el texto final', () =>
         expect(walk.find((s) => s.id === 'title')?.mode).toBe('verbatim');
     });
 
-    it('todo lo demás junta ideas y la prosa se escribe después', () => {
-        expect(walk.filter((s) => s.id !== 'title').every((s) => s.mode === 'elements')).toBe(true);
+    it('la proposición de cada punto también es VERBATIM: la escribe él', () => {
+        // Es la frase de la que se desprenden las partes del punto. Si la
+        // escribiera el modelo, volvería a haber una decisión central que nadie
+        // tomó — el mismo problema que tenía el título.
+        expect(walk.find((s) => s.id === 'point.1.proposition')?.mode).toBe('verbatim');
+        expect(walk.find((s) => s.id === 'point.2.proposition')?.mode).toBe('verbatim');
+    });
+
+    it('va ANTES de la exposición: primero la frase, después sus partes', () => {
+        const orden = walk.map((s) => s.id);
+        expect(orden.indexOf('point.1.proposition')).toBeLessThan(orden.indexOf('point.1.exposition'));
+    });
+
+    it('el resto junta ideas y la prosa se escribe después', () => {
+        const verbatim = walk.filter((s) => s.mode === 'verbatim').map((s) => s.id);
+        expect(verbatim).toEqual(['point.1.proposition', 'point.2.proposition', 'title']);
     });
 
     it('la proposición NO se etiqueta como indicación del pastor', () => {
@@ -147,8 +171,59 @@ describe('modo de sección: se deciden ideas, o se decide el texto final', () =>
     });
 
     it('las directivas del bosquejo sí se etiquetan como suyas', () => {
-        expect(walk.find((s) => s.id === 'point.1.exposition')?.contextKey).toBe(
+        expect(walk.find((s) => s.id === 'point.1.proposition')?.contextKey).toBe(
             'drafting.sections.directiveContext',
         );
+    });
+});
+
+describe('toda sección verbatim declara su propio texto', () => {
+    it('ninguna se queda con el texto de otra', () => {
+        // Cuando el modo `verbatim` se generalizó a partir del título, el texto
+        // quedó escrito para el título: la proposición del punto apareció
+        // pidiendo "El título del sermón" y "Usar este título".
+        //
+        // Este test es la baranda: agregar una sección verbatim sin su texto
+        // propio falla acá en vez de aparecer mal escrita en pantalla.
+        const sinTexto = deriveSectionWalk(JONAS)
+            .filter((s) => s.mode === 'verbatim')
+            .filter((s) => !s.verbatimKey)
+            .map((s) => s.id);
+        expect(sinTexto, `Secciones verbatim sin verbatimKey: ${sinTexto.join(', ')}`).toEqual([]);
+    });
+
+    it('cada una apunta a su propio prefijo, no a uno compartido', () => {
+        const claves = deriveSectionWalk(JONAS)
+            .filter((s) => s.mode === 'verbatim')
+            .map((s) => s.verbatimKey);
+        expect(new Set(claves).size).toBe(2); // proposición de punto y título
+    });
+});
+
+
+describe('el versículo del punto viaja con sus secciones', () => {
+    const walk = deriveSectionWalk(JONAS);
+
+    it('la proposición del punto lleva el pasaje que expone', () => {
+        // Resume lo que hay que ver EN el versículo: decidirla de memoria es
+        // peor, y obligar a abrir otra pestaña es fricción justo al pensar.
+        expect(walk.find((s) => s.id === 'point.1.proposition')?.scriptureRef).toBe('Jonás 1:1-2');
+        // Sale de SU título "(vv. 3)", no de la referencia heredada "1:3a".
+        expect(walk.find((s) => s.id === 'point.2.proposition')?.scriptureRef).toBe('Jonás 1:3');
+    });
+
+    it('la exposición también, para que el modelo cite el texto real', () => {
+        expect(walk.find((s) => s.id === 'point.2.exposition')?.scriptureRef).toBe('Jonás 1:3');
+    });
+
+    it('toma la PRIMERA referencia: las demás son cruzadas, no el pasaje', () => {
+        const s = walk.find((x) => x.id === 'point.1.exposition')?.scriptureRef;
+        expect(s).toBe('Jonás 1:1-2');
+        expect(s).not.toContain('Salmo');
+    });
+
+    it('un punto sin referencias no inventa ninguna', () => {
+        const sinRefs = deriveSectionWalk({ points: [{ title: 'I' }] });
+        expect(sinRefs.find((s) => s.id === 'point.1.proposition')?.scriptureRef).toBeUndefined();
     });
 });

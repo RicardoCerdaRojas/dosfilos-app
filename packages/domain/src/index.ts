@@ -96,6 +96,8 @@ export * from './drafting/splitElementLines';
 export * from './drafting/classifyContribution';
 export * from './drafting/deriveSectionWalk';
 export * from './drafting/buildSectionProsePrompt';
+export * from './drafting/scriptureLookupRef';
+export * from './drafting/pointPassageRef';
 // ¿El pasaje abre el libro? Decide si la introducción debe orientar al libro entero.
 export * from './bible/canon/opensBook';
 // 🌱 Pastoral Fidelity Phase 2.5 PR B (ADR-028) — Faculty Socratic Sermon Agent

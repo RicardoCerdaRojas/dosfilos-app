@@ -87,7 +87,7 @@ describe('parseProposedElements', () => {
 
     it('lee la respuesta limpia', () => {
         expect(parseProposedElements(ok)).toEqual([
-            { text: 'La crueldad asiria', why: 'Explica el miedo de Jonás' },
+            { text: 'La crueldad asiria', why: 'Explica el miedo de Jonás', unsupported: false },
         ]);
     });
 
@@ -98,7 +98,7 @@ describe('parseProposedElements', () => {
 
     it('descarta elementos sin texto en vez de renderizar filas vacías', () => {
         const sucio = '{"elements":[{"text":"  "},{"text":"Nínive","why":null}]}';
-        expect(parseProposedElements(sucio)).toEqual([{ text: 'Nínive', why: '' }]);
+        expect(parseProposedElements(sucio)).toEqual([{ text: 'Nínive', why: '', unsupported: false }]);
     });
 
     it('devuelve lista vacía —no lanza— con basura', () => {
@@ -183,5 +183,85 @@ describe('las directivas no cuentan como ideas originadas', () => {
     it('una idea suya junto a directivas sigue contando como propia', () => {
         const mezcla = [el('pastor', 'Autor', 'directiva'), el('pastor', 'Nínive era la capital asiria')];
         expect(describeSectionAuthorship(mezcla)).toBe('propia');
+    });
+});
+
+describe('buildElementsPrompt — la proposición del punto es el insumo', () => {
+    const base = {
+        passage: 'Jonás 1:1-2',
+        sectionLabel: 'Punto 1 — exposición',
+        sectionJob: 'Decir lo que el texto dice y por qué importa.',
+    };
+
+    const PROP = 'Dios se identifica, identifica a Jonás, ordena y explica la razón.';
+
+    it('con proposición, la TAREA cambia: primero enumerar conceptos', () => {
+        // Como párrafo suelto junto a las reglas, el modelo la usaba de filtro:
+        // lluvia de ideas desde el texto y después justificar cada una contra la
+        // frase. Enumerar los conceptos PRIMERO invierte el orden de trabajo.
+        const p = buildElementsPrompt({ ...base, pointProposition: PROP });
+        expect(p).toContain('TAREA, EN DOS PASOS');
+        expect(p).toContain('Identifica los CONCEPTOS que nombra la proposición');
+        expect(p).not.toContain('propón entre');
+    });
+
+    it('un concepto sin apoyo textual SE DECLARA, no desaparece', () => {
+        // El fallo real: un concepto central de su proposición ("Jonás se rebela
+        // al carácter misericordioso de Dios") no recibió ninguna propuesta y el
+        // hueco no se reportó. Callarlo lo deja creyendo que quedó cubierta.
+        const p = buildElementsPrompt({ ...base, pointProposition: PROP });
+        // La marca es un CAMPO, no un prefijo en el texto: el texto del elemento
+        // es lo que puede terminar en el sermón, y un prefijo ahí se filtra al
+        // púlpito. Pasó en el primer uso real.
+        expect(p).toContain('"unsupported": true');
+        expect(p).toContain('NO escribas esa advertencia dentro de "text"');
+        expect(p).toContain('creyendo que su proposición quedó cubierta');
+    });
+
+    it('el "why" pasa a decir QUÉ CONCEPTO desarrolla, para poder verificarlo', () => {
+        const p = buildElementsPrompt({ ...base, pointProposition: PROP });
+        expect(p).toContain('QUÉ CONCEPTO de su proposición desarrolla');
+    });
+
+    it('sin proposición conserva la tarea abierta de siempre', () => {
+        const p = buildElementsPrompt(base);
+        expect(p).toContain('propón entre');
+        expect(p).not.toContain('TAREA, EN DOS PASOS');
+    });
+
+    it('el texto bíblico viaja para no proponer de memoria', () => {
+        const p = buildElementsPrompt({ ...base, scriptureText: 'Vino palabra de Jehová a Jonás…' });
+        expect(p).toContain('TEXTO BÍBLICO');
+        expect(p).toContain('Vino palabra de Jehová');
+    });
+
+    it('sin proposición del punto no la inventa ni la menciona', () => {
+        expect(buildElementsPrompt(base)).not.toContain('PROPOSICIÓN DE ESTE PUNTO');
+    });
+});
+
+describe('la advertencia de "sin apoyo" nunca viaja dentro del texto', () => {
+    it('el prefijo se recorta y se convierte en marca', () => {
+        // Caso real del primer uso: el modelo escribió la advertencia dentro de
+        // "text". Si el pastor pulsa Usar, ese prefijo se vuelve parte de su
+        // idea decidida y termina filtrándose a la prosa del sermón.
+        const crudo = '{"elements":[{"text":"SIN APOYO TEXTUAL DIRECTO: El texto no revela la motivación.","why":"Responde al concepto X"}]}';
+        const [e] = parseProposedElements(crudo);
+        expect(e.text).toBe('El texto no revela la motivación.');
+        expect(e.unsupported).toBe(true);
+    });
+
+    it('el campo explícito también marca, sin prefijo en el texto', () => {
+        const crudo = '{"elements":[{"text":"Una idea.","why":"por qué","unsupported":true}]}';
+        expect(parseProposedElements(crudo)[0]).toEqual({ text: 'Una idea.', why: 'por qué', unsupported: true });
+    });
+
+    it('un elemento normal no queda marcado', () => {
+        const crudo = '{"elements":[{"text":"Nínive era la capital asiria.","why":"por qué"}]}';
+        expect(parseProposedElements(crudo)[0].unsupported).toBe(false);
+    });
+
+    it('un texto que era SÓLO el prefijo no produce un elemento vacío', () => {
+        expect(parseProposedElements('{"elements":[{"text":"SIN APOYO TEXTUAL DIRECTO:","why":"x"}]}')).toEqual([]);
     });
 });

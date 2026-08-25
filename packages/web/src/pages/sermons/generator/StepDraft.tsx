@@ -76,7 +76,7 @@ export function StepDraft() {
     const activeLanguage = language === 'en' ? 'en' : 'es';
     const navigate = useNavigate();
     const { user } = useFirebase();
-    const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, sermonId, derivedContext, sectionElements, setSectionElements, reset, saving } = useWizard();
+    const { homiletics, rules, setDraft, draft, setStep, exegesis, config, passage, sermonId, derivedContext, sectionElements, setSectionElements, sectionProse, setSectionProse, reset, saving } = useWizard();
     const draftShadowGate = useFeatureFlag('sermon_draft_shadow');
     // ADR-037 — las decisiones viven en el contexto del wizard y se persisten
     // con el resto del progreso: el spike ya adjudicó que el modelo propone
@@ -517,10 +517,11 @@ export function StepDraft() {
             homiletics
                 ? deriveSectionWalk({
                       points: (homiletics.outline?.mainPoints ?? []) as any[],
+                      sermonPassage: passage,
                       proposition: homiletics.homileticalProposition,
                   })
                 : [],
-        [homiletics],
+        [homiletics, passage],
     );
 
     // La sección activa por defecto es la PRIMERA PENDIENTE, no la primera del
@@ -538,6 +539,9 @@ export function StepDraft() {
             elements={sectionElements}
             onSelectSection={setActiveSectionId}
             onChangeElements={setSectionElements}
+            prose={sectionProse}
+            onChangeProse={setSectionProse}
+            audienceRigor={rules.audienceRigor}
             passage={passage}
             proposition={homiletics.homileticalProposition}
             points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}

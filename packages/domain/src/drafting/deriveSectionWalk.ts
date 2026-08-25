@@ -1,3 +1,5 @@
+import { pointPassageRef } from './pointPassageRef';
+
 /**
  * Deriva el RECORRIDO de secciones desde el bosquejo real del pastor.
  *
@@ -51,6 +53,26 @@ export interface WalkSection {
      * confunde dos cosas que el flujo entero se dedica a distinguir.
      */
     contextKey?: string;
+    /**
+     * Prefijo i18n del texto propio de una sección `verbatim` (`.label`,
+     * `.placeholder`, `.add`, `.propose`, `.proposeMore`, `.decided`).
+     *
+     * OBLIGATORIO EN `verbatim`, y hay un test que lo verifica. Cuando el modo
+     * se generalizó a partir del título, el texto quedó escrito para el título:
+     * la proposición del punto apareció pidiendo "El título del sermón" y
+     * "Usar este título". Un texto compartido entre secciones que dicen cosas
+     * distintas es la misma clase de error que una lista mantenida a mano.
+     */
+    verbatimKey?: string;
+    /**
+     * Referencia del pasaje que ESTA sección expone, si aplica.
+     *
+     * Sirve para dos cosas distintas: mostrarle el texto al pastor mientras
+     * decide —la proposición del punto resume lo que hay que ver EN el
+     * versículo, y escribirla de memoria es peor— y pasarle el texto REAL al
+     * modelo, para que lo cite en vez de recordarlo.
+     */
+    scriptureRef?: string;
     /** Agrupa las secciones de un punto bajo él, para el mapa lateral. */
     parentId?: string;
     /** Título del punto, verbatim. Sólo en las secciones que SON un punto. */
@@ -60,6 +82,12 @@ export interface WalkSection {
 /** Forma mínima que este módulo necesita del bosquejo. No importa la entidad entera. */
 export interface WalkOutlinePoint {
     title?: string;
+    /**
+     * Referencias del punto. LA PRIMERA es el pasaje que el punto expone; las
+     * demás son referencias cruzadas de apoyo. Es la convención con la que el
+     * bosquejo se construye, y de ahí sale `scriptureRef`.
+     */
+    scriptureReferences?: string[];
     application?: string;
     pastorDirective?: {
         emphasis?: string;
@@ -69,6 +97,8 @@ export interface WalkOutlinePoint {
 
 export interface WalkInput {
     points: readonly WalkOutlinePoint[];
+    /** Pasaje del sermón completo. Completa el "vv. 3" que traen los títulos. */
+    sermonPassage?: string;
     /** Ilustración de apertura, si el pastor ya la escribió en el paso 8. */
     openingIllustration?: string;
     /** Proposición homilética, verbatim. */
@@ -96,7 +126,45 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
         const n = i + 1;
         const parentId = `point.${n}`;
         const parentLabel = punto.title?.trim() || undefined;
+        // El título manda sobre `scriptureReferences`: uno lo mantiene el
+        // pastor, el otro quedó de la propuesta del generador.
+        const refPunto = pointPassageRef({
+            title: punto.title,
+            sermonPassage: input.sermonPassage,
+            scriptureReferences: punto.scriptureReferences,
+        });
         const base = { parentId, parentLabel };
+
+        // LA PROPOSICIÓN DEL PUNTO VA PRIMERO, y es `verbatim`.
+        //
+        // Es la frase que resume lo que la congregación tiene que ver en este
+        // punto, y de la que se desprenden sus partes: "es a un punto lo que la
+        // proposición homilética es al sermón" (fundador, 2026-08-24).
+        //
+        // LA DECIDE ÉL, no el modelo. Por la misma razón que el título: si la
+        // frase más importante del punto la escribe la máquina, vuelve a haber
+        // una decisión central que nadie tomó. Y como es el texto final que se
+        // predica, no una idea sobre él, va en modo `verbatim`.
+        secciones.push({
+            ...base,
+            id: `${parentId}.proposition`,
+            mode: 'verbatim',
+            scriptureRef: refPunto,
+            labelKey: `${NS}.pointProposition.label`,
+            jobKey: `${NS}.pointProposition.job`,
+            verbatimKey: `${NS}.pointProposition.verbatim`,
+            labelParams: { n },
+            status: 'pendiente',
+            // SUS INDICACIONES DEL BOSQUEJO VIVEN ACÁ, no en la exposición.
+            // Son las reflexiones iniciales con las que FORMA la proposición;
+            // ponerlas donde ya no se usan las convertía en decoración, y dejaba
+            // la sección donde de verdad hacen falta sin insumo.
+            contextKey: `${NS}.directiveContext`,
+            coveredBy: cubierta([
+                punto.pastorDirective?.emphasis,
+                ...(punto.pastorDirective?.exegeticalNotes ?? []),
+            ]),
+        });
 
         // La exposición SIEMPRE se pregunta: es el contenido del punto.
         // Sus directivas del bosquejo viajan como contexto —no como respuesta—,
@@ -106,15 +174,13 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
             ...base,
             id: `${parentId}.exposition`,
             mode: 'elements',
+            scriptureRef: refPunto,
             labelKey: `${NS}.exposition.label`,
             jobKey: `${NS}.exposition.job`,
             labelParams: { n },
+            // Su insumo es la PROPOSICIÓN del punto, que se decide en el taller
+            // y por eso no viaja en el recorrido: la aporta quien renderiza.
             status: 'pendiente',
-            contextKey: `${NS}.directiveContext`,
-            coveredBy: cubierta([
-                punto.pastorDirective?.emphasis,
-                ...(punto.pastorDirective?.exegeticalNotes ?? []),
-            ]),
         });
 
         secciones.push({
@@ -196,6 +262,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
         mode: 'verbatim',
         labelKey: `${NS}.title.label`,
         jobKey: `${NS}.title.job`,
+        verbatimKey: `${NS}.title.verbatim`,
         status: 'pendiente',
         coveredBy: cubierta([input.proposition]),
         contextKey: `${NS}.title.context`,

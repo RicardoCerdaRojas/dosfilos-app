@@ -11,15 +11,19 @@ import {
     type SermonElement,
     type ElementProvenance,
     type ContributionKind,
+    scriptureLookupRef,
     type WalkSection,
 } from '@dosfilos/domain';
 import { useProposeElements, type ProposedElement } from '@/hooks/useProposeElements';
+import { LocalBibleService } from '@/services/LocalBibleService';
 
 interface Props {
     section: WalkSection;
     passage: string;
     proposition?: string;
     points?: readonly string[];
+    /** Proposición decidida para el punto, si la sección no es esa misma. */
+    pointProposition?: string;
     elements: SermonElement[];
     onChange: (elements: SermonElement[]) => void;
 }
@@ -49,6 +53,21 @@ export function SectionElementsPanel(props: Props) {
     const { section } = props;
     /** En `verbatim` lo que escribe ES el texto final del sermón, no una idea sobre él. */
     const esVerbatim = section.mode === 'verbatim';
+    /**
+     * Texto propio de la sección verbatim. Cada una declara el suyo: compartir
+     * uno hacía que la proposición del punto pidiera "El título del sermón".
+     */
+    const vk = (sufijo: string) => `${section.verbatimKey ?? ''}.${sufijo}`;
+
+    /**
+     * El texto bíblico de la sección, a la vista mientras decide.
+     *
+     * La proposición del punto resume lo que la congregación tiene que ver EN
+     * el versículo: escribirla de memoria es peor, y obligarlo a abrir otra
+     * pestaña para consultarlo es fricción en el momento exacto en que está
+     * pensando. Lectura local y síncrona, sin llamada de red.
+     */
+    const versiculo = LocalBibleService.getVerses(scriptureLookupRef(section.scriptureRef) ?? '');
     const { propose, loading, error } = useProposeElements();
     const [mine, setMine] = useState('');
     const [proposals, setProposals] = useState<ProposedElement[]>([]);
@@ -106,6 +125,11 @@ export function SectionElementsPanel(props: Props) {
             passage: props.passage,
             sectionLabel: t(section.labelKey, section.labelParams),
             sectionJob: t(section.jobKey),
+            // El botón propone DESDE el versículo y la proposición, no en el
+            // aire: los elementos de la exposición son las partes que desglosan
+            // esa frase.
+            pointProposition: props.pointProposition,
+            scriptureText: versiculo ?? undefined,
             proposition: props.proposition,
             points: props.points,
             // Lo ya decidido viaja al prompt: re-proponer su propio trabajo es
@@ -127,6 +151,24 @@ export function SectionElementsPanel(props: Props) {
                 </h3>
                 <p className="text-sm text-muted-foreground">{t(section.jobKey)}</p>
             </div>
+
+            {versiculo && (
+                <blockquote className="rounded-md border-l-2 border-primary/40 bg-muted/40 py-2 pl-3 pr-2 text-sm">
+                    <p className="text-foreground/90 leading-relaxed">{versiculo}</p>
+                    <cite className="mt-1 block text-xs not-italic text-muted-foreground">
+                        {section.scriptureRef}
+                    </cite>
+                </blockquote>
+            )}
+
+            {props.pointProposition && (
+                <div className="rounded-md bg-muted/50 p-3 space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">
+                        {t('drafting.sections.pointPropositionContext')}
+                    </p>
+                    <p className="text-sm text-foreground/90">{props.pointProposition}</p>
+                </div>
+            )}
 
             {/* Lo que ya escribió: SE MUESTRA, NO SE PREGUNTA. Cuando la sección
                 está cubierta es la respuesta; cuando está pendiente son sus
@@ -159,13 +201,13 @@ export function SectionElementsPanel(props: Props) {
             {/* Camino 1 — su idea. Primero y siempre abierto. */}
             <div className="space-y-2">
                 <label htmlFor="mi-idea" className="text-sm font-medium">
-                    {esVerbatim ? t('drafting.elements.verbatimLabel') : t('drafting.elements.myIdeaLabel')}
+                    {esVerbatim ? t(vk('label')) : t('drafting.elements.myIdeaLabel')}
                 </label>
                 <Textarea
                     id="mi-idea"
                     value={mine}
                     onChange={(e) => setMine(e.target.value)}
-                    placeholder={t(esVerbatim ? 'drafting.elements.verbatimPlaceholder' : 'drafting.elements.myIdeaPlaceholder')}
+                    placeholder={t(esVerbatim ? vk('placeholder') : 'drafting.elements.myIdeaPlaceholder')}
                     rows={esVerbatim ? 2 : 4}
                     className="resize-none"
                 />
@@ -185,7 +227,7 @@ export function SectionElementsPanel(props: Props) {
                     disabled={(esVerbatim ? [mine.trim()].filter(Boolean) : splitElementLines(mine)).length === 0}
                 >
                     <Plus className="h-4 w-4 mr-1.5" />
-                    {esVerbatim ? t('drafting.elements.verbatimAdd') : t('drafting.elements.addMine')}
+                    {esVerbatim ? t(vk('add')) : t('drafting.elements.addMine')}
                 </Button>
             </div>
 
@@ -194,7 +236,7 @@ export function SectionElementsPanel(props: Props) {
                 <Button variant="outline" size="sm" onClick={handlePropose} disabled={loading}>
                     {loading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Lightbulb className="h-4 w-4 mr-1.5" />}
                     {esVerbatim
-                        ? t(proposals.length > 0 ? 'drafting.elements.verbatimProposeMore' : 'drafting.elements.verbatimPropose')
+                        ? t(proposals.length > 0 ? vk('proposeMore') : vk('propose'))
                         : t(proposals.length > 0 ? 'drafting.elements.proposeMore' : 'drafting.elements.propose')}
                 </Button>
 
@@ -211,6 +253,11 @@ export function SectionElementsPanel(props: Props) {
                             />
                         ) : (
                             <>
+                                {p.unsupported && (
+                                    <span className="inline-block rounded bg-warning/15 px-1.5 py-0.5 text-[11px] text-warning-foreground">
+                                        {t('drafting.elements.unsupported')}
+                                    </span>
+                                )}
                                 <p className="text-sm">{p.text}</p>
                                 {p.why && <p className="text-xs text-muted-foreground italic">{p.why}</p>}
                             </>
@@ -270,7 +317,7 @@ export function SectionElementsPanel(props: Props) {
             {decided.length > 0 && (
                 <div className="pt-4 border-t border-border/50 space-y-2">
                     <h4 className="text-sm font-medium">
-                        {esVerbatim ? t('drafting.elements.verbatimDecided') : t('drafting.elements.decidedTitle')}
+                        {esVerbatim ? t(vk('decided')) : t('drafting.elements.decidedTitle')}
                     </h4>
                     <ul className="space-y-1.5">
                         {decided.map((e) => (
@@ -342,6 +389,7 @@ export function SectionElementsPanel(props: Props) {
                     </p>
                 </div>
             )}
+
         </Card>
     );
 }

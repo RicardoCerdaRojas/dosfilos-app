@@ -33,12 +33,16 @@ interface WizardState {
      * todas a la vez.
      */
     sectionElements: Record<string, SermonElement[]>;
+    /** ADR-037 — prosa derivada de las decisiones, por sección. */
+    sectionProse: Record<string, string>;
 }
 
 interface WizardContextType extends WizardState {
     setSectionElements: (sectionId: string, elements: SermonElement[]) => void;
+    setSectionProse: (sectionId: string, prose: string) => void;
     /** Carga el mapa completo al restaurar un sermón guardado. */
     restoreSectionElements: (map: Record<string, SermonElement[]>) => void;
+    restoreSectionProse: (map: Record<string, string>) => void;
     setStep: (step: number) => void;
     setPassage: (passage: string) => void;
     setRules: (rules: GenerationRules) => void;
@@ -92,6 +96,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     const [derivedContext, setDerivedContext] = useState<DerivedContext | null>(null);
     const [seedCompletedSteps, setSeedCompletedSteps] = useState<number>(0);
     const [sectionElements, setSectionElementsState] = useState<Record<string, SermonElement[]>>({});
+    const [sectionProse, setSectionProseState] = useState<Record<string, string>>({});
 
     // Ephemeral local persistence for Step 1 — the sermon doc only gets
     // created after exegesis is generated, so without this the passage
@@ -142,6 +147,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
             // escribiría `sectionElements: {}` en todo sermón legacy y borraría
             // la distinción entre "sin medir" y "medido en cero".
             sectionElements: Object.keys(sectionElements).length > 0 ? sectionElements : null,
+            sectionProse: Object.keys(sectionProse).length > 0 ? sectionProse : null,
         },
         user?.uid || ''
     );
@@ -208,7 +214,11 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setSectionElementsState((prev) => ({ ...prev, [sectionId]: elements }));
     };
 
+    const setSectionProse = (sectionId: string, prose: string) =>
+        setSectionProseState((prev) => ({ ...prev, [sectionId]: prose }));
+
     const restoreSectionElements = (map: Record<string, SermonElement[]>) => setSectionElementsState(map);
+    const restoreSectionProse = (map: Record<string, string>) => setSectionProseState(map);
 
     const reset = () => {
         setStep(1);
@@ -222,6 +232,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setDerivedContext(null);
         setSeedCompletedSteps(0);
         setSectionElementsState({});
+        setSectionProseState({});
     };
 
     // 🎯 NEW: Select homiletical approach and update derived fields
@@ -265,6 +276,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         config,
         derivedContext,
         sectionElements,
+        sectionProse,
         sermonId, // 🎯 Expose to allow publishing
         setStep,
         setPassage,
@@ -275,14 +287,16 @@ export function WizardProvider({ children }: { children: ReactNode }) {
         setSermonId,
         setDerivedContext,
         setSectionElements,
+        setSectionProse,
         restoreSectionElements,
+        restoreSectionProse,
         selectHomileticalApproach,  // 🎯 NEW
         reset,
         saving,
         lastSaved,
         seedCompletedSteps,
         setSeedCompletedSteps,
-    }), [step, passage, rules, exegesis, homiletics, draft, config, derivedContext, sectionElements, saving, lastSaved, sermonId, seedCompletedSteps]);
+    }), [step, passage, rules, exegesis, homiletics, draft, config, derivedContext, sectionElements, sectionProse, saving, lastSaved, sermonId, seedCompletedSteps]);
 
     return (
         <WizardContext.Provider value={contextValue}>

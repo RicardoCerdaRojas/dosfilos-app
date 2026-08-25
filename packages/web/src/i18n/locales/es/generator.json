@@ -441,12 +441,7 @@
         "directiva": "Tema"
       },
       "flipKind": "Cambia entre idea tuya y tema a cubrir",
-      "verbatimLabel": "El título del sermón",
-      "verbatimPlaceholder": "Escríbelo tal como quieres que aparezca.",
-      "verbatimAdd": "Usar este título",
-      "verbatimPropose": "Propónme títulos",
-      "verbatimProposeMore": "Propónme otros",
-      "verbatimDecided": "Tu título"
+      "unsupported": "Sin apoyo directo en el texto"
     },
     "sections": {
       "exposition": {
@@ -484,7 +479,15 @@
       "title": {
         "label": "Título",
         "job": "Nombrar el sermón. Tu proposición está abajo para orientarte, pero el título es otra cosa: no afirma, nombra.",
-        "context": "Tu proposición, para ayudarte a pensarlo:"
+        "context": "Tu proposición, para ayudarte a pensarlo:",
+        "verbatim": {
+          "label": "El título del sermón",
+          "placeholder": "Escríbelo tal como quieres que aparezca.",
+          "add": "Usar este título",
+          "propose": "Propónme títulos",
+          "proposeMore": "Propónme otros",
+          "decided": "Tu título"
+        }
       },
       "coveredNote": "Ya es tuyo, del estudio o del bosquejo. No hay nada que decidir aquí.",
       "contextNote": "Tus indicaciones para esta sección:",
@@ -493,11 +496,32 @@
       "statusDone": "Lista",
       "statusPending": "Pendiente",
       "statusCovered": "Tuya",
-      "directiveContext": "Tus indicaciones para esta sección:"
+      "directiveContext": "Tus indicaciones para esta sección:",
+      "pointProposition": {
+        "label": "Punto {{n}} — proposición",
+        "job": "Una frase que resuma lo que quieres que vean en este punto. Es al punto lo que la proposición homilética es al sermón: los conceptos que contenga son los que después desarrollas.",
+        "verbatim": {
+          "label": "La proposición de este punto",
+          "placeholder": "Una frase: lo que quieres que vean en este punto.",
+          "add": "Usar esta proposición",
+          "propose": "Propónme proposiciones",
+          "proposeMore": "Propónme otras",
+          "decided": "Tu proposición para este punto"
+        }
+      },
+      "pointPropositionContext": "Tu proposición para este punto — las ideas de esta sección la desglosan:"
     },
     "tabs": {
       "draft": "Borrador",
       "workshop": "Taller"
+    },
+    "prose": {
+      "write": "Escribir esta sección",
+      "rewrite": "Volver a escribirla",
+      "label": "La prosa de esta sección",
+      "failed": "No se pudo escribir. Tus decisiones siguen guardadas.",
+      "emptyNoDecisions": "Primero decide qué va en esta sección. La prosa se escribe a partir de eso.",
+      "emptyReady": "Ya decidiste. Pulsa «Escribir esta sección» para redactarla."
     }
   },
   "pastoralContext": {

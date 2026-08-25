@@ -12,6 +12,24 @@ export interface SectionProseInput {
     proposition?: string;
     /** Título del punto al que pertenece la sección, verbatim. */
     pointTitle?: string;
+    /**
+     * La proposición del punto, si el pastor ya la decidió.
+     *
+     * Es la frase de la que se desprenden las partes del punto — "es a un punto
+     * lo que la proposición homilética es al sermón". Cuando existe, gobierna la
+     * estructura: se enuncia primero y cada idea desarrolla uno de sus
+     * conceptos. Cuando NO existe, el modelo no la inventa: sería otra decisión
+     * central tomada por la máquina, como pasaba con el título.
+     */
+    pointProposition?: string;
+    /**
+     * Texto bíblico REAL de la sección, leído de la Biblia local.
+     *
+     * Cuando viaja, el modelo lo cita tal cual. Sin él lo escribe de memoria —
+     * y una cita bíblica mal recordada en el púlpito es de la misma familia que
+     * una cita de autor inventada.
+     */
+    scriptureText?: string;
     /** Registro del sermón: cómo habla este pastor a su congregación. */
     audienceRigor?: 'beginner' | 'seminary';
 }
@@ -52,15 +70,61 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
         ? `\nTEMAS QUE ÉL MANDÓ CUBRIR (acá SÍ aportas el contenido, porque eso te pidió):\n${temas.map((e) => VINETA(e.text)).join('\n')}\n`
         : '';
 
+    /**
+     * UN ELEMENTO, UN MOVIMIENTO — cuando hay varios.
+     *
+     * La prosa corrida FUNDE las ideas: el oyente no puede seguir dónde termina
+     * una y empieza la otra, y el pastor pierde la estructura con la que las
+     * pensó. Desarrollar una por una es cómo se predica un punto con varias
+     * partes, y además deja el texto AUDITABLE contra las decisiones: se ve qué
+     * párrafo salió de qué idea.
+     *
+     * Con UNA sola idea no hay nada que separar: ahí la lista sería andamiaje
+     * vacío, y una ilustración partida en viñetas deja de ser una ilustración.
+     */
+    const varias = ideas.length + temas.length > 1;
+    const proposicionPunto = input.pointProposition?.trim();
+
+    const estructura = !varias
+        ? `   Es una sola idea: escríbela como un párrafo continuo. No la partas en
+   viñetas — sin varias partes que separar, la lista es andamiaje vacío.`
+        : proposicionPunto
+          ? `   LOS MOVIMIENTOS SALEN DE LA PROPOSICIÓN, NO DE LA LISTA DE IDEAS.
+
+   a) Cita el texto bíblico que se expone.
+   b) Enuncia la proposición del punto, tal cual está arriba.
+   c) UN MOVIMIENTO POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA, en el orden en
+      que ella los nombra, CADA UNO COMO SU PROPIA VIÑETA (guion al inicio de
+      línea). Las ideas de arriba son el MATERIAL con que llenas esos
+      movimientos: una idea puede servir a un concepto, y varias pueden
+      combinarse en uno. NO hagas un movimiento por idea.
+
+      La viñeta no es decoración: separa visualmente los conceptos para que el
+      predicador vea de un vistazo en cuántas partes se abre su proposición.
+      Como párrafos corridos se funden y hay que contarlos leyendo.
+   d) Si una idea decidida no sirve a ningún concepto de la proposición, úsala
+      donde mejor apoye, al final. NO la descartes y NO inventes un concepto
+      para acomodarla.
+
+   NO REESCRIBAS UNA IDEA CON OTRAS PALABRAS. Si un movimiento dice lo mismo que
+   la idea con sinónimos, no aporta nada: la idea ya estaba escrita. DESARROLLAR
+   es anclar en las palabras del texto bíblico y mostrar qué se sigue de ellas —
+   sin agregar afirmaciones que él no decidió.`
+          : `   Abre citando el texto bíblico que se está exponiendo, si la sección lo
+   expone. Después desarrolla UNA IDEA POR MOVIMIENTO, en el orden en que están
+   arriba: cada idea recibe su propio bloque. Puedes usar viñetas.
+   NO fundas dos ideas en un mismo párrafo: el oyente tiene que poder seguir
+   una a la vez.`;
+
     const registro =
         input.audienceRigor === 'seminary'
             ? 'Registro técnico: puedes usar vocabulario exegético sin explicarlo.'
             : 'Registro llano: si aparece un término técnico, explícalo en la misma frase.';
 
-    return `Eres el redactor del sermón de un pastor. Él YA DECIDIÓ qué dice esta sección. Tu trabajo es escribirla, no pensarla.
+    return `Eres el redactor del sermón de un pastor. Él YA DECIDIÓ qué dice esta sección. Tu trabajo es escribirla, no pensarla — y escribirla CONCISA: esto es su documento de trabajo, no la transcripción de lo que dirá en el púlpito.
 
 PASAJE: ${input.passage}
-${input.proposition ? `PROPOSICIÓN DEL SERMÓN: "${input.proposition}"\n` : ''}${input.pointTitle ? `PUNTO AL QUE PERTENECE: "${input.pointTitle}"\n` : ''}
+${input.proposition ? `PROPOSICIÓN DEL SERMÓN: "${input.proposition}"\n` : ''}${input.pointTitle ? `PUNTO AL QUE PERTENECE: "${input.pointTitle}"\n` : ''}${input.scriptureText ? `TEXTO BÍBLICO (${input.section.scriptureRef ?? ''}) — CÍTALO TAL CUAL, no lo escribas de memoria:\n"${input.scriptureText}"\n` : ''}${proposicionPunto ? `PROPOSICIÓN DE ESTE PUNTO (la escribió él; enúnciala TAL CUAL y desprende de ella las partes):\n"${proposicionPunto}"\n` : ''}
 SECCIÓN: ${input.sectionLabel}
 TRABAJO DE LA SECCIÓN: ${input.sectionJob}
 ${bloqueIdeas}${bloqueTemas}
@@ -79,13 +143,29 @@ REGLAS — LAS TRES PRIMERAS NO SON NEGOCIABLES:
    púlpito destruye la credibilidad del predicador. Si un dato haría falta y no
    lo tienes, escribe la frase sin él.
 
-4. Prosa para SER LEÍDA EN VOZ ALTA: frases cortas, sin subtítulos, sin viñetas,
-   sin numeración. Es un párrafo continuo o dos, no una lista.
+4. **LA FORMA DEL TEXTO SIGUE LA FORMA DE LO DECIDIDO.**
+${estructura}
 
 5. ${registro}
 
-6. Escribe en la voz del predicador dirigiéndose a su congregación. Nada de
-   meta-comentarios ("en esta sección veremos"), nada de encabezados.
+6. **CONCISIÓN. EL MANUSCRITO NO ES LA PREDICACIÓN.**
+   Este texto es el documento de trabajo del predicador, no la transcripción
+   de lo que dirá. Su trabajo es que él vea LA IDEA DE UN VISTAZO.
+
+   PROHIBIDO:
+   - Vocativos ("Hermanos", "Amados", "Queridos hermanos"). El trato con la
+     congregación lo pone él, vivo, y escribirlo acá se lo pre-guioniza.
+   - Adorno retórico: "Imaginen la profunda…", "de manera poderosa",
+     "profundamente", "verdaderamente", "es importante notar que".
+   - Repetir la idea con otras palabras para alargar. Si ya se dijo, sigue.
+   - Cerrar cada bloque con una moraleja que nadie pidió.
+
+   Cada movimiento: la idea, dicha con claridad, y sólo el desarrollo que
+   haga falta para que se entienda. Dos a cuatro frases suelen bastar. El
+   calor lo agrega él en el púlpito; tú entregas la idea limpia.
+
+7. Frases cortas, sin subtítulos, sin encabezados. Nada de meta-comentarios
+   ("en esta sección veremos", "a continuación analizaremos").
 
 SALIDA: sólo la prosa de la sección. Sin título, sin comillas, sin explicación.`;
 }

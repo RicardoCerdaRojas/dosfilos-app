@@ -96,9 +96,166 @@ describe('buildSectionProsePrompt', () => {
         expect(tecnico).toContain('sin explicarlo');
     });
 
-    it('pide prosa para leer en voz alta, no una lista', () => {
+    it('pide frases cortas, sin encabezados ni meta-comentarios', () => {
+        // Ya NO prohíbe viñetas: esa regla imponía una forma de predicar que no
+        // era la del pastor. La forma la decide la estructura de lo decidido.
+        //
+        // Y ya no dice "para leer en voz alta": el manuscrito NO es la
+        // transcripción de lo que dirá, es su documento de trabajo. Pedirle al
+        // modelo que escriba lo que se va a leer invita justamente al adorno
+        // que sobra.
         const p = buildSectionProsePrompt({ ...base, elements: [el('x')] });
-        expect(p).toContain('VOZ ALTA');
-        expect(p).toContain('sin viñetas');
+        expect(p).toContain('Frases cortas');
+        expect(p).toContain('meta-comentarios');
+        expect(p).not.toContain('sin viñetas');
+    });
+});
+
+describe('la forma del texto sigue la forma de lo decidido', () => {
+    it('con VARIAS ideas pide una por movimiento, en orden', () => {
+        // Estructura real del fundador (2026-08-24): sus cinco elementos
+        // salieron como cinco viñetas, una a una. La prosa corrida los funde y
+        // el oyente no puede seguir dónde termina uno y empieza el otro.
+        const p = buildSectionProsePrompt({
+            ...base,
+            elements: [el('La formulación muestra el mandato directo'), el('Hijo de Amitai lo sitúa como profeta'), el('Nínive era capital asiria')],
+        });
+        expect(p).toContain('UNA IDEA POR MOVIMIENTO');
+        expect(p).toContain('en el orden en que');
+        expect(p).toContain('NO fundas dos ideas');
+    });
+
+    it('con UNA sola idea pide párrafo continuo, no viñetas', () => {
+        // Sin varias partes que separar, la lista es andamiaje vacío — y una
+        // ilustración partida en viñetas deja de ser una ilustración.
+        const p = buildSectionProsePrompt({ ...base, elements: [el('¿Han visto a los niños cuando hacen rabietas?')] });
+        expect(p).toContain('párrafo continuo');
+        expect(p).toContain('No la partas en');
+    });
+
+    it('un tema también cuenta para decidir la forma', () => {
+        const p = buildSectionProsePrompt({
+            ...base,
+            elements: [el('Nínive era capital asiria'), el('Fecha del libro', 'directiva')],
+        });
+        expect(p).toContain('UNA IDEA POR MOVIMIENTO');
+    });
+});
+
+describe('el manuscrito no es la predicación', () => {
+    const p = () => buildSectionProsePrompt({ ...base, elements: [el('Nínive era la capital asiria')] });
+
+    it('prohíbe los vocativos: el trato con la congregación lo pone él, vivo', () => {
+        // La prosa generada abría con "Hermanos, esta formulación inicial…".
+        // Escribirlo de antemano le pre-guioniza la entrega, que es suya.
+        expect(p()).toContain('Vocativos');
+        expect(p()).toContain('Hermanos');
+        expect(p()).toContain('pre-guioniza');
+    });
+
+    it('prohíbe el adorno retórico por su nombre, no en abstracto', () => {
+        // Nombrar los giros concretos que aparecieron ("Imaginen la profunda…",
+        // "de manera poderosa") funciona mejor que pedir "sé conciso".
+        const texto = p();
+        expect(texto).toContain('Imaginen la profunda');
+        expect(texto).toContain('de manera poderosa');
+    });
+
+    it('dice para QUÉ sirve la concisión, no sólo que se exige', () => {
+        // El propósito no es ahorrar tokens: es que el predicador vea la idea
+        // de un vistazo cuando repase su manuscrito.
+        expect(p()).toContain('DE UN VISTAZO');
+    });
+
+    it('da un largo orientativo por movimiento', () => {
+        expect(p()).toContain('Dos a cuatro frases');
+    });
+});
+
+describe('la proposición del punto gobierna la estructura', () => {
+    const PROP = 'Dios habla, y cuando habla identifica, ordena y da razón.';
+    const tres = [
+        el('La formulación establece un mandato directo'),
+        el('Hijo de Amitai lo sitúa como profeta conocido'),
+        el('Nínive era la capital asiria'),
+    ];
+
+    it('cuando existe, se enuncia tal cual y las viñetas se desprenden de ella', () => {
+        // "Esta frase es a un punto lo que la proposición homilética es al
+        // sermón" (fundador). Las viñetas no son una lista suelta: son la
+        // descomposición de los conceptos que la frase contiene.
+        const p = buildSectionProsePrompt({ ...base, elements: tres, pointProposition: PROP });
+        expect(p).toContain(PROP);
+        expect(p).toContain('enúnciala TAL CUAL');
+        // La regla evolucionó: ya no es "una viñeta por idea, cada una ligada a
+        // un concepto" sino "un movimiento POR CONCEPTO, con las ideas como
+        // material". El cambio salió de ver que las viñetas seguían el orden de
+        // la lista y dos no correspondían a ningún concepto de la frase.
+        expect(p).toContain('POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA');
+    });
+
+    it('sin proposición del punto vuelve a la estructura simple, sin inventarla', () => {
+        // Si el pastor todavía no la decidió, el modelo NO la escribe: sería
+        // otra decisión central tomada por la máquina, como pasó con el título.
+        const p = buildSectionProsePrompt({ ...base, elements: tres });
+        expect(p).toContain('UNA IDEA POR MOVIMIENTO');
+        expect(p).not.toContain('PROPOSICIÓN DE ESTE PUNTO');
+    });
+
+    it('con una sola idea la proposición no impone tres movimientos', () => {
+        const p = buildSectionProsePrompt({ ...base, elements: [el('una sola')], pointProposition: PROP });
+        expect(p).toContain('párrafo continuo');
+    });
+});
+
+describe('la proposición es la espina, no una decoración', () => {
+    const PROP = 'Dios habla con intención: se identifica, identifica a Jonás, ordena y explica la razón.';
+    const cinco = [
+        el('La formulación muestra un mandato directo e imperativo'),
+        el('Hijo de Amitai lo sitúa como profeta conocido'),
+        el('Nínive era la capital asiria'),
+        el('El motivo divino revela el carácter justo de Dios'),
+        el('"Pregona contra ella" indica denuncia de juicio'),
+    ];
+    const p = () => buildSectionProsePrompt({ ...base, elements: cinco, pointProposition: PROP });
+
+    it('los movimientos salen de los conceptos de la frase, no de la lista', () => {
+        // Fallo real: las viñetas siguieron el orden de los elementos y dos de
+        // ellas no correspondían a ningún concepto de la proposición.
+        expect(p()).toContain('NO hagas un movimiento por idea');
+        expect(p()).toContain('POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA');
+    });
+
+    it('prohíbe parafrasear: una idea reescrita con sinónimos no aporta', () => {
+        // Los elementos `elegido` YA vienen escritos como frases completas. Pedir
+        // "desarrolla" sobre ellas produce la misma frase con otras palabras.
+        expect(p()).toContain('NO REESCRIBAS UNA IDEA CON OTRAS PALABRAS');
+        expect(p()).toContain('sinónimos');
+    });
+
+    it('dice qué ES desarrollar, no sólo qué no hacer', () => {
+        expect(p()).toContain('anclar en las palabras del texto bíblico');
+    });
+
+    it('una idea que no cabe en ningún concepto NO se descarta ni fuerza uno nuevo', () => {
+        // Descartarla perdería una decisión suya; inventar un concepto para
+        // acomodarla adulteraría su proposición.
+        const texto = p();
+        expect(texto).toContain('NO la descartes');
+        expect(texto).toContain('NO inventes un concepto');
+    });
+});
+
+describe('cada movimiento va como su propia viñeta', () => {
+    it('lo pide explícitamente y dice para qué sirve', () => {
+        // La espina funcionó pero salieron párrafos corridos: al reescribir el
+        // bloque quedó dicho CUÁNTOS movimientos hacer y no CÓMO separarlos.
+        const p = buildSectionProsePrompt({
+            ...base,
+            elements: [el('una'), el('otra'), el('tercera')],
+            pointProposition: 'Dios se identifica, ordena y explica.',
+        });
+        expect(p).toContain('CADA UNO COMO SU PROPIA VIÑETA');
+        expect(p).toContain('de un vistazo en cuántas partes');
     });
 });
