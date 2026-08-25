@@ -194,14 +194,31 @@ export function WorkshopDraftActions(props: Props) {
     };
 
     return (
-        <div className="shrink-0 border-t border-border/60 pt-3 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
+        /* SIN BORDE NI PADDING PROPIOS. Los tenía de cuando estas acciones
+           vivían al pie del taller y necesitaban separarse del contenido de
+           arriba. En la banda del paso ese `pt-3` corría la fila entera hacia
+           abajo y la botonera del Taller quedaba más baja que la del Borrador,
+           que es la misma banda. */
+        <div className="flex flex-wrap items-center gap-2">
                 {/* La acción principal hace el camino completo. La parcial queda
                     disponible al lado, sin que haya que adivinar el orden. */}
                 <Button
                     size="sm"
                     onClick={() => void (hayPendientes ? escribirYArmar() : armar(props.prose))}
                     disabled={!!escribiendo || (!hayPendientes && sinCambios)}
+                    /* SE AVISA LO QUE FALTA, PERO NO SE BLOQUEA. El pastor puede
+                       querer armar a medio camino para verlo tomar forma. En la
+                       banda no cabe una segunda línea, así que el aviso viaja en
+                       el botón: cuántas faltan lo dice el contador del título y
+                       CUÁLES lo dice el mapa, con su círculo vacío. */
+                    title={
+                        primeraFaltante
+                            ? t('drafting.assemble.missing', {
+                                  count: faltantes.length,
+                                  first: t(primeraFaltante.labelKey, primeraFaltante.labelParams),
+                              })
+                            : undefined
+                    }
                 >
                     {escribiendo ? (
                         <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
@@ -228,27 +245,6 @@ export function WorkshopDraftActions(props: Props) {
                         {t('drafting.assemble.buildPartial')}
                     </Button>
                 )}
-            </div>
-
-            {/* LA ACCIÓN ES PERMANENTE, NO UNA TAREA PENDIENTE. Si el pastor
-                cambia una decisión o reescribe una sección, tiene que poder
-                volver a armar; un botón que desaparece tras la primera vez lo
-                dejaría con un borrador que ya no refleja lo que decidió. La
-                etiqueta distingue crear de REHACER, igual que el botón de la
-                prosa — sin eso se lee como algo que quedó por hacer. */}
-
-            {/* SE AVISA LO QUE FALTA, PERO NO SE BLOQUEA. El pastor puede querer
-                armar el borrador a medio camino para verlo tomar forma; impedirlo
-                lo obligaría a completar el sermón a ciegas. Lo que no puede pasar
-                es que arme sin saber qué quedó vacío. */}
-            {primeraFaltante && (
-                <p className="text-xs text-muted-foreground">
-                    {t('drafting.assemble.missing', {
-                        count: faltantes.length,
-                        first: t(primeraFaltante.labelKey, primeraFaltante.labelParams),
-                    })}
-                </p>
-            )}
         </div>
     );
 }

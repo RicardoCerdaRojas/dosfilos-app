@@ -614,9 +614,19 @@ export function StepDraft() {
             <WizardStepHeader
                 leading={
                     socraticPanel ? (
+                        /* EL TALLER VA PRIMERO: se lee de izquierda a derecha
+                           en el orden del trabajo —decidir y después armar—, el
+                           mismo que el asistente ya usa arriba. El borrador es
+                           el resultado, no el punto de partida.
+                           ABRE EN BORRADOR de todos modos, porque estas
+                           pestañas sólo existen cuando YA hay uno: sin borrador
+                           el taller es lo único que se muestra, así que el
+                           primer trabajo empieza ahí por sí solo. Volver a
+                           entrar y aterrizar en el taller lo obligaría a buscar
+                           su sermón cada vez. */
                         <TabsList>
-                            <TabsTrigger value="draft">{t('drafting.tabs.draft')}</TabsTrigger>
                             <TabsTrigger value="workshop">{t('drafting.tabs.workshop')}</TabsTrigger>
+                            <TabsTrigger value="draft">{t('drafting.tabs.draft')}</TabsTrigger>
                         </TabsList>
                     ) : undefined
                 }
