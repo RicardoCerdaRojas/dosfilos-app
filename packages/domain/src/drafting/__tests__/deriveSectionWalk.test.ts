@@ -166,3 +166,26 @@ describe('modo de sección: se deciden ideas, o se decide el texto final', () =>
         );
     });
 });
+
+describe('toda sección verbatim declara su propio texto', () => {
+    it('ninguna se queda con el texto de otra', () => {
+        // Cuando el modo `verbatim` se generalizó a partir del título, el texto
+        // quedó escrito para el título: la proposición del punto apareció
+        // pidiendo "El título del sermón" y "Usar este título".
+        //
+        // Este test es la baranda: agregar una sección verbatim sin su texto
+        // propio falla acá en vez de aparecer mal escrita en pantalla.
+        const sinTexto = deriveSectionWalk(JONAS)
+            .filter((s) => s.mode === 'verbatim')
+            .filter((s) => !s.verbatimKey)
+            .map((s) => s.id);
+        expect(sinTexto, `Secciones verbatim sin verbatimKey: ${sinTexto.join(', ')}`).toEqual([]);
+    });
+
+    it('cada una apunta a su propio prefijo, no a uno compartido', () => {
+        const claves = deriveSectionWalk(JONAS)
+            .filter((s) => s.mode === 'verbatim')
+            .map((s) => s.verbatimKey);
+        expect(new Set(claves).size).toBe(2); // proposición de punto y título
+    });
+});

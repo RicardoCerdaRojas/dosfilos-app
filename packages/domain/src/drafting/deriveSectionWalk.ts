@@ -51,6 +51,17 @@ export interface WalkSection {
      * confunde dos cosas que el flujo entero se dedica a distinguir.
      */
     contextKey?: string;
+    /**
+     * Prefijo i18n del texto propio de una sección `verbatim` (`.label`,
+     * `.placeholder`, `.add`, `.propose`, `.proposeMore`, `.decided`).
+     *
+     * OBLIGATORIO EN `verbatim`, y hay un test que lo verifica. Cuando el modo
+     * se generalizó a partir del título, el texto quedó escrito para el título:
+     * la proposición del punto apareció pidiendo "El título del sermón" y
+     * "Usar este título". Un texto compartido entre secciones que dicen cosas
+     * distintas es la misma clase de error que una lista mantenida a mano.
+     */
+    verbatimKey?: string;
     /** Agrupa las secciones de un punto bajo él, para el mapa lateral. */
     parentId?: string;
     /** Título del punto, verbatim. Sólo en las secciones que SON un punto. */
@@ -114,6 +125,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
             mode: 'verbatim',
             labelKey: `${NS}.pointProposition.label`,
             jobKey: `${NS}.pointProposition.job`,
+            verbatimKey: `${NS}.pointProposition.verbatim`,
             labelParams: { n },
             status: 'pendiente',
         });
@@ -216,6 +228,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
         mode: 'verbatim',
         labelKey: `${NS}.title.label`,
         jobKey: `${NS}.title.job`,
+        verbatimKey: `${NS}.title.verbatim`,
         status: 'pendiente',
         coveredBy: cubierta([input.proposition]),
         contextKey: `${NS}.title.context`,

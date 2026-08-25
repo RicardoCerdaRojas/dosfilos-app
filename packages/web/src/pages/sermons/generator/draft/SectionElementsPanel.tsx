@@ -49,6 +49,11 @@ export function SectionElementsPanel(props: Props) {
     const { section } = props;
     /** En `verbatim` lo que escribe ES el texto final del sermón, no una idea sobre él. */
     const esVerbatim = section.mode === 'verbatim';
+    /**
+     * Texto propio de la sección verbatim. Cada una declara el suyo: compartir
+     * uno hacía que la proposición del punto pidiera "El título del sermón".
+     */
+    const vk = (sufijo: string) => `${section.verbatimKey ?? ''}.${sufijo}`;
     const { propose, loading, error } = useProposeElements();
     const [mine, setMine] = useState('');
     const [proposals, setProposals] = useState<ProposedElement[]>([]);
@@ -159,13 +164,13 @@ export function SectionElementsPanel(props: Props) {
             {/* Camino 1 — su idea. Primero y siempre abierto. */}
             <div className="space-y-2">
                 <label htmlFor="mi-idea" className="text-sm font-medium">
-                    {esVerbatim ? t('drafting.elements.verbatimLabel') : t('drafting.elements.myIdeaLabel')}
+                    {esVerbatim ? t(vk('label')) : t('drafting.elements.myIdeaLabel')}
                 </label>
                 <Textarea
                     id="mi-idea"
                     value={mine}
                     onChange={(e) => setMine(e.target.value)}
-                    placeholder={t(esVerbatim ? 'drafting.elements.verbatimPlaceholder' : 'drafting.elements.myIdeaPlaceholder')}
+                    placeholder={t(esVerbatim ? vk('placeholder') : 'drafting.elements.myIdeaPlaceholder')}
                     rows={esVerbatim ? 2 : 4}
                     className="resize-none"
                 />
@@ -185,7 +190,7 @@ export function SectionElementsPanel(props: Props) {
                     disabled={(esVerbatim ? [mine.trim()].filter(Boolean) : splitElementLines(mine)).length === 0}
                 >
                     <Plus className="h-4 w-4 mr-1.5" />
-                    {esVerbatim ? t('drafting.elements.verbatimAdd') : t('drafting.elements.addMine')}
+                    {esVerbatim ? t(vk('add')) : t('drafting.elements.addMine')}
                 </Button>
             </div>
 
@@ -194,7 +199,7 @@ export function SectionElementsPanel(props: Props) {
                 <Button variant="outline" size="sm" onClick={handlePropose} disabled={loading}>
                     {loading ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Lightbulb className="h-4 w-4 mr-1.5" />}
                     {esVerbatim
-                        ? t(proposals.length > 0 ? 'drafting.elements.verbatimProposeMore' : 'drafting.elements.verbatimPropose')
+                        ? t(proposals.length > 0 ? vk('proposeMore') : vk('propose'))
                         : t(proposals.length > 0 ? 'drafting.elements.proposeMore' : 'drafting.elements.propose')}
                 </Button>
 
@@ -270,7 +275,7 @@ export function SectionElementsPanel(props: Props) {
             {decided.length > 0 && (
                 <div className="pt-4 border-t border-border/50 space-y-2">
                     <h4 className="text-sm font-medium">
-                        {esVerbatim ? t('drafting.elements.verbatimDecided') : t('drafting.elements.decidedTitle')}
+                        {esVerbatim ? t(vk('decided')) : t('drafting.elements.decidedTitle')}
                     </h4>
                     <ul className="space-y-1.5">
                         {decided.map((e) => (

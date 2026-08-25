@@ -440,13 +440,7 @@
       "kind": {
         "directiva": "Topic"
       },
-      "flipKind": "Switch between your own idea and a topic to cover",
-      "verbatimLabel": "The sermon title",
-      "verbatimPlaceholder": "Write it exactly as you want it to appear.",
-      "verbatimAdd": "Use this title",
-      "verbatimPropose": "Suggest titles",
-      "verbatimProposeMore": "Suggest others",
-      "verbatimDecided": "Your title"
+      "flipKind": "Switch between your own idea and a topic to cover"
     },
     "sections": {
       "exposition": {
@@ -484,7 +478,15 @@
       "title": {
         "label": "Title",
         "job": "Name the sermon. Your proposition is below to guide you, but a title is a different thing: it does not assert, it names.",
-        "context": "Your proposition, to help you think it through:"
+        "context": "Your proposition, to help you think it through:",
+        "verbatim": {
+          "label": "The sermon title",
+          "placeholder": "Write it exactly as you want it to appear.",
+          "add": "Use this title",
+          "propose": "Suggest titles",
+          "proposeMore": "Suggest others",
+          "decided": "Your title"
+        }
       },
       "coveredNote": "Already yours, from the study or the outline. Nothing to decide here.",
       "contextNote": "Your notes for this section:",
@@ -496,7 +498,15 @@
       "directiveContext": "Your notes for this section:",
       "pointProposition": {
         "label": "Point {{n}} — proposition",
-        "job": "One sentence summing up what you want them to see in this point. It is to the point what the homiletical proposition is to the sermon: the concepts it holds are the ones you then unpack."
+        "job": "One sentence summing up what you want them to see in this point. It is to the point what the homiletical proposition is to the sermon: the concepts it holds are the ones you then unpack.",
+        "verbatim": {
+          "label": "This point's proposition",
+          "placeholder": "One sentence: what you want them to see in this point.",
+          "add": "Use this proposition",
+          "propose": "Suggest propositions",
+          "proposeMore": "Suggest others",
+          "decided": "Your proposition for this point"
+        }
       }
     },
     "tabs": {
