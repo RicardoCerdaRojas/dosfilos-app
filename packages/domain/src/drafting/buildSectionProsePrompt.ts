@@ -22,6 +22,14 @@ export interface SectionProseInput {
      * central tomada por la máquina, como pasaba con el título.
      */
     pointProposition?: string;
+    /**
+     * Texto bíblico REAL de la sección, leído de la Biblia local.
+     *
+     * Cuando viaja, el modelo lo cita tal cual. Sin él lo escribe de memoria —
+     * y una cita bíblica mal recordada en el púlpito es de la misma familia que
+     * una cita de autor inventada.
+     */
+    scriptureText?: string;
     /** Registro del sermón: cómo habla este pastor a su congregación. */
     audienceRigor?: 'beginner' | 'seminary';
 }
@@ -102,7 +110,7 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
     return `Eres el redactor del sermón de un pastor. Él YA DECIDIÓ qué dice esta sección. Tu trabajo es escribirla, no pensarla — y escribirla CONCISA: esto es su documento de trabajo, no la transcripción de lo que dirá en el púlpito.
 
 PASAJE: ${input.passage}
-${input.proposition ? `PROPOSICIÓN DEL SERMÓN: "${input.proposition}"\n` : ''}${input.pointTitle ? `PUNTO AL QUE PERTENECE: "${input.pointTitle}"\n` : ''}${proposicionPunto ? `PROPOSICIÓN DE ESTE PUNTO (la escribió él; enúnciala TAL CUAL y desprende de ella las partes):\n"${proposicionPunto}"\n` : ''}
+${input.proposition ? `PROPOSICIÓN DEL SERMÓN: "${input.proposition}"\n` : ''}${input.pointTitle ? `PUNTO AL QUE PERTENECE: "${input.pointTitle}"\n` : ''}${input.scriptureText ? `TEXTO BÍBLICO (${input.section.scriptureRef ?? ''}) — CÍTALO TAL CUAL, no lo escribas de memoria:\n"${input.scriptureText}"\n` : ''}${proposicionPunto ? `PROPOSICIÓN DE ESTE PUNTO (la escribió él; enúnciala TAL CUAL y desprende de ella las partes):\n"${proposicionPunto}"\n` : ''}
 SECCIÓN: ${input.sectionLabel}
 TRABAJO DE LA SECCIÓN: ${input.sectionJob}
 ${bloqueIdeas}${bloqueTemas}

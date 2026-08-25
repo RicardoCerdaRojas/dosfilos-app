@@ -6,6 +6,7 @@ import { RichSermonEditor } from '@/components/ui/RichSermonEditor';
 import { useTranslation } from '@/i18n';
 import type { SermonElement, WalkSection } from '@dosfilos/domain';
 import { useWriteSection } from '@/hooks/useWriteSection';
+import { LocalBibleService } from '@/services/LocalBibleService';
 
 interface Props {
     section: WalkSection;
@@ -81,6 +82,12 @@ export function SectionProsePanel(props: Props) {
             proposition: props.proposition,
             pointTitle: section.parentLabel,
             pointProposition: props.pointProposition,
+            // El texto REAL, no el que el modelo recuerde. Una cita bíblica mal
+            // recordada en el púlpito es de la misma familia que una cita de
+            // autor inventada.
+            scriptureText: section.scriptureRef
+                ? (LocalBibleService.getVerses(section.scriptureRef) ?? undefined)
+                : undefined,
             audienceRigor: props.audienceRigor,
         });
         if (texto) props.onProseChange(texto);

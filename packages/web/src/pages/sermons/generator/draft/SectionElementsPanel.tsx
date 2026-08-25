@@ -14,6 +14,7 @@ import {
     type WalkSection,
 } from '@dosfilos/domain';
 import { useProposeElements, type ProposedElement } from '@/hooks/useProposeElements';
+import { LocalBibleService } from '@/services/LocalBibleService';
 
 interface Props {
     section: WalkSection;
@@ -54,6 +55,16 @@ export function SectionElementsPanel(props: Props) {
      * uno hacía que la proposición del punto pidiera "El título del sermón".
      */
     const vk = (sufijo: string) => `${section.verbatimKey ?? ''}.${sufijo}`;
+
+    /**
+     * El texto bíblico de la sección, a la vista mientras decide.
+     *
+     * La proposición del punto resume lo que la congregación tiene que ver EN
+     * el versículo: escribirla de memoria es peor, y obligarlo a abrir otra
+     * pestaña para consultarlo es fricción en el momento exacto en que está
+     * pensando. Lectura local y síncrona, sin llamada de red.
+     */
+    const versiculo = section.scriptureRef ? LocalBibleService.getVerses(section.scriptureRef) : null;
     const { propose, loading, error } = useProposeElements();
     const [mine, setMine] = useState('');
     const [proposals, setProposals] = useState<ProposedElement[]>([]);
@@ -132,6 +143,15 @@ export function SectionElementsPanel(props: Props) {
                 </h3>
                 <p className="text-sm text-muted-foreground">{t(section.jobKey)}</p>
             </div>
+
+            {versiculo && (
+                <blockquote className="rounded-md border-l-2 border-primary/40 bg-muted/40 py-2 pl-3 pr-2 text-sm">
+                    <p className="text-foreground/90 leading-relaxed">{versiculo}</p>
+                    <cite className="mt-1 block text-xs not-italic text-muted-foreground">
+                        {section.scriptureRef}
+                    </cite>
+                </blockquote>
+            )}
 
             {/* Lo que ya escribió: SE MUESTRA, NO SE PREGUNTA. Cuando la sección
                 está cubierta es la respuesta; cuando está pendiente son sus

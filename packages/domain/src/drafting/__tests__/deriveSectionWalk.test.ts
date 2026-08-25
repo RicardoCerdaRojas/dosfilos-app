@@ -11,6 +11,7 @@ const JONAS: WalkInput = {
     points: [
         {
             title: 'I. Dios habla y revela su voluntad  (vv. 1-2)',
+            scriptureReferences: ['Jonás 1:1-2', 'Salmo 139:7-12', 'Jeremías 23:23-24'],
             application:
                 '* Dios habla, asi que vive consciente de su dirección.\n* Dios habla, lee tu biblia, ora, escucha a tu pastor.',
             pastorDirective: {
@@ -24,6 +25,7 @@ const JONAS: WalkInput = {
         },
         {
             title: 'II. El hombre desobedece y revela su necedad  (vv. 3)',
+            scriptureReferences: ['Jonás 1:3a', 'Proverbios 19:21', 'Hechos 9:1-6'],
             application:
                 '* Recapacita de tus reacciones hostiles a la voluntad de Dios.\n* Si te resistes a lo que Dios quiere hacer con tus enemigos usandote, pide a Dios que te haga mas parecido a Cristo.',
             pastorDirective: {
@@ -187,5 +189,32 @@ describe('toda sección verbatim declara su propio texto', () => {
             .filter((s) => s.mode === 'verbatim')
             .map((s) => s.verbatimKey);
         expect(new Set(claves).size).toBe(2); // proposición de punto y título
+    });
+});
+
+
+describe('el versículo del punto viaja con sus secciones', () => {
+    const walk = deriveSectionWalk(JONAS);
+
+    it('la proposición del punto lleva el pasaje que expone', () => {
+        // Resume lo que hay que ver EN el versículo: decidirla de memoria es
+        // peor, y obligar a abrir otra pestaña es fricción justo al pensar.
+        expect(walk.find((s) => s.id === 'point.1.proposition')?.scriptureRef).toBe('Jonás 1:1-2');
+        expect(walk.find((s) => s.id === 'point.2.proposition')?.scriptureRef).toBe('Jonás 1:3a');
+    });
+
+    it('la exposición también, para que el modelo cite el texto real', () => {
+        expect(walk.find((s) => s.id === 'point.2.exposition')?.scriptureRef).toBe('Jonás 1:3a');
+    });
+
+    it('toma la PRIMERA referencia: las demás son cruzadas, no el pasaje', () => {
+        const s = walk.find((x) => x.id === 'point.1.exposition')?.scriptureRef;
+        expect(s).toBe('Jonás 1:1-2');
+        expect(s).not.toContain('Salmo');
+    });
+
+    it('un punto sin referencias no inventa ninguna', () => {
+        const sinRefs = deriveSectionWalk({ points: [{ title: 'I' }] });
+        expect(sinRefs.find((s) => s.id === 'point.1.proposition')?.scriptureRef).toBeUndefined();
     });
 });

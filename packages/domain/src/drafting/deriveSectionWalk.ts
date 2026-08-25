@@ -62,6 +62,15 @@ export interface WalkSection {
      * distintas es la misma clase de error que una lista mantenida a mano.
      */
     verbatimKey?: string;
+    /**
+     * Referencia del pasaje que ESTA sección expone, si aplica.
+     *
+     * Sirve para dos cosas distintas: mostrarle el texto al pastor mientras
+     * decide —la proposición del punto resume lo que hay que ver EN el
+     * versículo, y escribirla de memoria es peor— y pasarle el texto REAL al
+     * modelo, para que lo cite en vez de recordarlo.
+     */
+    scriptureRef?: string;
     /** Agrupa las secciones de un punto bajo él, para el mapa lateral. */
     parentId?: string;
     /** Título del punto, verbatim. Sólo en las secciones que SON un punto. */
@@ -71,6 +80,12 @@ export interface WalkSection {
 /** Forma mínima que este módulo necesita del bosquejo. No importa la entidad entera. */
 export interface WalkOutlinePoint {
     title?: string;
+    /**
+     * Referencias del punto. LA PRIMERA es el pasaje que el punto expone; las
+     * demás son referencias cruzadas de apoyo. Es la convención con la que el
+     * bosquejo se construye, y de ahí sale `scriptureRef`.
+     */
+    scriptureReferences?: string[];
     application?: string;
     pastorDirective?: {
         emphasis?: string;
@@ -107,6 +122,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
         const n = i + 1;
         const parentId = `point.${n}`;
         const parentLabel = punto.title?.trim() || undefined;
+        const refPunto = punto.scriptureReferences?.[0]?.trim() || undefined;
         const base = { parentId, parentLabel };
 
         // LA PROPOSICIÓN DEL PUNTO VA PRIMERO, y es `verbatim`.
@@ -123,6 +139,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
             ...base,
             id: `${parentId}.proposition`,
             mode: 'verbatim',
+            scriptureRef: refPunto,
             labelKey: `${NS}.pointProposition.label`,
             jobKey: `${NS}.pointProposition.job`,
             verbatimKey: `${NS}.pointProposition.verbatim`,
@@ -138,6 +155,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
             ...base,
             id: `${parentId}.exposition`,
             mode: 'elements',
+            scriptureRef: refPunto,
             labelKey: `${NS}.exposition.label`,
             jobKey: `${NS}.exposition.job`,
             labelParams: { n },
