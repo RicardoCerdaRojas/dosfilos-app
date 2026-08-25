@@ -166,7 +166,16 @@ export function StepDraft() {
     const getSectionVersions = (sectionId: string) => contentHistory.getVersions(sectionId);
     const getCurrentVersionId = (sectionId: string) => contentHistory.getCurrentVersion(sectionId)?.id;
 
-    const handleGenerate = async () => {
+    /**
+     * Redacta un borrador nuevo desde la proposición y el bosquejo.
+     *
+     * `archivar` es DECISIÓN DEL PASTOR, no una política nuestra. Archivábamos
+     * siempre, que es lo prudente por defecto pero le llenaba el historial de
+     * versiones que él sabía que no quería guardar. El diálogo se lo pregunta;
+     * acá sólo se obedece. Por defecto sí, porque quien entra sin pasar por el
+     * diálogo (el estado vacío) no ha decidido nada.
+     */
+    const handleGenerate = async ({ archivar = true }: { archivar?: boolean } = {}) => {
         if (!homiletics) return;
 
         // Fail-closed: never redact a draft without the preacher's chosen FORM.
@@ -277,7 +286,9 @@ export function StepDraft() {
             // Se guarda POR SECCIÓN, no como bloque único, porque es como el
             // historial ya funciona y porque permite rescatar sólo la
             // introducción que le gustaba sin perder los puntos nuevos.
-            const guardoVersiones = await archivarBorradorActual(t('drafting.versions.beforeRegenerate'));
+            const guardoVersiones = archivar
+                ? await archivarBorradorActual(t('drafting.versions.beforeRegenerate'))
+                : false;
 
             setDraft(result);
             // EL AVISO OFRECE EL SEGURO EN EL MOMENTO EN QUE HACE FALTA.
@@ -663,7 +674,7 @@ export function StepDraft() {
                                 loading={loading}
                                 workshopHasDecisions={Boolean(socraticPanel) && hayDecisiones}
                                 onGoToWorkshop={() => setActiveTab('workshop')}
-                                onRegenerate={handleGenerate}
+                                onRegenerate={(opciones) => void handleGenerate(opciones)}
                             />
                         </>
                     )
@@ -882,7 +893,7 @@ export function StepDraft() {
                         <h3 className="font-semibold mb-2">{t('drafting.readyToGenerate')}</h3>
                         <p className="text-sm text-muted-foreground">{t('drafting.readyDesc')}</p>
                     </div>
-                    <Button onClick={handleGenerate} disabled={loading} size="lg" className="w-full max-w-md mx-auto">
+                    <Button onClick={() => void handleGenerate()} disabled={loading} size="lg" className="w-full max-w-md mx-auto">
                         <Sparkles className="mr-2 h-4 w-4" />
                         {t('drafting.generateBtn')}
                     </Button>

@@ -348,12 +348,13 @@
     },
     "regenerateConfirm": {
       "title": "¿Rehacer el borrador desde cero?",
-      "description": "Se escribirá un borrador nuevo a partir de tu proposición y tu bosquejo. El borrador actual queda guardado en el historial de cada sección, así que puedes volver a él.",
+      "description": "Se escribirá un borrador nuevo a partir de tu proposición y tu bosquejo, y reemplazará al actual.",
       "cancel": "Cancelar",
       "confirm": "Rehacer desde cero",
-      "menuItem": "Rehacer el borrador desde cero",
-      "workshopDescription": "El borrador nuevo se escribe desde tu proposición y tu bosquejo, no desde lo que decidiste en el Taller. Si lo que quieres es un borrador actualizado con tus decisiones, vuelve a armarlo desde el Taller. Tus decisiones no se borran en ningún caso, y el borrador actual queda en el historial de cada sección.",
-      "goToWorkshop": "Ir al Taller"
+      "workshopDescription": "El borrador nuevo se escribe desde tu proposición y tu bosquejo, no desde lo que decidiste en el Taller. Si lo que quieres es un borrador actualizado con tus decisiones, vuelve a armarlo desde el Taller. Tus decisiones no se borran en ningún caso.",
+      "goToWorkshop": "Ir al Taller",
+      "keepVersion": "Guardar el borrador actual en el historial",
+      "keepVersionHint": "Podrás volver a él sección por sección. Desmárcalo si prefieres no acumular versiones."
     },
     "saved": "Guardado",
     "fullContent": {
@@ -586,8 +587,7 @@
       "implications": "Implicaciones",
       "transition": "Transición",
       "authorityQuote": "Cita de autoridad"
-    },
-    "moreActions": "Más acciones"
+    }
   },
   "pastoralContext": {
     "title": "Contexto Pastoral (Opcional)",

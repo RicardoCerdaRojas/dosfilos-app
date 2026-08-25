@@ -348,12 +348,13 @@
     },
     "regenerateConfirm": {
       "title": "Rebuild the draft from scratch?",
-      "description": "A new draft will be written from your proposition and outline. The current draft stays in each section’s history, so you can go back to it.",
+      "description": "A new draft will be written from your proposition and outline, replacing the current one.",
       "cancel": "Cancel",
       "confirm": "Rebuild from scratch",
-      "menuItem": "Rebuild the draft from scratch",
-      "workshopDescription": "The new draft is written from your proposition and outline, not from what you decided in the Workshop. If what you want is a draft updated with your decisions, assemble it again from the Workshop. Your decisions are never deleted, and the current draft stays in each section’s history.",
-      "goToWorkshop": "Go to the Workshop"
+      "workshopDescription": "The new draft is written from your proposition and outline, not from what you decided in the Workshop. If what you want is a draft updated with your decisions, assemble it again from the Workshop. Your decisions are never deleted.",
+      "goToWorkshop": "Go to the Workshop",
+      "keepVersion": "Save the current draft to history",
+      "keepVersionHint": "You will be able to go back to it section by section. Uncheck it if you would rather not pile up versions."
     },
     "saved": "Saved",
     "fullContent": {
@@ -586,8 +587,7 @@
       "implications": "Implications",
       "transition": "Transition",
       "authorityQuote": "Authority quote"
-    },
-    "moreActions": "More actions"
+    }
   },
   "pastoralContext": {
     "title": "Pastoral context (optional)",

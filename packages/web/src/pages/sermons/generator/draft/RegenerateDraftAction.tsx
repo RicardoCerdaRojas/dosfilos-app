@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Loader2, MoreVertical, PenLine, RefreshCw } from 'lucide-react';
+import { Loader2, PenLine, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -10,13 +11,8 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
+    AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useTranslation } from '@/i18n';
 
 interface Props {
@@ -24,35 +20,41 @@ interface Props {
     /**
      * El taller existe Y el pastor ya decidió algo en él.
      *
-     * Es lo que separa "rehacer" de "vaciar el trabajo": sin decisiones,
+     * Es lo que separa "rehacer" de "saltarse el trabajo": sin decisiones,
      * regenerar es simplemente volver a pedir un borrador.
      */
     workshopHasDecisions: boolean;
     /** Llevar al taller, que es la ruta que NO se salta las decisiones. */
     onGoToWorkshop: () => void;
-    onRegenerate: () => void;
+    onRegenerate: (opciones: { archivar: boolean }) => void;
 }
 
 /**
  * Rehacer el borrador desde cero: la SALIDA DE EMERGENCIA de ADR-037.
  *
- * NO ES UN BOTÓN MÁS DE LA BARRA, y ese es el punto de este componente.
- * Regenerar estaba al lado del pasaje, con el mismo peso visual, siendo la
- * acción que se salta el pipeline entero: produce el sermón que nadie decidió,
- * que es exactamente el artefacto que el flujo socrático existe para no
- * fabricar. El ADR lo dice sin rodeos — dejar una puerta de atrás que produce
- * el mismo artefacto sin decisiones "vacía el pipeline por el uso, no por el
- * diseño".
+ * VISIBLE, Y LA FRICCIÓN VA EN EL DIÁLOGO. El primer intento la escondió en un
+ * menú `⋮` y el fundador la cortó en el acto: "casi imperceptible". Tenía
+ * razón, y es la segunda vez en esta pantalla que esconder una acción resulta
+ * ser el error — la primera fue el click en el mapa, "nunca lo hubiera
+ * sabido". Una acción legítima que no se encuentra no se vuelve más segura: se
+ * vuelve un motivo para desconfiar de la app.
  *
- * SOBREVIVE, PORQUE UN SÁBADO A LAS 23:00 EXISTE. El ADR la conserva a
- * propósito: si el flujo guiado es el único camino, el pastor apurado abandona
- * la herramienta. Lo que cambia es el peso: de acción destacada a opción dentro
- * del menú, con la consecuencia dicha antes de ejecutarla.
+ * SIN "ESCRIBE REGENERAR PARA CONFIRMAR". Esa fricción es para lo
+ * irreversible; acá el borrador queda archivado por sección y se puede volver
+ * a él. Pedir que se teclee una palabra para algo reversible enseña a
+ * despachar los diálogos sin leerlos, y entonces el aviso deja de proteger de
+ * lo que sí importa.
  *
- * EL DIÁLOGO OFRECE LA ALTERNATIVA, NO SÓLO LA ADVERTENCIA. Cuando ya hay
- * decisiones en el taller, "Volver a armar" hace lo que el pastor casi siempre
- * quiere —un borrador nuevo DESDE lo que decidió— y regenerar no. Advertir sin
- * ofrecer la salida correcta deja al apurado eligiendo la destructiva igual.
+ * LO QUE SÍ IMPORTA, y por eso el diálogo existe: el borrador nuevo NO viene
+ * de lo que el pastor decidió en el taller. Por eso, con decisiones hechas, se
+ * ofrece "Ir al Taller" —donde volver a armar hace lo que casi siempre quiere—
+ * y la destructiva deja de ser el botón primario. Advertir sin ofrecer la
+ * salida correcta deja al apurado eligiendo la destructiva igual.
+ *
+ * ARCHIVAR ES SU DECISIÓN, NO NUESTRA POLÍTICA. Archivábamos siempre, que es
+ * lo prudente por defecto pero le llena el historial de versiones que él sabe
+ * que no quiere. Marcado por defecto: la prudencia es el punto de partida, no
+ * una regla.
  */
 export function RegenerateDraftAction({
     loading,
@@ -61,75 +63,79 @@ export function RegenerateDraftAction({
     onRegenerate,
 }: Props) {
     const { t } = useTranslation('generator');
-    const [confirmando, setConfirmando] = useState(false);
+    const [archivar, setArchivar] = useState(true);
 
     return (
-        <>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={loading}
-                        aria-label={t('drafting.moreActions')}
-                        title={t('drafting.moreActions')}
-                    >
-                        {loading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <MoreVertical className="h-4 w-4" />
-                        )}
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onSelect={() => setConfirmando(true)}
-                    >
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        {t('drafting.regenerateConfirm.menuItem')}
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+        <AlertDialog
+            // La casilla vuelve a su estado prudente cada vez que se abre: un
+            // "no guardar" de la vez pasada no puede decidir por el de hoy.
+            onOpenChange={(abierto) => abierto && setArchivar(true)}
+        >
+            <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" disabled={loading}>
+                    {loading ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t('drafting.regeneratingBtn')}
+                        </>
+                    ) : (
+                        <>
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            {t('drafting.regenerateBtn')}
+                        </>
+                    )}
+                </Button>
+            </AlertDialogTrigger>
 
-            <AlertDialog open={confirmando} onOpenChange={setConfirmando}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>{t('drafting.regenerateConfirm.title')}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {workshopHasDecisions
-                                ? t('drafting.regenerateConfirm.workshopDescription')
-                                : t('drafting.regenerateConfirm.description')}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>{t('drafting.regenerateConfirm.cancel')}</AlertDialogCancel>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>{t('drafting.regenerateConfirm.title')}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {workshopHasDecisions
+                            ? t('drafting.regenerateConfirm.workshopDescription')
+                            : t('drafting.regenerateConfirm.description')}
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
 
-                        {workshopHasDecisions && (
-                            <AlertDialogAction
-                                onClick={onGoToWorkshop}
-                                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                            >
-                                <PenLine className="mr-2 h-4 w-4" />
-                                {t('drafting.regenerateConfirm.goToWorkshop')}
-                            </AlertDialogAction>
-                        )}
+                <label className="flex items-start gap-3 rounded-md border border-border p-3 text-sm cursor-pointer">
+                    <Checkbox
+                        checked={archivar}
+                        onCheckedChange={(v) => setArchivar(v === true)}
+                        className="mt-0.5"
+                    />
+                    <span>
+                        {t('drafting.regenerateConfirm.keepVersion')}
+                        <span className="block text-xs text-muted-foreground">
+                            {t('drafting.regenerateConfirm.keepVersionHint')}
+                        </span>
+                    </span>
+                </label>
 
-                        {/* LA DESTRUCTIVA NO ES LA PRIMARIA cuando hay una
-                            alternativa que conserva el trabajo. */}
+                <AlertDialogFooter>
+                    <AlertDialogCancel>{t('drafting.regenerateConfirm.cancel')}</AlertDialogCancel>
+
+                    {workshopHasDecisions && (
                         <AlertDialogAction
-                            onClick={onRegenerate}
-                            className={
-                                workshopHasDecisions
-                                    ? 'bg-transparent text-destructive border border-destructive/40 hover:bg-destructive/10'
-                                    : 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                            }
+                            onClick={onGoToWorkshop}
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
                         >
-                            {t('drafting.regenerateConfirm.confirm')}
+                            <PenLine className="mr-2 h-4 w-4" />
+                            {t('drafting.regenerateConfirm.goToWorkshop')}
                         </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </>
+                    )}
+
+                    <AlertDialogAction
+                        onClick={() => onRegenerate({ archivar })}
+                        className={
+                            workshopHasDecisions
+                                ? 'bg-transparent text-destructive border border-destructive/40 hover:bg-destructive/10'
+                                : 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                        }
+                    >
+                        {t('drafting.regenerateConfirm.confirm')}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     );
 }
