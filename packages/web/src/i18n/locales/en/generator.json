@@ -493,7 +493,11 @@
       "statusDone": "Done",
       "statusPending": "Pending",
       "statusCovered": "Yours",
-      "directiveContext": "Your notes for this section:"
+      "directiveContext": "Your notes for this section:",
+      "pointProposition": {
+        "label": "Point {{n}} — proposition",
+        "job": "One sentence summing up what you want them to see in this point. It is to the point what the homiletical proposition is to the sermon: the concepts it holds are the ones you then unpack."
+      }
     },
     "tabs": {
       "draft": "Draft",

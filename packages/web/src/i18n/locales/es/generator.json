@@ -493,7 +493,11 @@
       "statusDone": "Lista",
       "statusPending": "Pendiente",
       "statusCovered": "Tuya",
-      "directiveContext": "Tus indicaciones para esta sección:"
+      "directiveContext": "Tus indicaciones para esta sección:",
+      "pointProposition": {
+        "label": "Punto {{n}} — proposición",
+        "job": "Una frase que resuma lo que quieres que vean en este punto. Es al punto lo que la proposición homilética es al sermón: los conceptos que contenga son los que después desarrollas."
+      }
     },
     "tabs": {
       "draft": "Borrador",

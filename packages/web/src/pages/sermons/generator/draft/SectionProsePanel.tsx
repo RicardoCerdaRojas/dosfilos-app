@@ -14,6 +14,8 @@ interface Props {
     onProseChange: (prose: string) => void;
     passage: string;
     proposition?: string;
+    /** Proposición decidida para el punto al que pertenece la sección, si existe. */
+    pointProposition?: string;
     audienceRigor?: 'beginner' | 'seminary';
 }
 
@@ -78,6 +80,7 @@ export function SectionProsePanel(props: Props) {
             passage: props.passage,
             proposition: props.proposition,
             pointTitle: section.parentLabel,
+            pointProposition: props.pointProposition,
             audienceRigor: props.audienceRigor,
         });
         if (texto) props.onProseChange(texto);

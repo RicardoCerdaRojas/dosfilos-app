@@ -12,6 +12,16 @@ export interface SectionProseInput {
     proposition?: string;
     /** Título del punto al que pertenece la sección, verbatim. */
     pointTitle?: string;
+    /**
+     * La proposición del punto, si el pastor ya la decidió.
+     *
+     * Es la frase de la que se desprenden las partes del punto — "es a un punto
+     * lo que la proposición homilética es al sermón". Cuando existe, gobierna la
+     * estructura: se enuncia primero y cada idea desarrolla uno de sus
+     * conceptos. Cuando NO existe, el modelo no la inventa: sería otra decisión
+     * central tomada por la máquina, como pasaba con el título.
+     */
+    pointProposition?: string;
     /** Registro del sermón: cómo habla este pastor a su congregación. */
     audienceRigor?: 'beginner' | 'seminary';
 }
@@ -64,15 +74,25 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
      * Con UNA sola idea no hay nada que separar: ahí la lista sería andamiaje
      * vacío, y una ilustración partida en viñetas deja de ser una ilustración.
      */
-    const estructura =
-        ideas.length + temas.length > 1
-            ? `   Abre citando el texto bíblico que se está exponiendo, si la sección lo
-   expone. Después desarrolla UNA IDEA POR MOVIMIENTO, en el orden en que
-   están arriba: cada idea recibe su propio bloque, con su propio desarrollo.
-   Puedes usar viñetas para separarlos. NO fundas dos ideas en un mismo
-   párrafo — el oyente tiene que poder seguir una a la vez.`
-            : `   Es una sola idea: escríbela como un párrafo continuo. No la partas en
-   viñetas — sin varias partes que separar, la lista es andamiaje vacío.`;
+    const varias = ideas.length + temas.length > 1;
+    const proposicionPunto = input.pointProposition?.trim();
+
+    const estructura = !varias
+        ? `   Es una sola idea: escríbela como un párrafo continuo. No la partas en
+   viñetas — sin varias partes que separar, la lista es andamiaje vacío.`
+        : proposicionPunto
+          ? `   Tres movimientos, EN ESTE ORDEN:
+   a) Cita el texto bíblico que se expone.
+   b) Enuncia la proposición del punto, tal cual está arriba. Es la frase de la
+      que se desprende todo lo demás.
+   c) Una viñeta por cada idea, en el orden en que están arriba. CADA VIÑETA
+      DESARROLLA UN CONCEPTO DE ESA FRASE: el oyente tiene que poder ver de
+      dónde sale. No fundas dos ideas en la misma viñeta.`
+          : `   Abre citando el texto bíblico que se está exponiendo, si la sección lo
+   expone. Después desarrolla UNA IDEA POR MOVIMIENTO, en el orden en que están
+   arriba: cada idea recibe su propio bloque. Puedes usar viñetas.
+   NO fundas dos ideas en un mismo párrafo: el oyente tiene que poder seguir
+   una a la vez.`;
 
     const registro =
         input.audienceRigor === 'seminary'
@@ -82,7 +102,7 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
     return `Eres el redactor del sermón de un pastor. Él YA DECIDIÓ qué dice esta sección. Tu trabajo es escribirla, no pensarla — y escribirla CONCISA: esto es su documento de trabajo, no la transcripción de lo que dirá en el púlpito.
 
 PASAJE: ${input.passage}
-${input.proposition ? `PROPOSICIÓN DEL SERMÓN: "${input.proposition}"\n` : ''}${input.pointTitle ? `PUNTO AL QUE PERTENECE: "${input.pointTitle}"\n` : ''}
+${input.proposition ? `PROPOSICIÓN DEL SERMÓN: "${input.proposition}"\n` : ''}${input.pointTitle ? `PUNTO AL QUE PERTENECE: "${input.pointTitle}"\n` : ''}${proposicionPunto ? `PROPOSICIÓN DE ESTE PUNTO (la escribió él; enúnciala TAL CUAL y desprende de ella las partes):\n"${proposicionPunto}"\n` : ''}
 SECCIÓN: ${input.sectionLabel}
 TRABAJO DE LA SECCIÓN: ${input.sectionJob}
 ${bloqueIdeas}${bloqueTemas}

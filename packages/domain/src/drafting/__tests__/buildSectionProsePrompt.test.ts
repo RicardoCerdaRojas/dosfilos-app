@@ -171,3 +171,35 @@ describe('el manuscrito no es la predicación', () => {
         expect(p()).toContain('Dos a cuatro frases');
     });
 });
+
+describe('la proposición del punto gobierna la estructura', () => {
+    const PROP = 'Dios habla, y cuando habla identifica, ordena y da razón.';
+    const tres = [
+        el('La formulación establece un mandato directo'),
+        el('Hijo de Amitai lo sitúa como profeta conocido'),
+        el('Nínive era la capital asiria'),
+    ];
+
+    it('cuando existe, se enuncia tal cual y las viñetas se desprenden de ella', () => {
+        // "Esta frase es a un punto lo que la proposición homilética es al
+        // sermón" (fundador). Las viñetas no son una lista suelta: son la
+        // descomposición de los conceptos que la frase contiene.
+        const p = buildSectionProsePrompt({ ...base, elements: tres, pointProposition: PROP });
+        expect(p).toContain(PROP);
+        expect(p).toContain('enúnciala TAL CUAL');
+        expect(p).toContain('DESARROLLA UN CONCEPTO DE ESA FRASE');
+    });
+
+    it('sin proposición del punto vuelve a la estructura simple, sin inventarla', () => {
+        // Si el pastor todavía no la decidió, el modelo NO la escribe: sería
+        // otra decisión central tomada por la máquina, como pasó con el título.
+        const p = buildSectionProsePrompt({ ...base, elements: tres });
+        expect(p).toContain('UNA IDEA POR MOVIMIENTO');
+        expect(p).not.toContain('PROPOSICIÓN DE ESTE PUNTO');
+    });
+
+    it('con una sola idea la proposición no impone tres movimientos', () => {
+        const p = buildSectionProsePrompt({ ...base, elements: [el('una sola')], pointProposition: PROP });
+        expect(p).toContain('párrafo continuo');
+    });
+});

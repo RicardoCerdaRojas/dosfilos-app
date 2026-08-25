@@ -79,6 +79,22 @@ export function SocraticWorkshop(props: Props) {
         });
     }, []);
 
+    /**
+     * La proposición YA DECIDIDA del punto al que pertenece la sección activa.
+     *
+     * La sección de exposición vive en `point.N.exposition` y la frase en
+     * `point.N.proposition`: se busca por el `parentId`, así que basta con que
+     * él la haya decidido para que la redacción la use. Si todavía no la
+     * escribió, no viaja — y el prompt NO la inventa.
+     */
+    const proposicionDelPunto = props.activeSection.parentId
+        ? (props.elements[`${props.activeSection.parentId}.proposition`] ?? [])
+              .filter((e) => e.provenance !== 'descartado')
+              .map((e) => e.text)
+              .join(' ')
+              .trim() || undefined
+        : undefined;
+
     return (
         <div className="flex items-stretch gap-0 h-full min-h-[24rem]">
             {abierto && (
@@ -134,6 +150,7 @@ export function SocraticWorkshop(props: Props) {
                                 onProseChange={(texto) => props.onChangeProse(props.activeSection.id, texto)}
                                 passage={props.passage}
                                 proposition={props.proposition}
+                                pointProposition={proposicionDelPunto}
                                 audienceRigor={props.audienceRigor}
                             />
                         </div>

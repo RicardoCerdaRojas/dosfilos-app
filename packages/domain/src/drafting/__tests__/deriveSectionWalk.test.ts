@@ -134,8 +134,22 @@ describe('modo de sección: se deciden ideas, o se decide el texto final', () =>
         expect(walk.find((s) => s.id === 'title')?.mode).toBe('verbatim');
     });
 
-    it('todo lo demás junta ideas y la prosa se escribe después', () => {
-        expect(walk.filter((s) => s.id !== 'title').every((s) => s.mode === 'elements')).toBe(true);
+    it('la proposición de cada punto también es VERBATIM: la escribe él', () => {
+        // Es la frase de la que se desprenden las partes del punto. Si la
+        // escribiera el modelo, volvería a haber una decisión central que nadie
+        // tomó — el mismo problema que tenía el título.
+        expect(walk.find((s) => s.id === 'point.1.proposition')?.mode).toBe('verbatim');
+        expect(walk.find((s) => s.id === 'point.2.proposition')?.mode).toBe('verbatim');
+    });
+
+    it('va ANTES de la exposición: primero la frase, después sus partes', () => {
+        const orden = walk.map((s) => s.id);
+        expect(orden.indexOf('point.1.proposition')).toBeLessThan(orden.indexOf('point.1.exposition'));
+    });
+
+    it('el resto junta ideas y la prosa se escribe después', () => {
+        const verbatim = walk.filter((s) => s.mode === 'verbatim').map((s) => s.id);
+        expect(verbatim).toEqual(['point.1.proposition', 'point.2.proposition', 'title']);
     });
 
     it('la proposición NO se etiqueta como indicación del pastor', () => {

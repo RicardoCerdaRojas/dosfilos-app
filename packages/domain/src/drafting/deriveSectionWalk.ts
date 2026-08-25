@@ -98,6 +98,26 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
         const parentLabel = punto.title?.trim() || undefined;
         const base = { parentId, parentLabel };
 
+        // LA PROPOSICIÓN DEL PUNTO VA PRIMERO, y es `verbatim`.
+        //
+        // Es la frase que resume lo que la congregación tiene que ver en este
+        // punto, y de la que se desprenden sus partes: "es a un punto lo que la
+        // proposición homilética es al sermón" (fundador, 2026-08-24).
+        //
+        // LA DECIDE ÉL, no el modelo. Por la misma razón que el título: si la
+        // frase más importante del punto la escribe la máquina, vuelve a haber
+        // una decisión central que nadie tomó. Y como es el texto final que se
+        // predica, no una idea sobre él, va en modo `verbatim`.
+        secciones.push({
+            ...base,
+            id: `${parentId}.proposition`,
+            mode: 'verbatim',
+            labelKey: `${NS}.pointProposition.label`,
+            jobKey: `${NS}.pointProposition.job`,
+            labelParams: { n },
+            status: 'pendiente',
+        });
+
         // La exposición SIEMPRE se pregunta: es el contenido del punto.
         // Sus directivas del bosquejo viajan como contexto —no como respuesta—,
         // porque una directiva dice QUÉ cubrir y la exposición es la idea que lo
