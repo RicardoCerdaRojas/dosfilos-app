@@ -440,7 +440,8 @@
       "kind": {
         "directiva": "Tema"
       },
-      "flipKind": "Cambia entre idea tuya y tema a cubrir"
+      "flipKind": "Cambia entre idea tuya y tema a cubrir",
+      "unsupported": "Sin apoyo directo en el texto"
     },
     "sections": {
       "exposition": {

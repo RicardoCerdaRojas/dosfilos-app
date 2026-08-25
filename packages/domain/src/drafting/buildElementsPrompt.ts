@@ -81,8 +81,12 @@ NO propongas ideas que no correspondan a un concepto de la proposición, por
 buenas que sean: acá él ya decidió de qué se trata este punto.
 
 SI UN CONCEPTO NO TIENE APOYO EN EL TEXTO, DILO — propón igual un elemento para
-ese concepto y empieza su "why" con "SIN APOYO TEXTUAL DIRECTO:". Callarlo lo
-dejaría creyendo que su proposición quedó cubierta cuando le falta una parte.`
+ese concepto y marca ese elemento con "unsupported": true. Callarlo lo dejaría
+creyendo que su proposición quedó cubierta cuando le falta una parte.
+
+NO escribas esa advertencia dentro de "text". El texto del elemento es lo que
+puede terminar en el sermón: un prefijo ahí se le filtra al púlpito. La marca va
+en su campo.`
         : `TAREA: propón entre ${ELEMENTS_PER_SECTION.min} y ${ELEMENTS_PER_SECTION.max} ELEMENTOS para esta sección.`;
 
     return `Eres el acompañante de un pastor que está redactando un sermón. NO escribes el sermón: le ayudas a DECIDIR qué va en cada sección.
@@ -120,7 +124,7 @@ FORMATO DE SALIDA (JSON, sin texto alrededor):
         input.pointProposition
             ? '"QUÉ CONCEPTO de su proposición desarrolla, citando sus palabras."'
             : '"Por qué sirve a ESTE sermón, en una línea."'
-    } }
+    }${input.pointProposition ? ', "unsupported": false' : ''} }
   ]
 }`;
 }

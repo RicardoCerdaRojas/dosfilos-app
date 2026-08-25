@@ -253,6 +253,11 @@ export function SectionElementsPanel(props: Props) {
                             />
                         ) : (
                             <>
+                                {p.unsupported && (
+                                    <span className="inline-block rounded bg-warning/15 px-1.5 py-0.5 text-[11px] text-warning-foreground">
+                                        {t('drafting.elements.unsupported')}
+                                    </span>
+                                )}
                                 <p className="text-sm">{p.text}</p>
                                 {p.why && <p className="text-xs text-muted-foreground italic">{p.why}</p>}
                             </>

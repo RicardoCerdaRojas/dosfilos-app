@@ -440,7 +440,8 @@
       "kind": {
         "directiva": "Topic"
       },
-      "flipKind": "Switch between your own idea and a topic to cover"
+      "flipKind": "Switch between your own idea and a topic to cover",
+      "unsupported": "No direct support in the text"
     },
     "sections": {
       "exposition": {
