@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { Loader2, PenLine } from 'lucide-react';
+import type { MDXEditorMethods } from '@mdxeditor/editor';
 import { Button } from '@/components/ui/button';
 import { RichSermonEditor } from '@/components/ui/RichSermonEditor';
 import { useTranslation } from '@/i18n';
@@ -38,6 +40,32 @@ export function SectionProsePanel(props: Props) {
     const { write, writingId, error } = useWriteSection();
     const { section } = props;
 
+    /**
+     * MDXEditor LEE `markdown` SÓLO AL MONTAR. Cambiar la prop después no
+     * actualiza nada: al volver a escribir la sección, el pastor seguía viendo
+     * la prosa vieja hasta recargar la página. Hay que empujar el texto nuevo
+     * por la API del editor.
+     */
+    const editorRef = useRef<MDXEditorMethods>(null);
+    /**
+     * Último texto que salió DEL editor. Sirve para distinguir un cambio
+     * propio (él tecleando) de uno externo (la regeneración): empujar el valor
+     * mientras escribe le movería el cursor al principio en cada tecla.
+     */
+    const ultimoPropio = useRef<string | undefined>(props.prose);
+
+    useEffect(() => {
+        const entrante = props.prose ?? '';
+        if (entrante === (ultimoPropio.current ?? '')) return;
+        ultimoPropio.current = entrante;
+        editorRef.current?.setMarkdown(entrante);
+    }, [props.prose]);
+
+    const alEditar = (texto: string) => {
+        ultimoPropio.current = texto;
+        props.onProseChange(texto);
+    };
+
     const decididos = props.elements.filter((e) => e.provenance !== 'descartado');
     const escribiendo = writingId === section.id;
 
@@ -76,7 +104,15 @@ export function SectionProsePanel(props: Props) {
                 genérico dejaría al pastor sin saber cuál de las dos le falta. */}
             {props.prose ? (
                 <div className="flex-1 min-h-0 overflow-y-auto rounded-md border border-border/60">
-                    <RichSermonEditor markdown={props.prose} onChange={props.onProseChange} />
+                    {/* `key` por sección: al cambiar de sección el editor se
+                        vuelve a montar con su propio contenido, en vez de
+                        arrastrar el estado interno de la anterior. */}
+                    <RichSermonEditor
+                        key={section.id}
+                        ref={editorRef}
+                        markdown={props.prose}
+                        onChange={alEditar}
+                    />
                 </div>
             ) : (
                 <p className="text-sm text-muted-foreground">
