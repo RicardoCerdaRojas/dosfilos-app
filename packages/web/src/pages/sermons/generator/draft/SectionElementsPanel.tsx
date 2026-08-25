@@ -11,6 +11,7 @@ import {
     type SermonElement,
     type ElementProvenance,
     type ContributionKind,
+    scriptureLookupRef,
     type WalkSection,
 } from '@dosfilos/domain';
 import { useProposeElements, type ProposedElement } from '@/hooks/useProposeElements';
@@ -64,7 +65,7 @@ export function SectionElementsPanel(props: Props) {
      * pestaña para consultarlo es fricción en el momento exacto en que está
      * pensando. Lectura local y síncrona, sin llamada de red.
      */
-    const versiculo = section.scriptureRef ? LocalBibleService.getVerses(section.scriptureRef) : null;
+    const versiculo = LocalBibleService.getVerses(scriptureLookupRef(section.scriptureRef) ?? '');
     const { propose, loading, error } = useProposeElements();
     const [mine, setMine] = useState('');
     const [proposals, setProposals] = useState<ProposedElement[]>([]);
