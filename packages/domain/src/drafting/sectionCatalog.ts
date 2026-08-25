@@ -67,14 +67,6 @@ export interface SectionDefinition {
     unpacksProposition?: boolean;
     /** Muestra el texto bíblico del punto mientras se decide. */
     showsScripture?: boolean;
-    /**
-     * Sin material de origen, la sección NO EXISTE en ese lugar del recorrido.
-     *
-     * El último punto no lleva transición: después de él viene la conclusión,
-     * no otro movimiento. Dejarla pendiente para siempre le anunciaría trabajo
-     * imposible; omitirla dice la verdad — ahí no hay transición que decidir.
-     */
-    omitWhenEmpty?: boolean;
 }
 
 const NS = 'drafting.sections';
@@ -151,10 +143,14 @@ export const SECTION_CATALOG: readonly SectionDefinition[] = [
         // sin enseñar el texto cambia un pendiente falso por un "listo" mudo.
         // Y sigue pudiendo escribir el puente retórico, que es lo único suyo
         // acá — `assembleTransitions` lo conserva y le agrega el recordatorio.
+        // TODO PUNTO LLEVA TRANSICIÓN, incluido el último. Asumí que no —
+        // "después viene la conclusión, no otro movimiento"— y el fundador lo
+        // corrigió: él la hace siempre. Lo que cambia en el último no es que
+        // exista, sino su contenido: no hay lista de puntos que retomar, así
+        // que el puente a la conclusión lo escribe él.
         coveredFrom: 'transitionReminder',
         contextKey: `${NS}.transitionContext`,
         coveredMeansDone: true,
-        omitWhenEmpty: true,
         oneIdea: true,
     }),
 

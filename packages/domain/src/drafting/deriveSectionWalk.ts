@@ -114,8 +114,9 @@ function resolverCubierto(
         case 'openingIllustration':
             return limpiar([input.openingIllustration]);
         case 'transitionReminder': {
-            // El ÚLTIMO punto no lleva recordatorio: después de él viene la
-            // conclusión, no otro movimiento, y repetir ahí los puntos es ruido.
+            // El último punto SÍ lleva transición, pero no recordatorio: no hay
+            // otro punto al que apuntar. Ahí el puente a la conclusión lo
+            // escribe el pastor, y por eso la sección le queda pendiente.
             const titulos = input.points.map((p) => p.title?.trim()).filter((t): t is string => Boolean(t));
             const proposicion = input.proposition?.trim();
             const esUltimo = punto ? input.points[input.points.length - 1] === punto : false;
@@ -138,11 +139,9 @@ function resolverCubierto(
 export function deriveSectionWalk(input: WalkInput): WalkSection[] {
     const secciones: WalkSection[] = [];
 
-    const instanciar = (definicion: SectionDefinition, punto?: WalkOutlinePoint, n?: number): WalkSection | null => {
+    const instanciar = (definicion: SectionDefinition, punto?: WalkOutlinePoint, n?: number): WalkSection => {
         const cubierto = resolverCubierto(definicion.coveredFrom, input, punto);
         const tieneCubierto = cubierto.length > 0;
-        // Sin material de origen, la sección no existe acá. Ver `omitWhenEmpty`.
-        if (definicion.omitWhenEmpty && !tieneCubierto) return null;
         // El título manda sobre `scriptureReferences`: uno lo mantiene el
         // pastor, el otro quedó de la propuesta del generador.
         const refPunto = punto
@@ -178,15 +177,11 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
     // Las de punto se repiten por cada punto, conservando el orden del catálogo
     // dentro de cada uno: primero se decide el punto entero y después el
     // siguiente, que es como el pastor piensa un sermón.
-    const agregar = (s: WalkSection | null) => {
-        if (s) secciones.push(s);
-    };
-
     input.points.forEach((punto, i) => {
-        for (const definicion of dePunto) agregar(instanciar(definicion, punto, i + 1));
+        for (const definicion of dePunto) secciones.push(instanciar(definicion, punto, i + 1));
     });
 
-    for (const definicion of deSermon) agregar(instanciar(definicion));
+    for (const definicion of deSermon) secciones.push(instanciar(definicion));
 
     return secciones;
 }
