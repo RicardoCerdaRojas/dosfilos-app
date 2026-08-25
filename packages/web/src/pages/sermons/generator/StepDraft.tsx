@@ -566,6 +566,7 @@ export function StepDraft() {
             proposition={homiletics.homileticalProposition}
             points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
             outlinePoints={(homiletics.outline?.mainPoints ?? []) as any[]}
+            hasDraft={!!draft}
             onAssemble={async (armado) => {
                 const guardo = await archivarBorradorActual(t('drafting.versions.beforeAssemble'));
                 setDraft(armado);

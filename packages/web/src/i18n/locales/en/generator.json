@@ -532,7 +532,9 @@
       "build": "Build the draft",
       "missing": "{{count}} sections would come out EMPTY, starting with “{{first}}”. You can build anyway.",
       "writeAndBuild": "Draft the {{count}} and build",
-      "buildPartial": "Build with what's there"
+      "buildPartial": "Build with what's there",
+      "rebuild": "Rebuild the draft",
+      "upToDate": "Draft up to date"
     }
   },
   "pastoralContext": {

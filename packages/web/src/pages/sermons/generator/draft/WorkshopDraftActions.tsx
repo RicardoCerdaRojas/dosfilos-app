@@ -22,6 +22,8 @@ interface Props {
     audienceRigor?: 'beginner' | 'seminary';
     onProseChange: (sectionId: string, prose: string) => void;
     onAssemble: (draft: SermonContent) => void | Promise<void>;
+    /** Ya existe un borrador: entonces esta acción lo REHACE, no lo crea. */
+    hasDraft?: boolean;
 }
 
 /**
@@ -38,6 +40,18 @@ export function WorkshopDraftActions(props: Props) {
     const { t } = useTranslation('generator');
     const { write } = useWriteSection();
     const [escribiendo, setEscribiendo] = useState<{ hechas: number; total: number } | null>(null);
+    /**
+     * Huella de lo que había cuando se armó por última vez.
+     *
+     * Sirve para APAGAR el botón cuando no hay nada nuevo que incorporar. Un
+     * botón siempre activo se lee como una tarea pendiente —el fundador
+     * preguntó dos veces por qué seguía ahí— y además invita a rearmar de balde,
+     * lo que archiva una versión idéntica y ensucia el historial.
+     *
+     * Arranca en null y no se persiste: al recargar no se sabe con qué se armó
+     * el borrador guardado, y ahí lo seguro es dejar rearmar.
+     */
+    const [huellaArmada, setHuellaArmada] = useState<string | null>(null);
 
     const entrada = {
         walk: props.walk,
@@ -75,9 +89,39 @@ export function WorkshopDraftActions(props: Props) {
      */
     const hayPendientes = redactables.length > 0;
 
+    /**
+     * Qué contenido entraría hoy al borrador. Se comparan los TEXTOS, no las
+     * referencias: reordenar el mapa o volver a renderizar no es un cambio del
+     * sermón, y apagar el botón por identidad de objeto lo dejaría encendido
+     * siempre.
+     */
+    const huellaActual = JSON.stringify([
+        Object.entries(props.prose)
+            .map(([k, v]) => [k, v.trim()])
+            .sort(),
+        Object.entries(props.elements)
+            .map(([k, els]) => [k, els.filter((e) => e.provenance !== 'descartado').map((e) => e.text)])
+            .sort(),
+    ]);
+    const sinCambios = huellaArmada === huellaActual;
+
+    const armar = (prosa: Record<string, string>) => {
+        void props.onAssemble(assembleDraft({ ...entrada, prose: prosa }));
+        setHuellaArmada(
+            JSON.stringify([
+                Object.entries(prosa)
+                    .map(([k, v]) => [k, v.trim()])
+                    .sort(),
+                Object.entries(props.elements)
+                    .map(([k, els]) => [k, els.filter((e) => e.provenance !== 'descartado').map((e) => e.text)])
+                    .sort(),
+            ]),
+        );
+    };
+
     const escribirYArmar = async () => {
         const prosaNueva = await escribirTodo();
-        props.onAssemble(assembleDraft({ ...entrada, prose: { ...props.prose, ...prosaNueva } }));
+        armar({ ...props.prose, ...prosaNueva });
     };
 
     const escribirTodo = async (): Promise<Record<string, string>> => {
@@ -133,7 +177,11 @@ export function WorkshopDraftActions(props: Props) {
             <div className="flex flex-wrap items-center gap-2">
                 {/* La acción principal hace el camino completo. La parcial queda
                     disponible al lado, sin que haya que adivinar el orden. */}
-                <Button size="sm" onClick={() => void (hayPendientes ? escribirYArmar() : props.onAssemble(assembleDraft(entrada)))} disabled={!!escribiendo}>
+                <Button
+                    size="sm"
+                    onClick={() => void (hayPendientes ? escribirYArmar() : armar(props.prose))}
+                    disabled={!!escribiendo || (!hayPendientes && sinCambios)}
+                >
                     {escribiendo ? (
                         <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                     ) : (
@@ -143,14 +191,16 @@ export function WorkshopDraftActions(props: Props) {
                         ? t('drafting.assemble.writingProgress', escribiendo)
                         : hayPendientes
                           ? t('drafting.assemble.writeAndBuild', { count: redactables.length })
-                          : t('drafting.assemble.build')}
+                          : sinCambios
+                            ? t('drafting.assemble.upToDate')
+                            : t(props.hasDraft ? 'drafting.assemble.rebuild' : 'drafting.assemble.build')}
                 </Button>
 
                 {hayPendientes && (
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => void props.onAssemble(assembleDraft(entrada))}
+                        onClick={() => armar(props.prose)}
                         disabled={!!escribiendo}
                     >
                         <PenLine className="h-4 w-4 mr-1.5" />
@@ -158,6 +208,13 @@ export function WorkshopDraftActions(props: Props) {
                     </Button>
                 )}
             </div>
+
+            {/* LA ACCIÓN ES PERMANENTE, NO UNA TAREA PENDIENTE. Si el pastor
+                cambia una decisión o reescribe una sección, tiene que poder
+                volver a armar; un botón que desaparece tras la primera vez lo
+                dejaría con un borrador que ya no refleja lo que decidió. La
+                etiqueta distingue crear de REHACER, igual que el botón de la
+                prosa — sin eso se lee como algo que quedó por hacer. */}
 
             {/* SE AVISA LO QUE FALTA, PERO NO SE BLOQUEA. El pastor puede querer
                 armar el borrador a medio camino para verlo tomar forma; impedirlo

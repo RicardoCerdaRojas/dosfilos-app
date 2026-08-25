@@ -22,6 +22,7 @@ interface Props {
     /** Bosquejo, para armar el borrador con los títulos y aplicaciones reales. */
     outlinePoints: readonly { title?: string; application?: string; scriptureReferences?: string[] }[];
     onAssemble: (draft: SermonContent) => void | Promise<void>;
+    hasDraft?: boolean;
 }
 
 const ANCHO_MIN = 200;
@@ -180,6 +181,7 @@ export function SocraticWorkshop(props: Props) {
             audienceRigor={props.audienceRigor}
             onProseChange={props.onChangeProse}
             onAssemble={props.onAssemble}
+            hasDraft={props.hasDraft}
         />
         </div>
     );
