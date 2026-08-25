@@ -114,13 +114,18 @@ function resolverCubierto(
         case 'openingIllustration':
             return limpiar([input.openingIllustration]);
         case 'transitionReminder': {
-            // El último punto SÍ lleva transición, pero no recordatorio: no hay
-            // otro punto al que apuntar. Ahí el puente a la conclusión lo
-            // escribe el pastor, y por eso la sección le queda pendiente.
+            // TODOS los puntos lo reciben, el último incluido.
+            //
+            // Se excluyó al último razonando que el recordatorio "anuncia el
+            // punto siguiente" y después del último no hay ninguno. El error
+            // fue confundir dos cosas: esto es CONTEXTO QUE EL PASTOR LEE
+            // mientras decide, no texto que se inserte solo. Retomar la tesis
+            // antes de la conclusión es justamente lo que hace un predicador, y
+            // ocultárselo no lo protegía de nada — sólo lo dejó sin la
+            // referencia que sí tenía en el punto anterior.
             const titulos = input.points.map((p) => p.title?.trim()).filter((t): t is string => Boolean(t));
             const proposicion = input.proposition?.trim();
-            const esUltimo = punto ? input.points[input.points.length - 1] === punto : false;
-            if (!proposicion || titulos.length === 0 || esUltimo) return [];
+            if (!proposicion || titulos.length === 0) return [];
             return [buildTransitionReminder(proposicion, titulos)];
         }
         case 'studyKeyWords':

@@ -49,8 +49,6 @@ const COMPLETO: AssembleDraftInput = {
         'point.1.illustration': 'Como un padre que llama por su nombre.',
         'point.2.exposition': 'Jonás se levanta para huir.',
         'point.2.illustration': '¿Han visto a los niños con rabietas?',
-        // El último punto necesita su puente a la conclusión: lo escribe él.
-        'point.2.transition': 'Y si esto es así, ¿qué nos queda?',
         'conclusion.recap': 'Dios habló; el hombre huyó.',
         'conclusion.callToAction': 'No tomes ese barco esta semana.',
     },
@@ -178,20 +176,16 @@ describe('la prosa redactada manda sobre las notas del bosquejo', () => {
 });
 
 
-describe('todo punto lleva transición, incluido el último', () => {
-    it('el último la tiene, pero SIN recordatorio: no hay punto al que apuntar', () => {
-        // Se asumió que el último no llevaba —"después viene la conclusión"— y
-        // el fundador lo corrigió: él la hace siempre. Lo que cambia no es que
-        // exista, sino que ahí el puente a la conclusión lo escribe él.
-        const ultima = walk.find((s) => s.id === 'point.2.transition');
-        expect(ultima).toBeDefined();
-        expect(ultima?.coveredBy).toBeUndefined();
-        expect(ultima?.status).toBe('pendiente');
-    });
-
-    it('los anteriores traen el recordatorio compuesto', () => {
-        const primera = walk.find((s) => s.id === 'point.1.transition');
-        expect(primera?.status).toBe('cubierta');
-        expect(primera?.coveredBy?.[0]).toContain('**Puntos:**');
+describe('todo punto lleva transición, con su recordatorio', () => {
+    it('TODOS lo reciben, el último incluido', () => {
+        // Dos suposiciones equivocadas seguidas sobre esta misma sección: que el
+        // último punto no llevaba transición, y que no llevaba recordatorio. El
+        // recordatorio es CONTEXTO QUE EL PASTOR LEE, no texto que se inserte
+        // solo — retomar la tesis antes de la conclusión es lo que él hace.
+        for (const id of ['point.1.transition', 'point.2.transition']) {
+            const s = walk.find((x) => x.id === id);
+            expect(s?.status, id).toBe('cubierta');
+            expect(s?.coveredBy?.[0], id).toContain('**Puntos:**');
+        }
     });
 });
