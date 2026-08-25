@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RailDivider } from '@/components/ui/RailDivider';
 import { useTranslation } from '@/i18n';
-import type { HomileticalAnalysis, SermonContent, SermonElement, WalkSection } from '@dosfilos/domain';
+import type { SermonElement, WalkSection } from '@dosfilos/domain';
 import { SermonMap } from './SermonMap';
 import { SectionElementsPanel } from './SectionElementsPanel';
 import { SectionProsePanel } from './SectionProsePanel';
-import { WorkshopDraftActions } from './WorkshopDraftActions';
 import { useWriteSection } from '@/hooks/useWriteSection';
 import { scriptureLookupRef } from '@dosfilos/domain';
 import { LocalBibleService } from '@/services/LocalBibleService';
@@ -22,13 +21,6 @@ interface Props {
     passage: string;
     proposition?: string;
     points?: readonly string[];
-    /** Bosquejo, para armar el borrador con los títulos y aplicaciones reales. */
-    outlinePoints: readonly { title?: string; application?: string; scriptureReferences?: string[] }[];
-    onAssemble: (draft: SermonContent) => void | Promise<void>;
-    hasDraft?: boolean;
-    /** Título del sermón, para el encabezado. */
-    sermonTitle?: string;
-    homiletics: HomileticalAnalysis;
 }
 
 const ANCHO_MIN = 200;
@@ -113,48 +105,15 @@ export function SocraticWorkshop(props: Props) {
               .trim() || undefined
         : undefined;
 
-    const listas = props.walk.filter(
-        (s) =>
-            s.status === 'cubierta' ||
-            (props.elements[s.id] ?? []).some((e) => e.provenance !== 'descartado'),
-    ).length;
-
     return (
         <div className="flex flex-col h-full min-h-[24rem]">
-        {/* MISMO PATRÓN QUE LA PESTAÑA BORRADOR: título a la izquierda,
-            acciones a la derecha, contenido debajo. El botón de armar vivía al
-            pie y se sentía fuera de lugar en cualquier posición que probara —
-            la razón era que el taller no seguía el patrón que el resto de la
-            app ya establece, no dónde estaba puesto exactamente.
-
-            Mismas clases que el encabezado del borrador: `min-w-0` + `truncate`
-            en el título y `shrink-0` en las acciones, porque agregar cualquier
-            cosa a esa fila partía el encabezado en dos líneas. */}
-        <div className="mb-4 flex-shrink-0 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-                <h3 className="text-lg font-semibold truncate" title={props.sermonTitle}>
-                    {props.sermonTitle || t('drafting.sections.mapTitle')}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                    {t('drafting.sections.pendingCount', { done: listas, total: props.walk.length })}
-                </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-                <WorkshopDraftActions
-                    walk={props.walk}
-                    elements={props.elements}
-                    prose={props.prose}
-                    points={props.outlinePoints}
-                    proposition={props.proposition}
-                    audienceRigor={props.audienceRigor}
-                    onProseChange={props.onChangeProse}
-                    onAssemble={props.onAssemble}
-                    hasDraft={props.hasDraft}
-                    homiletics={props.homiletics}
-                />
-            </div>
-        </div>
-
+        {/* SIN ENCABEZADO PROPIO. El taller es una PESTAÑA del paso, no una
+            pantalla aparte: el título del sermón, cuántas secciones van listas
+            y la acción de armar el borrador viven en la banda del paso, junto a
+            publicar y guardar. Cuando el taller tenía su propia banda, esa
+            pestaña se quedaba sin los botones del paso —no había forma de
+            publicar sin volver a Borrador— y el título aparecía dos veces al
+            cambiar de pestaña. */}
         <div className="flex items-stretch gap-0 flex-1 min-h-0">
             {abierto && (
                 <div style={{ width: ancho }} className="shrink-0 overflow-hidden">

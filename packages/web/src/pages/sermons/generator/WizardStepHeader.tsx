@@ -1,8 +1,18 @@
 import { cn } from '@/lib/utils';
 
 interface Props {
+    /**
+     * Va ANTES del título, en la misma fila: las pestañas del paso.
+     *
+     * Son parte del encabezado y no una barra propia encima. Con las pestañas
+     * en su línea, el título en otra y los botones en una tercera, el paso
+     * gastaba tres bandas horizontales antes de mostrar una palabra del sermón.
+     */
+    leading?: React.ReactNode;
     /** Título del paso o del sermón. Cede espacio antes que las acciones. */
     title: string;
+    /** Un dato corto sobre el estado del paso, junto al título. */
+    meta?: React.ReactNode;
     /** Acciones sobre el DOCUMENTO: pasaje, regenerar, vista previa, historial. */
     documentActions?: React.ReactNode;
     /**
@@ -39,12 +49,24 @@ interface Props {
  * la fila se parte en dos líneas apenas se le agrega algo, y este archivo ya
  * lo advertía antes de que el encabezado se compartiera.
  */
-export function WizardStepHeader({ title, documentActions, navigationActions, className }: Props) {
+export function WizardStepHeader({
+    leading,
+    title,
+    meta,
+    documentActions,
+    navigationActions,
+    className,
+}: Props) {
     return (
         <div className={cn('flex-shrink-0 flex flex-wrap items-center gap-x-3 gap-y-2', className)}>
-            <h2 className="min-w-0 flex-1 truncate text-lg font-semibold" title={title}>
-                {title}
-            </h2>
+            {leading && <div className="flex shrink-0 items-center">{leading}</div>}
+
+            <div className="min-w-0 flex-1 flex items-baseline gap-2">
+                <h2 className="min-w-0 truncate text-lg font-semibold" title={title}>
+                    {title}
+                </h2>
+                {meta && <span className="shrink-0 text-sm text-muted-foreground">{meta}</span>}
+            </div>
 
             {documentActions && <div className="flex shrink-0 items-center gap-2">{documentActions}</div>}
 

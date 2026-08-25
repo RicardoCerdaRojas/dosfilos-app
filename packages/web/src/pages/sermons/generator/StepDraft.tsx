@@ -25,7 +25,9 @@ import {
 } from '@dosfilos/application';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import {
+    countReadySections,
     deriveSectionWalk,
+    type SermonContent,
     normalizeHomileticalApproach,
     GENRE_COMPLIANCE_GENRES,
     JUDGE_SHADOW_SAMPLE_1_IN,
@@ -71,6 +73,7 @@ import { useDraftVersions } from './draft/useDraftVersions';
 import { SocraticWorkshop } from './draft/SocraticWorkshop';
 import { HomileticsSavedIndicator } from './homiletics/HomileticsLoadingScreen';
 import { WizardStepHeader } from './WizardStepHeader';
+import { WorkshopDraftActions } from './draft/WorkshopDraftActions';
 
 export function StepDraft() {
     const { t, language } = useTranslation('generator');
@@ -557,6 +560,19 @@ export function StepDraft() {
         socraticWalk.find((s) => s.status === 'pendiente') ??
         socraticWalk[0];
 
+    // Armar el borrador: lo dispara la banda del paso.
+    const armarBorrador = async (armado: SermonContent) => {
+        const guardo = await archivarBorradorActual(t('drafting.versions.beforeAssemble'));
+        setDraft(armado);
+        // Llevarlo a ver lo que acaba de armar. El resultado de esta acción ES
+        // el borrador: dejarlo en el taller lo obliga a buscarlo para saber si
+        // funcionó.
+        setActiveTab('draft');
+        toast.success(
+            guardo ? t('drafting.versions.assembledWithBackup') : t('drafting.versions.assembled'),
+        );
+    };
+
     const socraticPanel = socraticGate.enabled && homiletics && activeSection ? (
         <SocraticWorkshop
             walk={socraticWalk}
@@ -570,40 +586,61 @@ export function StepDraft() {
             passage={passage}
             proposition={homiletics.homileticalProposition}
             points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
-            outlinePoints={(homiletics.outline?.mainPoints ?? []) as any[]}
-            hasDraft={!!draft}
-            homiletics={homiletics}
-            sermonTitle={draft?.title}
-            onAssemble={async (armado) => {
-                const guardo = await archivarBorradorActual(t('drafting.versions.beforeAssemble'));
-                setDraft(armado);
-                // Llevarlo a ver lo que acaba de armar. El resultado de esta
-                // acción ES el borrador: dejarlo en el taller lo obliga a
-                // buscarlo para saber si funcionó.
-                setActiveTab('draft');
-                toast.success(
-                    guardo
-                        ? t('drafting.versions.assembledWithBackup')
-                        : t('drafting.versions.assembled'),
-                );
-            }}
         />
     ) : null;
 
-    // Se define acá arriba para poder envolverlo en pestañas sin re-indentar
-    // 180 líneas. El ternario estrecha `draft`: dentro de la rama verdadera ya
-    // no es null, igual que en la rama original del render.
-    const draftBody = draft ? (
-        <>
-            <IllustrationDuplicateBanner draft={draft} />
-            {/* EL ENCABEZADO CRUZA LAS DOS COLUMNAS.
-                Vivía dentro de la izquierda, así que el chat arrancaba más
-                arriba que el contenido y las columnas no encuadraban. Como
-                banda sobre ambas, el borde superior es uno solo y el chat
-                empieza donde empieza el trabajo. */}
+    // ARMAR EL BORRADOR ES ACCIÓN DEL PASO, NO DEL PANEL. Vivía dentro del
+    // taller, que es la razón por la que se perdía al cambiar de pestaña.
+    const workshopActions = homiletics ? (
+        <WorkshopDraftActions
+            walk={socraticWalk}
+            elements={sectionElements}
+            prose={sectionProse}
+            points={(homiletics.outline?.mainPoints ?? []) as any[]}
+            proposition={homiletics.homileticalProposition}
+            audienceRigor={rules.audienceRigor}
+            onProseChange={setSectionProse}
+            onAssemble={armarBorrador}
+            hasDraft={!!draft}
+            homiletics={homiletics}
+        />
+    ) : null;
+
+    // LA BANDA DEL PASO ES UNA SOLA Y LAS PESTAÑAS VAN DENTRO. Vivía adentro de
+    // `draftBody`, o sea dentro de la pestaña Borrador: al pasar al Taller
+    // desaparecían el título y TODOS los botones del paso —publicar incluido—
+    // y no quedaba forma de publicar sin volver a la otra pestaña.
+    const stepHeader = draft ? (
             <WizardStepHeader
+                leading={
+                    socraticPanel ? (
+                        <TabsList>
+                            <TabsTrigger value="draft">{t('drafting.tabs.draft')}</TabsTrigger>
+                            <TabsTrigger value="workshop">{t('drafting.tabs.workshop')}</TabsTrigger>
+                        </TabsList>
+                    ) : undefined
+                }
                 title={draft.title}
-                documentActions={<>
+                meta={
+                    activeTab === 'workshop'
+                        ? t('drafting.sections.pendingCount', {
+                              done: countReadySections(socraticWalk, sectionElements),
+                              total: socraticWalk.length,
+                          })
+                        : undefined
+                }
+                documentActions={
+                    /* LA ACCIÓN PROPIA DE LA PESTAÑA VIAJA EN LA MISMA BANDA.
+                       En el taller la acción es armar el borrador; en el
+                       borrador son el pasaje y regenerar. Lo que NO cambia con
+                       la pestaña —publicar, guardar, volver— queda del otro
+                       lado del separador, porque son del sermón y no del modo
+                       en que se esté trabajando. */
+                    activeTab === 'workshop' ? (
+                        workshopActions
+                    ) : (
+                        <>
+
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -648,7 +685,9 @@ export function StepDraft() {
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
-                </>}
+                        </>
+                    )
+                }
                 navigationActions={<>
                 <Button onClick={() => setStep(2)} variant="outline" size="sm">
                     <ArrowLeft className="mr-2 h-4 w-4" />
@@ -692,6 +731,14 @@ export function StepDraft() {
                 </Button>
                 </>}
             />
+    ) : null;
+
+    // Se define acá arriba para poder envolverlo en pestañas sin re-indentar
+    // 180 líneas. El ternario estrecha `draft`: dentro de la rama verdadera ya
+    // no es null, igual que en la rama original del render.
+    const draftBody = draft ? (
+        <>
+            <IllustrationDuplicateBanner draft={draft} />
             <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
                 <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
                     <div className="flex-1 min-h-0">
@@ -872,11 +919,14 @@ export function StepDraft() {
                 Los botones del paso quedan FUERA de las pestañas: navegar y
                 publicar no dependen del modo en que se esté trabajando. */}
             {socraticPanel ? (
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'draft' | 'workshop')} className="flex-1 min-h-0 flex flex-col">
-                    <TabsList className="self-start shrink-0">
-                        <TabsTrigger value="draft">{t('drafting.tabs.draft')}</TabsTrigger>
-                        <TabsTrigger value="workshop">{t('drafting.tabs.workshop')}</TabsTrigger>
-                    </TabsList>
+                <Tabs
+                    value={activeTab}
+                    onValueChange={(v) => setActiveTab(v as 'draft' | 'workshop')}
+                    className="flex-1 min-h-0 flex flex-col gap-4"
+                >
+                    {/* La banda va DENTRO de `Tabs` porque lleva el `TabsList`:
+                        las pestañas necesitan el contexto de Radix. */}
+                    {stepHeader}
                     {/* NINGUNA CLASE DE `display` EN `TabsContent`.
                         Radix oculta el panel inactivo con el atributo `hidden`,
                         que la hoja del navegador implementa como `display:none`
@@ -885,15 +935,18 @@ export function StepDraft() {
                         `flex-1` y los dos se repartían la altura: el taller
                         quedaba empujado al fondo con un hueco enorme arriba.
                         El layout va en un div INTERIOR. */}
-                    <TabsContent value="draft" className="flex-1 min-h-0 mt-3">
+                    <TabsContent value="draft" className="flex-1 min-h-0">
                         <div className="h-full flex flex-col gap-4">{draftBody}</div>
                     </TabsContent>
-                    <TabsContent value="workshop" className="flex-1 min-h-0 mt-3">
+                    <TabsContent value="workshop" className="flex-1 min-h-0">
                         <div className="h-full overflow-y-auto">{socraticPanel}</div>
                     </TabsContent>
                 </Tabs>
             ) : (
-                draftBody
+                <>
+                    {stepHeader}
+                    {draftBody}
+                </>
             )}
 
         </div>

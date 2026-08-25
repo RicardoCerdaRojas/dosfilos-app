@@ -95,6 +95,7 @@ export * from './drafting/parseProposedElements';
 export * from './drafting/splitElementLines';
 export * from './drafting/classifyContribution';
 export * from './drafting/deriveSectionWalk';
+export * from './drafting/sectionReadiness';
 export * from './drafting/buildSectionProsePrompt';
 export * from './drafting/scriptureLookupRef';
 export * from './drafting/pointPassageRef';

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronRight, Check, Circle, CircleDot } from 'lucide-react';
 import { useTranslation } from '@/i18n';
-import { hasDecisions, type SermonElement, type WalkSection } from '@dosfilos/domain';
+import { sectionIsReady, type SermonElement, type WalkSection } from '@dosfilos/domain';
 
 interface Props {
     walk: readonly WalkSection[];
@@ -39,7 +39,7 @@ export function SermonMap({ walk, elements, activeId, onSelect }: Props) {
      * desde el bosquejo— y llega como `cubierta`, no por una excepción de
      * estado. Marcarla resuelta sin mostrar el texto sería un "listo" mudo.
      */
-    const isDone = (s: WalkSection) => s.status === 'cubierta' || hasDecisions(elements[s.id] ?? []);
+    const isDone = (s: WalkSection) => sectionIsReady(s, elements[s.id] ?? []);
 
 
     // Agrupa por punto conservando el orden del recorrido. Las secciones sin
