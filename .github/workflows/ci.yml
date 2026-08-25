@@ -63,6 +63,14 @@ jobs:
       # quien ya usaba `t()` y hacía trampa, y no miraba a quien no lo usaba en
       # absoluto. Así quedaron 141 archivos con español incrustado, invisibles.
       #
+      # `react-hooks/rules-of-hooks` estaba en 'off' en el .eslintrc de web: el
+      # plugin instalado, la config extendiéndolo, y apagada justo la regla que
+      # atrapa el error que rompe la pantalla en runtime. Costó un crash de
+      # `StepDraft` al regenerar (un `useMemo` bajo un `if (loading) return`).
+      # Trinquete por archivo: la deuda vieja no bloquea, una nueva sí.
+      - name: Trinquete de react-hooks (hooks condicionales)
+        run: ./scripts/check-react-hooks.sh
+
       # Trinquete, no cero: las 588 ocurrencias preexistentes no bloquean; una
       # nueva sí.
       - name: Trinquete de i18n (texto hardcodeado)

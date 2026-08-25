@@ -19,7 +19,12 @@ module.exports = {
         '@typescript-eslint/no-empty-object-type': 'off',
         'prefer-const': 'off',
         'react-hooks/exhaustive-deps': 'off',
-        'react-hooks/rules-of-hooks': 'off',
+        // 'warn' Y NO 'off': se ve en el editor mientras se escribe. Quien la
+        // EXIGE es `scripts/check-react-hooks.sh`, con trinquete por archivo —
+        // acá en 'error' bloquearía por 38 violaciones viejas y alguien la
+        // volvería a apagar, que es exactamente cómo llegamos al crash de
+        // `StepDraft` al regenerar.
+        'react-hooks/rules-of-hooks': 'warn',
         'no-case-declarations': 'off',
         'no-useless-escape': 'off',
         'no-misleading-character-class': 'off',
