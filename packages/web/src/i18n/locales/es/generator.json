@@ -541,7 +541,11 @@
         "job": "Retomar la proposición y anunciar el punto siguiente. Se deriva del bosquejo: no hay nada que decidir."
       },
       "keyWordsContext": "Las palabras que estudiaste, con lo que dijiste de cada una:",
-      "transitionContext": "Esto se compone solo desde tu bosquejo. Puedes agregar arriba la frase con que pasas al punto siguiente:"
+      "transitionContext": "Esto se compone solo desde tu bosquejo. Puedes agregar arriba la frase con que pasas al punto siguiente:",
+      "authorityQuote": {
+        "label": "Punto {{n}} — cita de autoridad",
+        "job": "Una voz que respalde lo que acabas de exponer. Sólo si tienes una verificable: una cita inventada en el púlpito destruye la credibilidad."
+      }
     },
     "tabs": {
       "draft": "Borrador",
@@ -569,7 +573,8 @@
       "crossReferences": "Referencias cruzadas",
       "illustration": "Ilustración",
       "implications": "Implicaciones",
-      "transition": "Transición"
+      "transition": "Transición",
+      "authorityQuote": "Cita de autoridad"
     }
   },
   "pastoralContext": {

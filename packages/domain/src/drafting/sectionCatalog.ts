@@ -19,6 +19,7 @@ export type DraftTarget =
     | { kind: 'callToAction' }
     /** Cuerpo del punto: la prosa que lo desarrolla. */
     | { kind: 'pointContent' }
+    | { kind: 'pointAuthorityQuote' }
     | { kind: 'pointIllustration' }
     | { kind: 'pointImplications' }
     | { kind: 'pointTransition' };
@@ -78,6 +79,15 @@ export interface SectionDefinition {
     unpacksProposition?: boolean;
     /** Muestra el texto bíblico del punto mientras se decide. */
     showsScripture?: boolean;
+    /**
+     * La sección puede quedar vacía sin que al sermón le falte nada.
+     *
+     * La cita de autoridad es el caso: existe SÓLO si el pastor tiene una
+     * verificable. Contarla como pendiente lo empujaría a inventar una para
+     * "completar" el sermón — que es justo el mecanismo por el que se fabrica
+     * una cita falsa.
+     */
+    optional?: boolean;
 }
 
 const NS = 'drafting.sections';
@@ -122,6 +132,18 @@ export const SECTION_CATALOG: readonly SectionDefinition[] = [
         target: { kind: 'pointContent' },
         unpacksProposition: true,
         showsScripture: true,
+    }),
+    def({
+        key: 'authorityQuote',
+        scope: 'point',
+        mode: 'elements',
+        labelKey: `${NS}.authorityQuote.label`,
+        jobKey: `${NS}.authorityQuote.job`,
+        target: { kind: 'pointAuthorityQuote' },
+        optional: true,
+        // UNA cita, no una lista: un punto se respalda con una voz, no con
+        // varias apiladas.
+        oneIdea: true,
     }),
     def({
         key: 'illustration',

@@ -17,12 +17,19 @@ export interface AssembleDraftInput {
 
 interface PartesDelPunto {
     content: string[];
+    authorityQuote: string;
     illustration: string;
     implications: string;
     transition: string;
 }
 
-const vacio = (): PartesDelPunto => ({ content: [], illustration: '', implications: '', transition: '' });
+const vacio = (): PartesDelPunto => ({
+    content: [],
+    authorityQuote: '',
+    illustration: '',
+    implications: '',
+    transition: '',
+});
 
 /**
  * Arma el borrador a partir de lo que el pastor decidió y escribió.
@@ -109,6 +116,9 @@ export function assembleDraft(input: AssembleDraftInput): SermonContent {
             case 'pointContent':
                 if (texto) delPunto(numeroDe(seccion)).content.push(texto);
                 break;
+            case 'pointAuthorityQuote':
+                delPunto(numeroDe(seccion)).authorityQuote = texto;
+                break;
             case 'pointIllustration':
                 delPunto(numeroDe(seccion)).illustration = texto;
                 break;
@@ -126,16 +136,28 @@ export function assembleDraft(input: AssembleDraftInput): SermonContent {
     }
 
     const body = input.points.map((punto, i) => {
-        const parte = porPunto.get(i + 1) ?? vacio();
+        const n = i + 1;
+        const parte = porPunto.get(n) ?? vacio();
         return {
             point: punto.title?.trim() ?? '',
+            // El pasaje que ESTE punto expone, para que el bloque del texto lo
+            // abra. Sale del recorrido, que ya lo derivó del título del punto.
+            mainPassageRef: input.walk.find((s) => s.parentId === `point.${n}` && s.scriptureRef)?.scriptureRef,
             content: unir(parte.content),
             illustration: parte.illustration || undefined,
             implications: splitApplication(parte.implications),
             scriptureReferences: punto.scriptureReferences,
-            // NUNCA se fabrica una cita de autoridad: es la regla que ya rige el
-            // resto del sermón.
-            authorityQuote: null,
+            // LA CITA ES UNA DECISIÓN SUYA, no un campo que el modelo rellena.
+            //
+            // Acá se forzaba `null` razonando "nunca se fabrica". Pero no
+            // fabricar no es lo mismo que no permitir: una cita verificable de
+            // su biblioteca es legítima y el proyecto la contempla. Al forzarla
+            // a `null` desapareció del sermón sin que nadie lo decidiera.
+            //
+            // Ahora sale de su sección: si él no decidió ninguna, es `null` —
+            // que es lo correcto — pero por ausencia de decisión, no por
+            // imposición.
+            authorityQuote: parte.authorityQuote || null,
             transition: parte.transition || undefined,
         };
     });
@@ -153,6 +175,9 @@ export function assembleDraft(input: AssembleDraftInput): SermonContent {
 export function missingForDraft(input: AssembleDraftInput): WalkSection[] {
     return input.walk.filter((s) => {
         if (s.status === 'cubierta') return false;
+        // Una sección opcional vacía no es una falta: contarla empujaría al
+        // pastor a rellenarla para "completar" el sermón.
+        if (s.optional) return false;
         if (s.mode === 'verbatim') {
             return (input.elements[s.id] ?? []).every((e) => e.provenance === 'descartado');
         }

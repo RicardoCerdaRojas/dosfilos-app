@@ -12,9 +12,15 @@ const PUNTO = {
 
 describe('sermonPointBlocks', () => {
     it('define el orden en que se predica un punto', () => {
-        expect(sermonPointBlocks(PUNTO).map((b) => b.kind)).toEqual([
+        // Título → VERSÍCULO → proposición y desarrollo → apoyo → imagen →
+        // aplicación → transición. El pastor lee el pasaje antes de oír qué se
+        // afirma de él, y la cita respalda antes de que la imagen lo haga
+        // visible.
+        expect(sermonPointBlocks({ ...PUNTO, mainPassageRef: 'Jonás 1:1-2', authorityQuote: 'Owen dijo…' }).map((b) => b.kind)).toEqual([
+            'mainPassage',
             'content',
             'crossReferences',
+            'authorityQuote',
             'illustration',
             'implications',
             'transition',
@@ -41,10 +47,16 @@ describe('sermonPointBlocks', () => {
         expect(bloques.map((b) => b.kind)).toEqual(['content']);
     });
 
-    it('la cita de autoridad aparece SÓLO si existe', () => {
-        expect(sermonPointBlocks(PUNTO).filter((b) => b.kind === 'content')).toHaveLength(1);
+    it('la cita de autoridad aparece SÓLO si existe, y con rótulo propio', () => {
+        // Antes se colaba como un bloque de contenido más, sin decir qué era.
+        expect(sermonPointBlocks(PUNTO).some((b) => b.kind === 'authorityQuote')).toBe(false);
         const conCita = sermonPointBlocks({ ...PUNTO, authorityQuote: 'Owen dijo algo verificable.' });
-        expect(conCita.filter((b) => b.kind === 'content')).toHaveLength(2);
+        const cita = conCita.find((b) => b.kind === 'authorityQuote');
+        expect(cita?.headingKey).toBe('drafting.pointBlocks.authorityQuote');
+    });
+
+    it('sin pasaje del punto no inventa un bloque de texto', () => {
+        expect(sermonPointBlocks(PUNTO).some((b) => b.kind === 'mainPassage')).toBe(false);
     });
 
     it('una transición en blanco no genera bloque', () => {

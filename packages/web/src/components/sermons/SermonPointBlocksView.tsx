@@ -38,7 +38,16 @@ export function SermonPointBlocksView({ point, renderFallbackReference }: Props)
                         </h5>
                     )}
 
-                    {bloque.kind === 'crossReferences' ? (
+                    {bloque.kind === 'mainPassage' ? (
+                        // El pasaje que el punto expone, con el texto REAL de la
+                        // Biblia local. Antes lo escribía el modelo dentro de la
+                        // prosa: dato que ya tenemos, pedido a quien puede
+                        // equivocarlo.
+                        <ScriptureReferenceWithText
+                            reference={bloque.text ?? ''}
+                            renderFallback={renderFallbackReference}
+                        />
+                    ) : bloque.kind === 'crossReferences' ? (
                         <div className="space-y-3">
                             {(bloque.items ?? []).map((ref, j) => (
                                 <ScriptureReferenceWithText

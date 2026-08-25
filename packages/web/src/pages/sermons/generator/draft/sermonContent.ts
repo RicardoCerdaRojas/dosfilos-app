@@ -37,6 +37,12 @@ export function buildFullContent(draft: SermonDraft | null, t: TFunction): strin
                 .map((bloque) => {
                     const encabezado = bloque.headingKey ? `### ${t(bloque.headingKey)}\n` : '';
 
+                    if (bloque.kind === 'mainPassage') {
+                        const ref = bloque.text ?? '';
+                        const texto = LocalBibleService.getVerses(scriptureLookupRef(ref) ?? '');
+                        return texto ? `> **${ref}** — ${texto}` : `> ${ref}`;
+                    }
+
                     if (bloque.kind === 'crossReferences') {
                         // CON EL TEXTO DEL VERSÍCULO: sin él hay que abrir cada
                         // cita para saber qué dice, también en el publicado.

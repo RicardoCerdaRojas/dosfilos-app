@@ -49,6 +49,9 @@ const COMPLETO: AssembleDraftInput = {
         'point.1.illustration': 'Como un padre que llama por su nombre.',
         'point.2.exposition': 'Jonás se levanta para huir.',
         'point.2.illustration': '¿Han visto a los niños con rabietas?',
+        // La cita de autoridad es opcional: acá se deja decidida en un punto
+        // para verificar que llega al sermón, y ausente en el otro.
+        'point.1.authorityQuote': 'Calvino comenta que la huida revela el corazón.',
         'conclusion.recap': 'Dios habló; el hombre huyó.',
         'conclusion.callToAction': 'No tomes ese barco esta semana.',
     },
@@ -102,8 +105,11 @@ describe('assembleDraft', () => {
         expect(draft.body[1].implications).toHaveLength(1);
     });
 
-    it('NUNCA fabrica una cita de autoridad', () => {
-        expect(draft.body.every((p) => p.authorityQuote === null)).toBe(true);
+    it('NUNCA fabrica una cita de autoridad: sale de lo que él decidió', () => {
+        // La regla no cambió —no se inventa— pero pasó de imponerse con `null`
+        // fijo a derivarse de su sección. Un punto sin cita decidida sigue en
+        // `null`.
+        expect(draft.body[1].authorityQuote).toBeNull();
     });
 
     it('un elemento descartado no entra al sermón', () => {
@@ -227,5 +233,22 @@ describe('lo que la sección trae hecho: contenido o contexto', () => {
             prose: {},
         });
         expect(conPalabras.introduction).not.toContain('לִבְרֹחַ');
+    });
+});
+
+
+describe('la cita de autoridad es una decisión, no un campo forzado', () => {
+    it('llega al sermón cuando él la decidió', () => {
+        // Se forzaba `null` razonando "nunca se fabrica" — y no fabricar no es
+        // lo mismo que no permitir. Desaparecía sin que nadie lo decidiera.
+        expect(assembleDraft(COMPLETO).body[0].authorityQuote).toContain('Calvino comenta');
+    });
+
+    it('queda en null cuando no decidió ninguna, por AUSENCIA no por imposición', () => {
+        expect(assembleDraft(COMPLETO).body[1].authorityQuote).toBeNull();
+    });
+
+    it('el punto lleva el pasaje que expone, derivado del recorrido', () => {
+        expect(assembleDraft(COMPLETO).body[0].mainPassageRef).toBe('Jonás 1:1-2');
     });
 });

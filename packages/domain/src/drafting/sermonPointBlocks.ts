@@ -1,7 +1,14 @@
 /** Un bloque del cuerpo de un punto, en el orden en que se predica. */
 export interface SermonPointBlock {
     /** Identifica el bloque. La UI decide cómo pintarlo. */
-    kind: 'content' | 'crossReferences' | 'illustration' | 'implications' | 'transition';
+    kind:
+        | 'mainPassage'
+        | 'content'
+        | 'crossReferences'
+        | 'authorityQuote'
+        | 'illustration'
+        | 'implications'
+        | 'transition';
     /** Clave i18n de su encabezado. Ausente cuando el bloque no lleva rótulo. */
     headingKey?: string;
     /** Texto corrido, para los bloques de un solo cuerpo. */
@@ -12,6 +19,14 @@ export interface SermonPointBlock {
 
 /** Forma mínima que este módulo necesita de un punto del sermón. */
 export interface SermonPointShape {
+    /**
+     * Referencia del pasaje que ESTE punto expone.
+     *
+     * Separada de `scriptureReferences`, que son las de APOYO. Antes el texto
+     * del pasaje venía escrito dentro de la prosa porque el prompt se lo pedía
+     * al modelo — dato que ya tenemos, pedido a quien puede equivocarlo.
+     */
+    mainPassageRef?: string;
     content?: string;
     scriptureReferences?: string[];
     illustration?: string;
@@ -46,6 +61,12 @@ export function sermonPointBlocks(point: SermonPointShape): SermonPointBlock[] {
     const bloques: SermonPointBlock[] = [];
     const texto = (v: string | null | undefined) => v?.trim() || undefined;
 
+    // EL TEXTO BÍBLICO VA PRIMERO: título → versículo → proposición → desarrollo.
+    // El pastor lee el pasaje antes de oír qué se afirma de él, que es el orden
+    // en que se predica. Va sin rótulo: la referencia lo identifica.
+    const pasaje = texto(point.mainPassageRef);
+    if (pasaje) bloques.push({ kind: 'mainPassage', text: pasaje });
+
     const contenido = texto(point.content);
     // El cuerpo del punto no lleva rótulo: es lo que se predica, no una ficha.
     if (contenido) bloques.push({ kind: 'content', text: contenido });
@@ -59,6 +80,12 @@ export function sermonPointBlocks(point: SermonPointShape): SermonPointBlock[] {
         bloques.push({ kind: 'crossReferences', headingKey: `${NS}.crossReferences`, items: refs });
     }
 
+    // ANTES DE LA ILUSTRACIÓN: la cita respalda lo que se acaba de exponer; la
+    // imagen viene después a hacerlo visible. Se muestra SÓLO si existe —
+    // nunca se fabrica, y un rótulo vacío sobraría.
+    const cita = texto(point.authorityQuote);
+    if (cita) bloques.push({ kind: 'authorityQuote', headingKey: `${NS}.authorityQuote`, text: cita });
+
     const ilustracion = texto(point.illustration);
     if (ilustracion) {
         bloques.push({ kind: 'illustration', headingKey: `${NS}.illustration`, text: ilustracion });
@@ -68,11 +95,6 @@ export function sermonPointBlocks(point: SermonPointShape): SermonPointBlock[] {
     if (implicaciones.length > 0) {
         bloques.push({ kind: 'implications', headingKey: `${NS}.implications`, items: implicaciones });
     }
-
-    // La cita de autoridad se muestra SÓLO si existe. Nunca se fabrica, así que
-    // en el flujo socrático siempre es `null` — y un rótulo vacío sobraría.
-    const cita = texto(point.authorityQuote);
-    if (cita) bloques.push({ kind: 'content', text: cita });
 
     const transicion = texto(point.transition);
     if (transicion) {

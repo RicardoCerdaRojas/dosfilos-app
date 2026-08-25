@@ -43,6 +43,8 @@ export interface WalkSection {
     coveredBy?: string[];
     /** Ese material ES el contenido de la sección, no sólo contexto. */
     coveredIsContent?: boolean;
+    /** Puede quedar vacía sin que al sermón le falte nada. */
+    optional?: boolean;
     /** Clave i18n que introduce `coveredBy`. */
     contextKey?: string;
     /** Prefijo i18n del texto propio de una sección `verbatim`. */
@@ -169,6 +171,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
             coveredBy: tieneCubierto ? cubierto : undefined,
             contextKey: tieneCubierto ? definicion.contextKey : undefined,
             coveredIsContent: definicion.coveredIsContent,
+            optional: definicion.optional,
             verbatimKey: definicion.verbatimKey,
             oneIdea: definicion.oneIdea,
             unpacksProposition: definicion.unpacksProposition,
