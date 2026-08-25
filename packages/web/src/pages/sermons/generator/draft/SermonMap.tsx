@@ -28,10 +28,19 @@ export function SermonMap({ walk, elements, activeId, onSelect }: Props) {
     const { t } = useTranslation('generator');
     const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
-    // COMPLETITUD, no autoría: una directiva también es una decisión. Medirlo
-    // con la autoría dejaba en círculo una sección donde el pastor acababa de
-    // trabajar, sólo porque lo que escribió era un tema y no una idea.
-    const isDone = (s: WalkSection) => s.status === 'cubierta' || hasDecisions(elements[s.id] ?? []);
+    /**
+     * ¿Esta sección le pide algo al pastor?
+     *
+     * COMPLETITUD, no autoría: una directiva también es una decisión. Medirlo
+     * con la autoría dejaba en círculo una sección donde acababa de trabajar,
+     * sólo porque lo que escribió era un tema y no una idea.
+     *
+     * Y las `derivada` cuentan como listas: se componen solas desde el
+     * bosquejo. Mostrarlas pendientes le anuncia trabajo que no existe — el
+     * mismo error, en otra forma.
+     */
+    const isDone = (s: WalkSection) =>
+        s.status === 'cubierta' || s.status === 'derivada' || hasDecisions(elements[s.id] ?? []);
 
     const done = walk.filter(isDone).length;
 
