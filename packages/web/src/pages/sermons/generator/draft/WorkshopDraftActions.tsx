@@ -91,7 +91,11 @@ export function WorkshopDraftActions(props: Props) {
             s.mode === 'elements' &&
             !props.prose[s.id]?.trim() &&
             ((props.elements[s.id] ?? []).some((e) => e.provenance !== 'descartado') ||
-                (s.coveredBy ?? []).length > 0),
+                // Sólo si su material ES contenido. El recordatorio de la
+                // transición es CONTEXTO: redactar desde él produciría prosa que
+                // repite la proposición, que es justo el duplicado recién
+                // corregido.
+                (s.coveredIsContent === true && (s.coveredBy ?? []).length > 0)),
     );
 
     /**
@@ -156,7 +160,7 @@ export function WorkshopDraftActions(props: Props) {
                       .join(' ')
                       .trim() || undefined
                 : undefined;
-            const desdeElBosquejo = (seccion.coveredBy ?? []).map((text, i) => ({
+            const desdeElBosquejo = (seccion.coveredIsContent ? (seccion.coveredBy ?? []) : []).map((text, i) => ({
                 id: `${seccion.id}.covered.${i}`,
                 sectionId: seccion.id,
                 text,

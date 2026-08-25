@@ -79,8 +79,12 @@ export function SectionProsePanel(props: Props) {
      *
      * Sus notas entran como elementos suyos porque LO SON: procedencia `pastor`,
      * decididas por él en el paso homilético.
+     *
+     * SÓLO cuando ese material ES contenido. El recordatorio de la transición
+     * es contexto: redactar desde él produciría prosa que repite la
+     * proposición, el duplicado que se acaba de corregir.
      */
-    const desdeElBosquejo: SermonElement[] = (section.coveredBy ?? []).map((text, i) => ({
+    const desdeElBosquejo: SermonElement[] = (section.coveredIsContent ? (section.coveredBy ?? []) : []).map((text, i) => ({
         id: `${section.id}.covered.${i}`,
         sectionId: section.id,
         text,
