@@ -366,7 +366,8 @@
       "beforeRegenerate": "Antes de regenerar el borrador",
       "seePrevious": "Ver versión anterior",
       "beforeAssemble": "Antes de armar desde el taller",
-      "assembledWithBackup": "Borrador armado. El anterior quedó en el historial."
+      "assembledWithBackup": "Borrador armado. El anterior quedó en el historial.",
+      "assembled": "Borrador armado desde tus decisiones."
     },
     "afterGenerateTitle": "Después de generar podrás:",
     "afterGenerateList": [

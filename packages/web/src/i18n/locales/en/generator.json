@@ -366,7 +366,8 @@
       "beforeRegenerate": "Before regenerating the draft",
       "seePrevious": "View previous version",
       "beforeAssemble": "Before building from the workshop",
-      "assembledWithBackup": "Draft built. The previous one is in the history."
+      "assembledWithBackup": "Draft built. The previous one is in the history.",
+      "assembled": "Draft built from your decisions."
     },
     "afterGenerateTitle": "Once it's generated you can:",
     "afterGenerateList": [
