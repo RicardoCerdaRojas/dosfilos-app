@@ -539,7 +539,8 @@
         "label": "Punto {{n}} — transición",
         "job": "Retomar la proposición y anunciar el punto siguiente. Se deriva del bosquejo: no hay nada que decidir."
       },
-      "keyWordsContext": "Las palabras que estudiaste, con lo que dijiste de cada una:"
+      "keyWordsContext": "Las palabras que estudiaste, con lo que dijiste de cada una:",
+      "transitionContext": "Esto se compone solo desde tu bosquejo. Puedes agregar arriba la frase con que pasas al punto siguiente:"
     },
     "tabs": {
       "draft": "Borrador",

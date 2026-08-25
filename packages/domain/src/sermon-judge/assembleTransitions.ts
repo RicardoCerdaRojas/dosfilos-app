@@ -31,10 +31,7 @@ export function assembleTransitions(
     const proposicion = homiletics.homileticalProposition?.trim();
     if (!content.body?.length || puntos.length === 0 || !proposicion) return content;
 
-    const recordatorio = [
-        proposicion,
-        `**Puntos:**\n${puntos.map((t, i) => `${i + 1}. ${t}`).join('\n')}`,
-    ].join('\n\n');
+    const recordatorio = buildTransitionReminder(proposicion, puntos);
 
     const body = content.body.map((punto, i) => {
         const esUltimo = i === content.body.length - 1;
@@ -59,4 +56,24 @@ function leadIn(transition: string | undefined): string {
     return primerBloque
         .replace(/^\s*\*{0,2}\s*(?:Transici[oó]n|Recordatorio)\s*:?\s*\*{0,2}\s*/i, '')
         .trim();
+}
+
+
+/**
+ * El recordatorio que cierra cada transición: proposición + puntos, verbatim.
+ *
+ * EXPORTADO para que el taller pueda MOSTRARLE al pastor lo que la transición
+ * va a decir. Marcarla como resuelta sin enseñarle el texto cambia un pendiente
+ * falso por un "listo" mudo: el check afirma que está hecho y él no tiene cómo
+ * verificarlo ni cómo cambiarlo.
+ *
+ * Se calcula en un solo lugar porque es lo mismo que se ensambla: dos copias de
+ * este formato divergirían y el taller mostraría algo distinto de lo que el
+ * sermón termina diciendo.
+ */
+export function buildTransitionReminder(proposition: string, pointTitles: readonly string[]): string {
+    return [
+        proposition,
+        `**Puntos:**\n${pointTitles.map((t, i) => `${i + 1}. ${t}`).join('\n')}`,
+    ].join('\n\n');
 }

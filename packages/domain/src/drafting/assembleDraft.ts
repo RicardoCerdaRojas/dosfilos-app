@@ -147,7 +147,7 @@ export function assembleDraft(input: AssembleDraftInput): SermonContent {
 /** Secciones que aún no tienen contenido. Para avisar antes de armar. */
 export function missingForDraft(input: AssembleDraftInput): WalkSection[] {
     return input.walk.filter((s) => {
-        if (s.status === 'cubierta' || s.status === 'derivada') return false;
+        if (s.status === 'cubierta') return false;
         if (s.mode === 'verbatim') {
             return (input.elements[s.id] ?? []).every((e) => e.provenance === 'descartado');
         }

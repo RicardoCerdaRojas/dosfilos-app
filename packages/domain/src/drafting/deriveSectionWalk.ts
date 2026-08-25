@@ -1,4 +1,5 @@
 import { pointPassageRef } from './pointPassageRef';
+import { buildTransitionReminder } from '../sermon-judge/assembleTransitions';
 import { SECTION_CATALOG, sectionIdFor, type CoveredSource, type SectionDefinition } from './sectionCatalog';
 
 /**
@@ -26,14 +27,7 @@ export type SectionStatus =
      * flujo — y le pediría decidir dos veces la misma cosa, con el riesgo de
      * que la segunda contradiga a la primera.
      */
-    | 'cubierta'
-    /**
-     * No se decide ni se redacta: se deriva de lo que ya existe.
-     *
-     * La transición es el caso — retomar la proposición y nombrar el punto
-     * siguiente es mecánico. Preguntarla sería fricción sin contenido.
-     */
-    | 'derivada';
+    | 'cubierta';
 
 /** Cómo se decide la sección. */
 export type SectionMode = 'elements' | 'verbatim';
@@ -119,6 +113,15 @@ function resolverCubierto(
             return limpiar([input.proposition]);
         case 'openingIllustration':
             return limpiar([input.openingIllustration]);
+        case 'transitionReminder': {
+            // El ÚLTIMO punto no lleva recordatorio: después de él viene la
+            // conclusión, no otro movimiento, y repetir ahí los puntos es ruido.
+            const titulos = input.points.map((p) => p.title?.trim()).filter((t): t is string => Boolean(t));
+            const proposicion = input.proposition?.trim();
+            const esUltimo = punto ? input.points[input.points.length - 1] === punto : false;
+            if (!proposicion || titulos.length === 0 || esUltimo) return [];
+            return [buildTransitionReminder(proposicion, titulos)];
+        }
         case 'studyKeyWords':
             // Original + significancia en una línea: el pastor decidió qué
             // significa la palabra, y esa nota es lo que alimenta la sección.
@@ -135,9 +138,11 @@ function resolverCubierto(
 export function deriveSectionWalk(input: WalkInput): WalkSection[] {
     const secciones: WalkSection[] = [];
 
-    const instanciar = (definicion: SectionDefinition, punto?: WalkOutlinePoint, n?: number): WalkSection => {
+    const instanciar = (definicion: SectionDefinition, punto?: WalkOutlinePoint, n?: number): WalkSection | null => {
         const cubierto = resolverCubierto(definicion.coveredFrom, input, punto);
         const tieneCubierto = cubierto.length > 0;
+        // Sin material de origen, la sección no existe acá. Ver `omitWhenEmpty`.
+        if (definicion.omitWhenEmpty && !tieneCubierto) return null;
         // El título manda sobre `scriptureReferences`: uno lo mantiene el
         // pastor, el otro quedó de la propuesta del generador.
         const refPunto = punto
@@ -154,11 +159,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
             labelKey: definicion.labelKey,
             jobKey: definicion.jobKey,
             labelParams: n !== undefined ? { n } : undefined,
-            status: definicion.derived
-                ? 'derivada'
-                : definicion.coveredMeansDone && tieneCubierto
-                  ? 'cubierta'
-                  : 'pendiente',
+            status: definicion.coveredMeansDone && tieneCubierto ? 'cubierta' : 'pendiente',
             coveredBy: tieneCubierto ? cubierto : undefined,
             contextKey: tieneCubierto ? definicion.contextKey : undefined,
             verbatimKey: definicion.verbatimKey,
@@ -177,11 +178,15 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
     // Las de punto se repiten por cada punto, conservando el orden del catálogo
     // dentro de cada uno: primero se decide el punto entero y después el
     // siguiente, que es como el pastor piensa un sermón.
+    const agregar = (s: WalkSection | null) => {
+        if (s) secciones.push(s);
+    };
+
     input.points.forEach((punto, i) => {
-        for (const definicion of dePunto) secciones.push(instanciar(definicion, punto, i + 1));
+        for (const definicion of dePunto) agregar(instanciar(definicion, punto, i + 1));
     });
 
-    for (const definicion of deSermon) secciones.push(instanciar(definicion));
+    for (const definicion of deSermon) agregar(instanciar(definicion));
 
     return secciones;
 }

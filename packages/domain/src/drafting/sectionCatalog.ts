@@ -39,7 +39,9 @@ export type CoveredSource =
     /** La anécdota que el pastor escribió en el paso 8. */
     | 'openingIllustration'
     /** Las palabras clave del estudio, con su significancia. */
-    | 'studyKeyWords';
+    | 'studyKeyWords'
+    /** El recordatorio que cierra la transición: proposición + puntos. */
+    | 'transitionReminder';
 
 export interface SectionDefinition {
     /** Sufijo del id. Con `scope: 'point'` se antepone `point.N.`. */
@@ -66,13 +68,13 @@ export interface SectionDefinition {
     /** Muestra el texto bíblico del punto mientras se decide. */
     showsScripture?: boolean;
     /**
-     * La sección no se decide: se deriva de lo que ya existe.
+     * Sin material de origen, la sección NO EXISTE en ese lugar del recorrido.
      *
-     * La transición es el caso — retomar la proposición y nombrar el punto
-     * siguiente es mecánico. Preguntarla sería fricción sin contenido, que es
-     * justo lo que la definición de elemento descarta.
+     * El último punto no lleva transición: después de él viene la conclusión,
+     * no otro movimiento. Dejarla pendiente para siempre le anunciaría trabajo
+     * imposible; omitirla dice la verdad — ahí no hay transición que decidir.
      */
-    derived?: boolean;
+    omitWhenEmpty?: boolean;
 }
 
 const NS = 'drafting.sections';
@@ -145,7 +147,15 @@ export const SECTION_CATALOG: readonly SectionDefinition[] = [
         labelKey: `${NS}.transition.label`,
         jobKey: `${NS}.transition.job`,
         target: { kind: 'pointTransition' },
-        derived: true,
+        // El recordatorio SE MUESTRA aunque se componga solo: marcarla resuelta
+        // sin enseñar el texto cambia un pendiente falso por un "listo" mudo.
+        // Y sigue pudiendo escribir el puente retórico, que es lo único suyo
+        // acá — `assembleTransitions` lo conserva y le agrega el recordatorio.
+        coveredFrom: 'transitionReminder',
+        contextKey: `${NS}.transitionContext`,
+        coveredMeansDone: true,
+        omitWhenEmpty: true,
+        oneIdea: true,
     }),
 
     // ── Conclusión ──────────────────────────────────────────────────────

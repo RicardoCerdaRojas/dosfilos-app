@@ -66,12 +66,13 @@ describe('assembleDraft', () => {
         expect(c.indexOf('Dios habla con intención')).toBeLessThan(c.indexOf('La formulación muestra'));
     });
 
-    it('la transición sale DERIVADA del recorrido: no se le pregunta', () => {
-        // Retomar la proposición y nombrar el punto siguiente es mecánico, y el
-        // recordatorio lo compone `assembleTransitions` desde el bosquejo. Acá
-        // sólo se verifica que la sección exista y no pida decisión.
+    it('la transición trae su recordatorio ya compuesto', () => {
+        // Retomar la proposición y nombrar el punto siguiente es mecánico.
         const seccion = walk.find((s) => s.id === 'point.1.transition');
-        expect(seccion?.status).toBe('derivada');
+        // Llega CUBIERTA con el recordatorio ya compuesto: el pastor lo VE, y
+        // marcarla resuelta sin mostrárselo sería un "listo" mudo.
+        expect(seccion?.status).toBe('cubierta');
+        expect(seccion?.coveredBy?.[0]).toContain('**Puntos:**');
         expect(missingForDraft(COMPLETO).map((s) => s.id)).not.toContain('point.1.transition');
     });
 
@@ -171,5 +172,14 @@ describe('la prosa redactada manda sobre las notas del bosquejo', () => {
             'Dios habla, vive consciente de su dirección.',
             'Lee tu biblia, ora, escucha a tu pastor.',
         ]);
+    });
+});
+
+
+describe('el último punto no lleva transición', () => {
+    it('la sección NO EXISTE ahí: después viene la conclusión', () => {
+        // Dejarla pendiente para siempre le anunciaría trabajo imposible.
+        expect(walk.find((s) => s.id === 'point.2.transition')).toBeUndefined();
+        expect(walk.find((s) => s.id === 'point.1.transition')).toBeDefined();
     });
 });

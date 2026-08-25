@@ -35,12 +35,11 @@ export function SermonMap({ walk, elements, activeId, onSelect }: Props) {
      * con la autoría dejaba en círculo una sección donde acababa de trabajar,
      * sólo porque lo que escribió era un tema y no una idea.
      *
-     * Y las `derivada` cuentan como listas: se componen solas desde el
-     * bosquejo. Mostrarlas pendientes le anuncia trabajo que no existe — el
-     * mismo error, en otra forma.
+     * La transición cuenta como lista porque SU TEXTO YA EXISTE —se compone
+     * desde el bosquejo— y llega como `cubierta`, no por una excepción de
+     * estado. Marcarla resuelta sin mostrar el texto sería un "listo" mudo.
      */
-    const isDone = (s: WalkSection) =>
-        s.status === 'cubierta' || s.status === 'derivada' || hasDecisions(elements[s.id] ?? []);
+    const isDone = (s: WalkSection) => s.status === 'cubierta' || hasDecisions(elements[s.id] ?? []);
 
     const done = walk.filter(isDone).length;
 

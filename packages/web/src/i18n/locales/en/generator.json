@@ -539,7 +539,8 @@
         "label": "Point {{n}} — transition",
         "job": "Pick the proposition back up and announce the next point. Derived from the outline — nothing to decide."
       },
-      "keyWordsContext": "The words you studied, with what you said about each:"
+      "keyWordsContext": "The words you studied, with what you said about each:",
+      "transitionContext": "This composes itself from your outline. Above you can add the phrase you use to move to the next point:"
     },
     "tabs": {
       "draft": "Draft",
