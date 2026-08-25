@@ -551,7 +551,8 @@
       "label": "This section's prose",
       "failed": "Couldn't write it. Your decisions are still saved.",
       "emptyNoDecisions": "First decide what goes in this section. The prose is written from that.",
-      "emptyReady": "You've decided. Press “Write this section” to draft it."
+      "emptyReady": "You've decided. Press “Write this section” to draft it.",
+      "propositionOpens": "In the sermon, your proposition opens this section in your exact words. Here you write only what unpacks it."
     },
     "assemble": {
       "writingProgress": "Writing {{hechas}} of {{total}}…",

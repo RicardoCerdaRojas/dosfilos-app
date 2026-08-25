@@ -129,6 +129,19 @@ export function SectionProsePanel(props: Props) {
 
             {error && <p className="text-xs text-muted-foreground shrink-0">{t('drafting.prose.failed')}</p>}
 
+            {/* LA SECCIÓN NO EMPIEZA DONDE EMPIEZA ESTE TEXTO.
+                La proposición del punto la aporta el ensamblador con las
+                palabras EXACTAS del pastor —si la escribiera el modelo podría
+                desviarse—, así que la prosa de acá arranca en el desarrollo.
+                Sin decirlo, leer esta sección sola parece que faltara la tesis:
+                el fundador lo reportó como error, y tenía razón en que la
+                pantalla no se lo explicaba. */}
+            {section.unpacksProposition && props.pointProposition && (
+                <p className="shrink-0 text-xs text-muted-foreground">
+                    {t('drafting.prose.propositionOpens')}
+                </p>
+            )}
+
             {/* MENSAJES DISTINTOS PARA DOS ESTADOS DISTINTOS: todavía no decidió
                 nada, o decidió y aún no pidió la redacción. Un solo mensaje
                 genérico dejaría al pastor sin saber cuál de las dos le falta. */}
