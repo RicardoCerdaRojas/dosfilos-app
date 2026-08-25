@@ -193,13 +193,36 @@ describe('buildElementsPrompt — la proposición del punto es el insumo', () =>
         sectionJob: 'Decir lo que el texto dice y por qué importa.',
     };
 
-    it('propone las PARTES de la frase, no ideas sueltas sobre el pasaje', () => {
-        const p = buildElementsPrompt({
-            ...base,
-            pointProposition: 'Dios se identifica, identifica a Jonás, ordena y explica la razón.',
-        });
-        expect(p).toContain('LOS ELEMENTOS DE ESTA SECCIÓN SON LAS PARTES QUE DESGLOSAN ESA FRASE');
-        expect(p).toContain('no ideas\nsueltas sobre el pasaje');
+    const PROP = 'Dios se identifica, identifica a Jonás, ordena y explica la razón.';
+
+    it('con proposición, la TAREA cambia: primero enumerar conceptos', () => {
+        // Como párrafo suelto junto a las reglas, el modelo la usaba de filtro:
+        // lluvia de ideas desde el texto y después justificar cada una contra la
+        // frase. Enumerar los conceptos PRIMERO invierte el orden de trabajo.
+        const p = buildElementsPrompt({ ...base, pointProposition: PROP });
+        expect(p).toContain('TAREA, EN DOS PASOS');
+        expect(p).toContain('Identifica los CONCEPTOS que nombra la proposición');
+        expect(p).not.toContain('propón entre');
+    });
+
+    it('un concepto sin apoyo textual SE DECLARA, no desaparece', () => {
+        // El fallo real: un concepto central de su proposición ("Jonás se rebela
+        // al carácter misericordioso de Dios") no recibió ninguna propuesta y el
+        // hueco no se reportó. Callarlo lo deja creyendo que quedó cubierta.
+        const p = buildElementsPrompt({ ...base, pointProposition: PROP });
+        expect(p).toContain('SIN APOYO TEXTUAL DIRECTO');
+        expect(p).toContain('creyendo que su proposición quedó cubierta');
+    });
+
+    it('el "why" pasa a decir QUÉ CONCEPTO desarrolla, para poder verificarlo', () => {
+        const p = buildElementsPrompt({ ...base, pointProposition: PROP });
+        expect(p).toContain('QUÉ CONCEPTO de su proposición desarrolla');
+    });
+
+    it('sin proposición conserva la tarea abierta de siempre', () => {
+        const p = buildElementsPrompt(base);
+        expect(p).toContain('propón entre');
+        expect(p).not.toContain('TAREA, EN DOS PASOS');
     });
 
     it('el texto bíblico viaja para no proponer de memoria', () => {
