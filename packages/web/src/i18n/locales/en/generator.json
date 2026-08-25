@@ -452,7 +452,8 @@
         "proposeMore": "Search for others",
         "sinFuentes": "Your library has nothing on this point. Write the quote yourself, or leave it without one — better than quoting something off-point.",
         "sinCoincidencias": "There is material in your library, but none supports what this point claims.",
-        "falló": "Couldn't search your library. Try again."
+        "falló": "Couldn't search your library. Try again.",
+        "showSource": "Show the source excerpt"
       }
     },
     "sections": {

@@ -452,7 +452,8 @@
         "proposeMore": "Buscar otras",
         "sinFuentes": "Tu biblioteca no tiene material sobre este punto. Escribe la cita tú, o déjalo sin cita: es preferible a citar algo que no viene al caso.",
         "sinCoincidencias": "Hay material en tu biblioteca, pero ninguno respalda lo que este punto afirma.",
-        "falló": "No se pudo buscar en tu biblioteca. Intenta de nuevo."
+        "falló": "No se pudo buscar en tu biblioteca. Intenta de nuevo.",
+        "showSource": "Ver el fragmento de origen"
       }
     },
     "sections": {

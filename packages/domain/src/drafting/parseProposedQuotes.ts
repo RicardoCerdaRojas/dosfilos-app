@@ -6,6 +6,12 @@ export interface ProposedQuote extends ProposedElement {
     /** Texto listo para el púlpito: la cita más su atribución. */
     text: string;
     source: QuotableSource;
+    /**
+     * El fragmento COMPLETO del que salió, para que el pastor vea la cita en su
+     * contexto ANTES de decidir — que es cuando puede juzgar si dice lo que
+     * parece decir. Verificar después de publicar no sirve de nada.
+     */
+    excerpt: string;
 }
 
 /** Normaliza para comparar: espacios, comillas tipográficas y mayúsculas. */
@@ -81,6 +87,7 @@ export function parseProposedQuotes(raw: string, sources: readonly QuotableSourc
             text: atribucion ? `"${texto}" — ${atribucion}` : `"${texto}"`,
             why: typeof e.why === 'string' ? e.why.trim() : '',
             source: fuente,
+            excerpt: fuente.excerpt,
         });
     }
     return citas;

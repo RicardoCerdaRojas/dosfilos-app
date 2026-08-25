@@ -6,6 +6,9 @@ import { SermonMap } from './SermonMap';
 import { SectionElementsPanel } from './SectionElementsPanel';
 import { SectionProsePanel } from './SectionProsePanel';
 import { WorkshopDraftActions } from './WorkshopDraftActions';
+import { useWriteSection } from '@/hooks/useWriteSection';
+import { scriptureLookupRef } from '@dosfilos/domain';
+import { LocalBibleService } from '@/services/LocalBibleService';
 
 interface Props {
     walk: readonly WalkSection[];
@@ -62,6 +65,13 @@ export function SocraticWorkshop(props: Props) {
     const [abierto, setAbierto] = useState(true);
     const [ancho, setAncho] = useState(ANCHO_INICIAL);
     const [prosaAbierta, setProsaAbierta] = useState(true);
+    /**
+     * La redacción se dispara desde el PANEL DE LA SECCIÓN, junto a las otras
+     * acciones que le piden ayuda al modelo sobre esa misma sección. Vivía en
+     * el riel de prosa: las acciones de una sección quedaban repartidas en dos
+     * columnas y el pastor tenía que buscarlas.
+     */
+    const { write, writingId } = useWriteSection();
     const [anchoProsa, setAnchoProsa] = useState(PROSA_INICIAL);
 
     // Se lee después del primer render: en SSR/pruebas `localStorage` no existe,
@@ -192,6 +202,26 @@ export function SocraticWorkshop(props: Props) {
                     pointProposition={
                         props.activeSection.id.endsWith('.proposition') ? undefined : proposicionDelPunto
                     }
+                    writing={writingId === props.activeSection.id}
+                    hasProse={Boolean(props.prose[props.activeSection.id]?.trim())}
+                    onWriteSection={async () => {
+                        const texto = await write({
+                            section: props.activeSection,
+                            sectionLabel: t(props.activeSection.labelKey, props.activeSection.labelParams),
+                            sectionJob: t(props.activeSection.jobKey),
+                            elements: props.elements[props.activeSection.id] ?? [],
+                            passage: props.passage,
+                            proposition: props.proposition,
+                            pointTitle: props.activeSection.parentLabel,
+                            pointProposition: proposicionDelPunto,
+                            scriptureText:
+                                LocalBibleService.getVerses(
+                                    scriptureLookupRef(props.activeSection.scriptureRef) ?? '',
+                                ) ?? undefined,
+                            audienceRigor: props.audienceRigor,
+                        });
+                        if (texto) props.onChangeProse(props.activeSection.id, texto);
+                    }}
                     pointExpositionIdeas={
                         props.activeSection.parentId
                             ? (props.elements[`${props.activeSection.parentId}.exposition`] ?? [])

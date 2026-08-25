@@ -37,6 +37,10 @@ interface Props {
      * genérico del tema.
      */
     pointExpositionIdeas?: readonly string[];
+    /** Redacta la sección. Vive acá para que las acciones de la sección no se repartan. */
+    onWriteSection?: () => void;
+    writing?: boolean;
+    hasProse?: boolean;
     elements: SermonElement[];
     onChange: (elements: SermonElement[]) => void;
 }
@@ -269,6 +273,10 @@ export function SectionElementsPanel(props: Props) {
                     add([texto], 'editado', p.text);
                     consume(i);
                 }}
+                onWriteSection={props.onWriteSection}
+                writing={props.writing}
+                hasProse={props.hasProse}
+                canWrite={decided.length > 0}
                 onDiscard={(p, i) => {
                     // Descartar SE REGISTRA aunque no entre al sermón: qué
                     // rechazó dice tanto como qué aceptó.
