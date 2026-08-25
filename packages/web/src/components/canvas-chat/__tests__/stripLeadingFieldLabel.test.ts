@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { __testables } from '../SectionCard';
-
-const { stripLeadingFieldLabel } = __testables;
+import { stripLeadingFieldLabel } from '../stripLeadingFieldLabel';
 
 describe('stripLeadingFieldLabel — el marcador huérfano no llega al púlpito', () => {
     it('caso real: etiqueta y título dentro de UNA negrita', () => {

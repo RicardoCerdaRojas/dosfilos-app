@@ -355,7 +355,8 @@
     "saved": "Saved",
     "fullContent": {
       "crossReferences": "Cross References",
-      "practicalImplications": "Practical Implications"
+      "practicalImplications": "Practical Implications",
+      "transition": "Transition"
     },
     "versions": {
       "beforeManualEdit": "Before manual edit",
@@ -563,6 +564,12 @@
       "buildPartial": "Build with what's there",
       "rebuild": "Rebuild the draft",
       "upToDate": "Draft up to date"
+    },
+    "pointBlocks": {
+      "crossReferences": "Cross-references",
+      "illustration": "Illustration",
+      "implications": "Implications",
+      "transition": "Transition"
     }
   },
   "pastoralContext": {

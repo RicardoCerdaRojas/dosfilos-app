@@ -31,8 +31,21 @@ describe('buildFullContent — cross-reference rendering', () => {
         expect(md).not.toContain('- >');
     });
 
-    it('leaves a ref without a blockquote prefix untouched', () => {
+    it('una referencia resoluble sale CON su texto', () => {
+        // La vista previa y el sermón publicado mostraban sólo la cita: había
+        // que abrir cada una para saber qué dice. El lienzo de edición ya lo
+        // traía, y los dos renderizadores habían divergido.
         const md = buildFullContent(draft, t);
-        expect(md).toContain('- Salmo 119:105');
+        expect(md).toContain('**Salmo 119:105**');
+        expect(md).toContain('Lámpara es a mis pies tu palabra');
+    });
+
+    it('una referencia que no se puede resolver conserva la cita sola', () => {
+        // Perder la referencia sería peor que no tener el texto.
+        const md = buildFullContent(
+            { ...draft, body: [{ ...draft.body[0], scriptureReferences: ['Libro Inexistente 3:4'] }] } as typeof draft,
+            t,
+        );
+        expect(md).toContain('- Libro Inexistente 3:4');
     });
 });

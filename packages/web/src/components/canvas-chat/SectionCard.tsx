@@ -6,46 +6,11 @@ import { ChevronDown, ChevronRight, Maximize2, BookOpen, History } from 'lucide-
 import { SectionConfig } from './section-configs';
 import { cn } from '@/lib/utils';
 import { MarkdownRenderer } from './MarkdownRenderer';
-import { ScriptureReferenceWithText } from '@/components/bible/ScriptureReferenceWithText';
+import { SermonPointBlocksView } from '@/components/sermons/SermonPointBlocksView';
+import { stripLeadingFieldLabel } from './stripLeadingFieldLabel';
 import { BiblePassageViewer } from '@/components/bible/BiblePassageViewer';
 import { LocalBibleService } from '@/services/LocalBibleService';
 
-/**
- * Strip a redundant leading field label from a value. The LLM occasionally
- * repeats the section label inside the field value (e.g. an `authorityQuote`
- * that begins with "**Cita de Autoridad:**"), which would render the label
- * twice. Removes a single leading occurrence (with optional `**` / `:`).
- */
-function stripLeadingFieldLabel(value: string, label: string): string {
-  if (!value || !label) return value;
-  const esc = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const sinEtiqueta = value.replace(
-    new RegExp(`^\\s*(\\*{0,2})\\s*${esc}\\s*:?\\s*(\\*{0,2})\\s*\\n*`, 'i'),
-    (_m, abre: string, cierra: string) => (abre && !cierra ? '\u0000' : ''),
-  );
-  // MARCADOR HUÉRFANO.
-  //
-  // El modelo suele meter etiqueta y título en UNA sola negrita:
-  // `**Ilustración: El Mensajero Real**`. Al quitar la etiqueta se va también
-  // el `**` de apertura y queda el de cierre solo, que se renderiza literal:
-  // el pastor veía "El Mensajero Real**" en su sermón.
-  //
-  // El centinela marca que se consumió una apertura sin su cierre; entonces se
-  // quita el `**` final que quedó suelto. Es defensa en profundidad: el prompt
-  // ya no pide la etiqueta, pero el modelo puede volver a agregarla y esto no
-  // puede llegar a pantalla.
-  if (sinEtiqueta.startsWith('\u0000')) {
-    // El huérfano cierra la PRIMERA LÍNEA, no el texto: el título va solo en su
-    // renglón y el desarrollo viene después. Anclar al final del string dejaría
-    // el marcador intacto.
-    const resto = sinEtiqueta.slice(1);
-    const corte = resto.indexOf('\n');
-    const primera = corte === -1 ? resto : resto.slice(0, corte);
-    const cola = corte === -1 ? '' : resto.slice(corte);
-    return primera.replace(/\*{1,2}\s*$/, '') + cola;
-  }
-  return sinEtiqueta;
-}
 
 // Comprehensive pattern to match Bible references in Spanish
 const BIBLE_REF_PATTERN = /(?:^|[^\wáéíóúñ])((?:[1-3]\s?)?(?:Génesis|Genesis|Gén|Gen|Gn|Éxodo|Exodo|Éx|Ex|Levítico|Levitico|Lev|Lv|Números|Numeros|Núm|Num|Nm|Deuteronomio|Deut|Dt|Josué|Josue|Jos|Jueces|Jue|Jc|Rut|Rt|Samuel|Sam|S|Reyes|Rey|R|Crónicas|Cronicas|Cr|Esdras|Esd|Ezr|Nehemías|Nehemias|Neh|Ne|Ester|Est|Et|Job|Jb|Salmos?|Sal|Sl|Ps|Proverbios|Prov|Pr|Prv|Eclesiastés|Eclesiastes|Ecl|Ec|Cantares|Cantar|Cnt|Ct|Isaías|Isaias|Is|Isa|Jeremías|Jeremias|Jer|Jr|Lamentaciones|Lam|Lm|Ezequiel|Ezeq|Ez|Daniel|Dan|Dn|Oseas|Os|Joel|Jl|Amós|Amos|Am|Abdías|Abdias|Abd|Ab|Jonás|Jonas|Jon|Miqueas|Miq|Mi|Nahúm|Nahum|Nah|Na|Habacuc|Hab|Sofonías|Sofonias|Sof|Hageo|Hag|Zacarías|Zacarias|Zac|Zc|Malaquías|Malaquias|Mal|Mateo|Mat|Mt|Marcos|Mar|Mc|Mr|Lucas|Luc|Lc|Juan|Jn|Hechos|Hch|Hec|Romanos|Rom|Ro|Rm|Corintios|Cor|Co|Gálatas|Galatas|Gál|Gal|Ga|Efesios|Ef|Efe|Filipenses|Fil|Fp|Colosenses|Col|Tesalonicenses|Tes|Ts|Timoteo|Tim|Ti|Tito|Tit|Filemón|Filemon|Flm|Flmn|Hebreos|Heb|He|Santiago|Sant|Stg|Pedro|Ped|Pe|P|Judas|Jud|Apocalipsis|Apoc|Ap)\s*\d+[:.]\d+(?:[-–]\d+)?)/gi;
@@ -350,6 +315,22 @@ export function SectionCard({
         <div className="space-y-3">
           {items.length > 0 ? (
             items.map((item, i) => {
+              // EL CUERPO DEL SERMÓN TIENE SU PROPIO RENDERIZADOR, que consume la
+              // misma descripción que el sermón publicado. El camino genérico de
+              // abajo dibuja pares campo-valor con rótulos de formulario —útil
+              // para exégesis, impropio para un sermón— y además había divergido
+              // del serializador de la vista previa.
+              if (section.id === 'body' && typeof item === 'object' && item !== null) {
+                return (
+                  <Card key={i} className="p-3 bg-muted/30">
+                    <SermonPointBlocksView
+                      point={item as never}
+                      renderFallbackReference={(r) => renderTextWithBibleLinks(r)}
+                    />
+                  </Card>
+                );
+              }
+
               // If item is an object, render it as a card with key-value pairs
               if (typeof item === 'object' && item !== null) {
                 const sortedEntries = sortObjectEntries(Object.entries(item))
@@ -374,26 +355,14 @@ export function SectionCard({
                                 // Las referencias cruzadas van SIN viñeta: cada una ocupa
                                 // dos líneas (cita y texto), y el marcador quedaba solo
                                 // arriba porque su contenido deja de ser inline.
-                                <ul className={cn(
-                                  'space-y-1',
-                                  key === 'scriptureReferences' ? 'space-y-3' : 'list-disc list-inside pl-2',
-                                )}>
+                                <ul className="list-disc list-inside pl-2 space-y-1">
                                   {value.map((v, idx) => {
                                     // Cross-refs arrive with a leading "> " blockquote prefix; inside a
                                     // list item it renders as a literal char, so strip it.
                                     const texto = typeof v === 'string' ? v.replace(/^\s*>\s*/, '') : v;
-                                    // Una referencia cruzada sin su texto obliga a abrir cada una para
-                                    // saber qué dice, justo cuando el pastor revisa de un vistazo.
-                                    if (key === 'scriptureReferences' && typeof texto === 'string') {
-                                      return (
-                                        <li key={idx}>
-                                          <ScriptureReferenceWithText
-                                            reference={texto}
-                                            renderFallback={(r) => renderTextWithBibleLinks(r)}
-                                          />
-                                        </li>
-                                      );
-                                    }
+                                    // (Las referencias cruzadas del sermón las dibuja
+                                    // `SermonPointBlocksView`, con su texto. Acá sólo
+                                    // quedan las listas genéricas de otras secciones.)
                                     return <li key={idx}>{renderTextWithBibleLinks(texto)}</li>;
                                   })}
                                 </ul>
@@ -589,4 +558,3 @@ export function SectionCard({
 }
 
 /** Sólo para tests: la limpieza de etiquetas es pura y se prueba sin montar la tarjeta. */
-export const __testables = { stripLeadingFieldLabel };

@@ -355,7 +355,8 @@
     "saved": "Guardado",
     "fullContent": {
       "crossReferences": "Referencias Cruzadas",
-      "practicalImplications": "Implicaciones Prácticas"
+      "practicalImplications": "Implicaciones Prácticas",
+      "transition": "Transición"
     },
     "versions": {
       "beforeManualEdit": "Antes de edición manual",
@@ -563,6 +564,12 @@
       "buildPartial": "Armar con lo que hay",
       "rebuild": "Volver a armar el borrador",
       "upToDate": "Borrador al día"
+    },
+    "pointBlocks": {
+      "crossReferences": "Referencias cruzadas",
+      "illustration": "Ilustración",
+      "implications": "Implicaciones",
+      "transition": "Transición"
     }
   },
   "pastoralContext": {
