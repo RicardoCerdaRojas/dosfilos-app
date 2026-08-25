@@ -130,12 +130,13 @@ export function SocraticWorkshop(props: Props) {
                 pertenecen a la columna que el pastor está usando. */}
             <div className="flex-1 min-w-0 pl-1 flex flex-col">
               <div className="flex-1 overflow-y-auto">
-                {/* MEDIDA DE LECTURA. A todo el ancho las líneas pasaban de 200
-                    caracteres: el ojo pierde el renglón al volver. `max-w-3xl`
-                    deja el texto en la medida cómoda y el sobrante en blanco,
-                    que es lo correcto — estirar el texto no usa mejor el
-                    espacio, sólo lo hace más difícil de leer. */}
-                <div className="mx-auto w-full max-w-3xl">
+                {/* MEDIDA DE LECTURA, ALINEADA A LA IZQUIERDA.
+                    A todo el ancho las líneas pasaban de 200 caracteres y el ojo
+                    pierde el renglón al volver. Pero CENTRAR el bloque fue peor:
+                    el contenido se despegó del mapa y quedó flotando con un
+                    vacío enorme a su izquierda. La medida se acota pegando el
+                    texto al borde donde empieza la columna, no al medio. */}
+                <div className="w-full max-w-3xl">
                 <SectionElementsPanel
                     section={props.activeSection}
                     passage={props.passage}
@@ -152,7 +153,7 @@ export function SocraticWorkshop(props: Props) {
                 </div>
               </div>
 
-              <div className="mx-auto w-full max-w-3xl">
+              <div className="w-full max-w-3xl">
                 <WorkshopDraftActions
                     walk={props.walk}
                     elements={props.elements}

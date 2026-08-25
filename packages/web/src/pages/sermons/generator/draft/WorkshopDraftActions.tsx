@@ -195,7 +195,7 @@ export function WorkshopDraftActions(props: Props) {
 
     return (
         <div className="shrink-0 border-t border-border/60 pt-3 space-y-2">
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="flex flex-wrap items-center gap-2">
                 {/* La acción principal hace el camino completo. La parcial queda
                     disponible al lado, sin que haya que adivinar el orden. */}
                 <Button
@@ -242,7 +242,7 @@ export function WorkshopDraftActions(props: Props) {
                 lo obligaría a completar el sermón a ciegas. Lo que no puede pasar
                 es que arme sin saber qué quedó vacío. */}
             {primeraFaltante && (
-                <p className="text-xs text-muted-foreground text-right">
+                <p className="text-xs text-muted-foreground">
                     {t('drafting.assemble.missing', {
                         count: faltantes.length,
                         first: t(primeraFaltante.labelKey, primeraFaltante.labelParams),
