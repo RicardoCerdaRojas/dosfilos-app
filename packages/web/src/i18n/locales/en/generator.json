@@ -347,10 +347,14 @@
       "processFailed": "Could not process the request"
     },
     "regenerateConfirm": {
-      "title": "Regenerate Sermon Draft?",
-      "description": "This action will create a new draft based on your homiletical choices. Any manual edits to the current text will be permanently lost.",
+      "title": "Rebuild the draft from scratch?",
+      "description": "A new draft will be written from your proposition and outline, replacing the current one.",
       "cancel": "Cancel",
-      "confirm": "Regenerate"
+      "confirm": "Rebuild from scratch",
+      "workshopDescription": "The new draft is written from your proposition and outline, not from what you decided in the Workshop. If what you want is a draft updated with your decisions, assemble it again from the Workshop. Your decisions are never deleted.",
+      "goToWorkshop": "Go to the Workshop",
+      "keepVersion": "Save the current draft to history",
+      "keepVersionHint": "You will be able to go back to it section by section. Uncheck it if you would rather not pile up versions."
     },
     "saved": "Saved",
     "fullContent": {

@@ -78,6 +78,21 @@ function leadIn(transition: string | undefined): string {
 export function buildTransitionReminder(proposition: string, pointTitles: readonly string[]): string {
     return [
         proposition,
-        `**Puntos:**\n${pointTitles.map((t, i) => `${i + 1}. ${t}`).join('\n')}`,
+        `**Puntos:**\n${pointTitles.map(numerar).join('\n')}`,
     ].join('\n\n');
+}
+
+/** "I. Dios habla…", "2) El hombre…": el pastor ya numeró el punto. */
+const YA_NUMERADO = /^\s*(?:[IVXLCDM]+|\d+)\s*[.)\-–]\s+/i;
+
+/**
+ * Numera el punto SÓLO si su título no traía número.
+ *
+ * Los títulos del bosquejo suelen venir con su romano —"I. Dios habla y revela
+ * su voluntad"— y anteponerle otro producía "1. I. Dios habla…". Un número de
+ * más en una lista de dos parece un detalle; en el púlpito es el predicador
+ * leyendo dos veces la misma cifra.
+ */
+function numerar(titulo: string, i: number): string {
+    return YA_NUMERADO.test(titulo) ? titulo : `${i + 1}. ${titulo}`;
 }

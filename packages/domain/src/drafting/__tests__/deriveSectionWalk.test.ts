@@ -270,3 +270,34 @@ describe('sólo la exposición desglosa la proposición del punto', () => {
         expect(walk.find((s) => s.id === 'point.1.application')?.unpacksProposition).toBeUndefined();
     });
 });
+
+describe('introducción — la proposición anuncia los puntos', () => {
+    it('la sección de la proposición llega con la tesis Y el bosquejo', () => {
+        const walk = deriveSectionWalk({
+            proposition: 'En Jonás 1:1-3, veremos dos realidades.',
+            points: [
+                { title: 'I. Dios habla', application: '', scriptureReferences: [] },
+                { title: 'II. El hombre desobedece', application: '', scriptureReferences: [] },
+            ],
+        } as any);
+        const seccion = walk.find((s) => s.id === 'introduction.proposition');
+        const texto = (seccion?.coveredBy ?? []).join('\n');
+        expect(texto).toContain('En Jonás 1:1-3, veremos dos realidades.');
+        expect(texto).toContain('I. Dios habla');
+        expect(texto).toContain('II. El hombre desobedece');
+    });
+
+    it('sin puntos todavía, queda la proposición sola', () => {
+        const walk = deriveSectionWalk({ proposition: 'Tesis.', points: [] } as any);
+        const seccion = walk.find((s) => s.id === 'introduction.proposition');
+        expect(seccion?.coveredBy).toEqual(['Tesis.']);
+    });
+
+    it('el título se sigue orientando con la proposición SOLA', () => {
+        const walk = deriveSectionWalk({
+            proposition: 'Tesis.',
+            points: [{ title: 'I. Dios habla', application: '', scriptureReferences: [] }],
+        } as any);
+        expect(walk.find((s) => s.id === 'title')?.coveredBy).toEqual(['Tesis.']);
+    });
+});
