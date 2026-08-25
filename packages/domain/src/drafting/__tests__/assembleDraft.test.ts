@@ -119,7 +119,10 @@ describe('assembleDraft — lo que falta, falta', () => {
     it('una sección sin prosa queda vacía, NO se rellena', () => {
         // Rellenar sería la puerta de atrás que este flujo existe para cerrar.
         const draft = assembleDraft({ ...COMPLETO, prose: {} });
-        expect(draft.introduction).toBe('');
+        // Queda SÓLO lo que ya era suyo —su proposición— y nada más: las
+        // secciones sin redactar no se rellenan.
+        expect(draft.introduction).toContain('La tesis.');
+        expect(draft.introduction).not.toContain('historicalContext.heading');
         expect(draft.body[0].content).toBe('Dios habla con intención: se identifica, ordena y explica.');
         expect(draft.conclusion).toBe('');
     });
@@ -187,5 +190,42 @@ describe('todo punto lleva transición, con su recordatorio', () => {
             expect(s?.status, id).toBe('cubierta');
             expect(s?.coveredBy?.[0], id).toContain('**Puntos:**');
         }
+    });
+});
+
+describe('lo que la sección trae hecho: contenido o contexto', () => {
+    const draft = assembleDraft(COMPLETO);
+
+    it('el recordatorio de la transición NO entra como contenido', () => {
+        // Entraba, y `assembleTransitions` lo agrega después: salía dos veces,
+        // una como prosa corrida y otra como lista. Es CONTEXTO que el pastor
+        // lee mientras decide, no texto de la sección.
+        expect(draft.body[0].transition ?? '').not.toContain('**Puntos:**');
+    });
+
+    it('la proposición del sermón SÍ es el contenido de su sección', () => {
+        // Misma fuente, distinto rol: acá es el texto; en el título es contexto
+        // para que él escriba otra cosa.
+        expect(draft.introduction).toContain('La tesis.');
+    });
+
+    it('y NO se cuela en el título, donde sólo orienta', () => {
+        expect(draft.title).toBe('El Dios que persigue al rebelde');
+        expect(draft.title).not.toContain('La tesis.');
+    });
+
+    it('las palabras clave del estudio no entran solas al sermón', () => {
+        // Alimentan la decisión del contexto histórico; el texto lo escribe él.
+        const conPalabras = assembleDraft({
+            ...COMPLETO,
+            walk: deriveSectionWalk({
+                points: POINTS,
+                sermonPassage: 'Jonás 1:1-3',
+                proposition: 'La tesis.',
+                keyWords: [{ original: 'לִבְרֹחַ', significance: 'huir, con intención' }],
+            }),
+            prose: {},
+        });
+        expect(conPalabras.introduction).not.toContain('לִבְרֹחַ');
     });
 });

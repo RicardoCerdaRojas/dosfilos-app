@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight, Maximize2, BookOpen, History } from 'lucide-
 import { SectionConfig } from './section-configs';
 import { cn } from '@/lib/utils';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { ScriptureReferenceWithText } from '@/components/bible/ScriptureReferenceWithText';
 import { BiblePassageViewer } from '@/components/bible/BiblePassageViewer';
 import { LocalBibleService } from '@/services/LocalBibleService';
 
@@ -371,11 +372,24 @@ export function SectionCard({
                             <span className="text-foreground block mt-1">
                               {Array.isArray(value) ? (
                                 <ul className="list-disc list-inside pl-2 space-y-1">
-                                  {value.map((v, idx) => (
+                                  {value.map((v, idx) => {
                                     // Cross-refs arrive with a leading "> " blockquote prefix; inside a
                                     // list item it renders as a literal char, so strip it.
-                                    <li key={idx}>{renderTextWithBibleLinks(typeof v === 'string' ? v.replace(/^\s*>\s*/, '') : v)}</li>
-                                  ))}
+                                    const texto = typeof v === 'string' ? v.replace(/^\s*>\s*/, '') : v;
+                                    // Una referencia cruzada sin su texto obliga a abrir cada una para
+                                    // saber qué dice, justo cuando el pastor revisa de un vistazo.
+                                    if (key === 'scriptureReferences' && typeof texto === 'string') {
+                                      return (
+                                        <li key={idx}>
+                                          <ScriptureReferenceWithText
+                                            reference={texto}
+                                            renderReference={(r) => renderTextWithBibleLinks(r)}
+                                          />
+                                        </li>
+                                      );
+                                    }
+                                    return <li key={idx}>{renderTextWithBibleLinks(texto)}</li>;
+                                  })}
                                 </ul>
                               ) : typeof value === 'string' ? (
                                 // Use MarkdownRenderer for content, illustration, and other long text fields.

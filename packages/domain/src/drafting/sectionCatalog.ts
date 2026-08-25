@@ -57,6 +57,17 @@ export interface SectionDefinition {
     coveredFrom?: CoveredSource;
     /** Clave i18n que introduce ese material. */
     contextKey?: string;
+    /**
+     * El material de origen ES el contenido de la sección, no sólo contexto.
+     *
+     * LA DISTINCIÓN NO ES SUTIL: la misma fuente puede ser una cosa u otra
+     * según la sección. La proposición del sermón ES el contenido de la sección
+     * "Proposición Homilética" y es sólo CONTEXTO en la del título, que existe
+     * para que él escriba otra cosa. Y el recordatorio de la transición es
+     * contexto: si entrara como contenido saldría dos veces, porque
+     * `assembleTransitions` lo agrega después.
+     */
+    coveredIsContent?: boolean;
     /** Con material presente, la sección llega `cubierta` y no se pregunta. */
     coveredMeansDone?: boolean;
     /** Prefijo i18n del texto propio de una sección `verbatim`. */
@@ -131,6 +142,7 @@ export const SECTION_CATALOG: readonly SectionDefinition[] = [
         coveredFrom: 'pointApplication',
         contextKey: `${NS}.coveredNote`,
         coveredMeansDone: true,
+        coveredIsContent: true,
     }),
     def({
         key: 'transition',
@@ -184,6 +196,7 @@ export const SECTION_CATALOG: readonly SectionDefinition[] = [
         contextKey: `${NS}.coveredNote`,
         coveredMeansDone: true,
         oneIdea: true,
+        coveredIsContent: true,
     }),
     def({
         key: 'introduction.bookOverview',
@@ -223,6 +236,7 @@ export const SECTION_CATALOG: readonly SectionDefinition[] = [
         coveredFrom: 'sermonProposition',
         contextKey: `${NS}.coveredNote`,
         coveredMeansDone: true,
+        coveredIsContent: true,
     }),
 
     // ── Título: nombra lo que ya se dijo, por eso va al final ────────────

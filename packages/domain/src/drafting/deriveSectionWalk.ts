@@ -41,6 +41,8 @@ export interface WalkSection {
     status: SectionStatus;
     /** Lo que el pastor ya escribió y alimenta esta sección. */
     coveredBy?: string[];
+    /** Ese material ES el contenido de la sección, no sólo contexto. */
+    coveredIsContent?: boolean;
     /** Clave i18n que introduce `coveredBy`. */
     contextKey?: string;
     /** Prefijo i18n del texto propio de una sección `verbatim`. */
@@ -166,6 +168,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
             status: definicion.coveredMeansDone && tieneCubierto ? 'cubierta' : 'pendiente',
             coveredBy: tieneCubierto ? cubierto : undefined,
             contextKey: tieneCubierto ? definicion.contextKey : undefined,
+            coveredIsContent: definicion.coveredIsContent,
             verbatimKey: definicion.verbatimKey,
             oneIdea: definicion.oneIdea,
             unpacksProposition: definicion.unpacksProposition,

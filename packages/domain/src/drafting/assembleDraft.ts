@@ -54,15 +54,20 @@ export function assembleDraft(input: AssembleDraftInput): SermonContent {
     const contenido = (s: WalkSection): string => {
         const redactada = input.prose[s.id]?.trim();
         if (redactada) return redactada;
-        if (s.mode === 'verbatim') {
-            return (input.elements[s.id] ?? [])
-                .filter((e) => e.provenance !== 'descartado')
-                .map((e) => e.text.trim())
-                .filter(Boolean)
-                .join(' ')
-                .trim();
-        }
-        return (s.coveredBy ?? []).join('\n').trim();
+
+        const decidido = (input.elements[s.id] ?? [])
+            .filter((e) => e.provenance !== 'descartado')
+            .map((e) => e.text.trim())
+            .filter(Boolean)
+            .join(' ')
+            .trim();
+        if (decidido) return decidido;
+
+        // SÓLO si su material de origen ES el contenido. El recordatorio de la
+        // transición y las palabras clave del estudio son CONTEXTO: entraban al
+        // sermón por esta puerta, y el recordatorio salía dos veces porque
+        // `assembleTransitions` lo agrega después.
+        return s.coveredIsContent ? (s.coveredBy ?? []).join('\n').trim() : '';
     };
 
     const unir = (partes: string[]) => partes.map((p) => p.trim()).filter(Boolean).join('\n\n');
