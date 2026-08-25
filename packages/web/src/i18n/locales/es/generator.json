@@ -347,10 +347,13 @@
       "processFailed": "No se pudo procesar la solicitud"
     },
     "regenerateConfirm": {
-      "title": "¿Regenerar Borrador del Sermón?",
-      "description": "Esta acción creará un nuevo borrador basado en tus elecciones homiléticas. Cualquier edición manual en el texto actual se perderá permanentemente.",
+      "title": "¿Rehacer el borrador desde cero?",
+      "description": "Se escribirá un borrador nuevo a partir de tu proposición y tu bosquejo. El borrador actual queda guardado en el historial de cada sección, así que puedes volver a él.",
       "cancel": "Cancelar",
-      "confirm": "Regenerar"
+      "confirm": "Rehacer desde cero",
+      "menuItem": "Rehacer el borrador desde cero",
+      "workshopDescription": "El borrador nuevo se escribe desde tu proposición y tu bosquejo, no desde lo que decidiste en el Taller. Si lo que quieres es un borrador actualizado con tus decisiones, vuelve a armarlo desde el Taller. Tus decisiones no se borran en ningún caso, y el borrador actual queda en el historial de cada sección.",
+      "goToWorkshop": "Ir al Taller"
     },
     "saved": "Guardado",
     "fullContent": {
@@ -583,7 +586,8 @@
       "implications": "Implicaciones",
       "transition": "Transición",
       "authorityQuote": "Cita de autoridad"
-    }
+    },
+    "moreActions": "Más acciones"
   },
   "pastoralContext": {
     "title": "Contexto Pastoral (Opcional)",

@@ -8,7 +8,7 @@ import { DraftSkeletonPreview } from './DraftSkeletonPreview';
 import { IllustrationDuplicateBanner } from './IllustrationDuplicateBanner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload, BookOpen, RefreshCw } from 'lucide-react';
+import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload, BookOpen } from 'lucide-react';
 import {
     sermonGeneratorService,
     sermonService,
@@ -27,6 +27,7 @@ import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import {
     countReadySections,
     deriveSectionWalk,
+    hasDecisions,
     type SermonContent,
     normalizeHomileticalApproach,
     GENRE_COMPLIANCE_GENRES,
@@ -53,17 +54,6 @@ import { ContraScanModal } from '@/components/sermons/ContraScanModal';
 import { useSermonContraScan } from '@/hooks/useSermonContraScan';
 import { WorkflowPhase, CoachingStyle, formatPassageReference, aggregateRagSourcesFlat, evaluatePastoralSeed, type GenerationRules, type Sermon } from '@dosfilos/domain';
 import { BibleReaderPanel } from '@/components/bible/BibleReaderPanel';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { useTranslation } from '@/i18n';
 import { buildFullContent } from './draft/sermonContent';
 import { buildSermonCitationManifest } from './draft/buildSermonCitationManifest';
@@ -74,6 +64,7 @@ import { SocraticWorkshop } from './draft/SocraticWorkshop';
 import { HomileticsSavedIndicator } from './homiletics/HomileticsLoadingScreen';
 import { WizardStepHeader } from './WizardStepHeader';
 import { WizardStepShell } from './WizardStepShell';
+import { RegenerateDraftAction } from './draft/RegenerateDraftAction';
 import { WorkshopDraftActions } from './draft/WorkshopDraftActions';
 
 export function StepDraft() {
@@ -590,6 +581,8 @@ export function StepDraft() {
         />
     ) : null;
 
+    const hayDecisiones = Object.values(sectionElements).some(hasDecisions);
+
     // ARMAR EL BORRADOR ES ACCIÓN DEL PASO, NO DEL PANEL. Vivía dentro del
     // taller, que es la razón por la que se perdía al cambiar de pestaña.
     const workshopActions = homiletics ? (
@@ -662,40 +655,16 @@ export function StepDraft() {
                                 <span className="text-xs font-medium">{passage}</span>
                             </Button>
         
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="outline" size="sm" disabled={loading}>
-                                        {loading ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                {t('drafting.regeneratingBtn')}
-                                            </>
-                                        ) : (
-                                            <>
-                                                <RefreshCw className="mr-2 h-4 w-4" />
-                                                {t('drafting.regenerateBtn')}
-                                            </>
-                                        )}
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>{t('drafting.regenerateConfirm.title')}</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            {t('drafting.regenerateConfirm.description')}
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>{t('drafting.regenerateConfirm.cancel')}</AlertDialogCancel>
-                                        <AlertDialogAction
-                                            onClick={handleGenerate}
-                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                        >
-                                            {t('drafting.regenerateConfirm.confirm')}
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                            {/* REHACER DESDE CERO ES LA SALIDA DE EMERGENCIA,
+                                no una herramienta de la barra. Estaba acá con
+                                el mismo peso que el pasaje, siendo la acción
+                                que se salta el taller entero. */}
+                            <RegenerateDraftAction
+                                loading={loading}
+                                workshopHasDecisions={Boolean(socraticPanel) && hayDecisiones}
+                                onGoToWorkshop={() => setActiveTab('workshop')}
+                                onRegenerate={handleGenerate}
+                            />
                         </>
                     )
                 }
