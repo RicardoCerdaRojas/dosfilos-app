@@ -41,7 +41,6 @@ export function SermonMap({ walk, elements, activeId, onSelect }: Props) {
      */
     const isDone = (s: WalkSection) => s.status === 'cubierta' || hasDecisions(elements[s.id] ?? []);
 
-    const done = walk.filter(isDone).length;
 
     // Agrupa por punto conservando el orden del recorrido. Las secciones sin
     // punto (conclusión, introducción, título) van en su propio grupo suelto.
@@ -84,13 +83,6 @@ export function SermonMap({ walk, elements, activeId, onSelect }: Props) {
 
     return (
         <nav className="h-full w-full py-4 pl-1 pr-2 overflow-y-auto" aria-label={t('drafting.sections.mapTitle')}>
-            <div className="mb-3 px-2">
-                <h3 className="text-sm font-semibold">{t('drafting.sections.mapTitle')}</h3>
-                <p className="text-xs text-muted-foreground">
-                    {t('drafting.sections.pendingCount', { done, total: walk.length })}
-                </p>
-            </div>
-
             {grupos.map((g) => {
                 if (g.id === '__sueltas__') {
                     return (

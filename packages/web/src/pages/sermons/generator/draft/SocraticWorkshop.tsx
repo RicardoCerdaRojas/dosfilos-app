@@ -23,6 +23,8 @@ interface Props {
     outlinePoints: readonly { title?: string; application?: string; scriptureReferences?: string[] }[];
     onAssemble: (draft: SermonContent) => void | Promise<void>;
     hasDraft?: boolean;
+    /** Título del sermón, para el encabezado. */
+    sermonTitle?: string;
     homiletics: HomileticalAnalysis;
 }
 
@@ -101,8 +103,49 @@ export function SocraticWorkshop(props: Props) {
               .trim() || undefined
         : undefined;
 
+    const listas = props.walk.filter(
+        (s) =>
+            s.status === 'cubierta' ||
+            (props.elements[s.id] ?? []).some((e) => e.provenance !== 'descartado'),
+    ).length;
+
     return (
-        <div className="flex items-stretch gap-0 h-full min-h-[24rem]">
+        <div className="flex flex-col h-full min-h-[24rem]">
+        {/* MISMO PATRÓN QUE LA PESTAÑA BORRADOR: título a la izquierda,
+            acciones a la derecha, contenido debajo. El botón de armar vivía al
+            pie y se sentía fuera de lugar en cualquier posición que probara —
+            la razón era que el taller no seguía el patrón que el resto de la
+            app ya establece, no dónde estaba puesto exactamente.
+
+            Mismas clases que el encabezado del borrador: `min-w-0` + `truncate`
+            en el título y `shrink-0` en las acciones, porque agregar cualquier
+            cosa a esa fila partía el encabezado en dos líneas. */}
+        <div className="mb-4 flex-shrink-0 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+                <h3 className="text-lg font-semibold truncate" title={props.sermonTitle}>
+                    {props.sermonTitle || t('drafting.sections.mapTitle')}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                    {t('drafting.sections.pendingCount', { done: listas, total: props.walk.length })}
+                </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+                <WorkshopDraftActions
+                    walk={props.walk}
+                    elements={props.elements}
+                    prose={props.prose}
+                    points={props.outlinePoints}
+                    proposition={props.proposition}
+                    audienceRigor={props.audienceRigor}
+                    onProseChange={props.onChangeProse}
+                    onAssemble={props.onAssemble}
+                    hasDraft={props.hasDraft}
+                    homiletics={props.homiletics}
+                />
+            </div>
+        </div>
+
+        <div className="flex items-stretch gap-0 flex-1 min-h-0">
             {abierto && (
                 <div style={{ width: ancho }} className="shrink-0 overflow-hidden">
                     <SermonMap
@@ -153,20 +196,6 @@ export function SocraticWorkshop(props: Props) {
                 </div>
               </div>
 
-              <div className="w-full max-w-3xl">
-                <WorkshopDraftActions
-                    walk={props.walk}
-                    elements={props.elements}
-                    prose={props.prose}
-                    points={props.outlinePoints}
-                    proposition={props.proposition}
-                    audienceRigor={props.audienceRigor}
-                    onProseChange={props.onChangeProse}
-                    onAssemble={props.onAssemble}
-                    hasDraft={props.hasDraft}
-                    homiletics={props.homiletics}
-                />
-              </div>
             </div>
 
             {/* El riel de prosa NO existe en las secciones `verbatim`: lo que el
@@ -199,6 +228,7 @@ export function SocraticWorkshop(props: Props) {
                     )}
                 </>
             )}
+        </div>
         </div>
     );
 }

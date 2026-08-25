@@ -572,6 +572,7 @@ export function StepDraft() {
             outlinePoints={(homiletics.outline?.mainPoints ?? []) as any[]}
             hasDraft={!!draft}
             homiletics={homiletics}
+            sermonTitle={draft?.title}
             onAssemble={async (armado) => {
                 const guardo = await archivarBorradorActual(t('drafting.versions.beforeAssemble'));
                 setDraft(armado);
