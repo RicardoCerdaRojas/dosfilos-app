@@ -187,7 +187,11 @@ describe('la proposición del punto gobierna la estructura', () => {
         const p = buildSectionProsePrompt({ ...base, elements: tres, pointProposition: PROP });
         expect(p).toContain(PROP);
         expect(p).toContain('enúnciala TAL CUAL');
-        expect(p).toContain('DESARROLLA UN CONCEPTO DE ESA FRASE');
+        // La regla evolucionó: ya no es "una viñeta por idea, cada una ligada a
+        // un concepto" sino "un movimiento POR CONCEPTO, con las ideas como
+        // material". El cambio salió de ver que las viñetas seguían el orden de
+        // la lista y dos no correspondían a ningún concepto de la frase.
+        expect(p).toContain('POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA');
     });
 
     it('sin proposición del punto vuelve a la estructura simple, sin inventarla', () => {
@@ -201,5 +205,43 @@ describe('la proposición del punto gobierna la estructura', () => {
     it('con una sola idea la proposición no impone tres movimientos', () => {
         const p = buildSectionProsePrompt({ ...base, elements: [el('una sola')], pointProposition: PROP });
         expect(p).toContain('párrafo continuo');
+    });
+});
+
+describe('la proposición es la espina, no una decoración', () => {
+    const PROP = 'Dios habla con intención: se identifica, identifica a Jonás, ordena y explica la razón.';
+    const cinco = [
+        el('La formulación muestra un mandato directo e imperativo'),
+        el('Hijo de Amitai lo sitúa como profeta conocido'),
+        el('Nínive era la capital asiria'),
+        el('El motivo divino revela el carácter justo de Dios'),
+        el('"Pregona contra ella" indica denuncia de juicio'),
+    ];
+    const p = () => buildSectionProsePrompt({ ...base, elements: cinco, pointProposition: PROP });
+
+    it('los movimientos salen de los conceptos de la frase, no de la lista', () => {
+        // Fallo real: las viñetas siguieron el orden de los elementos y dos de
+        // ellas no correspondían a ningún concepto de la proposición.
+        expect(p()).toContain('NO hagas un movimiento por idea');
+        expect(p()).toContain('POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA');
+    });
+
+    it('prohíbe parafrasear: una idea reescrita con sinónimos no aporta', () => {
+        // Los elementos `elegido` YA vienen escritos como frases completas. Pedir
+        // "desarrolla" sobre ellas produce la misma frase con otras palabras.
+        expect(p()).toContain('NO REESCRIBAS UNA IDEA CON OTRAS PALABRAS');
+        expect(p()).toContain('sinónimos');
+    });
+
+    it('dice qué ES desarrollar, no sólo qué no hacer', () => {
+        expect(p()).toContain('anclar en las palabras del texto bíblico');
+    });
+
+    it('una idea que no cabe en ningún concepto NO se descarta ni fuerza uno nuevo', () => {
+        // Descartarla perdería una decisión suya; inventar un concepto para
+        // acomodarla adulteraría su proposición.
+        const texto = p();
+        expect(texto).toContain('NO la descartes');
+        expect(texto).toContain('NO inventes un concepto');
     });
 });

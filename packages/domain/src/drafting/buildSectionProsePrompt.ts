@@ -89,13 +89,22 @@ export function buildSectionProsePrompt(input: SectionProseInput): string {
         ? `   Es una sola idea: escríbela como un párrafo continuo. No la partas en
    viñetas — sin varias partes que separar, la lista es andamiaje vacío.`
         : proposicionPunto
-          ? `   Tres movimientos, EN ESTE ORDEN:
+          ? `   LOS MOVIMIENTOS SALEN DE LA PROPOSICIÓN, NO DE LA LISTA DE IDEAS.
+
    a) Cita el texto bíblico que se expone.
-   b) Enuncia la proposición del punto, tal cual está arriba. Es la frase de la
-      que se desprende todo lo demás.
-   c) Una viñeta por cada idea, en el orden en que están arriba. CADA VIÑETA
-      DESARROLLA UN CONCEPTO DE ESA FRASE: el oyente tiene que poder ver de
-      dónde sale. No fundas dos ideas en la misma viñeta.`
+   b) Enuncia la proposición del punto, tal cual está arriba.
+   c) UN MOVIMIENTO POR CADA CONCEPTO QUE LA PROPOSICIÓN NOMBRA, en el orden en
+      que ella los nombra. Las ideas de arriba son el MATERIAL con que llenas
+      esos movimientos: una idea puede servir a un concepto, y varias pueden
+      combinarse en uno. NO hagas un movimiento por idea.
+   d) Si una idea decidida no sirve a ningún concepto de la proposición, úsala
+      donde mejor apoye, al final. NO la descartes y NO inventes un concepto
+      para acomodarla.
+
+   NO REESCRIBAS UNA IDEA CON OTRAS PALABRAS. Si un movimiento dice lo mismo que
+   la idea con sinónimos, no aporta nada: la idea ya estaba escrita. DESARROLLAR
+   es anclar en las palabras del texto bíblico y mostrar qué se sigue de ellas —
+   sin agregar afirmaciones que él no decidió.`
           : `   Abre citando el texto bíblico que se está exponiendo, si la sección lo
    expone. Después desarrolla UNA IDEA POR MOVIMIENTO, en el orden en que están
    arriba: cada idea recibe su propio bloque. Puedes usar viñetas.
