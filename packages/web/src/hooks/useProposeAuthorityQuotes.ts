@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { createProxyLlmClient } from '@dosfilos/infrastructure';
 import {
     buildAuthorityQuotePrompt,
-    parseProposedElements,
+    parseProposedQuotes,
     type ProposedElement,
     type QuotableSource,
 } from '@dosfilos/domain';
@@ -69,7 +69,10 @@ export function useProposeAuthorityQuotes() {
                     temperature: 0.1,
                 });
 
-                const quotes = parseProposedElements(out ?? '');
+                // LA ATRIBUCIÓN LA PONEMOS NOSOTROS y se VERIFICA que la cita
+                // esté en el fragmento que dice citar. El modelo sólo devuelve
+                // qué fragmento usó y qué parte copió.
+                const quotes = parseProposedQuotes(out ?? '', sources);
                 // Lista vacía es una respuesta CORRECTA del prompt: ninguno de
                 // los fragmentos respalda el punto.
                 return quotes.length > 0 ? { kind: 'ok', quotes } : { kind: 'sinCoincidencias' };

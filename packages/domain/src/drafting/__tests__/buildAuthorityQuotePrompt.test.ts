@@ -35,8 +35,13 @@ describe('buildAuthorityQuotePrompt', () => {
         expect(p).toContain('Es una respuesta\n   correcta');
     });
 
-    it('prohíbe completar la atribución que falta', () => {
-        expect(buildAuthorityQuotePrompt(base)).toContain('no inventes una página');
+    it('el modelo NO escribe la atribución: devuelve el número del fragmento', () => {
+        // Se le pedía escribirla dentro del texto y la omitió: llegaron citas
+        // sin autor ni obra. La atribución es un dato NUESTRO, viene con el
+        // fragmento recuperado — pedírsela era darle ocasión de perderla.
+        const p = buildAuthorityQuotePrompt(base);
+        expect(p).toContain('NO ESCRIBAS LA ATRIBUCIÓN');
+        expect(p).toContain('"sourceIndex"');
     });
 
     it('permite recortar, no reescribir', () => {

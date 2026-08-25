@@ -28,6 +28,15 @@ interface Props {
     points?: readonly string[];
     /** Proposición decidida para el punto, si la sección no es esa misma. */
     pointProposition?: string;
+    /**
+     * Lo que él decidió decir en la exposición del punto.
+     *
+     * Es la declaración MÁS ESPECÍFICA de lo que el punto dice —"hijo de
+     * Amitai", "capital del Imperio Asirio"— y por eso es mejor consulta para
+     * buscar en su biblioteca que la frase-tesis sola, que encuentra lo
+     * genérico del tema.
+     */
+    pointExpositionIdeas?: readonly string[];
     elements: SermonElement[];
     onChange: (elements: SermonElement[]) => void;
 }
@@ -132,7 +141,14 @@ export function SectionElementsPanel(props: Props) {
             const r = await proponerCitas({
                 // La cita debe respaldar lo que el punto AFIRMA, no el pasaje
                 // en general: la proposición es la mejor consulta que hay.
-                query: props.pointProposition || section.parentLabel || props.passage,
+                // La consulta suma la tesis del punto y lo que decidió decir en
+                // él: cuanto más específica, más probable que NO encuentre nada
+                // — y decirle la verdad sobre lo que va a predicar es mejor que
+                // traerle algo tangencial al tema general.
+                query: [props.pointProposition, ...(props.pointExpositionIdeas ?? [])]
+                    .filter(Boolean)
+                    .join(' ')
+                    .trim() || section.parentLabel || props.passage,
                 userId: user?.uid,
                 passage: props.passage,
                 pointTitle: section.parentLabel,

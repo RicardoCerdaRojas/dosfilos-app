@@ -63,8 +63,10 @@ REGLAS — LA PRIMERA ES LA QUE IMPORTA:
    correcta. El pastor prefiere no citar a citar algo que no viene al caso —
    forzar una cita para llenar el hueco es cómo aparece una falsa.
 
-3. **LA ATRIBUCIÓN VA TAL COMO ESTÁ ARRIBA.** No completes un autor que no
-   figura, no inventes una página, no corrijas un título.
+3. **NO ESCRIBAS LA ATRIBUCIÓN.** Devuelve el NÚMERO del fragmento que usaste
+   y nosotros ponemos autor, obra y página desde nuestros datos. Si la
+   escribieras tú, un olvido dejaría una cita anónima en el púlpito y un
+   descuido la atribuiría a quien no la dijo.
 
 4. Puedes RECORTAR un fragmento para quedarte con la parte que respalda —
    marcando el corte con […]— pero no cambiar una sola palabra de lo que quede.
@@ -73,7 +75,8 @@ FORMATO DE SALIDA (JSON, sin texto alrededor):
 {
   "elements": [
     {
-      "text": "\\"La cita, copiada literal.\\" — Autor, Obra, p. X",
+      "sourceIndex": 1,
+      "text": "La cita, copiada literal del fragmento [1].",
       "why": "Qué afirmación del punto respalda, en una línea."
     }
   ]

@@ -192,6 +192,13 @@ export function SocraticWorkshop(props: Props) {
                     pointProposition={
                         props.activeSection.id.endsWith('.proposition') ? undefined : proposicionDelPunto
                     }
+                    pointExpositionIdeas={
+                        props.activeSection.parentId
+                            ? (props.elements[`${props.activeSection.parentId}.exposition`] ?? [])
+                                  .filter((e) => e.provenance !== 'descartado')
+                                  .map((e) => e.text)
+                            : undefined
+                    }
                 />
                 </div>
               </div>
