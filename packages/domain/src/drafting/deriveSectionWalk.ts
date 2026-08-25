@@ -155,6 +155,15 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
             verbatimKey: `${NS}.pointProposition.verbatim`,
             labelParams: { n },
             status: 'pendiente',
+            // SUS INDICACIONES DEL BOSQUEJO VIVEN ACÁ, no en la exposición.
+            // Son las reflexiones iniciales con las que FORMA la proposición;
+            // ponerlas donde ya no se usan las convertía en decoración, y dejaba
+            // la sección donde de verdad hacen falta sin insumo.
+            contextKey: `${NS}.directiveContext`,
+            coveredBy: cubierta([
+                punto.pastorDirective?.emphasis,
+                ...(punto.pastorDirective?.exegeticalNotes ?? []),
+            ]),
         });
 
         // La exposición SIEMPRE se pregunta: es el contenido del punto.
@@ -169,12 +178,9 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
             labelKey: `${NS}.exposition.label`,
             jobKey: `${NS}.exposition.job`,
             labelParams: { n },
+            // Su insumo es la PROPOSICIÓN del punto, que se decide en el taller
+            // y por eso no viaja en el recorrido: la aporta quien renderiza.
             status: 'pendiente',
-            contextKey: `${NS}.directiveContext`,
-            coveredBy: cubierta([
-                punto.pastorDirective?.emphasis,
-                ...(punto.pastorDirective?.exegeticalNotes ?? []),
-            ]),
         });
 
         secciones.push({

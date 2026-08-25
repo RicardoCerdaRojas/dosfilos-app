@@ -22,6 +22,8 @@ interface Props {
     passage: string;
     proposition?: string;
     points?: readonly string[];
+    /** Proposición decidida para el punto, si la sección no es esa misma. */
+    pointProposition?: string;
     elements: SermonElement[];
     onChange: (elements: SermonElement[]) => void;
 }
@@ -123,6 +125,11 @@ export function SectionElementsPanel(props: Props) {
             passage: props.passage,
             sectionLabel: t(section.labelKey, section.labelParams),
             sectionJob: t(section.jobKey),
+            // El botón propone DESDE el versículo y la proposición, no en el
+            // aire: los elementos de la exposición son las partes que desglosan
+            // esa frase.
+            pointProposition: props.pointProposition,
+            scriptureText: versiculo ?? undefined,
             proposition: props.proposition,
             points: props.points,
             // Lo ya decidido viaja al prompt: re-proponer su propio trabajo es
@@ -152,6 +159,15 @@ export function SectionElementsPanel(props: Props) {
                         {section.scriptureRef}
                     </cite>
                 </blockquote>
+            )}
+
+            {props.pointProposition && (
+                <div className="rounded-md bg-muted/50 p-3 space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">
+                        {t('drafting.sections.pointPropositionContext')}
+                    </p>
+                    <p className="text-sm text-foreground/90">{props.pointProposition}</p>
+                </div>
             )}
 
             {/* Lo que ya escribió: SE MUESTRA, NO SE PREGUNTA. Cuando la sección

@@ -11,6 +11,16 @@ export interface ElementsPromptInput {
     proposition?: string;
     /** Los títulos de los puntos, verbatim. */
     points?: readonly string[];
+    /**
+     * La proposición que el pastor decidió para ESTE punto, si existe.
+     *
+     * Cuando está, es el insumo principal: los elementos de la exposición son
+     * las partes que la desglosan. Proponer sin ella produce ideas sueltas
+     * sobre el pasaje en vez de las piezas de SU argumento.
+     */
+    pointProposition?: string;
+    /** Texto bíblico real de la sección, para no proponer de memoria. */
+    scriptureText?: string;
     /** Lo que el pastor YA trabajó y es suyo: observaciones, principio, notas… */
     pastorWork?: readonly string[];
     /** Elementos que el pastor ya decidió para esta sección: no se repiten. */
@@ -44,6 +54,7 @@ export function buildElementsPrompt(input: ElementsPromptInput): string {
 
 PASAJE: ${input.passage}
 ${input.proposition ? `\nPROPOSICIÓN HOMILÉTICA (la escribió él, es la tesis del sermón):\n"${input.proposition}"\n` : ''}${bloque('PUNTOS DEL SERMÓN:', input.points)}${bloque('LO QUE ÉL YA TRABAJÓ EN SU ESTUDIO (es suyo, respétalo):', input.pastorWork)}${bloque('YA DECIDIÓ ESTOS ELEMENTOS PARA ESTA SECCIÓN — NO los repitas ni los reformules:', input.alreadyDecided)}
+${input.scriptureText ? `TEXTO BÍBLICO:\n"${input.scriptureText}"\n` : ''}${input.pointProposition ? `\nPROPOSICIÓN DE ESTE PUNTO (la escribió él):\n"${input.pointProposition}"\n\nLOS ELEMENTOS DE ESTA SECCIÓN SON LAS PARTES QUE DESGLOSAN ESA FRASE. Propón\nuno por cada concepto que ella nombra y que el texto sostenga — no ideas\nsueltas sobre el pasaje.\n` : ''}
 SECCIÓN: ${input.sectionLabel}
 TRABAJO DE ESTA SECCIÓN: ${input.sectionJob}
 

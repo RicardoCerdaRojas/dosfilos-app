@@ -126,6 +126,11 @@ export function SocraticWorkshop(props: Props) {
                     points={props.points}
                     elements={props.elements[props.activeSection.id] ?? []}
                     onChange={(els) => props.onChangeElements(props.activeSection.id, els)}
+                    // No se le pasa a la sección que ES la proposición: se
+                    // estaría mostrando a sí misma como insumo.
+                    pointProposition={
+                        props.activeSection.id.endsWith('.proposition') ? undefined : proposicionDelPunto
+                    }
                 />
             </div>
 

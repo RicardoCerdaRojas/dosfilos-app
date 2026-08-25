@@ -62,13 +62,20 @@ describe('deriveSectionWalk — con el bosquejo real de Jonás', () => {
         expect(app?.coveredBy?.[0]).toContain('vive consciente de su dirección');
     });
 
-    it('sus directivas viajan como CONTEXTO de la exposición, que sigue pendiente', () => {
-        // Una directiva dice QUÉ cubrir; la exposición es la idea que lo cubre.
-        // Darla por respondida dejaría el punto sin contenido decidido.
+    it('sus directivas alimentan la PROPOSICIÓN del punto, no la exposición', () => {
+        // Son las reflexiones iniciales con las que FORMA la proposición.
+        // Estaban en la exposición, donde ya no se usan: ahí eran decoración, y
+        // la sección donde de verdad hacen falta quedaba sin insumo.
+        const prop = walk.find((s) => s.id === 'point.2.proposition');
+        expect(prop?.coveredBy).toHaveLength(3); // emphasis + 2 notas
+        expect(prop?.coveredBy?.join(' ')).toContain('personifica a la nave');
+        expect(prop?.contextKey).toBe('drafting.sections.directiveContext');
+    });
+
+    it('la exposición no las repite: su insumo es la proposición ya decidida', () => {
         const exp = walk.find((s) => s.id === 'point.2.exposition');
         expect(exp?.status).toBe('pendiente');
-        expect(exp?.coveredBy).toHaveLength(3); // emphasis + 2 notas
-        expect(exp?.coveredBy?.join(' ')).toContain('personifica a la nave');
+        expect(exp?.coveredBy).toBeUndefined();
     });
 
     it('el título SIEMPRE se pregunta: la proposición no lo responde', () => {
@@ -164,7 +171,7 @@ describe('modo de sección: se deciden ideas, o se decide el texto final', () =>
     });
 
     it('las directivas del bosquejo sí se etiquetan como suyas', () => {
-        expect(walk.find((s) => s.id === 'point.1.exposition')?.contextKey).toBe(
+        expect(walk.find((s) => s.id === 'point.1.proposition')?.contextKey).toBe(
             'drafting.sections.directiveContext',
         );
     });

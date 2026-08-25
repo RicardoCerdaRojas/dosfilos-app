@@ -507,7 +507,8 @@
           "proposeMore": "Propónme otras",
           "decided": "Tu proposición para este punto"
         }
-      }
+      },
+      "pointPropositionContext": "Tu proposición para este punto — las ideas de esta sección la desglosan:"
     },
     "tabs": {
       "draft": "Borrador",

@@ -185,3 +185,30 @@ describe('las directivas no cuentan como ideas originadas', () => {
         expect(describeSectionAuthorship(mezcla)).toBe('propia');
     });
 });
+
+describe('buildElementsPrompt — la proposición del punto es el insumo', () => {
+    const base = {
+        passage: 'Jonás 1:1-2',
+        sectionLabel: 'Punto 1 — exposición',
+        sectionJob: 'Decir lo que el texto dice y por qué importa.',
+    };
+
+    it('propone las PARTES de la frase, no ideas sueltas sobre el pasaje', () => {
+        const p = buildElementsPrompt({
+            ...base,
+            pointProposition: 'Dios se identifica, identifica a Jonás, ordena y explica la razón.',
+        });
+        expect(p).toContain('LOS ELEMENTOS DE ESTA SECCIÓN SON LAS PARTES QUE DESGLOSAN ESA FRASE');
+        expect(p).toContain('no ideas\nsueltas sobre el pasaje');
+    });
+
+    it('el texto bíblico viaja para no proponer de memoria', () => {
+        const p = buildElementsPrompt({ ...base, scriptureText: 'Vino palabra de Jehová a Jonás…' });
+        expect(p).toContain('TEXTO BÍBLICO');
+        expect(p).toContain('Vino palabra de Jehová');
+    });
+
+    it('sin proposición del punto no la inventa ni la menciona', () => {
+        expect(buildElementsPrompt(base)).not.toContain('PROPOSICIÓN DE ESTE PUNTO');
+    });
+});

@@ -507,7 +507,8 @@
           "proposeMore": "Suggest others",
           "decided": "Your proposition for this point"
         }
-      }
+      },
+      "pointPropositionContext": "Your proposition for this point — this section's ideas unpack it:"
     },
     "tabs": {
       "draft": "Draft",
