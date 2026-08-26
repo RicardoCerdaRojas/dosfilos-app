@@ -101,6 +101,12 @@ export function SectionElementsPanel(props: Props) {
     const { propose: proponerCitas, loading: buscandoCitas } = useProposeAuthorityQuotes();
     const { user } = useFirebase();
     /** La cita se SELECCIONA de su biblioteca; no se pide "una idea de cita". */
+    /**
+     * El texto multilínea entra como UNA unidad aunque la sección acumule:
+     * una cita pegada con sus saltos de línea no son tres citas. Es la mitad
+     * que sobrevive de la vieja decisión-única de las citas.
+     */
+    const noPartir = unaSolaEntrada || section.id.endsWith('.authorityQuote');
     const esCitaDeAutoridad = section.id.endsWith('.authorityQuote');
     /** Ítems finales (palabras clave): no se redactan y se proponen SIN modelo. */
     const esItemsFinales = Boolean(section.definition?.itemsAreFinal);
@@ -278,7 +284,7 @@ export function SectionElementsPanel(props: Props) {
                     rows={esVerbatim ? 2 : 4}
                     className="resize-none"
                 />
-                {!unaSolaEntrada && (
+                {!noPartir && (
                     <p className="text-xs text-muted-foreground">{t('drafting.elements.onePerLine')}</p>
                 )}
                 {esUnaIdea && (
@@ -291,10 +297,10 @@ export function SectionElementsPanel(props: Props) {
                         // el anterior en vez de acumular. Un sermón no tiene dos
                         // títulos, y dejar los dos obligaría a borrar a mano el
                         // que sobra.
-                        add(unaSolaEntrada ? [mine] : splitElementLines(mine), 'pastor');
+                        add(noPartir ? [mine] : splitElementLines(mine), 'pastor');
                         setMine('');
                     }}
-                    disabled={(unaSolaEntrada ? [mine.trim()].filter(Boolean) : splitElementLines(mine)).length === 0}
+                    disabled={(noPartir ? [mine.trim()].filter(Boolean) : splitElementLines(mine)).length === 0}
                 >
                     <Plus className="h-4 w-4 mr-1.5" />
                     {esVerbatim ? t(vk('add')) : t('drafting.elements.addMine')}
@@ -356,6 +362,16 @@ export function SectionElementsPanel(props: Props) {
                 onFlipKind={flipKind}
                 onRemove={remove}
             />
+
+            {/* CONSEJO, NO LÍMITE — decisión del fundador: varias citas se
+                permiten, y este argumento se le muestra al pastor para que
+                decida con él. Mismo contrato que el resto del taller: "se te
+                señala; tú decides. No bloquea." */}
+            {esCitaDeAutoridad && decided.length >= 2 && (
+                <p className="text-xs text-muted-foreground italic">
+                    {t('drafting.elements.quotes.multiVoiceAdvice')}
+                </p>
+            )}
 
         </div>
     );

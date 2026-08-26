@@ -129,9 +129,18 @@ export function assembleDraft(input: AssembleDraftInput): SermonContent {
                 delPunto(numeroDe(seccion)).keyWords.push(...palabras);
                 break;
             }
-            case 'pointAuthorityQuote':
-                delPunto(numeroDe(seccion)).authorityQuote = texto;
+            case 'pointAuthorityQuote': {
+                // VARIAS CITAS SON BLOQUES SEPARADOS. `contenido()` une los
+                // elementos con espacio — dos citas quedarían pegadas en una
+                // frase ilegible con dos atribuciones adentro.
+                const citas = (input.elements[seccion.id] ?? [])
+                    .filter((e) => e.provenance !== 'descartado')
+                    .map((e) => e.text.trim())
+                    .filter(Boolean);
+                delPunto(numeroDe(seccion)).authorityQuote =
+                    citas.length > 0 ? citas.join('\n\n') : texto;
                 break;
+            }
             case 'pointIllustration':
                 delPunto(numeroDe(seccion)).illustration = texto;
                 break;

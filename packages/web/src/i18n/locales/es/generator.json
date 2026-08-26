@@ -457,7 +457,8 @@
         "sinFuentes": "Tu biblioteca no tiene material sobre este punto. Escribe la cita tú, o déjalo sin cita: es preferible a citar algo que no viene al caso.",
         "sinCoincidencias": "Hay material en tu biblioteca, pero ninguno respalda lo que este punto afirma.",
         "falló": "No se pudo buscar en tu biblioteca. Intenta de nuevo.",
-        "showSource": "Ver el fragmento de origen"
+        "showSource": "Ver el fragmento de origen",
+        "multiVoiceAdvice": "Un punto se respalda con una voz, no con varias apiladas: si este punto necesita dos voces, puede ser señal de que pide dividirse. Tú decides."
       },
       "keyWords": {
         "propose": "Tráeme las del estudio",

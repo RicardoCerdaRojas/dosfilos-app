@@ -175,9 +175,12 @@ export const SECTION_CATALOG: readonly SectionDefinition[] = [
         jobKey: `${NS}.authorityQuote.job`,
         target: { kind: 'pointAuthorityQuote' },
         optional: true,
-        // UNA cita, no una lista: un punto se respalda con una voz, no con
-        // varias apiladas.
-        oneIdea: true,
+        // VARIAS CITAS PERMITIDAS — decisión del fundador (2026-08-26). La
+        // regla anterior ("un punto se respalda con una voz") reemplazaba cada
+        // cita nueva por la anterior; ahora es un CONSEJO visible cuando hay
+        // más de una, no un límite: "el pastor entiende qué es lo que está
+        // haciendo". El panel conserva aparte el no-partir el texto multilínea,
+        // que era la otra mitad de la flag que se quitó.
     }),
     def({
         key: 'illustration',

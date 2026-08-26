@@ -457,7 +457,8 @@
         "sinFuentes": "Your library has nothing on this point. Write the quote yourself, or leave it without one — better than quoting something off-point.",
         "sinCoincidencias": "There is material in your library, but none supports what this point claims.",
         "falló": "Couldn't search your library. Try again.",
-        "showSource": "Show the source excerpt"
+        "showSource": "Show the source excerpt",
+        "multiVoiceAdvice": "A point rests on one voice, not several stacked up: if this point needs two voices, it may be a sign it wants to be split. Your call."
       },
       "keyWords": {
         "propose": "Bring the ones from my study",

@@ -348,3 +348,18 @@ describe('assembleDraft — palabras clave por punto', () => {
         expect(draft.body[0].keyWords).toBeUndefined();
     });
 });
+
+describe('assembleDraft — varias citas de autoridad (decisión 2026-08-26)', () => {
+    const cita2 = (text: string): SermonElement => ({ ...el(text, 'elegido'), sectionId: 'point.1.authorityQuote' });
+
+    it('dos citas decididas entran como bloques separados, no pegadas en una frase', () => {
+        const draft = assembleDraft({
+            ...COMPLETO,
+            elements: {
+                ...COMPLETO.elements,
+                'point.1.authorityQuote': [cita2('"Cita A" — Autor A'), cita2('"Cita B" — Autor B')],
+            },
+        });
+        expect(draft.body[0].authorityQuote).toBe('"Cita A" — Autor A\n\n"Cita B" — Autor B');
+    });
+});
