@@ -55,8 +55,9 @@ export interface GreekKeyInsight {
  * v1: traducciones + words. v2: + keyInsights. v3: + wordOrderNote.
  * v4: genitivos en cadena — la aposición muestra "(de) X" y lo explica.
  * v5: + caseFunction (taxonomía cerrada) y nameNote (nombres propios).
+ * v6: + relations (aposición/concordancia) y rhetoric (quiasmo/inclusión).
  */
-export const GREEK_INSIGHT_PROMPT_VERSION = 5;
+export const GREEK_INSIGHT_PROMPT_VERSION = 6;
 
 export interface GreekVerseInsight {
     /** "JAS 1:2" — la clave del caché. */
@@ -81,6 +82,18 @@ export interface GreekVerseInsight {
      * concreto. Ausente cuando el orden no enseña nada en este versículo.
      */
     readonly wordOrderNote?: string;
+    /**
+     * Relaciones entre palabras (aposición, concordancia…) — validadas
+     * contra la morfología real. Permiten iluminar el par en pantalla en vez
+     * de dejar el dato como prosa dentro de una sola palabra.
+     */
+    readonly relations?: readonly import('./rhetoricalStructure').WordRelation[];
+    /**
+     * Estructura retórica del versículo (quiasmo, inclusión, paralelismo),
+     * SI la hay y si se sostiene. Es INTERPRETACIÓN y la UI la muestra como
+     * propuesta — ver las salvaguardas en `rhetoricalStructure.ts`.
+     */
+    readonly rhetoric?: import('./rhetoricalStructure').RhetoricalStructure;
     /** Ausente en cachés anteriores al versionado. */
     readonly promptVersion?: number;
 }

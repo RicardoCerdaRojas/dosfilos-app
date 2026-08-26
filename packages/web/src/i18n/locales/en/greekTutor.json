@@ -628,7 +628,8 @@
       "syntacticFunction": "Función sintáctica",
       "translation": "Translation",
       "caseFunction": "Case function",
-      "nameNote": "About the name"
+      "nameNote": "About the name",
+      "relations": "Relations"
     },
     "pos": {
       "N": "Noun",
@@ -855,6 +856,19 @@
       "respect": "\"As to\", limits the scope.",
       "address": "Directly calls or addresses."
     },
-    "cacheUnavailable": "We could not read the saved analyses (check your session or connection). You can generate it again, but one may already exist."
+    "cacheUnavailable": "We could not read the saved analyses (check your session or connection). You can generate it again, but one may already exist.",
+    "rhetoric": {
+      "chiasm": "Chiasm",
+      "inclusio": "Inclusio",
+      "parallelism": "Parallelism",
+      "proposalBadge": "Proposal",
+      "disclaimer": "Rhetorical structure is a READING of the text, not manuscript data — unlike morphology. Chiasms are often over-diagnosed: judge it yourself."
+    },
+    "relation": {
+      "apposition": "In apposition with",
+      "agreement": "Agrees with",
+      "governs": "Governs",
+      "modifies": "Modifies"
+    }
   }
 }

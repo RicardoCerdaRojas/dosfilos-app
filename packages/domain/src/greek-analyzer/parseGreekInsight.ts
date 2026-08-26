@@ -1,5 +1,6 @@
 import { GREEK_INSIGHT_PROMPT_VERSION, type GreekVerseInsight, type GreekWordInsight } from './verseInsight';
 import { isKnownCaseFunction } from './caseFunctionTaxonomy';
+import { validateRhetoricalStructure, validateWordRelations } from './rhetoricalStructure';
 import type { GreekCase } from './morphGntToken';
 
 /**
@@ -85,6 +86,10 @@ export function parseGreekInsight(
         : [];
 
     const wordOrderNote = typeof p.wordOrderNote === 'string' ? p.wordOrderNote.trim() : '';
+    // Ambas se validan contra el dato determinista y se caen solas si no se
+    // sostienen — sin tumbar el resto del análisis.
+    const relations = validateWordRelations(p.relations, input.cases ?? []);
+    const rhetoric = validateRhetoricalStructure(p.rhetoric, input.expectedWordCount);
 
     return {
         reference: input.reference,
@@ -93,6 +98,8 @@ export function parseGreekInsight(
         words,
         ...(keyInsights.length > 0 ? { keyInsights } : {}),
         ...(wordOrderNote ? { wordOrderNote } : {}),
+        ...(relations.length > 0 ? { relations } : {}),
+        ...(rhetoric ? { rhetoric } : {}),
         promptVersion: GREEK_INSIGHT_PROMPT_VERSION,
     };
 }

@@ -1,7 +1,8 @@
 import { ArrowLeftRight, Loader2, Sparkles, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { GREEK_INSIGHT_PROMPT_VERSION, type GreekVerseInsight } from '@dosfilos/domain';
+import { GREEK_INSIGHT_PROMPT_VERSION, type GreekVerseInsight, type GreekVerseTokens } from '@dosfilos/domain';
+import { GreekRhetoricBlock } from './GreekRhetoricBlock';
 
 interface Props {
     insight: GreekVerseInsight | null;
@@ -9,6 +10,8 @@ interface Props {
     error: string | null;
     /** No se pudo LEER el caché — distinto de "no hay análisis guardado". */
     cacheUnavailable?: boolean;
+    /** Para resolver los índices de la estructura retórica a sus palabras. */
+    tokens?: GreekVerseTokens['tokens'];
     onGenerate: () => void;
 }
 
@@ -18,7 +21,7 @@ interface Props {
  * el peso teológico) y, sin análisis aún, la invitación a generarlo — pull
  * con caché global, nunca auto.
  */
-export function GreekInsightBlocks({ insight, generating, error, cacheUnavailable, onGenerate }: Props) {
+export function GreekInsightBlocks({ insight, generating, error, cacheUnavailable, tokens, onGenerate }: Props) {
     const { t } = useTranslation('greekTutor');
 
     if (!insight) {
@@ -89,6 +92,10 @@ export function GreekInsightBlocks({ insight, generating, error, cacheUnavailabl
                         {t('analyzer.expandBtn')}
                     </Button>
                 </div>
+            )}
+
+            {insight.rhetoric && tokens && (
+                <GreekRhetoricBlock rhetoric={insight.rhetoric} tokens={tokens} />
             )}
 
             {/* EL "¿Y QUÉ?": las 2-3 palabras que cargan el peso teológico,

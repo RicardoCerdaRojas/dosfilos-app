@@ -76,6 +76,21 @@ export function GreekAnalyzerPage() {
     const referencia = `${book} ${chapter}:${verse}`;
     const { insight, generating, error: insightError, cacheUnavailable, generate } = useGreekInsight(referencia, data?.tokens);
 
+    /**
+     * Las relaciones de una palabra, ya resueltas al texto de la otra — la
+     * aposición deja de ser prosa dentro de una sola tarjeta y pasa a ser un
+     * vínculo que ambas muestran.
+     */
+    const relacionesDe = (i: number) =>
+        (insight?.relations ?? [])
+            .filter((r) => r.from === i || r.to === i)
+            .map((r) => ({
+                type: r.type,
+                note: r.note,
+                otherText: data?.tokens[r.from === i ? r.to : r.from]?.text ?? '',
+            }))
+            .filter((r) => r.otherText);
+
     /** Empata una clave exegética con su token, tolerando puntuación. */
     const limpiar = (x: string) => x.replace(/[.,·;··]+$/u, '');
     const claveDe = (texto: string) =>
@@ -232,6 +247,7 @@ export function GreekAnalyzerPage() {
                             generating={generating}
                             error={insightError}
                             cacheUnavailable={cacheUnavailable}
+                            tokens={data.tokens}
                             onGenerate={() => void generate()}
                         />
 
@@ -247,6 +263,7 @@ export function GreekAnalyzerPage() {
                                         token={tok}
                                         insight={insight?.words[i]}
                                         keyInsight={claveDe(tok.text)}
+                                        relations={relacionesDe(i)}
                                         bookCount={lemmaCounts[tok.lemma]}
                                         bookName={libroActual ? nombre(libroActual) : book}
                                         onSaveFinding={

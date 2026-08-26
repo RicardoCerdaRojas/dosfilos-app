@@ -110,6 +110,25 @@ Iacobus → Iacomus → "Sant Iago"; Κηφᾶς → "Cefas/Pedro"; Σαῦλο�
 cuéntalo en 1-2 frases y di si el castellano tiene un doblete más literal
 (Jacobo). Si el nombre no tiene historia que contar, devuelve "".
 
+Y "relations": las relaciones ENTRE PALABRAS que un profesor señalaría, con
+las POSICIONES de la lista de arriba (empezando en 0) — tipos permitidos:
+"apposition" (dos sustantivos del mismo caso que nombran al mismo referente),
+"agreement" (adjetivo o artículo que concuerda con su sustantivo), "governs"
+(la preposición que rige a su término), "modifies". Cada una con "note" de
+una línea. Devuelve [] si no hay ninguna clara.
+
+Y "rhetoric": SÓLO si el versículo tiene una estructura retórica CLARA —
+"chiasm" (A B B' A': los miembros se cierran en ESPEJO, invertidos),
+"inclusio" (abre y cierra con lo mismo) o "parallelism". Cada miembro con su
+"label" (A, B, B', A'), sus "wordIndices" REALES y una "note".
+
+⚠️ EL QUIASMO ES EL HALLAZGO MÁS SOBRE-DIAGNOSTICADO DE LOS ESTUDIOS
+BÍBLICOS. La mayoría de los versículos NO tiene uno. Devolver null es la
+respuesta correcta y frecuente: proponer una estructura dudosa le da al
+pastor algo que predicará con confianza y que su profesor desmontará. Si los
+miembros no se cierran invertidos de verdad, NO es quiasmo — llámalo
+paralelismo o devuelve null.
+
 REGLAS:
 - Todo en español, salvo las palabras griegas.
 - NO inventes sentidos que el lema no tiene: el pastor va a predicar con esto.
@@ -125,6 +144,8 @@ FORMATO DE SALIDA (JSON, sin texto alrededor):
   "keyInsights": [
     { "text": "…", "significance": "Por qué esta palabra importa al predicar este versículo." }
   ],
-  "wordOrderNote": "…"
+  "wordOrderNote": "…",
+  "relations": [ { "from": 6, "to": 0, "type": "apposition", "note": "δοῦλος nombra al mismo referente que Ἰάκωβος." } ],
+  "rhetoric": null
 }`;
 }

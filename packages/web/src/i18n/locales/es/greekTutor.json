@@ -652,7 +652,8 @@
       "syntacticFunction": "Función sintáctica",
       "translation": "Traducción",
       "caseFunction": "Función del caso",
-      "nameNote": "Sobre el nombre"
+      "nameNote": "Sobre el nombre",
+      "relations": "Relaciones"
     },
     "pos": {
       "N": "Sustantivo",
@@ -879,6 +880,19 @@
       "respect": "\"En cuanto a\", limita el alcance.",
       "address": "Llama o interpela directamente."
     },
-    "cacheUnavailable": "No pudimos consultar los análisis guardados (revisa tu sesión o tu conexión). Puedes generarlo de nuevo, pero quizá ya exista."
+    "cacheUnavailable": "No pudimos consultar los análisis guardados (revisa tu sesión o tu conexión). Puedes generarlo de nuevo, pero quizá ya exista.",
+    "rhetoric": {
+      "chiasm": "Quiasmo",
+      "inclusio": "Inclusión",
+      "parallelism": "Paralelismo",
+      "proposalBadge": "Propuesta",
+      "disclaimer": "La estructura retórica es una LECTURA del texto, no un dato del manuscrito — a diferencia de la morfología. El quiasmo suele sobre-diagnosticarse: júzgalo tú."
+    },
+    "relation": {
+      "apposition": "En aposición con",
+      "agreement": "Concuerda con",
+      "governs": "Rige a",
+      "modifies": "Modifica a"
+    }
   }
 }

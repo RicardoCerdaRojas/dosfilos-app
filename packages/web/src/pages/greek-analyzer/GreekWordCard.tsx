@@ -10,6 +10,8 @@ interface Props {
     insight?: GreekWordInsight;
     /** La significancia homilética, si esta palabra es una de las claves. */
     keyInsight?: GreekKeyInsight;
+    /** Relaciones de ESTA palabra con otras, ya resueltas a texto. */
+    relations?: { type: string; note: string; otherText: string }[];
     /** Frecuencia del lema en el libro actual (runtime, determinista). */
     bookCount?: number;
     /** Nombre del libro, para la línea de frecuencia. */
@@ -45,6 +47,7 @@ export function GreekWordCard({
     token,
     insight,
     keyInsight,
+    relations,
     bookCount,
     bookName,
     onSaveFinding,
@@ -231,6 +234,22 @@ export function GreekWordCard({
                         </div>
                         <div className="text-sm">{insight.syntacticFunction}</div>
                     </div>
+                </div>
+            )}
+
+            {relations && relations.length > 0 && (
+                <div className="space-y-1 border-t border-border/60 pt-2">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        {t('analyzer.fields.relations')}
+                    </div>
+                    {relations.map((r, i) => (
+                        <div key={i} className="text-xs">
+                            <span className="font-medium text-info">{t(`analyzer.relation.${r.type}`)}</span>
+                            {' · '}
+                            <span lang="grc">{r.otherText}</span>
+                            <div className="text-muted-foreground">{r.note}</div>
+                        </div>
+                    ))}
                 </div>
             )}
 
