@@ -567,3 +567,86 @@ describe('buildSermonDraftPrompt — el dato léxico no es el comentario del pas
         expect(prompt).toContain('asociación forzada');
     });
 });
+
+describe('buildSermonDraftPrompt — forma canónica del punto (convergencia con el taller)', () => {
+    const p = () => buildSermonDraftPrompt(baseAnalysis, {} as any, 'es');
+
+    it('el content abre con la proposición del punto, no con "### Exposición Bíblica"', () => {
+        expect(p()).toContain('LA PROPOSICIÓN DEL PUNTO');
+        expect(p()).not.toContain('### Exposición Bíblica');
+    });
+
+    it('las palabras clave van en el campo keyWords, fuera de content', () => {
+        expect(p()).toContain('"keyWords"');
+        expect(p()).toContain('Palabras Clave → campo "keyWords"');
+    });
+
+    it('los encabezados de la introducción son los del taller (constante compartida)', () => {
+        const prompt = p();
+        expect(prompt).toContain('### Contexto Histórico');
+        expect(prompt).toContain('### Conexión Actual');
+        expect(prompt).toContain('### Proposición Homilética');
+    });
+
+    it('en inglés, los encabezados cambian con el idioma', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, {} as any, 'en');
+        expect(prompt).toContain('### Historical Context');
+        expect(prompt).not.toContain('### Contexto Histórico');
+    });
+
+    it('comparte la regla de concisión del taller — el manuscrito no es la predicación', () => {
+        expect(p()).toContain('EL MANUSCRITO NO ES LA PREDICACIÓN');
+        expect(p()).toContain('Hermanos');
+    });
+
+    it('la numeración del anuncio de puntos respeta la del pastor', () => {
+        expect(p()).toContain('NO le antepongas otro');
+    });
+});
+
+describe('buildSermonDraftPrompt — hallazgos del smoke del fundador (2026-08-26)', () => {
+    const p = () => buildSermonDraftPrompt(baseAnalysis, {} as any, 'es');
+
+    it('las referencias cruzadas van desnudas: el texto lo pone la Biblia real', () => {
+        expect(p()).toContain('SOLO LA REFERENCIA, SIN el texto del versículo');
+        expect(p()).not.toContain('[Texto del versículo]');
+    });
+
+    it('las implicaciones van sin el prefijo que se veía con asteriscos literales', () => {
+        expect(p()).toContain('nada de "**Implicación:**"');
+        expect(p()).not.toContain('Empieza cada\n       entrada con "**Implicación:**"');
+    });
+
+    it('los puntos del anuncio van como viñetas — markdown colapsa saltos simples', () => {
+        expect(p()).toContain('CADA punto es una VIÑETA con guion');
+    });
+
+    it('el ejemplo de conclusión no trae los encabezados que la instrucción prohíbe', () => {
+        // La instrucción decía "sin encabezados" pero el EJEMPLO seguía
+        // mostrando "### Resumen Principal" — y el ejemplo manda.
+        expect(p()).not.toContain('### Resumen Principal');
+        // La única mención que queda es la prohibición misma, no la plantilla.
+        expect(p()).not.toContain('**Pasos de Acción**');
+    });
+
+    it('prohíbe narrar el acto de predicar', () => {
+        expect(p()).toContain('Hoy comenzamos a explorar');
+    });
+});
+
+describe('buildSermonDraftPrompt — segundo smoke del fundador (viñetas y conclusión)', () => {
+    const p = () => buildSermonDraftPrompt(baseAnalysis, {} as any, 'es');
+
+    it('la exposición del punto va en viñetas, un movimiento por concepto', () => {
+        expect(p()).toContain('CADA UNO COMO SU\n   PROPIA VIÑETA');
+    });
+
+    it('las implicaciones van sin anclas en negrita — la lista ya separa', () => {
+        expect(p()).toContain('SIN anclas en negrita');
+    });
+
+    it('la conclusión son puntos precisos, no prosa', () => {
+        expect(p()).toContain('CONCLUSIÓN — PUNTOS PRECISOS, NO PROSA');
+        expect(p()).toContain('UNA VIÑETA POR CADA');
+    });
+});

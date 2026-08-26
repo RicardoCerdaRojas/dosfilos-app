@@ -57,10 +57,27 @@ export function SermonPointBlocksView({ point, renderFallbackReference }: Props)
                                 />
                             ))}
                         </div>
+                    ) : bloque.kind === 'keyWords' ? (
+                        // Con viñetas y NO numeradas: las palabras no tienen
+                        // orden. Cada ítem pasa por markdown porque el original
+                        // griego/hebreo viene en *cursivas*.
+                        <ul className="list-disc pl-5 space-y-1 text-sm">
+                            {(bloque.items ?? []).map((item, j) => (
+                                <li key={j}>
+                                    <MarkdownRenderer content={item} reading />
+                                </li>
+                            ))}
+                        </ul>
                     ) : bloque.items ? (
+                        // Cada ítem pasa por markdown: las implicaciones pueden
+                        // traer énfasis, y pintarlas como texto plano dejaba
+                        // los asteriscos LITERALES en pantalla — también en
+                        // sermones viejos que ya vienen con "**…**" guardado.
                         <ol className="list-decimal pl-5 space-y-1 text-sm">
                             {bloque.items.map((item, j) => (
-                                <li key={j}>{item}</li>
+                                <li key={j}>
+                                    <MarkdownRenderer content={item} reading />
+                                </li>
                             ))}
                         </ol>
                     ) : (

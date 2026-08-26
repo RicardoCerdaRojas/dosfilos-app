@@ -43,7 +43,9 @@ describe('assembleTransitions — la proposición se copia, no se pide', () => {
         // como si fuera el contrato. El pastor numera sus puntos en el
         // bosquejo; anteponerle otro número lo hace leer dos veces la cifra.
         const r = assembleTransitions(content(['frase', 'x']), homiletics());
-        expect(r.body[0]!.transition).toContain('**Puntos:**\nI. Dios habla y revela su voluntad (vv. 1-2)\nII. El hombre desobedece y revela su necedad (v. 3)');
+        // Viñetas y no saltos simples: markdown colapsa un `\n` solo y los
+        // puntos salían como prosa corrida en pantalla.
+        expect(r.body[0]!.transition).toContain('**Puntos:**\n- I. Dios habla y revela su voluntad (vv. 1-2)\n- II. El hombre desobedece y revela su necedad (v. 3)');
     });
 
     it('TODOS los puntos llevan recordatorio, el último incluido', () => {
@@ -81,14 +83,14 @@ describe('buildTransitionReminder — numeración', () => {
             'I. Dios habla y revela su voluntad (vv. 1-2)',
             'II. El hombre desobedece (v. 3)',
         ]);
-        expect(out).toContain('I. Dios habla y revela su voluntad (vv. 1-2)');
+        expect(out).toContain('- I. Dios habla y revela su voluntad (vv. 1-2)');
         expect(out).not.toContain('1. I. Dios habla');
     });
 
     it('numera cuando el título viene sin número', () => {
         const out = buildTransitionReminder('Tesis.', ['Dios habla', 'El hombre desobedece']);
-        expect(out).toContain('1. Dios habla');
-        expect(out).toContain('2. El hombre desobedece');
+        expect(out).toContain('- 1. Dios habla');
+        expect(out).toContain('- 2. El hombre desobedece');
     });
 
     it('respeta la numeración arábiga del pastor', () => {

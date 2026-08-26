@@ -54,6 +54,11 @@ export function buildFullContent(draft: SermonDraft | null, t: TFunction): strin
                     }
 
                     if (bloque.items) {
+                        // Las palabras clave van con viñeta: no tienen orden.
+                        // Numerarlas les inventaría una secuencia.
+                        if (bloque.kind === 'keyWords') {
+                            return `${encabezado}${bloque.items.map((i) => `- ${i}`).join('\n')}`;
+                        }
                         return `${encabezado}${bloque.items.map((i, idx) => `${idx + 1}. ${i}`).join('\n')}`;
                     }
 

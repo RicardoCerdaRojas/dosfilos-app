@@ -78,7 +78,11 @@ function leadIn(transition: string | undefined): string {
 export function buildTransitionReminder(proposition: string, pointTitles: readonly string[]): string {
     return [
         proposition,
-        `**Puntos:**\n${pointTitles.map(numerar).join('\n')}`,
+        // VIÑETAS, no saltos de línea simples: markdown colapsa un `\n` solo
+        // dentro de un párrafo, así que los puntos salían como prosa corrida
+        // ("…(vv. 1-2) II. El hombre…") en todas las pantallas que renderizan
+        // markdown — que son todas. El guion los vuelve lista real.
+        `**Puntos:**\n${pointTitles.map((t, i) => `- ${numerar(t, i)}`).join('\n')}`,
     ].join('\n\n');
 }
 
