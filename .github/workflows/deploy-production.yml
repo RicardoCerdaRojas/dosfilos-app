@@ -4,6 +4,18 @@ on:
   push:
     branches:
       - main
+  # DISPARO MANUAL, porque el evento de push SE PIERDE. El 26/08/2026 GitHub
+  # Actions tuvo un `major_outage`: el merge a main entró, el push no creó
+  # ninguna corrida, y producción quedó sin el deploy de un PR ya mergeado —
+  # sin forma de lanzarlo salvo empujar un commit vacío a la rama por defecto.
+  # Un deploy que sólo sabe dispararse solo no se puede rescatar cuando el
+  # disparador falla.
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Por qué se lanza a mano (ej.: outage de Actions, deploy perdido)'
+        required: false
+        default: 'redeploy manual'
 
 jobs:
   deploy-production:
