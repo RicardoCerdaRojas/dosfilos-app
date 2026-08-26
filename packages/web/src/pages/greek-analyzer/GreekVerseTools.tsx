@@ -4,8 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 export type GreekFontScale = 0 | 1 | 2;
+/** Capa de color de la banda: apagada, por categoría, o por morfema. */
+export type GreekColorMode = 'off' | 'pos' | 'morph';
 
 interface Props {
+    colorMode: GreekColorMode;
+    onColorMode: (m: GreekColorMode) => void;
     fontScale: GreekFontScale;
     onFontScale: (s: GreekFontScale) => void;
     showTranslit: boolean;
@@ -27,6 +31,8 @@ interface Props {
  * aprende a leer el alfabeto de verdad.
  */
 export function GreekVerseTools({
+    colorMode,
+    onColorMode,
     fontScale,
     onFontScale,
     showTranslit,
@@ -49,8 +55,36 @@ export function GreekVerseTools({
     const chip =
         'inline-flex items-center gap-1 rounded-md border border-border/60 bg-background px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors';
 
+    const MODOS: { id: GreekColorMode; labelKey: string }[] = [
+        { id: 'off', labelKey: 'analyzer.tools.colorOff' },
+        { id: 'pos', labelKey: 'analyzer.tools.colorPos' },
+        { id: 'morph', labelKey: 'analyzer.tools.colorMorph' },
+    ];
+
     return (
         <div className="flex flex-wrap items-center gap-1.5 print:hidden">
+            {/* LAS DOS CAPAS DE COLOR — el sistema del hebreo, en griego: por
+                CATEGORÍA (qué es cada palabra) o por MORFEMA (dónde está la
+                marca que las pistas confirmaron: χαίρ-ειν, θε-οῦ). */}
+            <span className="inline-flex items-center rounded-md border border-border/60 bg-background">
+                {MODOS.map(({ id, labelKey }, i) => (
+                    <button
+                        key={id}
+                        type="button"
+                        onClick={() => onColorMode(id)}
+                        className={cn(
+                            'px-2 py-1 text-xs transition-colors',
+                            i > 0 && 'border-l border-border/60',
+                            colorMode === id
+                                ? 'text-foreground bg-muted/60 font-medium'
+                                : 'text-muted-foreground hover:text-foreground',
+                        )}
+                    >
+                        {t(labelKey)}
+                    </button>
+                ))}
+            </span>
+
             <button
                 type="button"
                 onClick={onToggleTranslit}

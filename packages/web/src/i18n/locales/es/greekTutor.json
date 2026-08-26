@@ -789,7 +789,22 @@
       "copyTranslit": "Translit.",
       "reanalyze": "Re-analizar",
       "reanalyzeHint": "Vuelve a generar el análisis (se comparte con todos los usuarios)",
-      "print": "Imprimir"
+      "print": "Imprimir",
+      "colorOff": "Sin color",
+      "colorPos": "Categorías",
+      "colorMorph": "Morfemas"
+    },
+    "legend": {
+      "title": "Sistema de colores",
+      "legendVerb": "Verbo",
+      "legendNoun": "Sustantivo",
+      "legendAdj": "Adjetivo",
+      "legendPron": "Pronombre",
+      "legendArticle": "Artículo",
+      "legendCase": "Terminación de caso",
+      "legendTense": "Marca de tiempo",
+      "legendMood": "Marca de modo",
+      "legendAugment": "Aumento"
     }
   }
 }

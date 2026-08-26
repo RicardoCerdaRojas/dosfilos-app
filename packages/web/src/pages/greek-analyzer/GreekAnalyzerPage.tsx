@@ -15,7 +15,7 @@ import { useGreekVerse } from './useGreekVerse';
 import { useGreekInsight } from './useGreekInsight';
 import { GreekPassageView } from './GreekPassageView';
 import { GreekInsightBlocks } from './GreekInsightBlocks';
-import type { GreekFontScale } from './GreekVerseTools';
+import type { GreekColorMode, GreekFontScale } from './GreekVerseTools';
 import { GreekVerseBoard } from './GreekVerseBoard';
 import { FirestoreGreekFindingsRepository } from '@dosfilos/infrastructure';
 import { transliterateGreek } from '@dosfilos/domain';
@@ -51,6 +51,14 @@ export function GreekAnalyzerPage() {
         return (v === 0 || v === 1 || v === 2 ? v : 1) as GreekFontScale;
     });
     const [showTranslit, setShowTranslit] = useState(() => localStorage.getItem('greekAnalyzer.translit') !== '0');
+    const [colorMode, setColorMode] = useState<GreekColorMode>(() => {
+        const v = localStorage.getItem('greekAnalyzer.colorMode');
+        return v === 'pos' || v === 'morph' ? v : 'off';
+    });
+    const cambiarColor = (m: GreekColorMode) => {
+        setColorMode(m);
+        localStorage.setItem('greekAnalyzer.colorMode', m);
+    };
     const cambiarFuente = (sc: GreekFontScale) => {
         setFontScale(sc);
         localStorage.setItem('greekAnalyzer.fontScale', String(sc));
@@ -197,6 +205,8 @@ export function GreekAnalyzerPage() {
                             debajo de cada palabra. Clicar una la resalta en la
                             grilla de análisis. */}
                         <GreekVerseBoard
+                            colorMode={colorMode}
+                            onColorMode={cambiarColor}
                             title={`${libroActual ? nombre(libroActual) : book} ${chapter}:${verse}`}
                             data={data}
                             insight={insight}

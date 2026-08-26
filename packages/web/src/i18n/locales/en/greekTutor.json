@@ -765,7 +765,22 @@
       "copyTranslit": "Translit.",
       "reanalyze": "Re-analyze",
       "reanalyzeHint": "Regenerates the analysis (shared with all users)",
-      "print": "Print"
+      "print": "Print",
+      "colorOff": "No color",
+      "colorPos": "Categories",
+      "colorMorph": "Morphemes"
+    },
+    "legend": {
+      "title": "Color system",
+      "legendVerb": "Verb",
+      "legendNoun": "Noun",
+      "legendAdj": "Adjective",
+      "legendPron": "Pronoun",
+      "legendArticle": "Article",
+      "legendCase": "Case ending",
+      "legendTense": "Tense marker",
+      "legendMood": "Mood marker",
+      "legendAugment": "Augment"
     }
   }
 }
