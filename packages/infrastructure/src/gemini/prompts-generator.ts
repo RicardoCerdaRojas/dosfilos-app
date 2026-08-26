@@ -6,6 +6,7 @@ import type { SupportedLanguage } from '@dosfilos/domain';
 // líneas dispersas ("relevante", "memorable", "no repitas categoría") y ninguna
 // describía la forma que el pastor de verdad usa.
 import illustrationGuidelinesMD from '../../config/prompts/homiletics/illustration-guidelines.md?raw';
+import { SERMON_INTRO_HEADINGS, SERMON_MANUSCRIPT_STYLE } from '@dosfilos/domain';
 
 const JSON_INSTRUCTION = `IMPORTANTE: Tu respuesta debe ser EXCLUSIVAMENTE un objeto JSON válido. No incluyas NADA de texto antes ni después del JSON (ni "Aquí está el JSON", ni bloques de código markdown como \`\`\`json). Solo el objeto JSON crudo.`;
 
@@ -236,7 +237,7 @@ export function buildSermonDraftPrompt(
   language?: SupportedLanguage,
   manifest?: CitationManifest,
 ): string {
-  return withLanguage(language, buildSermonDraftPromptBody(analysis, rules, manifest));
+  return withLanguage(language, buildSermonDraftPromptBody(analysis, rules, manifest, language));
 }
 
 /**
@@ -591,15 +592,19 @@ la formuló y NO la refuerces con datos inventados.
  * bosquejo— así que su lugar natural es la puerta de entrada, no el interior de
  * un punto.
  */
-function introSections(analysis: HomileticalAnalysis, rules: GenerationRules): string {
+function introSections(
+  analysis: HomileticalAnalysis,
+  rules: GenerationRules,
+  h: (typeof SERMON_INTRO_HEADINGS)[keyof typeof SERMON_INTRO_HEADINGS],
+): string {
   const anecdota = rules.pastoralSeed?.pastoralAnecdote?.trim();
   const orientacion = opensBook(analysis.exegeticalStudy?.passage ?? '');
   return [
-    anecdota ? '### Ilustración de Apertura' : null,
-    orientacion ? '### El Libro de un Vistazo' : null,
-    '### Contexto Histórico',
-    '### Conexión Actual',
-    '### Proposición Homilética',
+    anecdota ? `### ${h.openingIllustration}` : null,
+    orientacion ? `### ${h.bookOverview}` : null,
+    `### ${h.historicalContext}`,
+    `### ${h.currentConnection}`,
+    `### ${h.sermonProposition}`,
   ]
     .filter(Boolean)
     .join(' → ');
@@ -682,7 +687,15 @@ function bookOrientationRule(analysis: HomileticalAnalysis): string {
 `;
 }
 
-function buildSermonDraftPromptBody(analysis: HomileticalAnalysis, rules: GenerationRules, manifest?: CitationManifest): string {
+function buildSermonDraftPromptBody(
+    analysis: HomileticalAnalysis,
+    rules: GenerationRules,
+    manifest?: CitationManifest,
+    language: SupportedLanguage = DEFAULT_LANGUAGE,
+): string {
+  // Los MISMOS encabezados que el taller pinta vía i18n (constante de dominio
+  // con test de paridad en web): dos caminos, una sola introducción.
+  const H = SERMON_INTRO_HEADINGS[language] ?? SERMON_INTRO_HEADINGS.es;
   // Format exegetical study for context
   const exegesisContext = analysis.exegeticalStudy ? `
 
@@ -743,9 +756,12 @@ Usa formato MARKDOWN con JERARQUIZACIÓN VISUAL CLARA en todos los campos de tex
 📋 REGLAS DE FORMATO OBLIGATORIAS:
 
 1. **JERARQUIZACIÓN CON ENCABEZADOS**:
-   - Usa ### para subsecciones dentro del contenido
-   - Usa #### para sub-puntos o divisiones menores
-   - Cada encabezado debe estar en su propia línea con espacio antes y después
+   - Usa ### SOLO para las secciones de la INTRODUCCIÓN (el orden de abajo).
+   - El "content" de cada punto y la conclusión van SIN encabezados internos:
+     son prosa corrida en párrafos cortos. El sistema ya rotula cada bloque
+     (versículo, palabras clave, referencias, cita, ilustración, implicaciones,
+     transición) — un encabezado tuyo dentro del texto duplicaría el rótulo.
+   - Cada encabezado en su propia línea, con espacio antes y después.
 
 2. **SEPARACIÓN VISUAL — ESTE TEXTO SE LEE DE PIE, EN VOZ ALTA**:
    No se lee en una pantalla ni en un sillón: se lee desde el púlpito, mirando
@@ -787,20 +803,23 @@ Usa formato MARKDOWN con JERARQUIZACIÓN VISUAL CLARA en todos los campos de tex
    - Usa numeradas (1., 2.) sólo cuando el ORDEN importe — pasos o secuencia.
 
 5. **ESTRUCTURA DEL CONTENIDO DE CADA PUNTO**:
-   Organiza el campo "content" con esta estructura clara:
+   El campo "content" tiene DOS partes, en este orden y sin encabezados:
 
-   ### Exposición Bíblica
-   [Explicación del texto con contexto exegético]
+   [PRIMER PÁRRAFO — LA PROPOSICIÓN DEL PUNTO: UNA frase que resume lo que
+   este punto afirma del pasaje. Es al punto lo que la proposición homilética
+   es al sermón: los conceptos que contenga son los que después desarrollas.]
 
-   **Palabras Clave**: 
-   - *palabra original* (transliteración): significado
+   [Después: la EXPOSICIÓN — UN MOVIMIENTO POR CADA CONCEPTO que la
+   proposición nombra, en el orden en que ella los nombra, CADA UNO COMO SU
+   PROPIA VIÑETA (guion al inicio de línea). La viñeta no es decoración:
+   separa los conceptos para que el predicador vea de un vistazo en cuántas
+   partes se abre su proposición. Ancla cada movimiento en las palabras del
+   texto. NO transcribas el pasaje completo al abrir: el sermón ya lo muestra
+   antes de esta sección, con la Biblia real. Cita FRAGMENTOS cuando estés
+   comentando esas palabras.]
 
-   **Nota Exegética**: 
-   [Si aplica, explicación técnica accesible]
-
-   ---
-   
    IMPORTANTE: Las siguientes secciones NO van en "content", sino en campos JSON separados:
+   - Palabras Clave → campo "keyWords" (array)
    - Referencias Cruzadas → campo "scriptureReferences" (array)
    - Cita de Autoridad → campo "authorityQuote" (string)  
    - Ilustración → campo "illustration" (string)
@@ -811,7 +830,7 @@ Usa formato MARKDOWN con JERARQUIZACIÓN VISUAL CLARA en todos los campos de tex
 
 Instrucciones de Contenido:
   1. **INTRODUCCIÓN**:
-     - Orden de las secciones: ${introSections(analysis, rules)}
+     - Orden de las secciones: ${introSections(analysis, rules, H)}
      - Separa párrafos visualmente
      - Usa negritas para conceptos clave
      - Explica el trasfondo del pasaje (quién, cuándo, dónde, por qué)
@@ -820,14 +839,20 @@ Instrucciones de Contenido:
 ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
      
   2. **DESARROLLO DE CADA PUNTO** del bosquejo:
-     En el campo "content", estructura así:
-     
-     ### Exposición Bíblica
-     [Párrafo 1: Contexto del punto]
-     
-     [Párrafo 2: Profundización teológica]
-     
-     **Palabras Clave Relevantes** — para cada palabra, DOS COSAS y en este orden:
+     En el campo "content", DOS partes sin encabezados:
+
+     [Primer párrafo: LA PROPOSICIÓN DEL PUNTO — una frase que resume lo que
+     este punto afirma del pasaje.]
+
+     [Después: la exposición que la desarrolla — un movimiento por concepto de
+     la proposición, CADA UNO COMO VIÑETA (guion al inicio de línea), anclado
+     en las palabras del texto. Concisa: 150 a 300 palabras en total.]
+
+     En el campo "keyWords" (array, puede ser vacío): las palabras clave DEL
+     ESTUDIO DEL PASTOR (listadas en el contexto exegético) que pertenezcan a
+     ESTE punto — la palabra aparece o pesa en los versículos que este punto
+     expone. NO agregues palabras que el estudio no trae; NO repitas la misma
+     palabra en dos puntos. Para cada una, DOS COSAS y en este orden:
      1. su **RANGO SEMÁNTICO**: los sentidos que la palabra puede tener, no uno
         solo. Si el estudio del pastor trae el rango, úsalo TAL CUAL; no lo
         sustituyas por tu propia glosa.
@@ -838,26 +863,24 @@ ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
      de la palabra. Lo que él descubrió es SUYO y va como su lectura del texto,
      no como glosa léxica — atribuirle al diccionario lo que dijo él es una
      asociación forzada, y el pastor la nota.
-     Formato: "- *original* (transliteración) — **rango**: sentido A / sentido B
-     / sentido C. **Aquí**: [qué sentido usa el autor y por qué]"
-     
-     **Nota Exegética**: 
-     [Si aplica, explicación técnica accesible]
-     
-     ---
-     
+     Formato de cada entrada del array: "*original* (transliteración) —
+     **rango**: sentido A / sentido B. **Aquí**: [qué sentido usa el autor y
+     por qué]"
+
      Luego, en campos separados:
      - **scriptureReferences** (array): de 2 a 3 referencias que CRUCEN a OTROS
-       LIBROS de la Biblia, con el TEXTO del versículo como blockquote.
+       LIBROS de la Biblia. **SOLO LA REFERENCIA, SIN el texto del versículo**:
+       el sistema lo muestra desde la Biblia real — si lo escribes tú, lo
+       escribes de memoria y un versículo mal citado en el púlpito es peor que
+       ninguno.
        **PROHIBIDO usar el pasaje que se está predicando.** Volver a citar el
        texto expuesto no es una referencia cruzada: es repetir el texto, y no
        argumenta nada. Tampoco cuenta otro capítulo del MISMO libro.
        Su trabajo es MOSTRAR QUE LA AFIRMACIÓN DEL PUNTO ES CONSISTENTE CON EL
        RESTO DE LA ESCRITURA: cada una debe sostener exegéticamente lo que el
        punto afirma, no ilustrarlo ni adornarlo.
-       Lista de referencias con TEXTO del versículo como blockquote
-       Formato: "> \"[Texto del versículo]\" ([Referencia])"
-       Ejemplo: "> \"En el principio era el Verbo\" (Juan 1:1)"
+       Formato de cada entrada: "Libro Capítulo:Versículos" y nada más.
+       Ejemplo: "Juan 1:1"
      
      - **authorityQuote** (string): la cita en blockquote con su atribución. NO
        escribas "Cita de Autoridad:" adelante — la tarjeta ya rotula el campo, y
@@ -874,10 +897,12 @@ ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
        punto trae en el bosquejo. El pastor separa sus aplicaciones con líneas en
        blanco y llegan ya numeradas: si trae dos, van DOS implicaciones, una por
        cada una, en su orden. No las fusiones en un párrafo ni agregues de más.
-       Cada una DESARROLLA la suya; no la reemplaces por otra tuya. Empieza cada
-       entrada con "**Implicación:**". Si el punto no trae aplicación aprobada,
-       deriva UNA del propio punto — pero NUNCA inventes una que el punto no
-       sostenga.
+       Cada una DESARROLLA la suya; no la reemplaces por otra tuya. SIN
+       prefijos y SIN anclas en negrita: nada de "**Implicación:**" ni de abrir
+       con la aplicación en negritas — la tarjeta ya rotula el bloque y la
+       lista ya separa. Texto corrido simple en cada entrada. Si
+       el punto no trae aplicación aprobada, deriva UNA del propio punto — pero
+       NUNCA inventes una que el punto no sostenga.
      
      - **transition** (string): SÓLO la frase de transición al punto siguiente —
        el puente retórico, una o dos oraciones. Nada más.
@@ -886,20 +911,23 @@ ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
        Tampoco escribas rótulos ("Transición:", "Recordatorio:"): la tarjeta ya
        rotula el bloque.
      
-  3. **CONCLUSIÓN**: 
-     - Estructura con subsecciones (### Resumen Principal, ### Llamado Final)
-     - Separa ideas en párrafos distintos
-     - Usa negritas para el cierre principal
-     - Cierra el arco desde el contexto original hasta hoy
+  3. **CONCLUSIÓN — PUNTOS PRECISOS, NO PROSA**: 
+     - Una frase que reafirme la proposición, y luego UNA VIÑETA POR CADA
+       verdad que se predicó (guion al inicio de línea): el cierre de esa
+       idea en una o dos frases. Termina con UNA frase de cierre del arco.
+     - SIN encabezados internos y sin párrafos largos: el manuscrito cierra
+       la idea; el tono y el calor los pone el predicador en vivo.
+     - Concisa: 80 a 150 palabras.
   
   4. **LLAMADO A LA ACCIÓN**: 
-     - Usa lista numerada si son múltiples acciones
-     - Separa claramente cada paso o acción
-     - Usa negritas para verbos de acción
+     - 1 a 3 acciones concretas, en párrafos o lista corta — sin plantillas
+       tipo "Pasos de Acción".
   
   5. **TONO**: ${rules.tone || 'Inspirador'}
   
   6. **AUDIENCIA**: ${rules.targetAudience || 'General'}
+
+  7. ${SERMON_MANUSCRIPT_STYLE}
 
   Reglas Personalizadas del Usuario:
   ${rules.customInstructions || 'Ninguna'}
@@ -907,26 +935,26 @@ ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
   Formato de Salida (JSON):
   {
     "title": "Título Creativo",
-    "introduction": "### Contexto Histórico\\n\\n[Párrafo 1]\\n\\n[Párrafo 2]\\n\\n### Conexión Actual\\n\\n[Conexión con audiencia]\\n\\n### Proposición Homilética\\n\\n[Proposición]\\n\\n**Puntos del Sermón:**\\n1. [Punto 1]\\n2. [Punto 2]\\n3. [Punto 3]",
+    "introduction": "### ${H.historicalContext} — usa el ORDEN DE SECCIONES indicado arriba\\n\\n[Párrafo 1]\\n\\n[Párrafo 2]\\n\\n### ${H.currentConnection}\\n\\n[Conexión con audiencia]\\n\\n### ${H.sermonProposition}\\n\\n[Proposición VERBATIM]\\n\\n**Puntos:**\\n- [Título del punto 1, VERBATIM — CADA punto es una VIÑETA con guion, en su propia línea. Si el título ya trae número o romano, NO le antepongas otro.]\\n- [Título del punto 2, VERBATIM]",
     "body": [
       { 
         "point": "Título del Punto 1", 
-        "content": "### Exposición Bíblica\\n\\n[Párrafo 1]\\n\\n[Párrafo 2]\\n\\n**Palabras Clave:**\\n- *original* (transliteración): **significado**\\n\\n**Nota Exegética:**\\n[Explicación técnica]\\n\\n---", 
-        "scriptureReferences": [
-          "> \\"Porque de tal manera amó Dios al mundo...\\" (Juan 3:16)",
-          "> \\"Sabemos que a los que aman a Dios...\\" (Romanos 8:28)"
+        "content": "[La proposición del punto: una frase.]\\n\\n- [Movimiento 1: desarrolla el primer concepto de la proposición.]\\n- [Movimiento 2: el segundo.]", 
+        "keyWords": [
+          "*original* (transliteración) — **rango**: sentido A / sentido B. **Aquí**: [uso en este pasaje]"
         ],
+        "scriptureReferences": ["Juan 3:16", "Romanos 8:28"],
         "authorityQuote": null,
         "illustration": "**[Título]**\\n\\n[Desarrollo de la ilustración]",
         "implications": [
-          "**Implicación 1:** Descripción de la primera implicación", 
-          "**Implicación 2:** Descripción de la segunda implicación"
+          "[Desarrollo de la primera aplicación aprobada, sin prefijo]", 
+          "[Desarrollo de la segunda, sin prefijo]"
         ],
         "transition": "[Sólo la frase de transición al siguiente punto]"
       }
     ],
-  "conclusion": "### Resumen Principal\\n\\n[Párrafo 1]\\n\\n### Llamado Final\\n\\n**Punto culminante**: [Cierre poderoso]",
-  "callToAction": "**Pasos de Acción**:\\n\\n1. **[Acción 1]**: Descripción\\n2. **[Acción 2]**: Descripción\\n3. **[Acción 3]**: Descripción",
+  "conclusion": "[Frase que reafirma la proposición.]\\n\\n- [Cierre de la primera verdad predicada.]\\n- [Cierre de la segunda.]\\n\\n[UNA frase final que cierra el arco.]",
+  "callToAction": "[1 a 3 acciones concretas, en párrafos o lista corta con guiones. Sin plantillas.]",
   "ragSources": [
     {
       "sourceId": "S1",
@@ -958,8 +986,8 @@ REGLAS DE GENERACIÓN:
 4. **Diversidad de ilustraciones**: NO uses la misma categoría (viaje/deporte/familia/cocina/transporte) en dos puntos consecutivos. Si Punto I usa transporte (avión, tren), Punto II DEBE usar otra categoría.
 5. **authorityQuote es OPCIONAL** (null por defecto). Solo inclúyelo cuando uses una cita REAL y verificable de un autor cuyo texto esté presente en los documentos proporcionados o en la conversación. PROHIBIDO inventar citas atribuidas a Owen, Spurgeon, Calvino, Van Til, Edwards, MacArthur u otros autores. Si no hay una cita verificable disponible, deja authorityQuote en null. Una cita inventada en el pulpito destruye credibilidad.
 6. **callToAction es OBLIGATORIO y no puede ser vacío**. Debe contener 1-3 acciones concretas y específicas (no genéricas) que el oyente pueda comenzar esta semana. Sin callToAction, el sermón no se considera completo.
-7. **Balance de longitud OBLIGATORIO**: introduction 200-400 palabras (10-15%), body total 1800-2800 palabras (70-80%), conclusion 250-450 palabras (10-15%). La conclusion NUNCA puede ser menor a un cuarto de la introduction.
-8. TODO el texto debe usar formato markdown con jerarquización clara.
+7. **Balance de longitud OBLIGATORIO — el manuscrito es CONCISO**: introduction 150-300 palabras, cada punto del body 150-300 palabras en "content" (proposición + exposición), conclusion 100-200 palabras. La conclusion NUNCA puede ser menor a un cuarto de la introduction. Si un punto pide más, es señal de que estás adornando: corta.
+8. TODO el texto usa markdown (negritas, cursivas, párrafos separados); los encabezados ### SOLO en la introducción.
 9. **LENTE TEOLÓGICA — FCF Y CRISTOCENTRISMO (OBLIGATORIO)**:
    Todo sermón expositivo cristiano debe predicar a Cristo desde el texto, no usar el texto como pretexto para moralismo. Sigue el marco de Bryan Chapell (Christ-Centered Preaching):
 
@@ -1088,11 +1116,14 @@ Punto a Regenerar:
 - Referencias Base: ${point.scriptureReferences ? point.scriptureReferences.join(', ') : 'Ninguna'}
 ${directivaBlock}
 INSTRUCCIONES:
-1. **content**: exposición del texto con la misma estructura del resto del
-   sermón (### Exposición Bíblica, párrafos separados, **negritas** en los
-   conceptos clave, palabras originales en *cursiva*).
-2. **scriptureReferences**: referencias cruzadas relevantes, con el texto del
-   versículo como blockquote.
+1. **content**: DOS partes sin encabezados — primer párrafo, la proposición
+   del punto (una frase que resume lo que este punto afirma); después, la
+   exposición que la desarrolla en párrafos cortos (150-300 palabras en
+   total), con **negritas** en los conceptos clave y palabras originales en
+   *cursiva*.
+2. **scriptureReferences**: referencias cruzadas relevantes de OTROS libros.
+   SOLO la referencia ("Juan 1:1"), SIN el texto del versículo: el sistema lo
+   muestra desde la Biblia real.
 3. **illustration**: sigue la GUÍA DE ILUSTRACIONES de más abajo.
 4. **implications**: UNA sola, que DESARROLLA la aplicación ya aprobada para
    este punto${aplicacion ? `: "${aplicacion}"` : ''}. El orden es TEXTO → PUNTO →
@@ -1114,10 +1145,10 @@ Tono: ${rules.tone || 'Inspirador'}
 FORMATO JSON REQUERIDO:
 {
   "point": "${titulo}",
-  "content": "### Exposición Bíblica\\n\\n[Párrafo 1]\\n\\n[Párrafo 2]",
-  "scriptureReferences": ["> \\"[Texto]\\" ([Referencia])"],
+  "content": "[La proposición del punto: una frase.]\\n\\n- [Movimiento por concepto, como viñeta.]",
+  "scriptureReferences": ["Juan 1:1"],
   "illustration": "**[Título]**\\n\\n[Desarrollo]",
-  "implications": ["**Implicación:** [Desarrollo de la aplicación aprobada]"],
+  "implications": ["[Desarrollo de la aplicación aprobada — texto simple, sin prefijos ni negritas]"],
   "authorityQuote": null,
   "transition": "[Frase de transición]"
 }

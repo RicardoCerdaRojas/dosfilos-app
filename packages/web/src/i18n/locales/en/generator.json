@@ -586,7 +586,8 @@
       "illustration": "Illustration",
       "implications": "Implications",
       "transition": "Transition",
-      "authorityQuote": "Authority quote"
+      "authorityQuote": "Authority quote",
+      "keyWords": "Key words"
     },
     "study": {
       "viewButton": "View study",

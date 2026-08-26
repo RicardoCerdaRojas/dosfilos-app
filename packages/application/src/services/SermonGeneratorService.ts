@@ -1,4 +1,4 @@
-import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent, DEFAULT_LANGUAGE, buildCitationManifest, validateCitations, stripSermonCitationMarkers, injectNarrativeCitationAnchors, assembleTransitions, type CitationManifest } from '@dosfilos/domain';
+import { ISermonGenerator, ExegeticalStudy, HomileticalAnalysis, GenerationRules, PhaseDocument, FileSearchStoreContext, ICoreLibraryService, SermonContent, DEFAULT_LANGUAGE, buildCitationManifest, validateCitations, stripSermonCitationMarkers, injectNarrativeCitationAnchors, assembleTransitions, attachMainPassageRefs, type CitationManifest } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 import { GeminiSermonGenerator, DocumentProcessingService } from '@dosfilos/infrastructure';
 
@@ -274,7 +274,15 @@ export class SermonGeneratorService {
         // lugar de la proposición que el pastor aprobó. Son datos que ya
         // tenemos: pedírselos es darle la oportunidad de reformularlos.
         // Va ANTES de las citas para que el texto que se valida sea el final.
-        const rawDraft = assembleTransitions(generated, analysis);
+        // El versículo que abre cada punto también es dato del bosquejo, no
+        // del modelo: se deriva del título que el pastor mantiene (el campo no
+        // está en el esquema JSON del prompt a propósito). Sin esto, el punto
+        // generado no abría con su pasaje y el armado desde el taller sí — la
+        // diferencia de estructura que el fundador señaló al comparar ambos.
+        const rawDraft = attachMainPassageRefs(assembleTransitions(generated, analysis), {
+            sermonPassage: analysis.exegeticalStudy?.passage,
+            points: analysis.outline?.mainPoints ?? [],
+        });
 
         // Phase B: enforce the citation contract server-side. Strips
         // unknown `[Sn]` markers, drops hallucinated `ragSources`

@@ -4,6 +4,7 @@ export interface SermonPointBlock {
     kind:
         | 'mainPassage'
         | 'content'
+        | 'keyWords'
         | 'crossReferences'
         | 'authorityQuote'
         | 'illustration'
@@ -28,6 +29,7 @@ export interface SermonPointShape {
      */
     mainPassageRef?: string;
     content?: string;
+    keyWords?: string[];
     scriptureReferences?: string[];
     illustration?: string;
     implications?: string[];
@@ -71,6 +73,13 @@ export function sermonPointBlocks(point: SermonPointShape): SermonPointBlock[] {
     // El cuerpo del punto no lleva rótulo: es lo que se predica, no una ficha.
     if (contenido) bloques.push({ kind: 'content', text: contenido });
 
+    // DESPUÉS DE LA EXPOSICIÓN, ANTES DE LAS REFERENCIAS — donde el fundador
+    // las pidió: son el sustento léxico de lo que se acaba de exponer.
+    const palabras = (point.keyWords ?? []).map((k) => k.trim()).filter(Boolean);
+    if (palabras.length > 0) {
+        bloques.push({ kind: 'keyWords', headingKey: `${NS}.keyWords`, items: palabras });
+    }
+
     const refs = (point.scriptureReferences ?? [])
         // Las referencias generadas llegan con un "> " de cita al inicio; dentro
         // de un ítem de lista se renderiza como carácter literal.
@@ -91,7 +100,13 @@ export function sermonPointBlocks(point: SermonPointShape): SermonPointBlock[] {
         bloques.push({ kind: 'illustration', headingKey: `${NS}.illustration`, text: ilustracion });
     }
 
-    const implicaciones = (point.implications ?? []).map((i) => i.trim()).filter(Boolean);
+    const implicaciones = (point.implications ?? [])
+        // El generador antepone "**Implicación:**" (o "**Implicación 2:**") y
+        // la tarjeta ya rotula el bloque; además el lienzo pinta los ítems como
+        // texto plano, así que los asteriscos quedaban LITERALES en pantalla.
+        // Se limpia acá para que los sermones viejos también sanen.
+        .map((i) => i.replace(/^\s*\*{0,2}\s*Implicaci[oó]n(\s*\d+)?\s*:?\s*\*{0,2}\s*/i, '').trim())
+        .filter(Boolean);
     if (implicaciones.length > 0) {
         bloques.push({ kind: 'implications', headingKey: `${NS}.implications`, items: implicaciones });
     }
