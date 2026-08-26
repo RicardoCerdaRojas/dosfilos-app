@@ -779,6 +779,17 @@
       "bridgeAccusative": "El acusativo señala el objeto directo — el español no necesita preposición, sólo la posición.",
       "bridgeNominative": "El nominativo es el caso del sujeto y de lo que se dice de él (predicados y aposiciones) — y no depende de dónde esté en la frase.",
       "bridgeVocative": "El vocativo es el caso de la invocación directa: en español lo marcamos con comas (\"hermanos míos,\")."
+    },
+    "tools": {
+      "translit": "Translit.",
+      "translitToggle": "Mostrar u ocultar la transliteración — suelta la muleta para leer el alfabeto de verdad",
+      "smaller": "Letra más pequeña",
+      "larger": "Letra más grande",
+      "copyGreek": "Griego",
+      "copyTranslit": "Translit.",
+      "reanalyze": "Re-analizar",
+      "reanalyzeHint": "Vuelve a generar el análisis (se comparte con todos los usuarios)",
+      "print": "Imprimir"
     }
   }
 }

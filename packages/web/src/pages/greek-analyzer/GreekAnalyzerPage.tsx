@@ -13,14 +13,14 @@ import { cn } from '@/lib/utils';
 import type { BibleBookId } from '@dosfilos/domain';
 import { useGreekVerse } from './useGreekVerse';
 import { useGreekInsight } from './useGreekInsight';
-import { GreekWordHoverContent } from './GreekWordHoverContent';
 import { GreekPassageView } from './GreekPassageView';
 import { GreekInsightBlocks } from './GreekInsightBlocks';
+import type { GreekFontScale } from './GreekVerseTools';
+import { GreekVerseBoard } from './GreekVerseBoard';
 import { FirestoreGreekFindingsRepository } from '@dosfilos/infrastructure';
 import { transliterateGreek } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { GreekWordCard } from './GreekWordCard';
 
 /**
@@ -45,6 +45,22 @@ export function GreekAnalyzerPage() {
     const [vista, setVista] = useState<'verse' | 'passage'>('verse');
     /** Lemas guardados en esta sesión, para el check del botón. */
     const [guardados, setGuardados] = useState<Set<string>>(new Set());
+    /** Preferencias de lectura — del ESCRITORIO, no del texto: localStorage. */
+    const [fontScale, setFontScale] = useState<GreekFontScale>(() => {
+        const v = Number(localStorage.getItem('greekAnalyzer.fontScale'));
+        return (v === 0 || v === 1 || v === 2 ? v : 1) as GreekFontScale;
+    });
+    const [showTranslit, setShowTranslit] = useState(() => localStorage.getItem('greekAnalyzer.translit') !== '0');
+    const cambiarFuente = (sc: GreekFontScale) => {
+        setFontScale(sc);
+        localStorage.setItem('greekAnalyzer.fontScale', String(sc));
+    };
+    const alternarTranslit = () => {
+        setShowTranslit((v) => {
+            localStorage.setItem('greekAnalyzer.translit', v ? '0' : '1');
+            return !v;
+        });
+    };
 
     const nombre = (b: { nameEs: string; nameEn: string }) =>
         i18n.language.startsWith('es') ? b.nameEs : b.nameEn;
@@ -180,43 +196,22 @@ export function GreekAnalyzerPage() {
                         {/* EL VERSÍCULO PARA LEER: griego grande, transliteración
                             debajo de cada palabra. Clicar una la resalta en la
                             grilla de análisis. */}
-                        <div className="rounded-lg border border-border bg-primary/[0.03] p-6">
-                            <div className="mb-4 text-sm font-semibold">
-                                {libroActual ? nombre(libroActual) : book} {chapter}:{verse}
-                            </div>
-                            <div className="flex flex-wrap gap-x-4 gap-y-5" lang="grc">
-                                {data.tokens.map((tok, i) => (
-                                    <Tooltip key={i} delayDuration={200}>
-                                        <TooltipTrigger asChild>
-                                            <button
-                                                type="button"
-                                                onClick={() => setSeleccion(seleccion === i ? null : i)}
-                                                className={cn(
-                                                    'group flex flex-col items-center rounded px-1.5 py-1 transition-colors hover:bg-primary/10',
-                                                    seleccion === i && 'bg-primary/10 ring-1 ring-primary/40',
-                                                )}
-                                            >
-                                                <span className="text-3xl leading-tight">{tok.text}</span>
-                                                <span className="text-[11px] text-muted-foreground italic" lang="en">
-                                                    {tok.transliteration}
-                                                </span>
-                                            </button>
-                                        </TooltipTrigger>
-                                        {/* Mismo patrón que el hebreo: tooltip con
-                                            contenido rico, fondo de tarjeta. */}
-                                        <TooltipContent className="bg-card text-card-foreground border border-border shadow-lg">
-                                            <GreekWordHoverContent
-                                                token={tok}
-                                                insight={insight?.words[i]}
-                                                keyInsight={claveDe(tok.text)}
-                                                bookCount={lemmaCounts[tok.lemma]}
-                                                bookName={libroActual ? nombre(libroActual) : book}
-                                            />
-                                        </TooltipContent>
-                                    </Tooltip>
-                                ))}
-                            </div>
-                        </div>
+                        <GreekVerseBoard
+                            title={`${libroActual ? nombre(libroActual) : book} ${chapter}:${verse}`}
+                            data={data}
+                            insight={insight}
+                            claveDe={claveDe}
+                            lemmaCounts={lemmaCounts}
+                            bookName={libroActual ? nombre(libroActual) : book}
+                            fontScale={fontScale}
+                            onFontScale={cambiarFuente}
+                            showTranslit={showTranslit}
+                            onToggleTranslit={alternarTranslit}
+                            onReanalyze={insight ? () => void generate() : undefined}
+                            reanalyzing={generating}
+                            seleccion={seleccion}
+                            onSeleccion={setSeleccion}
+                        />
 
                         {/* LAS DOS TRADUCCIONES — el aporte del modelo, con caché
                             global: el texto griego es el mismo para todos, así que

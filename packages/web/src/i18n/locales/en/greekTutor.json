@@ -755,6 +755,17 @@
       "bridgeAccusative": "The accusative marks the direct object — Spanish needs no preposition, only position.",
       "bridgeNominative": "The nominative is the case of the subject and of what is said about it (predicates and appositions) — regardless of its position in the sentence.",
       "bridgeVocative": "The vocative is the case of direct address: Spanish marks it with commas."
+    },
+    "tools": {
+      "translit": "Translit.",
+      "translitToggle": "Show or hide the transliteration — drop the crutch to really read the alphabet",
+      "smaller": "Smaller text",
+      "larger": "Larger text",
+      "copyGreek": "Greek",
+      "copyTranslit": "Translit.",
+      "reanalyze": "Re-analyze",
+      "reanalyzeHint": "Regenerates the analysis (shared with all users)",
+      "print": "Print"
     }
   }
 }
