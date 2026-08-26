@@ -682,7 +682,22 @@ export function StepDraft() {
                               done: countReadySections(socraticWalk, sectionElements),
                               total: socraticWalk.length,
                           })
-                        : undefined
+                        : // ADR-037: EL BORRADOR DICE DE DÓNDE VIENE. Armado
+                          // desde el taller o generado de una vez — y los
+                          // anteriores a este campo no dicen NADA: la ausencia
+                          // de dato no es evidencia, nunca se acusa por falta
+                          // de registro.
+                          draft.assembledFrom && (
+                              <span
+                                  className={
+                                      draft.assembledFrom === 'workshop'
+                                          ? 'rounded bg-primary/10 px-1.5 py-0.5 text-[11px] leading-none text-primary'
+                                          : 'rounded bg-muted px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground'
+                                  }
+                              >
+                                  {t(`drafting.provenance.${draft.assembledFrom}`)}
+                              </span>
+                          )
                 }
                 documentActions={
                     /* LA ACCIÓN PROPIA DE LA PESTAÑA VIAJA EN LA MISMA BANDA.
@@ -931,27 +946,48 @@ export function StepDraft() {
                 )}
             </Card>
 
-            {socraticPanel}
-
-            <div className="mb-6">
-                <SermonPersonalizationPanel />
+            {/* DOS CAMINOS, DICHOS ANTES DE ELEGIR — punto 6 del plan de
+                convergencia. Los dos parten del estudio y del bosquejo; la
+                diferencia es quién decide las ideas, y eso se le dice al
+                pastor con las mismas palabras en ambas tarjetas. El taller no
+                lleva botón: ES la pantalla de abajo, ya desplegada — un botón
+                que hiciera scroll fingiría una navegación que no existe. */}
+            <div className="mb-6 space-y-3">
+                <div>
+                    <h3 className="font-semibold">{t('drafting.paths.heading')}</h3>
+                    <p className="text-sm text-muted-foreground">{t('drafting.paths.subheading')}</p>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                    <Card className="p-4 space-y-2 border-primary/40">
+                        <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-sm">{t('drafting.paths.workshopTitle')}</h4>
+                            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] leading-none text-primary">
+                                {t('drafting.paths.workshopBadge')}
+                            </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{t('drafting.paths.workshopDesc')}</p>
+                    </Card>
+                    <Card className="p-4 space-y-2">
+                        <h4 className="font-medium text-sm">{t('drafting.paths.generateTitle')}</h4>
+                        <p className="text-sm text-muted-foreground">{t('drafting.paths.generateDesc')}</p>
+                        <Button
+                            onClick={() => void handleGenerate()}
+                            disabled={loading}
+                            variant="outline"
+                            size="sm"
+                        >
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            {t('drafting.generateBtn')}
+                        </Button>
+                    </Card>
+                </div>
             </div>
 
-            <Card className="p-6 flex-1 flex flex-col justify-center">
-                <div className="text-center space-y-6">
-                    <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                        <FileText className="h-8 w-8 text-primary" />
-                    </div>
-                    <div>
-                        <h3 className="font-semibold mb-2">{t('drafting.readyToGenerate')}</h3>
-                        <p className="text-sm text-muted-foreground">{t('drafting.readyDesc')}</p>
-                    </div>
-                    <Button onClick={() => void handleGenerate()} disabled={loading} size="lg" className="w-full max-w-md mx-auto">
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        {t('drafting.generateBtn')}
-                    </Button>
-                </div>
-            </Card>
+            {socraticPanel}
+
+            <div className="mb-6 mt-6">
+                <SermonPersonalizationPanel />
+            </div>
         </div>
     ) : (
         <div className="h-full flex flex-col gap-4 overflow-hidden p-4">

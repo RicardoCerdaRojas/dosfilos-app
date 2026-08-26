@@ -188,6 +188,8 @@ export function assembleDraft(input: AssembleDraftInput): SermonContent {
     const ragSources = collectElementSources(input);
 
     return {
+        // El taller es el camino de las decisiones: el borrador lo declara.
+        assembledFrom: 'workshop',
         title,
         introduction: unir(introduccion),
         body,
