@@ -710,7 +710,17 @@
       "subjuntivoVocalLarga": "The lengthened theme vowel ({{marker}}) is the signature of the subjunctive.",
       "participioMedio": "The infix {{marker}} marks the middle/passive participle.",
       "participioActivo": "The marks {{marker}} signal the active participle.",
-      "participioAorAct": "The marks {{marker}} signal the aorist active participle."
+      "participioAorAct": "The marks {{marker}} signal the aorist active participle.",
+      "articleParadigm": "The article {{marker}} belongs to the paradigm memorized first: it gives away case, number and gender of its whole phrase.",
+      "iotaSubscript": "The iota subscript ({{marker}}) is the classic mark of the dative singular.",
+      "nomSgOs": "The ending {{marker}} marks the nominative singular masculine (2nd declension).",
+      "genSgOu": "The ending {{marker}} marks the genitive singular (2nd declension).",
+      "genSg1": "The ending {{marker}} marks the genitive singular (1st declension).",
+      "genPlOn": "The ending {{marker}} marks the genitive plural — in ALL declensions.",
+      "datPl": "The ending {{marker}} marks the dative plural (1st/2nd declension).",
+      "accSgN": "The ending {{marker}} marks the accusative singular.",
+      "accPl": "The ending {{marker}} marks the accusative plural.",
+      "nomPl": "The ending {{marker}} marks the nominative plural."
     },
     "personShort": "{{n}}rd person",
     "view": {

@@ -734,7 +734,17 @@
       "subjuntivoVocalLarga": "La vocal temática alargada ({{marker}}) es la firma del subjuntivo.",
       "participioMedio": "El infijo {{marker}} marca el participio medio/pasivo.",
       "participioActivo": "Las marcas {{marker}} señalan el participio activo.",
-      "participioAorAct": "Las marcas {{marker}} señalan el participio aoristo activo."
+      "participioAorAct": "Las marcas {{marker}} señalan el participio aoristo activo.",
+      "articleParadigm": "El artículo {{marker}} pertenece al paradigma que se memoriza primero: delata caso, número y género de todo su sintagma.",
+      "iotaSubscript": "La iota suscrita ({{marker}}) es la marca clásica del dativo singular.",
+      "nomSgOs": "La terminación {{marker}} marca el nominativo singular masculino (2ª declinación).",
+      "genSgOu": "La terminación {{marker}} marca el genitivo singular (2ª declinación).",
+      "genSg1": "La terminación {{marker}} marca el genitivo singular (1ª declinación).",
+      "genPlOn": "La terminación {{marker}} marca el genitivo plural — en TODAS las declinaciones.",
+      "datPl": "La terminación {{marker}} marca el dativo plural (1ª/2ª declinación).",
+      "accSgN": "La terminación {{marker}} marca el acusativo singular.",
+      "accPl": "La terminación {{marker}} marca el acusativo plural.",
+      "nomPl": "La terminación {{marker}} marca el nominativo plural."
     },
     "personShort": "{{n}}ª persona",
     "view": {

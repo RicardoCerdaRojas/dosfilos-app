@@ -78,7 +78,11 @@ export function GreekWordCard({
             type="button"
             onClick={onClick}
             className={cn(
-                'text-left rounded-lg border border-border bg-card p-4 space-y-3 transition-colors',
+                // `flex-col` + `h-full`: un <button> CENTRA su contenido por
+                // defecto — en el grid, las tarjetas cortas flotaban al medio
+                // de la fila con aire arriba. El contenido arranca en el tope
+                // y todas las tarjetas igualan la altura de su fila.
+                'flex h-full flex-col items-stretch justify-start text-left rounded-lg border border-border bg-card p-4 space-y-3 transition-colors',
                 onClick && 'hover:border-primary/40',
                 highlighted && 'border-primary ring-1 ring-primary/30',
             )}

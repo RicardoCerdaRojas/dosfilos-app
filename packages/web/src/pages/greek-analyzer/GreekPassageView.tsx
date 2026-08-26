@@ -137,7 +137,13 @@ export function GreekPassageView({ provider, book, bookName, chapter, versesInCh
                                             </span>
                                         </TooltipTrigger>
                                         <TooltipContent className="bg-card text-card-foreground border border-border shadow-lg print:hidden">
-                                            <GreekWordHoverContent token={tok} insight={insight?.words[i]} />
+                                            <GreekWordHoverContent
+                                                token={tok}
+                                                insight={insight?.words[i]}
+                                                keyInsight={insight?.keyInsights?.find(
+                                                    (k) => k.text.replace(/[.,·;]+$/u, '') === tok.text.replace(/[.,·;]+$/u, ''),
+                                                )}
+                                            />
                                         </TooltipContent>
                                     </Tooltip>
                                 ))}

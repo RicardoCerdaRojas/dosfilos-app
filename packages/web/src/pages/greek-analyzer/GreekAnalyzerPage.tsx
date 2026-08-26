@@ -205,7 +205,13 @@ export function GreekAnalyzerPage() {
                                         {/* Mismo patrón que el hebreo: tooltip con
                                             contenido rico, fondo de tarjeta. */}
                                         <TooltipContent className="bg-card text-card-foreground border border-border shadow-lg">
-                                            <GreekWordHoverContent token={tok} insight={insight?.words[i]} />
+                                            <GreekWordHoverContent
+                                                token={tok}
+                                                insight={insight?.words[i]}
+                                                keyInsight={claveDe(tok.text)}
+                                                bookCount={lemmaCounts[tok.lemma]}
+                                                bookName={libroActual ? nombre(libroActual) : book}
+                                            />
                                         </TooltipContent>
                                     </Tooltip>
                                 ))}
