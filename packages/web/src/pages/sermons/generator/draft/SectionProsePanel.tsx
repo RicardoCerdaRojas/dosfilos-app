@@ -95,12 +95,17 @@ export function SectionProsePanel(props: Props) {
 
 
     return (
-        <section className="h-full flex flex-col gap-3 py-4 pl-2 pr-1" aria-label={t('drafting.prose.label')}>
+        <section className="h-full flex flex-col gap-3 p-4" aria-label={t('drafting.prose.label')}>
             {/* SÓLO EL RESULTADO. El botón de redactar vive con las demás
                 acciones de la sección, en el panel de decisiones: acá quedaba
                 separado de "propónme ideas" cuando ambos son lo mismo — pedirle
                 ayuda al modelo sobre esta sección. */}
-            <h3 className="text-sm font-semibold shrink-0">{t('drafting.prose.label')}</h3>
+            {/* MISMO ESTILO que el encabezado de la columna de decisiones:
+                las dos columnas son pares del mismo taller y sus títulos deben
+                leerse como el mismo nivel — lo pidió el fundador comparándolas. */}
+            <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground shrink-0">
+                {t('drafting.prose.label')}
+            </h3>
 
             {error && <p className="text-xs text-muted-foreground shrink-0">{t('drafting.prose.failed')}</p>}
 

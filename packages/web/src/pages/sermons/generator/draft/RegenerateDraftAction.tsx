@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Loader2, PenLine, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ToolbarIconButton } from '../ToolbarIconButton';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     AlertDialog,
@@ -72,19 +72,15 @@ export function RegenerateDraftAction({
             onOpenChange={(abierto) => abierto && setArchivar(true)}
         >
             <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" disabled={loading}>
-                    {loading ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {t('drafting.regeneratingBtn')}
-                        </>
-                    ) : (
-                        <>
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            {t('drafting.regenerateBtn')}
-                        </>
-                    )}
-                </Button>
+                {/* Ícono VISIBLE con tooltip — no el menú "⋮" que la escondió.
+                    El nombre completo y las consecuencias viven en el diálogo,
+                    que es donde se decide. */}
+                <ToolbarIconButton
+                    label={loading ? t('drafting.regeneratingBtn') : t('drafting.regenerateConfirm.title')}
+                    disabled={loading}
+                >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                </ToolbarIconButton>
             </AlertDialogTrigger>
 
             <AlertDialogContent>

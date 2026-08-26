@@ -1,5 +1,5 @@
 import { BookOpen } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ToolbarIconButton } from '../ToolbarIconButton';
 import {
     Sheet,
     SheetContent,
@@ -43,10 +43,9 @@ export function StudyReadingSheet({ study }: Props) {
     return (
         <Sheet>
             <SheetTrigger asChild>
-                <Button variant="outline" size="sm">
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    {t('drafting.study.viewButton')}
-                </Button>
+                <ToolbarIconButton label={t('drafting.study.viewButton')}>
+                    <BookOpen className="h-4 w-4" />
+                </ToolbarIconButton>
             </SheetTrigger>
             <SheetContent side="right" className="w-full sm:max-w-lg p-0 flex flex-col">
                 <SheetHeader className="px-6 pt-6 pb-2">

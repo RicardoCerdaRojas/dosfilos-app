@@ -89,6 +89,10 @@ export function WorkshopDraftActions(props: Props) {
     const redactables = props.walk.filter(
         (s) =>
             s.mode === 'elements' &&
+            // Los ítems finales (palabras clave) no se redactan: entran al
+            // borrador tal cual. Redactarlos produciría un párrafo donde el
+            // sermón espera una lista de datos.
+            !s.definition.itemsAreFinal &&
             !props.prose[s.id]?.trim() &&
             ((props.elements[s.id] ?? []).some((e) => e.provenance !== 'descartado') ||
                 // Sólo si su material ES contenido. El recordatorio de la

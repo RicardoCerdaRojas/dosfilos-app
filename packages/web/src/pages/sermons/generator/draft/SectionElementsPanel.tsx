@@ -40,6 +40,14 @@ interface Props {
     pointExpositionIdeas?: readonly string[];
     /** El estudio exegético, fuente primaria de las propuestas. */
     study?: ElementsPromptInput['study'];
+    /**
+     * Las palabras clave del estudio, ya formateadas para el sermón.
+     *
+     * Alimentan la sección de palabras por punto SIN pasar por el modelo:
+     * son material trabajado y verificado por el pastor — pedirle a un LLM
+     * que las "proponga" es darle ocasión de reescribir un dato léxico.
+     */
+    studyKeyWords?: readonly string[];
     /** Redacta la sección. Vive acá para que las acciones de la sección no se repartan. */
     onWriteSection?: () => void;
     writing?: boolean;
@@ -93,7 +101,15 @@ export function SectionElementsPanel(props: Props) {
     const { propose: proponerCitas, loading: buscandoCitas } = useProposeAuthorityQuotes();
     const { user } = useFirebase();
     /** La cita se SELECCIONA de su biblioteca; no se pide "una idea de cita". */
+    /**
+     * El texto multilínea entra como UNA unidad aunque la sección acumule:
+     * una cita pegada con sus saltos de línea no son tres citas. Es la mitad
+     * que sobrevive de la vieja decisión-única de las citas.
+     */
+    const noPartir = unaSolaEntrada || section.id.endsWith('.authorityQuote');
     const esCitaDeAutoridad = section.id.endsWith('.authorityQuote');
+    /** Ítems finales (palabras clave): no se redactan y se proponen SIN modelo. */
+    const esItemsFinales = Boolean(section.definition?.itemsAreFinal);
     const [mine, setMine] = useState('');
     const [proposals, setProposals] = useState<ProposedElement[]>([]);
 
@@ -138,7 +154,28 @@ export function SectionElementsPanel(props: Props) {
                 };
             });
         if (nuevos.length === 0) return;
-        props.onChange(unaSolaEntrada ? nuevos : [...props.elements, ...nuevos]);
+        if (!unaSolaEntrada) {
+            props.onChange([...props.elements, ...nuevos]);
+            return;
+        }
+        // SECCIÓN DE UNA SOLA DECISIÓN. Dos matices que costaron trabajo real:
+        //
+        // 1. DESCARTAR NO REEMPLAZA. El descarte es un REGISTRO, no una
+        //    decisión de contenido: descartar una propuesta borraba la cita ya
+        //    elegida — pérdida silenciosa que el fundador encontró eligiendo
+        //    tres citas seguidas.
+        // 2. Los descartes anteriores SE CONSERVAN al decidir: qué rechazó
+        //    dice tanto como qué aceptó.
+        if (provenance === 'descartado') {
+            props.onChange([...props.elements, ...nuevos]);
+            return;
+        }
+        const habiaDecision = props.elements.some((e) => e.provenance !== 'descartado');
+        props.onChange([...props.elements.filter((e) => e.provenance === 'descartado'), ...nuevos]);
+        // El reemplazo se AVISA. La regla es deliberada —"un punto se respalda
+        // con una voz"— pero ejecutarla en silencio se lee como pantalla rota:
+        // "agregué tres y solo veo una".
+        if (habiaDecision) toast.info(t('drafting.elements.replacedPrevious'));
     };
 
     const remove = (id: string) => props.onChange(props.elements.filter((e) => e.id !== id));
@@ -154,6 +191,10 @@ export function SectionElementsPanel(props: Props) {
         );
 
     const handlePropose = async () => {
+        // LAS CITAS PRIMERO: también son ítems finales (no se redactan), pero
+        // su mecanismo de propuesta es OTRO — se buscan en la biblioteca, no
+        // en el estudio de palabras. Con la rama genérica antes, este botón
+        // le traería palabras hebreas a la sección de citas.
         if (esCitaDeAutoridad) {
             const r = await proponerCitas({
                 // La cita debe respaldar lo que el punto AFIRMA, no el pasaje
@@ -176,6 +217,19 @@ export function SectionElementsPanel(props: Props) {
             // tenga nada del tema no es lo mismo que tener y que no encaje, y
             // ninguno de los dos es un error.
             else toast.info(t(`drafting.elements.quotes.${r.kind}`));
+            return;
+        }
+        if (esItemsFinales) {
+            // DETERMINISTA: las palabras vienen del estudio, no del modelo. Se
+            // filtran las que ya decidió o descartó — re-proponer su propio
+            // trabajo es la forma más rápida de que abandone el flujo.
+            const yaVistas = new Set(props.elements.map((e) => e.text.trim()));
+            const restantes = (props.studyKeyWords ?? []).filter((k) => !yaVistas.has(k.trim()));
+            if (restantes.length === 0) {
+                toast.info(t('drafting.elements.keyWords.sinPalabras'));
+                return;
+            }
+            setProposals(restantes.map((text) => ({ text, why: t('drafting.elements.keyWords.fromStudy') })));
             return;
         }
 
@@ -234,7 +288,7 @@ export function SectionElementsPanel(props: Props) {
                     rows={esVerbatim ? 2 : 4}
                     className="resize-none"
                 />
-                {!unaSolaEntrada && (
+                {!noPartir && (
                     <p className="text-xs text-muted-foreground">{t('drafting.elements.onePerLine')}</p>
                 )}
                 {esUnaIdea && (
@@ -247,10 +301,10 @@ export function SectionElementsPanel(props: Props) {
                         // el anterior en vez de acumular. Un sermón no tiene dos
                         // títulos, y dejar los dos obligaría a borrar a mano el
                         // que sobra.
-                        add(unaSolaEntrada ? [mine] : splitElementLines(mine), 'pastor');
+                        add(noPartir ? [mine] : splitElementLines(mine), 'pastor');
                         setMine('');
                     }}
-                    disabled={(unaSolaEntrada ? [mine.trim()].filter(Boolean) : splitElementLines(mine)).length === 0}
+                    disabled={(noPartir ? [mine.trim()].filter(Boolean) : splitElementLines(mine)).length === 0}
                 >
                     <Plus className="h-4 w-4 mr-1.5" />
                     {esVerbatim ? t(vk('add')) : t('drafting.elements.addMine')}
@@ -261,16 +315,20 @@ export function SectionElementsPanel(props: Props) {
                 proposeKey={
                     esCitaDeAutoridad
                         ? 'drafting.elements.quotes.propose'
-                        : esVerbatim
-                          ? vk('propose')
-                          : 'drafting.elements.propose'
+                        : esItemsFinales
+                          ? 'drafting.elements.keyWords.propose'
+                          : esVerbatim
+                            ? vk('propose')
+                            : 'drafting.elements.propose'
                 }
                 proposeMoreKey={
                     esCitaDeAutoridad
                         ? 'drafting.elements.quotes.proposeMore'
-                        : esVerbatim
-                          ? vk('proposeMore')
-                          : 'drafting.elements.proposeMore'
+                        : esItemsFinales
+                          ? 'drafting.elements.keyWords.proposeMore'
+                          : esVerbatim
+                            ? vk('proposeMore')
+                            : 'drafting.elements.proposeMore'
                 }
                 loading={loading || buscandoCitas}
                 error={error}
@@ -287,7 +345,7 @@ export function SectionElementsPanel(props: Props) {
                     add([texto], 'editado', p.text, p.source);
                     consume(i);
                 }}
-                onWriteSection={props.onWriteSection}
+                onWriteSection={esItemsFinales ? undefined : props.onWriteSection}
                 writing={props.writing}
                 hasProse={props.hasProse}
                 canWrite={decided.length > 0}
@@ -308,6 +366,16 @@ export function SectionElementsPanel(props: Props) {
                 onFlipKind={flipKind}
                 onRemove={remove}
             />
+
+            {/* CONSEJO, NO LÍMITE — decisión del fundador: varias citas se
+                permiten, y este argumento se le muestra al pastor para que
+                decida con él. Mismo contrato que el resto del taller: "se te
+                señala; tú decides. No bloquea." */}
+            {esCitaDeAutoridad && decided.length >= 2 && (
+                <p className="text-xs text-muted-foreground italic">
+                    {t('drafting.elements.quotes.multiVoiceAdvice')}
+                </p>
+            )}
 
         </div>
     );

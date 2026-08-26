@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { deriveSectionWalk, pendingSections, type WalkInput } from '../deriveSectionWalk';
+import { missingForDraft } from '../assembleDraft';
 
 /**
  * El bosquejo REAL de Jonás 1:1-3 del fundador (Firestore, 2026-08-24).
@@ -299,5 +300,40 @@ describe('introducción — la proposición anuncia los puntos', () => {
             points: [{ title: 'I. Dios habla', application: '', scriptureReferences: [] }],
         } as any);
         expect(walk.find((s) => s.id === 'title')?.coveredBy).toEqual(['Tesis.']);
+    });
+});
+
+describe('palabras clave por punto (convergencia PR 3)', () => {
+    const walk = deriveSectionWalk({
+        proposition: 'Tesis.',
+        points: [{ title: 'I. Dios habla (vv. 1-2)', application: '', scriptureReferences: [] }],
+    } as any);
+
+    it('cada punto tiene su sección de palabras clave, optativa y de ítems finales', () => {
+        const seccion = walk.find((s) => s.id === 'point.1.keyWords');
+        expect(seccion).toBeDefined();
+        expect(seccion?.optional).toBe(true);
+        expect(seccion?.definition.itemsAreFinal).toBe(true);
+    });
+
+    it('va después de la exposición y antes de la cita de autoridad', () => {
+        const ids = walk.map((s) => s.id);
+        expect(ids.indexOf('point.1.keyWords')).toBeGreaterThan(ids.indexOf('point.1.exposition'));
+        expect(ids.indexOf('point.1.keyWords')).toBeLessThan(ids.indexOf('point.1.authorityQuote'));
+    });
+
+    it('por ser optativa, no cuenta como faltante al armar', () => {
+        const faltantes = missingForDraft({ walk, elements: {}, prose: {}, points: [], t: (k: string) => k });
+        expect(faltantes.some((s) => s.id === 'point.1.keyWords')).toBe(false);
+    });
+});
+
+describe('la cita de autoridad es de ítems finales', () => {
+    it('no se redacta: su texto ES el contenido — el contador del botón y el mapa miden igual', () => {
+        const walk = deriveSectionWalk({
+            proposition: 'Tesis.',
+            points: [{ title: 'I. Dios habla (vv. 1-2)', application: '', scriptureReferences: [] }],
+        } as any);
+        expect(walk.find((s) => s.id === 'point.1.authorityQuote')?.definition.itemsAreFinal).toBe(true);
     });
 });

@@ -5,6 +5,8 @@ import { WizardStepHeader } from './WizardStepHeader';
 import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
 import { WizardStepShell } from './WizardStepShell';
+import { ToolbarIconButton } from './ToolbarIconButton';
+import { PanelGroup } from '@/components/ui/PanelGroup';
 import { DerivedContextBanner } from './DerivedContextBanner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -366,19 +368,16 @@ export function StepHomiletics() {
     
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm" disabled={loading}>
+                            <ToolbarIconButton
+                                label={loading ? t('homiletics.regeneratingBtn') : t('homiletics.regenerateShort')}
+                                disabled={loading}
+                            >
                                 {loading ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        {t('homiletics.regeneratingBtn')}
-                                    </>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
-                                    <>
-                                        <RefreshCw className="mr-2 h-4 w-4" />
-                                        {t('homiletics.regenerateShort')}
-                                    </>
+                                    <RefreshCw className="h-4 w-4" />
                                 )}
-                            </Button>
+                            </ToolbarIconButton>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
@@ -400,13 +399,13 @@ export function StepHomiletics() {
                     </AlertDialog>
             </>}
             navigationActions={<>
+                {/* La primaria del paso conserva el texto; volver es ícono. */}
+                <ToolbarIconButton label={t('homiletics.backToExegesis')} onClick={() => setStep(1)} variant="ghost">
+                    <ArrowLeft className="h-4 w-4" />
+                </ToolbarIconButton>
                 <Button onClick={handleContinue} size="sm">
                     {t('homiletics.continueToDrafting')}
                     <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button onClick={() => setStep(1)} variant="ghost" size="sm">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    {t('homiletics.backToExegesis')}
                 </Button>
             </>}
         />
@@ -531,6 +530,7 @@ export function StepHomiletics() {
                 <BibleReaderPanel passage={exegesis.passage} onClose={() => setRightPanelMode('chat')} />
             ) : (
                 <ChatInterface
+                    frameless
                     messages={messages}
                     contentType="homiletics"
                     content={homiletics}
@@ -570,10 +570,12 @@ export function StepHomiletics() {
                         continuar. Mientras las dos ramas existan, lo que se
                         agregue arriba hay que ponerlo en las dos. */}
                     {stepHeader}
-                    <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
+                    {/* Un marco, paneles pegados — patrón VS Code, igual que
+                        el borrador y el taller. */}
+                    <PanelGroup>
                         {leftPanel}
                         {rightPanel}
-                    </div>
+                    </PanelGroup>
                 </div>
             )}
             </WizardStepShell>

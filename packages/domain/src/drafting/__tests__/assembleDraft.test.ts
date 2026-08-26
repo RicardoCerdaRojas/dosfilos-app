@@ -313,3 +313,53 @@ describe('assembleDraft — las fuentes de los elementos llegan a ragSources', (
         expect(assembleDraft(COMPLETO).ragSources).toBeUndefined();
     });
 });
+
+describe('assembleDraft — palabras clave por punto', () => {
+    const palabra = (text: string, provenance: SermonElement['provenance'] = 'elegido'): SermonElement => ({
+        ...el(text, provenance),
+        sectionId: 'point.1.keyWords',
+    });
+
+    it('cada palabra decidida es un ítem del punto, tal cual — no prosa', () => {
+        const draft = assembleDraft({
+            ...COMPLETO,
+            elements: {
+                ...COMPLETO.elements,
+                'point.1.keyWords': [
+                    palabra('*qûm* (levántate) — orden directa'),
+                    palabra('*bāraḥ* (huir) — decisión deliberada'),
+                ],
+            },
+        });
+        expect(draft.body[0].keyWords).toEqual([
+            '*qûm* (levántate) — orden directa',
+            '*bāraḥ* (huir) — decisión deliberada',
+        ]);
+    });
+
+    it('las descartadas no entran; sin decididas no hay campo', () => {
+        const draft = assembleDraft({
+            ...COMPLETO,
+            elements: {
+                ...COMPLETO.elements,
+                'point.1.keyWords': [palabra('*x* — y', 'descartado')],
+            },
+        });
+        expect(draft.body[0].keyWords).toBeUndefined();
+    });
+});
+
+describe('assembleDraft — varias citas de autoridad (decisión 2026-08-26)', () => {
+    const cita2 = (text: string): SermonElement => ({ ...el(text, 'elegido'), sectionId: 'point.1.authorityQuote' });
+
+    it('dos citas decididas entran como bloques separados, no pegadas en una frase', () => {
+        const draft = assembleDraft({
+            ...COMPLETO,
+            elements: {
+                ...COMPLETO.elements,
+                'point.1.authorityQuote': [cita2('"Cita A" — Autor A'), cita2('"Cita B" — Autor B')],
+            },
+        });
+        expect(draft.body[0].authorityQuote).toBe('"Cita A" — Autor A\n\n"Cita B" — Autor B');
+    });
+});

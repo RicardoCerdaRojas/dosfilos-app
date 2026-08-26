@@ -82,7 +82,7 @@ export function SermonMap({ walk, elements, activeId, onSelect }: Props) {
     };
 
     return (
-        <nav className="h-full w-full pb-4 pr-2 overflow-y-auto" aria-label={t('drafting.sections.mapTitle')}>
+        <nav className="h-full w-full p-3 overflow-y-auto" aria-label={t('drafting.sections.mapTitle')}>
             {grupos.map((g) => {
                 if (g.id === '__sueltas__') {
                     return (
