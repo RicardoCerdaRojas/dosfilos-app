@@ -65,6 +65,7 @@ import { HomileticsSavedIndicator } from './homiletics/HomileticsLoadingScreen';
 import { WizardStepHeader } from './WizardStepHeader';
 import { WizardStepShell } from './WizardStepShell';
 import { RegenerateDraftAction } from './draft/RegenerateDraftAction';
+import { StudyReadingSheet } from './draft/StudyReadingSheet';
 import { WorkshopDraftActions } from './draft/WorkshopDraftActions';
 
 export function StepDraft() {
@@ -596,6 +597,17 @@ export function StepDraft() {
             passage={passage}
             proposition={homiletics.homileticalProposition}
             points={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title)}
+            study={
+                exegesis
+                    ? {
+                          exegeticalProposition: exegesis.exegeticalProposition,
+                          historical: exegesis.context?.historical,
+                          literary: exegesis.context?.literary,
+                          audience: exegesis.context?.audience,
+                          pastoralInsights: exegesis.pastoralInsights,
+                      }
+                    : undefined
+            }
         />
     ) : null;
 
@@ -604,6 +616,10 @@ export function StepDraft() {
     // ARMAR EL BORRADOR ES ACCIÓN DEL PASO, NO DEL PANEL. Vivía dentro del
     // taller, que es la razón por la que se perdía al cambiar de pestaña.
     const workshopActions = homiletics ? (
+        <>
+        {/* El estudio A UN GESTO mientras decide. Releerlo exigía salir del
+            taller y perder la sección activa. */}
+        {exegesis && <StudyReadingSheet study={exegesis} />}
         <WorkshopDraftActions
             walk={socraticWalk}
             elements={sectionElements}
@@ -616,6 +632,7 @@ export function StepDraft() {
             hasDraft={!!draft}
             homiletics={homiletics}
         />
+        </>
     ) : null;
 
     // LA BANDA DEL PASO ES UNA SOLA Y LAS PESTAÑAS VAN DENTRO. Vivía adentro de

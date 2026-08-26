@@ -243,8 +243,12 @@ export const SECTION_CATALOG: readonly SectionDefinition[] = [
         labelKey: `${NS}.historicalContext.label`,
         jobKey: `${NS}.historicalContext.job`,
         target: { kind: 'introduction', headingKey: `${NS}.historicalContext.heading` },
-        coveredFrom: 'studyKeyWords',
-        contextKey: `${NS}.keyWordsContext`,
+        // SIN `coveredFrom: 'studyKeyWords'`. Las palabras clave del estudio se
+        // mostraban acá como "indicaciones para esta sección" porque era el
+        // ÚNICO camino por el que llegaban a la redacción — un injerto, no una
+        // pertenencia: el estudio léxico no es contexto histórico, y el
+        // fundador lo señaló en cuanto lo vio. Hoy tienen sus lugares propios:
+        // la hoja "Ver estudio" (lectura) y su bloque por punto (decisión).
     }),
     def({
         key: 'introduction.currentConnection',

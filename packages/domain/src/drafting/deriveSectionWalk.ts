@@ -143,6 +143,9 @@ function resolverCubierto(
             if (!proposicion || titulos.length === 0) return [];
             return [buildTransitionReminder(proposicion, titulos)];
         }
+        // Hoy sin sección que lo declare: el injerto en contexto histórico se
+        // quitó (el estudio léxico no es contexto histórico). Lo reusa la
+        // sección de palabras clave POR PUNTO del plan de convergencia.
         case 'studyKeyWords':
             // Original + significancia en una línea: el pastor decidió qué
             // significa la palabra, y esa nota es lo que alimenta la sección.

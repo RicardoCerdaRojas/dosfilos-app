@@ -25,6 +25,23 @@ export interface ElementsPromptInput {
     pastorWork?: readonly string[];
     /** Elementos que el pastor ya decidió para esta sección: no se repiten. */
     alreadyDecided?: readonly string[];
+    /**
+     * Su estudio exegético de ocho pasos, como FUENTE PRIMARIA de propuestas.
+     *
+     * Sin esto, el acompañante proponía contexto histórico desde el
+     * conocimiento general del modelo mientras el pastor tenía un estudio
+     * completo del pasaje a dos pasos de distancia — el estudio llegaba a la
+     * redacción recortado a palabras clave y anécdota, y sus hallazgos no
+     * alimentaban las decisiones. Las propuestas deben salir de SU trabajo;
+     * el conocimiento del modelo es el respaldo, no la fuente.
+     */
+    study?: {
+        exegeticalProposition?: string;
+        historical?: string;
+        literary?: string;
+        audience?: string;
+        pastoralInsights?: readonly string[];
+    };
 }
 
 /**
@@ -46,6 +63,33 @@ export interface ElementsPromptInput {
  *    elementos son relleno. Exigir un número fijo es el mecanismo por el que se
  *    fabrica contenido — la misma lección que la cita de autoridad obligatoria.
  */
+/**
+ * El estudio del pastor, como bloque del prompt.
+ *
+ * FUENTE PRIMARIA, NO EXCLUSIVA. Cuando el estudio habla del tema de la
+ * sección, las propuestas salen de él — su lenguaje y sus hallazgos mandan.
+ * Prohibirle al modelo todo conocimiento propio dejaría sin propuestas a las
+ * secciones que el estudio no cubre (una ilustración, una conexión actual);
+ * el punto es la PRIORIDAD, no el monopolio.
+ */
+function bloqueEstudio(study: ElementsPromptInput['study']): string {
+    if (!study) return '';
+    const partes = [
+        study.exegeticalProposition && `- Proposición exegética: ${study.exegeticalProposition}`,
+        study.historical && `- Contexto histórico: ${study.historical}`,
+        study.literary && `- Contexto literario: ${study.literary}`,
+        study.audience && `- Audiencia original: ${study.audience}`,
+        ...(study.pastoralInsights ?? []).map((i) => `- Idea pastoral suya: ${i}`),
+    ].filter(Boolean);
+    if (partes.length === 0) return '';
+    return `\nSU ESTUDIO EXEGÉTICO DEL PASAJE — LA FUENTE PRIMARIA:
+Cuando el estudio hable del tema de esta sección, tus propuestas SALEN DE AQUÍ:
+su lenguaje y sus hallazgos mandan sobre tu conocimiento general. Lo que el
+estudio no cubra puedes proponerlo desde el texto bíblico, no desde datos
+externos que él no pueda verificar.
+${partes.join('\n')}\n`;
+}
+
 export function buildElementsPrompt(input: ElementsPromptInput): string {
     const bloque = (titulo: string, items: readonly string[] | undefined) =>
         items?.length ? `\n${titulo}\n${items.map((i) => `- ${i}`).join('\n')}\n` : '';
@@ -92,7 +136,7 @@ en su campo.`
     return `Eres el acompañante de un pastor que está redactando un sermón. NO escribes el sermón: le ayudas a DECIDIR qué va en cada sección.
 
 PASAJE: ${input.passage}
-${input.proposition ? `\nPROPOSICIÓN HOMILÉTICA (la escribió él, es la tesis del sermón):\n"${input.proposition}"\n` : ''}${bloque('PUNTOS DEL SERMÓN:', input.points)}${bloque('LO QUE ÉL YA TRABAJÓ EN SU ESTUDIO (es suyo, respétalo):', input.pastorWork)}${bloque('YA DECIDIÓ ESTOS ELEMENTOS PARA ESTA SECCIÓN — NO los repitas ni los reformules:', input.alreadyDecided)}
+${input.proposition ? `\nPROPOSICIÓN HOMILÉTICA (la escribió él, es la tesis del sermón):\n"${input.proposition}"\n` : ''}${bloqueEstudio(input.study)}${bloque('PUNTOS DEL SERMÓN:', input.points)}${bloque('LO QUE ÉL YA TRABAJÓ EN SU ESTUDIO (es suyo, respétalo):', input.pastorWork)}${bloque('YA DECIDIÓ ESTOS ELEMENTOS PARA ESTA SECCIÓN — NO los repitas ni los reformules:', input.alreadyDecided)}
 ${input.scriptureText ? `TEXTO BÍBLICO:\n"${input.scriptureText}"\n` : ''}${input.pointProposition ? `\nPROPOSICIÓN DE ESTE PUNTO (la escribió él):\n"${input.pointProposition}"\n` : ''}
 SECCIÓN: ${input.sectionLabel}
 TRABAJO DE ESTA SECCIÓN: ${input.sectionJob}
