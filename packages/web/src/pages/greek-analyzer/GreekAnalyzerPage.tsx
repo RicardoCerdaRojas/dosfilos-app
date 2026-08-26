@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +12,9 @@ import {
 import { cn } from '@/lib/utils';
 import type { BibleBookId } from '@dosfilos/domain';
 import { useGreekVerse } from './useGreekVerse';
+import { useGreekInsight } from './useGreekInsight';
+import { GreekWordHoverContent } from './GreekWordHoverContent';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { GreekWordCard } from './GreekWordCard';
 
 /**
@@ -35,6 +38,8 @@ export function GreekAnalyzerPage() {
     const nombre = (b: { nameEs: string; nameEn: string }) =>
         i18n.language.startsWith('es') ? b.nameEs : b.nameEn;
     const libroActual = books.find((b) => b.id === book);
+    const referencia = `${book} ${chapter}:${verse}`;
+    const { insight, generating, error: insightError, generate } = useGreekInsight(referencia, data?.tokens);
 
     return (
         <div className="h-full overflow-y-auto">
@@ -109,23 +114,65 @@ export function GreekAnalyzerPage() {
                             </div>
                             <div className="flex flex-wrap gap-x-4 gap-y-5" lang="grc">
                                 {data.tokens.map((tok, i) => (
-                                    <button
-                                        key={i}
-                                        type="button"
-                                        onClick={() => setSeleccion(seleccion === i ? null : i)}
-                                        className={cn(
-                                            'group flex flex-col items-center rounded px-1.5 py-1 transition-colors hover:bg-primary/10',
-                                            seleccion === i && 'bg-primary/10 ring-1 ring-primary/40',
-                                        )}
-                                    >
-                                        <span className="text-3xl leading-tight">{tok.text}</span>
-                                        <span className="text-[11px] text-muted-foreground italic" lang="en">
-                                            {tok.transliteration}
-                                        </span>
-                                    </button>
+                                    <Tooltip key={i} delayDuration={200}>
+                                        <TooltipTrigger asChild>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSeleccion(seleccion === i ? null : i)}
+                                                className={cn(
+                                                    'group flex flex-col items-center rounded px-1.5 py-1 transition-colors hover:bg-primary/10',
+                                                    seleccion === i && 'bg-primary/10 ring-1 ring-primary/40',
+                                                )}
+                                            >
+                                                <span className="text-3xl leading-tight">{tok.text}</span>
+                                                <span className="text-[11px] text-muted-foreground italic" lang="en">
+                                                    {tok.transliteration}
+                                                </span>
+                                            </button>
+                                        </TooltipTrigger>
+                                        {/* Mismo patrón que el hebreo: tooltip con
+                                            contenido rico, fondo de tarjeta. */}
+                                        <TooltipContent className="bg-card text-card-foreground border border-border shadow-lg">
+                                            <GreekWordHoverContent token={tok} insight={insight?.words[i]} />
+                                        </TooltipContent>
+                                    </Tooltip>
                                 ))}
                             </div>
                         </div>
+
+                        {/* LAS DOS TRADUCCIONES — el aporte del modelo, con caché
+                            global: el texto griego es el mismo para todos, así que
+                            un análisis pagado una vez sirve a todos. PULL, no auto:
+                            quien lee morfología no pidió pagar una llamada. */}
+                        {insight ? (
+                            <div className="grid gap-3 md:grid-cols-2">
+                                <div className="rounded-lg border border-border p-4 space-y-1">
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                        {t('analyzer.literalTranslation')}
+                                    </h4>
+                                    <p className="text-sm leading-relaxed">{insight.literalTranslation}</p>
+                                </div>
+                                <div className="rounded-lg border border-border p-4 space-y-1">
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                        {t('analyzer.fluidTranslation')}
+                                    </h4>
+                                    <p className="text-sm leading-relaxed">{insight.fluidTranslation}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="rounded-lg border border-dashed border-border p-4 flex flex-wrap items-center justify-between gap-3">
+                                <p className="text-sm text-muted-foreground">{t('analyzer.insightPitch')}</p>
+                                <Button size="sm" onClick={() => void generate()} disabled={generating}>
+                                    {generating ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Sparkles className="mr-2 h-4 w-4" />
+                                    )}
+                                    {generating ? t('analyzer.generating') : t('analyzer.generateInsight')}
+                                </Button>
+                                {insightError && <p className="w-full text-xs text-destructive">{t('analyzer.insightError')}</p>}
+                            </div>
+                        )}
 
                         {/* ANÁLISIS POR PALABRA — todo a la vista. */}
                         <div>
@@ -137,6 +184,7 @@ export function GreekAnalyzerPage() {
                                     <GreekWordCard
                                         key={i}
                                         token={tok}
+                                        insight={insight?.words[i]}
                                         highlighted={seleccion === i}
                                         onClick={() => setSeleccion(seleccion === i ? null : i)}
                                     />

@@ -647,7 +647,10 @@
       "case": "Caso",
       "number": "Número",
       "gender": "Género",
-      "degree": "Grado"
+      "degree": "Grado",
+      "semanticRange": "Rango semántico",
+      "syntacticFunction": "Función sintáctica",
+      "translation": "Traducción"
     },
     "pos": {
       "N": "Sustantivo",
@@ -704,6 +707,35 @@
     "degree": {
       "C": "Comparativo",
       "S": "Superlativo"
-    }
+    },
+    "literalTranslation": "Traducción literal",
+    "fluidTranslation": "Traducción fluida",
+    "insightPitch": "Genera el análisis del versículo: traducciones, rango semántico y función sintáctica de cada palabra. Se guarda y queda disponible para todos.",
+    "generateInsight": "Generar análisis",
+    "generating": "Analizando…",
+    "insightError": "No se pudo generar el análisis. Inténtalo de nuevo.",
+    "clues": {
+      "title": "Pistas de reconocimiento",
+      "source": "Análisis: MorphGNT (revisión académica palabra por palabra). Las pistas señalan las marcas de la forma que lo confirman.",
+      "infPresActive": "La terminación {{marker}} marca el infinitivo presente activo.",
+      "infPresMedio": "La terminación {{marker}} marca el infinitivo presente medio/pasivo.",
+      "infAorActive": "La terminación {{marker}} marca el infinitivo aoristo activo.",
+      "infAorMedio": "La terminación {{marker}} marca el infinitivo aoristo medio.",
+      "infAorPasivo": "La terminación {{marker}} marca el infinitivo aoristo pasivo.",
+      "infPerfActive": "La terminación {{marker}} marca el infinitivo perfecto activo.",
+      "aoristoSigmatico": "El sufijo {{marker}} es la firma del aoristo (primero o sigmático).",
+      "aoristoPasivo": "El sufijo {{marker}} marca el aoristo pasivo.",
+      "futuroSigma": "La {{marker}} añadida a la raíz marca el futuro.",
+      "reduplicacion": "La reduplicación inicial ({{marker}}) marca el perfecto.",
+      "perfectoKappa": "La {{marker}} antes de la terminación marca el perfecto activo.",
+      "aumento": "El aumento {{marker}} al inicio señala un tiempo secundario (pasado) en indicativo.",
+      "impvActPl": "La terminación {{marker}} marca el imperativo activo, 2ª plural.",
+      "impvMedPl": "La terminación {{marker}} marca el imperativo medio, 2ª plural.",
+      "subjuntivoVocalLarga": "La vocal temática alargada ({{marker}}) es la firma del subjuntivo.",
+      "participioMedio": "El infijo {{marker}} marca el participio medio/pasivo.",
+      "participioActivo": "Las marcas {{marker}} señalan el participio activo.",
+      "participioAorAct": "Las marcas {{marker}} señalan el participio aoristo activo."
+    },
+    "personShort": "{{n}}ª persona"
   }
 }

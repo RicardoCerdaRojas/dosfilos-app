@@ -623,7 +623,10 @@
       "case": "Case",
       "number": "Number",
       "gender": "Gender",
-      "degree": "Degree"
+      "degree": "Degree",
+      "semanticRange": "Rango semántico",
+      "syntacticFunction": "Función sintáctica",
+      "translation": "Translation"
     },
     "pos": {
       "N": "Noun",
@@ -680,6 +683,35 @@
     "degree": {
       "C": "Comparative",
       "S": "Superlative"
-    }
+    },
+    "literalTranslation": "Literal translation",
+    "fluidTranslation": "Fluid translation",
+    "insightPitch": "Generate the verse analysis: translations, semantic range and syntactic function for each word. It is cached and becomes available to everyone.",
+    "generateInsight": "Generate analysis",
+    "generating": "Analyzing…",
+    "insightError": "The analysis could not be generated. Try again.",
+    "clues": {
+      "title": "Recognition clues",
+      "source": "Analysis: MorphGNT (word-by-word academic review). The clues point at the marks in the form that confirm it.",
+      "infPresActive": "The ending {{marker}} marks the present active infinitive.",
+      "infPresMedio": "The ending {{marker}} marks the present middle/passive infinitive.",
+      "infAorActive": "The ending {{marker}} marks the aorist active infinitive.",
+      "infAorMedio": "The ending {{marker}} marks the aorist middle infinitive.",
+      "infAorPasivo": "The ending {{marker}} marks the aorist passive infinitive.",
+      "infPerfActive": "The ending {{marker}} marks the perfect active infinitive.",
+      "aoristoSigmatico": "The suffix {{marker}} is the signature of the (first) sigmatic aorist.",
+      "aoristoPasivo": "The suffix {{marker}} marks the aorist passive.",
+      "futuroSigma": "The {{marker}} added to the stem marks the future.",
+      "reduplicacion": "The initial reduplication ({{marker}}) marks the perfect.",
+      "perfectoKappa": "The {{marker}} before the ending marks the perfect active.",
+      "aumento": "The augment {{marker}} at the start signals a secondary (past) tense in the indicative.",
+      "impvActPl": "The ending {{marker}} marks the active imperative, 2nd plural.",
+      "impvMedPl": "The ending {{marker}} marks the middle imperative, 2nd plural.",
+      "subjuntivoVocalLarga": "The lengthened theme vowel ({{marker}}) is the signature of the subjunctive.",
+      "participioMedio": "The infix {{marker}} marks the middle/passive participle.",
+      "participioActivo": "The marks {{marker}} signal the active participle.",
+      "participioAorAct": "The marks {{marker}} signal the aorist active participle."
+    },
+    "personShort": "{{n}}rd person"
   }
 }
