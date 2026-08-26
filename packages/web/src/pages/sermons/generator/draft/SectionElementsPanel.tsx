@@ -14,6 +14,7 @@ import {
 } from '@dosfilos/domain';
 import { useProposeElements, type ProposedElement } from '@/hooks/useProposeElements';
 import { useProposeAuthorityQuotes } from '@/hooks/useProposeAuthorityQuotes';
+import type { ElementsPromptInput } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
 import { SectionContextBlocks } from './SectionContextBlocks';
@@ -37,6 +38,8 @@ interface Props {
      * genérico del tema.
      */
     pointExpositionIdeas?: readonly string[];
+    /** El estudio exegético, fuente primaria de las propuestas. */
+    study?: ElementsPromptInput['study'];
     /** Redacta la sección. Vive acá para que las acciones de la sección no se repartan. */
     onWriteSection?: () => void;
     writing?: boolean;
@@ -187,6 +190,7 @@ export function SectionElementsPanel(props: Props) {
             scriptureText: versiculo ?? undefined,
             proposition: props.proposition,
             points: props.points,
+            study: props.study,
             // Lo ya decidido viaja al prompt: re-proponer su propio trabajo es
             // la forma más rápida de que abandone el flujo.
             // Sus indicaciones del bosquejo cuentan como ya decidido: proponerle

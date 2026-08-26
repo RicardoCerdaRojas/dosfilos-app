@@ -587,6 +587,18 @@
       "implications": "Implicaciones",
       "transition": "Transición",
       "authorityQuote": "Cita de autoridad"
+    },
+    "study": {
+      "viewButton": "Ver estudio",
+      "title": "Tu estudio de {{passage}}",
+      "readOnlyNote": "Solo lectura. El estudio se edita en su propio paso; aquí alimenta tus decisiones.",
+      "exegeticalProposition": "Proposición exegética",
+      "historical": "Contexto histórico",
+      "literary": "Contexto literario",
+      "audience": "Audiencia original",
+      "keyWords": "Palabras clave",
+      "insights": "Ideas pastorales",
+      "parallels": "Paralelos canónicos"
     }
   },
   "pastoralContext": {

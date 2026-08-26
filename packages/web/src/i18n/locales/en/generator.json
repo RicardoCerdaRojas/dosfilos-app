@@ -587,6 +587,18 @@
       "implications": "Implications",
       "transition": "Transition",
       "authorityQuote": "Authority quote"
+    },
+    "study": {
+      "viewButton": "View study",
+      "title": "Your study of {{passage}}",
+      "readOnlyNote": "Read-only. The study is edited in its own step; here it feeds your decisions.",
+      "exegeticalProposition": "Exegetical proposition",
+      "historical": "Historical context",
+      "literary": "Literary context",
+      "audience": "Original audience",
+      "keyWords": "Key words",
+      "insights": "Pastoral insights",
+      "parallels": "Canonical parallels"
     }
   },
   "pastoralContext": {

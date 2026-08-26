@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RailDivider } from '@/components/ui/RailDivider';
 import { useTranslation } from '@/i18n';
-import type { SermonElement, WalkSection } from '@dosfilos/domain';
+import type { ElementsPromptInput, SermonElement, WalkSection } from '@dosfilos/domain';
 import { SermonMap } from './SermonMap';
 import { SectionElementsPanel } from './SectionElementsPanel';
 import { SectionProsePanel } from './SectionProsePanel';
@@ -21,6 +21,8 @@ interface Props {
     passage: string;
     proposition?: string;
     points?: readonly string[];
+    /** El estudio exegético, para que las propuestas salgan de SU trabajo. */
+    study?: ElementsPromptInput['study'];
 }
 
 const ANCHO_MIN = 200;
@@ -154,6 +156,7 @@ export function SocraticWorkshop(props: Props) {
                     passage={props.passage}
                     proposition={props.proposition}
                     points={props.points}
+                    study={props.study}
                     elements={props.elements[props.activeSection.id] ?? []}
                     onChange={(els) => props.onChangeElements(props.activeSection.id, els)}
                     // No se le pasa a la sección que ES la proposición: se
