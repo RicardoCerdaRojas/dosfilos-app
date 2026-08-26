@@ -864,16 +864,18 @@ ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
 
      Luego, en campos separados:
      - **scriptureReferences** (array): de 2 a 3 referencias que CRUCEN a OTROS
-       LIBROS de la Biblia, con el TEXTO del versículo como blockquote.
+       LIBROS de la Biblia. **SOLO LA REFERENCIA, SIN el texto del versículo**:
+       el sistema lo muestra desde la Biblia real — si lo escribes tú, lo
+       escribes de memoria y un versículo mal citado en el púlpito es peor que
+       ninguno.
        **PROHIBIDO usar el pasaje que se está predicando.** Volver a citar el
        texto expuesto no es una referencia cruzada: es repetir el texto, y no
        argumenta nada. Tampoco cuenta otro capítulo del MISMO libro.
        Su trabajo es MOSTRAR QUE LA AFIRMACIÓN DEL PUNTO ES CONSISTENTE CON EL
        RESTO DE LA ESCRITURA: cada una debe sostener exegéticamente lo que el
        punto afirma, no ilustrarlo ni adornarlo.
-       Lista de referencias con TEXTO del versículo como blockquote
-       Formato: "> \"[Texto del versículo]\" ([Referencia])"
-       Ejemplo: "> \"En el principio era el Verbo\" (Juan 1:1)"
+       Formato de cada entrada: "Libro Capítulo:Versículos" y nada más.
+       Ejemplo: "Juan 1:1"
      
      - **authorityQuote** (string): la cita en blockquote con su atribución. NO
        escribas "Cita de Autoridad:" adelante — la tarjeta ya rotula el campo, y
@@ -890,10 +892,11 @@ ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
        punto trae en el bosquejo. El pastor separa sus aplicaciones con líneas en
        blanco y llegan ya numeradas: si trae dos, van DOS implicaciones, una por
        cada una, en su orden. No las fusiones en un párrafo ni agregues de más.
-       Cada una DESARROLLA la suya; no la reemplaces por otra tuya. Empieza cada
-       entrada con "**Implicación:**". Si el punto no trae aplicación aprobada,
-       deriva UNA del propio punto — pero NUNCA inventes una que el punto no
-       sostenga.
+       Cada una DESARROLLA la suya; no la reemplaces por otra tuya. SIN el
+       prefijo "**Implicación:**": la tarjeta ya rotula el bloque y la lista ya
+       numera — el prefijo se veía con los asteriscos literales en pantalla. Si
+       el punto no trae aplicación aprobada, deriva UNA del propio punto — pero
+       NUNCA inventes una que el punto no sostenga.
      
      - **transition** (string): SÓLO la frase de transición al punto siguiente —
        el puente retórico, una o dos oraciones. Nada más.
@@ -923,7 +926,7 @@ ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
   Formato de Salida (JSON):
   {
     "title": "Título Creativo",
-    "introduction": "### ${H.historicalContext} — usa el ORDEN DE SECCIONES indicado arriba\\n\\n[Párrafo 1]\\n\\n[Párrafo 2]\\n\\n### ${H.currentConnection}\\n\\n[Conexión con audiencia]\\n\\n### ${H.sermonProposition}\\n\\n[Proposición VERBATIM]\\n\\n**Puntos:**\\n[Los títulos del bosquejo, VERBATIM y en su orden, uno por línea. Si el título ya trae número o romano, NO le antepongas otro.]",
+    "introduction": "### ${H.historicalContext} — usa el ORDEN DE SECCIONES indicado arriba\\n\\n[Párrafo 1]\\n\\n[Párrafo 2]\\n\\n### ${H.currentConnection}\\n\\n[Conexión con audiencia]\\n\\n### ${H.sermonProposition}\\n\\n[Proposición VERBATIM]\\n\\n**Puntos:**\\n- [Título del punto 1, VERBATIM — CADA punto es una VIÑETA con guion, en su propia línea. Si el título ya trae número o romano, NO le antepongas otro.]\\n- [Título del punto 2, VERBATIM]",
     "body": [
       { 
         "point": "Título del Punto 1", 
@@ -931,21 +934,18 @@ ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
         "keyWords": [
           "*original* (transliteración) — **rango**: sentido A / sentido B. **Aquí**: [uso en este pasaje]"
         ],
-        "scriptureReferences": [
-          "> \\"Porque de tal manera amó Dios al mundo...\\" (Juan 3:16)",
-          "> \\"Sabemos que a los que aman a Dios...\\" (Romanos 8:28)"
-        ],
+        "scriptureReferences": ["Juan 3:16", "Romanos 8:28"],
         "authorityQuote": null,
         "illustration": "**[Título]**\\n\\n[Desarrollo de la ilustración]",
         "implications": [
-          "**Implicación 1:** Descripción de la primera implicación", 
-          "**Implicación 2:** Descripción de la segunda implicación"
+          "[Desarrollo de la primera aplicación aprobada, sin prefijo]", 
+          "[Desarrollo de la segunda, sin prefijo]"
         ],
         "transition": "[Sólo la frase de transición al siguiente punto]"
       }
     ],
-  "conclusion": "### Resumen Principal\\n\\n[Párrafo 1]\\n\\n### Llamado Final\\n\\n**Punto culminante**: [Cierre poderoso]",
-  "callToAction": "**Pasos de Acción**:\\n\\n1. **[Acción 1]**: Descripción\\n2. **[Acción 2]**: Descripción\\n3. **[Acción 3]**: Descripción",
+  "conclusion": "[Recapitulación en 1-2 párrafos cortos, SIN encabezados, cerrando el arco desde el texto hasta hoy. 100-200 palabras.]",
+  "callToAction": "[1 a 3 acciones concretas, en párrafos o lista corta con guiones. Sin plantillas.]",
   "ragSources": [
     {
       "sourceId": "S1",
@@ -1112,8 +1112,9 @@ INSTRUCCIONES:
    exposición que la desarrolla en párrafos cortos (150-300 palabras en
    total), con **negritas** en los conceptos clave y palabras originales en
    *cursiva*.
-2. **scriptureReferences**: referencias cruzadas relevantes, con el texto del
-   versículo como blockquote.
+2. **scriptureReferences**: referencias cruzadas relevantes de OTROS libros.
+   SOLO la referencia ("Juan 1:1"), SIN el texto del versículo: el sistema lo
+   muestra desde la Biblia real.
 3. **illustration**: sigue la GUÍA DE ILUSTRACIONES de más abajo.
 4. **implications**: UNA sola, que DESARROLLA la aplicación ya aprobada para
    este punto${aplicacion ? `: "${aplicacion}"` : ''}. El orden es TEXTO → PUNTO →
@@ -1136,9 +1137,9 @@ FORMATO JSON REQUERIDO:
 {
   "point": "${titulo}",
   "content": "[La proposición del punto: una frase.]\\n\\n[Exposición en párrafos cortos.]",
-  "scriptureReferences": ["> \\"[Texto]\\" ([Referencia])"],
+  "scriptureReferences": ["Juan 1:1"],
   "illustration": "**[Título]**\\n\\n[Desarrollo]",
-  "implications": ["**Implicación:** [Desarrollo de la aplicación aprobada]"],
+  "implications": ["[Desarrollo de la aplicación aprobada, sin prefijo]"],
   "authorityQuote": null,
   "transition": "[Frase de transición]"
 }

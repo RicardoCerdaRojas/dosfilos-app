@@ -603,3 +603,33 @@ describe('buildSermonDraftPrompt — forma canónica del punto (convergencia con
         expect(p()).toContain('NO le antepongas otro');
     });
 });
+
+describe('buildSermonDraftPrompt — hallazgos del smoke del fundador (2026-08-26)', () => {
+    const p = () => buildSermonDraftPrompt(baseAnalysis, {} as any, 'es');
+
+    it('las referencias cruzadas van desnudas: el texto lo pone la Biblia real', () => {
+        expect(p()).toContain('SOLO LA REFERENCIA, SIN el texto del versículo');
+        expect(p()).not.toContain('[Texto del versículo]');
+    });
+
+    it('las implicaciones van sin el prefijo que se veía con asteriscos literales', () => {
+        expect(p()).toContain('SIN el\n       prefijo "**Implicación:**"');
+        expect(p()).not.toContain('Empieza cada\n       entrada con "**Implicación:**"');
+    });
+
+    it('los puntos del anuncio van como viñetas — markdown colapsa saltos simples', () => {
+        expect(p()).toContain('CADA punto es una VIÑETA con guion');
+    });
+
+    it('el ejemplo de conclusión no trae los encabezados que la instrucción prohíbe', () => {
+        // La instrucción decía "sin encabezados" pero el EJEMPLO seguía
+        // mostrando "### Resumen Principal" — y el ejemplo manda.
+        expect(p()).not.toContain('### Resumen Principal');
+        // La única mención que queda es la prohibición misma, no la plantilla.
+        expect(p()).not.toContain('**Pasos de Acción**');
+    });
+
+    it('prohíbe narrar el acto de predicar', () => {
+        expect(p()).toContain('Hoy comenzamos a explorar');
+    });
+});

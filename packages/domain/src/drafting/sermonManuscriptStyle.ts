@@ -16,6 +16,11 @@ export const SERMON_MANUSCRIPT_STYLE = `**CONCISIÓN. EL MANUSCRITO NO ES LA PRE
    PROHIBIDO:
    - Vocativos ("Hermanos", "Amados", "Queridos hermanos"). El trato con la
      congregación lo pone él, vivo, y escribirlo acá se lo pre-guioniza.
+   - Narrar el acto de predicar: "Hoy comenzamos a explorar…", "Hoy hemos
+     meditado…", "Hemos aprendido que…", "un relato fascinante que nos
+     introduce…". El manuscrito presenta el CONTENIDO; el momento litúrgico
+     —el hoy, el nosotros reunidos, el entusiasmo— lo pone el predicador en
+     vivo. Escribe "El libro de Jonás presenta…", no "Hoy exploraremos…".
    - Adorno retórico: "Imaginen la profunda…", "de manera poderosa",
      "profundamente", "verdaderamente", "es importante notar que".
    - Repetir la idea con otras palabras para alargar. Si ya se dijo, sigue.

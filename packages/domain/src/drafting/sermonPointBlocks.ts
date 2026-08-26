@@ -100,7 +100,13 @@ export function sermonPointBlocks(point: SermonPointShape): SermonPointBlock[] {
         bloques.push({ kind: 'illustration', headingKey: `${NS}.illustration`, text: ilustracion });
     }
 
-    const implicaciones = (point.implications ?? []).map((i) => i.trim()).filter(Boolean);
+    const implicaciones = (point.implications ?? [])
+        // El generador antepone "**Implicación:**" (o "**Implicación 2:**") y
+        // la tarjeta ya rotula el bloque; además el lienzo pinta los ítems como
+        // texto plano, así que los asteriscos quedaban LITERALES en pantalla.
+        // Se limpia acá para que los sermones viejos también sanen.
+        .map((i) => i.replace(/^\s*\*{0,2}\s*Implicaci[oó]n(\s*\d+)?\s*:?\s*\*{0,2}\s*/i, '').trim())
+        .filter(Boolean);
     if (implicaciones.length > 0) {
         bloques.push({ kind: 'implications', headingKey: `${NS}.implications`, items: implicaciones });
     }

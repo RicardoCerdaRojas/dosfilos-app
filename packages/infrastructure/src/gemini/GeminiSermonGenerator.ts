@@ -234,7 +234,7 @@ export class GeminiSermonGenerator implements ISermonGenerator {
             // pulpit.
             const callToAction = parsed.callToAction && typeof parsed.callToAction === 'string' && parsed.callToAction.trim().length > 0
                 ? parsed.callToAction
-                : '**Pasos de Acción**:\n\n1. Reflexiona esta semana cómo aplicar esta verdad a tu vida personal.\n2. Comparte el mensaje central con alguien que necesite escucharlo.\n3. Ora pidiendo al Espíritu Santo que arraigue esta verdad en tu corazón.';
+                : 'Reflexiona esta semana cómo aplicar esta verdad a tu vida personal. Comparte el mensaje central con alguien que necesite escucharlo. Ora pidiendo que esta verdad arraigue en tu corazón.';
             return {
                 title: parsed.title || 'Sin Título',
                 introduction: parsed.introduction || '',
