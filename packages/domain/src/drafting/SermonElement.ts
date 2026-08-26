@@ -52,7 +52,25 @@ export interface SermonElement {
      * procedencia dejaría de significar algo.
      */
     proposedText?: string;
+    /**
+     * La fuente de la biblioteca de la que salió este elemento, cuando salió
+     * de una: hoy, las citas de autoridad propuestas desde sus libros.
+     *
+     * SIN el fragmento completo: eso pesa y sirve para DECIDIR (vive en la
+     * propuesta); acá sólo hace falta lo que la bibliografía va a imprimir.
+     * Sin este campo, la atribución quedaba escrita dentro del texto de la
+     * cita pero el LIBRO no quedaba registrado en las fuentes del sermón: la
+     * bibliografía no podía nombrar de dónde salió lo citado.
+     */
+    source?: ElementSource;
     decidedAt: Date;
+}
+
+/** Lo que la bibliografía necesita de una fuente. */
+export interface ElementSource {
+    title: string;
+    author?: string;
+    page?: string;
 }
 
 /** Cuántos elementos tiene sentido pedir por sección (ADR-037). */

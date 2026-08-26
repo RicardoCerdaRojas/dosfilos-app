@@ -1,4 +1,4 @@
-import type { SermonContent } from '../entities/SermonGenerator';
+import type { RAGSource, SermonContent } from '../entities/SermonGenerator';
 import type { SermonElement } from './SermonElement';
 import type { WalkSection } from './deriveSectionWalk';
 import { splitApplication } from '../sermon-judge/splitApplication';
@@ -12,7 +12,7 @@ export interface AssembleDraftInput {
     /** Títulos y referencias del bosquejo. */
     points: readonly { title?: string; scriptureReferences?: string[] }[];
     /** Traduce una clave i18n: los encabezados son texto de cara al usuario. */
-    t: (key: string) => string;
+    t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 interface PartesDelPunto {
@@ -162,13 +162,49 @@ export function assembleDraft(input: AssembleDraftInput): SermonContent {
         };
     });
 
+    const ragSources = collectElementSources(input);
+
     return {
         title,
         introduction: unir(introduccion),
         body,
         conclusion,
         callToAction: callToAction || undefined,
+        ...(ragSources.length > 0 ? { ragSources } : {}),
     };
+}
+
+/**
+ * Las fuentes de la biblioteca que respaldan elementos DECIDIDOS del sermón.
+ *
+ * Sin esto, la cita quedaba en el cuerpo con su atribución escrita pero el
+ * LIBRO no quedaba en `ragSources`: la bibliografía del sermón publicado no
+ * nombraba de dónde salió lo citado — a menos que el mismo libro ya viniera
+ * de la exégesis o la homilética, que es una coincidencia, no un registro.
+ *
+ * DEDUPLICADO POR OBRA Y PÁGINA: la bibliografía lista fuentes, no usos. La
+ * primera aparición gana y `usedFor` nombra su sección — se recorre el WALK y
+ * no el mapa de elementos para que el orden sea el del sermón, no el del
+ * objeto.
+ */
+function collectElementSources(input: AssembleDraftInput): RAGSource[] {
+    const fuentes: RAGSource[] = [];
+    const vistas = new Set<string>();
+    for (const seccion of input.walk) {
+        for (const el of input.elements[seccion.id] ?? []) {
+            if (el.provenance === 'descartado' || !el.source?.title) continue;
+            const clave = `${el.source.title}|${el.source.page ?? ''}`;
+            if (vistas.has(clave)) continue;
+            vistas.add(clave);
+            fuentes.push({
+                title: el.source.title,
+                ...(el.source.author ? { author: el.source.author } : {}),
+                ...(el.source.page ? { page: el.source.page } : {}),
+                usedFor: input.t(seccion.labelKey, seccion.labelParams),
+            });
+        }
+    }
+    return fuentes;
 }
 
 /** Secciones que aún no tienen contenido. Para avisar antes de armar. */
