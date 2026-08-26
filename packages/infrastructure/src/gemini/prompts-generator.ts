@@ -809,10 +809,14 @@ Usa formato MARKDOWN con JERARQUIZACIÓN VISUAL CLARA en todos los campos de tex
    este punto afirma del pasaje. Es al punto lo que la proposición homilética
    es al sermón: los conceptos que contenga son los que después desarrollas.]
 
-   [Después: la EXPOSICIÓN — párrafos cortos que desarrollan esa proposición,
-   anclados en las palabras del texto. NO transcribas el pasaje completo al
-   abrir: el sermón ya lo muestra antes de esta sección, con la Biblia real.
-   Cita FRAGMENTOS cuando estés comentando esas palabras.]
+   [Después: la EXPOSICIÓN — UN MOVIMIENTO POR CADA CONCEPTO que la
+   proposición nombra, en el orden en que ella los nombra, CADA UNO COMO SU
+   PROPIA VIÑETA (guion al inicio de línea). La viñeta no es decoración:
+   separa los conceptos para que el predicador vea de un vistazo en cuántas
+   partes se abre su proposición. Ancla cada movimiento en las palabras del
+   texto. NO transcribas el pasaje completo al abrir: el sermón ya lo muestra
+   antes de esta sección, con la Biblia real. Cita FRAGMENTOS cuando estés
+   comentando esas palabras.]
 
    IMPORTANTE: Las siguientes secciones NO van en "content", sino en campos JSON separados:
    - Palabras Clave → campo "keyWords" (array)
@@ -840,8 +844,9 @@ ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
      [Primer párrafo: LA PROPOSICIÓN DEL PUNTO — una frase que resume lo que
      este punto afirma del pasaje.]
 
-     [Después: la exposición que la desarrolla, en párrafos cortos anclados en
-     las palabras del texto. Concisa: 150 a 300 palabras en total.]
+     [Después: la exposición que la desarrolla — un movimiento por concepto de
+     la proposición, CADA UNO COMO VIÑETA (guion al inicio de línea), anclado
+     en las palabras del texto. Concisa: 150 a 300 palabras en total.]
 
      En el campo "keyWords" (array, puede ser vacío): las palabras clave DEL
      ESTUDIO DEL PASTOR (listadas en el contexto exegético) que pertenezcan a
@@ -892,9 +897,10 @@ ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
        punto trae en el bosquejo. El pastor separa sus aplicaciones con líneas en
        blanco y llegan ya numeradas: si trae dos, van DOS implicaciones, una por
        cada una, en su orden. No las fusiones en un párrafo ni agregues de más.
-       Cada una DESARROLLA la suya; no la reemplaces por otra tuya. SIN el
-       prefijo "**Implicación:**": la tarjeta ya rotula el bloque y la lista ya
-       numera — el prefijo se veía con los asteriscos literales en pantalla. Si
+       Cada una DESARROLLA la suya; no la reemplaces por otra tuya. SIN
+       prefijos y SIN anclas en negrita: nada de "**Implicación:**" ni de abrir
+       con la aplicación en negritas — la tarjeta ya rotula el bloque y la
+       lista ya separa. Texto corrido simple en cada entrada. Si
        el punto no trae aplicación aprobada, deriva UNA del propio punto — pero
        NUNCA inventes una que el punto no sostenga.
      
@@ -905,10 +911,13 @@ ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
        Tampoco escribas rótulos ("Transición:", "Recordatorio:"): la tarjeta ya
        rotula el bloque.
      
-  3. **CONCLUSIÓN**: 
-     - SIN encabezados internos: recapitula la proposición y los puntos en
-       párrafos cortos y cierra el arco desde el contexto original hasta hoy.
-     - Concisa: 100 a 200 palabras.
+  3. **CONCLUSIÓN — PUNTOS PRECISOS, NO PROSA**: 
+     - Una frase que reafirme la proposición, y luego UNA VIÑETA POR CADA
+       verdad que se predicó (guion al inicio de línea): el cierre de esa
+       idea en una o dos frases. Termina con UNA frase de cierre del arco.
+     - SIN encabezados internos y sin párrafos largos: el manuscrito cierra
+       la idea; el tono y el calor los pone el predicador en vivo.
+     - Concisa: 80 a 150 palabras.
   
   4. **LLAMADO A LA ACCIÓN**: 
      - 1 a 3 acciones concretas, en párrafos o lista corta — sin plantillas
@@ -930,7 +939,7 @@ ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
     "body": [
       { 
         "point": "Título del Punto 1", 
-        "content": "[La proposición del punto: una frase.]\\n\\n[Exposición que la desarrolla, en párrafos cortos.]", 
+        "content": "[La proposición del punto: una frase.]\\n\\n- [Movimiento 1: desarrolla el primer concepto de la proposición.]\\n- [Movimiento 2: el segundo.]", 
         "keyWords": [
           "*original* (transliteración) — **rango**: sentido A / sentido B. **Aquí**: [uso en este pasaje]"
         ],
@@ -944,7 +953,7 @@ ${openingIllustrationRule(rules)}${bookOrientationRule(analysis)}
         "transition": "[Sólo la frase de transición al siguiente punto]"
       }
     ],
-  "conclusion": "[Recapitulación en 1-2 párrafos cortos, SIN encabezados, cerrando el arco desde el texto hasta hoy. 100-200 palabras.]",
+  "conclusion": "[Frase que reafirma la proposición.]\\n\\n- [Cierre de la primera verdad predicada.]\\n- [Cierre de la segunda.]\\n\\n[UNA frase final que cierra el arco.]",
   "callToAction": "[1 a 3 acciones concretas, en párrafos o lista corta con guiones. Sin plantillas.]",
   "ragSources": [
     {
@@ -1136,10 +1145,10 @@ Tono: ${rules.tone || 'Inspirador'}
 FORMATO JSON REQUERIDO:
 {
   "point": "${titulo}",
-  "content": "[La proposición del punto: una frase.]\\n\\n[Exposición en párrafos cortos.]",
+  "content": "[La proposición del punto: una frase.]\\n\\n- [Movimiento por concepto, como viñeta.]",
   "scriptureReferences": ["Juan 1:1"],
   "illustration": "**[Título]**\\n\\n[Desarrollo]",
-  "implications": ["[Desarrollo de la aplicación aprobada, sin prefijo]"],
+  "implications": ["[Desarrollo de la aplicación aprobada — texto simple, sin prefijos ni negritas]"],
   "authorityQuote": null,
   "transition": "[Frase de transición]"
 }

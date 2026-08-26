@@ -69,9 +69,15 @@ export function SermonPointBlocksView({ point, renderFallbackReference }: Props)
                             ))}
                         </ul>
                     ) : bloque.items ? (
+                        // Cada ítem pasa por markdown: las implicaciones pueden
+                        // traer énfasis, y pintarlas como texto plano dejaba
+                        // los asteriscos LITERALES en pantalla — también en
+                        // sermones viejos que ya vienen con "**…**" guardado.
                         <ol className="list-decimal pl-5 space-y-1 text-sm">
                             {bloque.items.map((item, j) => (
-                                <li key={j}>{item}</li>
+                                <li key={j}>
+                                    <MarkdownRenderer content={item} reading />
+                                </li>
                             ))}
                         </ol>
                     ) : (

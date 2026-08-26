@@ -613,7 +613,7 @@ describe('buildSermonDraftPrompt — hallazgos del smoke del fundador (2026-08-2
     });
 
     it('las implicaciones van sin el prefijo que se veía con asteriscos literales', () => {
-        expect(p()).toContain('SIN el\n       prefijo "**Implicación:**"');
+        expect(p()).toContain('nada de "**Implicación:**"');
         expect(p()).not.toContain('Empieza cada\n       entrada con "**Implicación:**"');
     });
 
@@ -631,5 +631,22 @@ describe('buildSermonDraftPrompt — hallazgos del smoke del fundador (2026-08-2
 
     it('prohíbe narrar el acto de predicar', () => {
         expect(p()).toContain('Hoy comenzamos a explorar');
+    });
+});
+
+describe('buildSermonDraftPrompt — segundo smoke del fundador (viñetas y conclusión)', () => {
+    const p = () => buildSermonDraftPrompt(baseAnalysis, {} as any, 'es');
+
+    it('la exposición del punto va en viñetas, un movimiento por concepto', () => {
+        expect(p()).toContain('CADA UNO COMO SU\n   PROPIA VIÑETA');
+    });
+
+    it('las implicaciones van sin anclas en negrita — la lista ya separa', () => {
+        expect(p()).toContain('SIN anclas en negrita');
+    });
+
+    it('la conclusión son puntos precisos, no prosa', () => {
+        expect(p()).toContain('CONCLUSIÓN — PUNTOS PRECISOS, NO PROSA');
+        expect(p()).toContain('UNA VIÑETA POR CADA');
     });
 });
