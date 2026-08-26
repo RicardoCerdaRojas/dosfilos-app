@@ -40,8 +40,9 @@ export interface GreekKeyInsight {
  * distingue un caché viejo de una decisión del modelo.
  *
  * v1: traducciones + words. v2: + keyInsights. v3: + wordOrderNote.
+ * v4: genitivos en cadena — la aposición muestra "(de) X" y lo explica.
  */
-export const GREEK_INSIGHT_PROMPT_VERSION = 3;
+export const GREEK_INSIGHT_PROMPT_VERSION = 4;
 
 export interface GreekVerseInsight {
     /** "JAS 1:2" — la clave del caché. */

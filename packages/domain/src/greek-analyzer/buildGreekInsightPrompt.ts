@@ -63,7 +63,12 @@ Y para CADA palabra, en el MISMO ORDEN de la lista:
 - "syntacticFunction": cómo funciona ESTA palabra en ESTA frase, en una línea
   ("sujeto de ἡγήσασθε", "objeto directo", "genitivo de relación…"). Apóyate
   en la morfología dada.
-- "translation": su traducción contextual en este versículo.
+- "translation": su traducción contextual en este versículo. CASO ESPECIAL —
+  genitivos en cadena: cuando la palabra es aposición de un genitivo cuyo "de"
+  ya se puso en español ("del Señor Jesucristo" lleva UN solo "de"), escribe
+  la traducción como "(de) X" — el paréntesis muestra que la preposición viene
+  repartida del núcleo del sintagma, no omitida. Y dilo en su
+  "syntacticFunction": "comparte el 'de' de κυρίου".
 
 Y ADEMÁS, "keyInsights": elige las 2 o 3 palabras que cargan el PESO
 TEOLÓGICO del versículo y explica su SIGNIFICANCIA para la predicación — el
