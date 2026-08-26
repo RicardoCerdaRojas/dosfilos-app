@@ -67,6 +67,7 @@ import { WizardStepShell } from './WizardStepShell';
 import { RegenerateDraftAction } from './draft/RegenerateDraftAction';
 import { StudyReadingSheet } from './draft/StudyReadingSheet';
 import { ToolbarIconButton } from './ToolbarIconButton';
+import { PanelGroup } from '@/components/ui/PanelGroup';
 import { WorkshopDraftActions } from './draft/WorkshopDraftActions';
 
 export function StepDraft() {
@@ -778,7 +779,10 @@ export function StepDraft() {
     const draftBody = draft ? (
         <>
             <IllustrationDuplicateBanner draft={draft} />
-            <div className="flex-1 min-h-0 flex gap-4 overflow-hidden">
+            {/* UN MARCO, PANELES PEGADOS, LA LÍNEA ES EL BORDE COMPARTIDO —
+                el patrón VS Code. Con tarjetas sueltas y gap-4, el divisor
+                flotaba en el vacío y nunca se veía centrado. */}
+            <PanelGroup>
                 <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
                     <div className="flex-1 min-h-0">
                         <ContentCanvas
@@ -878,12 +882,13 @@ export function StepDraft() {
                             }}
                             activeContext={activeContext}
                             onRefreshContext={handleRefreshContext}
+                            frameless
                             onSyncDocuments={() => Promise.resolve()}
                             isSyncingDocuments={false}
                         />
                     )}
                 </ResizableChatPanel>
-            </div>
+            </PanelGroup>
         </>
     ) : null;
 

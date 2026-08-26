@@ -1,6 +1,7 @@
-import React, { useState, useCallback, useEffect, useRef, ReactNode } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PanelDivider } from '@/components/ui/PanelDivider';
 import { cn } from '@/lib/utils';
 
 interface ResizableChatPanelProps {
@@ -18,6 +19,19 @@ const DEFAULT_MIN_WIDTH = 320;
 const DEFAULT_MAX_WIDTH = 800;
 const DEFAULT_WIDTH = 384; // w-96 = 24rem = 384px
 
+/**
+ * El panel lateral del chat, al patrón VS Code dentro de un `PanelGroup`.
+ *
+ * Su primer hijo es el `PanelDivider`: la línea de 1px que separa el panel
+ * del contenido, con arrastre para el ancho y chevron para PLEGARLO — el
+ * mismo control, en el mismo lugar, que los divisores del taller. Antes cada
+ * pantalla tenía su propio mecanismo (acá un grip ⋮⋮ flotante, allá el rail
+ * con chevron) y el fundador lo señaló comparando con VS Code: la misma
+ * interacción se veía de dos formas y ninguna definida.
+ *
+ * El plegado se persiste junto al ancho: quien trabaja sin chat no quiere
+ * reabrirlo en cada sermón.
+ */
 export function ResizableChatPanel({
     children,
     storageKey = 'generatorChatWidth',
@@ -33,131 +47,69 @@ export function ResizableChatPanel({
         const stored = localStorage.getItem(storageKey);
         return stored ? Math.min(Math.max(parseInt(stored), minWidth), maxWidth) : defaultWidth;
     });
-    
-    const [isResizing, setIsResizing] = useState(false);
+    const [isOpen, setIsOpen] = useState(() => {
+        if (typeof window === 'undefined') return true;
+        return localStorage.getItem(`${storageKey}.open`) !== '0';
+    });
     const [isMaximized, setIsMaximized] = useState(false);
-    const panelRef = useRef<HTMLDivElement>(null);
 
-    // Save width to localStorage
     useEffect(() => {
         localStorage.setItem(storageKey, panelWidth.toString());
     }, [panelWidth, storageKey]);
-
-    // Handle mouse move during resize
-    const handleMouseMove = useCallback((e: MouseEvent) => {
-        if (!isResizing || !panelRef.current) return;
-        
-        const panelRect = panelRef.current.getBoundingClientRect();
-        if (!panelRect) return;
-        
-        // Calculate new width based on distance from mouse to panel's RIGHT edge
-        // This works for both scenarios:
-        // - Panel aligned to right of viewport
-        // - Panel in a flex container
-        const newWidth = panelRect.right - e.clientX;
-        
-        if (newWidth >= minWidth && newWidth <= maxWidth) {
-            setPanelWidth(newWidth);
-        }
-    }, [isResizing, minWidth, maxWidth]);
-
-    // Handle mouse up - stop resizing
-    const handleMouseUp = useCallback(() => {
-        setIsResizing(false);
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-    }, []);
-
-    // Add/remove event listeners
     useEffect(() => {
-        if (isResizing) {
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-            document.body.style.cursor = 'col-resize';
-            document.body.style.userSelect = 'none';
-        }
-        
-        return () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        };
-    }, [isResizing, handleMouseMove, handleMouseUp]);
+        localStorage.setItem(`${storageKey}.open`, isOpen ? '1' : '0');
+    }, [isOpen, storageKey]);
 
-    // Start resizing
-    const startResize = useCallback((e: React.MouseEvent) => {
-        e.preventDefault();
-        setIsResizing(true);
-    }, []);
+    const toggleMaximize = () => setIsMaximized(!isMaximized);
 
-    const toggleMaximize = () => {
-        setIsMaximized(!isMaximized);
-    };
+    if (isMaximized) {
+        return (
+            <div className={cn('fixed inset-0 z-50 bg-background flex flex-col', className)}>
+                {showMaximizeButton && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-3 right-3 z-20 h-7 w-7"
+                        onClick={toggleMaximize}
+                        title="Minimizar"
+                    >
+                        <Minimize2 className="h-4 w-4" />
+                    </Button>
+                )}
+                <div className="h-full flex-1 min-h-0">{children}</div>
+            </div>
+        );
+    }
 
     return (
-        <div
-            ref={panelRef}
-            className={cn(
-                "flex-shrink-0 relative flex flex-col",
-                isMaximized && "fixed inset-0 z-50 bg-background",
-                isResizing && "select-none",
-                className
-            )}
-            style={{ 
-                width: isMaximized ? '100%' : `${panelWidth}px`,
-                height: isMaximized ? '100%' : undefined
-            }}
-        >
-            {/* BORDE REDIMENSIONABLE AL PATRÓN VS CODE: la LÍNEA es el
-                affordance — una vertical de 1px siempre visible a todo lo
-                alto, que se ilumina con el acento al pasar el mouse y en
-                pleno arrastre, con zona de agarre invisible más ancha.
-
-                Reemplaza al icono de grip (⋮⋮) al 30% flotando dentro del
-                panel: el fundador lo comparó con VS Code — "parecen no bien
-                definidos y poco intuitivos" — y tenía razón: un puntito sin
-                línea no dice ni dónde termina el panel ni que se arrastra.
-                Mismo lenguaje que `RailDivider`, para que TODOS los bordes
-                redimensionables de la app se lean igual. */}
-            {!isMaximized && (
+        <>
+            <PanelDivider
+                panelSide="right"
+                isOpen={isOpen}
+                onToggle={() => setIsOpen((v) => !v)}
+                onResize={(delta) =>
+                    setPanelWidth((w) => Math.min(maxWidth, Math.max(minWidth, w + delta)))
+                }
+            />
+            {isOpen && (
                 <div
-                    role="separator"
-                    aria-orientation="vertical"
-                    className="group absolute left-0 top-0 bottom-0 w-3 -ml-1.5 cursor-col-resize z-10 select-none"
-                    onMouseDown={startResize}
+                    className={cn('flex-shrink-0 relative flex flex-col min-h-0', className)}
+                    style={{ width: `${panelWidth}px` }}
                 >
-                    <div
-                        className={cn(
-                            'pointer-events-none absolute inset-y-0 left-1/2 -translate-x-1/2 w-px transition-colors',
-                            isResizing ? 'bg-primary' : 'bg-border group-hover:bg-primary/60',
-                        )}
-                    />
+                    {showMaximizeButton && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-3 right-3 z-20 h-7 w-7"
+                            onClick={toggleMaximize}
+                            title="Pantalla Completa"
+                        >
+                            <Maximize2 className="h-4 w-4" />
+                        </Button>
+                    )}
+                    <div className="h-full flex-1 min-h-0">{children}</div>
                 </div>
             )}
-
-            {/* Maximize/Minimize Button - positioned at top right of panel */}
-            {showMaximizeButton && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-3 right-3 z-20 h-7 w-7"
-                    onClick={toggleMaximize}
-                    title={isMaximized ? "Minimizar" : "Pantalla Completa"}
-                >
-                    {isMaximized ? (
-                        <Minimize2 className="h-4 w-4" />
-                    ) : (
-                        <Maximize2 className="h-4 w-4" />
-                    )}
-                </Button>
-            )}
-
-            {/* Content with padding for resize handle */}
-            <div className={cn(
-                "h-full flex-1 min-h-0",
-                !isMaximized && "pl-2"
-            )}>
-                {children}
-            </div>
-        </div>
+        </>
     );
 }

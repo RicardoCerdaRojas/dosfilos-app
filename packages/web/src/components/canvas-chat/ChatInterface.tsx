@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 import { ContentType, CanvasChatMessage, CoachingStyle } from '@dosfilos/domain';
 import { SourceReference } from '@dosfilos/application';
 import { Card } from '@/components/ui/card';
@@ -41,6 +42,12 @@ interface ChatInterfaceProps<T = any> {
   onApplyChange: (messageId: string, newContent: any) => void;
   onContentUpdate: (content: T) => void;
   focusedSection?: string | null;
+  /**
+   * Dentro de un `PanelGroup` el marco lo pone el grupo: la Card interna va
+   * sin borde ni esquinas — con los dos, el chat era una caja dentro del
+   * marco y los paneles nunca se leían como una sola área de trabajo.
+   */
+  frameless?: boolean;
   disableDefaultAI?: boolean;
   externalIsLoading?: boolean;
   // New: Coaching style support
@@ -64,6 +71,7 @@ export function ChatInterface<T = any>({
   onApplyChange,
   onContentUpdate,
   focusedSection = null,
+  frameless = false,
   disableDefaultAI = false,
   externalIsLoading = false,
   selectedStyle = 'auto',
@@ -215,7 +223,12 @@ export function ChatInterface<T = any>({
           propio espaciado (header `p-4 border-b`, mensajes `p-4`, input abajo).
           Sumados, empujaban el contenido hacia abajo y el estado vacío quedaba
           flotando lejos del encabezado. Mismo caso que SectionCard. */}
-      <Card className="h-full flex flex-col overflow-hidden relative py-0 gap-0">
+      <Card
+        className={cn(
+            'h-full flex flex-col overflow-hidden relative py-0 gap-0',
+            frameless && 'border-0 rounded-none shadow-none',
+        )}
+      >
         {/* Header */}
         <div className="p-4 pr-12 border-b flex-shrink-0">
           <div className="flex items-center gap-2">

@@ -161,15 +161,12 @@ export function ContentCanvas<T = any>({
   // List mode: Show all sections
   return (
     <ScrollArea className="h-full">
-      {/* SIN PADDING ARRIBA NI A LA IZQUIERDA. El paso ya pone su propio
-          margen alrededor de todo: el que agregaba este contenedor era un
-          SEGUNDO margen, y dejaba las tarjetas 16px más abajo que el panel de
-          chat de al lado y 16px más a la derecha que las pestañas del
-          encabezado. La columna arranca donde arranca el paso.
-
-          A la derecha sí queda: ahí va la barra del `ScrollArea`, y sin
-          separación la tarjeta le queda debajo. */}
-      <div className="space-y-3 pr-4 pb-4">
+      {/* PADDING COMPLETO: el lienzo vive dentro del marco de un
+          `PanelGroup`, y el contenido de un panel respira contra sus cuatro
+          bordes — como en VS Code. (Cuando las columnas eran tarjetas sueltas
+          este padding desalineaba contra la banda; el marco eliminó esa
+          referencia cruzada.) */}
+      <div className="space-y-3 p-4">
         {sections.map((section) => {
           const sectionContent = getValueByPath(content, section.path);
           const isModified = modifiedSections.has(section.id);

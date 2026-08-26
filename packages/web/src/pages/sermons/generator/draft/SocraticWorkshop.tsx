@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { RailDivider } from '@/components/ui/RailDivider';
+import { PanelDivider } from '@/components/ui/PanelDivider';
+import { PanelGroup } from '@/components/ui/PanelGroup';
 import { useTranslation } from '@/i18n';
 import type { ElementsPromptInput, SermonElement, WalkSection } from '@dosfilos/domain';
 import { SermonMap } from './SermonMap';
@@ -46,7 +47,7 @@ function anchoGuardado(clave: string, inicial: number, min: number, max: number)
 /**
  * El taller socrático completo: mapa a la izquierda, sección activa a la derecha.
  *
- * EL MAPA SE REDIMENSIONA Y SE PLIEGA con el mismo `RailDivider` de Faculty —
+ * EL MAPA SE REDIMENSIONA Y SE PLIEGA con el `PanelDivider` compartido —
  * no un control nuevo. Los títulos de los puntos son frases largas ("I. Dios
  * habla y revela su voluntad (vv. 1-2)"), así que un ancho fijo los parte en
  * tres líneas y el mapa deja de leerse de un vistazo, que es su único trabajo.
@@ -118,7 +119,7 @@ export function SocraticWorkshop(props: Props) {
             pestaña se quedaba sin los botones del paso —no había forma de
             publicar sin volver a Borrador— y el título aparecía dos veces al
             cambiar de pestaña. */}
-        <div className="flex items-stretch gap-0 flex-1 min-h-0">
+        <PanelGroup className="items-stretch">
             {abierto && (
                 <div style={{ width: ancho }} className="shrink-0 overflow-hidden">
                     <SermonMap
@@ -130,8 +131,8 @@ export function SocraticWorkshop(props: Props) {
                 </div>
             )}
 
-            <RailDivider
-                side="left"
+            <PanelDivider
+                panelSide="left"
                 isOpen={abierto}
                 onToggle={() => setAbierto((v) => !v)}
                 // Arrastrar con el riel plegado no tiene sentido: no hay nada
@@ -207,8 +208,8 @@ export function SocraticWorkshop(props: Props) {
                 pero sus notas del bosquejo siguen necesitando redacción. */}
             {props.activeSection.mode === 'elements' && (
                 <>
-                    <RailDivider
-                        side="right"
+                    <PanelDivider
+                        panelSide="right"
                         isOpen={prosaAbierta}
                         onToggle={() => setProsaAbierta((v) => !v)}
                         onResize={prosaAbierta ? redimensionarProsa : undefined}
@@ -230,7 +231,7 @@ export function SocraticWorkshop(props: Props) {
                     )}
                 </>
             )}
-        </div>
+        </PanelGroup>
         </div>
     );
 }
