@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, ReactNode } from 'react';
-import { GripVertical, Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -107,20 +107,29 @@ export function ResizableChatPanel({
                 height: isMaximized ? '100%' : undefined
             }}
         >
-            {/* Resize Handle - only show when not maximized */}
+            {/* BORDE REDIMENSIONABLE AL PATRÓN VS CODE: la LÍNEA es el
+                affordance — una vertical de 1px siempre visible a todo lo
+                alto, que se ilumina con el acento al pasar el mouse y en
+                pleno arrastre, con zona de agarre invisible más ancha.
+
+                Reemplaza al icono de grip (⋮⋮) al 30% flotando dentro del
+                panel: el fundador lo comparó con VS Code — "parecen no bien
+                definidos y poco intuitivos" — y tenía razón: un puntito sin
+                línea no dice ni dónde termina el panel ni que se arrastra.
+                Mismo lenguaje que `RailDivider`, para que TODOS los bordes
+                redimensionables de la app se lean igual. */}
             {!isMaximized && (
                 <div
-                    className={cn(
-                        "absolute left-0 top-0 bottom-0 w-2 cursor-col-resize z-10 flex items-center justify-center group hover:bg-primary/10 transition-colors",
-                        isResizing && "bg-primary/20"
-                    )}
+                    role="separator"
+                    aria-orientation="vertical"
+                    className="group absolute left-0 top-0 bottom-0 w-3 -ml-1.5 cursor-col-resize z-10 select-none"
                     onMouseDown={startResize}
                 >
-                    <GripVertical 
+                    <div
                         className={cn(
-                            "h-6 w-6 text-muted-foreground/30 group-hover:text-muted-foreground transition-all",
-                            isResizing && "text-primary"
-                        )} 
+                            'pointer-events-none absolute inset-y-0 left-1/2 -translate-x-1/2 w-px transition-colors',
+                            isResizing ? 'bg-primary' : 'bg-border group-hover:bg-primary/60',
+                        )}
                     />
                 </div>
             )}
