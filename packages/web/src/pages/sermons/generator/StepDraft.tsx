@@ -5,7 +5,7 @@ import { DerivedContextBanner } from './DerivedContextBanner';
 import { SermonPersonalizationPanel } from './SermonPersonalizationPanel';
 import { IllustrationDuplicateBanner } from './IllustrationDuplicateBanner';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft, Save, Sparkles, Eye, Upload, BookOpen } from 'lucide-react';
+import { Loader2, ArrowLeft, Save, Eye, Upload, BookOpen } from 'lucide-react';
 import {
     sermonGeneratorService,
     sermonService,
@@ -40,7 +40,6 @@ import { ResizableChatPanel } from '@/components/canvas-chat/ResizableChatPanel'
 
 import { useContentHistory } from '@/hooks/useContentHistory';
 import { useGeneratorChat } from '@/hooks/useGeneratorChat';
-import { MarkdownRenderer } from '@/components/canvas-chat/MarkdownRenderer';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
@@ -63,6 +62,7 @@ import { WizardStepHeader } from './WizardStepHeader';
 import { WizardStepShell } from './WizardStepShell';
 import { RegenerateDraftAction } from './draft/RegenerateDraftAction';
 import { StudyReadingSheet } from './draft/StudyReadingSheet';
+import { DraftPathChooser } from './draft/DraftPathChooser';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import { PanelGroup } from '@/components/ui/PanelGroup';
 import { WorkshopDraftActions } from './draft/WorkshopDraftActions';
@@ -88,6 +88,15 @@ export function StepDraft() {
      * pregunta de alguien que no sabe si su acción funcionó.
      */
     const [activeTab, setActiveTab] = useState<'draft' | 'workshop'>('draft');
+    /**
+     * El pastor ya eligió camino en esta visita.
+     *
+     * No se persiste: al volver a un sermón donde ya decidió algo, `hayDecisiones`
+     * basta para saltarse el selector. Sirve para el caso en que acaba de
+     * pulsar "Entrar al taller" y todavía no decidió nada — sin esto, el
+     * selector volvería a aparecer sobre la pantalla que acaba de abrir.
+     */
+    const [caminoElegido, setCaminoElegido] = useState(false);
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
     // Pre-publish citation verification state (PR #218).
@@ -652,7 +661,7 @@ export function StepDraft() {
     // `draftBody`, o sea dentro de la pestaña Borrador: al pasar al Taller
     // desaparecían el título y TODOS los botones del paso —publicar incluido—
     // y no quedaba forma de publicar sin volver a la otra pestaña.
-    const stepHeader = draft ? (
+    const stepHeader = (
             <WizardStepHeader
                 leading={
                     socraticPanel ? (
@@ -660,19 +669,20 @@ export function StepDraft() {
                            en el orden del trabajo —decidir y después armar—, el
                            mismo que el asistente ya usa arriba. El borrador es
                            el resultado, no el punto de partida.
-                           ABRE EN BORRADOR de todos modos, porque estas
-                           pestañas sólo existen cuando YA hay uno: sin borrador
-                           el taller es lo único que se muestra, así que el
-                           primer trabajo empieza ahí por sí solo. Volver a
-                           entrar y aterrizar en el taller lo obligaría a buscar
-                           su sermón cada vez. */
+                           SIN BORRADOR TAMBIÉN EXISTEN: el pastor entra al
+                           taller desde el selector y trabaja acá, en la
+                           pantalla real. Antes exigían un borrador ya hecho, y
+                           por eso el taller se incrustaba ADEMÁS en el estado
+                           vacío — el mismo panel montado dos veces, con
+                           affordances distintas. Abre en Borrador cuando ya
+                           hay uno; en Taller cuando no. */
                         <TabsList>
                             <TabsTrigger value="workshop">{t('drafting.tabs.workshop')}</TabsTrigger>
                             <TabsTrigger value="draft">{t('drafting.tabs.draft')}</TabsTrigger>
                         </TabsList>
                     ) : undefined
                 }
-                title={draft.title}
+                title={draft?.title || t('drafting.title')}
                 meta={
                     activeTab === 'workshop'
                         ? t('drafting.sections.pendingCount', {
@@ -684,15 +694,15 @@ export function StepDraft() {
                           // anteriores a este campo no dicen NADA: la ausencia
                           // de dato no es evidencia, nunca se acusa por falta
                           // de registro.
-                          draft.assembledFrom && (
+                          draft?.assembledFrom && (
                               <span
                                   className={
-                                      draft.assembledFrom === 'workshop'
+                                      draft!.assembledFrom === 'workshop'
                                           ? 'rounded bg-primary/10 px-1.5 py-0.5 text-[11px] leading-none text-primary'
                                           : 'rounded bg-muted px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground'
                                   }
                               >
-                                  {t(`drafting.provenance.${draft.assembledFrom}`)}
+                                  {t(`drafting.provenance.${draft!.assembledFrom}`)}
                               </span>
                           )
                 }
@@ -783,7 +793,7 @@ export function StepDraft() {
                 </Button>
                 </>}
             />
-    ) : null;
+    );
 
     // Se define acá arriba para poder envolverlo en pestañas sin re-indentar
     // 180 líneas. El ternario estrecha `draft`: dentro de la rama verdadera ya
@@ -902,89 +912,46 @@ export function StepDraft() {
                 </ResizableChatPanel>
             </PanelGroup>
         </>
-    ) : null;
-
-    const leftPanel = !draft ? (
-        // overflow-y-auto so the "Generar Borrador" CTA stays reachable
-        // when SermonPersonalizationPanel is expanded — without scroll
-        // the panel's accordion body pushes the button below the
-        // viewport with no way to reach it short of collapsing the panel.
-        <div className="h-full flex flex-col overflow-y-auto">
-            {/* UNA SOLA COLUMNA, UN SOLO TRABAJO: elegir camino. Antes esta
-                pantalla apilaba cinco bloques que competían —encabezado,
-                proposición, selector, taller y contexto pastoral— más un panel
-                a la derecha que repetía los puntos y narraba sólo el camino
-                generado. */}
-            <div className="mx-auto w-full max-w-5xl px-1 py-2 space-y-6">
-                <div>
-                    <h2 className="text-2xl font-bold">{t('drafting.title')}</h2>
-                    <p className="text-muted-foreground">{t('drafting.subtitle')}</p>
-                </div>
-
-                {/* EL MATERIAL DEL QUE PARTEN LOS DOS, en una línea de
-                    referencia y no en una tarjeta grande: acá no se decide
-                    nada sobre él, sólo se confirma que llegó. */}
-                <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-2">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        {t('drafting.homileticalProposition')}
-                    </h3>
-                    <div className="text-sm font-medium italic">
-                        <MarkdownRenderer content={homiletics.homileticalProposition} />
-                    </div>
-                    {homiletics.outline?.mainPoints && homiletics.outline.mainPoints.length > 0 && (
-                        <ol className="list-decimal pl-5 text-sm text-muted-foreground space-y-0.5">
-                            {homiletics.outline.mainPoints.map((point: any, index: number) => (
-                                <li key={index}>{point.title}</li>
-                            ))}
-                        </ol>
-                    )}
-                </div>
-
-                {/* LA ELECCIÓN, con las mismas palabras para los dos caminos.
-                    El taller no lleva botón: ES lo que sigue abajo, ya
-                    desplegado — un botón que hiciera scroll fingiría una
-                    navegación que no existe. */}
-                <div className="space-y-3">
-                    <div>
-                        <h3 className="font-semibold">{t('drafting.paths.heading')}</h3>
-                        <p className="text-sm text-muted-foreground">{t('drafting.paths.subheading')}</p>
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                        <div className="rounded-lg border-2 border-primary/50 bg-primary/[0.03] p-4 space-y-1.5">
-                            <div className="flex items-center gap-2">
-                                <h4 className="font-medium text-sm">{t('drafting.paths.workshopTitle')}</h4>
-                                <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] leading-none text-primary">
-                                    {t('drafting.paths.workshopBadge')}
-                                </span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">{t('drafting.paths.workshopDesc')}</p>
-                        </div>
-                        <div className="rounded-lg border border-border p-4 space-y-3">
-                            <div className="space-y-1.5">
-                                <h4 className="font-medium text-sm">{t('drafting.paths.generateTitle')}</h4>
-                                <p className="text-sm text-muted-foreground">{t('drafting.paths.generateDesc')}</p>
-                            </div>
-                            <Button
-                                onClick={() => void handleGenerate()}
-                                disabled={loading}
-                                variant="outline"
-                                size="sm"
-                            >
-                                <Sparkles className="mr-2 h-4 w-4" />
-                                {t('drafting.generateBtn')}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* EL TALLER, A ANCHO COMPLETO. Repartía tres columnas dentro
-                    de media pantalla mientras el panel informativo de la
-                    derecha ocupaba la otra mitad para repetir lo ya dicho. */}
-                {socraticPanel}
-
-                <SermonPersonalizationPanel />
+    ) : (
+        // LA PESTAÑA BORRADOR EXISTE ANTES DEL BORRADOR. Sin esto, entrar al
+        // taller sin haber armado nada dejaba una pestaña que no se podía
+        // abrir — y el pastor sin saber qué le falta para llenarla.
+        <div className="flex-1 min-h-0 flex items-center justify-center p-8">
+            <div className="max-w-md text-center space-y-2">
+                <h3 className="font-semibold">{t('drafting.emptyDraftTitle')}</h3>
+                <p className="text-sm text-muted-foreground">{t('drafting.emptyDraftDesc')}</p>
             </div>
         </div>
+    );
+
+    // EL SELECTOR ES UNA COMPUERTA, NO UNA PANTALLA DE TRABAJO. Antes
+    // incrustaba el taller completo debajo — el mismo que vive en su
+    // pestaña, pero en media pantalla y sin la banda del paso. El fundador
+    // lo cortó: "no lo veo posible por espacio". El problema no era el
+    // espacio: era el taller MONTADO EN DOS LUGARES.
+    //
+    // Se muestra sólo mientras no haya por dónde entrar: sin borrador, sin
+    // decisiones y sin haber elegido en esta sesión. En cuanto decide algo,
+    // la pantalla de trabajo es la suya y volver al selector sería un paso
+    // atrás que él no pidió.
+    const mostrarSelector = !draft && !hayDecisiones && !caminoElegido;
+
+    const leftPanel = mostrarSelector ? (
+        <DraftPathChooser
+            personalization={<SermonPersonalizationPanel />}
+            proposition={homiletics.homileticalProposition}
+            pointTitles={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title).filter(Boolean)}
+            onEnterWorkshop={
+                socraticPanel
+                    ? () => {
+                          setCaminoElegido(true);
+                          setActiveTab('workshop');
+                      }
+                    : undefined
+            }
+            onGenerate={() => void handleGenerate()}
+            generating={loading}
+        />
     ) : (
         <div className="h-full flex flex-col gap-4 overflow-hidden p-4">
             {/* PESTAÑAS Y NO UN PANEL ENCIMA. Con el taller abierto sobre el

@@ -618,14 +618,17 @@
       "subheading": "Los dos parten de tu estudio y tu bosquejo. La diferencia es quién decide las ideas.",
       "workshopTitle": "El taller",
       "workshopBadge": "Recomendado",
-      "workshopDesc": "Decides sección por sección — tus ideas, las palabras de tu estudio, tus citas — y el asistente redacta desde lo que decidiste. Empieza abajo.",
+      "workshopDesc": "Decides sección por sección — tus ideas, las palabras de tu estudio, tus citas — y el asistente redacta desde lo que decidiste.",
       "generateTitle": "Borrador completo de una vez",
-      "generateDesc": "El asistente escribe todo el sermón desde tu estudio y tu bosquejo. Útil cuando el tiempo apremia: podrás refinarlo en el taller, y el borrador quedará marcado como generado."
+      "generateDesc": "El asistente escribe todo el sermón desde tu estudio y tu bosquejo. Útil cuando el tiempo apremia: podrás refinarlo en el taller, y el borrador quedará marcado como generado.",
+      "workshopCta": "Entrar al taller"
     },
     "provenance": {
       "workshop": "Armado desde tus decisiones",
       "generated": "Generado — refínalo en el taller"
-    }
+    },
+    "emptyDraftTitle": "Todavía no has armado el borrador",
+    "emptyDraftDesc": "Decide las secciones en el Taller y pulsa «Armar borrador», o genera el sermón completo desde la banda de arriba."
   },
   "pastoralContext": {
     "title": "Contexto Pastoral (Opcional)",
