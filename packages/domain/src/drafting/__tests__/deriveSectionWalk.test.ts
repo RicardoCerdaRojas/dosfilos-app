@@ -327,3 +327,13 @@ describe('palabras clave por punto (convergencia PR 3)', () => {
         expect(faltantes.some((s) => s.id === 'point.1.keyWords')).toBe(false);
     });
 });
+
+describe('la cita de autoridad es de ítems finales', () => {
+    it('no se redacta: su texto ES el contenido — el contador del botón y el mapa miden igual', () => {
+        const walk = deriveSectionWalk({
+            proposition: 'Tesis.',
+            points: [{ title: 'I. Dios habla (vv. 1-2)', application: '', scriptureReferences: [] }],
+        } as any);
+        expect(walk.find((s) => s.id === 'point.1.authorityQuote')?.definition.itemsAreFinal).toBe(true);
+    });
+});

@@ -191,19 +191,10 @@ export function SectionElementsPanel(props: Props) {
         );
 
     const handlePropose = async () => {
-        if (esItemsFinales) {
-            // DETERMINISTA: las palabras vienen del estudio, no del modelo. Se
-            // filtran las que ya decidió o descartó — re-proponer su propio
-            // trabajo es la forma más rápida de que abandone el flujo.
-            const yaVistas = new Set(props.elements.map((e) => e.text.trim()));
-            const restantes = (props.studyKeyWords ?? []).filter((k) => !yaVistas.has(k.trim()));
-            if (restantes.length === 0) {
-                toast.info(t('drafting.elements.keyWords.sinPalabras'));
-                return;
-            }
-            setProposals(restantes.map((text) => ({ text, why: t('drafting.elements.keyWords.fromStudy') })));
-            return;
-        }
+        // LAS CITAS PRIMERO: también son ítems finales (no se redactan), pero
+        // su mecanismo de propuesta es OTRO — se buscan en la biblioteca, no
+        // en el estudio de palabras. Con la rama genérica antes, este botón
+        // le traería palabras hebreas a la sección de citas.
         if (esCitaDeAutoridad) {
             const r = await proponerCitas({
                 // La cita debe respaldar lo que el punto AFIRMA, no el pasaje
@@ -226,6 +217,19 @@ export function SectionElementsPanel(props: Props) {
             // tenga nada del tema no es lo mismo que tener y que no encaje, y
             // ninguno de los dos es un error.
             else toast.info(t(`drafting.elements.quotes.${r.kind}`));
+            return;
+        }
+        if (esItemsFinales) {
+            // DETERMINISTA: las palabras vienen del estudio, no del modelo. Se
+            // filtran las que ya decidió o descartó — re-proponer su propio
+            // trabajo es la forma más rápida de que abandone el flujo.
+            const yaVistas = new Set(props.elements.map((e) => e.text.trim()));
+            const restantes = (props.studyKeyWords ?? []).filter((k) => !yaVistas.has(k.trim()));
+            if (restantes.length === 0) {
+                toast.info(t('drafting.elements.keyWords.sinPalabras'));
+                return;
+            }
+            setProposals(restantes.map((text) => ({ text, why: t('drafting.elements.keyWords.fromStudy') })));
             return;
         }
 
@@ -309,19 +313,19 @@ export function SectionElementsPanel(props: Props) {
 
             <ElementProposals
                 proposeKey={
-                    esItemsFinales
-                        ? 'drafting.elements.keyWords.propose'
-                        : esCitaDeAutoridad
-                          ? 'drafting.elements.quotes.propose'
+                    esCitaDeAutoridad
+                        ? 'drafting.elements.quotes.propose'
+                        : esItemsFinales
+                          ? 'drafting.elements.keyWords.propose'
                           : esVerbatim
                             ? vk('propose')
                             : 'drafting.elements.propose'
                 }
                 proposeMoreKey={
-                    esItemsFinales
-                        ? 'drafting.elements.keyWords.proposeMore'
-                        : esCitaDeAutoridad
-                          ? 'drafting.elements.quotes.proposeMore'
+                    esCitaDeAutoridad
+                        ? 'drafting.elements.quotes.proposeMore'
+                        : esItemsFinales
+                          ? 'drafting.elements.keyWords.proposeMore'
                           : esVerbatim
                             ? vk('proposeMore')
                             : 'drafting.elements.proposeMore'

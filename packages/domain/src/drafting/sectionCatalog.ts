@@ -175,6 +175,12 @@ export const SECTION_CATALOG: readonly SectionDefinition[] = [
         jobKey: `${NS}.authorityQuote.job`,
         target: { kind: 'pointAuthorityQuote' },
         optional: true,
+        // EL TEXTO DE LA CITA ES EL CONTENIDO FINAL: no se redacta — redactar
+        // una cita es reescribirla, y el ensamblador ya la toma verbatim. Sin
+        // esto, el botón de redactar contaba la cita decidida como "falta 1
+        // por redactar" mientras el mapa mostraba todo en check: dos varas
+        // midiendo la misma sección con reglas distintas.
+        itemsAreFinal: true,
         // VARIAS CITAS PERMITIDAS — decisión del fundador (2026-08-26). La
         // regla anterior ("un punto se respalda con una voz") reemplazaba cada
         // cita nueva por la anterior; ahora es un CONSEJO visible cuando hay
