@@ -458,6 +458,12 @@
         "sinCoincidencias": "There is material in your library, but none supports what this point claims.",
         "falló": "Couldn't search your library. Try again.",
         "showSource": "Show the source excerpt"
+      },
+      "keyWords": {
+        "propose": "Bring the ones from my study",
+        "proposeMore": "Bring the remaining ones",
+        "fromStudy": "From your word study.",
+        "sinPalabras": "Your study recorded no key words for this passage."
       }
     },
     "sections": {
@@ -557,6 +563,10 @@
       "authorityQuote": {
         "label": "Point {{n}} — authority quote",
         "job": "A voice that backs what you just expounded. Only if you have a verifiable one: an invented quote in the pulpit destroys credibility."
+      },
+      "keyWords": {
+        "label": "Point {{n}} — key words",
+        "job": "The words from your study this point uses. Decide which belong here; they enter the draft as you leave them."
       }
     },
     "tabs": {

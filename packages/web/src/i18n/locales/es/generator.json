@@ -458,6 +458,12 @@
         "sinCoincidencias": "Hay material en tu biblioteca, pero ninguno respalda lo que este punto afirma.",
         "falló": "No se pudo buscar en tu biblioteca. Intenta de nuevo.",
         "showSource": "Ver el fragmento de origen"
+      },
+      "keyWords": {
+        "propose": "Tráeme las del estudio",
+        "proposeMore": "Tráeme las que faltan",
+        "fromStudy": "De tu estudio de palabras.",
+        "sinPalabras": "Tu estudio no registró palabras clave para este pasaje."
       }
     },
     "sections": {
@@ -557,6 +563,10 @@
       "authorityQuote": {
         "label": "Punto {{n}} — cita de autoridad",
         "job": "Una voz que respalde lo que acabas de exponer. Sólo si tienes una verificable: una cita inventada en el púlpito destruye la credibilidad."
+      },
+      "keyWords": {
+        "label": "Punto {{n}} — palabras clave",
+        "job": "Las palabras de tu estudio que este punto usa. Decide cuáles pertenecen aquí; entran al borrador tal como las dejes."
       }
     },
     "tabs": {

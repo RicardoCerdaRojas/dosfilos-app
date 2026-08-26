@@ -608,6 +608,20 @@ export function StepDraft() {
                       }
                     : undefined
             }
+            // El MISMO formato que el generador emite en su campo `keyWords`:
+            // la palabra en cursiva, la transliteración y la significancia que
+            // el pastor escribió. Dos caminos, una forma.
+            studyKeyWords={(exegesis?.keyWords ?? [])
+                .map((kw: any) =>
+                    [
+                        kw.original && `*${kw.original}*`,
+                        kw.transliteration && `(${kw.transliteration})`,
+                        kw.significance && `— ${kw.significance}`,
+                    ]
+                        .filter(Boolean)
+                        .join(' '),
+                )
+                .filter(Boolean)}
         />
     ) : null;
 

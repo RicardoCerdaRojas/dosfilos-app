@@ -17,6 +17,7 @@ export interface AssembleDraftInput {
 
 interface PartesDelPunto {
     content: string[];
+    keyWords: string[];
     authorityQuote: string;
     illustration: string;
     implications: string;
@@ -25,6 +26,7 @@ interface PartesDelPunto {
 
 const vacio = (): PartesDelPunto => ({
     content: [],
+    keyWords: [],
     authorityQuote: '',
     illustration: '',
     implications: '',
@@ -116,6 +118,17 @@ export function assembleDraft(input: AssembleDraftInput): SermonContent {
             case 'pointContent':
                 if (texto) delPunto(numeroDe(seccion)).content.push(texto);
                 break;
+            case 'pointKeyWords': {
+                // ÍTEM POR ÍTEM, no la prosa: cada palabra decidida es una
+                // entrada de la lista, tal como el pastor la dejó. `contenido()`
+                // las uniría en un párrafo — el dato léxico no se redacta.
+                const palabras = (input.elements[seccion.id] ?? [])
+                    .filter((e) => e.provenance !== 'descartado')
+                    .map((e) => e.text.trim())
+                    .filter(Boolean);
+                delPunto(numeroDe(seccion)).keyWords.push(...palabras);
+                break;
+            }
             case 'pointAuthorityQuote':
                 delPunto(numeroDe(seccion)).authorityQuote = texto;
                 break;
@@ -144,6 +157,7 @@ export function assembleDraft(input: AssembleDraftInput): SermonContent {
             // abra. Sale del recorrido, que ya lo derivó del título del punto.
             mainPassageRef: input.walk.find((s) => s.parentId === `point.${n}` && s.scriptureRef)?.scriptureRef,
             content: unir(parte.content),
+            ...(parte.keyWords.length > 0 ? { keyWords: parte.keyWords } : {}),
             illustration: parte.illustration || undefined,
             implications: splitApplication(parte.implications),
             scriptureReferences: punto.scriptureReferences,

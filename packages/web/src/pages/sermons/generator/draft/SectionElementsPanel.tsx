@@ -40,6 +40,14 @@ interface Props {
     pointExpositionIdeas?: readonly string[];
     /** El estudio exegético, fuente primaria de las propuestas. */
     study?: ElementsPromptInput['study'];
+    /**
+     * Las palabras clave del estudio, ya formateadas para el sermón.
+     *
+     * Alimentan la sección de palabras por punto SIN pasar por el modelo:
+     * son material trabajado y verificado por el pastor — pedirle a un LLM
+     * que las "proponga" es darle ocasión de reescribir un dato léxico.
+     */
+    studyKeyWords?: readonly string[];
     /** Redacta la sección. Vive acá para que las acciones de la sección no se repartan. */
     onWriteSection?: () => void;
     writing?: boolean;
@@ -94,6 +102,8 @@ export function SectionElementsPanel(props: Props) {
     const { user } = useFirebase();
     /** La cita se SELECCIONA de su biblioteca; no se pide "una idea de cita". */
     const esCitaDeAutoridad = section.id.endsWith('.authorityQuote');
+    /** Ítems finales (palabras clave): no se redactan y se proponen SIN modelo. */
+    const esItemsFinales = Boolean(section.definition?.itemsAreFinal);
     const [mine, setMine] = useState('');
     const [proposals, setProposals] = useState<ProposedElement[]>([]);
 
@@ -154,6 +164,19 @@ export function SectionElementsPanel(props: Props) {
         );
 
     const handlePropose = async () => {
+        if (esItemsFinales) {
+            // DETERMINISTA: las palabras vienen del estudio, no del modelo. Se
+            // filtran las que ya decidió o descartó — re-proponer su propio
+            // trabajo es la forma más rápida de que abandone el flujo.
+            const yaVistas = new Set(props.elements.map((e) => e.text.trim()));
+            const restantes = (props.studyKeyWords ?? []).filter((k) => !yaVistas.has(k.trim()));
+            if (restantes.length === 0) {
+                toast.info(t('drafting.elements.keyWords.sinPalabras'));
+                return;
+            }
+            setProposals(restantes.map((text) => ({ text, why: t('drafting.elements.keyWords.fromStudy') })));
+            return;
+        }
         if (esCitaDeAutoridad) {
             const r = await proponerCitas({
                 // La cita debe respaldar lo que el punto AFIRMA, no el pasaje
@@ -259,18 +282,22 @@ export function SectionElementsPanel(props: Props) {
 
             <ElementProposals
                 proposeKey={
-                    esCitaDeAutoridad
-                        ? 'drafting.elements.quotes.propose'
-                        : esVerbatim
-                          ? vk('propose')
-                          : 'drafting.elements.propose'
+                    esItemsFinales
+                        ? 'drafting.elements.keyWords.propose'
+                        : esCitaDeAutoridad
+                          ? 'drafting.elements.quotes.propose'
+                          : esVerbatim
+                            ? vk('propose')
+                            : 'drafting.elements.propose'
                 }
                 proposeMoreKey={
-                    esCitaDeAutoridad
-                        ? 'drafting.elements.quotes.proposeMore'
-                        : esVerbatim
-                          ? vk('proposeMore')
-                          : 'drafting.elements.proposeMore'
+                    esItemsFinales
+                        ? 'drafting.elements.keyWords.proposeMore'
+                        : esCitaDeAutoridad
+                          ? 'drafting.elements.quotes.proposeMore'
+                          : esVerbatim
+                            ? vk('proposeMore')
+                            : 'drafting.elements.proposeMore'
                 }
                 loading={loading || buscandoCitas}
                 error={error}
@@ -287,7 +314,7 @@ export function SectionElementsPanel(props: Props) {
                     add([texto], 'editado', p.text, p.source);
                     consume(i);
                 }}
-                onWriteSection={props.onWriteSection}
+                onWriteSection={esItemsFinales ? undefined : props.onWriteSection}
                 writing={props.writing}
                 hasProse={props.hasProse}
                 canWrite={decided.length > 0}

@@ -23,6 +23,8 @@ interface Props {
     points?: readonly string[];
     /** El estudio exegético, para que las propuestas salgan de SU trabajo. */
     study?: ElementsPromptInput['study'];
+    /** Palabras clave del estudio, formateadas: la sección por punto las ofrece sin modelo. */
+    studyKeyWords?: readonly string[];
 }
 
 const ANCHO_MIN = 200;
@@ -157,6 +159,7 @@ export function SocraticWorkshop(props: Props) {
                     proposition={props.proposition}
                     points={props.points}
                     study={props.study}
+                    studyKeyWords={props.studyKeyWords}
                     elements={props.elements[props.activeSection.id] ?? []}
                     onChange={(els) => props.onChangeElements(props.activeSection.id, els)}
                     // No se le pasa a la sección que ES la proposición: se

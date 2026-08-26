@@ -19,6 +19,7 @@ export type DraftTarget =
     | { kind: 'callToAction' }
     /** Cuerpo del punto: la prosa que lo desarrolla. */
     | { kind: 'pointContent' }
+    | { kind: 'pointKeyWords' }
     | { kind: 'pointAuthorityQuote' }
     | { kind: 'pointIllustration' }
     | { kind: 'pointImplications' }
@@ -96,6 +97,15 @@ export interface SectionDefinition {
      * una cita falsa.
      */
     optional?: boolean;
+    /**
+     * Los elementos decididos SON el contenido final, ítem por ítem.
+     *
+     * La sección no se redacta: "escribir la sección" desde estos elementos
+     * produciría prosa donde el borrador espera una lista de datos (las
+     * palabras clave). El botón de redactar la omite y el ensamblador toma
+     * cada elemento tal cual.
+     */
+    itemsAreFinal?: boolean;
 }
 
 const NS = 'drafting.sections';
@@ -140,6 +150,22 @@ export const SECTION_CATALOG: readonly SectionDefinition[] = [
         target: { kind: 'pointContent' },
         unpacksProposition: true,
         showsScripture: true,
+    }),
+    def({
+        key: 'keyWords',
+        scope: 'point',
+        mode: 'elements',
+        labelKey: `${NS}.keyWords.label`,
+        jobKey: `${NS}.keyWords.job`,
+        target: { kind: 'pointKeyWords' },
+        // El estudio léxico es material YA TRABAJADO: el pastor decide cuáles
+        // palabras pertenecen a este punto, no las reescribe. Optativa: un
+        // punto sin palabra clave no le falta nada al sermón.
+        optional: true,
+        // Cada palabra decidida entra al borrador TAL CUAL, como ítem de la
+        // lista: acá no se redacta prosa — redactarla convertiría el dato
+        // léxico en un párrafo que nadie pidió.
+        itemsAreFinal: true,
     }),
     def({
         key: 'authorityQuote',
