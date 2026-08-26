@@ -5,3 +5,5 @@ export * from './verseInsight';
 export * from './buildGreekInsightPrompt';
 export * from './parseGreekInsight';
 export * from './greekRecognitionClues';
+export * from './translationBridge';
+export * from './segmentGreekWord';

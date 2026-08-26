@@ -15,6 +15,7 @@ import {
 import { useProposeElements, type ProposedElement } from '@/hooks/useProposeElements';
 import { useProposeAuthorityQuotes } from '@/hooks/useProposeAuthorityQuotes';
 import type { ElementsPromptInput } from '@dosfilos/domain';
+import { FirestoreGreekFindingsRepository } from '@dosfilos/infrastructure';
 import { useFirebase } from '@/context/firebase-context';
 import { toast } from 'sonner';
 import { SectionContextBlocks } from './SectionContextBlocks';
@@ -220,16 +221,41 @@ export function SectionElementsPanel(props: Props) {
             return;
         }
         if (esItemsFinales) {
-            // DETERMINISTA: las palabras vienen del estudio, no del modelo. Se
-            // filtran las que ya decidió o descartó — re-proponer su propio
+            // DETERMINISTA: las palabras vienen del estudio Y de los hallazgos
+            // que el pastor guardó en el analizador griego — no del modelo. Se
+            // filtran las que ya decidió o descartó: re-proponer su propio
             // trabajo es la forma más rápida de que abandone el flujo.
             const yaVistas = new Set(props.elements.map((e) => e.text.trim()));
-            const restantes = (props.studyKeyWords ?? []).filter((k) => !yaVistas.has(k.trim()));
+            const delEstudio = (props.studyKeyWords ?? [])
+                .filter((k) => !yaVistas.has(k.trim()))
+                .map((text) => ({ text, why: t('drafting.elements.keyWords.fromStudy') }));
+            // EL PUENTE DEL ANALIZADOR: hallazgos por USUARIO, no por sermón —
+            // desde el analizador no se sabe en qué sermón se usarán, y acá
+            // decidir cuál pertenece a este punto es su gesto de siempre.
+            let delAnalizador: { text: string; why: string }[] = [];
+            if (user?.uid) {
+                try {
+                    const findings = await new FirestoreGreekFindingsRepository().list(user.uid);
+                    delAnalizador = findings
+                        .filter((f) => !yaVistas.has(f.formatted.trim()))
+                        .map((f) => ({
+                            text: f.formatted,
+                            why: t('drafting.elements.keyWords.fromAnalyzer', { reference: f.reference }),
+                        }));
+                } catch (err) {
+                    // Sin hallazgos no se bloquea el estudio: quedan las del estudio.
+                    console.warn('[taller] no se pudieron leer los hallazgos del analizador', err);
+                }
+            }
+            const vistos = new Set<string>();
+            const restantes = [...delEstudio, ...delAnalizador].filter((p) =>
+                vistos.has(p.text.trim()) ? false : (vistos.add(p.text.trim()), true),
+            );
             if (restantes.length === 0) {
                 toast.info(t('drafting.elements.keyWords.sinPalabras'));
                 return;
             }
-            setProposals(restantes.map((text) => ({ text, why: t('drafting.elements.keyWords.fromStudy') })));
+            setProposals(restantes);
             return;
         }
 

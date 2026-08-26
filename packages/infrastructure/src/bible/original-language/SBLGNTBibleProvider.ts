@@ -91,6 +91,23 @@ export class SBLGNTBibleProvider implements IOriginalLanguageBibleProvider {
     }
 
     /**
+     * Cuántas veces aparece un lema EN ESTE LIBRO. Derivado del archivo ya
+     * cargado — runtime y gratis. El conteo NT-completo vive precomputado en
+     * `ntLemmaFrequency.json` (scripts/build-greek-lemma-index.mjs): el texto
+     * es fijo y esa respuesta no cambia.
+     */
+    async getLemmaCountInBook(bookId: BibleBookId, lemma: string): Promise<number> {
+        const book = await this.loadBook(bookId);
+        let n = 0;
+        for (const chapter of book.values()) {
+            for (const verse of chapter.values()) {
+                for (const tok of verse.tokens) if (tok.lemma === lemma) n++;
+            }
+        }
+        return n;
+    }
+
+    /**
      * Capítulos del libro y versículos por capítulo, para la navegación del
      * analizador. Derivado del archivo ya cargado: ninguna fuente aparte que
      * pueda divergir del texto.

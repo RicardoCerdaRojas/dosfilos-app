@@ -63,7 +63,25 @@ Y para CADA palabra, en el MISMO ORDEN de la lista:
 - "syntacticFunction": cómo funciona ESTA palabra en ESTA frase, en una línea
   ("sujeto de ἡγήσασθε", "objeto directo", "genitivo de relación…"). Apóyate
   en la morfología dada.
-- "translation": su traducción contextual en este versículo.
+- "translation": su traducción contextual en este versículo. CASO ESPECIAL —
+  genitivos en cadena: cuando la palabra es aposición de un genitivo cuyo "de"
+  ya se puso en español ("del Señor Jesucristo" lleva UN solo "de"), escribe
+  la traducción como "(de) X" — el paréntesis muestra que la preposición viene
+  repartida del núcleo del sintagma, no omitida. Y dilo en su
+  "syntacticFunction": "comparte el 'de' de κυρίου".
+
+Y ADEMÁS, "keyInsights": elige las 2 o 3 palabras que cargan el PESO
+TEOLÓGICO del versículo y explica su SIGNIFICANCIA para la predicación — el
+paso del dato a la consecuencia: por qué importa que ese verbo sea aoristo y
+no presente, qué pierde el oyente si el matiz del lema se traduce plano.
+2 a 4 frases por palabra, concretas y predicables. NO repitas la morfología
+(ya está arriba): explica qué SE SIGUE de ella.
+
+Y "wordOrderNote": si el ORDEN griego de este versículo difiere del español
+de forma que enseñe algo (un genitivo antepuesto, el sujeto al final, un
+énfasis por posición), explícalo en 2-3 frases CITANDO las palabras griegas
+concretas y cómo se reordenan al traducir. Si el orden no enseña nada aquí,
+devuelve "" — no inventes una lección donde no la hay.
 
 REGLAS:
 - Todo en español, salvo las palabras griegas.
@@ -76,6 +94,10 @@ FORMATO DE SALIDA (JSON, sin texto alrededor):
   "fluidTranslation": "…",
   "words": [
     { "text": "…", "semanticRange": "sentido A / sentido B", "syntacticFunction": "…", "translation": "…" }
-  ]
+  ],
+  "keyInsights": [
+    { "text": "…", "significance": "Por qué esta palabra importa al predicar este versículo." }
+  ],
+  "wordOrderNote": "…"
 }`;
 }

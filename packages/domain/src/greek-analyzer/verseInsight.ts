@@ -20,6 +20,30 @@ export interface GreekWordInsight {
     readonly translation: string;
 }
 
+/**
+ * El "¿y qué?" de una palabra teológicamente cargada: POR QUÉ su morfología o
+ * su semántica importan para la predicación. Es el salto del dato a la
+ * consecuencia — "aoristo imperativo" → "pide una decisión puntual, no una
+ * actitud continua".
+ */
+export interface GreekKeyInsight {
+    /** La palabra, verbatim como aparece en el versículo. */
+    readonly text: string;
+    readonly significance: string;
+}
+
+/**
+ * Versión del contrato del análisis. Se ESTAMPA al parsear (no la emite el
+ * modelo) y viaja al caché: un caché de versión anterior ofrece "Ampliar
+ * análisis". Adivinar por campos no funciona — `wordOrderNote` puede faltar
+ * legítimamente ("si el orden no enseña nada, omite"), así que su ausencia no
+ * distingue un caché viejo de una decisión del modelo.
+ *
+ * v1: traducciones + words. v2: + keyInsights. v3: + wordOrderNote.
+ * v4: genitivos en cadena — la aposición muestra "(de) X" y lo explica.
+ */
+export const GREEK_INSIGHT_PROMPT_VERSION = 4;
+
 export interface GreekVerseInsight {
     /** "JAS 1:2" — la clave del caché. */
     readonly reference: string;
@@ -29,4 +53,20 @@ export interface GreekVerseInsight {
     readonly fluidTranslation: string;
     /** En el MISMO orden que los tokens del versículo. */
     readonly words: readonly GreekWordInsight[];
+    /**
+     * Las 2-3 palabras que cargan el peso teológico del versículo, con su
+     * significancia homilética. SÓLO ésas: en todas las palabras sería ruido.
+     * Ausente en cachés anteriores a este campo.
+     */
+    readonly keyInsights?: readonly GreekKeyInsight[];
+    /**
+     * El reordenamiento más ilustrativo del versículo, explicado con SUS
+     * palabras ("δοῦλος cierra la frase griega; el español lo antepone…").
+     * La regla general —el griego marca la función con casos y usa el orden
+     * para el énfasis— es fija y vive en la UI; esta nota es el ejemplo
+     * concreto. Ausente cuando el orden no enseña nada en este versículo.
+     */
+    readonly wordOrderNote?: string;
+    /** Ausente en cachés anteriores al versionado. */
+    readonly promptVersion?: number;
 }

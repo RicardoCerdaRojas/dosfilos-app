@@ -60,6 +60,7 @@ export * from './bible'; // 📖 Bible Multi-version Repositories
 export * from './hebrew-tutor/index.js';
 export * from './greek-analyzer/GreekInsightService';
 export * from './greek-analyzer/FirestoreGreekInsightRepository';
+export * from './greek-analyzer/FirestoreGreekFindingsRepository';
 
 export * from './gemini/SseMultiAgentService';
 // 🔐 Callables de biblioteca (subida a Files API + caché de contexto). Viven en

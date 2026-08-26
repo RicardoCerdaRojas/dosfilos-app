@@ -65,6 +65,24 @@ export function useGreekVerse(initial: { book: BibleBookId; chapter: number; ver
         [nav, chapter],
     );
 
+    // Conteo del lema EN EL LIBRO para cada token del verso — runtime sobre
+    // el libro ya cargado, un mapa por versículo.
+    const [lemmaCounts, setLemmaCounts] = useState<Record<string, number>>({});
+    useEffect(() => {
+        if (!data) return;
+        let vivo = true;
+        (async () => {
+            const unicos = [...new Set(data.tokens.map((t) => t.lemma))];
+            const pares = await Promise.all(
+                unicos.map(async (lemma) => [lemma, await provider.getLemmaCountInBook(book, lemma)] as const),
+            );
+            if (vivo) setLemmaCounts(Object.fromEntries(pares));
+        })();
+        return () => {
+            vivo = false;
+        };
+    }, [provider, book, data]);
+
     const goTo = useCallback((b: BibleBookId, c: number, v: number) => {
         setBook(b);
         setChapter(c);
@@ -89,5 +107,5 @@ export function useGreekVerse(initial: { book: BibleBookId; chapter: number; ver
         [nav, chapter, verse],
     );
 
-    return { book, chapter, verse, books, chapters, versesInChapter, data, loading, error, goTo, step };
+    return { book, chapter, verse, books, chapters, versesInChapter, data, loading, error, goTo, step, provider, lemmaCounts };
 }

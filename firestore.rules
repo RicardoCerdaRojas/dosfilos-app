@@ -151,6 +151,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Greek Analyzer - hallazgos del pastor para su sermón (por usuario)
+    match /users/{userId}/greekFindings/{findingId} {
+      allow read, create: if isAuthenticated() && request.auth.uid == userId;
+      allow update, delete: if false;
+    }
+
     // Greek Analyzer - Verse Insight Cache
     // Global cache: the Greek text is the same for everyone, so one paid
     // analysis serves all users. Same contract as hebrew_analysis_cache.

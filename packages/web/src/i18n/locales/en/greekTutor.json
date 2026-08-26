@@ -710,8 +710,77 @@
       "subjuntivoVocalLarga": "The lengthened theme vowel ({{marker}}) is the signature of the subjunctive.",
       "participioMedio": "The infix {{marker}} marks the middle/passive participle.",
       "participioActivo": "The marks {{marker}} signal the active participle.",
-      "participioAorAct": "The marks {{marker}} signal the aorist active participle."
+      "participioAorAct": "The marks {{marker}} signal the aorist active participle.",
+      "articleParadigm": "The article {{marker}} belongs to the paradigm memorized first: it gives away case, number and gender of its whole phrase.",
+      "iotaSubscript": "The iota subscript ({{marker}}) is the classic mark of the dative singular.",
+      "nomSgOs": "The ending {{marker}} marks the nominative singular masculine (2nd declension).",
+      "genSgOu": "The ending {{marker}} marks the genitive singular (2nd declension).",
+      "genSg1": "The ending {{marker}} marks the genitive singular (1st declension).",
+      "genPlOn": "The ending {{marker}} marks the genitive plural — in ALL declensions.",
+      "datPl": "The ending {{marker}} marks the dative plural (1st/2nd declension).",
+      "accSgN": "The ending {{marker}} marks the accusative singular.",
+      "accPl": "The ending {{marker}} marks the accusative plural.",
+      "nomPl": "The ending {{marker}} marks the nominative plural."
     },
-    "personShort": "{{n}}rd person"
+    "personShort": "{{n}}rd person",
+    "view": {
+      "verse": "Verse",
+      "passage": "Passage"
+    },
+    "keyInsightsTitle": "Exegetical keys",
+    "keyWordBadge": "Key",
+    "significance": "Significance for preaching",
+    "expandPitch": "This analysis predates the exegetical keys. Expand it to see which words carry the theological weight and why.",
+    "expandBtn": "Expand analysis",
+    "frequency": "{{nt}}× in the NT",
+    "frequencyInBook": "{{n}}× in {{book}}",
+    "rareWord": "rare word",
+    "saveFinding": "Save this finding for your sermon",
+    "saveFindingShort": "For my sermon",
+    "findingSaved": "Saved — available in the workshop",
+    "findingSavedShort": "Saved",
+    "findingSavedToast": "Finding saved. You will find it in the sermon workshop, “Key words” section, via “Bring the ones from my study”.",
+    "findingError": "The finding could not be saved.",
+    "passage": {
+      "range": "Range",
+      "print": "Print",
+      "openVerse": "View analysis"
+    },
+    "literalHint": "(mirrors the Greek word order — compare it with the fluid one)",
+    "wordOrderTitle": "Word order",
+    "wordOrderRule": "Greek marks function with CASES, not order — so its order is free and used for emphasis. Spanish depends on order, so translation reorders.",
+    "bridge": {
+      "bridgeGenitive": "The \"of\" is not in the Greek: the genitive case carries it inside — it does the preposition’s job.",
+      "bridgeDative": "The \"to/for/in\" is not in the Greek: the dative case carries it inside.",
+      "bridgeAccusative": "The accusative marks the direct object — Spanish needs no preposition, only position.",
+      "bridgeNominative": "The nominative is the case of the subject and of what is said about it (predicates and appositions) — regardless of its position in the sentence.",
+      "bridgeVocative": "The vocative is the case of direct address: Spanish marks it with commas."
+    },
+    "tools": {
+      "translit": "Translit.",
+      "translitToggle": "Show or hide the transliteration — drop the crutch to really read the alphabet",
+      "smaller": "Smaller text",
+      "larger": "Larger text",
+      "copyGreek": "Greek",
+      "copyTranslit": "Translit.",
+      "reanalyze": "Re-analyze",
+      "reanalyzeHint": "Regenerates the analysis (shared with all users)",
+      "print": "Print",
+      "colorOff": "No color",
+      "colorPos": "Categories",
+      "colorMorph": "Morphemes"
+    },
+    "legend": {
+      "title": "Color system",
+      "legendVerb": "Verb",
+      "legendNoun": "Noun",
+      "legendAdj": "Adjective",
+      "legendPron": "Pronoun",
+      "legendArticle": "Article",
+      "legendCase": "Case ending",
+      "legendTense": "Tense marker",
+      "legendMood": "Mood marker",
+      "legendAugment": "Augment"
+    }
   }
 }

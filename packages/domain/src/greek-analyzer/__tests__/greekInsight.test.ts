@@ -62,3 +62,43 @@ describe('parseGreekInsight — el alineamiento es el contrato', () => {
         expect(out).not.toBeNull();
     });
 });
+
+describe('keyInsights — el "¿y qué?" homilético (fase 3)', () => {
+    const base = {
+        literalTranslation: 'lit', fluidTranslation: 'fluida',
+        words: [{ text: 'χαίρειν.', semanticRange: 'a / b', syntacticFunction: 'f', translation: 't' }],
+    };
+
+    it('acepta hasta 3 claves bien formadas y descarta las malformadas SIN tumbar el análisis', () => {
+        const out = parseGreekInsight(
+            JSON.stringify({
+                ...base,
+                keyInsights: [
+                    { text: 'χαίρειν.', significance: 'El infinitivo de saludo…' },
+                    { text: '', significance: 'sin palabra' },
+                    { text: 'x', significance: '' },
+                ],
+            }),
+            { reference: 'JAS 1:1', expectedWordCount: 1 },
+        );
+        expect(out?.keyInsights).toHaveLength(1);
+        expect(out?.words).toHaveLength(1);
+    });
+
+    it('un caché anterior (sin keyInsights) sigue siendo válido', () => {
+        const out = parseGreekInsight(JSON.stringify(base), { reference: 'JAS 1:1', expectedWordCount: 1 });
+        expect(out).not.toBeNull();
+        expect(out?.keyInsights).toBeUndefined();
+    });
+
+    it('recorta a 3: sólo las palabras que cargan el peso, no una glosa por palabra', () => {
+        const out = parseGreekInsight(
+            JSON.stringify({
+                ...base,
+                keyInsights: Array.from({ length: 5 }, (_, i) => ({ text: `w${i}`, significance: 's' })),
+            }),
+            { reference: 'JAS 1:1', expectedWordCount: 1 },
+        );
+        expect(out?.keyInsights).toHaveLength(3);
+    });
+});

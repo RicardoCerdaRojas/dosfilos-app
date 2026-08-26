@@ -36,14 +36,69 @@ function normalizar(texto: string): string {
  * y no estaría. Por eso esto es un catálogo determinista y no un modelo: un
  * modelo puede "ver" un aumento donde no lo hay.
  */
+/** ¿La forma original lleva iota suscrita (ᾳ/ῃ/ῳ)? Se pierde al normalizar. */
+function tieneIotaSuscrita(texto: string): boolean {
+    return /[ᾳῃῳᾷῇῷᾴῄῴᾲῂῲ]/u.test(texto);
+}
+
 export function greekRecognitionClues(token: GreekWordToken): GreekRecognitionClue[] {
-    if (token.pos !== 'V') return [];
     const { tag } = token;
     const forma = normalizar(token.text);
     const pistas: GreekRecognitionClue[] = [];
     const confirmar = (id: string, marker: string, presente: boolean) => {
         if (presente) pistas.push({ id, marker });
     };
+
+    // ── PEDAGOGÍA NOMINAL: artículo, declinaciones, iota suscrita ──────
+    // El artículo es LA LLAVE del griego — se memoriza como paradigma y
+    // delata caso, número y género de todo su sintagma. Los sustantivos,
+    // adjetivos y pronombres declinan con terminaciones igual de
+    // sistemáticas que las de los verbos: enseñarlas es tan formativo
+    // como el aoristo.
+    const NOMINAL = new Set(['N', 'A', 'RA', 'RP', 'RR', 'RD', 'RI']);
+    if (NOMINAL.has(token.pos) && tag.case) {
+        if (token.pos === 'RA') {
+            // Su propia forma ES la pista: pertenece al paradigma memorizado.
+            pistas.push({ id: 'articleParadigm', marker: token.text.replace(/[.,·;]+$/u, '') });
+        }
+
+        // La iota suscrita: la marca clásica del dativo singular.
+        if (tag.case === 'D' && tag.number === 'S' && tieneIotaSuscrita(token.text)) {
+            pistas.push({ id: 'iotaSubscript', marker: 'ᾳ/ῃ/ῳ' });
+        }
+
+        if (token.pos !== 'RA') {
+            // Terminaciones por caso+número. SÓLO las inequívocas del set
+            // pedagógico básico; si la forma no las lleva (3ª declinación,
+            // irregular), la pista SE OMITE — la misma regla de honestidad
+            // que los verbos.
+            if (tag.case === 'N' && tag.number === 'S' && tag.gender === 'M') {
+                confirmar('nomSgOs', '-ος', forma.endsWith('οσ'));
+            }
+            if (tag.case === 'G' && tag.number === 'S') {
+                confirmar('genSgOu', '-ου', forma.endsWith('ου'));
+                confirmar('genSg1', '-ης/-ας', forma.endsWith('ησ') || forma.endsWith('ασ'));
+            }
+            if (tag.case === 'G' && tag.number === 'P') {
+                confirmar('genPlOn', '-ων', forma.endsWith('ων'));
+            }
+            if (tag.case === 'D' && tag.number === 'P') {
+                confirmar('datPl', '-αις/-οις', forma.endsWith('αισ') || forma.endsWith('οισ'));
+            }
+            if (tag.case === 'A' && tag.number === 'S') {
+                confirmar('accSgN', '-ον/-αν/-ην', /(?:ον|αν|ην)$/.test(forma));
+            }
+            if (tag.case === 'A' && tag.number === 'P') {
+                confirmar('accPl', '-ους/-ας', forma.endsWith('ουσ') || forma.endsWith('ασ'));
+            }
+            if (tag.case === 'N' && tag.number === 'P') {
+                confirmar('nomPl', '-οι/-αι', forma.endsWith('οι') || forma.endsWith('αι'));
+            }
+        }
+        return pistas;
+    }
+
+    if (token.pos !== 'V') return [];
 
     // ── Infinitivos: la terminación LO ES todo ─────────────────────────
     if (tag.mood === 'N') {

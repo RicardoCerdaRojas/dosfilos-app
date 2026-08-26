@@ -38,10 +38,71 @@ describe('greekRecognitionClues — palabras reales de Santiago 1', () => {
         expect(pistas.map((p) => p.id)).toContain('participioActivo');
     });
 
-    it('un sustantivo no lleva pistas verbales', () => {
+    it('un sustantivo lleva pistas NOMINALES, nunca verbales (χαρὰν → -αν acusativo)', () => {
+        // Antes los nominales quedaban sin pedagogía; el fundador lo corrigió:
+        // "la pedagogía en la gramática griega también es importante".
         const token: GreekWordToken = {
             text: 'χαρὰν', lemma: 'χαρά', pos: 'N', tag: { case: 'A', number: 'S', gender: 'F' }, transliteration: 'charan',
         };
-        expect(greekRecognitionClues(token)).toEqual([]);
+        const ids = greekRecognitionClues(token).map((p) => p.id);
+        expect(ids).toContain('accSgN');
+        expect(ids).not.toContain('aoristoSigmatico');
+    });
+});
+
+describe('pedagogía nominal — Santiago 1:1', () => {
+    const nominal = (
+        text: string,
+        pos: GreekWordToken['pos'],
+        tag: GreekWordToken['tag'],
+    ): GreekWordToken => ({ text, lemma: 'x', pos, tag, transliteration: 'x' });
+
+    it('τῇ: el artículo es paradigma memorizado Y su iota suscrita marca el dativo', () => {
+        const pistas = greekRecognitionClues(nominal('τῇ', 'RA', { case: 'D', number: 'S', gender: 'F' }));
+        const ids = pistas.map((p) => p.id);
+        expect(pistas).toContainEqual({ id: 'articleParadigm', marker: 'τῇ' });
+        expect(ids).toContain('iotaSubscript');
+    });
+
+    it('θεοῦ: la terminación -ου marca el genitivo singular', () => {
+        const pistas = greekRecognitionClues(nominal('θεοῦ', 'N', { case: 'G', number: 'S', gender: 'M' }));
+        expect(pistas).toContainEqual({ id: 'genSgOu', marker: '-ου' });
+    });
+
+    it('φυλαῖς: -αις dativo plural; διασπορᾷ: iota suscrita de dativo', () => {
+        expect(
+            greekRecognitionClues(nominal('φυλαῖς', 'N', { case: 'D', number: 'P', gender: 'F' })).map((p) => p.id),
+        ).toContain('datPl');
+        expect(
+            greekRecognitionClues(nominal('διασπορᾷ', 'N', { case: 'D', number: 'S', gender: 'F' })).map((p) => p.id),
+        ).toContain('iotaSubscript');
+    });
+
+    it('δοῦλος: -ος nominativo singular masculino', () => {
+        expect(
+            greekRecognitionClues(nominal('δοῦλος', 'N', { case: 'N', number: 'S', gender: 'M' })).map((p) => p.id),
+        ).toContain('nomSgOs');
+    });
+
+    it('la 3ª declinación sin terminación esperada NO inventa pista', () => {
+        // πνεύμασι (dat. pl. 3ª) no termina en -αις/-οις → omisión honesta.
+        expect(
+            greekRecognitionClues(nominal('πνεύμασι', 'N', { case: 'D', number: 'P', gender: 'N' })).map((p) => p.id),
+        ).not.toContain('datPl');
+    });
+});
+
+describe('translationBridge — el "de" que no está en el griego', () => {
+    it('θεοῦ (genitivo) → puente del genitivo; el artículo no lleva puente', async () => {
+        const { translationBridge } = await import('../translationBridge');
+        expect(
+            translationBridge({ text: 'θεοῦ', lemma: 'θεός', pos: 'N', tag: { case: 'G', number: 'S', gender: 'M' }, transliteration: 'theou' }),
+        ).toBe('bridgeGenitive');
+        expect(
+            translationBridge({ text: 'τῇ', lemma: 'ὁ', pos: 'RA', tag: { case: 'D', number: 'S', gender: 'F' }, transliteration: 'tēi' }),
+        ).toBeNull();
+        expect(
+            translationBridge({ text: 'χαίρειν', lemma: 'χαίρω', pos: 'V', tag: { tense: 'P', voice: 'A', mood: 'N' }, transliteration: 'chairein' }),
+        ).toBeNull();
     });
 });

@@ -464,7 +464,8 @@
         "propose": "Bring the ones from my study",
         "proposeMore": "Bring the remaining ones",
         "fromStudy": "From your word study.",
-        "sinPalabras": "Your study recorded no key words for this passage."
+        "sinPalabras": "Your study recorded no key words for this passage.",
+        "fromAnalyzer": "From the Greek analyzer — {{reference}}."
       },
       "replacedPrevious": "This section holds a single decision: the new one replaced the previous."
     },

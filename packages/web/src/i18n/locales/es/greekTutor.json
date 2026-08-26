@@ -734,8 +734,77 @@
       "subjuntivoVocalLarga": "La vocal temática alargada ({{marker}}) es la firma del subjuntivo.",
       "participioMedio": "El infijo {{marker}} marca el participio medio/pasivo.",
       "participioActivo": "Las marcas {{marker}} señalan el participio activo.",
-      "participioAorAct": "Las marcas {{marker}} señalan el participio aoristo activo."
+      "participioAorAct": "Las marcas {{marker}} señalan el participio aoristo activo.",
+      "articleParadigm": "El artículo {{marker}} pertenece al paradigma que se memoriza primero: delata caso, número y género de todo su sintagma.",
+      "iotaSubscript": "La iota suscrita ({{marker}}) es la marca clásica del dativo singular.",
+      "nomSgOs": "La terminación {{marker}} marca el nominativo singular masculino (2ª declinación).",
+      "genSgOu": "La terminación {{marker}} marca el genitivo singular (2ª declinación).",
+      "genSg1": "La terminación {{marker}} marca el genitivo singular (1ª declinación).",
+      "genPlOn": "La terminación {{marker}} marca el genitivo plural — en TODAS las declinaciones.",
+      "datPl": "La terminación {{marker}} marca el dativo plural (1ª/2ª declinación).",
+      "accSgN": "La terminación {{marker}} marca el acusativo singular.",
+      "accPl": "La terminación {{marker}} marca el acusativo plural.",
+      "nomPl": "La terminación {{marker}} marca el nominativo plural."
     },
-    "personShort": "{{n}}ª persona"
+    "personShort": "{{n}}ª persona",
+    "view": {
+      "verse": "Versículo",
+      "passage": "Pasaje"
+    },
+    "keyInsightsTitle": "Claves exegéticas",
+    "keyWordBadge": "Clave",
+    "significance": "Significancia para la predicación",
+    "expandPitch": "Este análisis es anterior a las claves exegéticas. Amplíalo para ver qué palabras cargan el peso teológico y por qué.",
+    "expandBtn": "Ampliar análisis",
+    "frequency": "{{nt}}× en el NT",
+    "frequencyInBook": "{{n}}× en {{book}}",
+    "rareWord": "palabra rara",
+    "saveFinding": "Guardar este hallazgo para tu sermón",
+    "saveFindingShort": "Para mi sermón",
+    "findingSaved": "Guardado — disponible en el taller",
+    "findingSavedShort": "Guardado",
+    "findingSavedToast": "Hallazgo guardado. Lo encontrarás en el taller del sermón, sección «Palabras clave», con «Tráeme las del estudio».",
+    "findingError": "No se pudo guardar el hallazgo.",
+    "passage": {
+      "range": "Rango",
+      "print": "Imprimir",
+      "openVerse": "Ver análisis"
+    },
+    "literalHint": "(calca el orden del griego — compárala con la fluida)",
+    "wordOrderTitle": "El orden de las palabras",
+    "wordOrderRule": "El griego marca la función con los CASOS, no con el orden — por eso su orden es libre y se usa para el énfasis. El español depende del orden, así que al traducir se reordena.",
+    "bridge": {
+      "bridgeGenitive": "El \"de\" no está en el griego: el caso genitivo lo lleva dentro — hace el trabajo de la preposición.",
+      "bridgeDative": "El \"a/para/en\" no está en el griego: el caso dativo lo lleva dentro.",
+      "bridgeAccusative": "El acusativo señala el objeto directo — el español no necesita preposición, sólo la posición.",
+      "bridgeNominative": "El nominativo es el caso del sujeto y de lo que se dice de él (predicados y aposiciones) — y no depende de dónde esté en la frase.",
+      "bridgeVocative": "El vocativo es el caso de la invocación directa: en español lo marcamos con comas (\"hermanos míos,\")."
+    },
+    "tools": {
+      "translit": "Translit.",
+      "translitToggle": "Mostrar u ocultar la transliteración — suelta la muleta para leer el alfabeto de verdad",
+      "smaller": "Letra más pequeña",
+      "larger": "Letra más grande",
+      "copyGreek": "Griego",
+      "copyTranslit": "Translit.",
+      "reanalyze": "Re-analizar",
+      "reanalyzeHint": "Vuelve a generar el análisis (se comparte con todos los usuarios)",
+      "print": "Imprimir",
+      "colorOff": "Sin color",
+      "colorPos": "Categorías",
+      "colorMorph": "Morfemas"
+    },
+    "legend": {
+      "title": "Sistema de colores",
+      "legendVerb": "Verbo",
+      "legendNoun": "Sustantivo",
+      "legendAdj": "Adjetivo",
+      "legendPron": "Pronombre",
+      "legendArticle": "Artículo",
+      "legendCase": "Terminación de caso",
+      "legendTense": "Marca de tiempo",
+      "legendMood": "Marca de modo",
+      "legendAugment": "Aumento"
+    }
   }
 }
