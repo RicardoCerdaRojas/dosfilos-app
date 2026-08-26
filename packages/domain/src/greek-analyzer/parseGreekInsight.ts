@@ -1,4 +1,4 @@
-import type { GreekVerseInsight, GreekWordInsight } from './verseInsight';
+import { GREEK_INSIGHT_PROMPT_VERSION, type GreekVerseInsight, type GreekWordInsight } from './verseInsight';
 
 /**
  * Valida la respuesta del modelo ANTES de cachearla.
@@ -68,5 +68,6 @@ export function parseGreekInsight(
         words,
         ...(keyInsights.length > 0 ? { keyInsights } : {}),
         ...(wordOrderNote ? { wordOrderNote } : {}),
+        promptVersion: GREEK_INSIGHT_PROMPT_VERSION,
     };
 }

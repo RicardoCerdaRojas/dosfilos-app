@@ -32,6 +32,17 @@ export interface GreekKeyInsight {
     readonly significance: string;
 }
 
+/**
+ * Versión del contrato del análisis. Se ESTAMPA al parsear (no la emite el
+ * modelo) y viaja al caché: un caché de versión anterior ofrece "Ampliar
+ * análisis". Adivinar por campos no funciona — `wordOrderNote` puede faltar
+ * legítimamente ("si el orden no enseña nada, omite"), así que su ausencia no
+ * distingue un caché viejo de una decisión del modelo.
+ *
+ * v1: traducciones + words. v2: + keyInsights. v3: + wordOrderNote.
+ */
+export const GREEK_INSIGHT_PROMPT_VERSION = 3;
+
 export interface GreekVerseInsight {
     /** "JAS 1:2" — la clave del caché. */
     readonly reference: string;
@@ -55,4 +66,6 @@ export interface GreekVerseInsight {
      * concreto. Ausente cuando el orden no enseña nada en este versículo.
      */
     readonly wordOrderNote?: string;
+    /** Ausente en cachés anteriores al versionado. */
+    readonly promptVersion?: number;
 }

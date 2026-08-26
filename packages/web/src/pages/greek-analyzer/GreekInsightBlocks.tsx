@@ -1,7 +1,7 @@
 import { ArrowLeftRight, Loader2, Sparkles, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import type { GreekVerseInsight } from '@dosfilos/domain';
+import { GREEK_INSIGHT_PROMPT_VERSION, type GreekVerseInsight } from '@dosfilos/domain';
 
 interface Props {
     insight: GreekVerseInsight | null;
@@ -70,6 +70,20 @@ export function GreekInsightBlocks({ insight, generating, error, onGenerate }: P
                 </div>
             )}
 
+            {/* CACHÉ DE VERSIÓN ANTERIOR: ofrecer ampliar SIEMPRE que la
+                versión no sea la actual — adivinar por campos falló: el
+                fundador tenía claves (v2) y ningún botón para traer el orden
+                de palabras (v3). */}
+            {insight.promptVersion !== GREEK_INSIGHT_PROMPT_VERSION && (
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-border px-4 py-2">
+                    <p className="text-xs text-muted-foreground">{t('analyzer.expandPitch')}</p>
+                    <Button variant="ghost" size="sm" onClick={onGenerate} disabled={generating}>
+                        {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                        {t('analyzer.expandBtn')}
+                    </Button>
+                </div>
+            )}
+
             {/* EL "¿Y QUÉ?": las 2-3 palabras que cargan el peso teológico,
                 con su consecuencia homilética — del dato a lo que se predica. */}
             {insight.keyInsights?.length ? (
@@ -86,16 +100,7 @@ export function GreekInsightBlocks({ insight, generating, error, onGenerate }: P
                         </div>
                     ))}
                 </div>
-            ) : (
-                // Caché anterior a las claves: se ofrece ampliar (regenera).
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-border px-4 py-2">
-                    <p className="text-xs text-muted-foreground">{t('analyzer.expandPitch')}</p>
-                    <Button variant="ghost" size="sm" onClick={onGenerate} disabled={generating}>
-                        {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                        {t('analyzer.expandBtn')}
-                    </Button>
-                </div>
-            )}
+            ) : null}
         </>
     );
 }
