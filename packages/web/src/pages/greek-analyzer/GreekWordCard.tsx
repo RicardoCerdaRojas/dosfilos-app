@@ -11,8 +11,8 @@ interface Props {
 /** Color de la insignia por categoría — misma paleta semántica del hebreo. */
 const POS_BADGE: Record<string, string> = {
     V: 'bg-primary/10 text-primary',
-    N: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
-    A: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+    N: 'bg-info/10 text-info',
+    A: 'bg-warning/10 text-warning',
     RA: 'bg-muted text-muted-foreground',
     RP: 'bg-muted text-muted-foreground',
     RR: 'bg-muted text-muted-foreground',
