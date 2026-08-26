@@ -59,11 +59,14 @@ export function parseGreekInsight(
               .slice(0, 3)
         : [];
 
+    const wordOrderNote = typeof p.wordOrderNote === 'string' ? p.wordOrderNote.trim() : '';
+
     return {
         reference: input.reference,
         literalTranslation: literal,
         fluidTranslation: fluida,
         words,
         ...(keyInsights.length > 0 ? { keyInsights } : {}),
+        ...(wordOrderNote ? { wordOrderNote } : {}),
     };
 }

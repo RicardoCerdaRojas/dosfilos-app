@@ -47,4 +47,12 @@ export interface GreekVerseInsight {
      * Ausente en cachés anteriores a este campo.
      */
     readonly keyInsights?: readonly GreekKeyInsight[];
+    /**
+     * El reordenamiento más ilustrativo del versículo, explicado con SUS
+     * palabras ("δοῦλος cierra la frase griega; el español lo antepone…").
+     * La regla general —el griego marca la función con casos y usa el orden
+     * para el énfasis— es fija y vive en la UI; esta nota es el ejemplo
+     * concreto. Ausente cuando el orden no enseña nada en este versículo.
+     */
+    readonly wordOrderNote?: string;
 }

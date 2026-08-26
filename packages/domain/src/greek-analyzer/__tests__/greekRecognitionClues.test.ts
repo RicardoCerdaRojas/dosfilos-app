@@ -91,3 +91,18 @@ describe('pedagogía nominal — Santiago 1:1', () => {
         ).not.toContain('datPl');
     });
 });
+
+describe('translationBridge — el "de" que no está en el griego', () => {
+    it('θεοῦ (genitivo) → puente del genitivo; el artículo no lleva puente', async () => {
+        const { translationBridge } = await import('../translationBridge');
+        expect(
+            translationBridge({ text: 'θεοῦ', lemma: 'θεός', pos: 'N', tag: { case: 'G', number: 'S', gender: 'M' }, transliteration: 'theou' }),
+        ).toBe('bridgeGenitive');
+        expect(
+            translationBridge({ text: 'τῇ', lemma: 'ὁ', pos: 'RA', tag: { case: 'D', number: 'S', gender: 'F' }, transliteration: 'tēi' }),
+        ).toBeNull();
+        expect(
+            translationBridge({ text: 'χαίρειν', lemma: 'χαίρω', pos: 'V', tag: { tense: 'P', voice: 'A', mood: 'N' }, transliteration: 'chairein' }),
+        ).toBeNull();
+    });
+});

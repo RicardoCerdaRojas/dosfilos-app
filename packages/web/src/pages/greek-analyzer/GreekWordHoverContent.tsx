@@ -1,5 +1,6 @@
 import {
     greekRecognitionClues,
+    translationBridge,
     type GreekKeyInsight,
     type GreekWordInsight,
     type GreekWordToken,
@@ -35,6 +36,7 @@ export function GreekWordHoverContent({ token, insight, keyInsight, bookCount, b
     const pistas = greekRecognitionClues(token);
     const ntCount = useNtLemmaFrequency(token.lemma);
     const esRara = ntCount !== null && ntCount > 0 && ntCount <= 5;
+    const puente = translationBridge(token);
 
     const resumen = [
         token.tag.tense && t(`analyzer.tense.${token.tag.tense}`),
@@ -82,6 +84,11 @@ export function GreekWordHoverContent({ token, insight, keyInsight, bookCount, b
                         <span className="text-muted-foreground">{t('analyzer.fields.translation')}: </span>
                         <span className="font-medium text-primary">{insight.translation}</span>
                     </div>
+                )}
+                {/* EL PUENTE: por qué la traducción trae palabras que "no
+                    están" en el griego — el caso las lleva dentro. */}
+                {puente && (
+                    <div className="text-xs italic text-muted-foreground">{t(`analyzer.bridge.${puente}`)}</div>
                 )}
                 {insight && <div className="text-xs">{insight.syntacticFunction}</div>}
                 {insight && (

@@ -72,6 +72,12 @@ no presente, qué pierde el oyente si el matiz del lema se traduce plano.
 2 a 4 frases por palabra, concretas y predicables. NO repitas la morfología
 (ya está arriba): explica qué SE SIGUE de ella.
 
+Y "wordOrderNote": si el ORDEN griego de este versículo difiere del español
+de forma que enseñe algo (un genitivo antepuesto, el sujeto al final, un
+énfasis por posición), explícalo en 2-3 frases CITANDO las palabras griegas
+concretas y cómo se reordenan al traducir. Si el orden no enseña nada aquí,
+devuelve "" — no inventes una lección donde no la hay.
+
 REGLAS:
 - Todo en español, salvo las palabras griegas.
 - NO inventes sentidos que el lema no tiene: el pastor va a predicar con esto.
@@ -86,6 +92,7 @@ FORMATO DE SALIDA (JSON, sin texto alrededor):
   ],
   "keyInsights": [
     { "text": "…", "significance": "Por qué esta palabra importa al predicar este versículo." }
-  ]
+  ],
+  "wordOrderNote": "…"
 }`;
 }

@@ -745,6 +745,16 @@
       "range": "Range",
       "print": "Print",
       "openVerse": "View analysis"
+    },
+    "literalHint": "(mirrors the Greek word order — compare it with the fluid one)",
+    "wordOrderTitle": "Word order",
+    "wordOrderRule": "Greek marks function with CASES, not order — so its order is free and used for emphasis. Spanish depends on order, so translation reorders.",
+    "bridge": {
+      "bridgeGenitive": "The \"of\" is not in the Greek: the genitive case carries it inside — it does the preposition’s job.",
+      "bridgeDative": "The \"to/for/in\" is not in the Greek: the dative case carries it inside.",
+      "bridgeAccusative": "The accusative marks the direct object — Spanish needs no preposition, only position.",
+      "bridgeNominative": "The nominative marks the subject of the sentence, wherever it sits in the phrase.",
+      "bridgeVocative": "The vocative is the case of direct address: Spanish marks it with commas."
     }
   }
 }

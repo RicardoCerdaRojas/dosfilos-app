@@ -1,4 +1,4 @@
-import { Loader2, Sparkles, Star } from 'lucide-react';
+import { ArrowLeftRight, Loader2, Sparkles, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import type { GreekVerseInsight } from '@dosfilos/domain';
@@ -38,6 +38,12 @@ export function GreekInsightBlocks({ insight, generating, error, onGenerate }: P
                 <div className="rounded-lg border border-border p-4 space-y-1">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         {t('analyzer.literalTranslation')}
+                        {/* La literal CALCA el orden griego: compararla con la
+                            fluida ES ver el reordenamiento. Decirlo convierte
+                            dos cajas en una lección. */}
+                        <span className="ml-1 normal-case font-normal tracking-normal">
+                            {t('analyzer.literalHint')}
+                        </span>
                     </h4>
                     <p className="text-sm leading-relaxed">{insight.literalTranslation}</p>
                 </div>
@@ -48,6 +54,21 @@ export function GreekInsightBlocks({ insight, generating, error, onGenerate }: P
                     <p className="text-sm leading-relaxed">{insight.fluidTranslation}</p>
                 </div>
             </div>
+
+            {/* EL ORDEN DE LAS PALABRAS: la regla general es fija — el griego
+                marca la función con CASOS y usa el orden para el énfasis; el
+                español depende del orden y reordena. El ejemplo concreto lo
+                pone el modelo con las palabras de ESTE versículo. */}
+            {insight.wordOrderNote && (
+                <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-1.5">
+                    <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        <ArrowLeftRight className="h-3.5 w-3.5" />
+                        {t('analyzer.wordOrderTitle')}
+                    </h4>
+                    <p className="text-xs text-muted-foreground">{t('analyzer.wordOrderRule')}</p>
+                    <p className="text-sm leading-relaxed">{insight.wordOrderNote}</p>
+                </div>
+            )}
 
             {/* EL "¿Y QUÉ?": las 2-3 palabras que cargan el peso teológico,
                 con su consecuencia homilética — del dato a lo que se predica. */}

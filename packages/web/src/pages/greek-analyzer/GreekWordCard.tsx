@@ -1,4 +1,4 @@
-import { greekRecognitionClues, type GreekKeyInsight, type GreekWordInsight, type GreekWordToken } from '@dosfilos/domain';
+import { greekRecognitionClues, translationBridge, type GreekKeyInsight, type GreekWordInsight, type GreekWordToken } from '@dosfilos/domain';
 import { Star, BookmarkPlus, Check } from 'lucide-react';
 import { useNtLemmaFrequency } from './useLemmaFrequency';
 import { useTranslation } from 'react-i18next';
@@ -59,6 +59,7 @@ export function GreekWordCard({
     // La RAREZA es el dato que se cita en el púlpito: "δίψυχος aparece sólo
     // 2 veces en todo el NT". Se destaca cuando de verdad es raro.
     const esRara = ntCount !== null && ntCount > 0 && ntCount <= 5;
+    const puente = translationBridge(token);
 
     const celdas: { labelKey: string; value: string }[] = [];
     const celda = (labelKey: string, dim: string, code?: string) => {
@@ -149,6 +150,10 @@ export function GreekWordCard({
 
             {insight && (
                 <div className="text-sm font-medium text-primary">{insight.translation}</div>
+            )}
+
+            {puente && (
+                <div className="text-xs italic text-muted-foreground">{t(`analyzer.bridge.${puente}`)}</div>
             )}
 
             {ntCount !== null && ntCount > 0 && (
