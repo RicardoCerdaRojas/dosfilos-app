@@ -104,7 +104,16 @@ export function SectionElementsPanel(props: Props) {
      * es una comodidad: es un solo `onChange`, y encadenar el singular desde
      * React perdería todas las escrituras menos la última.
      */
-    const add = (texts: readonly string[], provenance: ElementProvenance, proposedText?: string) => {
+    const add = (
+        texts: readonly string[],
+        provenance: ElementProvenance,
+        proposedText?: string,
+        // La fuente de la propuesta, SIN el fragmento: el excerpt sirve para
+        // decidir y vive en la propuesta; al elemento sólo viaja lo que la
+        // bibliografía imprime. Guardar el fragmento entero por elemento
+        // engordaría el autosave con texto que ya nadie muestra.
+        source?: { title: string; author?: string; page?: string },
+    ) => {
         const nuevos: SermonElement[] = texts
             .map((t) => t.trim())
             .filter((t) => t.length > 0)
@@ -121,6 +130,7 @@ export function SectionElementsPanel(props: Props) {
                     kind,
                     kindAuto: kind,
                     proposedText,
+                    ...(source ? { source: { title: source.title, ...(source.author ? { author: source.author } : {}), ...(source.page ? { page: source.page } : {}) } } : {}),
                     decidedAt: new Date(),
                 };
             });
@@ -263,14 +273,14 @@ export function SectionElementsPanel(props: Props) {
                 proposals={proposals}
                 onPropose={handlePropose}
                 onUse={(p, i) => {
-                    add([p.text], 'elegido');
+                    add([p.text], 'elegido', undefined, p.source);
                     consume(i);
                 }}
                 onEdit={(p, i, texto) => {
                     // El texto propuesto viaja con el elemento: sin el original,
                     // `editado` no es auditable y la procedencia deja de
                     // significar algo.
-                    add([texto], 'editado', p.text);
+                    add([texto], 'editado', p.text, p.source);
                     consume(i);
                 }}
                 onWriteSection={props.onWriteSection}

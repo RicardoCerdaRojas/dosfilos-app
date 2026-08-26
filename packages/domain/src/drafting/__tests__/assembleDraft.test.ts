@@ -252,3 +252,64 @@ describe('la cita de autoridad es una decisión, no un campo forzado', () => {
         expect(assembleDraft(COMPLETO).body[0].mainPassageRef).toBe('Jonás 1:1-2');
     });
 });
+
+describe('assembleDraft — las fuentes de los elementos llegan a ragSources', () => {
+    const fuente = { title: 'Comentario de Jonás', author: 'D. Alexander', page: '87' };
+    const cita = (sectionId: string, source = fuente): SermonElement => ({
+        ...el('"El profeta huye" — D. Alexander'),
+        sectionId,
+        source,
+    });
+
+    it('un elemento con fuente registra el libro en ragSources', () => {
+        const draft = assembleDraft({
+            ...COMPLETO,
+            elements: { ...COMPLETO.elements, 'point.1.authorityQuote': [cita('point.1.authorityQuote')] },
+        });
+        expect(draft.ragSources).toHaveLength(1);
+        expect(draft.ragSources?.[0]).toMatchObject({
+            title: 'Comentario de Jonás',
+            author: 'D. Alexander',
+            page: '87',
+        });
+    });
+
+    it('la misma obra y página en dos secciones es UNA entrada: lista fuentes, no usos', () => {
+        const draft = assembleDraft({
+            ...COMPLETO,
+            elements: {
+                ...COMPLETO.elements,
+                'point.1.authorityQuote': [cita('point.1.authorityQuote')],
+                'point.2.authorityQuote': [cita('point.2.authorityQuote')],
+            },
+        });
+        expect(draft.ragSources).toHaveLength(1);
+    });
+
+    it('misma obra en otra página son DOS entradas', () => {
+        const draft = assembleDraft({
+            ...COMPLETO,
+            elements: {
+                ...COMPLETO.elements,
+                'point.1.authorityQuote': [cita('point.1.authorityQuote')],
+                'point.2.authorityQuote': [cita('point.2.authorityQuote', { ...fuente, page: '112' })],
+            },
+        });
+        expect(draft.ragSources).toHaveLength(2);
+    });
+
+    it('un elemento descartado no registra su fuente', () => {
+        const draft = assembleDraft({
+            ...COMPLETO,
+            elements: {
+                ...COMPLETO.elements,
+                'point.1.authorityQuote': [{ ...cita('point.1.authorityQuote'), provenance: 'descartado' }],
+            },
+        });
+        expect(draft.ragSources).toBeUndefined();
+    });
+
+    it('sin elementos con fuente, el campo no existe — no un arreglo vacío', () => {
+        expect(assembleDraft(COMPLETO).ragSources).toBeUndefined();
+    });
+});

@@ -10,6 +10,13 @@ export interface ProposedElement {
      * decidido y terminaría filtrándose a la prosa del sermón.
      */
     unsupported?: boolean;
+    /**
+     * De qué fuente de la biblioteca salió la propuesta, cuando salió de una.
+     * Las citas de autoridad (`ProposedQuote`) la traen siempre; las ideas
+     * generadas no la tienen. Viaja hasta el elemento decidido para que el
+     * sermón registre sus fuentes.
+     */
+    source?: { title: string; author?: string; page?: string };
 }
 
 /**
