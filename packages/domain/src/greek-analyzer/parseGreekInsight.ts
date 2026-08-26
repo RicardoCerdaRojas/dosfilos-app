@@ -44,10 +44,26 @@ export function parseGreekInsight(
         words.push({ text, semanticRange, syntacticFunction, translation });
     }
 
+    // Las claves exegéticas son OPCIONALES y se validan suave: una entrada
+    // malformada se descarta sola, sin tumbar el análisis entero — a
+    // diferencia de `words`, donde el desalineamiento corrompe todo.
+    const keyInsights = Array.isArray(p.keyInsights)
+        ? p.keyInsights
+              .map((crudo) => {
+                  const k = crudo as Record<string, unknown>;
+                  const text = typeof k.text === 'string' ? k.text.trim() : '';
+                  const significance = typeof k.significance === 'string' ? k.significance.trim() : '';
+                  return text && significance ? { text, significance } : null;
+              })
+              .filter((k): k is { text: string; significance: string } => k !== null)
+              .slice(0, 3)
+        : [];
+
     return {
         reference: input.reference,
         literalTranslation: literal,
         fluidTranslation: fluida,
         words,
+        ...(keyInsights.length > 0 ? { keyInsights } : {}),
     };
 }

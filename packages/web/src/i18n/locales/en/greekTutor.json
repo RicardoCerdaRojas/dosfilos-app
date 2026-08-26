@@ -712,6 +712,29 @@
       "participioActivo": "The marks {{marker}} signal the active participle.",
       "participioAorAct": "The marks {{marker}} signal the aorist active participle."
     },
-    "personShort": "{{n}}rd person"
+    "personShort": "{{n}}rd person",
+    "view": {
+      "verse": "Verse",
+      "passage": "Passage"
+    },
+    "keyInsightsTitle": "Exegetical keys",
+    "keyWordBadge": "Key",
+    "significance": "Significance for preaching",
+    "expandPitch": "This analysis predates the exegetical keys. Expand it to see which words carry the theological weight and why.",
+    "expandBtn": "Expand analysis",
+    "frequency": "{{nt}}× in the NT",
+    "frequencyInBook": "{{n}}× in {{book}}",
+    "rareWord": "rare word",
+    "saveFinding": "Save this finding for your sermon",
+    "saveFindingShort": "For my sermon",
+    "findingSaved": "Saved — available in the workshop",
+    "findingSavedShort": "Saved",
+    "findingSavedToast": "Finding saved. You will find it in the sermon workshop, “Key words” section, via “Bring the ones from my study”.",
+    "findingError": "The finding could not be saved.",
+    "passage": {
+      "range": "Range",
+      "print": "Print",
+      "openVerse": "View analysis"
+    }
   }
 }

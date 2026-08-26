@@ -20,6 +20,18 @@ export interface GreekWordInsight {
     readonly translation: string;
 }
 
+/**
+ * El "¿y qué?" de una palabra teológicamente cargada: POR QUÉ su morfología o
+ * su semántica importan para la predicación. Es el salto del dato a la
+ * consecuencia — "aoristo imperativo" → "pide una decisión puntual, no una
+ * actitud continua".
+ */
+export interface GreekKeyInsight {
+    /** La palabra, verbatim como aparece en el versículo. */
+    readonly text: string;
+    readonly significance: string;
+}
+
 export interface GreekVerseInsight {
     /** "JAS 1:2" — la clave del caché. */
     readonly reference: string;
@@ -29,4 +41,10 @@ export interface GreekVerseInsight {
     readonly fluidTranslation: string;
     /** En el MISMO orden que los tokens del versículo. */
     readonly words: readonly GreekWordInsight[];
+    /**
+     * Las 2-3 palabras que cargan el peso teológico del versículo, con su
+     * significancia homilética. SÓLO ésas: en todas las palabras sería ruido.
+     * Ausente en cachés anteriores a este campo.
+     */
+    readonly keyInsights?: readonly GreekKeyInsight[];
 }

@@ -1,4 +1,6 @@
-import { greekRecognitionClues, type GreekWordInsight, type GreekWordToken } from '@dosfilos/domain';
+import { greekRecognitionClues, type GreekKeyInsight, type GreekWordInsight, type GreekWordToken } from '@dosfilos/domain';
+import { Star, BookmarkPlus, Check } from 'lucide-react';
+import { useNtLemmaFrequency } from './useLemmaFrequency';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
@@ -6,6 +8,15 @@ interface Props {
     token: GreekWordToken;
     /** El aporte del modelo (fase 2): rango, función, traducción. Opcional. */
     insight?: GreekWordInsight;
+    /** La significancia homilética, si esta palabra es una de las claves. */
+    keyInsight?: GreekKeyInsight;
+    /** Frecuencia del lema en el libro actual (runtime, determinista). */
+    bookCount?: number;
+    /** Nombre del libro, para la línea de frecuencia. */
+    bookName?: string;
+    /** Guardar el hallazgo para el sermón. Presente sólo con insight. */
+    onSaveFinding?: () => void;
+    saved?: boolean;
     highlighted?: boolean;
     onClick?: () => void;
 }
@@ -30,10 +41,24 @@ const POS_BADGE: Record<string, string> = {
  * TODO EL CONTENIDO ES DETERMINISTA: viene del dataset, no de un modelo. Las
  * celdas ausentes no se muestran — un rótulo sobre un guion no informa nada.
  */
-export function GreekWordCard({ token, insight, highlighted, onClick }: Props) {
+export function GreekWordCard({
+    token,
+    insight,
+    keyInsight,
+    bookCount,
+    bookName,
+    onSaveFinding,
+    saved,
+    highlighted,
+    onClick,
+}: Props) {
     const { t } = useTranslation('greekTutor');
     const { tag } = token;
     const pistas = greekRecognitionClues(token);
+    const ntCount = useNtLemmaFrequency(token.lemma);
+    // La RAREZA es el dato que se cita en el púlpito: "δίψυχος aparece sólo
+    // 2 veces en todo el NT". Se destaca cuando de verdad es raro.
+    const esRara = ntCount !== null && ntCount > 0 && ntCount <= 5;
 
     const celdas: { labelKey: string; value: string }[] = [];
     const celda = (labelKey: string, dim: string, code?: string) => {
@@ -67,6 +92,38 @@ export function GreekWordCard({ token, insight, highlighted, onClick }: Props) {
                 >
                     {t(`analyzer.pos.${token.pos}`)}
                 </span>
+                {keyInsight && (
+                    <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[11px] leading-none text-primary">
+                        <Star className="h-3 w-3" />
+                        {t('analyzer.keyWordBadge')}
+                    </span>
+                )}
+                {onSaveFinding && (
+                    <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (!saved) onSaveFinding();
+                        }}
+                        onKeyDown={(e) => {
+                            if ((e.key === 'Enter' || e.key === ' ') && !saved) {
+                                e.stopPropagation();
+                                onSaveFinding();
+                            }
+                        }}
+                        className={cn(
+                            'ml-auto inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] leading-none transition-colors',
+                            saved
+                                ? 'bg-success/10 text-success cursor-default'
+                                : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary cursor-pointer',
+                        )}
+                        title={saved ? t('analyzer.findingSaved') : t('analyzer.saveFinding')}
+                    >
+                        {saved ? <Check className="h-3 w-3" /> : <BookmarkPlus className="h-3 w-3" />}
+                        {saved ? t('analyzer.findingSavedShort') : t('analyzer.saveFindingShort')}
+                    </span>
+                )}
             </div>
 
             <div className="flex items-baseline justify-between gap-3">
@@ -88,6 +145,16 @@ export function GreekWordCard({ token, insight, highlighted, onClick }: Props) {
 
             {insight && (
                 <div className="text-sm font-medium text-primary">{insight.translation}</div>
+            )}
+
+            {ntCount !== null && ntCount > 0 && (
+                <div className={cn('text-xs', esRara ? 'font-medium text-warning' : 'text-muted-foreground')}>
+                    {t('analyzer.frequency', { nt: ntCount })}
+                    {bookCount !== undefined && bookName && (
+                        <> · {t('analyzer.frequencyInBook', { n: bookCount, book: bookName })}</>
+                    )}
+                    {esRara && <> · {t('analyzer.rareWord')}</>}
+                </div>
             )}
 
             {celdas.length > 0 && (
@@ -130,6 +197,15 @@ export function GreekWordCard({ token, insight, highlighted, onClick }: Props) {
                         </div>
                         <div className="text-sm">{insight.syntacticFunction}</div>
                     </div>
+                </div>
+            )}
+
+            {keyInsight && (
+                <div className="rounded-md bg-primary/5 border border-primary/20 p-2.5 space-y-1">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">
+                        {t('analyzer.significance')}
+                    </div>
+                    <p className="text-sm leading-relaxed">{keyInsight.significance}</p>
                 </div>
             )}
         </button>

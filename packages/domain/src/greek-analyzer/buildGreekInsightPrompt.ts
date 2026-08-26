@@ -65,6 +65,13 @@ Y para CADA palabra, en el MISMO ORDEN de la lista:
   en la morfología dada.
 - "translation": su traducción contextual en este versículo.
 
+Y ADEMÁS, "keyInsights": elige las 2 o 3 palabras que cargan el PESO
+TEOLÓGICO del versículo y explica su SIGNIFICANCIA para la predicación — el
+paso del dato a la consecuencia: por qué importa que ese verbo sea aoristo y
+no presente, qué pierde el oyente si el matiz del lema se traduce plano.
+2 a 4 frases por palabra, concretas y predicables. NO repitas la morfología
+(ya está arriba): explica qué SE SIGUE de ella.
+
 REGLAS:
 - Todo en español, salvo las palabras griegas.
 - NO inventes sentidos que el lema no tiene: el pastor va a predicar con esto.
@@ -76,6 +83,9 @@ FORMATO DE SALIDA (JSON, sin texto alrededor):
   "fluidTranslation": "…",
   "words": [
     { "text": "…", "semanticRange": "sentido A / sentido B", "syntacticFunction": "…", "translation": "…" }
+  ],
+  "keyInsights": [
+    { "text": "…", "significance": "Por qué esta palabra importa al predicar este versículo." }
   ]
 }`;
 }

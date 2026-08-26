@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Loader2, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +14,12 @@ import type { BibleBookId } from '@dosfilos/domain';
 import { useGreekVerse } from './useGreekVerse';
 import { useGreekInsight } from './useGreekInsight';
 import { GreekWordHoverContent } from './GreekWordHoverContent';
+import { GreekPassageView } from './GreekPassageView';
+import { GreekInsightBlocks } from './GreekInsightBlocks';
+import { FirestoreGreekFindingsRepository } from '@dosfilos/infrastructure';
+import { transliterateGreek } from '@dosfilos/domain';
+import { useFirebase } from '@/context/firebase-context';
+import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { GreekWordCard } from './GreekWordCard';
 
@@ -31,15 +37,50 @@ import { GreekWordCard } from './GreekWordCard';
  */
 export function GreekAnalyzerPage() {
     const { t, i18n } = useTranslation('greekTutor');
-    const { book, chapter, verse, books, chapters, versesInChapter, data, loading, error, goTo, step } =
+    const { user } = useFirebase();
+    const { book, chapter, verse, books, chapters, versesInChapter, data, loading, error, goTo, step, provider, lemmaCounts } =
         useGreekVerse({ book: 'JAS', chapter: 1, verse: 1 });
     const [seleccion, setSeleccion] = useState<number | null>(null);
+    /** Versículo suelto o perícopa: un pastor estudia pasajes. */
+    const [vista, setVista] = useState<'verse' | 'passage'>('verse');
+    /** Lemas guardados en esta sesión, para el check del botón. */
+    const [guardados, setGuardados] = useState<Set<string>>(new Set());
 
     const nombre = (b: { nameEs: string; nameEn: string }) =>
         i18n.language.startsWith('es') ? b.nameEs : b.nameEn;
     const libroActual = books.find((b) => b.id === book);
     const referencia = `${book} ${chapter}:${verse}`;
     const { insight, generating, error: insightError, generate } = useGreekInsight(referencia, data?.tokens);
+
+    /** Empata una clave exegética con su token, tolerando puntuación. */
+    const limpiar = (x: string) => x.replace(/[.,·;··]+$/u, '');
+    const claveDe = (texto: string) =>
+        insight?.keyInsights?.find((k) => limpiar(k.text) === limpiar(texto));
+
+    /**
+     * EL PUENTE AL SERMÓN: guarda el hallazgo con el MISMO formato de las
+     * palabras clave del taller — que lo ofrecerá como propuesta en cualquier
+     * sermón del pastor. Por eso el botón sólo existe con análisis: sin
+     * significancia ni rango no hay nada que valga la pena llevarse.
+     */
+    const guardarHallazgo = async (i: number) => {
+        const tok = data?.tokens[i];
+        if (!tok || !user?.uid) return;
+        const cuerpo = claveDe(tok.text)?.significance ?? insight?.words[i]?.semanticRange;
+        if (!cuerpo) return;
+        const nombreLibro = libroActual ? nombre(libroActual) : book;
+        try {
+            await new FirestoreGreekFindingsRepository().save(user.uid, {
+                reference: `${nombreLibro} ${chapter}:${verse}`,
+                lemma: tok.lemma,
+                formatted: `*${tok.lemma}* (${transliterateGreek(tok.lemma)}) — ${cuerpo}`,
+            });
+            setGuardados((prev) => new Set(prev).add(tok.lemma));
+            toast.success(t('analyzer.findingSavedToast'));
+        } catch {
+            toast.error(t('analyzer.findingError'));
+        }
+    };
 
     return (
         <div className="h-full overflow-y-auto">
@@ -93,9 +134,40 @@ export function GreekAnalyzerPage() {
                             <ChevronRight className="h-4 w-4" />
                         </Button>
                     </div>
+
+                    {/* Versículo suelto o perícopa completa. */}
+                    <div className="ml-auto flex items-center gap-1">
+                        {(['verse', 'passage'] as const).map((v) => (
+                            <button
+                                key={v}
+                                type="button"
+                                onClick={() => setVista(v)}
+                                className={cn(
+                                    'rounded-md border px-3 py-1.5 text-sm transition-colors',
+                                    vista === v
+                                        ? 'bg-background text-foreground border-border/60 shadow-sm'
+                                        : 'border-transparent text-muted-foreground hover:bg-muted/60',
+                                )}
+                            >
+                                {t(`analyzer.view.${v}`)}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                {loading ? (
+                {vista === 'passage' ? (
+                    <GreekPassageView
+                        provider={provider}
+                        book={book}
+                        bookName={libroActual ? nombre(libroActual) : book}
+                        chapter={chapter}
+                        versesInChapter={versesInChapter}
+                        onOpenVerse={(v) => {
+                            goTo(book, chapter, v);
+                            setVista('verse');
+                        }}
+                    />
+                ) : loading ? (
                     <div className="flex items-center justify-center py-24">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
@@ -144,35 +216,12 @@ export function GreekAnalyzerPage() {
                             global: el texto griego es el mismo para todos, así que
                             un análisis pagado una vez sirve a todos. PULL, no auto:
                             quien lee morfología no pidió pagar una llamada. */}
-                        {insight ? (
-                            <div className="grid gap-3 md:grid-cols-2">
-                                <div className="rounded-lg border border-border p-4 space-y-1">
-                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                        {t('analyzer.literalTranslation')}
-                                    </h4>
-                                    <p className="text-sm leading-relaxed">{insight.literalTranslation}</p>
-                                </div>
-                                <div className="rounded-lg border border-border p-4 space-y-1">
-                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                        {t('analyzer.fluidTranslation')}
-                                    </h4>
-                                    <p className="text-sm leading-relaxed">{insight.fluidTranslation}</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="rounded-lg border border-dashed border-border p-4 flex flex-wrap items-center justify-between gap-3">
-                                <p className="text-sm text-muted-foreground">{t('analyzer.insightPitch')}</p>
-                                <Button size="sm" onClick={() => void generate()} disabled={generating}>
-                                    {generating ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Sparkles className="mr-2 h-4 w-4" />
-                                    )}
-                                    {generating ? t('analyzer.generating') : t('analyzer.generateInsight')}
-                                </Button>
-                                {insightError && <p className="w-full text-xs text-destructive">{t('analyzer.insightError')}</p>}
-                            </div>
-                        )}
+                        <GreekInsightBlocks
+                            insight={insight}
+                            generating={generating}
+                            error={insightError}
+                            onGenerate={() => void generate()}
+                        />
 
                         {/* ANÁLISIS POR PALABRA — todo a la vista. */}
                         <div>
@@ -185,6 +234,15 @@ export function GreekAnalyzerPage() {
                                         key={i}
                                         token={tok}
                                         insight={insight?.words[i]}
+                                        keyInsight={claveDe(tok.text)}
+                                        bookCount={lemmaCounts[tok.lemma]}
+                                        bookName={libroActual ? nombre(libroActual) : book}
+                                        onSaveFinding={
+                                            insight && user?.uid && (claveDe(tok.text) || insight.words[i])
+                                                ? () => void guardarHallazgo(i)
+                                                : undefined
+                                        }
+                                        saved={guardados.has(tok.lemma)}
                                         highlighted={seleccion === i}
                                         onClick={() => setSeleccion(seleccion === i ? null : i)}
                                     />

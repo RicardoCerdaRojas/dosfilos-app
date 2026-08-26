@@ -1,0 +1,80 @@
+import { Loader2, Sparkles, Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import type { GreekVerseInsight } from '@dosfilos/domain';
+
+interface Props {
+    insight: GreekVerseInsight | null;
+    generating: boolean;
+    error: string | null;
+    onGenerate: () => void;
+}
+
+/**
+ * El aporte del modelo en la vista de versículo: las dos traducciones, las
+ * CLAVES EXEGÉTICAS (el "¿y qué?" homilético de las 2-3 palabras que cargan
+ * el peso teológico) y, sin análisis aún, la invitación a generarlo — pull
+ * con caché global, nunca auto.
+ */
+export function GreekInsightBlocks({ insight, generating, error, onGenerate }: Props) {
+    const { t } = useTranslation('greekTutor');
+
+    if (!insight) {
+        return (
+            <div className="rounded-lg border border-dashed border-border p-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-muted-foreground">{t('analyzer.insightPitch')}</p>
+                <Button size="sm" onClick={onGenerate} disabled={generating}>
+                    {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    {generating ? t('analyzer.generating') : t('analyzer.generateInsight')}
+                </Button>
+                {error && <p className="w-full text-xs text-destructive">{t('analyzer.insightError')}</p>}
+            </div>
+        );
+    }
+
+    return (
+        <>
+            <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-lg border border-border p-4 space-y-1">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        {t('analyzer.literalTranslation')}
+                    </h4>
+                    <p className="text-sm leading-relaxed">{insight.literalTranslation}</p>
+                </div>
+                <div className="rounded-lg border border-border p-4 space-y-1">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        {t('analyzer.fluidTranslation')}
+                    </h4>
+                    <p className="text-sm leading-relaxed">{insight.fluidTranslation}</p>
+                </div>
+            </div>
+
+            {/* EL "¿Y QUÉ?": las 2-3 palabras que cargan el peso teológico,
+                con su consecuencia homilética — del dato a lo que se predica. */}
+            {insight.keyInsights?.length ? (
+                <div className="rounded-lg border border-primary/20 bg-primary/[0.03] p-4 space-y-3">
+                    <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+                        <Star className="h-3.5 w-3.5" />
+                        {t('analyzer.keyInsightsTitle')}
+                    </h4>
+                    {insight.keyInsights.map((k) => (
+                        <div key={k.text} className="text-sm leading-relaxed">
+                            <span className="font-semibold" lang="grc">{k.text}</span>
+                            {' — '}
+                            {k.significance}
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                // Caché anterior a las claves: se ofrece ampliar (regenera).
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-border px-4 py-2">
+                    <p className="text-xs text-muted-foreground">{t('analyzer.expandPitch')}</p>
+                    <Button variant="ghost" size="sm" onClick={onGenerate} disabled={generating}>
+                        {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                        {t('analyzer.expandBtn')}
+                    </Button>
+                </div>
+            )}
+        </>
+    );
+}

@@ -736,6 +736,29 @@
       "participioActivo": "Las marcas {{marker}} señalan el participio activo.",
       "participioAorAct": "Las marcas {{marker}} señalan el participio aoristo activo."
     },
-    "personShort": "{{n}}ª persona"
+    "personShort": "{{n}}ª persona",
+    "view": {
+      "verse": "Versículo",
+      "passage": "Pasaje"
+    },
+    "keyInsightsTitle": "Claves exegéticas",
+    "keyWordBadge": "Clave",
+    "significance": "Significancia para la predicación",
+    "expandPitch": "Este análisis es anterior a las claves exegéticas. Amplíalo para ver qué palabras cargan el peso teológico y por qué.",
+    "expandBtn": "Ampliar análisis",
+    "frequency": "{{nt}}× en el NT",
+    "frequencyInBook": "{{n}}× en {{book}}",
+    "rareWord": "palabra rara",
+    "saveFinding": "Guardar este hallazgo para tu sermón",
+    "saveFindingShort": "Para mi sermón",
+    "findingSaved": "Guardado — disponible en el taller",
+    "findingSavedShort": "Guardado",
+    "findingSavedToast": "Hallazgo guardado. Lo encontrarás en el taller del sermón, sección «Palabras clave», con «Tráeme las del estudio».",
+    "findingError": "No se pudo guardar el hallazgo.",
+    "passage": {
+      "range": "Rango",
+      "print": "Imprimir",
+      "openVerse": "Ver análisis"
+    }
   }
 }
