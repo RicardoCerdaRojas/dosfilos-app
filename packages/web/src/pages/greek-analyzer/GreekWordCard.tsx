@@ -1,4 +1,4 @@
-import type { GreekWordInsight, GreekWordToken } from '@dosfilos/domain';
+import { greekRecognitionClues, type GreekWordInsight, type GreekWordToken } from '@dosfilos/domain';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +33,7 @@ const POS_BADGE: Record<string, string> = {
 export function GreekWordCard({ token, insight, highlighted, onClick }: Props) {
     const { t } = useTranslation('greekTutor');
     const { tag } = token;
+    const pistas = greekRecognitionClues(token);
 
     const celdas: { labelKey: string; value: string }[] = [];
     const celda = (labelKey: string, dim: string, code?: string) => {
@@ -99,6 +100,19 @@ export function GreekWordCard({ token, insight, highlighted, onClick }: Props) {
                             <div className="text-sm">{c.value}</div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {pistas.length > 0 && (
+                <div className="rounded-md bg-warning/10 p-2.5 space-y-1">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-warning">
+                        {t('analyzer.clues.title')}
+                    </div>
+                    <ul className="space-y-0.5 text-xs">
+                        {pistas.map((p) => (
+                            <li key={p.id}>• {t(`analyzer.clues.${p.id}`, { marker: p.marker })}</li>
+                        ))}
+                    </ul>
                 </div>
             )}
 

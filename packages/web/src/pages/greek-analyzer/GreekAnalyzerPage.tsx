@@ -13,6 +13,8 @@ import { cn } from '@/lib/utils';
 import type { BibleBookId } from '@dosfilos/domain';
 import { useGreekVerse } from './useGreekVerse';
 import { useGreekInsight } from './useGreekInsight';
+import { GreekWordHoverContent } from './GreekWordHoverContent';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { GreekWordCard } from './GreekWordCard';
 
 /**
@@ -112,20 +114,28 @@ export function GreekAnalyzerPage() {
                             </div>
                             <div className="flex flex-wrap gap-x-4 gap-y-5" lang="grc">
                                 {data.tokens.map((tok, i) => (
-                                    <button
-                                        key={i}
-                                        type="button"
-                                        onClick={() => setSeleccion(seleccion === i ? null : i)}
-                                        className={cn(
-                                            'group flex flex-col items-center rounded px-1.5 py-1 transition-colors hover:bg-primary/10',
-                                            seleccion === i && 'bg-primary/10 ring-1 ring-primary/40',
-                                        )}
-                                    >
-                                        <span className="text-3xl leading-tight">{tok.text}</span>
-                                        <span className="text-[11px] text-muted-foreground italic" lang="en">
-                                            {tok.transliteration}
-                                        </span>
-                                    </button>
+                                    <Tooltip key={i} delayDuration={200}>
+                                        <TooltipTrigger asChild>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSeleccion(seleccion === i ? null : i)}
+                                                className={cn(
+                                                    'group flex flex-col items-center rounded px-1.5 py-1 transition-colors hover:bg-primary/10',
+                                                    seleccion === i && 'bg-primary/10 ring-1 ring-primary/40',
+                                                )}
+                                            >
+                                                <span className="text-3xl leading-tight">{tok.text}</span>
+                                                <span className="text-[11px] text-muted-foreground italic" lang="en">
+                                                    {tok.transliteration}
+                                                </span>
+                                            </button>
+                                        </TooltipTrigger>
+                                        {/* Mismo patrón que el hebreo: tooltip con
+                                            contenido rico, fondo de tarjeta. */}
+                                        <TooltipContent className="bg-card text-card-foreground border border-border shadow-lg">
+                                            <GreekWordHoverContent token={tok} insight={insight?.words[i]} />
+                                        </TooltipContent>
+                                    </Tooltip>
                                 ))}
                             </div>
                         </div>
