@@ -294,7 +294,7 @@
   },
   "drafting": {
     "title": "Sermon Draft",
-    "subtitle": "Generate the complete sermon ready to preach.",
+    "subtitle": "Your study and outline are ready. Choose how to write the sermon.",
     "homileticalProposition": "Homiletical Proposition",
     "outlinePoints": "Sermon Points:",
     "readyToGenerate": "Ready to generate your complete sermon",
@@ -618,14 +618,17 @@
       "subheading": "Both start from your study and your outline. The difference is who decides the ideas.",
       "workshopTitle": "The workshop",
       "workshopBadge": "Recommended",
-      "workshopDesc": "You decide section by section — your ideas, your study’s words, your quotes — and the assistant writes from what you decided. Start below.",
+      "workshopDesc": "You decide section by section — your ideas, your study’s words, your quotes — and the assistant writes from what you decided.",
       "generateTitle": "Full draft at once",
-      "generateDesc": "The assistant writes the whole sermon from your study and your outline. Useful when time is short: you can refine it in the workshop, and the draft will be marked as generated."
+      "generateDesc": "The assistant writes the whole sermon from your study and your outline. Useful when time is short: you can refine it in the workshop, and the draft will be marked as generated.",
+      "workshopCta": "Enter the workshop"
     },
     "provenance": {
       "workshop": "Assembled from your decisions",
       "generated": "Generated — refine it in the workshop"
-    }
+    },
+    "emptyDraftTitle": "You have not assembled the draft yet",
+    "emptyDraftDesc": "Decide the sections in the Workshop and press “Assemble draft”, or generate the full sermon from the band above."
   },
   "pastoralContext": {
     "title": "Pastoral context (optional)",

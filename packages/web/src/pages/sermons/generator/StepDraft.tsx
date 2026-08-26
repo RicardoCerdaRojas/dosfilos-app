@@ -1,14 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWizard } from './WizardContext';
-import { WizardLayout } from './WizardLayout';
 import { DerivedContextBanner } from './DerivedContextBanner';
 import { SermonPersonalizationPanel } from './SermonPersonalizationPanel';
-import { DraftSkeletonPreview } from './DraftSkeletonPreview';
 import { IllustrationDuplicateBanner } from './IllustrationDuplicateBanner';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload, BookOpen } from 'lucide-react';
+import { Loader2, ArrowLeft, Save, Eye, Upload, BookOpen } from 'lucide-react';
 import {
     sermonGeneratorService,
     sermonService,
@@ -43,7 +40,6 @@ import { ResizableChatPanel } from '@/components/canvas-chat/ResizableChatPanel'
 
 import { useContentHistory } from '@/hooks/useContentHistory';
 import { useGeneratorChat } from '@/hooks/useGeneratorChat';
-import { MarkdownRenderer } from '@/components/canvas-chat/MarkdownRenderer';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
@@ -66,6 +62,7 @@ import { WizardStepHeader } from './WizardStepHeader';
 import { WizardStepShell } from './WizardStepShell';
 import { RegenerateDraftAction } from './draft/RegenerateDraftAction';
 import { StudyReadingSheet } from './draft/StudyReadingSheet';
+import { DraftPathChooser } from './draft/DraftPathChooser';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import { PanelGroup } from '@/components/ui/PanelGroup';
 import { WorkshopDraftActions } from './draft/WorkshopDraftActions';
@@ -91,6 +88,15 @@ export function StepDraft() {
      * pregunta de alguien que no sabe si su acción funcionó.
      */
     const [activeTab, setActiveTab] = useState<'draft' | 'workshop'>('draft');
+    /**
+     * El pastor ya eligió camino en esta visita.
+     *
+     * No se persiste: al volver a un sermón donde ya decidió algo, `hayDecisiones`
+     * basta para saltarse el selector. Sirve para el caso en que acaba de
+     * pulsar "Entrar al taller" y todavía no decidió nada — sin esto, el
+     * selector volvería a aparecer sobre la pantalla que acaba de abrir.
+     */
+    const [caminoElegido, setCaminoElegido] = useState(false);
     const [loading, setLoading] = useState(false);
     const [publishing, setPublishing] = useState(false);
     // Pre-publish citation verification state (PR #218).
@@ -655,7 +661,7 @@ export function StepDraft() {
     // `draftBody`, o sea dentro de la pestaña Borrador: al pasar al Taller
     // desaparecían el título y TODOS los botones del paso —publicar incluido—
     // y no quedaba forma de publicar sin volver a la otra pestaña.
-    const stepHeader = draft ? (
+    const stepHeader = (
             <WizardStepHeader
                 leading={
                     socraticPanel ? (
@@ -663,19 +669,20 @@ export function StepDraft() {
                            en el orden del trabajo —decidir y después armar—, el
                            mismo que el asistente ya usa arriba. El borrador es
                            el resultado, no el punto de partida.
-                           ABRE EN BORRADOR de todos modos, porque estas
-                           pestañas sólo existen cuando YA hay uno: sin borrador
-                           el taller es lo único que se muestra, así que el
-                           primer trabajo empieza ahí por sí solo. Volver a
-                           entrar y aterrizar en el taller lo obligaría a buscar
-                           su sermón cada vez. */
+                           SIN BORRADOR TAMBIÉN EXISTEN: el pastor entra al
+                           taller desde el selector y trabaja acá, en la
+                           pantalla real. Antes exigían un borrador ya hecho, y
+                           por eso el taller se incrustaba ADEMÁS en el estado
+                           vacío — el mismo panel montado dos veces, con
+                           affordances distintas. Abre en Borrador cuando ya
+                           hay uno; en Taller cuando no. */
                         <TabsList>
                             <TabsTrigger value="workshop">{t('drafting.tabs.workshop')}</TabsTrigger>
                             <TabsTrigger value="draft">{t('drafting.tabs.draft')}</TabsTrigger>
                         </TabsList>
                     ) : undefined
                 }
-                title={draft.title}
+                title={draft?.title || t('drafting.title')}
                 meta={
                     activeTab === 'workshop'
                         ? t('drafting.sections.pendingCount', {
@@ -687,15 +694,15 @@ export function StepDraft() {
                           // anteriores a este campo no dicen NADA: la ausencia
                           // de dato no es evidencia, nunca se acusa por falta
                           // de registro.
-                          draft.assembledFrom && (
+                          draft?.assembledFrom && (
                               <span
                                   className={
-                                      draft.assembledFrom === 'workshop'
+                                      draft!.assembledFrom === 'workshop'
                                           ? 'rounded bg-primary/10 px-1.5 py-0.5 text-[11px] leading-none text-primary'
                                           : 'rounded bg-muted px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground'
                                   }
                               >
-                                  {t(`drafting.provenance.${draft.assembledFrom}`)}
+                                  {t(`drafting.provenance.${draft!.assembledFrom}`)}
                               </span>
                           )
                 }
@@ -786,7 +793,7 @@ export function StepDraft() {
                 </Button>
                 </>}
             />
-    ) : null;
+    );
 
     // Se define acá arriba para poder envolverlo en pestañas sin re-indentar
     // 180 líneas. El ternario estrecha `draft`: dentro de la rama verdadera ya
@@ -905,90 +912,46 @@ export function StepDraft() {
                 </ResizableChatPanel>
             </PanelGroup>
         </>
-    ) : null;
-
-    const leftPanel = !draft ? (
-        // overflow-y-auto so the "Generar Borrador" CTA stays reachable
-        // when SermonPersonalizationPanel is expanded — without scroll
-        // the panel's accordion body pushes the button below the
-        // viewport with no way to reach it short of collapsing the panel.
-        <div className="h-full flex flex-col overflow-y-auto">
-            <div className="space-y-4 mb-6">
-                <div className="flex items-center gap-2">
-                    <FileText className="h-6 w-6 text-primary" />
-                    <h2 className="text-2xl font-bold">{t('drafting.title')}</h2>
-                </div>
-                <p className="text-muted-foreground">{t('drafting.subtitle')}</p>
-            </div>
-
-            <Card className="p-6 space-y-4 bg-muted/50 mb-6">
-                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-                    {t('drafting.homileticalProposition')}
-                </h3>
-                <div className="text-lg font-medium italic">
-                    <MarkdownRenderer content={homiletics.homileticalProposition} />
-                </div>
-
-                {homiletics.outline?.mainPoints && homiletics.outline.mainPoints.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-border/50">
-                        <h4 className="font-semibold text-sm text-muted-foreground mb-2">
-                            {t('drafting.outlinePoints')}
-                        </h4>
-                        <ul className="space-y-1.5 text-sm">
-                            {homiletics.outline.mainPoints.map((point: any, index: number) => (
-                                <li key={index} className="flex items-start gap-2">
-                                    <span className="text-primary mt-0.5">▪</span>
-                                    <span className="text-foreground/90">{point.title}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-            </Card>
-
-            {/* DOS CAMINOS, DICHOS ANTES DE ELEGIR — punto 6 del plan de
-                convergencia. Los dos parten del estudio y del bosquejo; la
-                diferencia es quién decide las ideas, y eso se le dice al
-                pastor con las mismas palabras en ambas tarjetas. El taller no
-                lleva botón: ES la pantalla de abajo, ya desplegada — un botón
-                que hiciera scroll fingiría una navegación que no existe. */}
-            <div className="mb-6 space-y-3">
-                <div>
-                    <h3 className="font-semibold">{t('drafting.paths.heading')}</h3>
-                    <p className="text-sm text-muted-foreground">{t('drafting.paths.subheading')}</p>
-                </div>
-                <div className="grid gap-3 md:grid-cols-2">
-                    <Card className="p-4 space-y-2 border-primary/40">
-                        <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-sm">{t('drafting.paths.workshopTitle')}</h4>
-                            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] leading-none text-primary">
-                                {t('drafting.paths.workshopBadge')}
-                            </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{t('drafting.paths.workshopDesc')}</p>
-                    </Card>
-                    <Card className="p-4 space-y-2">
-                        <h4 className="font-medium text-sm">{t('drafting.paths.generateTitle')}</h4>
-                        <p className="text-sm text-muted-foreground">{t('drafting.paths.generateDesc')}</p>
-                        <Button
-                            onClick={() => void handleGenerate()}
-                            disabled={loading}
-                            variant="outline"
-                            size="sm"
-                        >
-                            <Sparkles className="mr-2 h-4 w-4" />
-                            {t('drafting.generateBtn')}
-                        </Button>
-                    </Card>
-                </div>
-            </div>
-
-            {socraticPanel}
-
-            <div className="mb-6 mt-6">
-                <SermonPersonalizationPanel />
+    ) : (
+        // LA PESTAÑA BORRADOR EXISTE ANTES DEL BORRADOR. Sin esto, entrar al
+        // taller sin haber armado nada dejaba una pestaña que no se podía
+        // abrir — y el pastor sin saber qué le falta para llenarla.
+        <div className="flex-1 min-h-0 flex items-center justify-center p-8">
+            <div className="max-w-md text-center space-y-2">
+                <h3 className="font-semibold">{t('drafting.emptyDraftTitle')}</h3>
+                <p className="text-sm text-muted-foreground">{t('drafting.emptyDraftDesc')}</p>
             </div>
         </div>
+    );
+
+    // EL SELECTOR ES UNA COMPUERTA, NO UNA PANTALLA DE TRABAJO. Antes
+    // incrustaba el taller completo debajo — el mismo que vive en su
+    // pestaña, pero en media pantalla y sin la banda del paso. El fundador
+    // lo cortó: "no lo veo posible por espacio". El problema no era el
+    // espacio: era el taller MONTADO EN DOS LUGARES.
+    //
+    // Se muestra sólo mientras no haya por dónde entrar: sin borrador, sin
+    // decisiones y sin haber elegido en esta sesión. En cuanto decide algo,
+    // la pantalla de trabajo es la suya y volver al selector sería un paso
+    // atrás que él no pidió.
+    const mostrarSelector = !draft && !hayDecisiones && !caminoElegido;
+
+    const leftPanel = mostrarSelector ? (
+        <DraftPathChooser
+            personalization={<SermonPersonalizationPanel />}
+            proposition={homiletics.homileticalProposition}
+            pointTitles={(homiletics.outline?.mainPoints ?? []).map((p: any) => p.title).filter(Boolean)}
+            onEnterWorkshop={
+                socraticPanel
+                    ? () => {
+                          setCaminoElegido(true);
+                          setActiveTab('workshop');
+                      }
+                    : undefined
+            }
+            onGenerate={() => void handleGenerate()}
+            generating={loading}
+        />
     ) : (
         <div className="h-full flex flex-col gap-4 overflow-hidden p-4">
             {/* PESTAÑAS Y NO UN PANEL ENCIMA. Con el taller abierto sobre el
@@ -1032,43 +995,14 @@ export function StepDraft() {
         </div>
     );
 
-    const rightPanel = !draft ? (
-        <Card className="p-6 h-full flex flex-col justify-start">
-            <div className="text-center space-y-4">
-                <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <FileText className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                    <h3 className="font-semibold mb-2">{t('drafting.finalDraftTitle')}</h3>
-                    <p className="text-sm text-muted-foreground">{t('drafting.finalDraftDesc')}</p>
-                </div>
-                {/* Este panel usaba las claves de HOMILÉTICA
-                    (`homiletics.afterGenerate*`), así que en Redacción prometía
-                    cosas del paso anterior y ya hechas: elegir enfoque, refinar
-                    la proposición, mejorar el bosquejo, agregar ilustraciones
-                    —que el pastor acababa de escribir en el panel de al lado—.
-                    Ninguna de las cuatro ocurre después de generar el borrador.
-                    Reusar la clave de otro paso ahorró cuatro líneas y le mintió
-                    al pastor sobre dónde está parado. Cada paso describe lo
-                    suyo. */}
-                {/* La FORMA antes que la lista: el esqueleto se arma con el
-                    bosquejo del pastor, así que anticipa la estructura y le
-                    confirma que su trabajo llegó hasta acá. */}
-                <div className="pt-4 border-t text-left">
-                    <h4 className="font-medium text-sm mb-2">{t('drafting.skeleton.title')}</h4>
-                    <DraftSkeletonPreview homiletics={homiletics} />
-                </div>
-                <div className="pt-4 border-t">
-                    <h4 className="font-medium text-sm mb-2">{t('drafting.afterGenerateTitle')}</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1 text-left">
-                        {(t('drafting.afterGenerateList', { returnObjects: true }) as string[]).map((item, i) => (
-                            <li key={i}>• {item}</li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
-        </Card>
-    ) : null;
+    // SIN PANEL DERECHO EN EL ESTADO VACÍO. Narraba el camino generado como
+    // si fuera EL camino ("este es el último paso, generaré un sermón
+    // completo"), contradiciendo al selector que recomienda el taller; y su
+    // esqueleto repetía los puntos ya listados a la izquierda, con menos
+    // información que el mapa del taller —que los muestra con su estado real—.
+    // Quitarlo le devuelve el ancho completo al taller, que es el camino
+    // recomendado y estaba aplastado en media pantalla con tres columnas
+    // adentro.
 
     return (
         <>
@@ -1078,7 +1012,7 @@ export function StepDraft() {
                 {/* ADR-031 — provide the citation manifest so [N] anchors in the
                     editor render as verifiable popovers (chunk + book + page). */}
                 <CitationManifestContext.Provider value={draft?.citationManifest}>
-                    {draft ? leftPanel : <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />}
+                    {leftPanel}
                 </CitationManifestContext.Provider>
             </WizardStepShell>
 
