@@ -1,603 +1,685 @@
 {
-    "title": "Greek Tutor",
-    "loading": {
-        "title": "Preparing Your Study Session",
-        "subtitle": "Analyzing the biblical passage with advanced exegetical tools",
-        "steps": {
-            "grammar": "Consulting standard grammars",
-            "forms": "Identifying relevant Greek forms",
-            "context": "Analyzing exegetical context",
-            "units": "Preparing training units"
-        },
-        "progress": "Progress",
-        "estimatedTime": "~15-30 seconds",
-        "footer": "Faithful study of Scripture honors God and edifies His people",
-        "tipTitle": "Study Tip",
-        "tips": [
-            "Greek word order is flexible thanks to its case system",
-            "Greek verb tenses communicate aspect more than chronological time",
-            "Pay attention to prepositions, as they often carry deep theological nuances",
-            "The definite article in Greek functions differently than in English",
-            "Participles are verbal adjectives that share characteristics of both"
-        ]
+  "title": "Greek Tutor",
+  "loading": {
+    "title": "Preparing Your Study Session",
+    "subtitle": "Analyzing the biblical passage with advanced exegetical tools",
+    "steps": {
+      "grammar": "Consulting standard grammars",
+      "forms": "Identifying relevant Greek forms",
+      "context": "Analyzing exegetical context",
+      "units": "Preparing training units"
     },
-    "description": "The ecosystem of tools for biblical study and sermon preparation.",
-    "intro": {
-        "heroSubtitle": "Morphology, syntax, and lexicon — verse by verse in original Greek.",
-        "actionTitle": "What passage do you want to study?",
-        "actionSubtitle": "Choose a NT text to start your guided session.",
-        "showcaseTitle": "What you'll be able to do",
-        "showcaseSubtitle": "Each tool unlocks a different layer of analysis. Click to see the example in detail."
-    },
-    "emptyState": {
-        "eyebrow": "Study · Biblical Greek",
-        "title": "Start your Greek study",
-        "body": "Each session dissects the New Testament — verse by verse — with morphological analysis, theological context, and pedagogical exercises.",
-        "methodologyLabel": "Methodology",
-        "suggestedPassages": "Suggested passages",
-        "featuredBadge": "Most studied",
-        "tipTitle": "Tip",
-        "tipBody": "Pick any suggested passage or create a new one. The tutor walks you step by step from original text to application."
-    },
-    "startTraining": "Start Training",
-    "mySessions": "My Sessions",
-    "biblicalPassage": "Biblical Passage",
-    "frequentPassages": "Frequent passages:",
-    "passageNotRecognized": "Passage not recognized",
-    "passageSelector": {
-        "label": "Biblical Passage",
-        "placeholder": "E.g.: John 3:16, Psalms 23",
-        "searchButton": "Start Study",
-        "searching": "Searching...",
-        "analyzing": "Analyzing...",
-        "invalidReference": "Invalid Reference",
-        "invalidReferenceDesc": "Please enter a valid biblical reference (e.g., John 3:16)."
-    },
-    "sections": {
-        "overview": "General Overview",
-        "wordStudy": "Word Study",
-        "learningReinforcement": "Learning Reinforcement"
-    },
-    "features": {
-        "readPassage": {
-            "title": "Read Passage",
-            "description": "Explore the biblical text in its original language with interactive tools to deepen your understanding.",
-            "preview": "Interactive transliteration",
-            "details": [
-                "View original Greek text with Spanish version options",
-                "Interactive transliteration for pronunciation",
-                "Click any Greek word to add to study units",
-                "Toggle between original and translation",
-                "Selected words highlighted in green"
-            ]
-        },
-        "syntax": {
-            "title": "Syntactic Structure",
-            "description": "Visualize grammatical relationships and clause hierarchy in the Greek text.",
-            "preview": {
-                "mainClause": "Main Clause",
-                "subordinateClause": "Subordinate Clause"
-            },
-            "details": [
-                "Hierarchical view of main and subordinate clauses",
-                "Syntactic relationships clearly marked",
-                "Expand/collapse controls for each level",
-                "Visual identification of grammatical roles",
-                "Understand the author's logical argument structure"
-            ]
-        },
-        "morphology": {
-            "title": "Morphological Analysis",
-            "description": "Detailed breakdown of each word into its basic morphological components.",
-            "preview": {
-                "root": "root",
-                "thematicVowel": "vowel",
-                "participle": "participle"
-            },
-            "details": [
-                "Visual separation of roots, prefixes, and suffixes",
-                "Explanation of each morpheme's meaning",
-                "Identification of tense, voice, mood, case, and number",
-                "Connection between form and grammatical function",
-                "Deepen understanding of Greek word construction"
-            ]
-        },
-        "recognitionKeys": {
-            "title": "Recognition Keys",
-            "description": "Morphological patterns helping you identify grammatical forms quickly.",
-            "details": [
-                "Key endings for verb tenses",
-                "Recognition patterns for cases",
-                "Voice and mood markers",
-                "Examples of each pattern in context",
-                "Develop reading skills without a dictionary"
-            ]
-        },
-        "contextFunction": {
-            "title": "Function in Context",
-            "description": "Understand the role each word plays within its clause and the full passage.",
-            "preview": {
-                "subject": "Subject",
-                "function": "Grammatical Function"
-            },
-            "details": [
-                "Identification of syntactic role (subject, object, modifier)",
-                "Relationship with other words in the clause",
-                "Connection to the passage's general argument",
-                "Theological importance of specific function",
-                "See how grammar serves meaning"
-            ]
-        },
-        "expertInsight": {
-            "title": "Expert Insight",
-            "description": "Deep perspectives from grammarians and exegetes on text meaning and implications.",
-            "preview": "Scholarly commentary...",
-            "details": [
-                "Expert explanations of author's grammatical choices",
-                "Theological nuances revealed by grammar",
-                "Connections to other NT usages",
-                "Applied hermeneutical perspectives",
-                "Transforms grammatical knowledge into theological understanding"
-            ]
-        },
-        "generalConcepts": {
-            "title": "General Concepts",
-            "description": "Reference library of fundamental Koine Greek concepts.",
-            "preview": {
-                "cases": "Greek Cases",
-                "tenses": "Verb Tenses",
-                "moods": "Moods"
-            },
-            "details": [
-                "Explanations of Greek cases",
-                "Guide to verb tenses and meanings",
-                "Description of moods",
-                "Voices and their uses",
-                "Quick access to fundamental knowledge"
-            ]
-        },
-        "tutorQuestions": {
-            "title": "Ask Tutor",
-            "description": "Ask personalized questions about any aspect of the text and receive contextualized answers.",
-            "preview": "How does this verb function here?",
-            "details": [
-                "Ask about grammar, syntax, or theology",
-                "Answers based on specific passage context",
-                "Personalized assistance for your level",
-                "Access to specialized hermeneutical resources",
-                "Learn at your own pace with expert guidance"
-            ]
-        },
-        "quiz": {
-            "title": "Comprehension Quiz",
-            "description": "Evaluate and reinforce your Greek understanding with interactive exercises.",
-            "preview": {
-                "identify": "Identify forms",
-                "analyze": "Analyze syntax"
-            },
-            "details": [
-                "Multiple choice questions on morphology and syntax",
-                "Immediate feedback with detailed explanations",
-                "Exercises based on the study passage",
-                "Track progress and improvement areas",
-                "Consolidate learning with active practice"
-            ]
-        },
-        "myInsights": {
-            "title": "My Insights",
-            "description": "View and manage your saved personal notes and insights."
-        }
-    },
-    "buttons": {
-        "viewExample": "View Example",
-        "explore": "Explore",
-        "ask": "Ask",
-        "practice": "Practice",
-        "view": "View"
-    },
-    "studyUnit": {
-        "recognition": {
-            "stepByStepGuide": "Step-by-step guide to identify",
-            "identification": "Identification",
-            "stepsToRecognize": "Steps to Recognize",
-            "practicalAdvice": "Practical Advice",
-            "practicalTip": "When identifying Greek verbal forms, first look for the ending to determine person and number, then the temporal stem for tense, and finally analyze prefixes (augment, reduplication) to confirm aspect.",
-            "attention": "Attention!",
-            "attentionText": "Some forms are visually similar but function differently. Pay special attention to syntactic context to distinguish between forms that share identical endings."
-        },
-        "function": {
-            "howFunctionsIn": "How {{word}} functions in {{passage}}",
-            "syntacticFunction": "Syntactic Function",
-            "semanticImpact": "Semantic Impact",
-            "semanticText": "This word's syntactic function is not merely grammatical – it directly affects the theological meaning of the passage. Consider how this construction directs the reader's attention to certain aspects of the divine message.",
-            "forThePulpit": "For the Pulpit",
-            "pulpitTip": "When preaching, help your congregation see how the grammatical structure reveals the inspired author's intention. Syntax is theology in action."
-        },
-        "theology": {
-            "pastoralImplications": "Pastoral implications of {{word}} in {{passage}}",
-            "textToPulpit": "From Text to Pulpit",
-            "step1Title": "1. Exegesis",
-            "step1Desc": "Discover the original meaning in Greek context",
-            "step2Title": "2. Theology",
-            "step2Desc": "Connect with doctrine and the gospel",
-            "step3Title": "3. Application",
-            "step3Desc": "Proclaim with fidelity and pastoral relevance",
-            "preachingPoints": "Preaching Points",
-            "reflectiveQuestionsTitle": "Reflective Questions",
-            "reflectiveQuestions": [
-                "How does this grammatical detail change your understanding of the passage?",
-                "What theological truth does this Greek construction highlight?",
-                "How can you communicate this exegetical depth to your congregation in an accessible way?",
-                "What pastoral application arises from this insight?"
-            ],
-            "pastoralAdvice": "Pastoral Advice",
-            "pastoralText": "Knowledge of Greek is a pastoral gift, not an academic ornament. Use these insights to feed your flock with God's Word in its original richness, but always translate exegetical depth into homiletical clarity."
-        }
-    },
-    "dashboard": {
-        "title": "My Study Sessions",
-        "newSession": "New Session",
-        "loadingSessions": "Loading sessions...",
-        "loadMore": "Load more",
-        "loadingMore": "Loading...",
-        "loadError": "Error loading sessions",
-        "deleteConfirm": "Are you sure you want to delete this study session? This action cannot be undone.",
-        "deleteError": "Error deleting session. Please try again.",
-        "searchPlaceholder": "Search passage (e.g. Romans, John 3:16)...",
-        "noResults": "No results found",
-        "adjustFilters": "Try adjusting filters or search query",
-        "clearFilters": "Clear filters",
-        "showingCount": "Showing {{filtered}} of {{total}} sessions",
-        "statistics": {
-            "activeSessions": "Active Sessions",
-            "wordsStudied": "Words Studied",
-            "averageProgress": "Average Progress",
-            "lastActivity": "Last Activity",
-            "studyStreak": "Study Streak",
-            "streakDays_one": "{{count}} day",
-            "streakDays_other": "{{count}} days",
-            "tooltips": {
-                "masteryTitle": "🎯 Your Greek Mastery Level",
-                "masteryDesc": "Shows how well you are <0>mastering</0> the words you study.",
-                "calcTitle": "How it's calculated:",
-                "calcMastered": "• Word <0>mastered</0>: ≥50% quiz accuracy",
-                "calcAverage": "• Averaged across all your sessions",
-                "masteryTip": "💡 High progress = You are internalizing biblical Greek",
-                "streakTitle": "🔥 Keep the Momentum",
-                "streakDesc": "<0>Consistency</0> is key to mastering Greek. Don't break the chain!",
-                "streakCalcTitle": "How it works:",
-                "streakRule1": "• Counts consecutive study days",
-                "streakRule2": "• You have 1 grace day (study today or yesterday)",
-                "streakRule3": "• Breaks after > 1 day without activity",
-                "streakTip": "💪 10 mins daily > 2 hours once a week"
-            }
-        },
-        "sessionCard": {
-            "palabra_one": "word",
-            "palabra_other": "words",
-            "precision": "accuracy",
-            "dificil_one": "difficult",
-            "dificil_other": "difficult",
-            "progress": "Progress",
-            "wordsLearned": "{{completed}} of {{total}} words learned",
-            "continue": "Continue",
-            "viewDetails": "View Details",
-            "nextWord": "Resume with"
-        },
-        "status": {
-            "new": "New",
-            "progress": "In progress",
-            "complete": "Completed",
-            "paused": "Paused"
-        },
-        "filters": {
-            "all": "All",
-            "empty": "Empty (0%)",
-            "started": "Started (1-50%)",
-            "half": "Advanced (51-99%)",
-            "complete": "Completed (100%)",
-            "sortByPlaceholder": "Sort by",
-            "mostRecent": "Most recent",
-            "oldest": "Oldest",
-            "azPassage": "A-Z (Passage)",
-            "byProgress": "By progress"
-        },
-        "menu": {
-            "duplicate": "Duplicate session",
-            "delete": "Delete",
-            "deleteTitle": "Delete session?",
-            "deleteDescription": "You are about to delete the session for {{passage}}. This action cannot be undone.",
-            "cancel": "Cancel",
-            "deleting": "Deleting..."
-        },
-        "cleanup": {
-            "button": "Clear empty sessions ({{count}})",
-            "cleaning": "Cleaning...",
-            "confirmTitle": "Are you sure you want to delete {{count}} empty session(s)?",
-            "confirmDescription": "These sessions have 0% progress and were created over 24 hours ago.\n\nThis action cannot be undone.",
-            "error": "Error cleaning up sessions. Please try again."
-        }
-    },
-    "ui": {
-        "navigation": {
-            "back": "Back",
-            "greekTutor": "Greek Tutor",
-            "askTutor": "Ask Tutor",
-            "concepts": "Concepts",
-            "insights": "Insights",
-            "selectVersions": "Select versions...",
-            "rvr60": "RV60 (Spanish)",
-            "asv": "ASV (English)",
-            "greekOriginal": "Greek Original",
-            "transliteration": "Transliteration",
-            "wordsHighlighted": "Words highlighted",
-            "changePassage": "Change Passage"
-        },
-        "sidebar": {
-            "generalContext": "GENERAL CONTEXT",
-            "readPassage": "Read Passage",
-            "exploreFullText": "Explore the full text",
-            "syntacticStructure": "Syntactic Structure",
-            "seeClauses": "View clauses and relationships",
-            "studyUnits": "STUDY UNITS",
-            "learningReinforcement": "LEARNING REINFORCEMENT",
-            "comprehensionQuiz": "Comprehension Quiz",
-            "practiceWhat": "Practice what you learned",
-            "deleteUnit": "Delete unit",
-            "deleteConfirm": "Delete \"{{word}}\" from units?",
-            "deleteConfirmBody": "The word and its analysis are removed from your study list. This action cannot be undone.",
-            "deleteCancel": "Cancel",
-            "autoMorphologyTip": "Selecting a word will automatically show its morphological analysis"
-        }
-    },
-    "wordPreview": {
-        "title": "Add word to units",
-        "previewFor": "Study unit preview for",
-        "greekWord": "Greek Word",
-        "transliteration": "Transliteration",
-        "identifying": "Identifying word...",
-        "grammaticalId": "Grammatical Identification",
-        "formDetails": "Form Details",
-        "lemma": "Lemma:",
-        "category": "Category:",
-        "gloss": "Gloss:",
-        "recognitionGuide": "Recognition Guide",
-        "error": "Error identifying word. Please try again.",
-        "cancel": "Cancel",
-        "addUnit": "Add Unit",
-        "clickToStudy": "Click to study",
-        "alreadyInUnits": "Already in your units"
-    },
-    "askTutor": {
-        "contextualMode": "Contextual",
-        "generalMode": "General",
-        "placeholderContextual": "Ask about this specific passage...",
-        "placeholderGeneral": "Ask a general Greek question...",
-        "pressEnterHint": "Press <kbd>{{key}}</kbd> to send",
-        "cancel": "Cancel",
-        "send": "Send",
-        "processing": "Thinking...",
-        "tutorConsulting": "Consulting with tutor...",
-        "responseTitle": "Tutor Response",
-        "yourQuestion": "Your question:",
-        "saveInsight": {
-            "button": "Save Insight",
-            "saving": "Saving...",
-            "modalTitle": "Save as Personal Insight",
-            "modalDescription": "This response will be saved to your personal knowledge library",
-            "wordLabel": "Word:",
-            "passageLabel": "Passage:",
-            "titleLabel": "Title (optional)",
-            "titlePlaceholder": "Will be auto-generated if left empty",
-            "titleCharCount": "{{count}}/100 characters",
-            "tagsLabel": "Tags",
-            "tagsPlaceholder": "Add tag...",
-            "tagsCount": "{{count}}/10 tags",
-            "cancel": "Cancel",
-            "save": "Save Insight"
-        }
-    },
-    "insights": {
-        "modalTitle": "My Insights",
-        "modalSubtitle": "Personal notes and theological reflections saved from your sessions.",
-        "loading": "Loading your insights...",
-        "emptyTitle": "No insights saved yet",
-        "emptyMessage": "As you study, save your personal notes and theological reflections. They will appear here.",
-        "searchPlaceholder": "Search in title, content, or question...",
-        "filterByTags": "Filter by tags:",
-        "resultCount": "Showing {{count}} result(s)",
-        "clearFilters": "Clear filters",
-        "viewContent": "View content",
-        "hideContent": "Hide content",
-        "question": "Question",
-        "deleteTitle": "Delete insight",
-        "deleteMessage": "Are you sure you want to delete this insight? This action cannot be undone.",
-        "cancel": "Cancel",
-        "delete": "Delete",
-        "editTitle": "Edit insight",
-        "title": "Title",
-        "tags": "Tags",
-        "addTag": "Add tag...",
-        "saving": "Saving...",
-        "save": "Save"
-    },
-    "session": {
-        "back": "Back",
-        "changePassage": "Change Passage",
-        "askTutor": "Ask Tutor",
-        "concepts": "Concepts",
-        "insights": "Insights",
-        "studyUnits": "Study Units",
-        "learningReinforcement": "Learning Reinforcement",
-        "content": {
-            "analyzing": "Generating analysis..."
-        },
-        "errors": {
-            "startTitle": "Error starting session",
-            "startMessage": "We couldn't connect to the exegetical assistant.",
-            "retry": "Retry",
-            "syntaxUnavailable": "⚠️ Analysis not available",
-            "syntaxErrorMessage": "Sorry, we couldn't complete the syntactic analysis of this passage at this time.",
-            "whatCanYouDo": "What can you do?",
-            "tryAgain": "Try again",
-            "tryAgainDescription": "The analysis can sometimes fail temporarily. Click \\\"Syntactic Structure\\\" again to retry.",
-            "tryShort": "Try a shorter passage",
-            "tryShortDescription": "Longer passages are more complex to analyze. Try selecting a single verse.",
-            "comeLater": "Come back later",
-            "comeLaterDescription": "This is an experimental feature that we are constantly improving.",
-            "meanwhile": "Meanwhile...",
-            "meanwhileDescription": "You can use other available tools: morphological analysis, word context, and comprehension quiz.",
-            "chatError": "There was an error processing your question. Please try again.",
-            "syntaxFailed": "Analysis failed. Please try again.",
-            "general": "There was an error processing your question. Please try again."
-        },
-        "passageReader": {
-            "selectVersions": "Select the versions you want to view. Click on Greek words to add them to your study units.",
-            "rvr60": "RV60 (Spanish)",
-            "greekOriginal": "Greek Original",
-            "transliteration": "Transliteration",
-            "wordsHighlighted": "Words highlighted in green are already in your study units ({{count}} total).",
-            "preparingSession": "Preparing your study session",
-            "loadingPassage": "Loading passage...",
-            "loadingGreek": "Loading original Greek text",
-            "generatingTranslit": "Generating transliteration",
-            "preparingAnalysis": "Preparing interactive analysis",
-            "tip": "Tip",
-            "tips": {
-                "clickWord": "Click on any Greek word to see its detailed analysis",
-                "wordOrder": "Word order in Greek is flexible thanks to its case system",
-                "translitHelps": "Transliteration helps you pronounce correctly while studying",
-                "autoSave": "Each session is automatically saved to your dashboard"
-            },
-            "errorLoading": "Could not load passage. Please try again later."
-        }
+    "progress": "Progress",
+    "estimatedTime": "~15-30 seconds",
+    "footer": "Faithful study of Scripture honors God and edifies His people",
+    "tipTitle": "Study Tip",
+    "tips": [
+      "Greek word order is flexible thanks to its case system",
+      "Greek verb tenses communicate aspect more than chronological time",
+      "Pay attention to prepositions, as they often carry deep theological nuances",
+      "The definite article in Greek functions differently than in English",
+      "Participles are verbal adjectives that share characteristics of both"
+    ]
+  },
+  "description": "The ecosystem of tools for biblical study and sermon preparation.",
+  "intro": {
+    "heroSubtitle": "Morphology, syntax, and lexicon — verse by verse in original Greek.",
+    "actionTitle": "What passage do you want to study?",
+    "actionSubtitle": "Choose a NT text to start your guided session.",
+    "showcaseTitle": "What you'll be able to do",
+    "showcaseSubtitle": "Each tool unlocks a different layer of analysis. Click to see the example in detail."
+  },
+  "emptyState": {
+    "eyebrow": "Study · Biblical Greek",
+    "title": "Start your Greek study",
+    "body": "Each session dissects the New Testament — verse by verse — with morphological analysis, theological context, and pedagogical exercises.",
+    "methodologyLabel": "Methodology",
+    "suggestedPassages": "Suggested passages",
+    "featuredBadge": "Most studied",
+    "tipTitle": "Tip",
+    "tipBody": "Pick any suggested passage or create a new one. The tutor walks you step by step from original text to application."
+  },
+  "startTraining": "Start Training",
+  "mySessions": "My Sessions",
+  "biblicalPassage": "Biblical Passage",
+  "frequentPassages": "Frequent passages:",
+  "passageNotRecognized": "Passage not recognized",
+  "passageSelector": {
+    "label": "Biblical Passage",
+    "placeholder": "E.g.: John 3:16, Psalms 23",
+    "searchButton": "Start Study",
+    "searching": "Searching...",
+    "analyzing": "Analyzing...",
+    "invalidReference": "Invalid Reference",
+    "invalidReferenceDesc": "Please enter a valid biblical reference (e.g., John 3:16)."
+  },
+  "sections": {
+    "overview": "General Overview",
+    "wordStudy": "Word Study",
+    "learningReinforcement": "Learning Reinforcement"
+  },
+  "features": {
+    "readPassage": {
+      "title": "Read Passage",
+      "description": "Explore the biblical text in its original language with interactive tools to deepen your understanding.",
+      "preview": "Interactive transliteration",
+      "details": [
+        "View original Greek text with Spanish version options",
+        "Interactive transliteration for pronunciation",
+        "Click any Greek word to add to study units",
+        "Toggle between original and translation",
+        "Selected words highlighted in green"
+      ]
     },
     "syntax": {
-        "title": "Syntactic Structure",
-        "helpTooltip": "View help guide",
-        "collapseAll": "Collapse All",
-        "expandAll": "Expand All",
-        "generalDescription": "General Description",
-        "legend": "Legend",
-        "words": "words",
-        "mainVerb": "Main verb at position",
-        "analyzeWord": "Analyze word",
-        "clauseTypes": {
-            "main": "Main",
-            "purposeIna": "Purpose (ἵνα)",
-            "resultHoste": "Result (ὥστε)",
-            "causal": "Causal (ὅτι, γάρ)",
-            "conditional": "Conditional (εἰ)",
-            "temporal": "Temporal (ὅτε)",
-            "indirectQuestion": "Indirect Question",
-            "participial": "Participial",
-            "infinitival": "Infinitival",
-            "relative": "Relative (ὅς)"
-        },
-        "onboarding": {
-            "welcome": "Welcome to Syntactic Analysis!",
-            "intro": "This tool helps you understand the Greek text structure before studying individual words.",
-            "steps": "I'll show you the key elements in 5 quick steps.",
-            "skipTip": "💡 You can skip this tutorial at any time",
-            "step1Title": "📖 General Overview",
-            "step1Content": "Read this blue box first. It gives you the full picture of the passage's argument.",
-            "step1Question": "Question: \"What is the main idea?\"",
-            "step2Title": "🔵 Main Clause",
-            "step2Content1": "Clauses with blue background are the main ones - the backbone of the text.",
-            "step2Content2": "Identify the main verb (position indicated below) and the subject.",
-            "step3Title": "↪️ Subordinate Clauses",
-            "step3Content1": "Indented clauses depend on the main one.",
-            "step3Content2": "The color tells you its function: green (purpose), orange (cause), etc.",
-            "step3Question": "Question: \"How does this clause modify the main one?\"",
-            "step4Title": "🎯 View Controls",
-            "step4Content": "Use these buttons to control what you see:",
-            "step4Collapse": "Collapse All: Only main clauses (for overview)",
-            "step4Expand": "Expand All: See full structure",
-            "step4Tip": "💡 Start collapsed to avoid being overwhelmed",
-            "step5Title": "🎨 Color Legend",
-            "step5Content1": "Each color represents a clause type with a specific function.",
-            "step5Content2": "For example: Green = Purpose (\"so that...\"), Orange = Cause (\"because...\")",
-            "step5Done": "✅ Ready! Now you know how to use syntactic analysis.",
-            "back": "Back",
-            "close": "Close",
-            "last": "Finish",
-            "next": "Next",
-            "skip": "Skip"
-        }
-    },
-    "quiz": {
-        "quizTitle": "Comprehension Quiz",
-        "practiceTitle": "Practice your comprehension",
-        "questionCounter": "Question {{current}} of {{total}}",
-        "generatingQuiz": "Generating quiz...",
-        "verifyAnswer": "Verify Answer",
-        "skip": "Skip",
-        "nextQuestion": "Next Question",
-        "correct": "Correct!",
-        "incorrect": "Incorrect",
-        "quizCompleted": "Quiz completed!",
-        "trueOption": "True",
-        "falseOption": "False",
-        "testPrompt": "Test what you have learned about",
-        "masteryLevels": {
-            "notSeen": "Not seen",
-            "seen": "Seen",
-            "practiced": "Practiced",
-            "mastered": "Mastered"
-        }
+      "title": "Syntactic Structure",
+      "description": "Visualize grammatical relationships and clause hierarchy in the Greek text.",
+      "preview": {
+        "mainClause": "Main Clause",
+        "subordinateClause": "Subordinate Clause"
+      },
+      "details": [
+        "Hierarchical view of main and subordinate clauses",
+        "Syntactic relationships clearly marked",
+        "Expand/collapse controls for each level",
+        "Visual identification of grammatical roles",
+        "Understand the author's logical argument structure"
+      ]
     },
     "morphology": {
-        "analysisTitle": "Analysis of the components that form this Greek word",
-        "structure": "Structure",
-        "components": "Components",
-        "synthesis": "Synthesis",
-        "pedagogicalTip": "Pedagogical Tip",
-        "tipContent": "Observe how the prefix changes the nuances of the root verb.",
-        "tipDismiss": "Hide tip",
-        "tipShow": "Show pedagogical tip",
-        "componentTypes": {
-            "prefix": "Prefix",
-            "root": "Root",
-            "formative": "Formative",
-            "ending": "Ending",
-            "other": "Other"
-        }
+      "title": "Morphological Analysis",
+      "description": "Detailed breakdown of each word into its basic morphological components.",
+      "preview": {
+        "root": "root",
+        "thematicVowel": "vowel",
+        "participle": "participle"
+      },
+      "details": [
+        "Visual separation of roots, prefixes, and suffixes",
+        "Explanation of each morpheme's meaning",
+        "Identification of tense, voice, mood, case, and number",
+        "Connection between form and grammatical function",
+        "Deepen understanding of Greek word construction"
+      ]
     },
-    "wordAnalysis": {
-        "ariaLabel": "Word Analysis Toolbar",
-        "analyze": "Analyze",
-        "recognition": {
-            "label": "Keys",
-            "description": "Recognition Keys"
-        },
-        "context": {
-            "label": "Function",
-            "description": "Function in Context"
-        },
-        "significance": {
-            "label": "Theology",
-            "description": "Theological Significance"
-        }
+    "recognitionKeys": {
+      "title": "Recognition Keys",
+      "description": "Morphological patterns helping you identify grammatical forms quickly.",
+      "details": [
+        "Key endings for verb tenses",
+        "Recognition patterns for cases",
+        "Voice and mood markers",
+        "Examples of each pattern in context",
+        "Develop reading skills without a dictionary"
+      ]
     },
-    "concepts": {
-        "libraryTitle": "Key Concepts Library",
-        "counter": "{{current}} of {{total}}",
-        "previous": "Previous",
-        "next": "Next",
-        "goToOtherConcept": "View another concept",
-        "keyConceptTitle": "Biblical Greek Key Concept",
-        "keyConceptSubtitle": "Learn while you study",
-        "practicalExample": "Practical Example",
-        "selectActionPrompt": "Select an action from the side panel to start your study",
-        "seeOtherConcept": "View another concept"
+    "contextFunction": {
+      "title": "Function in Context",
+      "description": "Understand the role each word plays within its clause and the full passage.",
+      "preview": {
+        "subject": "Subject",
+        "function": "Grammatical Function"
+      },
+      "details": [
+        "Identification of syntactic role (subject, object, modifier)",
+        "Relationship with other words in the clause",
+        "Connection to the passage's general argument",
+        "Theological importance of specific function",
+        "See how grammar serves meaning"
+      ]
     },
-    "headers": {
-        "readPassage": "Read Full Passage",
-        "syntacticStructure": "Syntactic Structure",
-        "morphologicalDecomposition": "Morphological Decomposition",
-        "comprehensionQuiz": "Comprehension Quiz"
+    "expertInsight": {
+      "title": "Expert Insight",
+      "description": "Deep perspectives from grammarians and exegetes on text meaning and implications.",
+      "preview": "Scholarly commentary...",
+      "details": [
+        "Expert explanations of author's grammatical choices",
+        "Theological nuances revealed by grammar",
+        "Connections to other NT usages",
+        "Applied hermeneutical perspectives",
+        "Transforms grammatical knowledge into theological understanding"
+      ]
     },
-    "modal": {
-        "characteristics": "Features:"
+    "generalConcepts": {
+      "title": "General Concepts",
+      "description": "Reference library of fundamental Koine Greek concepts.",
+      "preview": {
+        "cases": "Greek Cases",
+        "tenses": "Verb Tenses",
+        "moods": "Moods"
+      },
+      "details": [
+        "Explanations of Greek cases",
+        "Guide to verb tenses and meanings",
+        "Description of moods",
+        "Voices and their uses",
+        "Quick access to fundamental knowledge"
+      ]
+    },
+    "tutorQuestions": {
+      "title": "Ask Tutor",
+      "description": "Ask personalized questions about any aspect of the text and receive contextualized answers.",
+      "preview": "How does this verb function here?",
+      "details": [
+        "Ask about grammar, syntax, or theology",
+        "Answers based on specific passage context",
+        "Personalized assistance for your level",
+        "Access to specialized hermeneutical resources",
+        "Learn at your own pace with expert guidance"
+      ]
+    },
+    "quiz": {
+      "title": "Comprehension Quiz",
+      "description": "Evaluate and reinforce your Greek understanding with interactive exercises.",
+      "preview": {
+        "identify": "Identify forms",
+        "analyze": "Analyze syntax"
+      },
+      "details": [
+        "Multiple choice questions on morphology and syntax",
+        "Immediate feedback with detailed explanations",
+        "Exercises based on the study passage",
+        "Track progress and improvement areas",
+        "Consolidate learning with active practice"
+      ]
+    },
+    "myInsights": {
+      "title": "My Insights",
+      "description": "View and manage your saved personal notes and insights."
     }
+  },
+  "buttons": {
+    "viewExample": "View Example",
+    "explore": "Explore",
+    "ask": "Ask",
+    "practice": "Practice",
+    "view": "View"
+  },
+  "studyUnit": {
+    "recognition": {
+      "stepByStepGuide": "Step-by-step guide to identify",
+      "identification": "Identification",
+      "stepsToRecognize": "Steps to Recognize",
+      "practicalAdvice": "Practical Advice",
+      "practicalTip": "When identifying Greek verbal forms, first look for the ending to determine person and number, then the temporal stem for tense, and finally analyze prefixes (augment, reduplication) to confirm aspect.",
+      "attention": "Attention!",
+      "attentionText": "Some forms are visually similar but function differently. Pay special attention to syntactic context to distinguish between forms that share identical endings."
+    },
+    "function": {
+      "howFunctionsIn": "How {{word}} functions in {{passage}}",
+      "syntacticFunction": "Syntactic Function",
+      "semanticImpact": "Semantic Impact",
+      "semanticText": "This word's syntactic function is not merely grammatical – it directly affects the theological meaning of the passage. Consider how this construction directs the reader's attention to certain aspects of the divine message.",
+      "forThePulpit": "For the Pulpit",
+      "pulpitTip": "When preaching, help your congregation see how the grammatical structure reveals the inspired author's intention. Syntax is theology in action."
+    },
+    "theology": {
+      "pastoralImplications": "Pastoral implications of {{word}} in {{passage}}",
+      "textToPulpit": "From Text to Pulpit",
+      "step1Title": "1. Exegesis",
+      "step1Desc": "Discover the original meaning in Greek context",
+      "step2Title": "2. Theology",
+      "step2Desc": "Connect with doctrine and the gospel",
+      "step3Title": "3. Application",
+      "step3Desc": "Proclaim with fidelity and pastoral relevance",
+      "preachingPoints": "Preaching Points",
+      "reflectiveQuestionsTitle": "Reflective Questions",
+      "reflectiveQuestions": [
+        "How does this grammatical detail change your understanding of the passage?",
+        "What theological truth does this Greek construction highlight?",
+        "How can you communicate this exegetical depth to your congregation in an accessible way?",
+        "What pastoral application arises from this insight?"
+      ],
+      "pastoralAdvice": "Pastoral Advice",
+      "pastoralText": "Knowledge of Greek is a pastoral gift, not an academic ornament. Use these insights to feed your flock with God's Word in its original richness, but always translate exegetical depth into homiletical clarity."
+    }
+  },
+  "dashboard": {
+    "title": "My Study Sessions",
+    "newSession": "New Session",
+    "loadingSessions": "Loading sessions...",
+    "loadMore": "Load more",
+    "loadingMore": "Loading...",
+    "loadError": "Error loading sessions",
+    "deleteConfirm": "Are you sure you want to delete this study session? This action cannot be undone.",
+    "deleteError": "Error deleting session. Please try again.",
+    "searchPlaceholder": "Search passage (e.g. Romans, John 3:16)...",
+    "noResults": "No results found",
+    "adjustFilters": "Try adjusting filters or search query",
+    "clearFilters": "Clear filters",
+    "showingCount": "Showing {{filtered}} of {{total}} sessions",
+    "statistics": {
+      "activeSessions": "Active Sessions",
+      "wordsStudied": "Words Studied",
+      "averageProgress": "Average Progress",
+      "lastActivity": "Last Activity",
+      "studyStreak": "Study Streak",
+      "streakDays_one": "{{count}} day",
+      "streakDays_other": "{{count}} days",
+      "tooltips": {
+        "masteryTitle": "🎯 Your Greek Mastery Level",
+        "masteryDesc": "Shows how well you are <0>mastering</0> the words you study.",
+        "calcTitle": "How it's calculated:",
+        "calcMastered": "• Word <0>mastered</0>: ≥50% quiz accuracy",
+        "calcAverage": "• Averaged across all your sessions",
+        "masteryTip": "💡 High progress = You are internalizing biblical Greek",
+        "streakTitle": "🔥 Keep the Momentum",
+        "streakDesc": "<0>Consistency</0> is key to mastering Greek. Don't break the chain!",
+        "streakCalcTitle": "How it works:",
+        "streakRule1": "• Counts consecutive study days",
+        "streakRule2": "• You have 1 grace day (study today or yesterday)",
+        "streakRule3": "• Breaks after > 1 day without activity",
+        "streakTip": "💪 10 mins daily > 2 hours once a week"
+      }
+    },
+    "sessionCard": {
+      "palabra_one": "word",
+      "palabra_other": "words",
+      "precision": "accuracy",
+      "dificil_one": "difficult",
+      "dificil_other": "difficult",
+      "progress": "Progress",
+      "wordsLearned": "{{completed}} of {{total}} words learned",
+      "continue": "Continue",
+      "viewDetails": "View Details",
+      "nextWord": "Resume with"
+    },
+    "status": {
+      "new": "New",
+      "progress": "In progress",
+      "complete": "Completed",
+      "paused": "Paused"
+    },
+    "filters": {
+      "all": "All",
+      "empty": "Empty (0%)",
+      "started": "Started (1-50%)",
+      "half": "Advanced (51-99%)",
+      "complete": "Completed (100%)",
+      "sortByPlaceholder": "Sort by",
+      "mostRecent": "Most recent",
+      "oldest": "Oldest",
+      "azPassage": "A-Z (Passage)",
+      "byProgress": "By progress"
+    },
+    "menu": {
+      "duplicate": "Duplicate session",
+      "delete": "Delete",
+      "deleteTitle": "Delete session?",
+      "deleteDescription": "You are about to delete the session for {{passage}}. This action cannot be undone.",
+      "cancel": "Cancel",
+      "deleting": "Deleting..."
+    },
+    "cleanup": {
+      "button": "Clear empty sessions ({{count}})",
+      "cleaning": "Cleaning...",
+      "confirmTitle": "Are you sure you want to delete {{count}} empty session(s)?",
+      "confirmDescription": "These sessions have 0% progress and were created over 24 hours ago.\n\nThis action cannot be undone.",
+      "error": "Error cleaning up sessions. Please try again."
+    }
+  },
+  "ui": {
+    "navigation": {
+      "back": "Back",
+      "greekTutor": "Greek Tutor",
+      "askTutor": "Ask Tutor",
+      "concepts": "Concepts",
+      "insights": "Insights",
+      "selectVersions": "Select versions...",
+      "rvr60": "RV60 (Spanish)",
+      "asv": "ASV (English)",
+      "greekOriginal": "Greek Original",
+      "transliteration": "Transliteration",
+      "wordsHighlighted": "Words highlighted",
+      "changePassage": "Change Passage"
+    },
+    "sidebar": {
+      "generalContext": "GENERAL CONTEXT",
+      "readPassage": "Read Passage",
+      "exploreFullText": "Explore the full text",
+      "syntacticStructure": "Syntactic Structure",
+      "seeClauses": "View clauses and relationships",
+      "studyUnits": "STUDY UNITS",
+      "learningReinforcement": "LEARNING REINFORCEMENT",
+      "comprehensionQuiz": "Comprehension Quiz",
+      "practiceWhat": "Practice what you learned",
+      "deleteUnit": "Delete unit",
+      "deleteConfirm": "Delete \"{{word}}\" from units?",
+      "deleteConfirmBody": "The word and its analysis are removed from your study list. This action cannot be undone.",
+      "deleteCancel": "Cancel",
+      "autoMorphologyTip": "Selecting a word will automatically show its morphological analysis"
+    }
+  },
+  "wordPreview": {
+    "title": "Add word to units",
+    "previewFor": "Study unit preview for",
+    "greekWord": "Greek Word",
+    "transliteration": "Transliteration",
+    "identifying": "Identifying word...",
+    "grammaticalId": "Grammatical Identification",
+    "formDetails": "Form Details",
+    "lemma": "Lemma:",
+    "category": "Category:",
+    "gloss": "Gloss:",
+    "recognitionGuide": "Recognition Guide",
+    "error": "Error identifying word. Please try again.",
+    "cancel": "Cancel",
+    "addUnit": "Add Unit",
+    "clickToStudy": "Click to study",
+    "alreadyInUnits": "Already in your units"
+  },
+  "askTutor": {
+    "contextualMode": "Contextual",
+    "generalMode": "General",
+    "placeholderContextual": "Ask about this specific passage...",
+    "placeholderGeneral": "Ask a general Greek question...",
+    "pressEnterHint": "Press <kbd>{{key}}</kbd> to send",
+    "cancel": "Cancel",
+    "send": "Send",
+    "processing": "Thinking...",
+    "tutorConsulting": "Consulting with tutor...",
+    "responseTitle": "Tutor Response",
+    "yourQuestion": "Your question:",
+    "saveInsight": {
+      "button": "Save Insight",
+      "saving": "Saving...",
+      "modalTitle": "Save as Personal Insight",
+      "modalDescription": "This response will be saved to your personal knowledge library",
+      "wordLabel": "Word:",
+      "passageLabel": "Passage:",
+      "titleLabel": "Title (optional)",
+      "titlePlaceholder": "Will be auto-generated if left empty",
+      "titleCharCount": "{{count}}/100 characters",
+      "tagsLabel": "Tags",
+      "tagsPlaceholder": "Add tag...",
+      "tagsCount": "{{count}}/10 tags",
+      "cancel": "Cancel",
+      "save": "Save Insight"
+    }
+  },
+  "insights": {
+    "modalTitle": "My Insights",
+    "modalSubtitle": "Personal notes and theological reflections saved from your sessions.",
+    "loading": "Loading your insights...",
+    "emptyTitle": "No insights saved yet",
+    "emptyMessage": "As you study, save your personal notes and theological reflections. They will appear here.",
+    "searchPlaceholder": "Search in title, content, or question...",
+    "filterByTags": "Filter by tags:",
+    "resultCount": "Showing {{count}} result(s)",
+    "clearFilters": "Clear filters",
+    "viewContent": "View content",
+    "hideContent": "Hide content",
+    "question": "Question",
+    "deleteTitle": "Delete insight",
+    "deleteMessage": "Are you sure you want to delete this insight? This action cannot be undone.",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "editTitle": "Edit insight",
+    "title": "Title",
+    "tags": "Tags",
+    "addTag": "Add tag...",
+    "saving": "Saving...",
+    "save": "Save"
+  },
+  "session": {
+    "back": "Back",
+    "changePassage": "Change Passage",
+    "askTutor": "Ask Tutor",
+    "concepts": "Concepts",
+    "insights": "Insights",
+    "studyUnits": "Study Units",
+    "learningReinforcement": "Learning Reinforcement",
+    "content": {
+      "analyzing": "Generating analysis..."
+    },
+    "errors": {
+      "startTitle": "Error starting session",
+      "startMessage": "We couldn't connect to the exegetical assistant.",
+      "retry": "Retry",
+      "syntaxUnavailable": "⚠️ Analysis not available",
+      "syntaxErrorMessage": "Sorry, we couldn't complete the syntactic analysis of this passage at this time.",
+      "whatCanYouDo": "What can you do?",
+      "tryAgain": "Try again",
+      "tryAgainDescription": "The analysis can sometimes fail temporarily. Click \\\"Syntactic Structure\\\" again to retry.",
+      "tryShort": "Try a shorter passage",
+      "tryShortDescription": "Longer passages are more complex to analyze. Try selecting a single verse.",
+      "comeLater": "Come back later",
+      "comeLaterDescription": "This is an experimental feature that we are constantly improving.",
+      "meanwhile": "Meanwhile...",
+      "meanwhileDescription": "You can use other available tools: morphological analysis, word context, and comprehension quiz.",
+      "chatError": "There was an error processing your question. Please try again.",
+      "syntaxFailed": "Analysis failed. Please try again.",
+      "general": "There was an error processing your question. Please try again."
+    },
+    "passageReader": {
+      "selectVersions": "Select the versions you want to view. Click on Greek words to add them to your study units.",
+      "rvr60": "RV60 (Spanish)",
+      "greekOriginal": "Greek Original",
+      "transliteration": "Transliteration",
+      "wordsHighlighted": "Words highlighted in green are already in your study units ({{count}} total).",
+      "preparingSession": "Preparing your study session",
+      "loadingPassage": "Loading passage...",
+      "loadingGreek": "Loading original Greek text",
+      "generatingTranslit": "Generating transliteration",
+      "preparingAnalysis": "Preparing interactive analysis",
+      "tip": "Tip",
+      "tips": {
+        "clickWord": "Click on any Greek word to see its detailed analysis",
+        "wordOrder": "Word order in Greek is flexible thanks to its case system",
+        "translitHelps": "Transliteration helps you pronounce correctly while studying",
+        "autoSave": "Each session is automatically saved to your dashboard"
+      },
+      "errorLoading": "Could not load passage. Please try again later."
+    }
+  },
+  "syntax": {
+    "title": "Syntactic Structure",
+    "helpTooltip": "View help guide",
+    "collapseAll": "Collapse All",
+    "expandAll": "Expand All",
+    "generalDescription": "General Description",
+    "legend": "Legend",
+    "words": "words",
+    "mainVerb": "Main verb at position",
+    "analyzeWord": "Analyze word",
+    "clauseTypes": {
+      "main": "Main",
+      "purposeIna": "Purpose (ἵνα)",
+      "resultHoste": "Result (ὥστε)",
+      "causal": "Causal (ὅτι, γάρ)",
+      "conditional": "Conditional (εἰ)",
+      "temporal": "Temporal (ὅτε)",
+      "indirectQuestion": "Indirect Question",
+      "participial": "Participial",
+      "infinitival": "Infinitival",
+      "relative": "Relative (ὅς)"
+    },
+    "onboarding": {
+      "welcome": "Welcome to Syntactic Analysis!",
+      "intro": "This tool helps you understand the Greek text structure before studying individual words.",
+      "steps": "I'll show you the key elements in 5 quick steps.",
+      "skipTip": "💡 You can skip this tutorial at any time",
+      "step1Title": "📖 General Overview",
+      "step1Content": "Read this blue box first. It gives you the full picture of the passage's argument.",
+      "step1Question": "Question: \"What is the main idea?\"",
+      "step2Title": "🔵 Main Clause",
+      "step2Content1": "Clauses with blue background are the main ones - the backbone of the text.",
+      "step2Content2": "Identify the main verb (position indicated below) and the subject.",
+      "step3Title": "↪️ Subordinate Clauses",
+      "step3Content1": "Indented clauses depend on the main one.",
+      "step3Content2": "The color tells you its function: green (purpose), orange (cause), etc.",
+      "step3Question": "Question: \"How does this clause modify the main one?\"",
+      "step4Title": "🎯 View Controls",
+      "step4Content": "Use these buttons to control what you see:",
+      "step4Collapse": "Collapse All: Only main clauses (for overview)",
+      "step4Expand": "Expand All: See full structure",
+      "step4Tip": "💡 Start collapsed to avoid being overwhelmed",
+      "step5Title": "🎨 Color Legend",
+      "step5Content1": "Each color represents a clause type with a specific function.",
+      "step5Content2": "For example: Green = Purpose (\"so that...\"), Orange = Cause (\"because...\")",
+      "step5Done": "✅ Ready! Now you know how to use syntactic analysis.",
+      "back": "Back",
+      "close": "Close",
+      "last": "Finish",
+      "next": "Next",
+      "skip": "Skip"
+    }
+  },
+  "quiz": {
+    "quizTitle": "Comprehension Quiz",
+    "practiceTitle": "Practice your comprehension",
+    "questionCounter": "Question {{current}} of {{total}}",
+    "generatingQuiz": "Generating quiz...",
+    "verifyAnswer": "Verify Answer",
+    "skip": "Skip",
+    "nextQuestion": "Next Question",
+    "correct": "Correct!",
+    "incorrect": "Incorrect",
+    "quizCompleted": "Quiz completed!",
+    "trueOption": "True",
+    "falseOption": "False",
+    "testPrompt": "Test what you have learned about",
+    "masteryLevels": {
+      "notSeen": "Not seen",
+      "seen": "Seen",
+      "practiced": "Practiced",
+      "mastered": "Mastered"
+    }
+  },
+  "morphology": {
+    "analysisTitle": "Analysis of the components that form this Greek word",
+    "structure": "Structure",
+    "components": "Components",
+    "synthesis": "Synthesis",
+    "pedagogicalTip": "Pedagogical Tip",
+    "tipContent": "Observe how the prefix changes the nuances of the root verb.",
+    "tipDismiss": "Hide tip",
+    "tipShow": "Show pedagogical tip",
+    "componentTypes": {
+      "prefix": "Prefix",
+      "root": "Root",
+      "formative": "Formative",
+      "ending": "Ending",
+      "other": "Other"
+    }
+  },
+  "wordAnalysis": {
+    "ariaLabel": "Word Analysis Toolbar",
+    "analyze": "Analyze",
+    "recognition": {
+      "label": "Keys",
+      "description": "Recognition Keys"
+    },
+    "context": {
+      "label": "Function",
+      "description": "Function in Context"
+    },
+    "significance": {
+      "label": "Theology",
+      "description": "Theological Significance"
+    }
+  },
+  "concepts": {
+    "libraryTitle": "Key Concepts Library",
+    "counter": "{{current}} of {{total}}",
+    "previous": "Previous",
+    "next": "Next",
+    "goToOtherConcept": "View another concept",
+    "keyConceptTitle": "Biblical Greek Key Concept",
+    "keyConceptSubtitle": "Learn while you study",
+    "practicalExample": "Practical Example",
+    "selectActionPrompt": "Select an action from the side panel to start your study",
+    "seeOtherConcept": "View another concept"
+  },
+  "headers": {
+    "readPassage": "Read Full Passage",
+    "syntacticStructure": "Syntactic Structure",
+    "morphologicalDecomposition": "Morphological Decomposition",
+    "comprehensionQuiz": "Comprehension Quiz"
+  },
+  "modal": {
+    "characteristics": "Features:"
+  },
+  "modes": {
+    "analyzer": "Analyzer",
+    "analyzerDesc": "Full morphology",
+    "study": "Guided study",
+    "studyDesc": "Step by step"
+  },
+  "analyzer": {
+    "chapterShort": "Ch. {{n}}",
+    "verseShort": "v. {{n}}",
+    "prevVerse": "Previous verse",
+    "nextVerse": "Next verse",
+    "notFound": "This verse is not in the text.",
+    "wordAnalysis": "Word-by-word analysis ({{count}} words)",
+    "attribution": "Text and morphology from the SBLGNT (Society of Biblical Literature Greek New Testament), morphological analysis by MorphGNT:",
+    "fields": {
+      "lemma": "Lemma",
+      "tense": "Tense",
+      "voice": "Voice",
+      "mood": "Mood",
+      "person": "Person",
+      "case": "Case",
+      "number": "Number",
+      "gender": "Gender",
+      "degree": "Degree"
+    },
+    "pos": {
+      "N": "Noun",
+      "V": "Verb",
+      "A": "Adjective",
+      "D": "Adverb",
+      "P": "Preposition",
+      "C": "Conjunction",
+      "X": "Particle",
+      "I": "Interjection",
+      "RA": "Article",
+      "RP": "Personal pron.",
+      "RR": "Relative pron.",
+      "RD": "Demonstrative pron.",
+      "RI": "Interrogative pron."
+    },
+    "tense": {
+      "P": "Present",
+      "I": "Imperfect",
+      "F": "Future",
+      "A": "Aorist",
+      "X": "Perfect",
+      "Y": "Pluperfect"
+    },
+    "voice": {
+      "A": "Active",
+      "M": "Middle",
+      "P": "Passive"
+    },
+    "mood": {
+      "I": "Indicative",
+      "D": "Imperative",
+      "S": "Subjunctive",
+      "O": "Optative",
+      "N": "Infinitive",
+      "P": "Participle"
+    },
+    "case": {
+      "N": "Nominative",
+      "G": "Genitive",
+      "D": "Dative",
+      "A": "Accusative",
+      "V": "Vocative"
+    },
+    "number": {
+      "S": "Singular",
+      "P": "Plural"
+    },
+    "gender": {
+      "M": "Masculine",
+      "F": "Feminine",
+      "N": "Neuter"
+    },
+    "degree": {
+      "C": "Comparative",
+      "S": "Superlative"
+    }
+  }
 }

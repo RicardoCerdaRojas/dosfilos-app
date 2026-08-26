@@ -96,6 +96,7 @@ export * from './drafting/splitElementLines';
 export * from './drafting/classifyContribution';
 export * from './drafting/deriveSectionWalk';
 export * from './drafting/sectionReadiness';
+export * from './greek-analyzer';
 export * from './drafting/sermonManuscriptStyle';
 export * from './drafting/attachMainPassageRefs';
 export * from './drafting/buildSectionProsePrompt';
