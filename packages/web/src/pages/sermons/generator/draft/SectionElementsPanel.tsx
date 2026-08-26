@@ -148,7 +148,28 @@ export function SectionElementsPanel(props: Props) {
                 };
             });
         if (nuevos.length === 0) return;
-        props.onChange(unaSolaEntrada ? nuevos : [...props.elements, ...nuevos]);
+        if (!unaSolaEntrada) {
+            props.onChange([...props.elements, ...nuevos]);
+            return;
+        }
+        // SECCIÓN DE UNA SOLA DECISIÓN. Dos matices que costaron trabajo real:
+        //
+        // 1. DESCARTAR NO REEMPLAZA. El descarte es un REGISTRO, no una
+        //    decisión de contenido: descartar una propuesta borraba la cita ya
+        //    elegida — pérdida silenciosa que el fundador encontró eligiendo
+        //    tres citas seguidas.
+        // 2. Los descartes anteriores SE CONSERVAN al decidir: qué rechazó
+        //    dice tanto como qué aceptó.
+        if (provenance === 'descartado') {
+            props.onChange([...props.elements, ...nuevos]);
+            return;
+        }
+        const habiaDecision = props.elements.some((e) => e.provenance !== 'descartado');
+        props.onChange([...props.elements.filter((e) => e.provenance === 'descartado'), ...nuevos]);
+        // El reemplazo se AVISA. La regla es deliberada —"un punto se respalda
+        // con una voz"— pero ejecutarla en silencio se lee como pantalla rota:
+        // "agregué tres y solo veo una".
+        if (habiaDecision) toast.info(t('drafting.elements.replacedPrevious'));
     };
 
     const remove = (id: string) => props.onChange(props.elements.filter((e) => e.id !== id));

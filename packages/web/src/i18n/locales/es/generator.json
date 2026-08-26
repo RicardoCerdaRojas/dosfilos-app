@@ -464,7 +464,8 @@
         "proposeMore": "Tráeme las que faltan",
         "fromStudy": "De tu estudio de palabras.",
         "sinPalabras": "Tu estudio no registró palabras clave para este pasaje."
-      }
+      },
+      "replacedPrevious": "Esta sección lleva una sola decisión: la nueva reemplazó a la anterior."
     },
     "sections": {
       "exposition": {

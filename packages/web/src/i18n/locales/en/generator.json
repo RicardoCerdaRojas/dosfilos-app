@@ -464,7 +464,8 @@
         "proposeMore": "Bring the remaining ones",
         "fromStudy": "From your word study.",
         "sinPalabras": "Your study recorded no key words for this passage."
-      }
+      },
+      "replacedPrevious": "This section holds a single decision: the new one replaced the previous."
     },
     "sections": {
       "exposition": {
