@@ -18,6 +18,8 @@ export function useGreekInsight(reference: string, tokens: readonly GreekWordTok
     if (!serviceRef.current) serviceRef.current = new GreekInsightService();
 
     const [insight, setInsight] = useState<GreekVerseInsight | null>(null);
+    /** El caché no se pudo leer — distinto de "no hay análisis". */
+    const [cacheUnavailable, setCacheUnavailable] = useState(false);
     const [checking, setChecking] = useState(true);
     const [generating, setGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -27,11 +29,16 @@ export function useGreekInsight(reference: string, tokens: readonly GreekWordTok
         setInsight(null);
         setError(null);
         setChecking(true);
+        setCacheUnavailable(false);
         repoRef.current!.get(reference).then((cached) => {
             if (!vivo) return;
-            // EL CACHÉ TAMBIÉN SE VALIDA CONTRA LOS TOKENS: un análisis viejo
-            // de otra edición del texto, desalineado, es peor que ninguno.
-            if (cached && tokens && cached.words.length === tokens.length) setInsight(cached);
+            if (cached === 'unavailable') {
+                setCacheUnavailable(true);
+            } else if (cached && tokens && cached.words.length === tokens.length) {
+                // EL CACHÉ SE VALIDA CONTRA LOS TOKENS: un análisis viejo de
+                // otra edición del texto, desalineado, es peor que ninguno.
+                setInsight(cached);
+            }
             setChecking(false);
         });
         return () => {
@@ -54,5 +61,5 @@ export function useGreekInsight(reference: string, tokens: readonly GreekWordTok
         }
     }, [reference, tokens]);
 
-    return { insight, checking, generating, error, generate };
+    return { insight, checking, generating, error, cacheUnavailable, generate };
 }

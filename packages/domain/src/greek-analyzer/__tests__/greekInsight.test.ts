@@ -102,3 +102,42 @@ describe('keyInsights — el "¿y qué?" homilético (fase 3)', () => {
         expect(out?.keyInsights).toHaveLength(3);
     });
 });
+
+describe('caseFunction — la taxonomía es CERRADA (v5)', () => {
+    const conFuncion = (caseFunction: string, nameNote = '') =>
+        JSON.stringify({
+            literalTranslation: 'lit',
+            fluidTranslation: 'fluida',
+            words: [{ text: 'Ἰάκωβος', semanticRange: 'a / b', syntacticFunction: 'f', translation: 'Santiago', caseFunction, nameNote }],
+        });
+
+    const parse = (raw: string) =>
+        parseGreekInsight(raw, { reference: 'JAS 1:1', expectedWordCount: 1, cases: ['N'] });
+
+    it('acepta una función válida para ESE caso — el caso real de Santiago 1:1', () => {
+        expect(parse(conFuncion('absolute'))?.words[0].caseFunction).toBe('absolute');
+    });
+
+    it('DESCARTA una función que no pertenece al caso (no hay "posesión" nominativa)', () => {
+        // El profesor del fundador la habría llamado mal; el sistema no la
+        // repite. Una etiqueta con aire académico que nadie reconoce es peor
+        // que ninguna: el pastor la repetiría en clase.
+        expect(parse(conFuncion('possession'))?.words[0].caseFunction).toBeUndefined();
+    });
+
+    it('descarta una etiqueta inventada, y el resto del análisis sobrevive', () => {
+        const out = parse(conFuncion('nominativoDeSaludoProfético'));
+        expect(out?.words[0].caseFunction).toBeUndefined();
+        expect(out?.words[0].translation).toBe('Santiago');
+    });
+
+    it('la nota del nombre viaja cuando tiene contenido', () => {
+        const out = parse(conFuncion('absolute', 'Del latín Iacobus → "Sant Iago". El doblete culto es Jacobo.'));
+        expect(out?.words[0].nameNote).toContain('Jacobo');
+    });
+
+    it('sin la lista de casos no se valida nada: la función se descarta', () => {
+        const out = parseGreekInsight(conFuncion('absolute'), { reference: 'JAS 1:1', expectedWordCount: 1 });
+        expect(out?.words[0].caseFunction).toBeUndefined();
+    });
+});

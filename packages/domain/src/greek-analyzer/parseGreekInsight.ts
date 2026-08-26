@@ -1,4 +1,6 @@
 import { GREEK_INSIGHT_PROMPT_VERSION, type GreekVerseInsight, type GreekWordInsight } from './verseInsight';
+import { isKnownCaseFunction } from './caseFunctionTaxonomy';
+import type { GreekCase } from './morphGntToken';
 
 /**
  * Valida la respuesta del modelo ANTES de cachearla.
@@ -12,7 +14,17 @@ import { GREEK_INSIGHT_PROMPT_VERSION, type GreekVerseInsight, type GreekWordIns
  */
 export function parseGreekInsight(
     raw: string,
-    input: { reference: string; expectedWordCount: number },
+    input: {
+        reference: string;
+        expectedWordCount: number;
+        /**
+         * El caso de cada token, en orden. Sirve para VALIDAR la función que
+         * devuelve el modelo contra la taxonomía cerrada de ESE caso: un
+         * "genitivo de medio" no existe, y una etiqueta con aire académico
+         * que ningún profesor reconoce es peor que ninguna.
+         */
+        cases?: readonly (GreekCase | undefined)[];
+    },
 ): GreekVerseInsight | null {
     const inicio = raw.indexOf('{');
     const fin = raw.lastIndexOf('}');
@@ -34,14 +46,27 @@ export function parseGreekInsight(
     if (!Array.isArray(p.words) || p.words.length !== input.expectedWordCount) return null;
 
     const words: GreekWordInsight[] = [];
-    for (const crudo of p.words) {
+    for (const [i, crudo] of p.words.entries()) {
         const w = crudo as Record<string, unknown>;
         const text = typeof w.text === 'string' ? w.text.trim() : '';
         const semanticRange = typeof w.semanticRange === 'string' ? w.semanticRange.trim() : '';
         const syntacticFunction = typeof w.syntacticFunction === 'string' ? w.syntacticFunction.trim() : '';
         const translation = typeof w.translation === 'string' ? w.translation.trim() : '';
         if (!text || !semanticRange || !syntacticFunction || !translation) return null;
-        words.push({ text, semanticRange, syntacticFunction, translation });
+
+        const caso = input.cases?.[i];
+        const fnCruda = typeof w.caseFunction === 'string' ? w.caseFunction.trim() : '';
+        const caseFunction = caso && fnCruda && isKnownCaseFunction(caso, fnCruda) ? fnCruda : undefined;
+        const nameNote = typeof w.nameNote === 'string' ? w.nameNote.trim() : '';
+
+        words.push({
+            text,
+            semanticRange,
+            syntacticFunction,
+            translation,
+            ...(caseFunction ? { caseFunction } : {}),
+            ...(nameNote ? { nameNote } : {}),
+        });
     }
 
     // Las claves exegéticas son OPCIONALES y se validan suave: una entrada

@@ -650,7 +650,9 @@
       "degree": "Grado",
       "semanticRange": "Rango semántico",
       "syntacticFunction": "Función sintáctica",
-      "translation": "Traducción"
+      "translation": "Traducción",
+      "caseFunction": "Función del caso",
+      "nameNote": "Sobre el nombre"
     },
     "pos": {
       "N": "Sustantivo",
@@ -805,6 +807,78 @@
       "legendTense": "Marca de tiempo",
       "legendMood": "Marca de modo",
       "legendAugment": "Aumento"
-    }
+    },
+    "caseFn": {
+      "N": {
+        "subject": "Nominativo sujeto",
+        "predicateNominative": "Nominativo predicado",
+        "absolute": "Nominativo absoluto",
+        "appellation": "Nominativo de apelación",
+        "apposition": "Nominativo en aposición",
+        "pendent": "Nominativo pendiente"
+      },
+      "G": {
+        "possession": "Genitivo de posesión",
+        "relationship": "Genitivo de parentesco",
+        "subjective": "Genitivo subjetivo",
+        "objective": "Genitivo objetivo",
+        "attributive": "Genitivo atributivo",
+        "partitive": "Genitivo partitivo",
+        "source": "Genitivo de origen",
+        "apposition": "Genitivo de aposición",
+        "objectOfPreposition": "Genitivo régimen de preposición"
+      },
+      "D": {
+        "indirectObject": "Dativo objeto indirecto",
+        "means": "Dativo de medio",
+        "manner": "Dativo de modo",
+        "reference": "Dativo de referencia",
+        "advantage": "Dativo de interés",
+        "time": "Dativo de tiempo",
+        "sphere": "Dativo de esfera",
+        "objectOfPreposition": "Dativo régimen de preposición"
+      },
+      "A": {
+        "directObject": "Acusativo objeto directo",
+        "doubleAccusative": "Doble acusativo",
+        "subjectOfInfinitive": "Acusativo sujeto del infinitivo",
+        "measure": "Acusativo de extensión",
+        "respect": "Acusativo de relación",
+        "objectOfPreposition": "Acusativo régimen de preposición"
+      },
+      "V": {
+        "address": "Vocativo de invocación"
+      }
+    },
+    "caseFnHint": {
+      "subject": "Ejecuta la acción del verbo finito.",
+      "predicateNominative": "Dice QUÉ ES el sujeto (con \"ser\" y equivalentes).",
+      "absolute": "Encabezados, títulos y saludos de carta: no depende de ningún verbo finito.",
+      "appellation": "El nombre en sí, no lo que se dice de él.",
+      "apposition": "El genitivo ES aquello que precisa.",
+      "pendent": "Se enuncia primero y la frase sigue por otro camino.",
+      "possession": "Marca de quién es algo.",
+      "relationship": "Marca el parentesco (hijo, padre, hermano DE).",
+      "subjective": "El genitivo ACTÚA (\"el amor de Dios\" = Dios ama).",
+      "objective": "El genitivo RECIBE (\"el temor de Dios\" = se le teme a Dios).",
+      "attributive": "Funciona como adjetivo (\"cuerpo de pecado\" = cuerpo pecaminoso).",
+      "partitive": "El TODO del que se toma una parte.",
+      "source": "De dónde procede.",
+      "objectOfPreposition": "El caso lo pide la preposición que lo precede.",
+      "indirectObject": "A quién se dirige la acción.",
+      "means": "El instrumento: \"por medio de\", \"con\".",
+      "manner": "El modo en que ocurre la acción.",
+      "reference": "\"Con respecto a\", el marco de la afirmación.",
+      "advantage": "A favor (o en contra) de quién.",
+      "time": "Cuándo ocurre (punto en el tiempo).",
+      "sphere": "El ámbito en que algo es cierto.",
+      "directObject": "Recibe directamente la acción.",
+      "doubleAccusative": "Dos acusativos con un mismo verbo.",
+      "subjectOfInfinitive": "Hace de sujeto dentro de una oración de infinitivo.",
+      "measure": "Cuánto tiempo o cuánta distancia.",
+      "respect": "\"En cuanto a\", limita el alcance.",
+      "address": "Llama o interpela directamente."
+    },
+    "cacheUnavailable": "No pudimos consultar los análisis guardados (revisa tu sesión o tu conexión). Puedes generarlo de nuevo, pero quizá ya exista."
   }
 }

@@ -30,6 +30,7 @@ export class GreekInsightService {
         const parsed = parseGreekInsight(raw ?? '', {
             reference: input.reference,
             expectedWordCount: input.tokens.length,
+            cases: input.tokens.map((t) => t.tag.case),
         });
         if (!parsed) {
             throw new Error('greek-insight: respuesta del modelo inválida o desalineada');

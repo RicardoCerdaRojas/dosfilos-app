@@ -7,6 +7,8 @@ interface Props {
     insight: GreekVerseInsight | null;
     generating: boolean;
     error: string | null;
+    /** No se pudo LEER el caché — distinto de "no hay análisis guardado". */
+    cacheUnavailable?: boolean;
     onGenerate: () => void;
 }
 
@@ -16,13 +18,18 @@ interface Props {
  * el peso teológico) y, sin análisis aún, la invitación a generarlo — pull
  * con caché global, nunca auto.
  */
-export function GreekInsightBlocks({ insight, generating, error, onGenerate }: Props) {
+export function GreekInsightBlocks({ insight, generating, error, cacheUnavailable, onGenerate }: Props) {
     const { t } = useTranslation('greekTutor');
 
     if (!insight) {
         return (
             <div className="rounded-lg border border-dashed border-border p-4 flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-muted-foreground">{t('analyzer.insightPitch')}</p>
+                {/* UN FALLO DE LECTURA NO ES "NO HAY ANÁLISIS". Tragárselo
+                    hacía que ambos casos se vieran idénticos, y el pastor
+                    pagaría una regeneración que quizá no hacía falta. */}
+                <p className="text-sm text-muted-foreground">
+                    {t(cacheUnavailable ? 'analyzer.cacheUnavailable' : 'analyzer.insightPitch')}
+                </p>
                 <Button size="sm" onClick={onGenerate} disabled={generating}>
                     {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                     {generating ? t('analyzer.generating') : t('analyzer.generateInsight')}

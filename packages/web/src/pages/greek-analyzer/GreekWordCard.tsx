@@ -192,8 +192,33 @@ export function GreekWordCard({
                 </div>
             )}
 
+            {insight?.nameNote && (
+                <div className="rounded-md bg-muted/60 p-2.5 space-y-1">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {t('analyzer.fields.nameNote')}
+                    </div>
+                    <p className="text-xs leading-relaxed">{insight.nameNote}</p>
+                </div>
+            )}
+
             {insight && (
                 <div className="space-y-1.5 border-t border-border/60 pt-2">
+                    {/* LA FUNCIÓN DEL CASO — el nombre técnico que el profesor
+                        evalúa, de la taxonomía cerrada: "nominativo absoluto",
+                        no "sujeto del saludo implícito". */}
+                    {insight.caseFunction && tag.case && (
+                        <div>
+                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                {t('analyzer.fields.caseFunction')}
+                            </div>
+                            <div className="text-sm font-medium text-info">
+                                {t(`analyzer.caseFn.${tag.case}.${insight.caseFunction}`)}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                                {t(`analyzer.caseFnHint.${insight.caseFunction}`)}
+                            </div>
+                        </div>
+                    )}
                     <div>
                         <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
                             {t('analyzer.fields.semanticRange')}

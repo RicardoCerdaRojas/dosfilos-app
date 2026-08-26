@@ -16,6 +16,19 @@ export interface GreekWordInsight {
     readonly semanticRange: string;
     /** Cómo funciona ESTA palabra en ESTA frase. */
     readonly syntacticFunction: string;
+    /**
+     * La FUNCIÓN DEL CASO según la taxonomía estándar (Wallace) — el nombre
+     * técnico que un profesor de seminario evalúa: "nominativo absoluto",
+     * "genitivo de posesión", "dativo de medio". Id de la lista CERRADA
+     * (`CASE_FUNCTIONS`); el parser descarta lo que no esté en ella. Ausente
+     * cuando la palabra no tiene caso o el modelo no la determinó.
+     */
+    readonly caseFunction?: string;
+    /**
+     * Historia del nombre propio: por qué Ἰάκωβος se traduce "Santiago" y no
+     * "Jacobo". Sólo en nombres propios y sólo cuando hay algo que contar.
+     */
+    readonly nameNote?: string;
     /** Traducción contextual de la palabra. */
     readonly translation: string;
 }
@@ -41,8 +54,9 @@ export interface GreekKeyInsight {
  *
  * v1: traducciones + words. v2: + keyInsights. v3: + wordOrderNote.
  * v4: genitivos en cadena — la aposición muestra "(de) X" y lo explica.
+ * v5: + caseFunction (taxonomía cerrada) y nameNote (nombres propios).
  */
-export const GREEK_INSIGHT_PROMPT_VERSION = 4;
+export const GREEK_INSIGHT_PROMPT_VERSION = 5;
 
 export interface GreekVerseInsight {
     /** "JAS 1:2" — la clave del caché. */

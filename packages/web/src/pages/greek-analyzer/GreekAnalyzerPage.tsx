@@ -74,7 +74,7 @@ export function GreekAnalyzerPage() {
         i18n.language.startsWith('es') ? b.nameEs : b.nameEn;
     const libroActual = books.find((b) => b.id === book);
     const referencia = `${book} ${chapter}:${verse}`;
-    const { insight, generating, error: insightError, generate } = useGreekInsight(referencia, data?.tokens);
+    const { insight, generating, error: insightError, cacheUnavailable, generate } = useGreekInsight(referencia, data?.tokens);
 
     /** Empata una clave exegética con su token, tolerando puntuación. */
     const limpiar = (x: string) => x.replace(/[.,·;··]+$/u, '');
@@ -231,6 +231,7 @@ export function GreekAnalyzerPage() {
                             insight={insight}
                             generating={generating}
                             error={insightError}
+                            cacheUnavailable={cacheUnavailable}
                             onGenerate={() => void generate()}
                         />
 

@@ -90,7 +90,21 @@ export function GreekWordHoverContent({ token, insight, keyInsight, bookCount, b
                 {puente && (
                     <div className="text-xs italic text-muted-foreground">{t(`analyzer.bridge.${puente}`)}</div>
                 )}
+                {insight?.caseFunction && token.tag.case && (
+                    <div className="text-xs">
+                        <span className="font-medium text-info">
+                            {t(`analyzer.caseFn.${token.tag.case}.${insight.caseFunction}`)}
+                        </span>
+                        {' — '}
+                        <span className="text-muted-foreground">
+                            {t(`analyzer.caseFnHint.${insight.caseFunction}`)}
+                        </span>
+                    </div>
+                )}
                 {insight && <div className="text-xs">{insight.syntacticFunction}</div>}
+                {insight?.nameNote && (
+                    <div className="rounded bg-muted/60 p-2 text-xs leading-relaxed">{insight.nameNote}</div>
+                )}
                 {insight && (
                     <div>
                         <span className="text-muted-foreground">{t('analyzer.fields.semanticRange')}: </span>

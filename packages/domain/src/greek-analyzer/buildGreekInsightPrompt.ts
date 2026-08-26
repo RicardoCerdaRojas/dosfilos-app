@@ -1,4 +1,5 @@
 import type { GreekWordToken } from './morphGntToken';
+import { CASE_FUNCTIONS } from './caseFunctionTaxonomy';
 
 /** Expande el tag a texto plano para el prompt, sin códigos crípticos. */
 const TENSE: Record<string, string> = { P: 'presente', I: 'imperfecto', F: 'futuro', A: 'aoristo', X: 'perfecto', Y: 'pluscuamperfecto' };
@@ -42,6 +43,15 @@ export function buildGreekInsightPrompt(input: {
         .map((t, i) => `${i + 1}. ${t.text} — lema ${t.lemma} — ${describirTag(t)}`)
         .join('\n');
 
+    // La lista CERRADA de funciones, sólo para los casos presentes en este
+    // versículo: darle la taxonomía entera sería ruido, y darle libertad para
+    // inventar etiquetas sería peor que no preguntar.
+    const casosPresentes = [...new Set(input.tokens.map((t) => t.tag.case).filter(Boolean))] as (keyof typeof CASE_FUNCTIONS)[];
+    const NOMBRE_CASO: Record<string, string> = { N: 'nominativo', G: 'genitivo', D: 'dativo', A: 'acusativo', V: 'vocativo' };
+    const taxonomia = casosPresentes
+        .map((c) => `  ${NOMBRE_CASO[c]}: ${CASE_FUNCTIONS[c].join(', ')}`)
+        .join('\n');
+
     return `Eres un gramático de griego koiné asistiendo a un pastor hispanohablante que estudia el texto original.
 
 VERSÍCULO: ${input.reference}
@@ -83,6 +93,23 @@ de forma que enseñe algo (un genitivo antepuesto, el sujeto al final, un
 concretas y cómo se reordenan al traducir. Si el orden no enseña nada aquí,
 devuelve "" — no inventes una lección donde no la hay.
 
+Y para cada palabra CON CASO, "caseFunction": la función del caso según la
+taxonomía estándar (Wallace). ELIGE EXACTAMENTE UNO de estos identificadores
+—no inventes etiquetas ni las traduzcas, devuelve el id tal cual— y si
+ninguno encaja o no estás seguro, devuelve "":
+
+${taxonomia}
+
+Guía: el sujeto de un verbo FINITO es "subject"; en un encabezado o saludo
+epistolar SIN verbo finito el nominativo es "absolute". Distingue el genitivo
+"subjective" (el genitivo actúa) del "objective" (el genitivo recibe).
+
+Y para los NOMBRES PROPIOS, "nameNote": si el nombre castellano se aleja del
+griego por historia de la traducción (Ἰάκωβος → "Santiago", del latín
+Iacobus → Iacomus → "Sant Iago"; Κηφᾶς → "Cefas/Pedro"; Σαῦλος → "Saulo"),
+cuéntalo en 1-2 frases y di si el castellano tiene un doblete más literal
+(Jacobo). Si el nombre no tiene historia que contar, devuelve "".
+
 REGLAS:
 - Todo en español, salvo las palabras griegas.
 - NO inventes sentidos que el lema no tiene: el pastor va a predicar con esto.
@@ -93,7 +120,7 @@ FORMATO DE SALIDA (JSON, sin texto alrededor):
   "literalTranslation": "…",
   "fluidTranslation": "…",
   "words": [
-    { "text": "…", "semanticRange": "sentido A / sentido B", "syntacticFunction": "…", "translation": "…" }
+    { "text": "…", "semanticRange": "sentido A / sentido B", "syntacticFunction": "…", "translation": "…", "caseFunction": "possession", "nameNote": "" }
   ],
   "keyInsights": [
     { "text": "…", "significance": "Por qué esta palabra importa al predicar este versículo." }

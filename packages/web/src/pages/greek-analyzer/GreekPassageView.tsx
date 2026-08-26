@@ -54,7 +54,11 @@ export function GreekPassageView({ provider, book, bookName, chapter, versesInCh
                 rango.map(async (v) => {
                     const tokens = await provider.getVerseTokens(book, chapter, v);
                     if (!tokens) return null;
-                    const insight = await repo.get(`${book} ${chapter}:${v}`);
+                    const cached = await repo.get(`${book} ${chapter}:${v}`);
+                    // 'unavailable' (sin sesión, red) se trata como "sin
+                    // traducción" en esta vista: leer corrido no ofrece
+                    // generar nada, así que no hay decisión que informar.
+                    const insight = cached === 'unavailable' ? null : cached;
                     return {
                         tokens,
                         insight: insight && insight.words.length === tokens.tokens.length ? insight : null,

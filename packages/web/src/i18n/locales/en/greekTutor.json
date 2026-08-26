@@ -626,7 +626,9 @@
       "degree": "Degree",
       "semanticRange": "Rango semántico",
       "syntacticFunction": "Función sintáctica",
-      "translation": "Translation"
+      "translation": "Translation",
+      "caseFunction": "Case function",
+      "nameNote": "About the name"
     },
     "pos": {
       "N": "Noun",
@@ -781,6 +783,78 @@
       "legendTense": "Tense marker",
       "legendMood": "Mood marker",
       "legendAugment": "Augment"
-    }
+    },
+    "caseFn": {
+      "N": {
+        "subject": "Nominative subject",
+        "predicateNominative": "Predicate nominative",
+        "absolute": "Nominative absolute",
+        "appellation": "Nominative of appellation",
+        "apposition": "Nominative in apposition",
+        "pendent": "Pendent nominative"
+      },
+      "G": {
+        "possession": "Genitive of possession",
+        "relationship": "Genitive of relationship",
+        "subjective": "Subjective genitive",
+        "objective": "Objective genitive",
+        "attributive": "Attributive genitive",
+        "partitive": "Partitive genitive",
+        "source": "Genitive of source",
+        "apposition": "Genitive of apposition",
+        "objectOfPreposition": "Genitive object of preposition"
+      },
+      "D": {
+        "indirectObject": "Dative indirect object",
+        "means": "Dative of means",
+        "manner": "Dative of manner",
+        "reference": "Dative of reference",
+        "advantage": "Dative of advantage",
+        "time": "Dative of time",
+        "sphere": "Dative of sphere",
+        "objectOfPreposition": "Dative object of preposition"
+      },
+      "A": {
+        "directObject": "Accusative direct object",
+        "doubleAccusative": "Double accusative",
+        "subjectOfInfinitive": "Accusative subject of infinitive",
+        "measure": "Accusative of measure",
+        "respect": "Accusative of respect",
+        "objectOfPreposition": "Accusative object of preposition"
+      },
+      "V": {
+        "address": "Vocative of address"
+      }
+    },
+    "caseFnHint": {
+      "subject": "Performs the action of the finite verb.",
+      "predicateNominative": "States WHAT the subject is (with \"to be\").",
+      "absolute": "Headings, titles and letter salutations: depends on no finite verb.",
+      "appellation": "The name itself, not what is said about it.",
+      "apposition": "The genitive IS what it specifies.",
+      "pendent": "Stated first; the sentence then goes another way.",
+      "possession": "Marks whose something is.",
+      "relationship": "Marks kinship (son, father, brother OF).",
+      "subjective": "The genitive ACTS (\"the love of God\" = God loves).",
+      "objective": "The genitive RECEIVES (\"the fear of God\" = God is feared).",
+      "attributive": "Works like an adjective (\"body of sin\" = sinful body).",
+      "partitive": "The WHOLE from which a part is taken.",
+      "source": "Where it comes from.",
+      "objectOfPreposition": "The case is required by the preceding preposition.",
+      "indirectObject": "To whom the action is directed.",
+      "means": "The instrument: \"by means of\", \"with\".",
+      "manner": "The way the action happens.",
+      "reference": "\"With respect to\", the frame of the claim.",
+      "advantage": "For (or against) whose benefit.",
+      "time": "When it happens (point in time).",
+      "sphere": "The realm in which something holds.",
+      "directObject": "Directly receives the action.",
+      "doubleAccusative": "Two accusatives with one verb.",
+      "subjectOfInfinitive": "Acts as subject inside an infinitive clause.",
+      "measure": "How much time or distance.",
+      "respect": "\"As to\", limits the scope.",
+      "address": "Directly calls or addresses."
+    },
+    "cacheUnavailable": "We could not read the saved analyses (check your session or connection). You can generate it again, but one may already exist."
   }
 }
