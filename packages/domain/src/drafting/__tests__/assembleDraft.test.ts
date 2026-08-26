@@ -363,3 +363,9 @@ describe('assembleDraft — varias citas de autoridad (decisión 2026-08-26)', (
         expect(draft.body[0].authorityQuote).toBe('"Cita A" — Autor A\n\n"Cita B" — Autor B');
     });
 });
+
+describe('assembleDraft — procedencia (ADR-037: el sermón lo dice)', () => {
+    it('el borrador del taller se declara armado desde decisiones', () => {
+        expect(assembleDraft(COMPLETO).assembledFrom).toBe('workshop');
+    });
+});

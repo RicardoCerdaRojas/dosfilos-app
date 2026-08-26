@@ -394,6 +394,15 @@ export interface GenerationRules {
 }
 
 export interface SermonContent {
+    /**
+     * Por qué camino nació este borrador — ADR-037: "la autoría queda baja y
+     * el sermón LO DICE". `workshop` = ensamblado desde las decisiones del
+     * taller; `generated` = escrito por el modelo de una vez (la salida de
+     * emergencia). AUSENTE en borradores anteriores a este campo: la ausencia
+     * de dato no es evidencia de nada, y la UI no muestra insignia — nunca se
+     * acusa por falta de registro.
+     */
+    assembledFrom?: 'workshop' | 'generated';
     title: string;
     introduction: string;
     body: {

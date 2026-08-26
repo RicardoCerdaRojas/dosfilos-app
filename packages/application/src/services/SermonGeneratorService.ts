@@ -279,10 +279,15 @@ export class SermonGeneratorService {
         // está en el esquema JSON del prompt a propósito). Sin esto, el punto
         // generado no abría con su pasaje y el armado desde el taller sí — la
         // diferencia de estructura que el fundador señaló al comparar ambos.
-        const rawDraft = attachMainPassageRefs(assembleTransitions(generated, analysis), {
-            sermonPassage: analysis.exegeticalStudy?.passage,
-            points: analysis.outline?.mainPoints ?? [],
-        });
+        const rawDraft: SermonContent = {
+            ...attachMainPassageRefs(assembleTransitions(generated, analysis), {
+                sermonPassage: analysis.exegeticalStudy?.passage,
+                points: analysis.outline?.mainPoints ?? [],
+            }),
+            // ADR-037: la salida de emergencia se declara. El borrador escrito
+            // por el modelo LO DICE, y la insignia del paso lo muestra.
+            assembledFrom: 'generated',
+        };
 
         // Phase B: enforce the citation contract server-side. Strips
         // unknown `[Sn]` markers, drops hallucinated `ragSources`
