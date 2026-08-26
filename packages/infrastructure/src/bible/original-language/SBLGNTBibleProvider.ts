@@ -1,6 +1,11 @@
-import type {
-    BibleBookId,
-    IOriginalLanguageBibleProvider,
+import {
+    parseMorphGntParsing,
+    parseMorphGntPos,
+    transliterateGreek,
+    type BibleBookId,
+    type GreekVerseTokens,
+    type GreekWordToken,
+    type IOriginalLanguageBibleProvider,
 } from '@dosfilos/domain';
 
 /**
@@ -58,9 +63,43 @@ export class SBLGNTBibleProvider implements IOriginalLanguageBibleProvider {
         const max = Math.max(...chapterMap.keys());
         const out: string[] = [];
         for (let v = 1; v <= max; v++) {
-            out.push(chapterMap.get(v) ?? '');
+            out.push(chapterMap.get(v)?.text ?? '');
         }
         return out;
+    }
+
+    /**
+     * Un versículo con sus TOKENS morfológicos — el dato que este provider
+     * descargaba y tiraba. MorphGNT trae por palabra: lema, categoría y el
+     * código de parsing completo; el analizador griego los muestra sin pasar
+     * por ningún modelo. La transliteración se deriva acá, también por código.
+     *
+     * ATENCIÓN LICENCIA: el TEXTO del SBLGNT es CC BY 4.0; la MORFOLOGÍA de
+     * MorphGNT es CC BY-SA 4.0. Quien muestre estos tokens en pantalla debe
+     * declarar `morphologyRendered` en las atribuciones (bloque BY-SA latente
+     * en `aggregateRequiredAttributions`).
+     */
+    async getVerseTokens(
+        bookId: BibleBookId,
+        chapter: number,
+        verse: number,
+    ): Promise<GreekVerseTokens | null> {
+        const book = await this.loadBook(bookId);
+        const entry = book.get(chapter)?.get(verse);
+        if (!entry) return null;
+        return { reference: { chapter, verse }, text: entry.text, tokens: entry.tokens };
+    }
+
+    /**
+     * Capítulos del libro y versículos por capítulo, para la navegación del
+     * analizador. Derivado del archivo ya cargado: ninguna fuente aparte que
+     * pueda divergir del texto.
+     */
+    async getNavigation(bookId: BibleBookId): Promise<{ chapter: number; verses: number }[]> {
+        const book = await this.loadBook(bookId);
+        return [...book.entries()]
+            .map(([chapter, verses]) => ({ chapter, verses: Math.max(...verses.keys()) }))
+            .sort((a, b) => a.chapter - b.chapter);
     }
 
     private async loadBook(bookId: BibleBookId): Promise<ParsedBook> {
@@ -104,7 +143,11 @@ export class SBLGNTBibleProvider implements IOriginalLanguageBibleProvider {
     }
 }
 
-type ParsedBook = Map<number, Map<number, string>>; // chapter → verse → text
+interface ParsedVerse {
+    text: string;
+    tokens: GreekWordToken[];
+}
+type ParsedBook = Map<number, Map<number, ParsedVerse>>; // chapter → verse
 
 function parseMorphgntText(raw: string): ParsedBook {
     const result: ParsedBook = new Map();
@@ -114,8 +157,9 @@ function parseMorphgntText(raw: string): ParsedBook {
         const trimmed = line.trim();
         if (!trimmed || trimmed.startsWith('#')) continue;
 
-        // MorphGNT uses single-space-separated columns. We need at
-        // least 4: ref, pos, parsing, text.
+        // MorphGNT: `ref pos parsing text word normalized lemma`. Para el
+        // texto bastan 4 columnas; el token completo pide las 7 — las líneas
+        // cortas conservan el texto y quedan sin análisis, nunca al revés.
         const cols = trimmed.split(/\s+/);
         if (cols.length < 4) continue;
 
@@ -132,8 +176,24 @@ function parseMorphgntText(raw: string): ParsedBook {
             chapterMap = new Map();
             result.set(chapter, chapterMap);
         }
-        const existing = chapterMap.get(verse);
-        chapterMap.set(verse, existing ? `${existing} ${text}` : text);
+        let entry = chapterMap.get(verse);
+        if (!entry) {
+            entry = { text: '', tokens: [] };
+            chapterMap.set(verse, entry);
+        }
+        entry.text = entry.text ? `${entry.text} ${text}` : text;
+
+        const pos = parseMorphGntPos(cols[1] ?? '');
+        const lemma = cols[6];
+        if (pos && lemma) {
+            entry.tokens.push({
+                text,
+                lemma,
+                pos,
+                tag: parseMorphGntParsing(cols[2] ?? ''),
+                transliteration: transliterateGreek(text),
+            });
+        }
     }
 
     return result;
