@@ -777,7 +777,7 @@
       "bridgeGenitive": "El \"de\" no está en el griego: el caso genitivo lo lleva dentro — hace el trabajo de la preposición.",
       "bridgeDative": "El \"a/para/en\" no está en el griego: el caso dativo lo lleva dentro.",
       "bridgeAccusative": "El acusativo señala el objeto directo — el español no necesita preposición, sólo la posición.",
-      "bridgeNominative": "El nominativo señala el sujeto de la oración, esté donde esté en la frase.",
+      "bridgeNominative": "El nominativo es el caso del sujeto y de lo que se dice de él (predicados y aposiciones) — y no depende de dónde esté en la frase.",
       "bridgeVocative": "El vocativo es el caso de la invocación directa: en español lo marcamos con comas (\"hermanos míos,\")."
     }
   }

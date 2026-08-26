@@ -753,7 +753,7 @@
       "bridgeGenitive": "The \"of\" is not in the Greek: the genitive case carries it inside — it does the preposition’s job.",
       "bridgeDative": "The \"to/for/in\" is not in the Greek: the dative case carries it inside.",
       "bridgeAccusative": "The accusative marks the direct object — Spanish needs no preposition, only position.",
-      "bridgeNominative": "The nominative marks the subject of the sentence, wherever it sits in the phrase.",
+      "bridgeNominative": "The nominative is the case of the subject and of what is said about it (predicates and appositions) — regardless of its position in the sentence.",
       "bridgeVocative": "The vocative is the case of direct address: Spanish marks it with commas."
     }
   }
