@@ -567,3 +567,39 @@ describe('buildSermonDraftPrompt — el dato léxico no es el comentario del pas
         expect(prompt).toContain('asociación forzada');
     });
 });
+
+describe('buildSermonDraftPrompt — forma canónica del punto (convergencia con el taller)', () => {
+    const p = () => buildSermonDraftPrompt(baseAnalysis, {} as any, 'es');
+
+    it('el content abre con la proposición del punto, no con "### Exposición Bíblica"', () => {
+        expect(p()).toContain('LA PROPOSICIÓN DEL PUNTO');
+        expect(p()).not.toContain('### Exposición Bíblica');
+    });
+
+    it('las palabras clave van en el campo keyWords, fuera de content', () => {
+        expect(p()).toContain('"keyWords"');
+        expect(p()).toContain('Palabras Clave → campo "keyWords"');
+    });
+
+    it('los encabezados de la introducción son los del taller (constante compartida)', () => {
+        const prompt = p();
+        expect(prompt).toContain('### Contexto Histórico');
+        expect(prompt).toContain('### Conexión Actual');
+        expect(prompt).toContain('### Proposición Homilética');
+    });
+
+    it('en inglés, los encabezados cambian con el idioma', () => {
+        const prompt = buildSermonDraftPrompt(baseAnalysis, {} as any, 'en');
+        expect(prompt).toContain('### Historical Context');
+        expect(prompt).not.toContain('### Contexto Histórico');
+    });
+
+    it('comparte la regla de concisión del taller — el manuscrito no es la predicación', () => {
+        expect(p()).toContain('EL MANUSCRITO NO ES LA PREDICACIÓN');
+        expect(p()).toContain('Hermanos');
+    });
+
+    it('la numeración del anuncio de puntos respeta la del pastor', () => {
+        expect(p()).toContain('NO le antepongas otro');
+    });
+});

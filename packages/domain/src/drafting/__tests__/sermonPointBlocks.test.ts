@@ -63,3 +63,28 @@ describe('sermonPointBlocks', () => {
         expect(sermonPointBlocks({ ...PUNTO, transition: '   ' }).some((b) => b.kind === 'transition')).toBe(false);
     });
 });
+
+describe('bloque de palabras clave', () => {
+    it('va después del contenido y antes de las referencias cruzadas', () => {
+        const bloques = sermonPointBlocks({
+            content: 'exposición',
+            keyWords: ['*qûm* (levántate) — orden directa'],
+            scriptureReferences: ['Romanos 8:28'],
+        });
+        const kinds = bloques.map((b) => b.kind);
+        expect(kinds.indexOf('keyWords')).toBeGreaterThan(kinds.indexOf('content'));
+        expect(kinds.indexOf('keyWords')).toBeLessThan(kinds.indexOf('crossReferences'));
+    });
+
+    it('sin palabras no hay bloque — un rótulo sobre nada anuncia algo que no está', () => {
+        expect(sermonPointBlocks({ content: 'x', keyWords: [] }).some((b) => b.kind === 'keyWords')).toBe(false);
+        expect(sermonPointBlocks({ content: 'x' }).some((b) => b.kind === 'keyWords')).toBe(false);
+    });
+
+    it('las entradas vacías se filtran', () => {
+        const bloque = sermonPointBlocks({ content: 'x', keyWords: [' ', '*a* — b'] }).find(
+            (b) => b.kind === 'keyWords',
+        );
+        expect(bloque?.items).toEqual(['*a* — b']);
+    });
+});

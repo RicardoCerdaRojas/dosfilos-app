@@ -217,6 +217,13 @@ export class GeminiSermonGenerator implements ISermonGenerator {
             // returns null when no verified source exists.
             const body = Array.isArray(parsed.body) ? parsed.body.map((b: any) => ({
                 ...b,
+                // Sólo strings con contenido: el esquema los pide así, pero un
+                // modelo puede emitir objetos ({original, significance}) y el
+                // renderizador hace `.trim()` sobre cada entrada — un objeto
+                // acá revienta el lienzo entero, no una línea.
+                keyWords: Array.isArray(b?.keyWords)
+                    ? b.keyWords.filter((k: unknown): k is string => typeof k === 'string' && k.trim().length > 0)
+                    : undefined,
                 authorityQuote: b?.authorityQuote && typeof b.authorityQuote === 'string' && b.authorityQuote.trim().length > 0
                     ? b.authorityQuote
                     : null,

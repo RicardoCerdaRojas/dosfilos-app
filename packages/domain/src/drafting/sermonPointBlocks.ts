@@ -4,6 +4,7 @@ export interface SermonPointBlock {
     kind:
         | 'mainPassage'
         | 'content'
+        | 'keyWords'
         | 'crossReferences'
         | 'authorityQuote'
         | 'illustration'
@@ -28,6 +29,7 @@ export interface SermonPointShape {
      */
     mainPassageRef?: string;
     content?: string;
+    keyWords?: string[];
     scriptureReferences?: string[];
     illustration?: string;
     implications?: string[];
@@ -70,6 +72,13 @@ export function sermonPointBlocks(point: SermonPointShape): SermonPointBlock[] {
     const contenido = texto(point.content);
     // El cuerpo del punto no lleva rótulo: es lo que se predica, no una ficha.
     if (contenido) bloques.push({ kind: 'content', text: contenido });
+
+    // DESPUÉS DE LA EXPOSICIÓN, ANTES DE LAS REFERENCIAS — donde el fundador
+    // las pidió: son el sustento léxico de lo que se acaba de exponer.
+    const palabras = (point.keyWords ?? []).map((k) => k.trim()).filter(Boolean);
+    if (palabras.length > 0) {
+        bloques.push({ kind: 'keyWords', headingKey: `${NS}.keyWords`, items: palabras });
+    }
 
     const refs = (point.scriptureReferences ?? [])
         // Las referencias generadas llegan con un "> " de cita al inicio; dentro

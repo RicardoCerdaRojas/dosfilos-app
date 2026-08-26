@@ -405,6 +405,13 @@ export interface SermonContent {
          * respaldan después.
          */
         mainPassageRef?: string;
+        /**
+         * Palabras clave del estudio que pertenecen a ESTE punto, una por
+         * entrada ("*original* (transliteración) — significado / uso aquí").
+         * Material ya trabajado en la exégesis: el borrador lo muestra, no lo
+         * reinventa. Va después de la exposición y antes de las referencias.
+         */
+        keyWords?: string[];
         scriptureReferences?: string[]; // Referencias cruzadas
         illustration?: string;
         implications?: string[]; // Implicaciones (al menos 2)

@@ -57,6 +57,17 @@ export function SermonPointBlocksView({ point, renderFallbackReference }: Props)
                                 />
                             ))}
                         </div>
+                    ) : bloque.kind === 'keyWords' ? (
+                        // Con viñetas y NO numeradas: las palabras no tienen
+                        // orden. Cada ítem pasa por markdown porque el original
+                        // griego/hebreo viene en *cursivas*.
+                        <ul className="list-disc pl-5 space-y-1 text-sm">
+                            {(bloque.items ?? []).map((item, j) => (
+                                <li key={j}>
+                                    <MarkdownRenderer content={item} reading />
+                                </li>
+                            ))}
+                        </ul>
                     ) : bloque.items ? (
                         <ol className="list-decimal pl-5 space-y-1 text-sm">
                             {bloque.items.map((item, j) => (

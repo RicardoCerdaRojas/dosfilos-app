@@ -1,4 +1,5 @@
 import type { SermonElement } from './SermonElement';
+import { SERMON_MANUSCRIPT_STYLE } from './sermonManuscriptStyle';
 import type { WalkSection } from './deriveSectionWalk';
 
 export interface SectionProseInput {
@@ -167,21 +168,7 @@ ${estructura}
 
 5. ${registro}
 
-6. **CONCISIÓN. EL MANUSCRITO NO ES LA PREDICACIÓN.**
-   Este texto es el documento de trabajo del predicador, no la transcripción
-   de lo que dirá. Su trabajo es que él vea LA IDEA DE UN VISTAZO.
-
-   PROHIBIDO:
-   - Vocativos ("Hermanos", "Amados", "Queridos hermanos"). El trato con la
-     congregación lo pone él, vivo, y escribirlo acá se lo pre-guioniza.
-   - Adorno retórico: "Imaginen la profunda…", "de manera poderosa",
-     "profundamente", "verdaderamente", "es importante notar que".
-   - Repetir la idea con otras palabras para alargar. Si ya se dijo, sigue.
-   - Cerrar cada bloque con una moraleja que nadie pidió.
-
-   Cada movimiento: la idea, dicha con claridad, y sólo el desarrollo que
-   haga falta para que se entienda. Dos a cuatro frases suelen bastar. El
-   calor lo agrega él en el púlpito; tú entregas la idea limpia.
+6. ${SERMON_MANUSCRIPT_STYLE}
 
 7. Frases cortas, sin subtítulos, sin encabezados. Nada de meta-comentarios
    ("en esta sección veremos", "a continuación analizaremos").
