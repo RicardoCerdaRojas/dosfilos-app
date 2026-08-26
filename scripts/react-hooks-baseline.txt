@@ -1,0 +1,10 @@
+# Baseline de react-hooks/rules-of-hooks — NO editar a mano.
+# Regenerar con: ./scripts/check-react-hooks.sh --update
+# Formato: <cantidad>\t<archivo relativo a packages/web>
+# Total: 38
+1	src/lib/citations.tsx
+1	src/pages/faculty/ProjectDashboard.tsx
+1	src/pages/hebrew-tutor/components/NominalDetectivePanel.tsx
+1	src/pages/hebrew-tutor/components/VerbDetectivePanel.tsx
+31	src/pages/sermons/detail.tsx
+3	src/pages/sermons/generator/SermonInProgress.tsx

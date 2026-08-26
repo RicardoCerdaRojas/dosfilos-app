@@ -507,22 +507,12 @@ export function StepDraft() {
         setDraft(newContent);
     };
 
-    if (!homiletics) {
-        return <div>{t('drafting.errors.noHomiletics')}</div>;
-    }
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <div className="text-center space-y-4">
-                    <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-                    <p className="text-lg font-medium">{t('drafting.loading')}</p>
-                    <p className="text-sm text-muted-foreground">{t('drafting.loadingSub')}</p>
-                </div>
-            </div>
-        );
-    }
-
+    /* TODOS LOS HOOKS VAN ANTES DE LOS RETORNOS TEMPRANOS. Este `useMemo`
+       estaba DEBAJO del `if (loading) return …`: al pulsar regenerar, el paso
+       renderizaba un hook menos y React abortaba con "Rendered fewer hooks
+       than expected". No se veía hasta usar la única acción que enciende
+       `loading` con el borrador ya en pantalla. Cualquier hook nuevo va acá
+       arriba, no junto al código que lo usa. */
     /**
      * ADR-037 — el taller socrático. Alcanzable en LAS DOS ramas del paso.
      *
@@ -554,6 +544,23 @@ export function StepDraft() {
                 : [],
         [homiletics, passage, rules.pastoralSeed?.pastoralAnecdote],
     );
+
+    if (!homiletics) {
+        return <div>{t('drafting.errors.noHomiletics')}</div>;
+    }
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="text-center space-y-4">
+                    <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+                    <p className="text-lg font-medium">{t('drafting.loading')}</p>
+                    <p className="text-sm text-muted-foreground">{t('drafting.loadingSub')}</p>
+                </div>
+            </div>
+        );
+    }
+
 
     // La sección activa por defecto es la PRIMERA PENDIENTE, no la primera del
     // recorrido: abrir en una que ya es suya le haría creer que hay algo que
