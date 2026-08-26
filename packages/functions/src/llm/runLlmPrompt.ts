@@ -58,6 +58,8 @@ export const PROXY_FEATURES = [
     'greekTutor.explainMorphology',
     'greekTutor.answerFreeQuestion',
     'greekTutor.analyzeSyntax',
+    // Analizador griego (fase 2): rango semántico + sintaxis + traducciones.
+    'greekTutor.analyzeVerse',
     'greekTutor.quiz',
     // Tanda 2 — generación y refinamiento del sermón (GeminiAIService).
     'sermon.generateSermon',

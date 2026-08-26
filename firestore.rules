@@ -151,6 +151,15 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Greek Analyzer - Verse Insight Cache
+    // Global cache: the Greek text is the same for everyone, so one paid
+    // analysis serves all users. Same contract as hebrew_analysis_cache.
+    match /greek_insight_cache/{passageId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if false;
+    }
+
     // Hebrew Tutor - Detective Sessions
     // Stores completed detective sessions for analytics and progress tracking
     match /hebrewDetectiveSessions/{sessionId} {

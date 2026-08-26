@@ -647,7 +647,9 @@
       "case": "Caso",
       "number": "Número",
       "gender": "Género",
-      "degree": "Grado"
+      "degree": "Grado",
+      "semanticRange": "Rango semántico",
+      "syntacticFunction": "Función sintáctica"
     },
     "pos": {
       "N": "Sustantivo",
@@ -704,6 +706,12 @@
     "degree": {
       "C": "Comparativo",
       "S": "Superlativo"
-    }
+    },
+    "literalTranslation": "Traducción literal",
+    "fluidTranslation": "Traducción fluida",
+    "insightPitch": "Genera el análisis del versículo: traducciones, rango semántico y función sintáctica de cada palabra. Se guarda y queda disponible para todos.",
+    "generateInsight": "Generar análisis",
+    "generating": "Analizando…",
+    "insightError": "No se pudo generar el análisis. Inténtalo de nuevo."
   }
 }

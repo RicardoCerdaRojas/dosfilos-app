@@ -1,9 +1,11 @@
-import type { GreekWordToken } from '@dosfilos/domain';
+import type { GreekWordInsight, GreekWordToken } from '@dosfilos/domain';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 interface Props {
     token: GreekWordToken;
+    /** El aporte del modelo (fase 2): rango, función, traducción. Opcional. */
+    insight?: GreekWordInsight;
     highlighted?: boolean;
     onClick?: () => void;
 }
@@ -28,7 +30,7 @@ const POS_BADGE: Record<string, string> = {
  * TODO EL CONTENIDO ES DETERMINISTA: viene del dataset, no de un modelo. Las
  * celdas ausentes no se muestran — un rótulo sobre un guion no informa nada.
  */
-export function GreekWordCard({ token, highlighted, onClick }: Props) {
+export function GreekWordCard({ token, insight, highlighted, onClick }: Props) {
     const { t } = useTranslation('greekTutor');
     const { tag } = token;
 
@@ -83,6 +85,10 @@ export function GreekWordCard({ token, highlighted, onClick }: Props) {
                 </div>
             </div>
 
+            {insight && (
+                <div className="text-sm font-medium text-primary">{insight.translation}</div>
+            )}
+
             {celdas.length > 0 && (
                 <div className="grid grid-cols-2 gap-1.5">
                     {celdas.map((c) => (
@@ -93,6 +99,23 @@ export function GreekWordCard({ token, highlighted, onClick }: Props) {
                             <div className="text-sm">{c.value}</div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {insight && (
+                <div className="space-y-1.5 border-t border-border/60 pt-2">
+                    <div>
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                            {t('analyzer.fields.semanticRange')}
+                        </div>
+                        <div className="text-sm">{insight.semanticRange}</div>
+                    </div>
+                    <div>
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                            {t('analyzer.fields.syntacticFunction')}
+                        </div>
+                        <div className="text-sm">{insight.syntacticFunction}</div>
+                    </div>
                 </div>
             )}
         </button>

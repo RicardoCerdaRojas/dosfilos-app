@@ -623,7 +623,9 @@
       "case": "Case",
       "number": "Number",
       "gender": "Gender",
-      "degree": "Degree"
+      "degree": "Degree",
+      "semanticRange": "Rango semántico",
+      "syntacticFunction": "Función sintáctica"
     },
     "pos": {
       "N": "Noun",
@@ -680,6 +682,12 @@
     "degree": {
       "C": "Comparative",
       "S": "Superlative"
-    }
+    },
+    "literalTranslation": "Literal translation",
+    "fluidTranslation": "Fluid translation",
+    "insightPitch": "Generate the verse analysis: translations, semantic range and syntactic function for each word. It is cached and becomes available to everyone.",
+    "generateInsight": "Generate analysis",
+    "generating": "Analyzing…",
+    "insightError": "The analysis could not be generated. Try again."
   }
 }
