@@ -217,7 +217,20 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     const setSectionProse = (sectionId: string, prose: string) =>
         setSectionProseState((prev) => ({ ...prev, [sectionId]: prose }));
 
-    const restoreSectionElements = (map: Record<string, SermonElement[]>) => setSectionElementsState(map);
+    const restoreSectionElements = (map: Record<string, SermonElement[]>) => {
+        // SOLO ELEMENTOS CON TEXTO. Un saneador de fechas convirtió el texto
+        // de dos citas reales en Timestamps (".., p. 194" parseado como año
+        // 194): renderizar ese objeto revienta React con "Objects are not
+        // valid as a React child". El dato ya está perdido — se filtra acá y
+        // el próximo autosave escribe el estado limpio, así el documento se
+        // repara solo.
+        const limpio: Record<string, SermonElement[]> = {};
+        for (const [id, elementos] of Object.entries(map ?? {})) {
+            const validos = (elementos ?? []).filter((e) => typeof e?.text === 'string');
+            if (validos.length > 0) limpio[id] = validos;
+        }
+        setSectionElementsState(limpio);
+    };
     const restoreSectionProse = (map: Record<string, string>) => setSectionProseState(map);
 
     const reset = () => {

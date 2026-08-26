@@ -475,13 +475,15 @@ export class SermonService {
             return new Date(obj.seconds * 1000);
         }
 
-        // Handle string dates
+        // Handle string dates — SOLO ISO 8601 ESTRICTO. La heurística anterior
+        // ("parsea como fecha y contiene una T") convertía en fecha CUALQUIER
+        // texto con una T que el parser laxo de V8 tragara. Caso real: la cita
+        // "…A Literary and Theological Commentary, p. 194" tiene la T de
+        // "Theological" y V8 lee ", p. 194" como el año 194 — el TEXTO de la
+        // cita del pastor se guardó como timestamp del siglo II y su decisión
+        // se perdió. Un dato del usuario jamás se coerciona por adivinanza.
         if (typeof obj === 'string') {
-            const dateTest = new Date(obj);
-            if (!isNaN(dateTest.getTime()) && obj.includes('T')) {
-                return dateTest;
-            }
-            return obj;
+            return ISO_DATE_STRING.test(obj) ? new Date(obj) : obj;
         }
 
         if (Array.isArray(obj)) {
@@ -559,3 +561,10 @@ export class SermonService {
 
 // Singleton instance
 export const sermonService = new SermonService();
+
+
+/**
+ * Fecha ISO 8601 completa ("2026-08-26T13:19:34.393Z"), y nada más.
+ * Exportada para poder probar el caso que corrompió datos reales.
+ */
+export const ISO_DATE_STRING = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/;
