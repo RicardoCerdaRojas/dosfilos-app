@@ -1,14 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWizard } from './WizardContext';
-import { WizardLayout } from './WizardLayout';
 import { DerivedContextBanner } from './DerivedContextBanner';
 import { SermonPersonalizationPanel } from './SermonPersonalizationPanel';
-import { DraftSkeletonPreview } from './DraftSkeletonPreview';
 import { IllustrationDuplicateBanner } from './IllustrationDuplicateBanner';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Loader2, ArrowLeft, Save, FileText, Sparkles, Eye, Upload, BookOpen } from 'lucide-react';
+import { Loader2, ArrowLeft, Save, Sparkles, Eye, Upload, BookOpen } from 'lucide-react';
 import {
     sermonGeneratorService,
     sermonService,
@@ -913,79 +910,78 @@ export function StepDraft() {
         // the panel's accordion body pushes the button below the
         // viewport with no way to reach it short of collapsing the panel.
         <div className="h-full flex flex-col overflow-y-auto">
-            <div className="space-y-4 mb-6">
-                <div className="flex items-center gap-2">
-                    <FileText className="h-6 w-6 text-primary" />
-                    <h2 className="text-2xl font-bold">{t('drafting.title')}</h2>
-                </div>
-                <p className="text-muted-foreground">{t('drafting.subtitle')}</p>
-            </div>
-
-            <Card className="p-6 space-y-4 bg-muted/50 mb-6">
-                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-                    {t('drafting.homileticalProposition')}
-                </h3>
-                <div className="text-lg font-medium italic">
-                    <MarkdownRenderer content={homiletics.homileticalProposition} />
-                </div>
-
-                {homiletics.outline?.mainPoints && homiletics.outline.mainPoints.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-border/50">
-                        <h4 className="font-semibold text-sm text-muted-foreground mb-2">
-                            {t('drafting.outlinePoints')}
-                        </h4>
-                        <ul className="space-y-1.5 text-sm">
-                            {homiletics.outline.mainPoints.map((point: any, index: number) => (
-                                <li key={index} className="flex items-start gap-2">
-                                    <span className="text-primary mt-0.5">▪</span>
-                                    <span className="text-foreground/90">{point.title}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-            </Card>
-
-            {/* DOS CAMINOS, DICHOS ANTES DE ELEGIR — punto 6 del plan de
-                convergencia. Los dos parten del estudio y del bosquejo; la
-                diferencia es quién decide las ideas, y eso se le dice al
-                pastor con las mismas palabras en ambas tarjetas. El taller no
-                lleva botón: ES la pantalla de abajo, ya desplegada — un botón
-                que hiciera scroll fingiría una navegación que no existe. */}
-            <div className="mb-6 space-y-3">
+            {/* UNA SOLA COLUMNA, UN SOLO TRABAJO: elegir camino. Antes esta
+                pantalla apilaba cinco bloques que competían —encabezado,
+                proposición, selector, taller y contexto pastoral— más un panel
+                a la derecha que repetía los puntos y narraba sólo el camino
+                generado. */}
+            <div className="mx-auto w-full max-w-5xl px-1 py-2 space-y-6">
                 <div>
-                    <h3 className="font-semibold">{t('drafting.paths.heading')}</h3>
-                    <p className="text-sm text-muted-foreground">{t('drafting.paths.subheading')}</p>
+                    <h2 className="text-2xl font-bold">{t('drafting.title')}</h2>
+                    <p className="text-muted-foreground">{t('drafting.subtitle')}</p>
                 </div>
-                <div className="grid gap-3 md:grid-cols-2">
-                    <Card className="p-4 space-y-2 border-primary/40">
-                        <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-sm">{t('drafting.paths.workshopTitle')}</h4>
-                            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] leading-none text-primary">
-                                {t('drafting.paths.workshopBadge')}
-                            </span>
+
+                {/* EL MATERIAL DEL QUE PARTEN LOS DOS, en una línea de
+                    referencia y no en una tarjeta grande: acá no se decide
+                    nada sobre él, sólo se confirma que llegó. */}
+                <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        {t('drafting.homileticalProposition')}
+                    </h3>
+                    <div className="text-sm font-medium italic">
+                        <MarkdownRenderer content={homiletics.homileticalProposition} />
+                    </div>
+                    {homiletics.outline?.mainPoints && homiletics.outline.mainPoints.length > 0 && (
+                        <ol className="list-decimal pl-5 text-sm text-muted-foreground space-y-0.5">
+                            {homiletics.outline.mainPoints.map((point: any, index: number) => (
+                                <li key={index}>{point.title}</li>
+                            ))}
+                        </ol>
+                    )}
+                </div>
+
+                {/* LA ELECCIÓN, con las mismas palabras para los dos caminos.
+                    El taller no lleva botón: ES lo que sigue abajo, ya
+                    desplegado — un botón que hiciera scroll fingiría una
+                    navegación que no existe. */}
+                <div className="space-y-3">
+                    <div>
+                        <h3 className="font-semibold">{t('drafting.paths.heading')}</h3>
+                        <p className="text-sm text-muted-foreground">{t('drafting.paths.subheading')}</p>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                        <div className="rounded-lg border-2 border-primary/50 bg-primary/[0.03] p-4 space-y-1.5">
+                            <div className="flex items-center gap-2">
+                                <h4 className="font-medium text-sm">{t('drafting.paths.workshopTitle')}</h4>
+                                <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] leading-none text-primary">
+                                    {t('drafting.paths.workshopBadge')}
+                                </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{t('drafting.paths.workshopDesc')}</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">{t('drafting.paths.workshopDesc')}</p>
-                    </Card>
-                    <Card className="p-4 space-y-2">
-                        <h4 className="font-medium text-sm">{t('drafting.paths.generateTitle')}</h4>
-                        <p className="text-sm text-muted-foreground">{t('drafting.paths.generateDesc')}</p>
-                        <Button
-                            onClick={() => void handleGenerate()}
-                            disabled={loading}
-                            variant="outline"
-                            size="sm"
-                        >
-                            <Sparkles className="mr-2 h-4 w-4" />
-                            {t('drafting.generateBtn')}
-                        </Button>
-                    </Card>
+                        <div className="rounded-lg border border-border p-4 space-y-3">
+                            <div className="space-y-1.5">
+                                <h4 className="font-medium text-sm">{t('drafting.paths.generateTitle')}</h4>
+                                <p className="text-sm text-muted-foreground">{t('drafting.paths.generateDesc')}</p>
+                            </div>
+                            <Button
+                                onClick={() => void handleGenerate()}
+                                disabled={loading}
+                                variant="outline"
+                                size="sm"
+                            >
+                                <Sparkles className="mr-2 h-4 w-4" />
+                                {t('drafting.generateBtn')}
+                            </Button>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            {socraticPanel}
+                {/* EL TALLER, A ANCHO COMPLETO. Repartía tres columnas dentro
+                    de media pantalla mientras el panel informativo de la
+                    derecha ocupaba la otra mitad para repetir lo ya dicho. */}
+                {socraticPanel}
 
-            <div className="mb-6 mt-6">
                 <SermonPersonalizationPanel />
             </div>
         </div>
@@ -1032,43 +1028,14 @@ export function StepDraft() {
         </div>
     );
 
-    const rightPanel = !draft ? (
-        <Card className="p-6 h-full flex flex-col justify-start">
-            <div className="text-center space-y-4">
-                <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <FileText className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                    <h3 className="font-semibold mb-2">{t('drafting.finalDraftTitle')}</h3>
-                    <p className="text-sm text-muted-foreground">{t('drafting.finalDraftDesc')}</p>
-                </div>
-                {/* Este panel usaba las claves de HOMILÉTICA
-                    (`homiletics.afterGenerate*`), así que en Redacción prometía
-                    cosas del paso anterior y ya hechas: elegir enfoque, refinar
-                    la proposición, mejorar el bosquejo, agregar ilustraciones
-                    —que el pastor acababa de escribir en el panel de al lado—.
-                    Ninguna de las cuatro ocurre después de generar el borrador.
-                    Reusar la clave de otro paso ahorró cuatro líneas y le mintió
-                    al pastor sobre dónde está parado. Cada paso describe lo
-                    suyo. */}
-                {/* La FORMA antes que la lista: el esqueleto se arma con el
-                    bosquejo del pastor, así que anticipa la estructura y le
-                    confirma que su trabajo llegó hasta acá. */}
-                <div className="pt-4 border-t text-left">
-                    <h4 className="font-medium text-sm mb-2">{t('drafting.skeleton.title')}</h4>
-                    <DraftSkeletonPreview homiletics={homiletics} />
-                </div>
-                <div className="pt-4 border-t">
-                    <h4 className="font-medium text-sm mb-2">{t('drafting.afterGenerateTitle')}</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1 text-left">
-                        {(t('drafting.afterGenerateList', { returnObjects: true }) as string[]).map((item, i) => (
-                            <li key={i}>• {item}</li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
-        </Card>
-    ) : null;
+    // SIN PANEL DERECHO EN EL ESTADO VACÍO. Narraba el camino generado como
+    // si fuera EL camino ("este es el último paso, generaré un sermón
+    // completo"), contradiciendo al selector que recomienda el taller; y su
+    // esqueleto repetía los puntos ya listados a la izquierda, con menos
+    // información que el mapa del taller —que los muestra con su estado real—.
+    // Quitarlo le devuelve el ancho completo al taller, que es el camino
+    // recomendado y estaba aplastado en media pantalla con tres columnas
+    // adentro.
 
     return (
         <>
@@ -1078,7 +1045,7 @@ export function StepDraft() {
                 {/* ADR-031 — provide the citation manifest so [N] anchors in the
                     editor render as verifiable popovers (chunk + book + page). */}
                 <CitationManifestContext.Provider value={draft?.citationManifest}>
-                    {draft ? leftPanel : <WizardLayout leftPanel={leftPanel} rightPanel={rightPanel} />}
+                    {leftPanel}
                 </CitationManifestContext.Provider>
             </WizardStepShell>
 
