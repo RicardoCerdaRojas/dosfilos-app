@@ -312,7 +312,7 @@
     "previewDialogTitle": "Sermon Preview",
     "closePreview": "Close Preview",
     "publishing": "Publishing...",
-    "publishSermon": "Publish Sermon",
+    "publishSermon": "Publish",
     "finalDraftTitle": "The Final Draft",
     "finalDraftDesc": "This is the last step. I will generate a complete and structured sermon based on your exegesis and homiletical analysis.",
     "illustrationLabel": "Illustration",
@@ -586,11 +586,11 @@
     },
     "assemble": {
       "writingProgress": "Writing {{hechas}} of {{total}}…",
-      "build": "Build the draft",
+      "build": "Assemble draft",
       "missing": "{{count}} sections would come out EMPTY, starting with “{{first}}”. You can build anyway.",
-      "writeAndBuild": "Draft the {{count}} and build",
-      "buildPartial": "Build with what's there",
-      "rebuild": "Rebuild the draft",
+      "writeAndBuild": "Write and assemble ({{count}})",
+      "buildPartial": "Assemble as is",
+      "rebuild": "Reassemble draft",
       "upToDate": "Draft up to date"
     },
     "pointBlocks": {

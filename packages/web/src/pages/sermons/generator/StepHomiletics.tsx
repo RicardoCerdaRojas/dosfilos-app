@@ -5,6 +5,7 @@ import { WizardStepHeader } from './WizardStepHeader';
 import { useWizard } from './WizardContext';
 import { WizardLayout } from './WizardLayout';
 import { WizardStepShell } from './WizardStepShell';
+import { ToolbarIconButton } from './ToolbarIconButton';
 import { DerivedContextBanner } from './DerivedContextBanner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -366,19 +367,16 @@ export function StepHomiletics() {
     
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm" disabled={loading}>
+                            <ToolbarIconButton
+                                label={loading ? t('homiletics.regeneratingBtn') : t('homiletics.regenerateShort')}
+                                disabled={loading}
+                            >
                                 {loading ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        {t('homiletics.regeneratingBtn')}
-                                    </>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
-                                    <>
-                                        <RefreshCw className="mr-2 h-4 w-4" />
-                                        {t('homiletics.regenerateShort')}
-                                    </>
+                                    <RefreshCw className="h-4 w-4" />
                                 )}
-                            </Button>
+                            </ToolbarIconButton>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
@@ -400,13 +398,13 @@ export function StepHomiletics() {
                     </AlertDialog>
             </>}
             navigationActions={<>
+                {/* La primaria del paso conserva el texto; volver es ícono. */}
+                <ToolbarIconButton label={t('homiletics.backToExegesis')} onClick={() => setStep(1)} variant="ghost">
+                    <ArrowLeft className="h-4 w-4" />
+                </ToolbarIconButton>
                 <Button onClick={handleContinue} size="sm">
                     {t('homiletics.continueToDrafting')}
                     <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button onClick={() => setStep(1)} variant="ghost" size="sm">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    {t('homiletics.backToExegesis')}
                 </Button>
             </>}
         />

@@ -66,6 +66,7 @@ import { WizardStepHeader } from './WizardStepHeader';
 import { WizardStepShell } from './WizardStepShell';
 import { RegenerateDraftAction } from './draft/RegenerateDraftAction';
 import { StudyReadingSheet } from './draft/StudyReadingSheet';
+import { ToolbarIconButton } from './ToolbarIconButton';
 import { WorkshopDraftActions } from './draft/WorkshopDraftActions';
 
 export function StepDraft() {
@@ -718,22 +719,31 @@ export function StepDraft() {
                     )
                 }
                 navigationActions={<>
-                <Button onClick={() => setStep(2)} variant="outline" size="sm">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    {t('drafting.backToHomiletics')}
-                </Button>
+                {/* ÍCONO + TOOLTIP para lo secundario; el texto queda en la
+                    primaria. Abreviar no es ocultar: los tres son universales
+                    (volver, ver, guardar) y el nombre vive en el tooltip. */}
+                <ToolbarIconButton label={t('drafting.backToHomiletics')} onClick={() => setStep(2)}>
+                    <ArrowLeft className="h-4 w-4" />
+                </ToolbarIconButton>
+
+                <ToolbarIconButton label={t('drafting.preview')} onClick={() => setShowPreview(true)}>
+                    <Eye className="h-4 w-4" />
+                </ToolbarIconButton>
+
+                <ToolbarIconButton label={t('drafting.saveAndExit')} onClick={handleSaveAndExit}>
+                    <Save className="h-4 w-4" />
+                </ToolbarIconButton>
         
-                <Button onClick={() => setShowPreview(true)} variant="outline" size="sm">
-                    <Eye className="mr-2 h-4 w-4" />
-                    {t('drafting.preview')}
-                </Button>
-        
-                <Button onClick={handleSaveAndExit} variant="outline" size="sm">
-                    <Save className="mr-2 h-4 w-4" />
-                    {t('drafting.saveAndExit')}
-                </Button>
-        
-                <Button onClick={handlePublish} disabled={publishing || contraScan.scanning || !sermonId} size="sm">
+                <Button
+                    onClick={handlePublish}
+                    disabled={publishing || contraScan.scanning || !sermonId}
+                    size="sm"
+                    // UNA PRIMARIA POR CONTEXTO: en el taller la acción del
+                    // siguiente paso es armar el borrador; publicar espera su
+                    // turno como secundaria y recupera el peso en la pestaña
+                    // del borrador, donde sí es el paso natural.
+                    variant={activeTab === 'workshop' ? 'outline' : 'default'}
+                >
                     {/* EL BOTÓN DICE LO QUE ESTÁ PASANDO, NO LO QUE SE PIDIÓ.
                         Antes mostraba "Publicando…" también durante el
                         contra-scan, que es la etapa LENTA (un callable de 1 GB

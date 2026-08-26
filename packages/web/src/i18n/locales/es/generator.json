@@ -312,7 +312,7 @@
     "previewDialogTitle": "Vista Previa del Sermón",
     "closePreview": "Cerrar Vista Previa",
     "publishing": "Publicando...",
-    "publishSermon": "Publicar Sermón",
+    "publishSermon": "Publicar",
     "finalDraftTitle": "El Borrador Final",
     "finalDraftDesc": "Este es el último paso. Generaré un sermón completo y estructurado basado en tu exégesis y análisis homilético.",
     "illustrationLabel": "Ilustración",
@@ -586,11 +586,11 @@
     },
     "assemble": {
       "writingProgress": "Escribiendo {{hechas}} de {{total}}…",
-      "build": "Armar el borrador",
+      "build": "Armar borrador",
       "missing": "{{count}} secciones quedarían VACÍAS en el borrador, empezando por «{{first}}». Puedes armarlo igual.",
-      "writeAndBuild": "Redactar las {{count}} y armar el borrador",
-      "buildPartial": "Armar con lo que hay",
-      "rebuild": "Volver a armar el borrador",
+      "writeAndBuild": "Redactar y armar ({{count}})",
+      "buildPartial": "Armar sin redactar",
+      "rebuild": "Rearmar borrador",
       "upToDate": "Borrador al día"
     },
     "pointBlocks": {
