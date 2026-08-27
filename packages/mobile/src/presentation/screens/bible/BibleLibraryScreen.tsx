@@ -38,12 +38,11 @@ export default function BibleLibraryScreen() {
   const [selectedCategory, setSelectedCategory] = useState<BibleCategory | 'All'>('All');
   const [selectedTestament, setSelectedTestament] = useState<'Old' | 'New'>('Old');
 
-  // Sync selectedVersionId with store version only if it changes externally 
-  React.useEffect(() => {
-    if (versionId && selectedVersionId !== null && versionId !== selectedVersionId) {
-      setSelectedVersionId(versionId);
-    }
-  }, [versionId, selectedVersionId]);
+  // Sync selectedVersionId with store version only if it changes externally
+  // (render-phase adjustment — https://react.dev/learn/you-might-not-need-an-effect)
+  if (versionId && selectedVersionId !== null && versionId !== selectedVersionId) {
+    setSelectedVersionId(versionId);
+  }
 
   const handleSelectVersion = (id: string) => {
     setVersion(id);

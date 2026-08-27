@@ -1,50 +1,40 @@
-# Welcome to your Expo app 👋
+# Dos Filos Preach — app tablet
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App móvil/tablet de Dos Filos para **predicar** (módulo Púlpito) y, en una segunda
+entrega, **redactar** (módulo Redactor). El plan ejecutable vive en
+[`docs/app-mobile/pulpito-plan.md`](../../docs/app-mobile/pulpito-plan.md); las decisiones
+estructurales (M-01..M-09) y el roadmap F0–F4 están ahí.
 
-## Get started
+- **Nombre**: Dos Filos Preach
+- **Bundle id / package**: `com.dosfilos.preach` (iOS y Android)
+- **Plataformas**: iOS y Android desde F0. Soporte e-ink de primera clase (BOOX) — ver M-09.
 
-1. Install dependencies
+## Estado (F0 — cimientos)
 
-   ```bash
-   npm install
-   ```
+Fase F0 en curso. Base actual: Expo SDK 52 / React Native 0.76 (herencia del fork de
+febrero 2026). Pendiente en F0: upgrade a Expo 56, `@react-native-firebase` + App Check,
+Metro configurado para el workspace (`@dosfilos/domain` importable), tokens de tema con 5
+modos (incluido tinta electrónica) y CI job mobile.
 
-2. Start the app
+Qué quedó del fork y qué se eliminó: ver §3 del plan. Los módulos Eventos, Tutor, Study y
+Donate fueron eliminados en F0; el módulo Biblia y el patrón de auth se rescatan.
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Desarrollo
 
 ```bash
-npm run reset-project
+# desde la raíz del monorepo
+npm run mobile            # expo start
+npm run mobile:ios        # build + run iOS
+npm run mobile:android    # build + run Android
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+> **Nota**: a partir de la adopción de `@react-native-firebase` + App Check (F0) la app no
+> corre en Expo Go: se usan dev builds (EAS). Los debug tokens de App Check para
+> dispositivos internos se documentarán aquí cuando se provisionen.
 
-## Learn more
+## Estructura
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `app/` — rutas (Expo Router): `(auth)`, `(tabs)` con Inicio / Biblia / Sermones.
+- `src/domain`, `src/data`, `src/core`, `src/presentation` — capas propias del cliente.
+- `stitch_design.mobile/` — diseños de referencia (Stitch, feb 2026). Solo referencia
+  visual; `preaching_mode_(tablet)` coincide con el plan de Púlpito.

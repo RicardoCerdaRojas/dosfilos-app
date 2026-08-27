@@ -88,9 +88,12 @@ IglesiaFiel (deuda de hoisting, dominio ajeno). Este monorepo está sano y —de
 parseo bíblico compartido del #490). Duplicar tipos en repo aparte recrearía el drift que el
 #501 mató. **Costo:** Metro para workspaces (watchFolders + resolver).
 
-### M-02 — Stack canónico: Expo SDK 56 + `@react-native-firebase`
-Directiva byblos "Stack mobile canónico": Expo 56 / RN 0.85 / New Arch / NativeWind /
-TanStack Query + Zustand / Expo Router / EAS. El SDK JS de Firebase no tiene persistencia
+### M-02 — Stack canónico: Expo SDK 57 + `@react-native-firebase`
+Directiva byblos "Stack mobile canónico": Expo moderno / New Arch / NativeWind /
+TanStack Query + Zustand / Expo Router / EAS. **Ajuste 2026-08-27 (aprobado por el
+fundador durante F0)**: la directiva decía Expo 56 / RN 0.85, pero Expo 56 arrastra la
+regresión de memoria de Hermes V1 (fix en RN 0.86.2); se sube directo a **Expo 57 /
+RN 0.86**, que `expo-doctor` recomienda explícito. El SDK JS de Firebase no tiene persistencia
 offline en RN (solo memoria) — descalificante para una app cuyo momento de uso no puede
 depender del WiFi de la iglesia. El nativo da caché en disco + cola de escrituras offline
 gratis. Migrar después cuesta meses; al inicio cuesta cero (lección central de
@@ -197,7 +200,7 @@ algo probable en tablet real.
 
 | Fase | Contenido | ~PRs | Cierre |
 |---|---|---|---|
-| **F0** Cimientos | Upgrade Expo 52→56, `@react-native-firebase`, App Check (App Attest + Play Integrity + **verificación en BOOX real**), Metro workspace (`@dosfilos/domain` importable), rebrand (app.json, íconos, Lexend real — nombre/bundle id: ver §10), tokens con 5 modos (incl. e-ink), limpieza (eventos/template/dep fantasma), CI job mobile (typecheck + lint + bundle Metro). **iOS y Android desde el inicio** | 3 | Base sana en ambas plataformas, sin pantallas nuevas |
+| **F0** Cimientos | Upgrade Expo 52→57, `@react-native-firebase`, App Check (App Attest + Play Integrity + **verificación en BOOX real**), Metro workspace (`@dosfilos/domain` importable), rebrand (app.json, íconos, Lexend real — nombre/bundle id: ver §10), tokens con 5 modos (incl. e-ink), limpieza (eventos/template/dep fantasma), CI job mobile (typecheck + lint + bundle Metro). **iOS y Android desde el inicio** | 3 | Base sana en ambas plataformas, sin pantallas nuevas |
 | **F1** Púlpito mínimo | Lista real (`getSermonsListSummary`, published, agrupada por serie) → detalle → modo púlpito: markdown por secciones, tipografía ajustable, 5 modos de luz, timer, keep-awake, blackout, tap/swipe/volumen, riel de secciones, `[N]` popover + footer atribuciones. **Google + Apple Sign-In (M-08). Resaltado por frase/párrafo (tap largo).** Al cierre: **beta interna** (TestFlight internal iOS + Play internal testing Android, 2-3 usuarios) | 5-6 | Se predica un sermón real desde la tablet; beta interna corriendo |
 | **F2** Maletín + anotaciones | "Preparar para predicar" (pin offline + indicador), highlights → Firestore (web migra de localStorage), **selección fina de texto + marcas de predicador (glifos)**, canvas de tinta con Pencil/S Pen/EMR BOOX, panel Biblia offline (SQLite, parser compartido), pulido modo e-ink | 5 | Domingo sin WiFi = cero riesgo |
 | **F3** Ensayo + registro | Modo ensayo con tiempos por sección, pantalla post-predicación → `addPreachingLog()`, historial visible en web, pasadores BT/pedal | 3 | Ciclo de vida del sermón cerrado |
@@ -209,7 +212,7 @@ algo probable en tablet real.
 |---|---|---|
 | App Check en RN estorba el arranque | Alto | Prototipar primera semana de F0; debug tokens en README nuevo |
 | Play Integrity falla en la BOOX (e-ink, certificación GMS variable) | Medio | Verificar en F0 con el dispositivo real; debug token provisionado para equipos internos |
-| Upgrade Expo 52→56 rompe módulo Biblia | Medio | Es TS puro + AsyncStorage; migración JSON→SQLite (F2) reduce superficie |
+| Upgrade Expo 52→57 rompe módulo Biblia | Medio | Es TS puro + AsyncStorage; migración JSON→SQLite (F2) reduce superficie |
 | Selección fina de texto en RN más cara de lo estimado | Medio | Por eso F1 lleva tap-largo por frase/párrafo; la selección fina no bloquea el resaltado |
 | Markdown con HTML crudo (`<br/>`) | Bajo | Render propio por bloques; no depender de librerías de render HTML muertas |
 | Divergencia con Stitch de febrero | Bajo | Stitch sigue siendo referencia; `preaching_mode_(tablet)` coincide |
