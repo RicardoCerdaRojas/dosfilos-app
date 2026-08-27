@@ -3,6 +3,12 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
+      "@dosfilos/domain": [
+        "../domain/src"
+      ],
+      "@dosfilos/domain/*": [
+        "../domain/src/*"
+      ],
       "@/*": [
         "./*"
       ],

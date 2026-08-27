@@ -18,6 +18,10 @@ import '../global.css';
 
 // Initialize i18n
 import '@/core/i18n';
+
+// App Check antes de cualquier llamada al backend (M-04)
+import { initAppCheck } from '@/core/config/appCheck';
+initAppCheck().catch((err) => console.error('[appCheck] init failed:', err));
 import { useLanguageStore } from '@/presentation/state/language.store';
 import { useTranslation } from 'react-i18next';
 
