@@ -1,7 +1,8 @@
 import { User } from '@/domain/entities/user';
 import { AuthRepository } from '@/domain/repositories/auth.repository';
 import { getFirebaseAuth } from '@/data/sources/firebase.source';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser, sendPasswordResetEmail, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithCredential } from '@react-native-firebase/auth';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser, sendPasswordResetEmail, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, AppleAuthProvider, signInWithCredential } from '@react-native-firebase/auth';
+import { signOutGoogle } from '@/core/config/socialAuth';
 
 export class AuthRepositoryImpl implements AuthRepository {
     async signIn(email: string, password: string): Promise<User> {
@@ -69,9 +70,33 @@ export class AuthRepositoryImpl implements AuthRepository {
         }
     }
 
+    async signInWithApple(identityToken: string, rawNonce: string): Promise<User> {
+        try {
+            const auth = getFirebaseAuth();
+            // El nonce va en CLARO al proveedor: Firebase compara su hash con
+            // el que Apple firmó dentro del identityToken.
+            const credential = AppleAuthProvider.credential(identityToken, rawNonce);
+            const userCredential = await signInWithCredential(auth, credential);
+            const fbUser = userCredential.user;
+
+            return {
+                id: fbUser.uid,
+                email: fbUser.email || '',
+                firstName: fbUser.displayName?.split(' ')[0] || '',
+                lastName: fbUser.displayName?.split(' ').slice(1).join(' ') || '',
+                photoUrl: fbUser.photoURL || undefined,
+                role: 'viewer',
+            };
+        } catch (error) {
+            console.error('Error signing in with Apple:', error);
+            throw error;
+        }
+    }
+
     async signOut(): Promise<void> {
         const auth = getFirebaseAuth();
         await signOut(auth);
+        await signOutGoogle();
     }
 
     async getCurrentUser(): Promise<User | null> {

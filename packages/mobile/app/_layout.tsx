@@ -29,6 +29,10 @@ import '@/core/i18n';
 // App Check antes de cualquier llamada al backend (M-04)
 import { initAppCheck } from '@/core/config/appCheck';
 initAppCheck().catch((err) => console.error('[appCheck] init failed:', err));
+
+// Google Sign-In nativo (M-08) — configurar antes de que se monte el login
+import { configureGoogleSignIn } from '@/core/config/socialAuth';
+configureGoogleSignIn();
 import { useLanguageStore } from '@/presentation/state/language.store';
 import { useTranslation } from 'react-i18next';
 

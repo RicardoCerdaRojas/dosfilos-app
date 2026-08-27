@@ -1,197 +1,240 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+    ActivityIndicator,
+    Linking,
+    Platform,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
+import { useTranslation } from 'react-i18next';
+
 import { useAuthStore } from '@/presentation/state/auth.store';
 import { useUIStore } from '@/presentation/state/ui.store';
-import { useRouter } from 'expo-router';
-import * as Google from 'expo-auth-session/providers/google';
-import { makeRedirectUri } from 'expo-auth-session';
+import { getGoogleIdToken } from '@/core/config/socialAuth';
+
+/**
+ * El registro NO ocurre en la app: la política es payment-first en la web
+ * (M-08). Google y Apple son SOLO login — abren la sesión de una cuenta que
+ * ya existe.
+ */
+const WEB_REGISTER_URL = 'https://app.preach.dosfilos.com/register';
 
 export const LoginScreen = () => {
-  const router = useRouter();
-  const [resetMode, setResetMode] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [localLoading, setLocalLoading] = useState(false);
+    const [resetMode, setResetMode] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [localLoading, setLocalLoading] = useState(false);
+    const [appleAvailable, setAppleAvailable] = useState(false);
 
-  // Hook del UI Store para notificaciones
-  const { showToast } = useUIStore();
+    const { t } = useTranslation();
+    const { showToast } = useUIStore();
+    const { signIn, signInWithGoogle, signInWithApple, resetPassword } = useAuthStore();
 
-  /* 
-   * Configuración REPARADA:
-   * 1. Hardcoded URI para pasar el bloqueo 400 de Google.
-   * 2. 'token' (Implicit) Flow para evitar el error 404/Something went wrong del Proxy.
-   * 3. useProxy: true para asegurar el enrutamiento.
-   */
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: "879645593010-pps33vrrc4s1i5fbhj71q3eam7f0vvav.apps.googleusercontent.com",
-    redirectUri: "https://auth.expo.io/@ricardocerdarojas/mobile", 
-    responseType: "token", 
-    scopes: ['openid', 'profile', 'email'],
-  });
+    React.useEffect(() => {
+        if (Platform.OS !== 'ios') return;
+        AppleAuthentication.isAvailableAsync().then(setAppleAvailable);
+    }, []);
 
-  React.useEffect(() => {
-    if (request) {
-      console.log('--- CONFIGURATION RESTORED ---');
-      console.log('Target URI:', request.redirectUri);
-      console.log('Response Type:', request.responseType);
-    }
-  }, [request]);
+    const describeAuthError = (error: any): string => {
+        const code = error?.code || error?.message;
+        if (
+            code === 'auth/invalid-credential' ||
+            code === 'auth/user-not-found' ||
+            code === 'auth/wrong-password'
+        ) {
+            return t('auth:error_invalid_credentials');
+        }
+        if (code === 'auth/invalid-email') return t('auth:error_invalid_email');
+        if (code === 'auth/too-many-requests') return t('auth:error_too_many_requests');
+        return t('auth:error_generic');
+    };
 
-  const { signIn, signUp, signInWithGoogle, resetPassword, isLoading } = useAuthStore();
+    const handleLogin = async () => {
+        if (!email || !password) {
+            showToast(t('auth:enter_email_password'), 'info');
+            return;
+        }
+        try {
+            setLocalLoading(true);
+            await signIn(email, password);
+        } catch (error: any) {
+            showToast(describeAuthError(error), 'error');
+        } finally {
+            setLocalLoading(false);
+        }
+    };
 
-  React.useEffect(() => {
-    if (response?.type === 'success') {
-      console.log('¡EXITO! Regresamos de Google.');
-      console.log('Params:', response.params);
-      
-      const { access_token, id_token } = response.params;
-      const token = id_token || access_token;
-      
-      if (token) {
-        // Log para validar que tenemos credencial
-        console.log('Token capturado:', token.substring(0, 15) + '...');
-        signInWithGoogle(token);
-      }
-    } else if (response?.type === 'error') {
-      console.error('Google Auth Error:', response.error);
-      showToast('Error en autenticación con Google', 'error');
-    }
-  }, [response]);
+    const handleGoogle = async () => {
+        try {
+            setLocalLoading(true);
+            const idToken = await getGoogleIdToken();
+            if (!idToken) return; // cancelado por el usuario
+            await signInWithGoogle(idToken);
+        } catch (error: any) {
+            showToast(describeAuthError(error), 'error');
+        } finally {
+            setLocalLoading(false);
+        }
+    };
 
+    const handleApple = async () => {
+        try {
+            setLocalLoading(true);
+            // Apple firma el HASH del nonce; Firebase recibe el nonce en claro
+            // y compara. Sin esto el token es rechazado por replay.
+            const rawNonce = Crypto.randomUUID();
+            const hashedNonce = await Crypto.digestStringAsync(
+                Crypto.CryptoDigestAlgorithm.SHA256,
+                rawNonce,
+            );
+            const credential = await AppleAuthentication.signInAsync({
+                requestedScopes: [
+                    AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                    AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                ],
+                nonce: hashedNonce,
+            });
+            if (!credential.identityToken) {
+                showToast(t('auth:error_generic'), 'error');
+                return;
+            }
+            await signInWithApple(credential.identityToken, rawNonce);
+        } catch (error: any) {
+            if (error?.code === 'ERR_REQUEST_CANCELED') return;
+            showToast(describeAuthError(error), 'error');
+        } finally {
+            setLocalLoading(false);
+        }
+    };
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      showToast('Por favor ingrese email y contraseña', 'info');
-      return;
-    }
+    const handlePasswordReset = async () => {
+        if (!email) {
+            showToast(t('auth:enter_email'), 'info');
+            return;
+        }
+        try {
+            setLocalLoading(true);
+            await resetPassword(email);
+            showToast(t('auth:reset_sent'), 'success');
+            setResetMode(false);
+        } catch {
+            showToast(t('auth:reset_failed'), 'error');
+        } finally {
+            setLocalLoading(false);
+        }
+    };
 
-    try {
-      setLocalLoading(true);
-      await signIn(email, password); 
-    } catch (error: any) {
-      console.log('Login Error Object:', error); // Debugging
-      let msg = 'Error al iniciar sesión';
-      const errorCode = error.code || error.message; // Fallback to message if code is missing
+    return (
+        <View className="flex-1 justify-center items-center bg-white p-6">
+            <View className="w-full max-w-sm">
+                <Text className="text-3xl font-lexend-bold text-center mb-1 text-slate-900">
+                    Dos Filos Preach
+                </Text>
+                <Text className="text-center text-slate-500 font-lexend mb-8">
+                    {resetMode ? t('auth:reset_title') : t('auth:sign_in')}
+                </Text>
 
-      if (errorCode === 'auth/invalid-credential' || errorCode === 'auth/user-not-found' || errorCode === 'auth/wrong-password') {
-        msg = 'Credenciales inválidas. Por favor verifique su email y contraseña.';
-      } else if (errorCode === 'auth/invalid-email') {
-        msg = 'El formato del email no es válido.';
-      } else if (errorCode === 'auth/too-many-requests') {
-        msg = 'Demasiados intentos fallidos. Por favor intente más tarde.';
-      }
-      
-      showToast(msg, 'error');
-    } finally {
-      setLocalLoading(false);
-    }
-  };
+                <TextInput
+                    className="w-full bg-slate-100 border border-slate-200 rounded-lg p-4 mb-4 text-base font-lexend"
+                    placeholder={t('auth:email')}
+                    placeholderTextColor="#9CA3AF"
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    keyboardType="email-address"
+                    editable={!localLoading}
+                />
 
-  const handlePasswordReset = async () => {
-    if (!email) {
-      showToast('Por favor ingrese su email', 'info');
-      return;
-    }
+                {!resetMode && (
+                    <TextInput
+                        className="w-full bg-slate-100 border border-slate-200 rounded-lg p-4 mb-6 text-base font-lexend"
+                        placeholder={t('auth:password')}
+                        placeholderTextColor="#9CA3AF"
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry
+                        autoComplete="current-password"
+                        editable={!localLoading}
+                    />
+                )}
 
-    try {
-      setLocalLoading(true);
-      await resetPassword(email);
-      showToast('Se ha enviado un enlace de recuperación a su email', 'success');
-      setResetMode(false);
-    } catch (error: any) {
-      showToast('No se pudo enviar el email de recuperación', 'error');
-    } finally {
-      setLocalLoading(false);
-    }
-  };
+                <TouchableOpacity
+                    className="w-full bg-primary rounded-lg p-4 flex-row justify-center items-center mb-5 active:opacity-80"
+                    style={{ opacity: localLoading ? 0.7 : 1 }}
+                    onPress={resetMode ? handlePasswordReset : handleLogin}
+                    disabled={localLoading}
+                >
+                    {localLoading ? (
+                        <ActivityIndicator color="white" />
+                    ) : (
+                        <Text className="text-white font-lexend-semibold text-lg">
+                            {resetMode ? t('auth:send_reset') : t('auth:sign_in')}
+                        </Text>
+                    )}
+                </TouchableOpacity>
 
-  return (
-    <View className="flex-1 justify-center items-center bg-white p-6">
-      <View className="w-full max-w-sm">
-        <Text className="text-3xl font-bold text-center mb-2 text-gray-800">
-          DosFilos
-        </Text>
-        <Text className="text-center text-gray-500 mb-8">
-          {resetMode ? 'Recuperar Contraseña' : 'Iniciar Sesión'}
-        </Text>
-        
-        <TextInput
-          className="w-full bg-gray-100 border border-gray-300 rounded-lg p-4 mb-4 text-base"
-          placeholder="Email"
-          placeholderTextColor="#9CA3AF"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          editable={!localLoading}
-        />
+                {!resetMode && (
+                    <>
+                        <View className="flex-row items-center mb-5">
+                            <View className="flex-1 h-px bg-slate-200" />
+                            <Text className="text-slate-400 font-lexend text-xs mx-3">
+                                {t('auth:or')}
+                            </Text>
+                            <View className="flex-1 h-px bg-slate-200" />
+                        </View>
 
-        {!resetMode && (
-          <TextInput
-            className="w-full bg-gray-100 border border-gray-300 rounded-lg p-4 mb-6 text-base"
-            placeholder="Contraseña"
-            placeholderTextColor="#9CA3AF"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            editable={!localLoading}
-          />
-        )}
+                        <TouchableOpacity
+                            onPress={handleGoogle}
+                            disabled={localLoading}
+                            className="w-full bg-white border border-slate-300 rounded-lg p-4 flex-row justify-center items-center mb-3 active:opacity-80"
+                        >
+                            <Text className="text-slate-700 font-lexend-semibold text-base">
+                                {t('auth:continue_google')}
+                            </Text>
+                        </TouchableOpacity>
 
-        <TouchableOpacity
-          className={`w-full bg-blue-600 rounded-lg p-4 flex-row justify-center items-center mb-4 ${
-            localLoading ? 'opacity-70' : ''
-          }`}
-          onPress={resetMode ? handlePasswordReset : handleLogin}
-          disabled={localLoading}
-        >
-          {localLoading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white font-bold text-lg">
-              {resetMode ? 'Enviar Email de Recuperación' : 'Iniciar Sesión'}
-            </Text>
-          )}
-        </TouchableOpacity>
+                        {appleAvailable && (
+                            <AppleAuthentication.AppleAuthenticationButton
+                                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                                cornerRadius={8}
+                                style={{ width: '100%', height: 52, marginBottom: 12 }}
+                                onPress={handleApple}
+                            />
+                        )}
+                    </>
+                )}
 
-        {/* 
-          // DESACTIVADO TEMPORALMENTE
-          // Google Auth en Expo Go requiere un "Auth Proxy" complejo que está fallando.
-          // Funciona mejor en "Production Builds" (APK/IPA).
-          // Lo reactivaremos para la build final.
-          !resetMode && (
-            <TouchableOpacity
-              className="w-full bg-white border border-gray-300 rounded-lg p-4 flex-row justify-center items-center mb-4"
-              onPress={() => promptAsync({ useProxy: true })}
-              disabled={!request || localLoading}
-            >
-              <Text className="text-gray-700 font-bold text-lg">
-                Conectar con Google (Próximamente)
-              </Text>
-            </TouchableOpacity>
-          ) 
-        */}
+                <TouchableOpacity
+                    onPress={() => setResetMode(!resetMode)}
+                    className="self-center mt-2"
+                    disabled={localLoading}
+                >
+                    <Text className="text-primary font-lexend">
+                        {resetMode ? t('auth:back_to_sign_in') : t('auth:forgot_password')}
+                    </Text>
+                </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => setResetMode(!resetMode)}
-          className="self-center"
-          disabled={localLoading}
-        >
-          <Text className="text-blue-600">
-            {resetMode ? 'Volver a iniciar sesión' : '¿Olvidaste tu contraseña?'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-            onPress={() => router.push('/(auth)/sign-up')}
-            className="self-center mt-6"
-            disabled={localLoading}
-        >
-            <Text className="text-gray-500">
-                ¿No tienes cuenta? <Text className="text-blue-600 font-bold">Regístrate</Text>
-            </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+                {!resetMode && (
+                    <TouchableOpacity
+                        onPress={() => Linking.openURL(WEB_REGISTER_URL)}
+                        className="self-center mt-6"
+                        disabled={localLoading}
+                    >
+                        <Text className="text-slate-500 font-lexend text-center">
+                            {t('auth:no_account')}{' '}
+                            <Text className="text-primary font-lexend-semibold">
+                                {t('auth:register_on_web')}
+                            </Text>
+                        </Text>
+                    </TouchableOpacity>
+                )}
+            </View>
+        </View>
+    );
 };

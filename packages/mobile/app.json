@@ -4,14 +4,15 @@
     "slug": "dos-filos-preach",
     "owner": "ricardocerdarojas",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "dosfilospreach",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.dosfilos.preach",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.dosfilos.preach",
@@ -45,6 +46,8 @@
           }
         }
       ],
+      "@react-native-google-signin/google-signin",
+      "expo-apple-authentication",
       "expo-router",
       [
         "expo-splash-screen",
