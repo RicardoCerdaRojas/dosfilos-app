@@ -69,7 +69,7 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
     celda('gender', 'gender', tag.gender);
 
     return (
-        <div className="w-[22rem] max-h-[75vh] overflow-y-auto text-left">
+        <div className="w-[22rem] max-w-[calc(100vw-2rem)] max-h-[75vh] overflow-y-auto overflow-x-hidden text-left">
             {/* 1 · IDENTIDAD — fija al desplazarse. */}
             <header className="sticky top-0 z-10 -mx-1 flex items-start justify-between gap-3 border-b border-border bg-card px-4 py-3">
                 <div className="min-w-0">
@@ -93,10 +93,18 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
                 </div>
             </header>
 
-            <div className="space-y-3 px-4 py-3">
+            <div className="space-y-3 px-4 py-3 break-words">
                 {/* 2 · QUÉ SIGNIFICA AQUÍ — lo que se viene a buscar. */}
                 {insight && (
                     <p className="text-base font-medium leading-snug text-primary">{insight.translation}</p>
+                )}
+
+                {/* EL RANGO VA PEGADO AL LEMA, no en el bloque de contexto: el
+                    lema ABRE la pregunta ("¿qué puede significar esta raíz?")
+                    y el rango la RESPONDE. Separarlos obligaba a bajar y
+                    volver para completar una sola idea. */}
+                {insight?.semanticRange && (
+                    <Bloque label={t('analyzer.fields.semanticRange')}>{insight.semanticRange}</Bloque>
                 )}
 
                 {/* 3 · POR QUÉ ASÍ. */}
@@ -121,12 +129,21 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
                 )}
 
                 {/* 4 · LA FORMA — mismas celdas que la tarjeta. */}
+                {/* CELDAS QUE SE ADAPTAN, no una rejilla rígida: con `grid-cols-3`
+                    un valor largo ("Imperativo", "Subjuntivo") desbordaba su
+                    columna y el popover ganaba scroll HORIZONTAL — el peor en
+                    un panel de lectura, porque esconde texto sin avisar.
+                    `auto-fit` + `minmax` reparte las que quepan, y `min-w-0`
+                    deja que el contenido se ajuste en vez de empujar. */}
                 {celdas.length > 0 && (
-                    <div className="grid grid-cols-3 gap-1">
+                    <div
+                        className="grid gap-1"
+                        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(5.5rem, 1fr))' }}
+                    >
                         {celdas.map((c) => (
-                            <div key={c.label} className="rounded border border-border/60 px-1.5 py-1">
+                            <div key={c.label} className="min-w-0 rounded border border-border/60 px-1.5 py-1">
                                 <div className="text-[9px] uppercase tracking-wide text-muted-foreground">{c.label}</div>
-                                <div className="text-xs leading-tight">{c.value}</div>
+                                <div className="text-xs leading-tight break-words">{c.value}</div>
                             </div>
                         ))}
                     </div>
@@ -146,10 +163,6 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
                 )}
 
                 {/* 5 · CONTEXTO. */}
-                {insight?.semanticRange && (
-                    <Bloque label={t('analyzer.fields.semanticRange')}>{insight.semanticRange}</Bloque>
-                )}
-
                 {relations && relations.length > 0 && (
                     <Bloque label={t('analyzer.fields.relations')}>
                         {relations.map((r, i) => (

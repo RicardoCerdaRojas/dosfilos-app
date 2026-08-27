@@ -170,13 +170,16 @@ export function GreekWordCard({
             )}
 
             {celdas.length > 0 && (
-                <div className="grid grid-cols-2 gap-1.5">
+                <div
+                    className="grid gap-1.5"
+                    style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(6rem, 1fr))' }}
+                >
                     {celdas.map((c) => (
-                        <div key={c.labelKey} className="rounded border border-border/60 px-2 py-1.5">
+                        <div key={c.labelKey} className="min-w-0 rounded border border-border/60 px-2 py-1.5">
                             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
                                 {t(c.labelKey)}
                             </div>
-                            <div className="text-sm">{c.value}</div>
+                            <div className="text-sm break-words">{c.value}</div>
                         </div>
                     ))}
                 </div>
