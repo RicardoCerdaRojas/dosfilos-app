@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
-import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai';
+import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory, type Tool } from '@google/generative-ai';
 import { GeminiLlmClient } from './GeminiLlmClient';
 import { recordLlmUsage } from './llmUsageRecorder';
 import { LLM_PRICING } from './llmCost';
@@ -179,6 +179,18 @@ const MAX_OUTPUT_TOKENS_CAP = 65_536;
 const DEFAULT_MAX_CALLS_PER_HOUR = 120;
 const WINDOW_MS = 3_600_000;
 
+/**
+ * La herramienta `fileSearch` del tutor de griego.
+ *
+ * Los tipos del SDK `@google/generative-ai@0.21` declaran `Tool` como la unión
+ * de tres herramientas y `fileSearch` no está entre ellas, aunque la API sí la
+ * acepta. Se declara acá la forma que la API espera para no perder el chequeo
+ * de tipos sobre el objeto que se le manda.
+ */
+interface FileSearchTool {
+    fileSearch: { fileSearchStoreNames: string[] };
+}
+
 export const runLlmPrompt = onCall(
     // 120 s alcanzaban mientras el proxy servía respuestas cortas. El compositor
     // académico pide 65.536 tokens de salida en `gemini-2.5-pro`: un paper
@@ -241,14 +253,18 @@ export const runLlmPrompt = onCall(
         if (storeId) {
             try {
                 const genAI = new GoogleGenerativeAI(apiKey);
+                // EL CONTRATO SE DECLARA, NO SE SILENCIA. Acá había un
+                // `@ts-ignore`, que apaga TODOS los errores de su línea —
+                // incluido un typo en `fileSearchStoreNames`, que el modelo
+                // ignoraría en silencio dejando al tutor sin su corpus. Con el
+                // tipo declarado, la forma se sigue verificando; el cast queda
+                // acotado al único punto donde el SDK 0.21 se queda corto.
+                const fileSearchTool: FileSearchTool = {
+                    fileSearch: { fileSearchStoreNames: [storeId] },
+                };
                 const toolModel = genAI.getGenerativeModel({
                     model,
-                    tools: [
-                        {
-                            // @ts-ignore - los tipos del SDK aún no cubren fileSearch
-                            fileSearch: { fileSearchStoreNames: [storeId] },
-                        },
-                    ],
+                    tools: [fileSearchTool as unknown as Tool],
                     // NOTA: `responseMimeType: application/json` NO es compatible
                     // con tools — el llamador limpia el JSON del texto.
                 });
