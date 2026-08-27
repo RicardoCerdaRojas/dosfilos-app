@@ -1,7 +1,7 @@
 import { Sermon } from '@/domain/models/sermon.model';
 import { SermonRepository } from '@/domain/repositories/sermon.repository';
 import { getFirebaseDb } from '../sources/firebase.source';
-import { collection, getDocs, query, orderBy, limit as firestoreLimit, doc, getDoc, startAfter } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit as firestoreLimit, doc, getDoc, startAfter } from '@react-native-firebase/firestore';
 
 export class SermonRepositoryImpl implements SermonRepository {
     private get collection() {

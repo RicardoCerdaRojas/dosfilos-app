@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "194439024220",
+    "project_id": "dosfilosapp",
+    "storage_bucket": "dosfilosapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:194439024220:android:d8b1b684ea72a57fbae099",
+        "android_client_info": {
+          "package_name": "com.dosfilos.preach"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "194439024220-2285ib54j3cqju2ostfh89h490bihu7e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBuK0CTmSfl4KkENVIO3hHvVD1xb4hBIeM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "194439024220-2285ib54j3cqju2ostfh89h490bihu7e.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "194439024220-dim4gco9uvhl887p3174m6odccjaeb5p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.dosfilos.preach"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

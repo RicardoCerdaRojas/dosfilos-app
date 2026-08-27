@@ -1,7 +1,7 @@
 import { User } from '@/domain/entities/user';
 import { AuthRepository } from '@/domain/repositories/auth.repository';
 import { getFirebaseAuth } from '@/data/sources/firebase.source';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser, sendPasswordResetEmail, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser, sendPasswordResetEmail, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithCredential } from '@react-native-firebase/auth';
 
 export class AuthRepositoryImpl implements AuthRepository {
     async signIn(email: string, password: string): Promise<User> {
