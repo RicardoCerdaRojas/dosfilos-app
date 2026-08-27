@@ -6122,6 +6122,11 @@
   dependencies:
     react-native-url-polyfill "4.0.0"
 
+"@react-native-firebase/functions@26.3.2":
+  version "26.3.2"
+  resolved "https://registry.yarnpkg.com/@react-native-firebase/functions/-/functions-26.3.2.tgz#8df2a7a0760cedfa18784af22809523d96534b46"
+  integrity sha512-nNWYUaiUuDkyyy/Ng4VxeJABAlcM8lTxJStgo765Rh3JujwhG6FyDWKV67vw2XV7lbfwWvdAcOTUd1rB4PWwnQ==
+
 "@react-native-masked-view/masked-view@^0.3.2":
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/@react-native-masked-view/masked-view/-/masked-view-0.3.2.tgz#7064533a573e3539ec912f59c1f457371bf49dd9"
@@ -7490,6 +7495,13 @@
   version "22.19.17"
   resolved "https://registry.npmjs.org/@types/node/-/node-22.19.17.tgz"
   integrity sha512-wGdMcf+vPYM6jikpS/qhg6WiqSV/OhG+jeeHT/KlVqxYfD40iYJf9/AE1uQxVWFvU7MipKRkRv8NSHiCGgPr8Q==
+  dependencies:
+    undici-types "~6.21.0"
+
+"@types/node@^22.10.0":
+  version "22.20.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.20.1.tgz#84e7cdf63cdaa20c134aa317ccc901aa21e16f0e"
+  integrity sha512-EANqOCF9QFyra+4pfxUcX9STKJpCLjMbObVzljIJomAWSnuSIEAvyzEU53GaajbXJEgdh0iEcPL+DGvpUd4k1Q==
   dependencies:
     undici-types "~6.21.0"
 
@@ -11457,6 +11469,11 @@ expo-auth-session@~57.0.8:
     expo-linking "~57.0.8"
     expo-web-browser "~57.0.2"
     invariant "^2.2.4"
+
+expo-brightness@~57.0.1:
+  version "57.0.1"
+  resolved "https://registry.yarnpkg.com/expo-brightness/-/expo-brightness-57.0.1.tgz#a1ba581948d18b328010929786690cef4fe591f8"
+  integrity sha512-ISqKOPJYIM7GLT3qS918owWB2dE5JxpylWhGqbyau/YnMpbgx/H8nr/B/0wvB14HPTNFD+YDlxt8M7mYzOOiyg==
 
 expo-build-properties@~57.0.15:
   version "57.0.15"

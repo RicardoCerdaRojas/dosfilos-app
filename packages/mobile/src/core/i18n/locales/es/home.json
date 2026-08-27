@@ -9,9 +9,10 @@
     "start_study": "Iniciar Estudio",
     "open_bible": "Abrir Biblia",
     "new_sermon": "Nuevo Sermón",
-    "recent_sermons": "Sermones Recientes",
-    "view_all": "Ver Todo",
+    "recent_sermons": "Sermones recientes",
+    "view_all": "Ver todos",
     "edited_ago": "Editado hace {{time}}",
     "yesterday": "Ayer",
-    "days_ago": "Hace {{count}} días"
+    "days_ago": "Hace {{count}} días",
+    "go_preach": "Predicar"
 }

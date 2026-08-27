@@ -13,5 +13,10 @@
     "prepared_percent": "{{percent}}% Preparado",
     "resume_preparation": "Continuar Preparación",
     "error_loading": "Error al cargar el sermón",
-    "view_all": "Ver todos"
+    "view_all": "Ver todos",
+    "no_series": "Sin serie",
+    "error_loading_list": "No se pudo cargar la lista de sermones. Revisa tu conexión.",
+    "empty_published": "Aún no tienes sermones publicados. Publica desde la web y aparecerán aquí.",
+    "no_content": "Este sermón no tiene contenido todavía.",
+    "enter_preach_mode": "Entrar al púlpito"
 }
