@@ -2,6 +2,13 @@ import { DarkTheme as navigationDarkTheme, DefaultTheme as navigationDefaultThem
 import { LogBox, useColorScheme as useDeviceColorScheme } from 'react-native';
 import { SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import {
+  Lexend_400Regular,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+  Lexend_700Bold,
+} from '@expo-google-fonts/lexend';
 import { useEffect, useMemo } from 'react';
 import { useColorScheme } from 'nativewind';
 import 'react-native-reanimated';
@@ -67,6 +74,12 @@ function RootLayoutNav() {
   const { language } = useLanguageStore();
   const { i18n } = useTranslation();
   const { user, isLoading } = useAuthStore();
+  const [fontsLoaded] = useFonts({
+    Lexend: Lexend_400Regular,
+    'Lexend-Medium': Lexend_500Medium,
+    'Lexend-SemiBold': Lexend_600SemiBold,
+    'Lexend-Bold': Lexend_700Bold,
+  });
   const segments = useSegments();
   const router = useRouter();
 
@@ -88,10 +101,10 @@ function RootLayoutNav() {
   }, [isDark]);
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [isLoading]);
+  }, [isLoading, fontsLoaded]);
 
   useEffect(() => {
     if (isLoading) return;

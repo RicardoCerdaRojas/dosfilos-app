@@ -88,6 +88,39 @@ jobs:
       - name: Secretos declarados por function
         run: ./scripts/check-functions-secrets.sh
 
+  mobile:
+    name: Mobile (typecheck + lint + bundle)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --ignore-engines
+
+      - name: Type check
+        working-directory: packages/mobile
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Lint
+        working-directory: packages/mobile
+        run: npx expo lint
+
+      # El bundle de Metro atrapa lo que tsc no ve: imports rotos en runtime,
+      # assets faltantes, config de Metro inválida. No necesita SDKs nativos.
+      - name: Metro bundle (android)
+        working-directory: packages/mobile
+        run: npx expo export --platform android --output-dir /tmp/expo-export
+        env:
+          CI: 'true'
+
   test:
     name: Run Tests
     runs-on: ubuntu-latest
