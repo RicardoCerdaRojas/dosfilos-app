@@ -2,6 +2,7 @@ import { CitationManifest, ExegeticalStudy, HomileticalAnalysis, RAGSource, Serm
 import type { SermonPersonalization } from './SermonPersonalization';
 import type { FidelityReport } from './FidelityReport';
 import type { ContraScanReport } from './ContraScanReport';
+import { buildSermonAuthorshipSnapshot } from '../drafting/sermonAuthorship';
 import { aggregateRagSourcesFlat } from '../services/aggregateRagSources';
 
 export interface PreachingLog {
@@ -212,6 +213,24 @@ export interface Sermon {
     studyDepthSnapshot?: import('./StudyDepthAssessment').StudyDepthSnapshot;
 
     /**
+     * ADR-037 — cómo se armó este sermón: cuántas ideas originó el pastor,
+     * cuántas eligió, cuántas reescribió.
+     *
+     * ES UN SNAPSHOT Y NO UNA LECTURA EN VIVO POR UNA RAZÓN DURA: la copia
+     * publicada NO lleva `wizardProgress`, donde viven las decisiones. Sin
+     * grabarlo al publicar, toda pantalla que describiera la autoría de un
+     * sermón publicado diría "sin medir" para TODOS — incluido el que se armó
+     * entero en el taller.
+     *
+     * AUSENTE EN TODO SERMÓN ANTERIOR AL TALLER, y ausente es `sin-medir`, que
+     * NO es lo mismo que medido en cero. Un sermón legacy no tiene decisiones
+     * registradas porque el registro no existía, no porque el pastor no aportara
+     * ideas: tratarlo como el estado más bajo le diría a un pastor con noventa
+     * sermones propios que ninguna idea es suya.
+     */
+    authorshipSnapshot?: import('../drafting/sermonAuthorship').SermonAuthorshipSnapshot;
+
+    /**
      * Phase 3 PR 1 (ADR-029) — Claim/source fidelity pass result. Written by
      * `RunFidelityPassUseCase` after a Gemini Flash (+ optional Sonnet
      * escalation) evaluator scores every `[N]` marker. Read by the
@@ -306,6 +325,7 @@ export class SermonEntity implements Sermon {
         public versionOf?: string,
         public versionLabel?: string,
         public tutorSessionId?: string,
+        public authorshipSnapshot?: Sermon['authorshipSnapshot'],
         public hasContent?: boolean,
         /**
          * Skips the "content required" rule. Set ONLY when reconstructing a
@@ -379,6 +399,7 @@ export class SermonEntity implements Sermon {
             data.versionOf,
             data.versionLabel,
             data.tutorSessionId,
+            data.authorshipSnapshot,
             data.hasContent,
             skipContentValidation
         );
@@ -430,7 +451,8 @@ export class SermonEntity implements Sermon {
             data.contraScanReport ?? this.contraScanReport,
             d.versionOf ?? this.versionOf,
             d.versionLabel ?? this.versionLabel,
-            d.tutorSessionId ?? this.tutorSessionId
+            d.tutorSessionId ?? this.tutorSessionId,
+            d.authorshipSnapshot ?? this.authorshipSnapshot
         );
     }
 
@@ -469,7 +491,8 @@ export class SermonEntity implements Sermon {
             this.contraScanReport,
             this.versionOf,
             this.versionLabel,
-            this.tutorSessionId
+            this.tutorSessionId,
+            this.authorshipSnapshot
         );
     }
 
@@ -526,7 +549,14 @@ export class SermonEntity implements Sermon {
             this.contraScanReport,
             this.versionOf,
             this.versionLabel,
-            this.tutorSessionId
+            this.tutorSessionId,
+            // SE CAPTURA ACÁ, no se arrastra. Las decisiones viven en
+            // `wizardProgress`, que la copia publicada NO lleva: si no se
+            // graban en este preciso momento, se pierden y el sermón publicado
+            // quedaría descrito como "sin medir" aunque se armara entero en el
+            // taller. Un sermón sin decisiones devuelve `undefined` — no se
+            // graba una medición en cero.
+            buildSermonAuthorshipSnapshot(this.wizardProgress?.sectionElements)
         );
     }
 
@@ -592,7 +622,8 @@ export class SermonEntity implements Sermon {
             this.contraScanReport,
             this.versionOf,
             this.versionLabel,
-            this.tutorSessionId
+            this.tutorSessionId,
+            this.authorshipSnapshot
         );
     }
 
@@ -627,7 +658,8 @@ export class SermonEntity implements Sermon {
             this.contraScanReport,
             this.versionOf,
             this.versionLabel,
-            this.tutorSessionId
+            this.tutorSessionId,
+            this.authorshipSnapshot
         );
     }
 
@@ -662,7 +694,8 @@ export class SermonEntity implements Sermon {
             this.contraScanReport,
             this.versionOf,
             this.versionLabel,
-            this.tutorSessionId
+            this.tutorSessionId,
+            this.authorshipSnapshot
         );
     }
 

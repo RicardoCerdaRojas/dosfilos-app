@@ -318,5 +318,15 @@
     "tutor": "Tutor",
     "thinking": "Thinking…",
     "fullSession": "Open full session"
+  },
+  "authorship": {
+    "title": "How this sermon came together",
+    "shape": {
+      "propia": "The ideas in this sermon are yours.",
+      "mixta": "You built it with your own ideas and others you picked from the suggestions.",
+      "seleccionada": "This sermon came together by picking from suggestions."
+    },
+    "tally": "{{ideas}} ideas across {{secciones}} sections — {{propias}} started with you.",
+    "trajectory": "At the start you pick more; with practice that shifts toward your own ideas."
   }
 }

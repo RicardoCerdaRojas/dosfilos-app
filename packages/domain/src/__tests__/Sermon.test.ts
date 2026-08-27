@@ -221,4 +221,57 @@ describe('SermonEntity', () => {
             expect(edited.content).toBe('Cuerpo retocado');
         });
     });
+
+    describe('authorshipSnapshot — la ausencia de dato no es evidencia de cero', () => {
+        const conDecisiones = (elements: any) =>
+            SermonEntity.create({
+                userId: 'user123',
+                title: 'Sermón del taller',
+                content: 'Cuerpo del sermón',
+                wizardProgress: { sectionElements: elements } as any,
+            });
+
+        it('publicar CAPTURA el snapshot — la copia no lleva wizardProgress', () => {
+            // El eslabón que rompe todo si falta: las decisiones viven en
+            // `wizardProgress`, que la copia publicada NO copia. Sin capturar
+            // acá, un sermón armado entero en el taller se vería "sin medir".
+            const sermon = conDecisiones({
+                introduction: [
+                    { id: '1', kind: 'elemento', text: 'a', provenance: 'pastor' },
+                    { id: '2', kind: 'elemento', text: 'b', provenance: 'elegido' },
+                ],
+            });
+
+            const copy = sermon.publishAsCopy();
+
+            expect(copy.wizardProgress).toBeUndefined();
+            expect(copy.authorshipSnapshot?.shape).toBe('mixta');
+            expect(copy.authorshipSnapshot?.pastor).toBe(1);
+            expect(copy.authorshipSnapshot?.elegido).toBe(1);
+        });
+
+        it('un sermón anterior al taller se publica SIN snapshot, no con ceros', () => {
+            // Grabar ceros convertiría "no se midió" en "se midió y dio cero",
+            // y la pantalla le diría a un pastor con historia que nada es suyo.
+            const legacy = SermonEntity.create({
+                userId: 'user123',
+                title: 'Sermón de 2019',
+                content: 'Predicado antes de que existiera el taller',
+            });
+
+            expect(legacy.publishAsCopy().authorshipSnapshot).toBeUndefined();
+        });
+
+        it('los cambios posteriores no pisan el snapshot grabado', () => {
+            const copy = conDecisiones({
+                a: [{ id: '1', kind: 'elemento', text: 'a', provenance: 'pastor' }],
+            }).publishAsCopy();
+
+            const renombrado = copy.update({ title: 'Título nuevo del sermón' });
+            const archivado = copy.archive();
+
+            expect(renombrado.authorshipSnapshot?.shape).toBe('propia');
+            expect(archivado.authorshipSnapshot?.shape).toBe('propia');
+        });
+    });
 });

@@ -319,5 +319,15 @@
     "tutor": "Tutor",
     "thinking": "Pensando…",
     "fullSession": "Ir a la sesión completa"
+  },
+  "authorship": {
+    "title": "Cómo se armó este sermón",
+    "shape": {
+      "propia": "Las ideas de este sermón son tuyas.",
+      "mixta": "Lo armaste con ideas tuyas y otras que elegiste entre las propuestas.",
+      "seleccionada": "Este sermón se armó eligiendo entre propuestas."
+    },
+    "tally": "{{ideas}} ideas en {{secciones}} secciones — {{propias}} nacieron de ti.",
+    "trajectory": "Al principio se elige más; con la práctica eso va cambiando hacia tus propias ideas."
   }
 }
