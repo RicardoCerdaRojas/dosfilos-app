@@ -49,7 +49,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "test:root": "vitest run",
-    "postinstall": "node scripts/dedupe-nested-react.js"
+    "postinstall": "node scripts/dedupe-nested-react.js && node scripts/dedupe-nested-firebase.js"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
