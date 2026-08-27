@@ -80,6 +80,37 @@ export interface PlainBlock {
     text: string;
 }
 
+/** Trozo de un párrafo: prosa o un marcador de cita `[N]` (o `[1, 3]`). */
+export type InlineToken =
+    | { kind: 'text'; text: string }
+    | { kind: 'citation'; text: string; ordinals: number[] };
+
+// MISMA regla que packages/web/src/lib/citationMarkers.tsx: el primer
+// carácter dentro del corchete debe ser dígito, para no chocar con las
+// referencias bíblicas ni con corchetes de prosa.
+const CITATION_MARKER_RE = /\[(\d+(?:\s*,\s*\d+)*)\](?!\()/g;
+
+/** Parte un párrafo en prosa + marcadores de cita, preservando el orden. */
+export function tokenizeCitations(paragraph: string): InlineToken[] {
+    const tokens: InlineToken[] = [];
+    let last = 0;
+    for (const match of paragraph.matchAll(CITATION_MARKER_RE)) {
+        const start = match.index ?? 0;
+        if (start > last) tokens.push({ kind: 'text', text: paragraph.slice(last, start) });
+        tokens.push({
+            kind: 'citation',
+            text: match[0],
+            ordinals: match[1]
+                .split(',')
+                .map((s) => Number(s.trim()))
+                .filter((n) => Number.isInteger(n) && n > 0),
+        });
+        last = start + match[0].length;
+    }
+    if (last < paragraph.length) tokens.push({ kind: 'text', text: paragraph.slice(last) });
+    return tokens;
+}
+
 /**
  * Normaliza un cuerpo markdown a bloques renderizables en texto plano (F1; el
  * render rico llega con el modo púlpito):

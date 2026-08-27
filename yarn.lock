@@ -11470,6 +11470,11 @@ expo-auth-session@~57.0.8:
     expo-web-browser "~57.0.2"
     invariant "^2.2.4"
 
+expo-brightness@~57.0.1:
+  version "57.0.1"
+  resolved "https://registry.yarnpkg.com/expo-brightness/-/expo-brightness-57.0.1.tgz#a1ba581948d18b328010929786690cef4fe591f8"
+  integrity sha512-ISqKOPJYIM7GLT3qS918owWB2dE5JxpylWhGqbyau/YnMpbgx/H8nr/B/0wvB14HPTNFD+YDlxt8M7mYzOOiyg==
+
 expo-build-properties@~57.0.15:
   version "57.0.15"
   resolved "https://registry.yarnpkg.com/expo-build-properties/-/expo-build-properties-57.0.15.tgz#f982f8ea4a27385f59325bc1cdd2577626c650e4"

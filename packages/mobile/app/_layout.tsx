@@ -139,6 +139,10 @@ function RootLayoutNav() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="sermon/[id]" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="preach/[id]"
+            options={{ headerShown: false, animation: 'fade', gestureEnabled: false }}
+          />
           <Stack.Screen name="+not-found" />
         </Stack>
         <ToastNotification />

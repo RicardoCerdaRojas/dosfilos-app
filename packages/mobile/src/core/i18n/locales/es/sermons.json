@@ -18,5 +18,5 @@
     "error_loading_list": "No se pudo cargar la lista de sermones. Revisa tu conexión.",
     "empty_published": "Aún no tienes sermones publicados. Publica desde la web y aparecerán aquí.",
     "no_content": "Este sermón no tiene contenido todavía.",
-    "preach_mode_soon": "Modo púlpito — próximamente"
+    "enter_preach_mode": "Entrar al púlpito"
 }

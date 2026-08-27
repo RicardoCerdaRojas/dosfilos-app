@@ -14,9 +14,26 @@ config.resolver.extraNodeModules = {
   "@dosfilos/domain": path.join(workspaceRoot, "packages/domain/src"),
 };
 
-// El SDK JS de Firebase (dep transitoria hasta @react-native-firebase, F0 PR-2)
-// no resuelve su build de React Native cuando Metro usa package exports:
-// "Component auth has not been registered yet" al arrancar.
+// Herencia del SDK JS de Firebase: package exports queda apagado (ver historia
+// en F0; el SDK nativo tampoco lo necesita).
 config.resolver.unstable_enablePackageExports = false;
+
+// `@dosfilos/domain` es TypeScript de fuente y algunos de sus imports internos
+// llevan extensión `.js` (estilo NodeNext, válido para tsc y para el bundler de
+// web). Metro los busca literalmente y no encuentra el archivo. Se resuelve
+// reintentando sin la extensión SOLO para rutas relativas dentro de domain.
+const domainSrc = path.join(workspaceRoot, "packages/domain/src");
+const defaultResolve = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  const fromDomain = context.originModulePath?.startsWith(domainSrc);
+  if (fromDomain && moduleName.startsWith(".") && moduleName.endsWith(".js")) {
+    return context.resolveRequest(
+      context,
+      moduleName.slice(0, -".js".length),
+      platform,
+    );
+  }
+  return (defaultResolve ?? context.resolveRequest)(context, moduleName, platform);
+};
 
 module.exports = withNativeWind(config, { input: "./global.css" });

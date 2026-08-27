@@ -113,17 +113,21 @@ export default function SermonDetailScreen() {
                 )}
             </ScrollView>
 
-            {/* Modo púlpito llega en el siguiente PR de F1 */}
             <View
                 className="absolute left-0 right-0 items-center"
                 style={{ bottom: insets.bottom + 16 }}
             >
-                <View className="bg-slate-300 dark:bg-slate-700 px-8 py-3.5 rounded-full flex-row items-center opacity-70">
+                <TouchableOpacity
+                    onPress={() => router.push(`/preach/${sermon.id}`)}
+                    disabled={sections.length === 0}
+                    className="bg-primary px-8 py-3.5 rounded-full flex-row items-center active:opacity-80"
+                    style={{ opacity: sections.length === 0 ? 0.4 : 1 }}
+                >
                     <MaterialIcons name="record-voice-over" size={20} color="#ffffff" />
                     <Text className="text-white font-lexend-semibold ml-2">
-                        {t('sermons:preach_mode_soon')}
+                        {t('sermons:enter_preach_mode')}
                     </Text>
-                </View>
+                </TouchableOpacity>
             </View>
         </View>
     );

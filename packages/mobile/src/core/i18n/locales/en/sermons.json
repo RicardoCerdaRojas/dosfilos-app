@@ -18,5 +18,5 @@
     "error_loading_list": "Couldn't load your sermons. Check your connection.",
     "empty_published": "No published sermons yet. Publish from the web and they will show up here.",
     "no_content": "This sermon doesn't have content yet.",
-    "preach_mode_soon": "Pulpit mode — coming soon"
+    "enter_preach_mode": "Enter pulpit"
 }
