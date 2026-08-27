@@ -31,3 +31,27 @@ describe('rateLimitDocId', () => {
         expect(rateLimitDocId('b', 'x'.repeat(200)).length).toBeLessThanOrEqual(83);
     });
 });
+
+describe('la unificación no puede perder los contadores existentes', () => {
+    it('produce el MISMO id de documento que la copia local de captureLead', () => {
+        // `captureLead` tenía su propia copia del limitador que escribía en
+        // `lead_magnet__<ip>`. Al pasar a la util compartida, si el id cambiara
+        // los contadores vivos se reiniciarían y cada bot recuperaría su cuota
+        // el día del despliegue — la protección se apagaría sola, en silencio.
+        const ip = '203.0.113.7';
+        const idViejo = `lead_magnet__${ip.replace(/[^a-zA-Z0-9.:_-]/g, '_').slice(0, 80)}`;
+
+        expect(rateLimitDocId('lead_magnet', ip)).toBe(idViejo);
+    });
+
+    it('el primer salto de x-forwarded-for es el que identifica al cliente', () => {
+        // La cadena llega como "cliente, proxy1, proxy2". Limitar por la cadena
+        // entera daría una identidad distinta por cada ruta de proxies, y el
+        // mismo bot pasaría el tope tantas veces como caminos encuentre.
+        const cadena = '203.0.113.7, 70.41.3.18, 150.172.238.178';
+        const primerSalto = cadena.split(',')[0]!.trim();
+
+        expect(rateLimitDocId('lead_magnet', primerSalto)).toBe('lead_magnet__203.0.113.7');
+        expect(rateLimitDocId('lead_magnet', primerSalto)).not.toBe(rateLimitDocId('lead_magnet', cadena));
+    });
+});

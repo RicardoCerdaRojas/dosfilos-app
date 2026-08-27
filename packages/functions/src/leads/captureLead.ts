@@ -4,6 +4,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { sendDeliveryEmail } from './leadMagnetMailer';
 import { dispatchToMetaCapi, hashEmail } from '../analytics/metaCapi';
 import { APP_URL } from '../config/urls';
+import { consumeRateLimitToken } from '../shared/rateLimit';
 
 interface CaptureLeadRequest {
     email: string;
@@ -110,7 +111,17 @@ export const captureLead = onCall<CaptureLeadRequest, Promise<CaptureLeadRespons
         const callerIp = (request.rawRequest?.headers['x-forwarded-for'] as string | undefined) ?? null;
         if (callerIp) {
             try {
-                const allowed = await consumeRateLimitToken(db, callerIp);
+                // El encabezado puede traer la CADENA de proxies; el primer
+                // salto es el cliente original. Extraerlo acá y no dentro del
+                // limitador es lo que permite que el limitador sea genérico: lo
+                // que identifica al que llama depende del dominio, no de él.
+                const firstHop = callerIp.split(',')[0]?.trim() ?? callerIp;
+                const allowed = await consumeRateLimitToken(db, {
+                    bucket: 'lead_magnet',
+                    key: firstHop,
+                    windowMs: RATE_LIMIT_WINDOW_MS,
+                    max: RATE_LIMIT_MAX_PER_HOUR,
+                });
                 if (!allowed) {
                     throw new HttpsError(
                         'resource-exhausted',
@@ -225,49 +236,3 @@ function buildLeadId(email: string, magnetSlug: string): string {
     return `${magnetSlug}__${safeEmail}`;
 }
 
-/**
- * Sliding-window rate-limit token consumer. Uses a deterministic
- * doc id per IP in `rate_limits/{ipKey}` to track recent submission
- * timestamps. Returns `true` when the request is allowed,
- * `false` when over the cap.
- *
- * Idempotent under retry: a Firebase callable retry that re-runs
- * this function will count as a single attempt because the timestamp
- * advance happens via `arrayUnion` of the current ms — re-running
- * within the same millisecond is a no-op array-set semantics.
- *
- * Single-doc reads/writes; no transaction needed because the worst
- * race is one bot getting one extra request through.
- */
-async function consumeRateLimitToken(
-    db: FirebaseFirestore.Firestore,
-    ip: string,
-): Promise<boolean> {
-    // The x-forwarded-for header can be a comma-separated chain when
-    // the request passed through multiple proxies. Take the left-most
-    // entry (the original client) and sanitize for use as doc id.
-    const firstHop = ip.split(',')[0]?.trim() ?? ip;
-    const ipKey = firstHop.replace(/[^a-zA-Z0-9.:_-]/g, '_').slice(0, 80);
-    if (!ipKey) return true;
-
-    const ref = db.collection('rate_limits').doc(`lead_magnet__${ipKey}`);
-    const snap = await ref.get();
-    const now = Date.now();
-    const windowStart = now - RATE_LIMIT_WINDOW_MS;
-
-    const data = snap.exists ? snap.data() : null;
-    const recentRaw = (data?.recentMs as number[] | undefined) ?? [];
-    const recent = recentRaw.filter(ms => typeof ms === 'number' && ms >= windowStart);
-
-    if (recent.length >= RATE_LIMIT_MAX_PER_HOUR) {
-        return false;
-    }
-
-    recent.push(now);
-    await ref.set({
-        recentMs: recent,
-        lastSeenAt: FieldValue.serverTimestamp(),
-        ip: firstHop,
-    });
-    return true;
-}

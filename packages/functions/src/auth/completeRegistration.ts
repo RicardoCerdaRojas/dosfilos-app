@@ -22,6 +22,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { SupportedLocale } from '../services/EmailService';
 import { logger } from 'firebase-functions/v2';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
+import { consumeRateLimitToken } from '../shared/rateLimit';
 import { trackGeoEvent, getClientIP } from '../analytics/geoTracking';
 
 // ============================================================================
@@ -260,6 +261,39 @@ export const completeRegistration = onCall<CompleteRegistrationRequest>(
         const { sessionId, locale = 'es' } = request.data;
 
         logger.info('Starting registration completion', { sessionId, locale });
+
+        /**
+         * TOPE POR IP — defensa en profundidad, no la puerta principal.
+         *
+         * Este callable NO está autenticado: se llama con el `sessionId` que
+         * Stripe devuelve tras el pago, así que no hay uid al que limitar. La
+         * puerta real la guarda `validatePendingRegistration` (el sessionId
+         * tiene que existir y estar pendiente) y App Check; esto acota el
+         * MARTILLEO: sin tope, probar sessionIds en bucle cuesta lecturas y
+         * convierte el callable en un enumerador.
+         *
+         * EL TOPE ES ALTO A PROPÓSITO. Varios registros legítimos pueden salir
+         * de la misma IP —una iglesia tras un mismo router, un evento donde el
+         * pastor inscribe a su equipo— y bloquear eso sería peor que el abuso
+         * que evita. Frena al bot, no a la congregación.
+         *
+         * FAIL-OPEN: si Firestore falla, se permite. Un problema nuestro no
+         * puede dejar sin cuenta a alguien que YA PAGÓ.
+         */
+        const ip = getClientIP(request.rawRequest);
+        const dentroDelTope = await consumeRateLimitToken(getFirestore(), {
+            bucket: 'registration',
+            key: ip.split(',')[0]?.trim() ?? ip,
+            windowMs: 60 * 60 * 1000,
+            max: 20,
+        });
+        if (!dentroDelTope) {
+            logger.warn('Registration rate limit hit', { ip });
+            throw new HttpsError(
+                'resource-exhausted',
+                'Demasiados intentos seguidos. Espera unos minutos y vuelve a intentar.',
+            );
+        }
 
         // Track uid outside the try so a rollback can see it if a later step fails
         let createdUid: string | null = null;
