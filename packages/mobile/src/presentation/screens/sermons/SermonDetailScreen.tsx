@@ -1,54 +1,130 @@
 import React from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Image } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
-import { useSermon } from '@/presentation/hooks/useSermons';
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
+import { useSermon } from '@/presentation/hooks/useSermons';
+import { extractSectionsWithBody, toPlainBlocks } from '@/core/utils/sermonSections';
+
 export default function SermonDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: sermon, isLoading, error } = useSermon(id!);
-  const { t, i18n } = useTranslation();
+    const { id } = useLocalSearchParams<{ id: string }>();
+    const router = useRouter();
+    const { t, i18n } = useTranslation();
+    const insets = useSafeAreaInsets();
+    const { data: sermon, isLoading, error } = useSermon(id ?? '');
 
-  if (isLoading) {
+    // Sin useMemo: el compilador de React memoiza solo (y la regla de lint
+    // rechaza memoización manual que no puede preservar).
+    const sections = sermon?.content ? extractSectionsWithBody(sermon.content) : [];
+
+    if (isLoading) {
+        return (
+            <View className="flex-1 justify-center items-center bg-background-light dark:bg-background-primary">
+                <ActivityIndicator size="large" color="#1754cf" />
+            </View>
+        );
+    }
+
+    if (error || !sermon) {
+        return (
+            <View className="flex-1 justify-center items-center bg-background-light dark:bg-background-primary px-8">
+                <MaterialIcons name="error-outline" size={40} color="#94a3b8" />
+                <Text className="text-slate-500 dark:text-slate-400 font-lexend text-center mt-3">
+                    {t('sermons:error_loading')}
+                </Text>
+            </View>
+        );
+    }
+
+    const publishedDate = sermon.publishedAt
+        ? new Date(sermon.publishedAt).toLocaleDateString(i18n.language, {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+          })
+        : null;
+
     return (
-      <View className="flex-1 justify-center items-center bg-white dark:bg-background-primary">
-        <ActivityIndicator size="large" color="#1754cf" />
-      </View>
-    );
-  }
+        <View className="flex-1 bg-background-light dark:bg-background-primary">
+            <View
+                className="flex-row items-center px-3 pb-2 bg-background-light dark:bg-background-primary"
+                style={{ paddingTop: insets.top + 4 }}
+            >
+                <TouchableOpacity onPress={() => router.back()} className="p-2 active:opacity-60">
+                    <MaterialIcons name="arrow-back" size={24} color="#64748b" />
+                </TouchableOpacity>
+                <Text
+                    className="flex-1 text-base font-lexend-semibold text-slate-900 dark:text-white ml-1"
+                    numberOfLines={1}
+                >
+                    {sermon.title}
+                </Text>
+            </View>
 
-  if (error || !sermon) {
-    return (
-      <View className="flex-1 justify-center items-center bg-white dark:bg-background-primary">
-        <Text className="text-red-500">{t('sermons:error_loading')}</Text>
-      </View>
-    );
-  }
+            <ScrollView
+                className="flex-1"
+                contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: insets.bottom + 96 }}
+            >
+                <Text className="text-3xl font-lexend-bold text-slate-900 dark:text-white mt-4 leading-tight">
+                    {sermon.title}
+                </Text>
+                {sermon.bibleReferences.length > 0 && (
+                    <Text className="text-primary font-lexend text-base mt-2">
+                        {sermon.bibleReferences.join(' · ')}
+                    </Text>
+                )}
+                {publishedDate && (
+                    <Text className="text-xs text-slate-400 font-lexend mt-1">{publishedDate}</Text>
+                )}
 
-  return (
-    <>
-      <Stack.Screen options={{ title: sermon.title }} />
-      <ScrollView className="flex-1 bg-white dark:bg-background-primary">
-        {sermon.thumbnailUrl && (
-          <Image
-            source={{ uri: sermon.thumbnailUrl }}
-            className="w-full h-64"
-            resizeMode="cover"
-          />
-        )}
-        <View className="p-4">
-          <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{sermon.title}</Text>
-          {sermon.preacher && (
-            <Text className="text-lg text-gray-600 dark:text-slate-400 mb-4">{sermon.preacher}</Text>
-          )}
-          <Text className="text-gray-500 dark:text-slate-500 mb-4">
-            {new Date(sermon.date).toLocaleDateString(i18n.language)}
-          </Text>
-          <Text className="text-base text-gray-800 dark:text-slate-300 leading-6">
-            {sermon.description}
-          </Text>
+                {sections.length === 0 ? (
+                    <Text className="text-slate-500 dark:text-slate-400 font-lexend mt-8">
+                        {t('sermons:no_content')}
+                    </Text>
+                ) : (
+                    sections.map((section) => (
+                        <View key={section.slug} className="mt-7">
+                            {section.title ? (
+                                <Text className="text-xl font-lexend-semibold text-slate-900 dark:text-white mb-2">
+                                    {section.title}
+                                </Text>
+                            ) : null}
+                            {toPlainBlocks(section.body).map((block, i) =>
+                                block.kind === 'subheading' ? (
+                                    <Text
+                                        key={i}
+                                        className="text-sm font-lexend-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mt-3 mb-2"
+                                    >
+                                        {block.text}
+                                    </Text>
+                                ) : (
+                                    <Text
+                                        key={i}
+                                        className="text-base leading-7 text-slate-700 dark:text-slate-300 mb-3"
+                                    >
+                                        {block.text}
+                                    </Text>
+                                ),
+                            )}
+                        </View>
+                    ))
+                )}
+            </ScrollView>
+
+            {/* Modo púlpito llega en el siguiente PR de F1 */}
+            <View
+                className="absolute left-0 right-0 items-center"
+                style={{ bottom: insets.bottom + 16 }}
+            >
+                <View className="bg-slate-300 dark:bg-slate-700 px-8 py-3.5 rounded-full flex-row items-center opacity-70">
+                    <MaterialIcons name="record-voice-over" size={20} color="#ffffff" />
+                    <Text className="text-white font-lexend-semibold ml-2">
+                        {t('sermons:preach_mode_soon')}
+                    </Text>
+                </View>
+            </View>
         </View>
-      </ScrollView>
-    </>
-  );
+    );
 }

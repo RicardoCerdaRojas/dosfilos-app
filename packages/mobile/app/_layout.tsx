@@ -1,5 +1,5 @@
 import { DarkTheme as navigationDarkTheme, DefaultTheme as navigationDefaultTheme, ThemeProvider } from 'expo-router';
-import { LogBox, useColorScheme as useDeviceColorScheme } from 'react-native';
+import { LogBox, View, useColorScheme as useDeviceColorScheme } from 'react-native';
 import { SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
@@ -74,7 +74,7 @@ function RootLayoutNav() {
   const { language } = useLanguageStore();
   const { i18n } = useTranslation();
   const { user, isLoading } = useAuthStore();
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontsError] = useFonts({
     Lexend: Lexend_400Regular,
     'Lexend-Medium': Lexend_500Medium,
     'Lexend-SemiBold': Lexend_600SemiBold,
@@ -101,10 +101,12 @@ function RootLayoutNav() {
   }, [isDark]);
 
   useEffect(() => {
-    if (!isLoading && fontsLoaded) {
+    // Si las fuentes fallan (p.ej. asset no resoluble en dev) NO se bloquea el
+    // arranque: se entra con la fuente del sistema.
+    if (!isLoading && (fontsLoaded || fontsError)) {
       SplashScreen.hideAsync();
     }
-  }, [isLoading, fontsLoaded]);
+  }, [isLoading, fontsLoaded, fontsError]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -124,15 +126,24 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={isDark ? CustomDarkTheme : CustomDefaultTheme}>
-      <>
+      {/* hideAsync desde un effect temprano tiene carrera con el registro del
+          overlay nativo (pantalla blanca intermitente en cold start); el
+          onLayout del root es el punto que Expo documenta como seguro. */}
+      <View
+        style={{ flex: 1 }}
+        onLayout={() => {
+          SplashScreen.hideAsync();
+        }}
+      >
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="sermon/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
         <ToastNotification />
         <StatusBar style={isDark ? 'light' : 'dark'} />
-      </>
+      </View>
     </ThemeProvider>
   );
 }
