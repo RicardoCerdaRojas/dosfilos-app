@@ -48,7 +48,8 @@
     "mobile:web": "npm run web --workspace=packages/mobile",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "test:root": "vitest run"
+    "test:root": "vitest run",
+    "postinstall": "node scripts/dedupe-nested-react.js"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
