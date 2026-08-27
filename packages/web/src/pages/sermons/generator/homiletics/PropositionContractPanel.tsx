@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, CheckCircle2, Plus, Trash2, Save } from 'lucide-react';
+import { AlertTriangle, BookOpen, CheckCircle2, Plus, Trash2, Save } from 'lucide-react';
 import {
     parseSustantivada,
     confrontProposition,
+    pointPassageRef,
     sermonStructureFor,
     GENRE_SERMON_STRUCTURE_GENRES,
     type HomileticalAnalysis,
@@ -15,6 +16,8 @@ import { Input } from '@/components/ui/input';
 
 interface Props {
     homiletics: HomileticalAnalysis;
+    /** Pasaje del sermón: completa el libro y capítulo del que se deduce. */
+    sermonPassage?: string;
     /** Del `pastoralSeed`. Sin género, la vara corre sin piso de género. */
     genre?: string;
     /**
@@ -25,7 +28,12 @@ interface Props {
      */
     onApply: (patch: {
         proposition: string;
-        points: { title: string; application: string; srcIndex: number | null }[];
+        points: {
+            title: string;
+            application: string;
+            passageRef: string;
+            srcIndex: number | null;
+        }[];
     }) => void;
 }
 
@@ -46,7 +54,7 @@ interface Props {
  * La sustantivada es el default, no una prohibición: una proposición libre
  * simplemente rinde menos elementos, y eso se informa sin impedir nada.
  */
-export function PropositionContractPanel({ homiletics, genre, onApply }: Props) {
+export function PropositionContractPanel({ homiletics, genre, sermonPassage, onApply }: Props) {
     const { t } = useTranslation('generator');
 
     const originalProposition = homiletics.homileticalProposition ?? '';
@@ -64,6 +72,10 @@ export function PropositionContractPanel({ homiletics, genre, onApply }: Props) 
             (homiletics.outline?.mainPoints ?? []).map((p, i) => ({
                 title: p.title ?? '',
                 application: p.application ?? legacyApps[i] ?? '',
+                // Vacío si él no lo escribió: el campo NO se rellena solo. Lo
+                // deducido se muestra como marcador, y así se distingue de un
+                // vistazo lo que él mantiene de lo que la aplicación supone.
+                passageRef: p.passageRef ?? '',
                 srcIndex: i as number | null,
             })),
         [homiletics.outline, legacyApps],
@@ -77,7 +89,13 @@ export function PropositionContractPanel({ homiletics, genre, onApply }: Props) 
 
     const titles = points.map((p) => p.title);
     const same = (a: typeof points, b: typeof points) =>
-        a.length === b.length && a.every((x, i) => x.title === b[i]!.title && x.application === b[i]!.application);
+        a.length === b.length
+        && a.every(
+            (x, i) =>
+                x.title === b[i]!.title
+                && x.application === b[i]!.application
+                && x.passageRef === b[i]!.passageRef,
+        );
     const dirty = proposition !== originalProposition || !same(points, originalPoints);
 
     const { report, verboEnSegundaPersona, anunciados } = useMemo(() => {
@@ -101,12 +119,30 @@ export function PropositionContractPanel({ homiletics, genre, onApply }: Props) 
     const guias = report.hallazgos.filter((h) => !h.esViolacion);
     const alineado = violaciones.length === 0 && !verboEnSegundaPersona;
 
-    const addPoint = () => setPoints((prev) => [...prev, { title: '', application: '', srcIndex: null }]);
+    const addPoint = () =>
+        setPoints((prev) => [...prev, { title: '', application: '', passageRef: '', srcIndex: null }]);
     const removePoint = (i: number) => setPoints((prev) => prev.filter((_, k) => k !== i));
     const setTitle = (i: number, v: string) =>
         setPoints((prev) => prev.map((x, k) => (k === i ? { ...x, title: v } : x)));
     const setApplication = (i: number, v: string) =>
         setPoints((prev) => prev.map((x, k) => (k === i ? { ...x, application: v } : x)));
+    const setPassageRef = (i: number, v: string) =>
+        setPoints((prev) => prev.map((x, k) => (k === i ? { ...x, passageRef: v } : x)));
+
+    /**
+     * Lo que la aplicación DEDUCIRÍA para este punto si él no escribe nada.
+     *
+     * Se muestra como marcador de posición, no como valor: un campo que aparece
+     * lleno sin que el pastor lo escribiera vuelve a ser un dato que nadie
+     * mantiene — que es exactamente cómo la referencia acabó apuntando a un
+     * bosquejo que él ya había reemplazado.
+     */
+    const deducido = (i: number, title: string) =>
+        pointPassageRef({
+            title,
+            sermonPassage,
+            scriptureReferences: homiletics.outline?.mainPoints?.[i]?.scriptureReferences,
+        });
 
     return (
         <div className="rounded-lg border border-border bg-card p-4 space-y-4">
@@ -171,6 +207,25 @@ export function PropositionContractPanel({ homiletics, genre, onApply }: Props) 
                             >
                                 <Trash2 className="h-3.5 w-3.5" />
                             </Button>
+                        </div>
+                        {/* EL PASAJE QUE ESTE PUNTO EXPONE, por fin visible.
+                            Se decidía en el dato y no se veía en ninguna
+                            pantalla: quedaba como llegó del generador aunque el
+                            pastor reescribiera el punto entero. El marcador
+                            muestra lo que se deduciría de su título; escribir
+                            acá gana sobre esa deducción. */}
+                        <div className="flex items-center gap-2">
+                            <BookOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <Input
+                                value={p.passageRef}
+                                onChange={(e) => setPassageRef(i, e.target.value)}
+                                placeholder={
+                                    deducido(i, p.title)
+                                    ?? t('homiletics.contract.passageRefPlaceholder')
+                                }
+                                aria-label={t('homiletics.contract.passageRefLabel', { n: i + 1 })}
+                                className="h-8 text-xs"
+                            />
                         </div>
                         {/* La aplicación DEBAJO de su punto: así se ve a cuál
                             pertenece, que es justo lo que la lista suelta no

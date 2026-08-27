@@ -34,7 +34,19 @@ export function pointPassageRef(input: {
     sermonPassage?: string;
     /** Referencias del bosquejo. La primera es el respaldo. */
     scriptureReferences?: readonly string[];
+    /**
+     * El pasaje que el PASTOR escribió para este punto. Gana sobre todo.
+     *
+     * Es la conclusión de la regla de arriba llevada hasta el final: mientras
+     * nadie podía escribirlo, deducirlo del título era lo mejor disponible.
+     * Ahora que hay una pantalla donde él lo mantiene, deducir por encima de lo
+     * que escribió sería ignorarlo.
+     */
+    passageRef?: string;
 }): string | undefined {
+    const suyo = input.passageRef?.trim();
+    if (suyo) return suyo;
+
     const versiculos = input.title?.match(VERSICULOS_EN_TITULO)?.[1];
     const base = libroYCapitulo(input.sermonPassage);
     if (versiculos && base) {

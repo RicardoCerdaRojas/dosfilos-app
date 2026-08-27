@@ -17,6 +17,15 @@ export interface PointPatch {
     /** La aplicación de ESTE punto. Una por punto. */
     application?: string;
     /**
+     * El pasaje que ESTE punto expone, escrito por el pastor.
+     *
+     * Vacío significa "que lo siga deduciendo del título", no "sin pasaje": por
+     * eso la clave se omite en vez de guardarse como cadena vacía. Guardar ''
+     * congelaría la deducción en nada y el sermón quedaría sin el texto que
+     * expone — un dato en blanco que nadie escribió y nadie mantiene.
+     */
+    passageRef?: string;
+    /**
      * Posición ORIGINAL del punto, o `null` si es nuevo.
      *
      * Es lo que preserva la descripción y las referencias cuando el pastor
@@ -41,9 +50,15 @@ export function applyPropositionContract(
         // opcional y un string vacío en Firestore se lee como "hay aplicación,
         // pero es nada", que es distinto de "todavía no hay".
         const app = application ? { application } : {};
-        return src
-            ? { ...src, title: p.title, ...app }
-            : { title: p.title, description: '', scriptureReferences: [], ...app };
+        // Misma regla para el pasaje: vacío = seguir deduciéndolo del título.
+        const ref = (p.passageRef ?? '').trim();
+        const passage = ref ? { passageRef: ref } : {};
+        // Si el pastor BORRÓ lo que había escrito, la clave debe desaparecer —
+        // no basta con omitirla del patch, porque `...src` la traería de vuelta
+        // y su borrado no tendría efecto.
+        const base = src ? { ...src } : { title: p.title, description: '', scriptureReferences: [] };
+        if (!ref) delete (base as { passageRef?: string }).passageRef;
+        return { ...base, title: p.title, ...app, ...passage };
     });
     return {
         ...homiletics,

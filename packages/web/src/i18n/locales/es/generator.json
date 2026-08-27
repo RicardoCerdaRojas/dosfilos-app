@@ -278,7 +278,9 @@
       "secondPersonVerb": "El verbo está en segunda persona. Tus proposiciones usan primera persona plural (veremos, aprenderemos): el predicador se incluye con la congregación.",
       "disclaimer": "Se te señala lo que falta; tú decides. No bloquea.",
       "apply": "Aplicar cambios",
-      "applicationPlaceholder": "Aplicación de este punto — cómo aterriza en el oyente"
+      "applicationPlaceholder": "Aplicación de este punto — cómo aterriza en el oyente",
+      "passageRefPlaceholder": "Pasaje que expone este punto",
+      "passageRefLabel": "Pasaje del punto {{n}}"
     },
     "directive": {
       "noPoints": "Todavía no hay puntos en el bosquejo.",

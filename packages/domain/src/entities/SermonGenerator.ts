@@ -179,6 +179,26 @@ export interface SermonOutline {
         description: string;
         scriptureReferences: string[];
         /**
+         * EL PASAJE QUE ESTE PUNTO EXPONE, escrito por el PASTOR.
+         *
+         * Distinto de `scriptureReferences`, que son las de apoyo y las propuso
+         * el generador. La diferencia importa porque decide quién gana: entre un
+         * campo que el pastor mantiene y uno que el generador dejó, gana el
+         * suyo. Cuando este campo está, manda sobre todo lo demás.
+         *
+         * POR QUÉ HIZO FALTA: hasta ahora el pasaje del punto se DEDUCÍA del
+         * título —del "(vv. 3)" entre paréntesis— y si el título no lo llevaba,
+         * se caía a `scriptureReferences[0]`, que nadie mantiene. El caso real:
+         * el título decía "(vv. 3)" y la referencia heredada seguía apuntando a
+         * "Jonás 1:3a", del bosquejo de tres puntos que él ya había reemplazado.
+         * Ninguna pantalla la mostraba, así que no había forma de corregirla.
+         *
+         * Ausente = seguir deduciendo del título. No se rellena solo: un campo
+         * que aparece lleno sin que el pastor lo escribiera volvería a ser un
+         * dato que nadie mantiene.
+         */
+        passageRef?: string;
+        /**
          * La aplicación de ESTE punto — una por punto (decisión del fundador,
          * 2026-08-23).
          *
