@@ -106,3 +106,22 @@ describe('translationBridge — el "de" que no está en el griego', () => {
         ).toBeNull();
     });
 });
+
+describe('partículas pospositivas — determinista, propiedad del lema', () => {
+    it('δέ nunca abre su cláusula: la pista sale del lema, sin preguntarle a nadie', () => {
+        const de: GreekWordToken = { text: 'δὲ', lemma: 'δέ', pos: 'C', tag: {}, transliteration: 'de' };
+        expect(greekRecognitionClues(de)).toEqual([{ id: 'postpositive', marker: 'δέ' }]);
+    });
+
+    it('καί NO es pospositiva — abre cláusula sin problema', () => {
+        const kai: GreekWordToken = { text: 'καὶ', lemma: 'καί', pos: 'C', tag: {}, transliteration: 'kai' };
+        expect(greekRecognitionClues(kai)).toEqual([]);
+    });
+
+    it('γάρ y οὖν también lo son', () => {
+        for (const lemma of ['γάρ', 'οὖν']) {
+            const tok: GreekWordToken = { text: lemma, lemma, pos: 'C', tag: {}, transliteration: 'x' };
+            expect(greekRecognitionClues(tok).map((p) => p.id)).toContain('postpositive');
+        }
+    });
+});

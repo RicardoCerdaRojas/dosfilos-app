@@ -10,6 +10,7 @@ import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNtLemmaFrequency } from './useLemmaFrequency';
 import { GreekCompositionBlock } from './GreekCompositionBlock';
+import { GreekParticleBlock } from './GreekParticleBlock';
 
 interface Props {
     token: GreekWordToken;
@@ -116,6 +117,8 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
                 )}
 
                 {/* 3 · POR QUÉ ASÍ. */}
+                {insight && <GreekParticleBlock insight={insight} />}
+
                 {insight?.composition && <GreekCompositionBlock composition={insight.composition} compact />}
 
                 {/* EL ARTÍCULO, EXPLICADO. Era nuestra palabra peor tratada:

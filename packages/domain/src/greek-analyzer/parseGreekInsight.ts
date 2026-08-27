@@ -2,6 +2,7 @@ import { GREEK_INSIGHT_PROMPT_VERSION, type GreekVerseInsight, type GreekWordIns
 import { isKnownCaseFunction } from './caseFunctionTaxonomy';
 import { validateRhetoricalStructure, validateWordRelations } from './rhetoricalStructure';
 import { isKnownArticleUse } from './articleUseTaxonomy';
+import { isKnownDiscourseFunction } from './particleTaxonomy';
 import type { GreekCase } from './morphGntToken';
 
 /**
@@ -68,6 +69,13 @@ export function parseGreekInsight(
         const antecedenteCrudo = typeof w.antecedent === 'string' ? w.antecedent.trim() : '';
         const antecedent = articleUse === 'anaphoric' && antecedenteCrudo ? antecedenteCrudo : undefined;
 
+        const discCruda = typeof w.discourseFunction === 'string' ? w.discourseFunction.trim() : '';
+        const discourseFunction = isKnownDiscourseFunction(discCruda) ? discCruda : undefined;
+        const conectaCrudo = typeof w.connects === 'string' ? w.connects.trim() : '';
+        // "Qué conecta" sin función discursiva sería una afirmación sobre el
+        // argumento sin la categoría que la sostiene.
+        const connects = discourseFunction && conectaCrudo ? conectaCrudo : undefined;
+
         // COMPOSICIÓN: al menos DOS partes con glosa, y el veredicto sobre la
         // falacia de la raíz es OBLIGATORIO — sin él la descomposición
         // invitaría justo al error que pretende prevenir.
@@ -97,6 +105,8 @@ export function parseGreekInsight(
             ...(nameNote ? { nameNote } : {}),
             ...(articleUse ? { articleUse } : {}),
             ...(antecedent ? { antecedent } : {}),
+            ...(discourseFunction ? { discourseFunction } : {}),
+            ...(connects ? { connects } : {}),
             ...(composition ? { composition } : {}),
         });
     }

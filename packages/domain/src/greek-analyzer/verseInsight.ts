@@ -52,6 +52,15 @@ export interface GreekWordInsight {
      * etimología de una palabra cuyo uso ya no la respalda dice algo falso
      * con aire de erudición. El campo obliga a declararlo.
      */
+    /**
+     * La función DISCURSIVA de una partícula o conjunción (taxonomía cerrada,
+     * Runge): qué hace en el argumento, no sólo qué significa. δέ marca
+     * DESARROLLO —un paso nuevo— y sólo a veces contraste: traducirla siempre
+     * "pero" le inventa al texto una oposición que no está.
+     */
+    readonly discourseFunction?: string;
+    /** Qué conecta con qué, en una línea ("el v.4 con la ὑπομονή del v.3"). */
+    readonly connects?: string;
     readonly composition?: {
         readonly parts: readonly { readonly text: string; readonly gloss: string }[];
         readonly note: string;
@@ -87,8 +96,9 @@ export interface GreekKeyInsight {
  * v7: español latinoamericano (ustedes, no vosotros).
  * v8: + articleUse/antecedent, con el versículo anterior como contexto.
  * v9: + composition (palabras compuestas) y artículo con uso obligatorio.
+ * v10: + discourseFunction/connects para partículas y conjunciones.
  */
-export const GREEK_INSIGHT_PROMPT_VERSION = 9;
+export const GREEK_INSIGHT_PROMPT_VERSION = 10;
 
 export interface GreekVerseInsight {
     /** "JAS 1:2" — la clave del caché. */

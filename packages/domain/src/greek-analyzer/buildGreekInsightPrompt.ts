@@ -2,6 +2,7 @@ import type { GreekWordToken } from './morphGntToken';
 import { CASE_FUNCTIONS } from './caseFunctionTaxonomy';
 import { SPANISH_REGISTER } from '../shared/spanishRegister';
 import { ARTICLE_USES } from './articleUseTaxonomy';
+import { DISCOURSE_FUNCTIONS } from './particleTaxonomy';
 
 /** Expande el tag a texto plano para el prompt, sin códigos crípticos. */
 const TENSE: Record<string, string> = { P: 'presente', I: 'imperfecto', F: 'futuro', A: 'aoristo', X: 'perfecto', Y: 'pluscuamperfecto' };
@@ -135,6 +136,18 @@ y eso explica por qué un versículo puede EMPEZAR con un artículo. Entonces
 agrega "antecedent" con la palabra y su lugar ("ὑπομονήν, v. 3"). Si no hay
 antecedente identificable, NO digas que es anafórico.
 
+Y para cada PARTÍCULA o CONJUNCIÓN, "discourseFunction": qué hace en el
+ARGUMENTO —no sólo qué significa— de esta lista CERRADA:
+  ${DISCOURSE_FUNCTIONS.join(', ')}
+
+Más "connects": qué enlaza con qué, en una línea ("este versículo con la
+ὑπομονή del anterior"). Usa el versículo previo que te di como contexto.
+
+⚠️ δέ NO ES "PERO". Marca DESARROLLO —un paso nuevo del argumento— y sólo a
+veces contraste; traducirla siempre "pero" le inventa al texto una oposición
+que no está. Lo mismo con καί (continuidad, no siempre "y"), γάρ (fundamenta
+lo dicho) y οὖν (infiere). Elige la función por lo que hace AQUÍ.
+
 Y para las palabras COMPUESTAS (dos raíces unidas: ὁλόκληρος = ὅλος +
 κλῆρος; ἐκκλησία = ἐκ + καλέω), "composition":
   · "parts": cada componente con su glosa ({"text": "ὅλος", "gloss": "entero,
@@ -186,7 +199,7 @@ FORMATO DE SALIDA (JSON, sin texto alrededor):
   "literalTranslation": "…",
   "fluidTranslation": "…",
   "words": [
-    { "text": "…", "semanticRange": "sentido A / sentido B", "syntacticFunction": "…", "translation": "…", "caseFunction": "possession", "nameNote": "", "articleUse": "", "antecedent": "" }
+    { "text": "…", "semanticRange": "sentido A / sentido B", "syntacticFunction": "…", "translation": "…", "caseFunction": "possession", "nameNote": "", "articleUse": "", "antecedent": "", "discourseFunction": "", "connects": "" }
   ],
   "keyInsights": [
     { "text": "…", "significance": "Por qué esta palabra importa al predicar este versículo." }

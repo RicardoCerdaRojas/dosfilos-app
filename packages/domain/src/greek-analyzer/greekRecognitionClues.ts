@@ -1,4 +1,5 @@
 import type { GreekWordToken } from './morphGntToken';
+import { isPostpositive } from './particleTaxonomy';
 
 /**
  * Una pista de reconocimiento: la MARCA visible en la forma y la clave i18n
@@ -96,6 +97,11 @@ export function greekRecognitionClues(token: GreekWordToken): GreekRecognitionCl
             }
         }
         return pistas;
+    }
+
+    // ── PARTÍCULAS: la posposición es propiedad del LEMA, determinista ──
+    if ((token.pos === 'C' || token.pos === 'X') && isPostpositive(token.lemma)) {
+        return [{ id: 'postpositive', marker: token.lemma }];
     }
 
     if (token.pos !== 'V') return [];

@@ -747,7 +747,8 @@
       "datPl": "La terminación {{marker}} marca el dativo plural (1ª/2ª declinación).",
       "accSgN": "La terminación {{marker}} marca el acusativo singular.",
       "accPl": "La terminación {{marker}} marca el acusativo plural.",
-      "nomPl": "La terminación {{marker}} marca el nominativo plural."
+      "nomPl": "La terminación {{marker}} marca el nominativo plural.",
+      "postpositive": "La partícula {{marker}} es POSPOSITIVA: nunca abre su cláusula, va en segunda posición aunque enlace la oración entera con lo anterior. El español la traduce al principio, lo que borra la pista."
     },
     "personShort": "{{n}}ª persona",
     "view": {
@@ -923,6 +924,36 @@
     "composition": {
       "title": "Palabra compuesta",
       "rootFallacy": "Ojo: el uso real de esta palabra NO es la suma de sus partes. Predicar su etimología diría algo que el texto no dice."
+    },
+    "discourse": {
+      "title": "Función en el argumento",
+      "connects": "Enlaza",
+      "development": "Desarrollo",
+      "continuity": "Continuidad",
+      "contrast": "Contraste",
+      "correction": "Corrección",
+      "inference": "Inferencia",
+      "explanation": "Explicación",
+      "emphasis": "Énfasis",
+      "pointCounterpoint": "Tesis y contraparte",
+      "resumption": "Retoma",
+      "purpose": "Finalidad",
+      "temporal": "Marco temporal",
+      "condition": "Condición"
+    },
+    "discourseHint": {
+      "development": "Un paso NUEVO del argumento, no necesariamente contrario. δέ es esto, y por eso traducirla siempre \"pero\" inventa una oposición que no está.",
+      "continuity": "Suma sin cambiar de plano: sigue en la misma línea.",
+      "contrast": "Opone de verdad lo que sigue a lo anterior.",
+      "correction": "Corrige o sustituye lo que se acaba de decir.",
+      "inference": "Saca la consecuencia: \"por lo tanto\".",
+      "explanation": "Fundamenta lo dicho: da la razón de la afirmación anterior.",
+      "emphasis": "Realza el elemento al que acompaña.",
+      "pointCounterpoint": "Anuncia un par: lo primero se dice esperando lo segundo (μέν… δέ).",
+      "resumption": "Retoma un hilo que quedó atrás.",
+      "purpose": "Introduce la finalidad: para qué.",
+      "temporal": "Sitúa en el tiempo lo que sigue.",
+      "condition": "Plantea la condición de la que depende lo demás."
     }
   }
 }

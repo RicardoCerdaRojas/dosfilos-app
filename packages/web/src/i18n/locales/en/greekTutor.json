@@ -723,7 +723,8 @@
       "datPl": "The ending {{marker}} marks the dative plural (1st/2nd declension).",
       "accSgN": "The ending {{marker}} marks the accusative singular.",
       "accPl": "The ending {{marker}} marks the accusative plural.",
-      "nomPl": "The ending {{marker}} marks the nominative plural."
+      "nomPl": "The ending {{marker}} marks the nominative plural.",
+      "postpositive": "The particle {{marker}} is POSTPOSITIVE: it never opens its clause, sitting second even though it links the whole sentence to what precedes. Spanish and English translate it first, which hides the clue."
     },
     "personShort": "{{n}}rd person",
     "view": {
@@ -899,6 +900,36 @@
     "composition": {
       "title": "Compound word",
       "rootFallacy": "Careful: this word’s actual usage is NOT the sum of its parts. Preaching its etymology would claim something the text does not say."
+    },
+    "discourse": {
+      "title": "Function in the argument",
+      "connects": "Links",
+      "development": "Development",
+      "continuity": "Continuity",
+      "contrast": "Contrast",
+      "correction": "Correction",
+      "inference": "Inference",
+      "explanation": "Explanation",
+      "emphasis": "Emphasis",
+      "pointCounterpoint": "Point / counterpoint",
+      "resumption": "Resumption",
+      "purpose": "Purpose",
+      "temporal": "Temporal frame",
+      "condition": "Condition"
+    },
+    "discourseHint": {
+      "development": "A NEW step in the argument, not necessarily contrary. δέ is this — always translating it \"but\" invents an opposition that is not there.",
+      "continuity": "Adds without changing plane.",
+      "contrast": "Genuinely opposes what follows to what precedes.",
+      "correction": "Corrects or replaces what was just said.",
+      "inference": "Draws the consequence: \"therefore\".",
+      "explanation": "Grounds the previous statement.",
+      "emphasis": "Highlights what it accompanies.",
+      "pointCounterpoint": "Announces a pair: the first is said expecting the second (μέν… δέ).",
+      "resumption": "Picks up a thread left earlier.",
+      "purpose": "Introduces the purpose.",
+      "temporal": "Places what follows in time.",
+      "condition": "States the condition the rest depends on."
     }
   }
 }
