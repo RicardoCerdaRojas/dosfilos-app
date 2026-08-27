@@ -12,6 +12,8 @@ export interface CitationSourceChunk {
     resourceAuthor?: string;
     text: string;
     metadata?: { page?: string | number };
+    /** Biblioteca de la que salió — la estampa `selectSermonCitationChunks`. */
+    scope?: 'personal' | 'core';
 }
 
 export interface CitationRightsSnapshot {
@@ -68,6 +70,9 @@ export function buildCitationManifest(
             return {
                 sourceId: `S${idx + 1}`,
                 resourceId: chunk.resourceId,
+                // La clave se OMITE si no viene, en vez de viajar con
+                // `undefined`: Firestore rechaza `undefined` como valor.
+                ...(chunk.scope ? { scope: chunk.scope } : {}),
                 chunkId: chunk.id,
                 title: chunk.resourceTitle,
                 author: chunk.resourceAuthor && chunk.resourceAuthor.trim().length > 0

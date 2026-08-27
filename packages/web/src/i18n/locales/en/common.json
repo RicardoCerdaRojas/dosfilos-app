@@ -1,31 +1,36 @@
 {
-    "buttons": {
-        "getStarted": "Get Started Free",
-        "watchDemo": "Watch Demo (2 min)",
-        "learnMore": "Learn More",
-        "contactUs": "Contact Us",
-        "close": "Close",
-        "cancel": "Cancel",
-        "confirm": "Confirm",
-        "save": "Save"
-    },
-    "loading": "Loading...",
-    "error": "Error",
-    "success": "Success",
-    "currentPlan": "Current Plan",
-    "select": "Select",
-    "header": {
-        "welcome": "Welcome",
-        "user": "User",
-        "profile": "Profile",
-        "settings": "Settings",
-        "logout": "Log Out",
-        "logoutSuccess": "Logged out successfully"
-    },
-    "modulesIncluded": "Modules Included",
-    "limits": "Limits",
-    "fileDropzone": {
-        "empty": "Drag a file or click to select",
-        "clear": "Remove file"
-    }
+  "buttons": {
+    "getStarted": "Get Started Free",
+    "watchDemo": "Watch Demo (2 min)",
+    "learnMore": "Learn More",
+    "contactUs": "Contact Us",
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save"
+  },
+  "loading": "Loading...",
+  "error": "Error",
+  "success": "Success",
+  "currentPlan": "Current Plan",
+  "select": "Select",
+  "header": {
+    "welcome": "Welcome",
+    "user": "User",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Log Out",
+    "logoutSuccess": "Logged out successfully"
+  },
+  "modulesIncluded": "Modules Included",
+  "limits": "Limits",
+  "fileDropzone": {
+    "empty": "Drag a file or click to select",
+    "clear": "Remove file"
+  },
+  "citations": {
+    "openInLibrary": "Open in my library →",
+    "fromSharedLibrary": "From Preach's shared library.",
+    "seeInBibliography": "See in bibliography →"
+  }
 }

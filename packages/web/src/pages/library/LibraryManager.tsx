@@ -8,6 +8,7 @@ import { LibraryResourceEntity, ResourceType } from '@dosfilos/domain';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Loader2 } from 'lucide-react';
 import { ResourceCard } from './ResourceCard';
+import { resourceAnchorId, useHighlightedResource } from './hooks/useHighlightedResource';
 import { EditResourceModal } from './EditResourceModal';
 import { PhasePreferenceModal } from './PhasePreferenceModal';
 import { ConfigureCoreStoresModal } from './ConfigureCoreStoresModal';
@@ -167,6 +168,14 @@ export function LibraryManager() {
         },
     });
 
+    // Llegar DESDE UNA CITA del sermón: `?resource=<id>` trae el libro a la
+    // vista y lo marca un momento. Si ya no está, lo dice en vez de dejar al
+    // pastor buscando un libro que borró.
+    const destacado = useHighlightedResource({
+        resourceIds: data.resources.map((r) => r.id),
+        loading: data.loading,
+    });
+
     // ── Filtered view derived from search + category ────────────────────────
     const filteredResources = useMemo(() => {
         const query = searchQuery.toLowerCase();
@@ -285,6 +294,24 @@ export function LibraryManager() {
                     Self-hides when nothing's incomplete. */}
                 <MetadataBackfillBanner resources={data.resources} />
 
+                {/* Llegó desde una cita a un libro que ya no está. Se DICE:
+                    sin esto el enlace no hace nada y el pastor se queda
+                    buscando en su biblioteca algo que borró. */}
+                {destacado.notFound && (
+                    <div className="mb-4 flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/50 p-3 text-sm">
+                        <p className="text-muted-foreground">
+                            {t('citedResourceMissing')}
+                        </p>
+                        <button
+                            type="button"
+                            onClick={destacado.dismissNotFound}
+                            className="shrink-0 text-xs text-muted-foreground underline hover:text-foreground"
+                        >
+                            {t('citedResourceDismiss')}
+                        </button>
+                    </div>
+                )}
+
                 {data.loading ? (
                     <div className="flex justify-center p-12">
                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -302,8 +329,16 @@ export function LibraryManager() {
                             : 'space-y-2'
                     )}>
                         {filteredResources.map(resource => (
-                            <ResourceCard
+                            <div
                                 key={resource.id}
+                                id={resourceAnchorId(resource.id)}
+                                className={cn(
+                                    'rounded-lg transition-shadow',
+                                    destacado.highlightedId === resource.id
+                                        && 'ring-2 ring-primary ring-offset-2 ring-offset-background',
+                                )}
+                            >
+                            <ResourceCard
                                 resource={resource}
                                 categories={data.categories}
                                 indexStatus={data.indexStatus[resource.id] || 'unknown'}
@@ -322,6 +357,7 @@ export function LibraryManager() {
                                 onSetPhases={() => openPhases(resource)}
                                 onConfigureCoreStores={isAdmin ? () => openCoreStores(resource) : undefined}
                             />
+                            </div>
                         ))}
                     </div>
                 )}
