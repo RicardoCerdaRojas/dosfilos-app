@@ -796,7 +796,8 @@
       "print": "Imprimir",
       "colorOff": "Sin color",
       "colorPos": "Categorías",
-      "colorMorph": "Morfemas"
+      "colorMorph": "Morfemas",
+      "copyGroup": "Copiar"
     },
     "legend": {
       "title": "Sistema de colores",

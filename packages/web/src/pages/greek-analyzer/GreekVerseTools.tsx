@@ -1,4 +1,4 @@
-import { AArrowDown, AArrowUp, Copy, Printer, RefreshCw, Loader2, Check } from 'lucide-react';
+import { AArrowDown, AArrowUp, Copy, Eye, EyeOff, Printer, RefreshCw, Loader2, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
@@ -62,10 +62,15 @@ export function GreekVerseTools({
     ];
 
     return (
-        <div className="flex flex-wrap items-center gap-1.5 print:hidden">
-            {/* LAS DOS CAPAS DE COLOR — el sistema del hebreo, en griego: por
-                CATEGORÍA (qué es cada palabra) o por MORFEMA (dónde está la
-                marca que las pistas confirmaron: χαίρ-ειν, θε-οῦ). */}
+        // TRES GRUPOS SEPARADOS, no una fila de ocho botones sueltos: CÓMO SE
+        // VE el texto, QUÉ ME LLEVO de él, y QUÉ HAGO con el análisis. La fila
+        // plana obligaba a leer cada etiqueta para saber qué hacía cada cosa.
+        //
+        // Y "Translit." aparecía DOS VECES con sentidos distintos —mostrar y
+        // copiar—: ahora el interruptor lleva el ojo (ver/ocultar) y la copia
+        // el ícono de copiar, así el ícono desambigua lo que la palabra no.
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 print:hidden">
+            {/* ── CÓMO SE VE ────────────────────────────────────────── */}
             <span className="inline-flex items-center rounded-md border border-border/60 bg-background">
                 {MODOS.map(({ id, labelKey }, i) => (
                     <button
@@ -90,7 +95,9 @@ export function GreekVerseTools({
                 onClick={onToggleTranslit}
                 className={cn(chip, showTranslit && 'text-foreground bg-muted/60')}
                 title={t('analyzer.tools.translitToggle')}
+                aria-pressed={showTranslit}
             >
+                {showTranslit ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
                 {t('analyzer.tools.translit')}
             </button>
 
@@ -108,13 +115,19 @@ export function GreekVerseTools({
                     type="button"
                     onClick={() => onFontScale(Math.min(2, fontScale + 1) as GreekFontScale)}
                     disabled={fontScale === 2}
-                    className="px-1.5 py-1 text-muted-foreground hover:text-foreground disabled:opacity-40 border-l border-border/60"
+                    className="border-l border-border/60 px-1.5 py-1 text-muted-foreground hover:text-foreground disabled:opacity-40"
                     aria-label={t('analyzer.tools.larger')}
                 >
                     <AArrowUp className="h-3.5 w-3.5" />
                 </button>
             </span>
 
+            <Separador />
+
+            {/* ── QUÉ ME LLEVO ──────────────────────────────────────── */}
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {t('analyzer.tools.copyGroup')}
+            </span>
             <button type="button" onClick={() => copiar('greek')} className={chip}>
                 {copiado === 'greek' ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                 {t('analyzer.tools.copyGreek')}
@@ -124,6 +137,9 @@ export function GreekVerseTools({
                 {t('analyzer.tools.copyTranslit')}
             </button>
 
+            <Separador />
+
+            {/* ── QUÉ HAGO CON EL ANÁLISIS ──────────────────────────── */}
             {onReanalyze && (
                 <button
                     type="button"
@@ -143,4 +159,10 @@ export function GreekVerseTools({
             </button>
         </div>
     );
+
+}
+
+/** Divide los grupos del toolbar. Oculto en pantallas donde la fila se parte. */
+function Separador() {
+    return <span className="hidden h-4 w-px bg-border sm:inline-block" aria-hidden />;
 }

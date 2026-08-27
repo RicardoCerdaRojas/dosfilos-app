@@ -4,6 +4,8 @@ import { useNtLemmaFrequency } from './useLemmaFrequency';
 import { GreekCompositionBlock } from './GreekCompositionBlock';
 import { GreekParticleBlock } from './GreekParticleBlock';
 import { GreekPrepositionBlock } from './GreekPrepositionBlock';
+import { useMorphCells } from './useMorphCells';
+import { GreekMorphCells } from './GreekMorphCells';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
@@ -74,18 +76,7 @@ export function GreekWordCard({
     const puente = translationBridge(token);
     const regimen = token.pos === 'P' ? prepositionUsage(token.lemma, objectCase as any) : null;
 
-    const celdas: { labelKey: string; value: string }[] = [];
-    const celda = (labelKey: string, dim: string, code?: string) => {
-        if (code) celdas.push({ labelKey, value: t(`analyzer.${dim}.${code}`) });
-    };
-    celda('analyzer.fields.tense', 'tense', tag.tense);
-    celda('analyzer.fields.voice', 'voice', tag.voice);
-    celda('analyzer.fields.mood', 'mood', tag.mood);
-    if (tag.person) celdas.push({ labelKey: 'analyzer.fields.person', value: tag.person });
-    celda('analyzer.fields.case', 'case', tag.case);
-    celda('analyzer.fields.number', 'number', tag.number);
-    celda('analyzer.fields.gender', 'gender', tag.gender);
-    celda('analyzer.fields.degree', 'degree', tag.degree);
+    const celdas = useMorphCells(tag);
 
     return (
         <button
@@ -206,21 +197,7 @@ export function GreekWordCard({
                 </div>
             )}
 
-            {celdas.length > 0 && (
-                <div
-                    className="grid gap-1.5"
-                    style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(6rem, 1fr))' }}
-                >
-                    {celdas.map((c) => (
-                        <div key={c.labelKey} className="min-w-0 rounded border border-border/60 px-2 py-1.5">
-                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                                {t(c.labelKey)}
-                            </div>
-                            <div className="text-sm break-words">{c.value}</div>
-                        </div>
-                    ))}
-                </div>
-            )}
+            <GreekMorphCells cells={celdas} />
 
             {pistas.length > 0 && (
                 <div className="rounded-md bg-warning/10 p-2.5 space-y-1">

@@ -13,6 +13,8 @@ import { useNtLemmaFrequency } from './useLemmaFrequency';
 import { GreekCompositionBlock } from './GreekCompositionBlock';
 import { GreekParticleBlock } from './GreekParticleBlock';
 import { GreekPrepositionBlock } from './GreekPrepositionBlock';
+import { useMorphCells } from './useMorphCells';
+import { GreekMorphCells } from './GreekMorphCells';
 
 interface Props {
     token: GreekWordToken;
@@ -63,17 +65,7 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, o
     const regimen = token.pos === 'P' ? prepositionUsage(token.lemma, objectCase as any) : null;
     const { tag } = token;
 
-    const celdas: { label: string; value: string }[] = [];
-    const celda = (labelKey: string, dim: string, code?: string) => {
-        if (code) celdas.push({ label: t(`analyzer.fields.${labelKey}`), value: t(`analyzer.${dim}.${code}`) });
-    };
-    celda('tense', 'tense', tag.tense);
-    celda('voice', 'voice', tag.voice);
-    celda('mood', 'mood', tag.mood);
-    if (tag.person) celdas.push({ label: t('analyzer.fields.person'), value: tag.person });
-    celda('case', 'case', tag.case);
-    celda('number', 'number', tag.number);
-    celda('gender', 'gender', tag.gender);
+    const celdas = useMorphCells(tag);
 
     return (
         // ANCHO ANTES QUE ALTO — pero sólo sirve si el ancho se USA en dos
@@ -189,19 +181,7 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, o
                     un panel de lectura, porque esconde texto sin avisar.
                     `auto-fit` + `minmax` reparte las que quepan, y `min-w-0`
                     deja que el contenido se ajuste en vez de empujar. */}
-                {celdas.length > 0 && (
-                    <div
-                        className="grid gap-1"
-                        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(5.5rem, 1fr))' }}
-                    >
-                        {celdas.map((c) => (
-                            <div key={c.label} className="min-w-0 rounded border border-border/60 px-1.5 py-1">
-                                <div className="text-[9px] uppercase tracking-wide text-muted-foreground">{c.label}</div>
-                                <div className="text-xs leading-tight break-words">{c.value}</div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                <GreekMorphCells cells={celdas} compact />
 
                 {pistas.length > 0 && (
                     <div className="rounded-md bg-warning/10 p-2.5 space-y-1">

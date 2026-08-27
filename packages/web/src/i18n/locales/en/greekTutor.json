@@ -772,7 +772,8 @@
       "print": "Print",
       "colorOff": "No color",
       "colorPos": "Categories",
-      "colorMorph": "Morphemes"
+      "colorMorph": "Morphemes",
+      "copyGroup": "Copy"
     },
     "legend": {
       "title": "Color system",
