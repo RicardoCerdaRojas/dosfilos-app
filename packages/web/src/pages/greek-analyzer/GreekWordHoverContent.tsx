@@ -69,9 +69,14 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
     celda('gender', 'gender', tag.gender);
 
     return (
-        <div className="w-[22rem] max-w-[calc(100vw-2rem)] max-h-[75vh] overflow-y-auto overflow-x-hidden text-left">
+        // ANCHO ANTES QUE ALTO — pero sólo sirve si el ancho se USA en dos
+        // columnas: un popover más ancho de una sola columna sería igual de
+        // largo y además taparía el versículo. En pantallas angostas (iPad
+        // vertical, notebook con el panel abierto) el ancho no existe, así
+        // que vuelve a una columna y lo que salva es el encabezado fijo.
+        <div className="w-[22rem] sm:w-[40rem] max-w-[calc(100vw-2rem)] max-h-[75vh] overflow-y-auto overflow-x-hidden text-left">
             {/* 1 · IDENTIDAD — fija al desplazarse. */}
-            <header className="sticky top-0 z-10 -mx-1 flex items-start justify-between gap-3 border-b border-border bg-card px-4 py-3">
+            <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-border bg-card px-4 py-3">
                 <div className="min-w-0">
                     <div className="text-2xl leading-tight" lang="grc">{token.text}</div>
                     <div className="text-xs text-muted-foreground italic">
@@ -93,7 +98,9 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
                 </div>
             </header>
 
-            <div className="space-y-3 px-4 py-3 break-words">
+            <div className="grid gap-x-4 gap-y-3 px-4 py-3 break-words sm:grid-cols-2 sm:items-start">
+                {/* COLUMNA 1 — EL SENTIDO: qué significa y por qué. */}
+                <div className="space-y-3">
                 {/* 2 · QUÉ SIGNIFICA AQUÍ — lo que se viene a buscar. */}
                 {insight && (
                     <p className="text-base font-medium leading-snug text-primary">{insight.translation}</p>
@@ -127,6 +134,16 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
                         {insight?.syntacticFunction && <p className="text-xs">{insight.syntacticFunction}</p>}
                     </div>
                 )}
+
+                {insight?.nameNote && (
+                    <Bloque label={t('analyzer.fields.nameNote')}>
+                        <p className="text-xs leading-relaxed">{insight.nameNote}</p>
+                    </Bloque>
+                )}
+                </div>
+
+                {/* COLUMNA 2 — LA FORMA Y SU CONTEXTO. */}
+                <div className="space-y-3">
 
                 {/* 4 · LA FORMA — mismas celdas que la tarjeta. */}
                 {/* CELDAS QUE SE ADAPTAN, no una rejilla rígida: con `grid-cols-3`
@@ -175,12 +192,6 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
                     </Bloque>
                 )}
 
-                {insight?.nameNote && (
-                    <Bloque label={t('analyzer.fields.nameNote')}>
-                        <p className="text-xs leading-relaxed">{insight.nameNote}</p>
-                    </Bloque>
-                )}
-
                 {ntCount !== null && ntCount > 0 && (
                     <p className={cn('text-xs', esRara ? 'font-medium text-warning' : 'text-muted-foreground')}>
                         {t('analyzer.frequency', { nt: ntCount })}
@@ -191,7 +202,11 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
                     </p>
                 )}
 
-                {/* 6 · SIGNIFICANCIA — cierra, y sólo si carga peso. */}
+                </div>
+
+                {/* 6 · SIGNIFICANCIA — a TODO EL ANCHO: es la prosa más larga,
+                    y en una columna angosta se volvería una torre. */}
+                <div className="sm:col-span-2 space-y-3">
                 {keyInsight && (
                     <div className="rounded-md border border-primary/20 bg-primary/5 p-2.5 space-y-1">
                         <h4 className="text-[10px] font-semibold uppercase tracking-wide text-primary">
@@ -206,6 +221,7 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
                         {t('analyzer.clues.source')}
                     </p>
                 )}
+                </div>
             </div>
         </div>
     );

@@ -147,6 +147,10 @@ export function GreekPassageView({ provider, book, bookName, chapter, versesInCh
                             // pone su propio espaciado por sección.
                             className="bg-card text-card-foreground border border-border shadow-xl rounded-lg p-0 text-sm max-w-none [&>svg]:bg-card [&>svg]:fill-card print:hidden"
                             sideOffset={6}
+                            // Con 40rem de ancho el popover llega a los bordes:
+                            // Radix lo reubica solo, pero hay que decirle cuánto
+                            // margen respetar.
+                            collisionPadding={16}
                         >
                                             <GreekWordHoverContent
                                                 token={tok}
