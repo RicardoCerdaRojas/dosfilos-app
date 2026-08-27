@@ -7,6 +7,7 @@ import {
     CURATED_LEXICON_VERSION,
     lookupCuratedEntry,
 } from './curatedLexicon';
+import { MODEL_FAST } from '../llm/modelCatalog';
 
 /**
  * Pastoral Fidelity Phase 1.5 — callable that produces a pastoral
@@ -217,7 +218,7 @@ export const analyzeWordPastorally = onCall(
         // 4. Gemini call
         // Vía el port: el adapter mide el consumo (tokens → USD) que antes se
         // perdía al llamar al SDK directo. Mismo modelo, misma config.
-        const llm = new GeminiLlmClient(apiKey, 'gemini-2.5-flash', {
+        const llm = new GeminiLlmClient(apiKey, MODEL_FAST, {
             feature: 'analyzeWordPastorally',
             userId: request.auth?.uid,
         });

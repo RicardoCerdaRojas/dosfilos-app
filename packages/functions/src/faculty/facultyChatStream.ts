@@ -6,6 +6,7 @@ import { recordLlmUsage } from '../llm/llmUsageRecorder';
 import { LLM_PRICING } from '../llm/llmCost';
 import { consumeRateLimitToken } from '../shared/rateLimit';
 import * as admin from 'firebase-admin';
+import { MODEL_FAST } from '../llm/modelCatalog';
 
 /**
  * Chat de Faculty en el SERVIDOR, con streaming.
@@ -110,7 +111,7 @@ export const facultyChatStream = onRequest(
 
         const hasAttachments = Array.isArray(body.attachments) && body.attachments.length > 0;
         const model = String(
-            (hasAttachments ? body.visionModel : body.model) ?? 'gemini-2.5-flash',
+            (hasAttachments ? body.visionModel : body.model) ?? MODEL_FAST,
         );
         if (!(model in LLM_PRICING)) {
             res.status(400).json({ error: `Modelo no autorizado: ${model}` });

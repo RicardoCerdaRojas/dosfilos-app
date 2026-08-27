@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { ILlmClient, LlmGenerateOptions } from './LlmClient';
 import { recordLlmUsage, type LlmUsageContext } from './llmUsageRecorder';
+import { MODEL_FAST } from './modelCatalog';
 
 /**
  * Gemini adapter for the thin `ILlmClient` port (Phase 2.5, Q7 / ADR-025).
@@ -19,7 +20,7 @@ export class GeminiLlmClient implements ILlmClient {
      */
     constructor(
         private readonly apiKey: string,
-        private readonly modelName: string = 'gemini-2.5-flash',
+        private readonly modelName: string = MODEL_FAST,
         private readonly usage?: LlmUsageContext,
     ) {}
 

@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { GeminiLlmClient } from '../llm/GeminiLlmClient';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
+import { MODEL_FAST } from '../llm/modelCatalog';
 
 /**
  * ADR-035 — detector del perfil del pasaje (Capa 1), modo SHADOW.
@@ -225,7 +226,7 @@ export const profilePassage = onCall(
 
         // Vía el port: el adapter mide el consumo (tokens → USD) que antes se
         // perdía al llamar al SDK directo. Mismo modelo, misma config.
-        const llm = new GeminiLlmClient(apiKey, 'gemini-2.5-flash', {
+        const llm = new GeminiLlmClient(apiKey, MODEL_FAST, {
             feature: 'profilePassage',
             userId: request.auth?.uid,
         });
