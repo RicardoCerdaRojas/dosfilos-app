@@ -55,7 +55,7 @@
 3 packages/web/src/pages/admin/AdminEmailPreviews.tsx
 11 packages/web/src/pages/admin/AdminLeadMagnets.tsx
 8 packages/web/src/pages/admin/AnalyticsDashboard.tsx
-61 packages/web/src/pages/admin/CoreLibraryAdmin.tsx
+39 packages/web/src/pages/admin/CoreLibraryAdmin.tsx
 4 packages/web/src/pages/admin/DoxologicalShadowDashboard.tsx
 1 packages/web/src/pages/admin/GeographicDashboard.tsx
 7 packages/web/src/pages/admin/HintCatalogPage.tsx
@@ -64,6 +64,9 @@
 9 packages/web/src/pages/admin/TutorEditor.tsx
 3 packages/web/src/pages/admin/TutorManagement.tsx
 5 packages/web/src/pages/admin/VerifiedMisreadingsAdmin.tsx
+9 packages/web/src/pages/admin/coreLibrary/AddDocsDialog.tsx
+4 packages/web/src/pages/admin/coreLibrary/EditDocDialog.tsx
+9 packages/web/src/pages/admin/coreLibrary/StoreDialogs.tsx
 2 packages/web/src/pages/admin/lexicon/LexiconEntryEditor.tsx
 1 packages/web/src/pages/auth/forgot-password.tsx
 3 packages/web/src/pages/bible/BiblePage.tsx
