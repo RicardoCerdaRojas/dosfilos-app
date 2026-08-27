@@ -195,6 +195,20 @@ export const FEATURE_FLAG_NAMES = [
     'contra_scan',
 
     /**
+     * Fase 4 sub-feature 3 — LA VOZ DEL PREDICADOR. Pasa fragmentos de sermones
+     * que ESTE pastor armó en el taller como muestra de estilo, para que el
+     * borrador generado suene a él y no a un texto genérico.
+     *
+     * Sólo aprende de sermones armados en el taller: uno generado de
+     * una vez enseñaría NUESTRA voz de vuelta, un bucle que se cierra sobre sí
+     * mismo. Sin material suyo no hace nada y no avisa de ninguna carencia.
+     *
+     * Nada sale de su cuenta y nada entrena a ningún modelo: es su propio texto
+     * en su propia generación. Requiere `pastoral_fidelity_flow`. Default off.
+     */
+    'voice_fingerprint',
+
+    /**
      * Conducción afectiva (manifiesto de conducción formativa v1.3) — gatea el
      * botón "Conducir el corazón" en el panel de construcción del Estudio Madre:
      * la conducción guiada C1–C5 que elicita la dimensión afectiva (`aplicacion`
@@ -301,6 +315,7 @@ export const FEATURE_FLAG_PREREQUISITES: Record<FeatureFlagName, readonly Featur
     study_depth: ['pastoral_fidelity_flow'],
     fidelity_pass: ['pastoral_fidelity_flow'],
     contra_scan: ['pastoral_fidelity_flow'],
+    voice_fingerprint: ['pastoral_fidelity_flow'],
     conduccion_corazon: ['pastoral_fidelity_flow'],
     passage_profile: ['pastoral_fidelity_flow'],
     // Enforce cuelga del flag de sombra: no se puede enforce sin perfilar antes

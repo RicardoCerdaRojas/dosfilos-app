@@ -509,6 +509,10 @@
         },
         "socratic_drafting": {
           "description": "ADR-037 — Socratic drafting by elements. The pastor decides which idea goes in each section (his own, or chosen/edited from a suggestion) and the prose is written afterwards. SPIKE: for now only the historical-context section, in the Drafting step."
+        },
+        "voice_fingerprint": {
+          "label": "Preacher's voice",
+          "description": "The generated draft mirrors HOW the pastor writes, using excerpts from sermons he assembled in the workshop. Never copies their content, only their form. With no sermons of his own it does nothing and says nothing."
         }
       }
     },

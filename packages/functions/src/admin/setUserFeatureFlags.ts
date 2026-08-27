@@ -19,6 +19,7 @@ export const ALLOWED_FLAGS = new Set<string>([
     'study_depth',
     'fidelity_pass',
     'contra_scan',
+    'voice_fingerprint',
     'conduccion_corazon',
     'passage_profile',
     'passage_profile_enforce',

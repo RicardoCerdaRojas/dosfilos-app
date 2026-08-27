@@ -12,6 +12,7 @@ import { buildRulesWithContext } from './augmentGenerationRules';
 import { buildSermonCitationManifest } from './buildSermonCitationManifest';
 import { draftIncludesCentralIdea, draftMissingParallelRefs } from './draftChecks';
 import { recordDraftShadows } from './recordDraftShadows';
+import { loadVoiceSamples } from './loadVoiceSamples';
 
 export interface DraftGenerationInput {
     homiletics: any;
@@ -24,6 +25,8 @@ export interface DraftGenerationInput {
     activeLanguage: 'es' | 'en';
     /** Enciende las sombras de medición. */
     shadowEnabled: boolean;
+    /** Enciende el aprendizaje de la voz del predicador (Fase 4). */
+    voiceEnabled: boolean;
     setDraft: (draft: SermonContent) => void;
     /** Guarda el borrador vigente en el historial. Devuelve si guardó algo. */
     archivarBorradorActual: (etiqueta: string) => Promise<boolean>;
@@ -82,6 +85,14 @@ export function useDraftGeneration(input: DraftGenerationInput) {
                   }
                 : undefined;
 
+            // FASE 4 — CÓMO SUENA CUANDO ESCRIBE ÉL. Se piden fragmentos de sus
+            // propios sermones del taller para que el borrador no salga con voz
+            // genérica. Sin material suyo devuelve una lista vacía y el prompt
+            // queda exactamente como hoy: silencio, no aviso de carencia.
+            const voiceSamples = input.voiceEnabled
+                ? await loadVoiceSamples({ userId: input.userId, currentPassage: input.passage })
+                : [];
+
             const rulesWithContext = await buildRulesWithContext({
                 rules: input.rules,
                 derivedContext: input.derivedContext,
@@ -100,7 +111,7 @@ export function useDraftGeneration(input: DraftGenerationInput) {
 
             const { draft: result } = await sermonGeneratorService.generateSermonDraft(
                 homiletics,
-                rulesWithContext,
+                voiceSamples.length > 0 ? { ...rulesWithContext, voiceSamples } : rulesWithContext,
                 draftConfig,
                 input.userId,
                 input.activeLanguage,

@@ -36,6 +36,8 @@ export function useDraftStep(t: TFunction, activeLanguage: 'es' | 'en') {
     } = useWizard();
 
     const draftShadowGate = useFeatureFlag('sermon_draft_shadow');
+    // Fase 4 — la voz del predicador. Apagado: el borrador sale como hoy.
+    const voiceGate = useFeatureFlag('voice_fingerprint');
     // ADR-037 — las decisiones viven en el contexto del wizard y se persisten
     // con el resto del progreso: el spike ya adjudicó que el modelo propone
     // bien, así que el esquema deja de ser provisional.
@@ -87,6 +89,7 @@ export function useDraftStep(t: TFunction, activeLanguage: 'es' | 'en') {
         homiletics, rules, config, derivedContext, sermonId,
         userId: user?.uid, passage, activeLanguage,
         shadowEnabled: draftShadowGate.enabled,
+        voiceEnabled: voiceGate.enabled,
         setDraft,
         archivarBorradorActual: canvas.historial.archivarBorradorActual,
         abrirHistorial: canvas.historial.abrirHistorial,

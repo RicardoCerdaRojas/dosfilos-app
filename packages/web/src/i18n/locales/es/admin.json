@@ -509,6 +509,10 @@
         },
         "socratic_drafting": {
           "description": "ADR-037 — redacción socrática por elementos. El pastor decide qué idea va en cada sección (la aporta él, o elige/edita una propuesta) y la prosa se escribe después. SPIKE: por ahora sólo la sección de contexto histórico, en el paso de Redacción."
+        },
+        "voice_fingerprint": {
+          "label": "Voz del predicador",
+          "description": "El borrador generado imita CÓMO escribe el pastor, usando fragmentos de sermones que él mismo armó en el taller. Nunca copia su contenido, sólo su forma. Sin sermones suyos no hace nada ni avisa de la carencia."
         }
       }
     },
