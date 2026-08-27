@@ -104,7 +104,7 @@ export class GeneratorChatService {
     initializeForSermon(
         sermonId: string,
         phase: ContentType,
-        options: { persistToFirestore?: boolean } = {},
+        options: { persistToFirestore?: boolean; adoptFromKey?: string } = {},
     ): void {
         this.currentSermonId = sermonId;
         this.currentPhase = phase;
@@ -117,6 +117,8 @@ export class GeneratorChatService {
         if (stored) {
             this.history = stored.messages;
             this.sourcesPerMessage = new Map(Object.entries(stored.sourcesPerMessage));
+        } else if (this.adoptHistoryFrom(options.adoptFromKey, sermonId, phase)) {
+            // La conversación viajó con el pastor: ver `adoptHistoryFrom`.
         } else {
             this.history = [];
             this.sourcesPerMessage.clear();
@@ -927,6 +929,41 @@ export class GeneratorChatService {
             console.warn('⚠️ [GeneratorChat] Failed to load history:', error);
             return null;
         }
+    }
+
+    /**
+     * LA CONVERSACIÓN VIAJA CON EL PASTOR CUANDO EL SERMÓN NACE.
+     *
+     * En el Paso 1 todavía no hay documento de sermón, así que el chat se guarda
+     * bajo una clave provisional (el id de la configuración). En cuanto el
+     * pastor genera la exégesis, el sermón se crea y la clave pasa a ser el
+     * `sermonId` — y hasta ahora el historial guardado bajo la clave vieja
+     * quedaba huérfano: la conversación desaparecía de la pantalla EN ESE MISMO
+     * INSTANTE, sin recargar nada, justo cuando el trabajo se ponía serio.
+     *
+     * Acá se adopta: se mueve el historial a la clave nueva, se vuelve a
+     * guardar —lo que además lo sube a Firestore, porque ahora sí hay sermón al
+     * que anclarlo, y así sobrevive al cambio de dispositivo— y se borra el
+     * rastro viejo para que no reaparezca en un sermón futuro.
+     *
+     * NUNCA PISA UN HISTORIAL EXISTENTE. Sólo se adopta cuando la clave nueva
+     * no tiene nada: si el sermón ya tenía conversación, la suya manda.
+     */
+    private adoptHistoryFrom(
+        adoptFromKey: string | undefined,
+        sermonId: string,
+        phase: ContentType,
+    ): boolean {
+        if (!adoptFromKey || adoptFromKey === sermonId) return false;
+
+        const heredado = this.loadHistory(adoptFromKey, phase);
+        if (!heredado || heredado.messages.length === 0) return false;
+
+        this.history = heredado.messages;
+        this.sourcesPerMessage = new Map(Object.entries(heredado.sourcesPerMessage));
+        this.saveHistory();
+        this.removeStoredHistory(adoptFromKey, phase);
+        return true;
     }
 
     private removeStoredHistory(sermonId: string, phase: ContentType): void {

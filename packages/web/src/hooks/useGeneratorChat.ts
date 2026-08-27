@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import {
     ContentType,
@@ -51,6 +51,8 @@ export function useGeneratorChat({
     // Chat State
     const [messages, setMessages] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    /** Clave con la que se guardó el chat en el render anterior. */
+    const previousChatKeyRef = useRef<string | null>(null);
 
     // Initialize Chat Service
     useEffect(() => {
@@ -66,7 +68,17 @@ export function useGeneratorChat({
         const chatKey = sermonId ?? config?.id;
         const persistToFirestore = !!sermonId;
         if (chatKey) {
-            generatorChatService.initializeForSermon(chatKey, phase, { persistToFirestore });
+            // LA CLAVE CAMBIA CUANDO EL SERMÓN NACE, y con ella se perdía la
+            // conversación: en el Paso 1 el chat se guarda bajo el id de la
+            // configuración, y al generar la exégesis pasa a guardarse bajo el
+            // `sermonId`. Sin decirle de dónde viene, el servicio abría un
+            // historial vacío y lo conversado se borraba de la pantalla EN ESE
+            // MISMO INSTANTE — sin recargar, justo cuando el trabajo se ponía
+            // serio. Pasarle la clave anterior deja que la conversación viaje.
+            const previa = previousChatKeyRef.current;
+            const adoptFromKey = previa && previa !== chatKey ? previa : undefined;
+            previousChatKeyRef.current = chatKey;
+            generatorChatService.initializeForSermon(chatKey, phase, { persistToFirestore, adoptFromKey });
             const history = generatorChatService.getHistory();
             if (history.length > 0) {
                 setMessages(history.map((m, idx) => ({
