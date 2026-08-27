@@ -275,6 +275,7 @@ export class FirebaseSermonRepository implements ISermonRepository {
             bibliography: sermon.bibliography ?? null,
             citationManifest: sermon.citationManifest ?? null,
             studyDepthSnapshot: sermon.studyDepthSnapshot ?? null,
+            authorshipSnapshot: sermon.authorshipSnapshot ?? null,
             fidelityReport: sermon.fidelityReport ? this.fidelityReportToFirestore(sermon.fidelityReport) : null,
             contraScanReport: sermon.contraScanReport ? this.contraScanReportToFirestore(sermon.contraScanReport) : null,
             versionOf: sermon.versionOf ?? null,
@@ -522,6 +523,19 @@ export class FirebaseSermonRepository implements ISermonRepository {
                     capturedAt:
                         d.studyDepthSnapshot.capturedAt?.toDate?.()
                         ?? d.studyDepthSnapshot.capturedAt
+                        ?? new Date(),
+                }
+                : undefined,
+            // `null` y ausente son lo mismo acá y los dos significan SIN MEDIR:
+            // un sermón anterior al taller no trae snapshot, y eso no es una
+            // medición de cero. Se deja `undefined` para que quien lo lea tenga
+            // que decidir explícitamente qué mostrar cuando no hay dato.
+            authorshipSnapshot: d.authorshipSnapshot && typeof d.authorshipSnapshot === 'object'
+                ? {
+                    ...d.authorshipSnapshot,
+                    capturedAt:
+                        d.authorshipSnapshot.capturedAt?.toDate?.()
+                        ?? d.authorshipSnapshot.capturedAt
                         ?? new Date(),
                 }
                 : undefined,

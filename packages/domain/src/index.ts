@@ -96,6 +96,7 @@ export * from './drafting/splitElementLines';
 export * from './drafting/classifyContribution';
 export * from './drafting/deriveSectionWalk';
 export * from './drafting/sectionReadiness';
+export * from './drafting/sermonAuthorship';
 export * from './greek-analyzer';
 export * from './shared/spanishRegister';
 export * from './drafting/sermonManuscriptStyle';

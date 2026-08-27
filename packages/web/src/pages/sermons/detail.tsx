@@ -45,6 +45,7 @@ import { toast } from 'sonner';
 import { SermonPreview } from '@/components/sermons/SermonPreview';
 import { SermonRepurposeSection } from '@/components/sermons/SermonRepurposeSection';
 import { SermonBibliographySection } from '@/components/sermons/SermonBibliographySection';
+import { SermonAuthorshipSection } from '@/components/sermons/SermonAuthorshipSection';
 import { SermonAttributionsSection } from '@/components/sermons/SermonAttributionsSection';
 import { PastoralSeedAuditPanel } from '@/components/sermons/PastoralSeedAuditPanel';
 import { SermonVersionBanner } from './components/detail/SermonVersionBanner';
@@ -565,6 +566,12 @@ export function SermonDetailPage() {
               <SermonBibliographySection
                 bibliography={sermon.bibliography}
                 manifest={sermon.citationManifest}
+              />
+              {/* ADR-037 — cómo se armó. No se dibuja para los sermones
+                  anteriores al taller: sin registro no se dice nada. */}
+              <SermonAuthorshipSection
+                snapshot={sermon.authorshipSnapshot}
+                liveElements={sermon.wizardProgress?.sectionElements}
               />
               <SermonAttributionsSection manifest={sermon.citationManifest} />
               <SermonRepurposeSection
