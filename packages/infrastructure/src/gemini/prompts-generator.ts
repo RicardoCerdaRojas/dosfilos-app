@@ -1,4 +1,4 @@
-import { CitationManifest, GenerationRules, ExegeticalStudy, HomileticalAnalysis, WorkflowPhase, PhaseConfiguration, DEFAULT_LANGUAGE, formatSermonPersonalizationBlock, opensBook, splitApplication } from '@dosfilos/domain';
+import { CitationManifest, GenerationRules, ExegeticalStudy, HomileticalAnalysis, WorkflowPhase, PhaseConfiguration, DEFAULT_LANGUAGE, formatSermonPersonalizationBlock, opensBook, splitApplication, buildVoiceBlock } from '@dosfilos/domain';
 import type { SupportedLanguage } from '@dosfilos/domain';
 // Guía de ilustraciones extraída de 90 ilustraciones REALES del fundador. Vive
 // en un .md editable, como las guías de homilética, para que se pueda afinar sin
@@ -732,9 +732,14 @@ ${analysis.exegeticalStudy.canonicalParallels!.map(p => `  • ${p.reference}${p
   // prompt instructions about tone/length) so the LLM's anchor is
   // the pastor's seed, not the homiletical analysis derived later.
   const pastoralSeedBlock = buildPastoralSeedBlock(rules.pastoralSeed);
+  // Fase 4 — cómo escribe ESTE pastor. Va DESPUÉS de la voz primaria y del
+  // prompt base, y es deliberado: la voz primaria dice QUÉ tiene que decir el
+  // sermón (su idea, sus observaciones) y esto dice CÓMO suena cuando lo dice
+  // él. Ponerlo antes lo dejaría compitiendo con el contenido que debe servir.
+  const voiceBlock = buildVoiceBlock(rules.voiceSamples ?? []);
 
   return `
-${pastoralSeedBlock}${BASE_SYSTEM_PROMPT}
+${pastoralSeedBlock}${BASE_SYSTEM_PROMPT}${voiceBlock}
 ${projectContextBlock}${paperContextBlock}${facultyContextBlock}${personalizationBlock}${citationContractBlock}
 FASE 3: REDACCIÓN DEL SERMÓN
 Objetivo: Redactar el contenido completo del sermón basado en el análisis previo.

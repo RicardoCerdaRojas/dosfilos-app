@@ -26,7 +26,15 @@ function readDomainFlagNames(): string[] {
         throw new Error(`No se pudo leer FEATURE_FLAG_NAMES en ${DOMAIN_USER_TS}`);
     }
     // Solo los literales de la lista; los comentarios de bloque no llevan comillas simples.
-    return [...block[1].matchAll(/'([a-z0-9_]+)'/g)].map((m) => m[1]);
+    // SE QUITAN LOS COMENTARIOS ANTES DE EXTRAER. La lista lleva un comentario
+    // largo por flag, y cualquier palabra entrecomillada ahí dentro —`'workshop'`
+    // dentro de una explicación— entraba como si fuera un flag: la prueba
+    // fallaba pidiendo registrar algo que no existe. Una baranda que se dispara
+    // en falso enseña a ignorarla, y entonces deja de proteger cuando importa.
+    const sinComentarios = block[1]
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\/\/.*$/gm, '');
+    return [...sinComentarios.matchAll(/'([a-z0-9_]+)'/g)].map((m) => m[1]);
 }
 
 describe('ALLOWED_FLAGS ↔ FEATURE_FLAG_NAMES', () => {

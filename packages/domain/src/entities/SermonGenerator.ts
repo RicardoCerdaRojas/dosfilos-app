@@ -366,6 +366,13 @@ export interface GenerationRules {
      * The LLM develops, never originates. Idea central must appear
      * verbatim; the post-gen verbatim check warns if it doesn't.
      */
+    /**
+     * Fase 4 — fragmentos de sermones que ESTE pastor armó, para que el
+     * borrador suene a él. Ausente cuando todavía no hay material suyo del que
+     * aprender: entonces el sermón se escribe como se escribe hoy y no se le
+     * avisa de ninguna carencia.
+     */
+    voiceSamples?: readonly { sermonId: string; title: string; excerpt: string }[];
     pastoralSeed?: {
         centralIdea: string;
         observations: string[];

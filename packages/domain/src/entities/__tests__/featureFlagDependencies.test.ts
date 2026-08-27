@@ -82,6 +82,7 @@ describe('getFlagDependents — descendientes activos (down con aviso)', () => {
                 'step3_genre_help',
                 'anchor_fidelity_enforce',
                 'socratic_drafting',
+                'voice_fingerprint',
             ].sort(),
         );
     });

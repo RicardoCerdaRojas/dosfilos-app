@@ -147,6 +147,8 @@ export type { GreekForm, TrainingUnit, ChatMessage as GreekTutorChatMessage, Use
 export * from './greek-tutor/syntax-analysis'; // 🏛️ Greek Syntax Analysis
 export * from './models/Plan'; // 🎯 Plan models (refactored system)
 export * from './llm/modelCatalog';
+export * from './voice/selectVoiceSamples';
+export * from './voice/buildVoiceBlock';
 
 
 // Multi-Agent Faculty Entities
