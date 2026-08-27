@@ -111,7 +111,10 @@ export function StepHomiletics() {
      * silenciosa (descripciones pegadas al punto equivocado al borrar o
      * reordenar) y eso tiene que ser testeable sin montar la UI.
      */
-    const applyContract = (patch: { proposition: string; points: { title: string; srcIndex: number | null }[] }) => {
+    const applyContract = (patch: {
+        proposition: string;
+        points: { title: string; application?: string; passageRef?: string; srcIndex: number | null }[];
+    }) => {
         if (!homiletics) return;
         setHomiletics(applyPropositionContract(homiletics, patch));
     };
@@ -464,6 +467,7 @@ export function StepHomiletics() {
                                   proposition: (
                                       <PropositionContractPanel
                                           homiletics={homiletics}
+                                          sermonPassage={passage}
                                           {...(rules?.pastoralSeed?.genre ? { genre: rules.pastoralSeed.genre } : {})}
                                           onApply={applyContract}
                                       />

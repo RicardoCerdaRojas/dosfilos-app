@@ -75,6 +75,8 @@ export interface WalkOutlinePoint {
      * cruzadas. Sólo se usa como respaldo: manda el versículo del título.
      */
     scriptureReferences?: string[];
+    /** El pasaje que el pastor escribió para este punto. */
+    passageRef?: string;
 }
 
 /** Palabra clave del estudio, con la significancia que el pastor le dio. */
@@ -172,6 +174,7 @@ export function deriveSectionWalk(input: WalkInput): WalkSection[] {
                   title: punto.title,
                   sermonPassage: input.sermonPassage,
                   scriptureReferences: punto.scriptureReferences,
+                  passageRef: punto.passageRef,
               })
             : undefined;
 

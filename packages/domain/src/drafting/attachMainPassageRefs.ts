@@ -21,7 +21,12 @@ export function attachMainPassageRefs(
     draft: SermonContent,
     input: {
         sermonPassage?: string;
-        points: readonly { title?: string; scriptureReferences?: readonly string[] }[];
+        points: readonly {
+            title?: string;
+            scriptureReferences?: readonly string[];
+            /** El que escribió el pastor, si lo escribió. Gana sobre todo. */
+            passageRef?: string;
+        }[];
     },
 ): SermonContent {
     const body = draft.body.map((punto, i) => {
@@ -33,6 +38,7 @@ export function attachMainPassageRefs(
             title: outline?.title ?? punto.point,
             sermonPassage: input.sermonPassage,
             scriptureReferences: outline?.scriptureReferences,
+            passageRef: outline?.passageRef,
         });
         return ref ? { ...punto, mainPassageRef: ref } : punto;
     });
