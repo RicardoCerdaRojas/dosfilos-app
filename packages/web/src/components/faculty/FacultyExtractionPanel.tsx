@@ -16,6 +16,13 @@ interface ExtractionButton {
     descKey: string;
 }
 
+/**
+ * PALETA CATEGÓRICA, NO SEMÁNTICA. Cada color distingue un TIPO de artefacto
+ * —sermón, estudio, devocional— de los demás; ninguno significa éxito o error.
+ * Con los tokens `success/warning/info` los siete botones quedarían del mismo
+ * color y el panel perdería la única señal que permite encontrar el que se
+ * busca sin leer las siete etiquetas.
+ */
 const EXTRACTION_BUTTONS: ExtractionButton[] = [
     { type: 'SERMON', icon: BookOpen, iconColor: 'text-emerald-600', labelKey: 'extraction.sermonOutline', descKey: 'extraction.sermonOutlineDesc' },
     { type: 'BIBLE_STUDY', icon: Briefcase, iconColor: 'text-blue-600', labelKey: 'extraction.bibleStudy', descKey: 'extraction.bibleStudyDesc' },
@@ -31,10 +38,10 @@ type Tab = 'tools' | 'generated' | 'study';
 interface FacultyExtractionPanelProps {
     isOpen: boolean;
     /** Open-state width in pixels. Driven by chat.tsx so the
-     *  RailDivider can resize the panel by mutating that state. */
+     *  PanelDivider can resize the panel by mutating that state. */
     width?: number;
     /** Optional — kept for legacy. The rail itself no longer
-     *  renders open/close affordances; the RailDivider on the
+     *  renders open/close affordances; the PanelDivider on the
      *  rail boundary owns those actions. */
     onToggle?: () => void;
     extractingType: string | null;

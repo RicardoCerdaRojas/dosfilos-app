@@ -13,7 +13,7 @@ import { useFacultyProjects } from '@/hooks/faculty/useFacultyProjects';
 import { type SermonOutline } from '@/components/faculty/SermonOutlinePreviewModal';
 import { FacultySessionSidebar } from '@/components/faculty/FacultySessionSidebar';
 import { FacultyExtractionPanel } from '@/components/faculty/FacultyExtractionPanel';
-import { RailDivider } from '@/components/ui/RailDivider';
+import { PanelDivider } from '@/components/ui/PanelDivider';
 import { FacultyChatMessages } from '@/components/faculty/FacultyChatMessages';
 import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
 import { GuidedSermonHeader } from '@/components/faculty/GuidedSermonHeader';
@@ -157,7 +157,7 @@ export function FacultyChatPage() {
     // carries to the other (the chat session inherits the home pick
     // and vice-versa).
     const [lengthPreference, setLengthPreference] = useResponseModePref();
-    // Rail widths are state-driven so the RailDivider can resize
+    // Los anchos viven en estado para que el PanelDivider los redimensione
     // them by mutating these. Sane defaults match the previous
     // hardcoded `w-64` / `w-[28rem]`; clamps live in the resize
     // handler below.
@@ -371,12 +371,19 @@ export function FacultyChatPage() {
                 />
 
                 {/*
-                 * Rail divider at the LEFT rail boundary. Click →
-                 * toggle. Drag → resize (clamped 200..400). When the
-                 * rail is closed, drag is disabled — only click opens.
+                 * Divisor del riel IZQUIERDO. Clic alterna; arrastrar
+                 * redimensiona (entre 200 y 400). Con el riel cerrado el
+                 * arrastre se desactiva: sólo el clic abre.
+                 *
+                 * MISMO DIVISOR QUE EL RESTO DE LA APLICACIÓN. Faculty usaba
+                 * `RailDivider`, que reservaba 12px de ancho en el layout con
+                 * la línea "centrada" adentro — o sea, un hueco entre paneles
+                 * con una raya en medio. `PanelDivider` ocupa 1px REAL y ES el
+                 * borde compartido, así que queda centrado por construcción y
+                 * los paneles quedan pegados.
                  */}
-                <RailDivider
-                    side="left"
+                <PanelDivider
+                    panelSide="left"
                     isOpen={isLeftSidebarOpen}
                     onToggle={toggleSidebar}
                     onResize={isLeftSidebarOpen
@@ -591,12 +598,11 @@ export function FacultyChatPage() {
                 </div>
 
                 {/*
-                 * Rail divider at the RIGHT panel boundary. Same
-                 * pattern as the left divider — click toggles,
-                 * drag resizes (clamped 360..640).
+                 * Divisor del panel DERECHO. Mismo patrón que el izquierdo:
+                 * clic alterna, arrastrar redimensiona (entre 360 y 640).
                  */}
-                <RailDivider
-                    side="right"
+                <PanelDivider
+                    panelSide="right"
                     isOpen={isRightSidebarOpen}
                     onToggle={() => setIsRightSidebarOpen(prev => !prev)}
                     onResize={isRightSidebarOpen
