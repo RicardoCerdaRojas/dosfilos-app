@@ -51,6 +51,16 @@ export interface CitationManifestEntry {
     sourceId: string;
     /** Library resource doc the chunk belongs to. */
     resourceId: string;
+    /**
+     * De qué biblioteca salió: la del pastor o la compartida (CORE).
+     *
+     * Decide si se le puede OFRECER ABRIR la fuente: la suya está en su
+     * biblioteca, la de CORE no aparece ahí y el enlace no llevaría a ninguna
+     * parte. AUSENTE en los sermones anteriores a este campo — y ausente NO se
+     * adivina: sin dato, no se ofrece el enlace. Es la misma regla que gobierna
+     * la procedencia del borrador y la autoría.
+     */
+    scope?: 'personal' | 'core';
     /** Specific chunk within the resource (for back-traceability). */
     chunkId: string;
     /** Snapshot at generation time so the renderer doesn't re-query. */

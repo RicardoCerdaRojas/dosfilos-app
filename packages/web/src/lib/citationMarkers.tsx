@@ -1,5 +1,7 @@
 import React from 'react';
-import { BookOpen } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { BookOpen, Library } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import type { CitationManifest } from '@dosfilos/domain';
@@ -92,7 +94,16 @@ interface CitationPopoverProps {
     entry: CitationManifest['entries'][number];
 }
 
+/**
+ * EL ÍNDIGO SE QUEDA, y es una decisión. Los neutros de este popover pasaron a
+ * tokens del tema —así respeta claro y oscuro sin variantes escritas a mano—,
+ * pero el índigo NO es un neutro ni un estado: es el color con el que la cita se
+ * distingue de la prosa del sermón, dentro y fuera del popover. Traducirlo a
+ * `primary` lo confundiría con las acciones de la aplicación, que es justo lo
+ * que no debe parecer: una cita no se pulsa para actuar, se consulta.
+ */
 function CitationPopover({ ordinal, entry }: CitationPopoverProps) {
+    const { t } = useTranslation('common');
     const author = entry.author?.trim();
     const page = entry.page?.trim();
     return (
@@ -114,14 +125,14 @@ function CitationPopover({ ordinal, entry }: CitationPopoverProps) {
                 </button>
             </PopoverTrigger>
             <PopoverContent className="w-80 text-sm p-0 overflow-hidden" side="top" align="center">
-                <div className="flex items-start gap-2 p-3 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-950/40 dark:to-zinc-900 border-b border-slate-100 dark:border-zinc-800">
+                <div className="flex items-start gap-2 p-3 bg-muted/40 border-b border-border">
                     <BookOpen className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
                     <div className="min-w-0">
-                        <div className="font-semibold text-slate-800 dark:text-slate-100 leading-tight">
+                        <div className="font-semibold text-foreground leading-tight">
                             {entry.title}
                         </div>
                         {author && (
-                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            <div className="text-xs text-muted-foreground mt-0.5">
                                 {author}
                             </div>
                         )}
@@ -130,14 +141,41 @@ function CitationPopover({ ordinal, entry }: CitationPopoverProps) {
                 <div className="p-3 space-y-2">
                     {page && (
                         <div className="text-xs">
-                            <span className="text-slate-500 dark:text-slate-400">Página: </span>
-                            <span className="font-medium text-slate-700 dark:text-slate-200">{page}</span>
+                            <span className="text-muted-foreground">Página: </span>
+                            <span className="font-medium text-foreground">{page}</span>
                         </div>
                     )}
                     {entry.excerpt && (
-                        <div className="text-xs text-slate-600 dark:text-slate-400 italic border-l-2 border-indigo-200 dark:border-indigo-900 pl-2">
+                        <div className="text-xs text-muted-foreground italic border-l-2 border-border pl-2">
                             {entry.excerpt}
                         </div>
+                    )}
+                    {/*
+                     * ABRIR EL LIBRO, no sólo saber su nombre.
+                     *
+                     * La cita dice título y página; llegar al libro era cosa del
+                     * pastor: abrir la biblioteca y buscarlo a mano entre
+                     * decenas. Este enlace lo lleva directo.
+                     *
+                     * SÓLO SI ES SUYO. Una cita de la biblioteca compartida no
+                     * aparece en la suya, y ofrecer un enlace que no lleva a
+                     * ninguna parte es peor que no ofrecerlo. Los sermones
+                     * anteriores a este dato tampoco lo llevan: sin saber de
+                     * dónde salió, no se adivina.
+                     */}
+                    {entry.scope === 'personal' && entry.resourceId && (
+                        <Link
+                            to={`/dashboard/library?resource=${encodeURIComponent(entry.resourceId)}`}
+                            className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                        >
+                            <Library className="h-3 w-3 shrink-0" />
+                            {t('citations.openInLibrary')}
+                        </Link>
+                    )}
+                    {entry.scope === 'core' && (
+                        <p className="text-[11px] text-muted-foreground">
+                            {t('citations.fromSharedLibrary')}
+                        </p>
                     )}
                     <a
                         href={`#${citationAnchorId(ordinal)}`}
@@ -150,7 +188,7 @@ function CitationPopover({ ordinal, entry }: CitationPopoverProps) {
                             setTimeout(() => el?.classList.remove('ring-2', 'ring-indigo-400'), 1500);
                         }}
                     >
-                        Ver en bibliografía →
+                        {t('citations.seeInBibliography')}
                     </a>
                 </div>
             </PopoverContent>

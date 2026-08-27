@@ -29,6 +29,20 @@ export interface RetrievedCitationChunk {
     score?: number;
     /** Legal flag — curated CORE sources set this; surfaced for downstream attribution. */
     publiclyCitable?: boolean;
+    /**
+     * DE DÓNDE SALIÓ, y no se deduce: lo estampa el selector, que es el único
+     * punto donde se sabe con certeza —recibe las dos listas por separado—.
+     *
+     * NO SE INFIERE DE `publiclyCitable`. Ése es un flag LEGAL (si la fuente se
+     * puede citar públicamente) y coincidir hoy con CORE es una casualidad de
+     * los datos, no una regla. Usarlo como procedencia mezclaría dos preguntas
+     * distintas y rompería el día que una fuente personal sea de dominio
+     * público.
+     *
+     * Sirve para saber si el pastor PUEDE abrir la fuente: la suya vive en su
+     * biblioteca; la de CORE, no.
+     */
+    scope?: 'personal' | 'core';
 }
 
 export interface SelectSermonCitationChunksOptions {
@@ -75,9 +89,11 @@ export function selectSermonCitationChunks(
         out.push(chunk);
     };
 
-    // Priority order: every personal hit before any CORE hit.
-    for (const c of rankedPersonal) pushUnique(c);
-    for (const c of rankedCore) pushUnique(c);
+    // Priority order: every personal hit before any CORE hit. Se estampa la
+    // procedencia acá porque acá es donde se sabe: una lista es suya y la otra
+    // es la compartida. Más abajo ya no hay forma de distinguirlas.
+    for (const c of rankedPersonal) pushUnique({ ...c, scope: 'personal' });
+    for (const c of rankedCore) pushUnique({ ...c, scope: 'core' });
 
     return out;
 }

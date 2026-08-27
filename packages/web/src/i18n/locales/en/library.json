@@ -1,328 +1,330 @@
 {
-    "header": {
-        "category": "Your environment · Library",
-        "title": "Library",
-        "metaCount_one": "{{count}} resource",
-        "metaCount_other": "{{count}} resources",
-        "metaReady_one": "{{count}} ready",
-        "metaReady_other": "{{count}} ready",
-        "metaPending": "{{count}} to process",
-        "addButton": "Add resource",
-        "closeButton": "Close"
+  "header": {
+    "category": "Your environment · Library",
+    "title": "Library",
+    "metaCount_one": "{{count}} resource",
+    "metaCount_other": "{{count}} resources",
+    "metaReady_one": "{{count}} ready",
+    "metaReady_other": "{{count}} ready",
+    "metaPending": "{{count}} to process",
+    "addButton": "Add resource",
+    "closeButton": "Close"
+  },
+  "attentionCallout": {
+    "label": "Attention required",
+    "title_one": "{{count}} resource to process",
+    "title_other": "{{count}} resources to process",
+    "description": "Processing prepares a resource for search — only ready resources can be cited as sources in projects and theological queries.",
+    "actionButton": "Process pending"
+  },
+  "statusCallout": {
+    "extracting": {
+      "label": "In progress",
+      "title_one": "{{count}} resource extracting text",
+      "title_other": "{{count}} resources extracting text",
+      "description": "This can take several minutes depending on the document's size and complexity. No action needed — indexing runs automatically once extraction finishes."
     },
-    "attentionCallout": {
-        "label": "Attention required",
-        "title_one": "{{count}} resource to process",
-        "title_other": "{{count}} resources to process",
-        "description": "Processing prepares a resource for search — only ready resources can be cited as sources in projects and theological queries.",
-        "actionButton": "Process pending"
+    "failed": {
+      "label": "Extraction failed",
+      "title_one": "{{count}} resource with extraction error",
+      "title_other": "{{count}} resources with extraction error",
+      "description": "Something failed while processing the file. Check each affected resource below and either delete or re-upload it."
+    }
+  },
+  "progress": {
+    "processing": "Processing {{current}}/{{total}} — {{title}}"
+  },
+  "upload": {
+    "sectionLabel": "New resource",
+    "fileLabel": "File",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Document title",
+    "authorLabel": "Author",
+    "authorPlaceholder": "Author name",
+    "categoryLabel": "Category",
+    "uploadButton": "Upload",
+    "fileSizeWarning": "File >50MB: extraction takes longer (cap: 250MB)",
+    "modeLabel": "Processing mode",
+    "modeStandardTitle": "Standard",
+    "modeStandardDescription": "Narrative books, essays and sermons (up to ~600 pages). Consumes standard pages.",
+    "modePremiumTitle": "Premium",
+    "modePremiumDescription": "Tables, multi-column and scanned (up to ~1000 pages). Consumes premium pages.",
+    "tierUnavailableHint": "Not available for files over {{capMB}}MB",
+    "tierCalloutPremiumOnly": "This file ({{sizeMB}}MB) exceeds the Premium limit ({{premiumCapMB}}MB). Premium is disabled; Standard will be used.",
+    "tierCalloutStandardOnly": "This file ({{sizeMB}}MB) exceeds the Standard limit ({{standardCapMB}}MB). Standard is disabled; Premium still handles it.",
+    "tierCalloutBoth": "This file ({{sizeMB}}MB) exceeds the Premium ({{premiumCapMB}}MB) and Standard ({{standardCapMB}}MB) limits. It will be processed with Basic (free, reduced quality).",
+    "smartMatchLabel": "Detected from title",
+    "smartMatchScope": {
+      "whole-bible": "scope: whole Bible",
+      "whole-testament": "scope: whole testament",
+      "book": "scope: book",
+      "pericope": "scope: pericope"
+    }
+  },
+  "filters": {
+    "searchPlaceholder": "Search title or author",
+    "allCategories": "All categories",
+    "viewGridTitle": "Grid view",
+    "viewListTitle": "List view"
+  },
+  "empty": {
+    "titleEmpty": "Your library is empty",
+    "titleNoResults": "No results",
+    "descriptionEmpty": "Upload your first PDF or EPUB to start using it as a source in projects and queries.",
+    "descriptionNoResults": "Try different search terms or change the category filter.",
+    "ctaFirstResource": "Add first resource"
+  },
+  "card": {
+    "deleting": "Deleting…",
+    "metadataIncomplete": "Metadata missing",
+    "metadataIncompleteHint": "Bible-book coverage is missing. Edit so this resource appears in the smart paper search.",
+    "systemSourceLabel": "System",
+    "systemSourceHint": "Preloaded by the platform. Available to everyone without consuming your quota; read-only.",
+    "metaPagesEstimated": "~{{count}} p. (est.)",
+    "metaPagesActual_one": "{{count}} page",
+    "metaPagesActual_other": "{{count}} pages",
+    "metaPagesTitleActual": "Actual pages",
+    "metaPagesTitleEstimated": "Estimated pages (approx.)",
+    "actions": {
+      "preview": "View document",
+      "edit": "Edit book details",
+      "process": "Process",
+      "reprocess": "Reprocess",
+      "retryPremium": "Retry with Premium",
+      "cancelExtraction": "Cancel processing",
+      "moreActions": "More actions",
+      "configurePhases": "Configure phases",
+      "assignToCore": "Assign to Core",
+      "delete": "Delete"
+    }
+  },
+  "status": {
+    "pending": "Queued",
+    "processing": "Processing…",
+    "failed": "Processing error",
+    "verifying": "Verifying",
+    "indexing": "Indexing…",
+    "ready": "Ready",
+    "notReady": "To process"
+  },
+  "stepper": {
+    "ariaLabel": "Processing progress",
+    "elapsed": "Processing for {{duration}}",
+    "estimated": "{{duration}} estimated",
+    "phase": {
+      "uploading": "Uploading",
+      "extracting": "Extracting",
+      "indexing": "Indexing",
+      "ready": "Ready"
+    }
+  },
+  "engine": {
+    "llamaparse": "Premium",
+    "llamaparseHint": "Processed in premium mode — tables, multi-column and specialized content preserved",
+    "gemini": "Standard",
+    "geminiHint": "Processed in standard mode — narrative text, essays and sermons",
+    "pdfparse": "Basic",
+    "pdfparseHint": "Processed with the basic extractor — reduced quality; consider reprocessing"
+  },
+  "stores": {
+    "exegesis": "Exegesis",
+    "homiletics": "Homiletics",
+    "generic": "Generic",
+    "exegesisTitle": "Assigned to Core Library: Exegesis",
+    "homileticsTitle": "Assigned to Core Library: Homiletics",
+    "genericTitle": "Assigned to Core Library: Generic"
+  },
+  "phases": {
+    "exegesis": "Exegesis",
+    "homiletics": "Homiletics",
+    "drafting": "Drafting"
+  },
+  "metadataEditor": {
+    "scopeLabel": "Coverage",
+    "scope": {
+      "pericope": "Pericope",
+      "book": "Book",
+      "whole-testament": "Testament",
+      "whole-bible": "Whole Bible"
     },
-    "statusCallout": {
-        "extracting": {
-            "label": "In progress",
-            "title_one": "{{count}} resource extracting text",
-            "title_other": "{{count}} resources extracting text",
-            "description": "This can take several minutes depending on the document's size and complexity. No action needed — indexing runs automatically once extraction finishes."
-        },
-        "failed": {
-            "label": "Extraction failed",
-            "title_one": "{{count}} resource with extraction error",
-            "title_other": "{{count}} resources with extraction error",
-            "description": "Something failed while processing the file. Check each affected resource below and either delete or re-upload it."
-        }
+    "scopeHint": {
+      "pericope": "Narrow study of a passage (article, short monograph).",
+      "book": "Commentary or monograph on one or more books.",
+      "whole-testament": "Lexicon, grammar or reference for the full OT or NT.",
+      "whole-bible": "Dictionary, systematic theology or cross-canon reference."
     },
-    "progress": {
-        "processing": "Processing {{current}}/{{total}} — {{title}}"
+    "booksLabel": "Bible books covered",
+    "booksHint": "Pick the books this resource covers. Allows it to surface in the smart paper search.",
+    "booksNotApplicable": "Not applicable for this coverage — the resource is treated as available for any passage.",
+    "selectedBooksLabel": "Selected books",
+    "removeBookAria": "Remove {{book}}",
+    "bookPickerPlaceholder": "Add books…",
+    "bookPickerSelected_one": "{{count}} book selected",
+    "bookPickerSelected_other": "{{count}} books selected",
+    "bookSearchPlaceholder": "Search book…",
+    "bookSearchEmpty": "No results",
+    "testamentOT": "Old Testament",
+    "testamentNT": "New Testament"
+  },
+  "deleteDialog": {
+    "title": "Delete resource?",
+    "description": "You are about to delete",
+    "warning": "This action cannot be undone and will also delete the processing data.",
+    "cancel": "Cancel",
+    "confirm": "Delete"
+  },
+  "editModal": {
+    "title": "Edit Resource",
+    "description": "Edit the document details.",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Document title",
+    "authorLabel": "Author",
+    "authorPlaceholder": "Author name",
+    "categoryLabel": "Category",
+    "categoryOptions": {
+      "theology": "Systematic Theology",
+      "grammar": "Grammar / Languages",
+      "criticalText": "Critical Text",
+      "commentary": "Biblical Commentary",
+      "exegeticalCommentary": "Exegetical Commentary",
+      "theologicalDictionary": "Theological Dictionary",
+      "bibleDictionary": "Bible Dictionary",
+      "historicalContext": "Historical/Cultural Background",
+      "biblicalSurvey": "Biblical Survey / Introduction",
+      "article": "Article / Paper",
+      "other": "Other"
     },
-    "upload": {
-        "sectionLabel": "New resource",
-        "fileLabel": "File",
-        "titleLabel": "Title",
-        "titlePlaceholder": "Document title",
-        "authorLabel": "Author",
-        "authorPlaceholder": "Author name",
-        "categoryLabel": "Category",
-        "uploadButton": "Upload",
-        "fileSizeWarning": "File >50MB: extraction takes longer (cap: 250MB)",
-        "modeLabel": "Processing mode",
-        "modeStandardTitle": "Standard",
-        "modeStandardDescription": "Narrative books, essays and sermons (up to ~600 pages). Consumes standard pages.",
-        "modePremiumTitle": "Premium",
-        "modePremiumDescription": "Tables, multi-column and scanned (up to ~1000 pages). Consumes premium pages.",
-        "tierUnavailableHint": "Not available for files over {{capMB}}MB",
-        "tierCalloutPremiumOnly": "This file ({{sizeMB}}MB) exceeds the Premium limit ({{premiumCapMB}}MB). Premium is disabled; Standard will be used.",
-        "tierCalloutStandardOnly": "This file ({{sizeMB}}MB) exceeds the Standard limit ({{standardCapMB}}MB). Standard is disabled; Premium still handles it.",
-        "tierCalloutBoth": "This file ({{sizeMB}}MB) exceeds the Premium ({{premiumCapMB}}MB) and Standard ({{standardCapMB}}MB) limits. It will be processed with Basic (free, reduced quality).",
-        "smartMatchLabel": "Detected from title",
-        "smartMatchScope": {
-            "whole-bible": "scope: whole Bible",
-            "whole-testament": "scope: whole testament",
-            "book": "scope: book",
-            "pericope": "scope: pericope"
-        }
-    },
-    "filters": {
-        "searchPlaceholder": "Search title or author",
-        "allCategories": "All categories",
-        "viewGridTitle": "Grid view",
-        "viewListTitle": "List view"
-    },
-    "empty": {
-        "titleEmpty": "Your library is empty",
-        "titleNoResults": "No results",
-        "descriptionEmpty": "Upload your first PDF or EPUB to start using it as a source in projects and queries.",
-        "descriptionNoResults": "Try different search terms or change the category filter.",
-        "ctaFirstResource": "Add first resource"
-    },
-    "card": {
-        "deleting": "Deleting…",
-        "metadataIncomplete": "Metadata missing",
-        "metadataIncompleteHint": "Bible-book coverage is missing. Edit so this resource appears in the smart paper search.",
-        "systemSourceLabel": "System",
-        "systemSourceHint": "Preloaded by the platform. Available to everyone without consuming your quota; read-only.",
-        "metaPagesEstimated": "~{{count}} p. (est.)",
-        "metaPagesActual_one": "{{count}} page",
-        "metaPagesActual_other": "{{count}} pages",
-        "metaPagesTitleActual": "Actual pages",
-        "metaPagesTitleEstimated": "Estimated pages (approx.)",
-        "actions": {
-            "preview": "View document",
-            "edit": "Edit book details",
-            "process": "Process",
-            "reprocess": "Reprocess",
-            "retryPremium": "Retry with Premium",
-            "cancelExtraction": "Cancel processing",
-            "moreActions": "More actions",
-            "configurePhases": "Configure phases",
-            "assignToCore": "Assign to Core",
-            "delete": "Delete"
-        }
-    },
-    "status": {
-        "pending": "Queued",
-        "processing": "Processing…",
-        "failed": "Processing error",
-        "verifying": "Verifying",
-        "indexing": "Indexing…",
-        "ready": "Ready",
-        "notReady": "To process"
-    },
-    "stepper": {
-        "ariaLabel": "Processing progress",
-        "elapsed": "Processing for {{duration}}",
-        "estimated": "{{duration}} estimated",
-        "phase": {
-            "uploading": "Uploading",
-            "extracting": "Extracting",
-            "indexing": "Indexing",
-            "ready": "Ready"
-        }
-    },
-    "engine": {
-        "llamaparse": "Premium",
-        "llamaparseHint": "Processed in premium mode — tables, multi-column and specialized content preserved",
-        "gemini": "Standard",
-        "geminiHint": "Processed in standard mode — narrative text, essays and sermons",
-        "pdfparse": "Basic",
-        "pdfparseHint": "Processed with the basic extractor — reduced quality; consider reprocessing"
-    },
-    "stores": {
-        "exegesis": "Exegesis",
-        "homiletics": "Homiletics",
-        "generic": "Generic",
-        "exegesisTitle": "Assigned to Core Library: Exegesis",
-        "homileticsTitle": "Assigned to Core Library: Homiletics",
-        "genericTitle": "Assigned to Core Library: Generic"
-    },
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "phaseModal": {
+    "title": "Preferred Phases",
+    "description": "Choose the sermon phases where this document should be prioritized when the assistant queries your library",
+    "byAuthor": "{{title}} by {{author}}",
     "phases": {
-        "exegesis": "Exegesis",
-        "homiletics": "Homiletics",
-        "drafting": "Drafting"
+      "exegesisLabel": "Exegesis",
+      "exegesisDescription": "Expert in analyzing the original biblical text",
+      "homileticsLabel": "Homiletics",
+      "homileticsDescription": "Expert in structuring the sermon",
+      "draftingLabel": "Drafting",
+      "draftingDescription": "Expert in writing the final content"
     },
-    "metadataEditor": {
-        "scopeLabel": "Coverage",
-        "scope": {
-            "pericope": "Pericope",
-            "book": "Book",
-            "whole-testament": "Testament",
-            "whole-bible": "Whole Bible"
-        },
-        "scopeHint": {
-            "pericope": "Narrow study of a passage (article, short monograph).",
-            "book": "Commentary or monograph on one or more books.",
-            "whole-testament": "Lexicon, grammar or reference for the full OT or NT.",
-            "whole-bible": "Dictionary, systematic theology or cross-canon reference."
-        },
-        "booksLabel": "Bible books covered",
-        "booksHint": "Pick the books this resource covers. Allows it to surface in the smart paper search.",
-        "booksNotApplicable": "Not applicable for this coverage — the resource is treated as available for any passage.",
-        "selectedBooksLabel": "Selected books",
-        "removeBookAria": "Remove {{book}}",
-        "bookPickerPlaceholder": "Add books…",
-        "bookPickerSelected_one": "{{count}} book selected",
-        "bookPickerSelected_other": "{{count}} books selected",
-        "bookSearchPlaceholder": "Search book…",
-        "bookSearchEmpty": "No results",
-        "testamentOT": "Old Testament",
-        "testamentNT": "New Testament"
+    "cancel": "Cancel",
+    "save": "Save",
+    "toastSuccess": "Phase preferences updated",
+    "toastError": "Error updating preferences"
+  },
+  "coreStoresModal": {
+    "title": "Configure Core Stores",
+    "description": "Choose which Core Library stores include this document",
+    "byAuthor": "{{title}} by {{author}}",
+    "documentInStores_one": "✓ Document in {{count}} store",
+    "documentInStores_other": "✓ Document in {{count}} stores",
+    "stores": {
+      "exegesisLabel": "Exegesis",
+      "exegesisDescription": "Greek/Hebrew lexicons, hermeneutics, grammar",
+      "homileticsLabel": "Homiletics",
+      "homileticsDescription": "Preaching, systematic theology, sermons",
+      "genericLabel": "Generic",
+      "genericDescription": "General-use resources for any context",
+      "customDescription": "Custom context"
     },
-    "deleteDialog": {
-        "title": "Delete resource?",
-        "description": "You are about to delete",
-        "warning": "This action cannot be undone and will also delete the processing data.",
-        "cancel": "Cancel",
-        "confirm": "Delete"
-    },
-    "editModal": {
-        "title": "Edit Resource",
-        "description": "Edit the document details.",
-        "titleLabel": "Title",
-        "titlePlaceholder": "Document title",
-        "authorLabel": "Author",
-        "authorPlaceholder": "Author name",
-        "categoryLabel": "Category",
-        "categoryOptions": {
-            "theology": "Systematic Theology",
-            "grammar": "Grammar / Languages",
-            "criticalText": "Critical Text",
-            "commentary": "Biblical Commentary",
-            "exegeticalCommentary": "Exegetical Commentary",
-            "theologicalDictionary": "Theological Dictionary",
-            "bibleDictionary": "Bible Dictionary",
-            "historicalContext": "Historical/Cultural Background",
-            "biblicalSurvey": "Biblical Survey / Introduction",
-            "article": "Article / Paper",
-            "other": "Other"
-        },
-        "cancel": "Cancel",
-        "save": "Save"
-    },
-    "phaseModal": {
-        "title": "Preferred Phases",
-        "description": "Choose the sermon phases where this document should be prioritized when the assistant queries your library",
-        "byAuthor": "{{title}} by {{author}}",
-        "phases": {
-            "exegesisLabel": "Exegesis",
-            "exegesisDescription": "Expert in analyzing the original biblical text",
-            "homileticsLabel": "Homiletics",
-            "homileticsDescription": "Expert in structuring the sermon",
-            "draftingLabel": "Drafting",
-            "draftingDescription": "Expert in writing the final content"
-        },
-        "cancel": "Cancel",
-        "save": "Save",
-        "toastSuccess": "Phase preferences updated",
-        "toastError": "Error updating preferences"
-    },
-    "coreStoresModal": {
-        "title": "Configure Core Stores",
-        "description": "Choose which Core Library stores include this document",
-        "byAuthor": "{{title}} by {{author}}",
-        "documentInStores_one": "✓ Document in {{count}} store",
-        "documentInStores_other": "✓ Document in {{count}} stores",
-        "stores": {
-            "exegesisLabel": "Exegesis",
-            "exegesisDescription": "Greek/Hebrew lexicons, hermeneutics, grammar",
-            "homileticsLabel": "Homiletics",
-            "homileticsDescription": "Preaching, systematic theology, sermons",
-            "genericLabel": "Generic",
-            "genericDescription": "General-use resources for any context",
-            "customDescription": "Custom context"
-        },
-        "cancel": "Cancel",
-        "save": "Save",
-        "toastSuccessAdded_one": "Added to {{count}} Core store",
-        "toastSuccessAdded_other": "Added to {{count}} Core stores",
-        "toastSuccessRemoved": "Removed from all Core stores",
-        "toastError": "Error updating stores"
-    },
-    "balance": {
-        "title": "Processing pages",
-        "subtitle": "Available balance for document extraction",
-        "standard": "Standard",
-        "premium": "Premium",
-        "exegesis": "Studies",
-        "standardHelp": "Narrative books, essays and sermons (up to ~600 pages)",
-        "premiumHelp": "Tables, multi-column and scanned (up to ~1000 pages)",
-        "exegesisHelp": "Academic verse-by-verse papers",
-        "exegesisNoAccess": "Available on Pro and Team plans",
-        "split": "Plan: {{plan}} · Packs: {{pack}}",
-        "buyButton": "Buy pages",
-        "loading": "Loading balance…",
-        "redirecting": "Redirecting to Stripe…",
-        "checkoutError": "Error creating checkout session",
-        "purchaseSuccess": "Purchase confirmed! Your balance updates in seconds.",
-        "purchaseCanceled": "Purchase canceled"
-    },
-    "creditPacks": {
-        "title": "Buy processing pages",
-        "subtitle": "Pages don't expire for 12 months from purchase date.",
-        "standardHeader": "Standard pages (Gemini)",
-        "standardHelp": "For narrative books, essays, sermons — low cost, high speed.",
-        "premiumHeader": "Premium pages (LlamaParse)",
-        "premiumHelp": "For complex tables, multi-column, scanned PDFs — maximum fidelity.",
-        "exegesisHeader": "Academic studies",
-        "exegesisHelp": "USD credit for verse-by-verse papers. 1 study ≈ $2.",
-        "studies_one": "{{count}} study",
-        "studies_other": "{{count}} studies",
-        "perStudy": "${{rate}}/study",
-        "pages_one": "{{count}} page",
-        "pages_other": "{{count}} pages",
-        "perPage": "${{rate}}/page",
-        "buy": "Buy",
-        "close": "Close"
-    },
-    "metadataBackfill": {
-        "title_one": "{{count}} resource missing Bible book info",
-        "title_other": "{{count}} resources missing Bible book info",
-        "body": "We can infer the books from the title (BHQ → whole OT, \"2 Peter & Jude\" → 2 Peter + Jude, etc.) and fill them in automatically. We only write when the match is clear; the rest you can edit manually.",
-        "cta_one": "Detect ({{count}})",
-        "cta_other": "Detect ({{count}})",
-        "running": "Detecting…",
-        "dismiss": "Dismiss",
-        "summary": {
-            "updated_one": "✨ {{count}} resource updated",
-            "updated_other": "✨ {{count}} resources updated",
-            "noUpdates": "None could be detected automatically",
-            "manual_one": "{{count}} without a confident match — edit manually from the resource.",
-            "manual_other": "{{count}} without a confident match — edit manually from each resource.",
-            "manualWithFailures": "{{manual}} without a confident match. {{failed}} save errors — try again."
-        },
-        "toast": {
-            "success_one": "{{count}} resource updated with detected books",
-            "success_other": "{{count}} resources updated with detected books",
-            "partial": "{{updated}} updated, {{failed}} save errors",
-            "allSkipped": "No title had enough signal to infer books automatically",
-            "error": "Error running detection. Try again."
-        }
+    "cancel": "Cancel",
+    "save": "Save",
+    "toastSuccessAdded_one": "Added to {{count}} Core store",
+    "toastSuccessAdded_other": "Added to {{count}} Core stores",
+    "toastSuccessRemoved": "Removed from all Core stores",
+    "toastError": "Error updating stores"
+  },
+  "balance": {
+    "title": "Processing pages",
+    "subtitle": "Available balance for document extraction",
+    "standard": "Standard",
+    "premium": "Premium",
+    "exegesis": "Studies",
+    "standardHelp": "Narrative books, essays and sermons (up to ~600 pages)",
+    "premiumHelp": "Tables, multi-column and scanned (up to ~1000 pages)",
+    "exegesisHelp": "Academic verse-by-verse papers",
+    "exegesisNoAccess": "Available on Pro and Team plans",
+    "split": "Plan: {{plan}} · Packs: {{pack}}",
+    "buyButton": "Buy pages",
+    "loading": "Loading balance…",
+    "redirecting": "Redirecting to Stripe…",
+    "checkoutError": "Error creating checkout session",
+    "purchaseSuccess": "Purchase confirmed! Your balance updates in seconds.",
+    "purchaseCanceled": "Purchase canceled"
+  },
+  "creditPacks": {
+    "title": "Buy processing pages",
+    "subtitle": "Pages don't expire for 12 months from purchase date.",
+    "standardHeader": "Standard pages (Gemini)",
+    "standardHelp": "For narrative books, essays, sermons — low cost, high speed.",
+    "premiumHeader": "Premium pages (LlamaParse)",
+    "premiumHelp": "For complex tables, multi-column, scanned PDFs — maximum fidelity.",
+    "exegesisHeader": "Academic studies",
+    "exegesisHelp": "USD credit for verse-by-verse papers. 1 study ≈ $2.",
+    "studies_one": "{{count}} study",
+    "studies_other": "{{count}} studies",
+    "perStudy": "${{rate}}/study",
+    "pages_one": "{{count}} page",
+    "pages_other": "{{count}} pages",
+    "perPage": "${{rate}}/page",
+    "buy": "Buy",
+    "close": "Close"
+  },
+  "metadataBackfill": {
+    "title_one": "{{count}} resource missing Bible book info",
+    "title_other": "{{count}} resources missing Bible book info",
+    "body": "We can infer the books from the title (BHQ → whole OT, \"2 Peter & Jude\" → 2 Peter + Jude, etc.) and fill them in automatically. We only write when the match is clear; the rest you can edit manually.",
+    "cta_one": "Detect ({{count}})",
+    "cta_other": "Detect ({{count}})",
+    "running": "Detecting…",
+    "dismiss": "Dismiss",
+    "summary": {
+      "updated_one": "✨ {{count}} resource updated",
+      "updated_other": "✨ {{count}} resources updated",
+      "noUpdates": "None could be detected automatically",
+      "manual_one": "{{count}} without a confident match — edit manually from the resource.",
+      "manual_other": "{{count}} without a confident match — edit manually from each resource.",
+      "manualWithFailures": "{{manual}} without a confident match. {{failed}} save errors — try again."
     },
     "toast": {
-        "uploadSuccess": "Resource added to library",
-        "uploadError": "Error uploading resource",
-        "fileTooLarge": "File too large. Maximum allowed: {{maxMB}}MB.",
-        "deleteSuccess": "Resource deleted",
-        "deleteError": "Error deleting resource",
-        "cancelSuccess": "Processing cancelled",
-        "cancelError": "Error cancelling processing",
-        "cancelTooLate": "Already finished processing — use Delete instead of Cancel",
-        "updateSuccess": "Resource updated",
-        "updateError": "Error updating resource",
-        "processSuccess": "\"{{title}}\" ready ({{chunks}} fragments)",
-        "processWarning": "No fragments generated for \"{{title}}\". The text may be unreadable or too short.",
-        "processError": "Error processing resource",
-        "textNotReady": "The text is still being extracted. Wait a few seconds and try again.",
-        "reprocessConfirm": "Reprocess \"{{title}}\"? Existing fragments will be deleted and regenerated.",
-        "reprocessSuccess": "\"{{title}}\" reprocessed ({{chunks}} fragments)",
-        "reprocessWarning": "No new fragments generated during reprocessing",
-        "reprocessError": "Error reprocessing resource",
-        "noUnindexed": "No documents to process",
-        "processingComplete": "Processing completed with {{count}} errors. {{chunks}} fragments created.",
-        "processingSuccess": "Library ready: {{chunks}} fragments created",
-        "processingError": "Error processing library",
-        "retryPremiumLoading": "Retrying extraction with Premium…",
-        "retryPremiumSuccess": "Done: extracted with Premium",
-        "retryPremiumNoBalance": "You don't have enough Premium pages to retry",
-        "retryPremiumDenied": "You can only retry your own resources",
-        "retryPremiumError": "Error retrying with Premium"
+      "success_one": "{{count}} resource updated with detected books",
+      "success_other": "{{count}} resources updated with detected books",
+      "partial": "{{updated}} updated, {{failed}} save errors",
+      "allSkipped": "No title had enough signal to infer books automatically",
+      "error": "Error running detection. Try again."
     }
+  },
+  "toast": {
+    "uploadSuccess": "Resource added to library",
+    "uploadError": "Error uploading resource",
+    "fileTooLarge": "File too large. Maximum allowed: {{maxMB}}MB.",
+    "deleteSuccess": "Resource deleted",
+    "deleteError": "Error deleting resource",
+    "cancelSuccess": "Processing cancelled",
+    "cancelError": "Error cancelling processing",
+    "cancelTooLate": "Already finished processing — use Delete instead of Cancel",
+    "updateSuccess": "Resource updated",
+    "updateError": "Error updating resource",
+    "processSuccess": "\"{{title}}\" ready ({{chunks}} fragments)",
+    "processWarning": "No fragments generated for \"{{title}}\". The text may be unreadable or too short.",
+    "processError": "Error processing resource",
+    "textNotReady": "The text is still being extracted. Wait a few seconds and try again.",
+    "reprocessConfirm": "Reprocess \"{{title}}\"? Existing fragments will be deleted and regenerated.",
+    "reprocessSuccess": "\"{{title}}\" reprocessed ({{chunks}} fragments)",
+    "reprocessWarning": "No new fragments generated during reprocessing",
+    "reprocessError": "Error reprocessing resource",
+    "noUnindexed": "No documents to process",
+    "processingComplete": "Processing completed with {{count}} errors. {{chunks}} fragments created.",
+    "processingSuccess": "Library ready: {{chunks}} fragments created",
+    "processingError": "Error processing library",
+    "retryPremiumLoading": "Retrying extraction with Premium…",
+    "retryPremiumSuccess": "Done: extracted with Premium",
+    "retryPremiumNoBalance": "You don't have enough Premium pages to retry",
+    "retryPremiumDenied": "You can only retry your own resources",
+    "retryPremiumError": "Error retrying with Premium"
+  },
+  "citedResourceMissing": "The source you cited is no longer in your library. You may have deleted it after preparing that sermon.",
+  "citedResourceDismiss": "Got it"
 }
