@@ -11,13 +11,24 @@ import type { GreekVerseInsight, GreekWordToken } from '@dosfilos/domain';
  * análisis. El botón lo pide una vez y el caché lo vuelve gratis para todos —
  * el texto griego es el mismo para todo el mundo.
  */
-export function useGreekInsight(reference: string, tokens: readonly GreekWordToken[] | undefined) {
+export function useGreekInsight(
+    reference: string,
+    tokens: readonly GreekWordToken[] | undefined,
+    /**
+     * El versículo anterior, para que el análisis pueda ver la ANÁFORA: el
+     * artículo que abre Santiago 1:4 señala al v.3, y eso es indetectable
+     * mirando un solo versículo.
+     */
+    previousVerse?: { reference: string; text: string },
+) {
     const repoRef = useRef<FirestoreGreekInsightRepository>();
     if (!repoRef.current) repoRef.current = new FirestoreGreekInsightRepository();
     const serviceRef = useRef<GreekInsightService>();
     if (!serviceRef.current) serviceRef.current = new GreekInsightService();
 
     const [insight, setInsight] = useState<GreekVerseInsight | null>(null);
+    /** El caché no se pudo leer — distinto de "no hay análisis". */
+    const [cacheUnavailable, setCacheUnavailable] = useState(false);
     const [checking, setChecking] = useState(true);
     const [generating, setGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -27,11 +38,16 @@ export function useGreekInsight(reference: string, tokens: readonly GreekWordTok
         setInsight(null);
         setError(null);
         setChecking(true);
+        setCacheUnavailable(false);
         repoRef.current!.get(reference).then((cached) => {
             if (!vivo) return;
-            // EL CACHÉ TAMBIÉN SE VALIDA CONTRA LOS TOKENS: un análisis viejo
-            // de otra edición del texto, desalineado, es peor que ninguno.
-            if (cached && tokens && cached.words.length === tokens.length) setInsight(cached);
+            if (cached === 'unavailable') {
+                setCacheUnavailable(true);
+            } else if (cached && tokens && cached.words.length === tokens.length) {
+                // EL CACHÉ SE VALIDA CONTRA LOS TOKENS: un análisis viejo de
+                // otra edición del texto, desalineado, es peor que ninguno.
+                setInsight(cached);
+            }
             setChecking(false);
         });
         return () => {
@@ -44,7 +60,7 @@ export function useGreekInsight(reference: string, tokens: readonly GreekWordTok
         setGenerating(true);
         setError(null);
         try {
-            const result = await serviceRef.current!.analyzeVerse({ reference, tokens });
+            const result = await serviceRef.current!.analyzeVerse({ reference, tokens, previousVerse });
             setInsight(result);
             void repoRef.current!.save(result);
         } catch (e) {
@@ -52,7 +68,7 @@ export function useGreekInsight(reference: string, tokens: readonly GreekWordTok
         } finally {
             setGenerating(false);
         }
-    }, [reference, tokens]);
+    }, [reference, tokens, previousVerse]);
 
-    return { insight, checking, generating, error, generate };
+    return { insight, checking, generating, error, cacheUnavailable, generate };
 }

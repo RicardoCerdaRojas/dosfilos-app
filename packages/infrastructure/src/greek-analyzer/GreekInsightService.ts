@@ -16,6 +16,8 @@ export class GreekInsightService {
     async analyzeVerse(input: {
         reference: string;
         tokens: readonly GreekWordToken[];
+        /** Contexto para detectar la anáfora del artículo. */
+        previousVerse?: { reference: string; text: string };
     }): Promise<GreekVerseInsight> {
         const raw = await runLlmPrompt({
             feature: 'greekTutor.analyzeVerse',
@@ -30,6 +32,7 @@ export class GreekInsightService {
         const parsed = parseGreekInsight(raw ?? '', {
             reference: input.reference,
             expectedWordCount: input.tokens.length,
+            cases: input.tokens.map((t) => t.tag.case),
         });
         if (!parsed) {
             throw new Error('greek-insight: respuesta del modelo inválida o desalineada');

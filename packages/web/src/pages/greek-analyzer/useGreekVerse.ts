@@ -26,6 +26,8 @@ export function useGreekVerse(initial: { book: BibleBookId; chapter: number; ver
     const [verse, setVerse] = useState(initial.verse);
     const [nav, setNav] = useState<{ chapter: number; verses: number }[]>([]);
     const [data, setData] = useState<GreekVerseTokens | null>(null);
+    /** El versículo anterior, sólo su texto: contexto para la anáfora. */
+    const [previous, setPrevious] = useState<{ reference: string; text: string } | undefined>();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -45,9 +47,20 @@ export function useGreekVerse(initial: { book: BibleBookId; chapter: number; ver
             try {
                 const navegacion = await provider.getNavigation(book);
                 const tokens = await provider.getVerseTokens(book, chapter, verse);
+                // El anterior sale del MISMO libro ya cargado: cruzar al
+                // capítulo previo cuando el verso es 1 mantiene el hilo del
+                // argumento, que no se corta en los números de capítulo.
+                const antIdx = navegacion.findIndex((n) => n.chapter === chapter);
+                const antCap = verse > 1 ? chapter : navegacion[antIdx - 1]?.chapter;
+                const antVerso = verse > 1 ? verse - 1 : navegacion[antIdx - 1]?.verses;
+                const anterior =
+                    antCap && antVerso ? await provider.getVerseTokens(book, antCap, antVerso) : null;
                 if (!vivo) return;
                 setNav(navegacion);
                 setData(tokens);
+                setPrevious(
+                    anterior ? { reference: `${book} ${antCap}:${antVerso}`, text: anterior.text } : undefined,
+                );
             } catch (e) {
                 if (vivo) setError(e instanceof Error ? e.message : String(e));
             } finally {
@@ -107,5 +120,5 @@ export function useGreekVerse(initial: { book: BibleBookId; chapter: number; ver
         [nav, chapter, verse],
     );
 
-    return { book, chapter, verse, books, chapters, versesInChapter, data, loading, error, goTo, step, provider, lemmaCounts };
+    return { book, chapter, verse, books, chapters, versesInChapter, data, previous, loading, error, goTo, step, provider, lemmaCounts };
 }

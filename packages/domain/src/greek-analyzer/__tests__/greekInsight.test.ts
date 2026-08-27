@@ -102,3 +102,113 @@ describe('keyInsights — el "¿y qué?" homilético (fase 3)', () => {
         expect(out?.keyInsights).toHaveLength(3);
     });
 });
+
+describe('caseFunction — la taxonomía es CERRADA (v5)', () => {
+    const conFuncion = (caseFunction: string, nameNote = '') =>
+        JSON.stringify({
+            literalTranslation: 'lit',
+            fluidTranslation: 'fluida',
+            words: [{ text: 'Ἰάκωβος', semanticRange: 'a / b', syntacticFunction: 'f', translation: 'Santiago', caseFunction, nameNote }],
+        });
+
+    const parse = (raw: string) =>
+        parseGreekInsight(raw, { reference: 'JAS 1:1', expectedWordCount: 1, cases: ['N'] });
+
+    it('acepta una función válida para ESE caso — el caso real de Santiago 1:1', () => {
+        expect(parse(conFuncion('absolute'))?.words[0].caseFunction).toBe('absolute');
+    });
+
+    it('DESCARTA una función que no pertenece al caso (no hay "posesión" nominativa)', () => {
+        // El profesor del fundador la habría llamado mal; el sistema no la
+        // repite. Una etiqueta con aire académico que nadie reconoce es peor
+        // que ninguna: el pastor la repetiría en clase.
+        expect(parse(conFuncion('possession'))?.words[0].caseFunction).toBeUndefined();
+    });
+
+    it('descarta una etiqueta inventada, y el resto del análisis sobrevive', () => {
+        const out = parse(conFuncion('nominativoDeSaludoProfético'));
+        expect(out?.words[0].caseFunction).toBeUndefined();
+        expect(out?.words[0].translation).toBe('Santiago');
+    });
+
+    it('la nota del nombre viaja cuando tiene contenido', () => {
+        const out = parse(conFuncion('absolute', 'Del latín Iacobus → "Sant Iago". El doblete culto es Jacobo.'));
+        expect(out?.words[0].nameNote).toContain('Jacobo');
+    });
+
+    it('sin la lista de casos no se valida nada: la función se descarta', () => {
+        const out = parseGreekInsight(conFuncion('absolute'), { reference: 'JAS 1:1', expectedWordCount: 1 });
+        expect(out?.words[0].caseFunction).toBeUndefined();
+    });
+});
+
+describe('articleUse — el artículo que abre Santiago 1:4 (v8)', () => {
+    const conArticulo = (articleUse: string, antecedent = '') =>
+        JSON.stringify({
+            literalTranslation: 'lit',
+            fluidTranslation: 'fluida',
+            words: [{ text: 'ἡ', semanticRange: 'el / la', syntacticFunction: 'f', translation: 'la', articleUse, antecedent }],
+        });
+    const parse = (raw: string) =>
+        parseGreekInsight(raw, { reference: 'JAS 1:4', expectedWordCount: 1, cases: ['N'] });
+
+    it('el uso anafórico conserva su antecedente — el hilo entre versículos', () => {
+        const out = parse(conArticulo('anaphoric', 'ὑπομονήν, v. 3'));
+        expect(out?.words[0].articleUse).toBe('anaphoric');
+        expect(out?.words[0].antecedent).toBe('ὑπομονήν, v. 3');
+    });
+
+    it('el antecedente SÓLO existe con anáfora: colgado de otro uso se descarta', () => {
+        // "Señala hacia atrás" en un artículo genérico sería una relación
+        // inventada entre versículos.
+        expect(parse(conArticulo('generic', 'algo, v. 3'))?.words[0].antecedent).toBeUndefined();
+    });
+
+    it('descarta un uso inventado y el resto del análisis sobrevive', () => {
+        const out = parse(conArticulo('articuloDeEnfasisProfetico'));
+        expect(out?.words[0].articleUse).toBeUndefined();
+        expect(out?.words[0].translation).toBe('la');
+    });
+});
+
+describe('composition — ὁλόκληροι y la falacia de la raíz (v9)', () => {
+    const conComposicion = (composition: unknown) =>
+        JSON.stringify({
+            literalTranslation: 'lit',
+            fluidTranslation: 'fluida',
+            words: [{ text: 'ὁλόκληροι', semanticRange: 'íntegro', syntacticFunction: 'f', translation: 'íntegros', composition }],
+        });
+    const parse = (raw: string) =>
+        parseGreekInsight(raw, { reference: 'JAS 1:4', expectedWordCount: 1, cases: ['N'] });
+
+    it('descompone ὁλόκληροι en sus dos raíces con glosa', () => {
+        const out = parse(
+            conComposicion({
+                parts: [{ text: 'ὅλος', gloss: 'entero, completo' }, { text: 'κλῆρος', gloss: 'porción, parte' }],
+                note: 'Entero en todas sus partes: sin que le falte ninguna.',
+                meaningMatchesParts: true,
+            }),
+        );
+        expect(out?.words[0].composition?.parts).toHaveLength(2);
+        expect(out?.words[0].composition?.meaningMatchesParts).toBe(true);
+    });
+
+    it('EXIGE el veredicto sobre la falacia: sin él la descomposición se descarta', () => {
+        // Mostrar partes sin decir si el uso las respalda INVITA al error que
+        // se pretende prevenir.
+        const out = parse(
+            conComposicion({
+                parts: [{ text: 'ὅλος', gloss: 'entero' }, { text: 'κλῆρος', gloss: 'porción' }],
+                note: 'x',
+            }),
+        );
+        expect(out?.words[0].composition).toBeUndefined();
+    });
+
+    it('una sola parte no es un compuesto', () => {
+        const out = parse(
+            conComposicion({ parts: [{ text: 'ὅλος', gloss: 'entero' }], note: 'x', meaningMatchesParts: true }),
+        );
+        expect(out?.words[0].composition).toBeUndefined();
+    });
+});

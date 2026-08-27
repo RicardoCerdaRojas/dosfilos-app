@@ -1,4 +1,4 @@
-import { AArrowDown, AArrowUp, Copy, Printer, RefreshCw, Loader2, Check } from 'lucide-react';
+import { AArrowDown, AArrowUp, Copy, Eye, EyeOff, Printer, RefreshCw, Loader2, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
@@ -53,7 +53,7 @@ export function GreekVerseTools({
     };
 
     const chip =
-        'inline-flex items-center gap-1 rounded-md border border-border/60 bg-background px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors';
+        'inline-flex items-center gap-1 rounded-md border border-border/60 bg-background px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground hover:border-border';
 
     const MODOS: { id: GreekColorMode; labelKey: string }[] = [
         { id: 'off', labelKey: 'analyzer.tools.colorOff' },
@@ -62,10 +62,16 @@ export function GreekVerseTools({
     ];
 
     return (
-        <div className="flex flex-wrap items-center gap-1.5 print:hidden">
-            {/* LAS DOS CAPAS DE COLOR — el sistema del hebreo, en griego: por
-                CATEGORÍA (qué es cada palabra) o por MORFEMA (dónde está la
-                marca que las pistas confirmaron: χαίρ-ειν, θε-οῦ). */}
+        // TRES GRUPOS SEPARADOS, no una fila de ocho botones sueltos: CÓMO SE
+        // VE el texto, QUÉ ME LLEVO de él, y QUÉ HAGO con el análisis. La fila
+        // plana obligaba a leer cada etiqueta para saber qué hacía cada cosa.
+        //
+        // Y "Translit." aparecía DOS VECES con sentidos distintos —mostrar y
+        // copiar—: ahora el interruptor lleva el ojo (ver/ocultar) y la copia
+        // el ícono de copiar, así el ícono desambigua lo que la palabra no.
+        <div className="flex flex-wrap items-center gap-2 print:hidden">
+            {/* ── CÓMO SE VE ────────────────────────────────────────── */}
+            <Grupo>
             <span className="inline-flex items-center rounded-md border border-border/60 bg-background">
                 {MODOS.map(({ id, labelKey }, i) => (
                     <button
@@ -90,7 +96,9 @@ export function GreekVerseTools({
                 onClick={onToggleTranslit}
                 className={cn(chip, showTranslit && 'text-foreground bg-muted/60')}
                 title={t('analyzer.tools.translitToggle')}
+                aria-pressed={showTranslit}
             >
+                {showTranslit ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
                 {t('analyzer.tools.translit')}
             </button>
 
@@ -108,13 +116,19 @@ export function GreekVerseTools({
                     type="button"
                     onClick={() => onFontScale(Math.min(2, fontScale + 1) as GreekFontScale)}
                     disabled={fontScale === 2}
-                    className="px-1.5 py-1 text-muted-foreground hover:text-foreground disabled:opacity-40 border-l border-border/60"
+                    className="border-l border-border/60 px-1.5 py-1 text-muted-foreground hover:text-foreground disabled:opacity-40"
                     aria-label={t('analyzer.tools.larger')}
                 >
                     <AArrowUp className="h-3.5 w-3.5" />
                 </button>
             </span>
+            </Grupo>
 
+            {/* ── QUÉ ME LLEVO ──────────────────────────────────────── */}
+            <Grupo>
+            <span className="pl-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {t('analyzer.tools.copyGroup')}
+            </span>
             <button type="button" onClick={() => copiar('greek')} className={chip}>
                 {copiado === 'greek' ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                 {t('analyzer.tools.copyGreek')}
@@ -123,7 +137,10 @@ export function GreekVerseTools({
                 {copiado === 'translit' ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                 {t('analyzer.tools.copyTranslit')}
             </button>
+            </Grupo>
 
+            {/* ── QUÉ HAGO CON EL ANÁLISIS ──────────────────────────── */}
+            <Grupo>
             {onReanalyze && (
                 <button
                     type="button"
@@ -141,6 +158,25 @@ export function GreekVerseTools({
                 <Printer className="h-3 w-3" />
                 {t('analyzer.tools.print')}
             </button>
+            </Grupo>
         </div>
+    );
+
+}
+
+/**
+ * Un grupo del toolbar: fondo tenue y espacio propio.
+ *
+ * La primera versión los separaba con una línea de 1px y el fundador apenas
+ * la veía — con razón: la línea COMPETÍA con los bordes de los chips, que ya
+ * son líneas del mismo peso. Entre elementos que ya están delineados, lo que
+ * agrupa no es más línea sino FONDO y AIRE: el ojo lee "estas cosas comparten
+ * superficie" antes que "hay una raya entre ellas".
+ */
+function Grupo({ children }: { children: React.ReactNode }) {
+    return (
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-muted/50 px-1.5 py-1">
+            {children}
+        </span>
     );
 }

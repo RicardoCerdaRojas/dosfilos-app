@@ -16,6 +16,56 @@ export interface GreekWordInsight {
     readonly semanticRange: string;
     /** Cómo funciona ESTA palabra en ESTA frase. */
     readonly syntacticFunction: string;
+    /**
+     * La FUNCIÓN DEL CASO según la taxonomía estándar (Wallace) — el nombre
+     * técnico que un profesor de seminario evalúa: "nominativo absoluto",
+     * "genitivo de posesión", "dativo de medio". Id de la lista CERRADA
+     * (`CASE_FUNCTIONS`); el parser descarta lo que no esté en ella. Ausente
+     * cuando la palabra no tiene caso o el modelo no la determinó.
+     */
+    readonly caseFunction?: string;
+    /**
+     * Historia del nombre propio: por qué Ἰάκωβος se traduce "Santiago" y no
+     * "Jacobo". Sólo en nombres propios y sólo cuando hay algo que contar.
+     */
+    readonly nameNote?: string;
+    /**
+     * El uso del ARTÍCULO según la taxonomía cerrada (`ARTICLE_USES`). El
+     * artículo griego no es "el/la" español: hace trabajos que el castellano
+     * no marca, y explicarlos es lo que convierte un artículo suelto en un
+     * hilo argumental visible.
+     */
+    readonly articleUse?: string;
+    /**
+     * Con `articleUse: 'anaphoric'`, A QUÉ señala hacia atrás — la palabra y
+     * su versículo ("ὑπομονήν, v. 3"). Es lo que explica por qué un versículo
+     * puede EMPEZAR con un artículo.
+     */
+    readonly antecedent?: string;
+    /**
+     * Descomposición de una palabra COMPUESTA (ὁλόκληροι = ὅλος + κλῆρος).
+     *
+     * CON LA SALVAGUARDA CONTRA LA FALACIA DE LA RAÍZ, que es la razón de que
+     * `meaningMatchesParts` exista: el error exegético más común es suponer
+     * que el sentido de un compuesto ES la suma de sus partes. A veces lo es
+     * y a veces el uso se alejó por completo — y un pastor que predica la
+     * etimología de una palabra cuyo uso ya no la respalda dice algo falso
+     * con aire de erudición. El campo obliga a declararlo.
+     */
+    /**
+     * La función DISCURSIVA de una partícula o conjunción (taxonomía cerrada,
+     * Runge): qué hace en el argumento, no sólo qué significa. δέ marca
+     * DESARROLLO —un paso nuevo— y sólo a veces contraste: traducirla siempre
+     * "pero" le inventa al texto una oposición que no está.
+     */
+    readonly discourseFunction?: string;
+    /** Qué conecta con qué, en una línea ("el v.4 con la ὑπομονή del v.3"). */
+    readonly connects?: string;
+    readonly composition?: {
+        readonly parts: readonly { readonly text: string; readonly gloss: string }[];
+        readonly note: string;
+        readonly meaningMatchesParts: boolean;
+    };
     /** Traducción contextual de la palabra. */
     readonly translation: string;
 }
@@ -41,8 +91,14 @@ export interface GreekKeyInsight {
  *
  * v1: traducciones + words. v2: + keyInsights. v3: + wordOrderNote.
  * v4: genitivos en cadena — la aposición muestra "(de) X" y lo explica.
+ * v5: + caseFunction (taxonomía cerrada) y nameNote (nombres propios).
+ * v6: + relations (aposición/concordancia) y rhetoric (quiasmo/inclusión).
+ * v7: español latinoamericano (ustedes, no vosotros).
+ * v8: + articleUse/antecedent, con el versículo anterior como contexto.
+ * v9: + composition (palabras compuestas) y artículo con uso obligatorio.
+ * v10: + discourseFunction/connects para partículas y conjunciones.
  */
-export const GREEK_INSIGHT_PROMPT_VERSION = 4;
+export const GREEK_INSIGHT_PROMPT_VERSION = 10;
 
 export interface GreekVerseInsight {
     /** "JAS 1:2" — la clave del caché. */
@@ -67,6 +123,18 @@ export interface GreekVerseInsight {
      * concreto. Ausente cuando el orden no enseña nada en este versículo.
      */
     readonly wordOrderNote?: string;
+    /**
+     * Relaciones entre palabras (aposición, concordancia…) — validadas
+     * contra la morfología real. Permiten iluminar el par en pantalla en vez
+     * de dejar el dato como prosa dentro de una sola palabra.
+     */
+    readonly relations?: readonly import('./rhetoricalStructure').WordRelation[];
+    /**
+     * Estructura retórica del versículo (quiasmo, inclusión, paralelismo),
+     * SI la hay y si se sostiene. Es INTERPRETACIÓN y la UI la muestra como
+     * propuesta — ver las salvaguardas en `rhetoricalStructure.ts`.
+     */
+    readonly rhetoric?: import('./rhetoricalStructure').RhetoricalStructure;
     /** Ausente en cachés anteriores al versionado. */
     readonly promptVersion?: number;
 }

@@ -626,7 +626,10 @@
       "degree": "Degree",
       "semanticRange": "Rango semántico",
       "syntacticFunction": "Función sintáctica",
-      "translation": "Translation"
+      "translation": "Translation",
+      "caseFunction": "Case function",
+      "nameNote": "About the name",
+      "relations": "Relations"
     },
     "pos": {
       "N": "Noun",
@@ -720,7 +723,8 @@
       "datPl": "The ending {{marker}} marks the dative plural (1st/2nd declension).",
       "accSgN": "The ending {{marker}} marks the accusative singular.",
       "accPl": "The ending {{marker}} marks the accusative plural.",
-      "nomPl": "The ending {{marker}} marks the nominative plural."
+      "nomPl": "The ending {{marker}} marks the nominative plural.",
+      "postpositive": "The particle {{marker}} is POSTPOSITIVE: it never opens its clause, sitting second even though it links the whole sentence to what precedes. Spanish and English translate it first, which hides the clue."
     },
     "personShort": "{{n}}rd person",
     "view": {
@@ -768,7 +772,8 @@
       "print": "Print",
       "colorOff": "No color",
       "colorPos": "Categories",
-      "colorMorph": "Morphemes"
+      "colorMorph": "Morphemes",
+      "copyGroup": "Copy"
     },
     "legend": {
       "title": "Color system",
@@ -780,7 +785,160 @@
       "legendCase": "Case ending",
       "legendTense": "Tense marker",
       "legendMood": "Mood marker",
-      "legendAugment": "Augment"
+      "legendAugment": "Augment",
+      "legendConj": "Conjunction",
+      "legendPrep": "Preposition",
+      "legendAdv": "Adverb"
+    },
+    "caseFn": {
+      "N": {
+        "subject": "Nominative subject",
+        "predicateNominative": "Predicate nominative",
+        "absolute": "Nominative absolute",
+        "appellation": "Nominative of appellation",
+        "apposition": "Nominative in apposition",
+        "pendent": "Pendent nominative"
+      },
+      "G": {
+        "possession": "Genitive of possession",
+        "relationship": "Genitive of relationship",
+        "subjective": "Subjective genitive",
+        "objective": "Objective genitive",
+        "attributive": "Attributive genitive",
+        "partitive": "Partitive genitive",
+        "source": "Genitive of source",
+        "apposition": "Genitive of apposition",
+        "objectOfPreposition": "Genitive object of preposition"
+      },
+      "D": {
+        "indirectObject": "Dative indirect object",
+        "means": "Dative of means",
+        "manner": "Dative of manner",
+        "reference": "Dative of reference",
+        "advantage": "Dative of advantage",
+        "time": "Dative of time",
+        "sphere": "Dative of sphere",
+        "objectOfPreposition": "Dative object of preposition"
+      },
+      "A": {
+        "directObject": "Accusative direct object",
+        "doubleAccusative": "Double accusative",
+        "subjectOfInfinitive": "Accusative subject of infinitive",
+        "measure": "Accusative of measure",
+        "respect": "Accusative of respect",
+        "objectOfPreposition": "Accusative object of preposition"
+      },
+      "V": {
+        "address": "Vocative of address"
+      }
+    },
+    "caseFnHint": {
+      "subject": "Performs the action of the finite verb.",
+      "predicateNominative": "States WHAT the subject is (with \"to be\").",
+      "absolute": "Headings, titles and letter salutations: depends on no finite verb.",
+      "appellation": "The name itself, not what is said about it.",
+      "apposition": "The genitive IS what it specifies.",
+      "pendent": "Stated first; the sentence then goes another way.",
+      "possession": "Marks whose something is.",
+      "relationship": "Marks kinship (son, father, brother OF).",
+      "subjective": "The genitive ACTS (\"the love of God\" = God loves).",
+      "objective": "The genitive RECEIVES (\"the fear of God\" = God is feared).",
+      "attributive": "Works like an adjective (\"body of sin\" = sinful body).",
+      "partitive": "The WHOLE from which a part is taken.",
+      "source": "Where it comes from.",
+      "objectOfPreposition": "The case is required by the preceding preposition.",
+      "indirectObject": "To whom the action is directed.",
+      "means": "The instrument: \"by means of\", \"with\".",
+      "manner": "The way the action happens.",
+      "reference": "\"With respect to\", the frame of the claim.",
+      "advantage": "For (or against) whose benefit.",
+      "time": "When it happens (point in time).",
+      "sphere": "The realm in which something holds.",
+      "directObject": "Directly receives the action.",
+      "doubleAccusative": "Two accusatives with one verb.",
+      "subjectOfInfinitive": "Acts as subject inside an infinitive clause.",
+      "measure": "How much time or distance.",
+      "respect": "\"As to\", limits the scope.",
+      "address": "Directly calls or addresses."
+    },
+    "cacheUnavailable": "We could not read the saved analyses (check your session or connection). You can generate it again, but one may already exist.",
+    "rhetoric": {
+      "chiasm": "Chiasm",
+      "inclusio": "Inclusio",
+      "parallelism": "Parallelism",
+      "proposalBadge": "Proposal",
+      "disclaimer": "Rhetorical structure is a READING of the text, not manuscript data — unlike morphology. Chiasms are often over-diagnosed: judge it yourself."
+    },
+    "relation": {
+      "apposition": "In apposition with",
+      "agreement": "Agrees with",
+      "governs": "Governs",
+      "modifies": "Modifies"
+    },
+    "articleUse": {
+      "title": "Article use",
+      "pointsBack": "Points back to",
+      "anaphoric": "Anaphoric",
+      "deictic": "Deictic",
+      "parExcellence": "Par excellence",
+      "monadic": "Monadic",
+      "wellKnown": "Well-known",
+      "generic": "Generic",
+      "abstract": "With abstract noun",
+      "possessive": "Possessive",
+      "substantivizer": "Substantivizer",
+      "withProperName": "With proper name"
+    },
+    "articleUseHint": {
+      "anaphoric": "Picks up something already mentioned: \"THAT very thing I just named\". This is why a verse can open with an article.",
+      "deictic": "Points at something present in the scene.",
+      "parExcellence": "The one of its class par excellence (the Prophet, the Christ).",
+      "monadic": "The only one of its kind (the sun, the devil).",
+      "wellKnown": "The one everyone knows, even if unmentioned before.",
+      "generic": "The whole class, not an individual.",
+      "abstract": "Goes with a quality and makes it concrete (the faith, the love).",
+      "possessive": "Acts as a possessive: \"he raised THE hand\" = his hand.",
+      "substantivizer": "Turns an infinitive, adjective or whole phrase into a noun.",
+      "withProperName": "With a proper name: familiarity, or picking someone up again."
+    },
+    "composition": {
+      "title": "Compound word",
+      "rootFallacy": "Careful: this word’s actual usage is NOT the sum of its parts. Preaching its etymology would claim something the text does not say."
+    },
+    "discourse": {
+      "title": "Function in the argument",
+      "connects": "Links",
+      "development": "Development",
+      "continuity": "Continuity",
+      "contrast": "Contrast",
+      "correction": "Correction",
+      "inference": "Inference",
+      "explanation": "Explanation",
+      "emphasis": "Emphasis",
+      "pointCounterpoint": "Point / counterpoint",
+      "resumption": "Resumption",
+      "purpose": "Purpose",
+      "temporal": "Temporal frame",
+      "condition": "Condition"
+    },
+    "discourseHint": {
+      "development": "A NEW step in the argument, not necessarily contrary. δέ is this — always translating it \"but\" invents an opposition that is not there.",
+      "continuity": "Adds without changing plane.",
+      "contrast": "Genuinely opposes what follows to what precedes.",
+      "correction": "Corrects or replaces what was just said.",
+      "inference": "Draws the consequence: \"therefore\".",
+      "explanation": "Grounds the previous statement.",
+      "emphasis": "Highlights what it accompanies.",
+      "pointCounterpoint": "Announces a pair: the first is said expecting the second (μέν… δέ).",
+      "resumption": "Picks up a thread left earlier.",
+      "purpose": "Introduces the purpose.",
+      "temporal": "Places what follows in time.",
+      "condition": "States the condition the rest depends on."
+    },
+    "preposition": {
+      "title": "Preposition and its case",
+      "contrast": "With other cases the sense changes:",
+      "noObject": "Could not identify the governed term."
     }
   }
 }

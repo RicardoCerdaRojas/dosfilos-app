@@ -54,7 +54,11 @@ export function GreekPassageView({ provider, book, bookName, chapter, versesInCh
                 rango.map(async (v) => {
                     const tokens = await provider.getVerseTokens(book, chapter, v);
                     if (!tokens) return null;
-                    const insight = await repo.get(`${book} ${chapter}:${v}`);
+                    const cached = await repo.get(`${book} ${chapter}:${v}`);
+                    // 'unavailable' (sin sesión, red) se trata como "sin
+                    // traducción" en esta vista: leer corrido no ofrece
+                    // generar nada, así que no hay decisión que informar.
+                    const insight = cached === 'unavailable' ? null : cached;
                     return {
                         tokens,
                         insight: insight && insight.words.length === tokens.tokens.length ? insight : null,
@@ -136,7 +140,18 @@ export function GreekPassageView({ provider, book, bookName, chapter, versesInCh
                                                 </span>
                                             </span>
                                         </TooltipTrigger>
-                                        <TooltipContent className="bg-card text-card-foreground border border-border shadow-lg print:hidden">
+                                        <TooltipContent
+                            // `p-0` y `text-sm`: el tooltip base trae
+                            // `px-3 py-1.5 text-xs` para etiquetas cortas y
+                            // pelea con el encabezado fijo del contenido, que
+                            // pone su propio espaciado por sección.
+                            className="bg-card text-card-foreground border border-border shadow-xl rounded-lg p-0 text-sm max-w-none [&>svg]:bg-card [&>svg]:fill-card print:hidden"
+                            sideOffset={6}
+                            // Con 40rem de ancho el popover llega a los bordes:
+                            // Radix lo reubica solo, pero hay que decirle cuánto
+                            // margen respetar.
+                            collisionPadding={16}
+                        >
                                             <GreekWordHoverContent
                                                 token={tok}
                                                 insight={insight?.words[i]}

@@ -1,6 +1,11 @@
-import { greekRecognitionClues, translationBridge, type GreekKeyInsight, type GreekWordInsight, type GreekWordToken } from '@dosfilos/domain';
+import { greekRecognitionClues, prepositionUsage, translationBridge, type GreekKeyInsight, type GreekWordInsight, type GreekWordToken } from '@dosfilos/domain';
 import { Star, BookmarkPlus, Check } from 'lucide-react';
 import { useNtLemmaFrequency } from './useLemmaFrequency';
+import { GreekCompositionBlock } from './GreekCompositionBlock';
+import { GreekParticleBlock } from './GreekParticleBlock';
+import { GreekPrepositionBlock } from './GreekPrepositionBlock';
+import { useMorphCells } from './useMorphCells';
+import { GreekMorphCells } from './GreekMorphCells';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
@@ -10,6 +15,13 @@ interface Props {
     insight?: GreekWordInsight;
     /** La significancia homilética, si esta palabra es una de las claves. */
     keyInsight?: GreekKeyInsight;
+    /**
+     * El caso del TÉRMINO de la preposición (la palabra que rige) — lo pone
+     * quien conoce el versículo. Sin él no se sabe qué sentido toma.
+     */
+    objectCase?: string;
+    /** Relaciones de ESTA palabra con otras, ya resueltas a texto. */
+    relations?: { type: string; note: string; otherText: string }[];
     /** Frecuencia del lema en el libro actual (runtime, determinista). */
     bookCount?: number;
     /** Nombre del libro, para la línea de frecuencia. */
@@ -45,6 +57,8 @@ export function GreekWordCard({
     token,
     insight,
     keyInsight,
+    objectCase,
+    relations,
     bookCount,
     bookName,
     onSaveFinding,
@@ -60,19 +74,9 @@ export function GreekWordCard({
     // 2 veces en todo el NT". Se destaca cuando de verdad es raro.
     const esRara = ntCount !== null && ntCount > 0 && ntCount <= 5;
     const puente = translationBridge(token);
+    const regimen = token.pos === 'P' ? prepositionUsage(token.lemma, objectCase as any) : null;
 
-    const celdas: { labelKey: string; value: string }[] = [];
-    const celda = (labelKey: string, dim: string, code?: string) => {
-        if (code) celdas.push({ labelKey, value: t(`analyzer.${dim}.${code}`) });
-    };
-    celda('analyzer.fields.tense', 'tense', tag.tense);
-    celda('analyzer.fields.voice', 'voice', tag.voice);
-    celda('analyzer.fields.mood', 'mood', tag.mood);
-    if (tag.person) celdas.push({ labelKey: 'analyzer.fields.person', value: tag.person });
-    celda('analyzer.fields.case', 'case', tag.case);
-    celda('analyzer.fields.number', 'number', tag.number);
-    celda('analyzer.fields.gender', 'gender', tag.gender);
-    celda('analyzer.fields.degree', 'degree', tag.degree);
+    const celdas = useMorphCells(tag);
 
     return (
         <button
@@ -156,6 +160,33 @@ export function GreekWordCard({
                 <div className="text-xs italic text-muted-foreground">{t(`analyzer.bridge.${puente}`)}</div>
             )}
 
+            {regimen && <GreekPrepositionBlock lemma={token.lemma} usage={regimen} />}
+
+            {insight && <GreekParticleBlock insight={insight} />}
+
+            {insight?.composition && <GreekCompositionBlock composition={insight.composition} />}
+
+            {insight?.articleUse && (
+                <div className="rounded-md border border-info/30 bg-info/5 p-2.5 space-y-1">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-info">
+                        {t('analyzer.articleUse.title')}
+                    </div>
+                    <p className="text-xs">
+                        <span className="font-semibold">{t(`analyzer.articleUse.${insight.articleUse}`)}</span>
+                        {' — '}
+                        <span className="text-muted-foreground">
+                            {t(`analyzer.articleUseHint.${insight.articleUse}`)}
+                        </span>
+                    </p>
+                    {insight.antecedent && (
+                        <p className="text-xs">
+                            <span className="text-muted-foreground">{t('analyzer.articleUse.pointsBack')}: </span>
+                            <span className="font-medium" lang="grc">{insight.antecedent}</span>
+                        </p>
+                    )}
+                </div>
+            )}
+
             {ntCount !== null && ntCount > 0 && (
                 <div className={cn('text-xs', esRara ? 'font-medium text-warning' : 'text-muted-foreground')}>
                     {t('analyzer.frequency', { nt: ntCount })}
@@ -166,18 +197,7 @@ export function GreekWordCard({
                 </div>
             )}
 
-            {celdas.length > 0 && (
-                <div className="grid grid-cols-2 gap-1.5">
-                    {celdas.map((c) => (
-                        <div key={c.labelKey} className="rounded border border-border/60 px-2 py-1.5">
-                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                                {t(c.labelKey)}
-                            </div>
-                            <div className="text-sm">{c.value}</div>
-                        </div>
-                    ))}
-                </div>
-            )}
+            <GreekMorphCells cells={celdas} />
 
             {pistas.length > 0 && (
                 <div className="rounded-md bg-warning/10 p-2.5 space-y-1">
@@ -192,8 +212,33 @@ export function GreekWordCard({
                 </div>
             )}
 
+            {insight?.nameNote && (
+                <div className="rounded-md bg-muted/60 p-2.5 space-y-1">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {t('analyzer.fields.nameNote')}
+                    </div>
+                    <p className="text-xs leading-relaxed">{insight.nameNote}</p>
+                </div>
+            )}
+
             {insight && (
                 <div className="space-y-1.5 border-t border-border/60 pt-2">
+                    {/* LA FUNCIÓN DEL CASO — el nombre técnico que el profesor
+                        evalúa, de la taxonomía cerrada: "nominativo absoluto",
+                        no "sujeto del saludo implícito". */}
+                    {insight.caseFunction && tag.case && (
+                        <div>
+                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                {t('analyzer.fields.caseFunction')}
+                            </div>
+                            <div className="text-sm font-medium text-info">
+                                {t(`analyzer.caseFn.${tag.case}.${insight.caseFunction}`)}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                                {t(`analyzer.caseFnHint.${insight.caseFunction}`)}
+                            </div>
+                        </div>
+                    )}
                     <div>
                         <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
                             {t('analyzer.fields.semanticRange')}
@@ -206,6 +251,22 @@ export function GreekWordCard({
                         </div>
                         <div className="text-sm">{insight.syntacticFunction}</div>
                     </div>
+                </div>
+            )}
+
+            {relations && relations.length > 0 && (
+                <div className="space-y-1 border-t border-border/60 pt-2">
+                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        {t('analyzer.fields.relations')}
+                    </div>
+                    {relations.map((r, i) => (
+                        <div key={i} className="text-xs">
+                            <span className="font-medium text-info">{t(`analyzer.relation.${r.type}`)}</span>
+                            {' · '}
+                            <span lang="grc">{r.otherText}</span>
+                            <div className="text-muted-foreground">{r.note}</div>
+                        </div>
+                    ))}
                 </div>
             )}
 

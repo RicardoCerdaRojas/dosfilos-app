@@ -1,4 +1,9 @@
 import { GREEK_INSIGHT_PROMPT_VERSION, type GreekVerseInsight, type GreekWordInsight } from './verseInsight';
+import { isKnownCaseFunction } from './caseFunctionTaxonomy';
+import { validateRhetoricalStructure, validateWordRelations } from './rhetoricalStructure';
+import { isKnownArticleUse } from './articleUseTaxonomy';
+import { isKnownDiscourseFunction } from './particleTaxonomy';
+import type { GreekCase } from './morphGntToken';
 
 /**
  * Valida la respuesta del modelo ANTES de cachearla.
@@ -12,7 +17,17 @@ import { GREEK_INSIGHT_PROMPT_VERSION, type GreekVerseInsight, type GreekWordIns
  */
 export function parseGreekInsight(
     raw: string,
-    input: { reference: string; expectedWordCount: number },
+    input: {
+        reference: string;
+        expectedWordCount: number;
+        /**
+         * El caso de cada token, en orden. Sirve para VALIDAR la función que
+         * devuelve el modelo contra la taxonomía cerrada de ESE caso: un
+         * "genitivo de medio" no existe, y una etiqueta con aire académico
+         * que ningún profesor reconoce es peor que ninguna.
+         */
+        cases?: readonly (GreekCase | undefined)[];
+    },
 ): GreekVerseInsight | null {
     const inicio = raw.indexOf('{');
     const fin = raw.lastIndexOf('}');
@@ -34,14 +49,66 @@ export function parseGreekInsight(
     if (!Array.isArray(p.words) || p.words.length !== input.expectedWordCount) return null;
 
     const words: GreekWordInsight[] = [];
-    for (const crudo of p.words) {
+    for (const [i, crudo] of p.words.entries()) {
         const w = crudo as Record<string, unknown>;
         const text = typeof w.text === 'string' ? w.text.trim() : '';
         const semanticRange = typeof w.semanticRange === 'string' ? w.semanticRange.trim() : '';
         const syntacticFunction = typeof w.syntacticFunction === 'string' ? w.syntacticFunction.trim() : '';
         const translation = typeof w.translation === 'string' ? w.translation.trim() : '';
         if (!text || !semanticRange || !syntacticFunction || !translation) return null;
-        words.push({ text, semanticRange, syntacticFunction, translation });
+
+        const caso = input.cases?.[i];
+        const fnCruda = typeof w.caseFunction === 'string' ? w.caseFunction.trim() : '';
+        const caseFunction = caso && fnCruda && isKnownCaseFunction(caso, fnCruda) ? fnCruda : undefined;
+        const nameNote = typeof w.nameNote === 'string' ? w.nameNote.trim() : '';
+
+        const usoCrudo = typeof w.articleUse === 'string' ? w.articleUse.trim() : '';
+        const articleUse = isKnownArticleUse(usoCrudo) ? usoCrudo : undefined;
+        // EL ANTECEDENTE SÓLO EXISTE CON ANÁFORA: un "señala hacia atrás"
+        // colgado de un artículo genérico sería una relación inventada.
+        const antecedenteCrudo = typeof w.antecedent === 'string' ? w.antecedent.trim() : '';
+        const antecedent = articleUse === 'anaphoric' && antecedenteCrudo ? antecedenteCrudo : undefined;
+
+        const discCruda = typeof w.discourseFunction === 'string' ? w.discourseFunction.trim() : '';
+        const discourseFunction = isKnownDiscourseFunction(discCruda) ? discCruda : undefined;
+        const conectaCrudo = typeof w.connects === 'string' ? w.connects.trim() : '';
+        // "Qué conecta" sin función discursiva sería una afirmación sobre el
+        // argumento sin la categoría que la sostiene.
+        const connects = discourseFunction && conectaCrudo ? conectaCrudo : undefined;
+
+        // COMPOSICIÓN: al menos DOS partes con glosa, y el veredicto sobre la
+        // falacia de la raíz es OBLIGATORIO — sin él la descomposición
+        // invitaría justo al error que pretende prevenir.
+        const comp = w.composition as Record<string, unknown> | undefined;
+        let composition: GreekWordInsight['composition'];
+        if (comp && typeof comp === 'object' && Array.isArray(comp.parts)) {
+            const parts = comp.parts
+                .map((c) => {
+                    const x = c as Record<string, unknown>;
+                    const text = typeof x.text === 'string' ? x.text.trim() : '';
+                    const gloss = typeof x.gloss === 'string' ? x.gloss.trim() : '';
+                    return text && gloss ? { text, gloss } : null;
+                })
+                .filter((c): c is { text: string; gloss: string } => c !== null);
+            const nota = typeof comp.note === 'string' ? comp.note.trim() : '';
+            if (parts.length >= 2 && nota && typeof comp.meaningMatchesParts === 'boolean') {
+                composition = { parts, note: nota, meaningMatchesParts: comp.meaningMatchesParts };
+            }
+        }
+
+        words.push({
+            text,
+            semanticRange,
+            syntacticFunction,
+            translation,
+            ...(caseFunction ? { caseFunction } : {}),
+            ...(nameNote ? { nameNote } : {}),
+            ...(articleUse ? { articleUse } : {}),
+            ...(antecedent ? { antecedent } : {}),
+            ...(discourseFunction ? { discourseFunction } : {}),
+            ...(connects ? { connects } : {}),
+            ...(composition ? { composition } : {}),
+        });
     }
 
     // Las claves exegéticas son OPCIONALES y se validan suave: una entrada
@@ -60,6 +127,10 @@ export function parseGreekInsight(
         : [];
 
     const wordOrderNote = typeof p.wordOrderNote === 'string' ? p.wordOrderNote.trim() : '';
+    // Ambas se validan contra el dato determinista y se caen solas si no se
+    // sostienen — sin tumbar el resto del análisis.
+    const relations = validateWordRelations(p.relations, input.cases ?? []);
+    const rhetoric = validateRhetoricalStructure(p.rhetoric, input.expectedWordCount);
 
     return {
         reference: input.reference,
@@ -68,6 +139,8 @@ export function parseGreekInsight(
         words,
         ...(keyInsights.length > 0 ? { keyInsights } : {}),
         ...(wordOrderNote ? { wordOrderNote } : {}),
+        ...(relations.length > 0 ? { relations } : {}),
+        ...(rhetoric ? { rhetoric } : {}),
         promptVersion: GREEK_INSIGHT_PROMPT_VERSION,
     };
 }

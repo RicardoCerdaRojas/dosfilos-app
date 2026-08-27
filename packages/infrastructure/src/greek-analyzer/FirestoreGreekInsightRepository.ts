@@ -16,14 +16,20 @@ export class FirestoreGreekInsightRepository {
         return reference.replace(/[\s:]+/g, '_');
     }
 
-    async get(reference: string): Promise<GreekVerseInsight | null> {
+    /**
+     * `null` = no hay análisis guardado. `'unavailable'` = NO SE PUDO SABER
+     * (sin sesión, red caída, reglas). La diferencia importa: tragarse el
+     * error y devolver `null` hace que un fallo de lectura se vea IDÉNTICO a
+     * "no existe" — y la pantalla ofrece pagar una regeneración que quizá no
+     * hace falta. Quien llama decide qué mostrar en cada caso.
+     */
+    async get(reference: string): Promise<GreekVerseInsight | null | 'unavailable'> {
         try {
             const snap = await getDoc(doc(db, this.collection, this.key(reference)));
             return snap.exists() ? (snap.data() as GreekVerseInsight) : null;
         } catch (err) {
-            // El caché nunca bloquea el análisis: sin él, se paga de nuevo.
             console.warn('[greek-insight] cache read failed', err);
-            return null;
+            return 'unavailable';
         }
     }
 

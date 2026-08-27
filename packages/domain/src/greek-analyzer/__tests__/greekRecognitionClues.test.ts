@@ -106,3 +106,53 @@ describe('translationBridge — el "de" que no está en el griego', () => {
         ).toBeNull();
     });
 });
+
+describe('partículas pospositivas — determinista, propiedad del lema', () => {
+    it('δέ nunca abre su cláusula: la pista sale del lema, sin preguntarle a nadie', () => {
+        const de: GreekWordToken = { text: 'δὲ', lemma: 'δέ', pos: 'C', tag: {}, transliteration: 'de' };
+        expect(greekRecognitionClues(de)).toEqual([{ id: 'postpositive', marker: 'δέ' }]);
+    });
+
+    it('καί NO es pospositiva — abre cláusula sin problema', () => {
+        const kai: GreekWordToken = { text: 'καὶ', lemma: 'καί', pos: 'C', tag: {}, transliteration: 'kai' };
+        expect(greekRecognitionClues(kai)).toEqual([]);
+    });
+
+    it('γάρ y οὖν también lo son', () => {
+        for (const lemma of ['γάρ', 'οὖν']) {
+            const tok: GreekWordToken = { text: lemma, lemma, pos: 'C', tag: {}, transliteration: 'x' };
+            expect(greekRecognitionClues(tok).map((p) => p.id)).toContain('postpositive');
+        }
+    });
+});
+
+describe('prepositionUsage — el caso cambia el sentido', () => {
+    it('ἐν sólo rige dativo: sin alternativas que contrastar', async () => {
+        const { prepositionUsage } = await import('../prepositionCases');
+        const u = prepositionUsage('ἐν', 'D');
+        expect(u?.active?.gloss).toContain('dentro de');
+        expect(u?.alternatives).toHaveLength(0);
+    });
+
+    it('διά: genitivo es el MEDIO, acusativo el MOTIVO — y el contraste se muestra', async () => {
+        const { prepositionUsage } = await import('../prepositionCases');
+        const gen = prepositionUsage('διά', 'G');
+        expect(gen?.active?.gloss).toContain('MEDIO');
+        expect(gen?.alternatives[0]?.gloss).toContain('MOTIVO');
+
+        const acc = prepositionUsage('διά', 'A');
+        expect(acc?.active?.gloss).toContain('MOTIVO');
+    });
+
+    it('sin caso del término: no hay sentido activo, pero sí las opciones', async () => {
+        const { prepositionUsage } = await import('../prepositionCases');
+        const u = prepositionUsage('κατά', undefined);
+        expect(u?.active).toBeUndefined();
+        expect(u?.alternatives).toHaveLength(2);
+    });
+
+    it('un lema fuera del catálogo no inventa régimen', async () => {
+        const { prepositionUsage } = await import('../prepositionCases');
+        expect(prepositionUsage('χαίρω', 'D')).toBeNull();
+    });
+});

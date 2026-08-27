@@ -1,12 +1,17 @@
 import { ArrowLeftRight, Loader2, Sparkles, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { GREEK_INSIGHT_PROMPT_VERSION, type GreekVerseInsight } from '@dosfilos/domain';
+import { GREEK_INSIGHT_PROMPT_VERSION, type GreekVerseInsight, type GreekVerseTokens } from '@dosfilos/domain';
+import { GreekRhetoricBlock } from './GreekRhetoricBlock';
 
 interface Props {
     insight: GreekVerseInsight | null;
     generating: boolean;
     error: string | null;
+    /** No se pudo LEER el caché — distinto de "no hay análisis guardado". */
+    cacheUnavailable?: boolean;
+    /** Para resolver los índices de la estructura retórica a sus palabras. */
+    tokens?: GreekVerseTokens['tokens'];
     onGenerate: () => void;
 }
 
@@ -16,13 +21,18 @@ interface Props {
  * el peso teológico) y, sin análisis aún, la invitación a generarlo — pull
  * con caché global, nunca auto.
  */
-export function GreekInsightBlocks({ insight, generating, error, onGenerate }: Props) {
+export function GreekInsightBlocks({ insight, generating, error, cacheUnavailable, tokens, onGenerate }: Props) {
     const { t } = useTranslation('greekTutor');
 
     if (!insight) {
         return (
             <div className="rounded-lg border border-dashed border-border p-4 flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-muted-foreground">{t('analyzer.insightPitch')}</p>
+                {/* UN FALLO DE LECTURA NO ES "NO HAY ANÁLISIS". Tragárselo
+                    hacía que ambos casos se vieran idénticos, y el pastor
+                    pagaría una regeneración que quizá no hacía falta. */}
+                <p className="text-sm text-muted-foreground">
+                    {t(cacheUnavailable ? 'analyzer.cacheUnavailable' : 'analyzer.insightPitch')}
+                </p>
                 <Button size="sm" onClick={onGenerate} disabled={generating}>
                     {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                     {generating ? t('analyzer.generating') : t('analyzer.generateInsight')}
@@ -34,6 +44,21 @@ export function GreekInsightBlocks({ insight, generating, error, onGenerate }: P
 
     return (
         <>
+            {/* AMPLIAR VA ARRIBA, pegado al versículo: es una acción SOBRE
+                el texto, no el pie de los análisis que precisamente le
+                faltan. Aparece cuando el caché es de una versión anterior —
+                adivinar por campos falló antes (el fundador tenía claves y
+                ningún botón para traer el orden de palabras). */}
+            {insight.promptVersion !== GREEK_INSIGHT_PROMPT_VERSION && (
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-border px-4 py-2">
+                    <p className="text-xs text-muted-foreground">{t('analyzer.expandPitch')}</p>
+                    <Button variant="ghost" size="sm" onClick={onGenerate} disabled={generating}>
+                        {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                        {t('analyzer.expandBtn')}
+                    </Button>
+                </div>
+            )}
+
             <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-lg border border-border p-4 space-y-1">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -70,18 +95,8 @@ export function GreekInsightBlocks({ insight, generating, error, onGenerate }: P
                 </div>
             )}
 
-            {/* CACHÉ DE VERSIÓN ANTERIOR: ofrecer ampliar SIEMPRE que la
-                versión no sea la actual — adivinar por campos falló: el
-                fundador tenía claves (v2) y ningún botón para traer el orden
-                de palabras (v3). */}
-            {insight.promptVersion !== GREEK_INSIGHT_PROMPT_VERSION && (
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-border px-4 py-2">
-                    <p className="text-xs text-muted-foreground">{t('analyzer.expandPitch')}</p>
-                    <Button variant="ghost" size="sm" onClick={onGenerate} disabled={generating}>
-                        {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                        {t('analyzer.expandBtn')}
-                    </Button>
-                </div>
+            {insight.rhetoric && tokens && (
+                <GreekRhetoricBlock rhetoric={insight.rhetoric} tokens={tokens} />
             )}
 
             {/* EL "¿Y QUÉ?": las 2-3 palabras que cargan el peso teológico,

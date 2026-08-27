@@ -1,22 +1,13 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import type { BibleBookId } from '@dosfilos/domain';
 import { useGreekVerse } from './useGreekVerse';
 import { useGreekInsight } from './useGreekInsight';
 import { GreekPassageView } from './GreekPassageView';
 import { GreekInsightBlocks } from './GreekInsightBlocks';
 import type { GreekColorMode, GreekFontScale } from './GreekVerseTools';
 import { GreekVerseBoard } from './GreekVerseBoard';
+import { GreekNavBar } from './GreekNavBar';
 import { FirestoreGreekFindingsRepository } from '@dosfilos/infrastructure';
 import { transliterateGreek } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
@@ -38,7 +29,7 @@ import { GreekWordCard } from './GreekWordCard';
 export function GreekAnalyzerPage() {
     const { t, i18n } = useTranslation('greekTutor');
     const { user } = useFirebase();
-    const { book, chapter, verse, books, chapters, versesInChapter, data, loading, error, goTo, step, provider, lemmaCounts } =
+    const { book, chapter, verse, books, chapters, versesInChapter, data, previous, loading, error, goTo, step, provider, lemmaCounts } =
         useGreekVerse({ book: 'JAS', chapter: 1, verse: 1 });
     const [seleccion, setSeleccion] = useState<number | null>(null);
     /** Versículo suelto o perícopa: un pastor estudia pasajes. */
@@ -74,7 +65,35 @@ export function GreekAnalyzerPage() {
         i18n.language.startsWith('es') ? b.nameEs : b.nameEn;
     const libroActual = books.find((b) => b.id === book);
     const referencia = `${book} ${chapter}:${verse}`;
-    const { insight, generating, error: insightError, generate } = useGreekInsight(referencia, data?.tokens);
+    const { insight, generating, error: insightError, cacheUnavailable, generate } = useGreekInsight(referencia, data?.tokens, previous);
+
+    /**
+     * El caso del TÉRMINO de una preposición: el primer token siguiente que
+     * tenga caso. El artículo intermedio (ἐν τῇ διασπορᾷ) comparte el caso
+     * del sustantivo, así que tomarlo también acierta.
+     */
+    const casoDelTermino = (i: number) => {
+        for (let j = i + 1; j < (data?.tokens.length ?? 0) && j <= i + 4; j++) {
+            const c = data?.tokens[j]?.tag.case;
+            if (c) return c;
+        }
+        return undefined;
+    };
+
+    /**
+     * Las relaciones de una palabra, ya resueltas al texto de la otra — la
+     * aposición deja de ser prosa dentro de una sola tarjeta y pasa a ser un
+     * vínculo que ambas muestran.
+     */
+    const relacionesDe = (i: number) =>
+        (insight?.relations ?? [])
+            .filter((r) => r.from === i || r.to === i)
+            .map((r) => ({
+                type: r.type,
+                note: r.note,
+                otherText: data?.tokens[r.from === i ? r.to : r.from]?.text ?? '',
+            }))
+            .filter((r) => r.otherText);
 
     /** Empata una clave exegética con su token, tolerando puntuación. */
     const limpiar = (x: string) => x.replace(/[.,·;··]+$/u, '');
@@ -109,75 +128,19 @@ export function GreekAnalyzerPage() {
     return (
         <div className="h-full overflow-y-auto">
             <div className="mx-auto w-full max-w-6xl px-4 py-4 space-y-5">
-                {/* Navegación: libro / capítulo / versículo + paso a paso. */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <Select value={book} onValueChange={(v) => goTo(v as BibleBookId, 1, 1)}>
-                        <SelectTrigger className="w-44 h-9">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {books.map((b) => (
-                                <SelectItem key={b.id} value={b.id}>
-                                    {nombre(b)}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <Select value={String(chapter)} onValueChange={(v) => goTo(book, Number(v), 1)}>
-                        <SelectTrigger className="w-28 h-9">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {chapters.map((c) => (
-                                <SelectItem key={c} value={String(c)}>
-                                    {t('analyzer.chapterShort', { n: c })}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <Select value={String(verse)} onValueChange={(v) => goTo(book, chapter, Number(v))}>
-                        <SelectTrigger className="w-24 h-9">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {Array.from({ length: versesInChapter }, (_, i) => i + 1).map((v) => (
-                                <SelectItem key={v} value={String(v)}>
-                                    {t('analyzer.verseShort', { n: v })}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <div className="flex items-center gap-1">
-                        <Button variant="outline" size="sm" onClick={() => step(-1)} aria-label={t('analyzer.prevVerse')}>
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => step(1)} aria-label={t('analyzer.nextVerse')}>
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                    </div>
-
-                    {/* Versículo suelto o perícopa completa. */}
-                    <div className="ml-auto flex items-center gap-1">
-                        {(['verse', 'passage'] as const).map((v) => (
-                            <button
-                                key={v}
-                                type="button"
-                                onClick={() => setVista(v)}
-                                className={cn(
-                                    'rounded-md border px-3 py-1.5 text-sm transition-colors',
-                                    vista === v
-                                        ? 'bg-background text-foreground border-border/60 shadow-sm'
-                                        : 'border-transparent text-muted-foreground hover:bg-muted/60',
-                                )}
-                            >
-                                {t(`analyzer.view.${v}`)}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <GreekNavBar
+                    books={books}
+                    book={book}
+                    chapter={chapter}
+                    verse={verse}
+                    chapters={chapters}
+                    versesInChapter={versesInChapter}
+                    nombre={nombre}
+                    onGoTo={goTo}
+                    onStep={step}
+                    vista={vista}
+                    onVista={setVista}
+                />
 
                 {vista === 'passage' ? (
                     <GreekPassageView
@@ -211,6 +174,8 @@ export function GreekAnalyzerPage() {
                             data={data}
                             insight={insight}
                             claveDe={claveDe}
+                            relacionesDe={relacionesDe}
+                            casoDelTermino={casoDelTermino}
                             lemmaCounts={lemmaCounts}
                             bookName={libroActual ? nombre(libroActual) : book}
                             fontScale={fontScale}
@@ -231,6 +196,8 @@ export function GreekAnalyzerPage() {
                             insight={insight}
                             generating={generating}
                             error={insightError}
+                            cacheUnavailable={cacheUnavailable}
+                            tokens={data.tokens}
                             onGenerate={() => void generate()}
                         />
 
@@ -246,6 +213,8 @@ export function GreekAnalyzerPage() {
                                         token={tok}
                                         insight={insight?.words[i]}
                                         keyInsight={claveDe(tok.text)}
+                                        relations={relacionesDe(i)}
+                                        objectCase={casoDelTermino(i)}
                                         bookCount={lemmaCounts[tok.lemma]}
                                         bookName={libroActual ? nombre(libroActual) : book}
                                         onSaveFinding={

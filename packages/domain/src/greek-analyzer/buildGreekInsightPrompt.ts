@@ -1,4 +1,8 @@
 import type { GreekWordToken } from './morphGntToken';
+import { CASE_FUNCTIONS } from './caseFunctionTaxonomy';
+import { SPANISH_REGISTER } from '../shared/spanishRegister';
+import { ARTICLE_USES } from './articleUseTaxonomy';
+import { DISCOURSE_FUNCTIONS } from './particleTaxonomy';
 
 /** Expande el tag a texto plano para el prompt, sin códigos crípticos. */
 const TENSE: Record<string, string> = { P: 'presente', I: 'imperfecto', F: 'futuro', A: 'aoristo', X: 'perfecto', Y: 'pluscuamperfecto' };
@@ -37,13 +41,35 @@ function describirTag(t: GreekWordToken): string {
 export function buildGreekInsightPrompt(input: {
     reference: string;
     tokens: readonly GreekWordToken[];
+    /**
+     * El texto del versículo ANTERIOR, como contexto y no como tarea.
+     *
+     * Sin él la anáfora es indetectable: el artículo de Santiago 1:4 (ἡ δὲ
+     * ὑπομονή) señala a la ὑπομονήν del v.3, y un análisis que sólo ve un
+     * versículo no puede saberlo. Es la diferencia entre "acá hay un
+     * artículo" y "acá el autor retoma lo que acaba de decir".
+     */
+    previousVerse?: { reference: string; text: string };
 }): string {
     const lista = input.tokens
         .map((t, i) => `${i + 1}. ${t.text} — lema ${t.lemma} — ${describirTag(t)}`)
         .join('\n');
 
-    return `Eres un gramático de griego koiné asistiendo a un pastor hispanohablante que estudia el texto original.
+    // La lista CERRADA de funciones, sólo para los casos presentes en este
+    // versículo: darle la taxonomía entera sería ruido, y darle libertad para
+    // inventar etiquetas sería peor que no preguntar.
+    const casosPresentes = [...new Set(input.tokens.map((t) => t.tag.case).filter(Boolean))] as (keyof typeof CASE_FUNCTIONS)[];
+    const NOMBRE_CASO: Record<string, string> = { N: 'nominativo', G: 'genitivo', D: 'dativo', A: 'acusativo', V: 'vocativo' };
+    const taxonomia = casosPresentes
+        .map((c) => `  ${NOMBRE_CASO[c]}: ${CASE_FUNCTIONS[c].join(', ')}`)
+        .join('\n');
 
+    const contexto = input.previousVerse
+        ? `\nVERSÍCULO ANTERIOR (${input.previousVerse.reference}) — SÓLO CONTEXTO, no lo analices:\n${input.previousVerse.text}\n`
+        : '';
+
+    return `Eres un gramático de griego koiné asistiendo a un pastor hispanohablante que estudia el texto original.
+${contexto}
 VERSÍCULO: ${input.reference}
 ${input.tokens.map((t) => t.text).join(' ')}
 
@@ -83,8 +109,88 @@ de forma que enseñe algo (un genitivo antepuesto, el sujeto al final, un
 concretas y cómo se reordenan al traducir. Si el orden no enseña nada aquí,
 devuelve "" — no inventes una lección donde no la hay.
 
+Y para cada palabra CON CASO, "caseFunction": la función del caso según la
+taxonomía estándar (Wallace). ELIGE EXACTAMENTE UNO de estos identificadores
+—no inventes etiquetas ni las traduzcas, devuelve el id tal cual— y si
+ninguno encaja o no estás seguro, devuelve "":
+
+${taxonomia}
+
+Guía: el sujeto de un verbo FINITO es "subject"; en un encabezado o saludo
+epistolar SIN verbo finito el nominativo es "absolute". Distingue el genitivo
+"subjective" (el genitivo actúa) del "objective" (el genitivo recibe).
+
+Y para cada ARTÍCULO (categoría "artículo"), "articleUse": su uso según esta
+lista CERRADA —devuelve el id tal cual, y "" si ninguno encaja—:
+  ${ARTICLE_USES.join(', ')}
+
+TODO artículo tiene un uso: NO dejes "articleUse" vacío en un artículo —
+elige el MÁS ESPECÍFICO que aplique, y recurre a "generic" o "abstract" sólo
+cuando de verdad corresponda. El artículo griego NO es "el/la" del español:
+hace trabajos que el castellano no marca, y decir sólo "artículo definido"
+no le enseña nada al pastor.
+
+REVISA PRIMERO SI ES ANAFÓRICO, contra el versículo anterior que te di: si
+el sustantivo que acompaña ya apareció ahí, el artículo lo está RETOMANDO —
+y eso explica por qué un versículo puede EMPEZAR con un artículo. Entonces
+agrega "antecedent" con la palabra y su lugar ("ὑπομονήν, v. 3"). Si no hay
+antecedente identificable, NO digas que es anafórico.
+
+Y para cada PARTÍCULA o CONJUNCIÓN, "discourseFunction": qué hace en el
+ARGUMENTO —no sólo qué significa— de esta lista CERRADA:
+  ${DISCOURSE_FUNCTIONS.join(', ')}
+
+Más "connects": qué enlaza con qué, en una línea ("este versículo con la
+ὑπομονή del anterior"). Usa el versículo previo que te di como contexto.
+
+⚠️ δέ NO ES "PERO". Marca DESARROLLO —un paso nuevo del argumento— y sólo a
+veces contraste; traducirla siempre "pero" le inventa al texto una oposición
+que no está. Lo mismo con καί (continuidad, no siempre "y"), γάρ (fundamenta
+lo dicho) y οὖν (infiere). Elige la función por lo que hace AQUÍ.
+
+Y para las palabras COMPUESTAS (dos raíces unidas: ὁλόκληρος = ὅλος +
+κλῆρος; ἐκκλησία = ἐκ + καλέω), "composition":
+  · "parts": cada componente con su glosa ({"text": "ὅλος", "gloss": "entero,
+    completo"}).
+  · "meaningMatchesParts": true si el uso REAL de la palabra en el griego del
+    NT todavía corresponde a la suma de sus partes; false si el uso se alejó.
+  · "note": qué aporta la composición al sentido — y SI meaningMatchesParts
+    es false, DILO explícitamente y explica qué significa de verdad.
+
+⚠️ LA FALACIA DE LA RAÍZ es el error exegético más común: suponer que el
+sentido de un compuesto ES la suma de sus partes. A veces lo es y a veces el
+uso se alejó por completo. Un pastor que predica la etimología de una
+palabra cuyo uso ya no la respalda dice algo falso con aire de erudición.
+Si la palabra no es compuesta, omite "composition".
+
+Y para los NOMBRES PROPIOS, "nameNote": si el nombre castellano se aleja del
+griego por historia de la traducción (Ἰάκωβος → "Santiago", del latín
+Iacobus → Iacomus → "Sant Iago"; Κηφᾶς → "Cefas/Pedro"; Σαῦλος → "Saulo"),
+cuéntalo en 1-2 frases y di si el castellano tiene un doblete más literal
+(Jacobo). Si el nombre no tiene historia que contar, devuelve "".
+
+Y "relations": las relaciones ENTRE PALABRAS que un profesor señalaría, con
+las POSICIONES de la lista de arriba (empezando en 0) — tipos permitidos:
+"apposition" (dos sustantivos del mismo caso que nombran al mismo referente),
+"agreement" (adjetivo o artículo que concuerda con su sustantivo), "governs"
+(la preposición que rige a su término), "modifies". Cada una con "note" de
+una línea. Devuelve [] si no hay ninguna clara.
+
+Y "rhetoric": SÓLO si el versículo tiene una estructura retórica CLARA —
+"chiasm" (A B B' A': los miembros se cierran en ESPEJO, invertidos),
+"inclusio" (abre y cierra con lo mismo) o "parallelism". Cada miembro con su
+"label" (A, B, B', A'), sus "wordIndices" REALES y una "note".
+
+⚠️ EL QUIASMO ES EL HALLAZGO MÁS SOBRE-DIAGNOSTICADO DE LOS ESTUDIOS
+BÍBLICOS. La mayoría de los versículos NO tiene uno. Devolver null es la
+respuesta correcta y frecuente: proponer una estructura dudosa le da al
+pastor algo que predicará con confianza y que su profesor desmontará. Si los
+miembros no se cierran invertidos de verdad, NO es quiasmo — llámalo
+paralelismo o devuelve null.
+
 REGLAS:
 - Todo en español, salvo las palabras griegas.
+- ${SPANISH_REGISTER}
 - NO inventes sentidos que el lema no tiene: el pastor va a predicar con esto.
 - La lista de salida tiene EXACTAMENTE ${input.tokens.length} palabras, en el mismo orden.
 
@@ -93,11 +199,13 @@ FORMATO DE SALIDA (JSON, sin texto alrededor):
   "literalTranslation": "…",
   "fluidTranslation": "…",
   "words": [
-    { "text": "…", "semanticRange": "sentido A / sentido B", "syntacticFunction": "…", "translation": "…" }
+    { "text": "…", "semanticRange": "sentido A / sentido B", "syntacticFunction": "…", "translation": "…", "caseFunction": "possession", "nameNote": "", "articleUse": "", "antecedent": "", "discourseFunction": "", "connects": "" }
   ],
   "keyInsights": [
     { "text": "…", "significance": "Por qué esta palabra importa al predicar este versículo." }
   ],
-  "wordOrderNote": "…"
+  "wordOrderNote": "…",
+  "relations": [ { "from": 6, "to": 0, "type": "apposition", "note": "δοῦλος nombra al mismo referente que Ἰάκωβος." } ],
+  "rhetoric": null
 }`;
 }

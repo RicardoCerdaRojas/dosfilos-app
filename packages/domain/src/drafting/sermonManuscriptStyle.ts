@@ -1,3 +1,5 @@
+import { SPANISH_REGISTER } from '../shared/spanishRegister';
+
 /**
  * La regla de estilo del MANUSCRITO del sermón, compartida por los dos
  * caminos que escriben prosa: el redactor por sección del taller y el
@@ -9,7 +11,9 @@
  * divergen dos copias de cualquier regla. La forma aprobada es la del taller;
  * el generador la importa en vez de redeclararla.
  */
-export const SERMON_MANUSCRIPT_STYLE = `**CONCISIÓN. EL MANUSCRITO NO ES LA PREDICACIÓN.**
+export const SERMON_MANUSCRIPT_STYLE = `**${SPANISH_REGISTER}**
+
+   **CONCISIÓN. EL MANUSCRITO NO ES LA PREDICACIÓN.**
    Este texto es el documento de trabajo del predicador, no la transcripción
    de lo que dirá. Su trabajo es que él vea LA IDEA DE UN VISTAZO.
 
