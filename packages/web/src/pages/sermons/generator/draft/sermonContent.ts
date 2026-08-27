@@ -1,30 +1,22 @@
 import type { TFunction } from 'i18next';
-import { scriptureLookupRef, sermonPointBlocks } from '@dosfilos/domain';
+import { scriptureLookupRef, sermonPointBlocks, type SermonContent } from '@dosfilos/domain';
 import { LocalBibleService } from '@/services/LocalBibleService';
 
-interface SermonPoint {
-    point: string;
-    content: string;
-    scriptureReferences?: string[];
-    illustration?: string;
-    implications?: string[];
-    authorityQuote?: string;
-    transition?: string;
-}
-
-interface SermonDraft {
-    introduction: string;
-    body: SermonPoint[];
-    conclusion: string;
-    callToAction?: string;
-}
+/**
+ * EL TIPO ES EL DEL DOMINIO, no una copia local.
+ *
+ * Este archivo declaraba su propio `SermonDraft` con los cuatro campos que
+ * usaba. Mientras tanto el borrador real es `SermonContent`, y las dos formas
+ * fueron divergiendo: un campo nuevo en el dominio no llegaba acá, y el paso que
+ * pasa el borrador tenía que cargar con un error de tipos para que compilara.
+ */
 
 /**
  * Serialises a sermon draft to a markdown-ish string used by the preview
  * dialog and the publish flow. Keeps the side-effect-free transformation out
  * of the React component and away from i18n state changes.
  */
-export function buildFullContent(draft: SermonDraft | null, t: TFunction): string {
+export function buildFullContent(draft: SermonContent | null, t: TFunction): string {
     if (!draft) return '';
 
     const body = draft.body
