@@ -220,6 +220,11 @@ export class RAGService {
         return this.vectorRepository.hasIndex(resourceId);
     }
 
+    /** ¿Cuáles de estos recursos están indexados? Una consulta por cada 30. */
+    async indexedAmong(resourceIds: readonly string[]): Promise<Set<string>> {
+        return this.vectorRepository.hasIndexBatch(resourceIds);
+    }
+
     // ==================== Private Methods ====================
 
     /**

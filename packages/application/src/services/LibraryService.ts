@@ -244,6 +244,22 @@ export class LibraryService {
     /**
      * Check if a resource is indexed
      */
+    /**
+     * ¿Cuáles de estos recursos están indexados?
+     *
+     * La alternativa era llamar a `isResourceIndexed` en un bucle, que es como
+     * estaba: una consulta por recurso, en fila. Acá va una por cada treinta.
+     *
+     * Sin RAG configurado devuelve el conjunto vacío, igual que la versión de
+     * uno solo devuelve `false`: no se puede afirmar que algo esté indexado
+     * cuando no hay con qué comprobarlo.
+     */
+    async indexedResourcesAmong(resourceIds: readonly string[]): Promise<Set<string>> {
+        const rag = this.getRAGService();
+        if (!rag) return new Set<string>();
+        return rag.indexedAmong(resourceIds);
+    }
+
     async isResourceIndexed(resourceId: string): Promise<boolean> {
         const rag = this.getRAGService();
         if (!rag) {

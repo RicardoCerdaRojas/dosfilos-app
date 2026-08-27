@@ -47,4 +47,14 @@ export interface IVectorRepository {
      * @param resourceId - Resource ID to check
      */
     hasIndex(resourceId: string): Promise<boolean>;
+
+    /**
+     * ¿Cuáles de estos recursos están indexados? Devuelve el conjunto de los que
+     * SÍ lo están.
+     *
+     * Existe porque preguntarlo de a uno no escala: una pantalla que muestra el
+     * estado de la biblioteca entera hacía UNA CONSULTA POR RECURSO, en fila.
+     * Con cincuenta libros son cincuenta viajes para pintar cincuenta insignias.
+     */
+    hasIndexBatch(resourceIds: readonly string[]): Promise<Set<string>>;
 }
