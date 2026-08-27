@@ -11,7 +11,16 @@ import type { GreekVerseInsight, GreekWordToken } from '@dosfilos/domain';
  * análisis. El botón lo pide una vez y el caché lo vuelve gratis para todos —
  * el texto griego es el mismo para todo el mundo.
  */
-export function useGreekInsight(reference: string, tokens: readonly GreekWordToken[] | undefined) {
+export function useGreekInsight(
+    reference: string,
+    tokens: readonly GreekWordToken[] | undefined,
+    /**
+     * El versículo anterior, para que el análisis pueda ver la ANÁFORA: el
+     * artículo que abre Santiago 1:4 señala al v.3, y eso es indetectable
+     * mirando un solo versículo.
+     */
+    previousVerse?: { reference: string; text: string },
+) {
     const repoRef = useRef<FirestoreGreekInsightRepository>();
     if (!repoRef.current) repoRef.current = new FirestoreGreekInsightRepository();
     const serviceRef = useRef<GreekInsightService>();
@@ -51,7 +60,7 @@ export function useGreekInsight(reference: string, tokens: readonly GreekWordTok
         setGenerating(true);
         setError(null);
         try {
-            const result = await serviceRef.current!.analyzeVerse({ reference, tokens });
+            const result = await serviceRef.current!.analyzeVerse({ reference, tokens, previousVerse });
             setInsight(result);
             void repoRef.current!.save(result);
         } catch (e) {
@@ -59,7 +68,7 @@ export function useGreekInsight(reference: string, tokens: readonly GreekWordTok
         } finally {
             setGenerating(false);
         }
-    }, [reference, tokens]);
+    }, [reference, tokens, previousVerse]);
 
     return { insight, checking, generating, error, cacheUnavailable, generate };
 }

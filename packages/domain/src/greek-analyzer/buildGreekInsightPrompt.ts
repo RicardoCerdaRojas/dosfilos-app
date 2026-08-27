@@ -1,6 +1,7 @@
 import type { GreekWordToken } from './morphGntToken';
 import { CASE_FUNCTIONS } from './caseFunctionTaxonomy';
 import { SPANISH_REGISTER } from '../shared/spanishRegister';
+import { ARTICLE_USES } from './articleUseTaxonomy';
 
 /** Expande el tag a texto plano para el prompt, sin códigos crípticos. */
 const TENSE: Record<string, string> = { P: 'presente', I: 'imperfecto', F: 'futuro', A: 'aoristo', X: 'perfecto', Y: 'pluscuamperfecto' };
@@ -39,6 +40,15 @@ function describirTag(t: GreekWordToken): string {
 export function buildGreekInsightPrompt(input: {
     reference: string;
     tokens: readonly GreekWordToken[];
+    /**
+     * El texto del versículo ANTERIOR, como contexto y no como tarea.
+     *
+     * Sin él la anáfora es indetectable: el artículo de Santiago 1:4 (ἡ δὲ
+     * ὑπομονή) señala a la ὑπομονήν del v.3, y un análisis que sólo ve un
+     * versículo no puede saberlo. Es la diferencia entre "acá hay un
+     * artículo" y "acá el autor retoma lo que acaba de decir".
+     */
+    previousVerse?: { reference: string; text: string };
 }): string {
     const lista = input.tokens
         .map((t, i) => `${i + 1}. ${t.text} — lema ${t.lemma} — ${describirTag(t)}`)
@@ -53,8 +63,12 @@ export function buildGreekInsightPrompt(input: {
         .map((c) => `  ${NOMBRE_CASO[c]}: ${CASE_FUNCTIONS[c].join(', ')}`)
         .join('\n');
 
-    return `Eres un gramático de griego koiné asistiendo a un pastor hispanohablante que estudia el texto original.
+    const contexto = input.previousVerse
+        ? `\nVERSÍCULO ANTERIOR (${input.previousVerse.reference}) — SÓLO CONTEXTO, no lo analices:\n${input.previousVerse.text}\n`
+        : '';
 
+    return `Eres un gramático de griego koiné asistiendo a un pastor hispanohablante que estudia el texto original.
+${contexto}
 VERSÍCULO: ${input.reference}
 ${input.tokens.map((t) => t.text).join(' ')}
 
@@ -105,6 +119,17 @@ Guía: el sujeto de un verbo FINITO es "subject"; en un encabezado o saludo
 epistolar SIN verbo finito el nominativo es "absolute". Distingue el genitivo
 "subjective" (el genitivo actúa) del "objective" (el genitivo recibe).
 
+Y para cada ARTÍCULO (categoría "artículo"), "articleUse": su uso según esta
+lista CERRADA —devuelve el id tal cual, y "" si ninguno encaja—:
+  ${ARTICLE_USES.join(', ')}
+
+El artículo griego NO es "el/la" del español: hace trabajos que el castellano
+no marca. Si es "anaphoric", agrega "antecedent" con LA PALABRA a la que
+señala hacia atrás y dónde está ("ὑπομονήν, v. 3") — usa el versículo
+anterior que te di como contexto. Es lo que explica por qué un versículo
+puede EMPEZAR con un artículo: el autor está retomando lo que acaba de decir.
+Si no hay antecedente identificable, NO digas que es anafórico.
+
 Y para los NOMBRES PROPIOS, "nameNote": si el nombre castellano se aleja del
 griego por historia de la traducción (Ἰάκωβος → "Santiago", del latín
 Iacobus → Iacomus → "Sant Iago"; Κηφᾶς → "Cefas/Pedro"; Σαῦλος → "Saulo"),
@@ -141,7 +166,7 @@ FORMATO DE SALIDA (JSON, sin texto alrededor):
   "literalTranslation": "…",
   "fluidTranslation": "…",
   "words": [
-    { "text": "…", "semanticRange": "sentido A / sentido B", "syntacticFunction": "…", "translation": "…", "caseFunction": "possession", "nameNote": "" }
+    { "text": "…", "semanticRange": "sentido A / sentido B", "syntacticFunction": "…", "translation": "…", "caseFunction": "possession", "nameNote": "", "articleUse": "", "antecedent": "" }
   ],
   "keyInsights": [
     { "text": "…", "significance": "Por qué esta palabra importa al predicar este versículo." }

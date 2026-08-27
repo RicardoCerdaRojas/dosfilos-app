@@ -893,6 +893,32 @@
       "agreement": "Concuerda con",
       "governs": "Rige a",
       "modifies": "Modifica a"
+    },
+    "articleUse": {
+      "title": "Uso del artículo",
+      "pointsBack": "Señala hacia atrás a",
+      "anaphoric": "Anafórico",
+      "deictic": "Deíctico",
+      "parExcellence": "Por antonomasia",
+      "monadic": "Monádico",
+      "wellKnown": "De lo conocido",
+      "generic": "Genérico",
+      "abstract": "Con abstracto",
+      "possessive": "Posesivo",
+      "substantivizer": "Sustantivador",
+      "withProperName": "Con nombre propio"
+    },
+    "articleUseHint": {
+      "anaphoric": "Retoma algo ya mencionado: \"ESA misma cosa que acabo de nombrar\". Por eso un versículo puede empezar con artículo.",
+      "deictic": "Señala algo presente en la escena: \"este de aquí\".",
+      "parExcellence": "El de su clase por excelencia (el Profeta, el Cristo).",
+      "monadic": "El único que existe de su clase (el sol, el diablo).",
+      "wellKnown": "El que todos conocen, aunque no se haya mencionado antes.",
+      "generic": "La clase entera, no un individuo (\"el hombre\" = los seres humanos).",
+      "abstract": "Acompaña una cualidad y la vuelve concreta (la fe, el amor).",
+      "possessive": "Hace de posesivo: \"levantó LA mano\" = su mano.",
+      "substantivizer": "Convierte en sustantivo un infinitivo, un adjetivo o una frase entera.",
+      "withProperName": "Con nombre propio: marca familiaridad o retoma a alguien ya nombrado."
     }
   }
 }

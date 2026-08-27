@@ -1,6 +1,7 @@
 import { GREEK_INSIGHT_PROMPT_VERSION, type GreekVerseInsight, type GreekWordInsight } from './verseInsight';
 import { isKnownCaseFunction } from './caseFunctionTaxonomy';
 import { validateRhetoricalStructure, validateWordRelations } from './rhetoricalStructure';
+import { isKnownArticleUse } from './articleUseTaxonomy';
 import type { GreekCase } from './morphGntToken';
 
 /**
@@ -60,6 +61,13 @@ export function parseGreekInsight(
         const caseFunction = caso && fnCruda && isKnownCaseFunction(caso, fnCruda) ? fnCruda : undefined;
         const nameNote = typeof w.nameNote === 'string' ? w.nameNote.trim() : '';
 
+        const usoCrudo = typeof w.articleUse === 'string' ? w.articleUse.trim() : '';
+        const articleUse = isKnownArticleUse(usoCrudo) ? usoCrudo : undefined;
+        // EL ANTECEDENTE SÓLO EXISTE CON ANÁFORA: un "señala hacia atrás"
+        // colgado de un artículo genérico sería una relación inventada.
+        const antecedenteCrudo = typeof w.antecedent === 'string' ? w.antecedent.trim() : '';
+        const antecedent = articleUse === 'anaphoric' && antecedenteCrudo ? antecedenteCrudo : undefined;
+
         words.push({
             text,
             semanticRange,
@@ -67,6 +75,8 @@ export function parseGreekInsight(
             translation,
             ...(caseFunction ? { caseFunction } : {}),
             ...(nameNote ? { nameNote } : {}),
+            ...(articleUse ? { articleUse } : {}),
+            ...(antecedent ? { antecedent } : {}),
         });
     }
 

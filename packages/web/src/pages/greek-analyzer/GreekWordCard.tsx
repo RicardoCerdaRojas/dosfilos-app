@@ -159,6 +159,27 @@ export function GreekWordCard({
                 <div className="text-xs italic text-muted-foreground">{t(`analyzer.bridge.${puente}`)}</div>
             )}
 
+            {insight?.articleUse && (
+                <div className="rounded-md border border-info/30 bg-info/5 p-2.5 space-y-1">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-info">
+                        {t('analyzer.articleUse.title')}
+                    </div>
+                    <p className="text-xs">
+                        <span className="font-semibold">{t(`analyzer.articleUse.${insight.articleUse}`)}</span>
+                        {' — '}
+                        <span className="text-muted-foreground">
+                            {t(`analyzer.articleUseHint.${insight.articleUse}`)}
+                        </span>
+                    </p>
+                    {insight.antecedent && (
+                        <p className="text-xs">
+                            <span className="text-muted-foreground">{t('analyzer.articleUse.pointsBack')}: </span>
+                            <span className="font-medium" lang="grc">{insight.antecedent}</span>
+                        </p>
+                    )}
+                </div>
+            )}
+
             {ntCount !== null && ntCount > 0 && (
                 <div className={cn('text-xs', esRara ? 'font-medium text-warning' : 'text-muted-foreground')}>
                     {t('analyzer.frequency', { nt: ntCount })}

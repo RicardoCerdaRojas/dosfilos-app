@@ -9,3 +9,4 @@ export * from './translationBridge';
 export * from './segmentGreekWord';
 export * from './caseFunctionTaxonomy';
 export * from './rhetoricalStructure';
+export * from './articleUseTaxonomy';

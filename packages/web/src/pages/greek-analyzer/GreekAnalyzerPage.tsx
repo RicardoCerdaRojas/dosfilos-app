@@ -38,7 +38,7 @@ import { GreekWordCard } from './GreekWordCard';
 export function GreekAnalyzerPage() {
     const { t, i18n } = useTranslation('greekTutor');
     const { user } = useFirebase();
-    const { book, chapter, verse, books, chapters, versesInChapter, data, loading, error, goTo, step, provider, lemmaCounts } =
+    const { book, chapter, verse, books, chapters, versesInChapter, data, previous, loading, error, goTo, step, provider, lemmaCounts } =
         useGreekVerse({ book: 'JAS', chapter: 1, verse: 1 });
     const [seleccion, setSeleccion] = useState<number | null>(null);
     /** Versículo suelto o perícopa: un pastor estudia pasajes. */
@@ -74,7 +74,7 @@ export function GreekAnalyzerPage() {
         i18n.language.startsWith('es') ? b.nameEs : b.nameEn;
     const libroActual = books.find((b) => b.id === book);
     const referencia = `${book} ${chapter}:${verse}`;
-    const { insight, generating, error: insightError, cacheUnavailable, generate } = useGreekInsight(referencia, data?.tokens);
+    const { insight, generating, error: insightError, cacheUnavailable, generate } = useGreekInsight(referencia, data?.tokens, previous);
 
     /**
      * Las relaciones de una palabra, ya resueltas al texto de la otra — la

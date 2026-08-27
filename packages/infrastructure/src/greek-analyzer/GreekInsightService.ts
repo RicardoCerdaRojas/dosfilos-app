@@ -16,6 +16,8 @@ export class GreekInsightService {
     async analyzeVerse(input: {
         reference: string;
         tokens: readonly GreekWordToken[];
+        /** Contexto para detectar la anáfora del artículo. */
+        previousVerse?: { reference: string; text: string };
     }): Promise<GreekVerseInsight> {
         const raw = await runLlmPrompt({
             feature: 'greekTutor.analyzeVerse',

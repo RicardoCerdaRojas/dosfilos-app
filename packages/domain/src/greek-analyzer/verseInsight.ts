@@ -29,6 +29,19 @@ export interface GreekWordInsight {
      * "Jacobo". Sólo en nombres propios y sólo cuando hay algo que contar.
      */
     readonly nameNote?: string;
+    /**
+     * El uso del ARTÍCULO según la taxonomía cerrada (`ARTICLE_USES`). El
+     * artículo griego no es "el/la" español: hace trabajos que el castellano
+     * no marca, y explicarlos es lo que convierte un artículo suelto en un
+     * hilo argumental visible.
+     */
+    readonly articleUse?: string;
+    /**
+     * Con `articleUse: 'anaphoric'`, A QUÉ señala hacia atrás — la palabra y
+     * su versículo ("ὑπομονήν, v. 3"). Es lo que explica por qué un versículo
+     * puede EMPEZAR con un artículo.
+     */
+    readonly antecedent?: string;
     /** Traducción contextual de la palabra. */
     readonly translation: string;
 }
@@ -57,8 +70,9 @@ export interface GreekKeyInsight {
  * v5: + caseFunction (taxonomía cerrada) y nameNote (nombres propios).
  * v6: + relations (aposición/concordancia) y rhetoric (quiasmo/inclusión).
  * v7: español latinoamericano (ustedes, no vosotros).
+ * v8: + articleUse/antecedent, con el versículo anterior como contexto.
  */
-export const GREEK_INSIGHT_PROMPT_VERSION = 7;
+export const GREEK_INSIGHT_PROMPT_VERSION = 8;
 
 export interface GreekVerseInsight {
     /** "JAS 1:2" — la clave del caché. */

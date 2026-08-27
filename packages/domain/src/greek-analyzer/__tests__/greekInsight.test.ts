@@ -141,3 +141,32 @@ describe('caseFunction — la taxonomía es CERRADA (v5)', () => {
         expect(out?.words[0].caseFunction).toBeUndefined();
     });
 });
+
+describe('articleUse — el artículo que abre Santiago 1:4 (v8)', () => {
+    const conArticulo = (articleUse: string, antecedent = '') =>
+        JSON.stringify({
+            literalTranslation: 'lit',
+            fluidTranslation: 'fluida',
+            words: [{ text: 'ἡ', semanticRange: 'el / la', syntacticFunction: 'f', translation: 'la', articleUse, antecedent }],
+        });
+    const parse = (raw: string) =>
+        parseGreekInsight(raw, { reference: 'JAS 1:4', expectedWordCount: 1, cases: ['N'] });
+
+    it('el uso anafórico conserva su antecedente — el hilo entre versículos', () => {
+        const out = parse(conArticulo('anaphoric', 'ὑπομονήν, v. 3'));
+        expect(out?.words[0].articleUse).toBe('anaphoric');
+        expect(out?.words[0].antecedent).toBe('ὑπομονήν, v. 3');
+    });
+
+    it('el antecedente SÓLO existe con anáfora: colgado de otro uso se descarta', () => {
+        // "Señala hacia atrás" en un artículo genérico sería una relación
+        // inventada entre versículos.
+        expect(parse(conArticulo('generic', 'algo, v. 3'))?.words[0].antecedent).toBeUndefined();
+    });
+
+    it('descarta un uso inventado y el resto del análisis sobrevive', () => {
+        const out = parse(conArticulo('articuloDeEnfasisProfetico'));
+        expect(out?.words[0].articleUse).toBeUndefined();
+        expect(out?.words[0].translation).toBe('la');
+    });
+});

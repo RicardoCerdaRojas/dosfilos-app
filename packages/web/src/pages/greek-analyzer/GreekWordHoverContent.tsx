@@ -115,6 +115,30 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
                 )}
 
                 {/* 3 · POR QUÉ ASÍ. */}
+                {/* EL ARTÍCULO, EXPLICADO. Era nuestra palabra peor tratada:
+                    paradigma y nada más. El uso anafórico es el que responde
+                    "¿por qué este versículo empieza con un artículo?". */}
+                {insight?.articleUse && (
+                    <div className="rounded-md border border-info/30 bg-info/5 p-2.5 space-y-1">
+                        <h4 className="text-[10px] font-semibold uppercase tracking-wide text-info">
+                            {t('analyzer.articleUse.title')}
+                        </h4>
+                        <p className="text-xs">
+                            <span className="font-semibold">{t(`analyzer.articleUse.${insight.articleUse}`)}</span>
+                            {' — '}
+                            <span className="text-muted-foreground">
+                                {t(`analyzer.articleUseHint.${insight.articleUse}`)}
+                            </span>
+                        </p>
+                        {insight.antecedent && (
+                            <p className="text-xs">
+                                <span className="text-muted-foreground">{t('analyzer.articleUse.pointsBack')}: </span>
+                                <span className="font-medium" lang="grc">{insight.antecedent}</span>
+                            </p>
+                        )}
+                    </div>
+                )}
+
                 {(puente || insight?.caseFunction || insight?.syntacticFunction) && (
                     <div className="space-y-1.5 rounded-md bg-muted/50 p-2.5">
                         {insight?.caseFunction && tag.case && (
