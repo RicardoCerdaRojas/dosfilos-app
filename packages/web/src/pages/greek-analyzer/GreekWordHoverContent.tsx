@@ -13,140 +13,187 @@ import { useNtLemmaFrequency } from './useLemmaFrequency';
 interface Props {
     token: GreekWordToken;
     insight?: GreekWordInsight;
-    /** La significancia homilética, si esta palabra es una de las claves. */
     keyInsight?: GreekKeyInsight;
-    /** Conteo en el libro actual, cuando quien monta lo tiene a mano. */
+    relations?: { type: string; note: string; otherText: string }[];
     bookCount?: number;
     bookName?: string;
 }
 
+/** Una sección del popover: rótulo pequeño + cuerpo. Da el ritmo vertical. */
+function Bloque({ label, children }: { label: string; children: React.ReactNode }) {
+    return (
+        <section className="space-y-0.5">
+            <h4 className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</h4>
+            <div className="text-sm leading-snug">{children}</div>
+        </section>
+    );
+}
+
 /**
- * El contenido del popover al posicionarse sobre una palabra de la banda —
- * el espejo del `WordTooltipContent` hebreo: resumen morfológico, traducción
- * y las PISTAS DE RECONOCIMIENTO.
+ * El popover de una palabra — REDISEÑADO CON JERARQUÍA, no por acumulación.
  *
- * Las pistas responden la pregunta del fundador —"¿cómo le explicamos al
- * pastor que χαίρειν es presente activo infinitivo?"— en sus dos capas: el
- * ANÁLISIS lo anota MorphGNT (dataset académico, no un modelo), y las MARCAS
- * que lo confirman en la forma se derivan por catálogo determinista, que
- * OMITE la pista cuando la marca no está en vez de inventarla.
+ * Creció campo a campo hasta ser una lista plana donde el dato importante
+ * pesaba lo mismo que el accesorio; el fundador lo comparó con las tarjetas y
+ * tenía razón. El orden ahora es el de la lectura real:
+ *
+ *   1. IDENTIDAD — la palabra, su transliteración, categoría y lema.
+ *   2. QUÉ SIGNIFICA AQUÍ — la traducción, en grande. Es lo que se viene a
+ *      buscar al pasar el mouse.
+ *   3. POR QUÉ ASÍ — el puente del caso y la función sintáctica: lo que
+ *      explica esa traducción.
+ *   4. LA FORMA — morfología en celdas (como en la tarjeta) y las pistas.
+ *   5. CONTEXTO — rango semántico, relaciones, frecuencia.
+ *   6. SIGNIFICANCIA — el "¿y qué?", cerrando, sólo si es palabra clave.
+ *
+ * Encabezado FIJO: al desplazarse por un análisis largo, la palabra que se
+ * está mirando no debe salirse de la vista.
  */
-export function GreekWordHoverContent({ token, insight, keyInsight, bookCount, bookName }: Props) {
+export function GreekWordHoverContent({ token, insight, keyInsight, relations, bookCount, bookName }: Props) {
     const { t } = useTranslation('greekTutor');
     const pistas = greekRecognitionClues(token);
     const ntCount = useNtLemmaFrequency(token.lemma);
     const esRara = ntCount !== null && ntCount > 0 && ntCount <= 5;
     const puente = translationBridge(token);
+    const { tag } = token;
 
-    const resumen = [
-        token.tag.tense && t(`analyzer.tense.${token.tag.tense}`),
-        token.tag.voice && t(`analyzer.voice.${token.tag.voice}`),
-        token.tag.mood && t(`analyzer.mood.${token.tag.mood}`),
-        token.tag.person && t('analyzer.personShort', { n: token.tag.person }),
-        token.tag.case && t(`analyzer.case.${token.tag.case}`),
-        token.tag.number && t(`analyzer.number.${token.tag.number}`),
-        token.tag.gender && t(`analyzer.gender.${token.tag.gender}`),
-    ].filter(Boolean);
+    const celdas: { label: string; value: string }[] = [];
+    const celda = (labelKey: string, dim: string, code?: string) => {
+        if (code) celdas.push({ label: t(`analyzer.fields.${labelKey}`), value: t(`analyzer.${dim}.${code}`) });
+    };
+    celda('tense', 'tense', tag.tense);
+    celda('voice', 'voice', tag.voice);
+    celda('mood', 'mood', tag.mood);
+    if (tag.person) celdas.push({ label: t('analyzer.fields.person'), value: tag.person });
+    celda('case', 'case', tag.case);
+    celda('number', 'number', tag.number);
+    celda('gender', 'gender', tag.gender);
 
     return (
-        // EL POPOVER LLEVA LO MISMO QUE LA TARJETA. El fundador: "el uso que
-        // le doy es para no tener que bajar al card cuando estoy mirando todo
-        // el versículo". Scroll interno para los versículos con mucha clave.
-        <div className="w-80 max-h-[70vh] overflow-y-auto space-y-3 p-1 text-left">
-            <div className="flex items-start justify-between gap-3">
-                <div>
-                    <div className="text-xl leading-tight" lang="grc">{token.text}</div>
-                    <div className="text-xs text-muted-foreground italic">{token.transliteration}</div>
+        <div className="w-[22rem] max-h-[75vh] overflow-y-auto text-left">
+            {/* 1 · IDENTIDAD — fija al desplazarse. */}
+            <header className="sticky top-0 z-10 -mx-1 flex items-start justify-between gap-3 border-b border-border bg-card px-4 py-3">
+                <div className="min-w-0">
+                    <div className="text-2xl leading-tight" lang="grc">{token.text}</div>
+                    <div className="text-xs text-muted-foreground italic">
+                        {token.transliteration}
+                        <span className="not-italic"> · {t('analyzer.fields.lemma')} </span>
+                        <span className="not-italic font-medium text-foreground" lang="grc">{token.lemma}</span>
+                    </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] leading-none text-muted-foreground">
+                        {t(`analyzer.pos.${token.pos}`)}
+                    </span>
                     {keyInsight && (
                         <span className="inline-flex items-center gap-0.5 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] leading-none text-primary">
                             <Star className="h-2.5 w-2.5" />
                             {t('analyzer.keyWordBadge')}
                         </span>
                     )}
-                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] leading-none text-muted-foreground">
-                        {t(`analyzer.pos.${token.pos}`)}
-                    </span>
                 </div>
-            </div>
+            </header>
 
-            <div className="space-y-1 text-sm">
-                <div>
-                    <span className="text-muted-foreground">{t('analyzer.fields.lemma')}: </span>
-                    <span lang="grc">{token.lemma}</span>
-                </div>
-                {resumen.length > 0 && (
-                    <div className="text-muted-foreground">{resumen.join(' · ')}</div>
-                )}
+            <div className="space-y-3 px-4 py-3">
+                {/* 2 · QUÉ SIGNIFICA AQUÍ — lo que se viene a buscar. */}
                 {insight && (
-                    <div>
-                        <span className="text-muted-foreground">{t('analyzer.fields.translation')}: </span>
-                        <span className="font-medium text-primary">{insight.translation}</span>
+                    <p className="text-base font-medium leading-snug text-primary">{insight.translation}</p>
+                )}
+
+                {/* 3 · POR QUÉ ASÍ. */}
+                {(puente || insight?.caseFunction || insight?.syntacticFunction) && (
+                    <div className="space-y-1.5 rounded-md bg-muted/50 p-2.5">
+                        {insight?.caseFunction && tag.case && (
+                            <div className="text-xs">
+                                <span className="font-semibold text-info">
+                                    {t(`analyzer.caseFn.${tag.case}.${insight.caseFunction}`)}
+                                </span>
+                                <span className="text-muted-foreground">
+                                    {' — '}
+                                    {t(`analyzer.caseFnHint.${insight.caseFunction}`)}
+                                </span>
+                            </div>
+                        )}
+                        {puente && (
+                            <p className="text-xs italic text-muted-foreground">{t(`analyzer.bridge.${puente}`)}</p>
+                        )}
+                        {insight?.syntacticFunction && <p className="text-xs">{insight.syntacticFunction}</p>}
                     </div>
                 )}
-                {/* EL PUENTE: por qué la traducción trae palabras que "no
-                    están" en el griego — el caso las lleva dentro. */}
-                {puente && (
-                    <div className="text-xs italic text-muted-foreground">{t(`analyzer.bridge.${puente}`)}</div>
-                )}
-                {insight?.caseFunction && token.tag.case && (
-                    <div className="text-xs">
-                        <span className="font-medium text-info">
-                            {t(`analyzer.caseFn.${token.tag.case}.${insight.caseFunction}`)}
-                        </span>
-                        {' — '}
-                        <span className="text-muted-foreground">
-                            {t(`analyzer.caseFnHint.${insight.caseFunction}`)}
-                        </span>
+
+                {/* 4 · LA FORMA — mismas celdas que la tarjeta. */}
+                {celdas.length > 0 && (
+                    <div className="grid grid-cols-3 gap-1">
+                        {celdas.map((c) => (
+                            <div key={c.label} className="rounded border border-border/60 px-1.5 py-1">
+                                <div className="text-[9px] uppercase tracking-wide text-muted-foreground">{c.label}</div>
+                                <div className="text-xs leading-tight">{c.value}</div>
+                            </div>
+                        ))}
                     </div>
                 )}
-                {insight && <div className="text-xs">{insight.syntacticFunction}</div>}
+
+                {pistas.length > 0 && (
+                    <div className="rounded-md bg-warning/10 p-2.5 space-y-1">
+                        <h4 className="text-[10px] font-semibold uppercase tracking-wide text-warning">
+                            {t('analyzer.clues.title')}
+                        </h4>
+                        <ul className="space-y-0.5 text-xs">
+                            {pistas.map((p) => (
+                                <li key={p.id}>• {t(`analyzer.clues.${p.id}`, { marker: p.marker })}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {/* 5 · CONTEXTO. */}
+                {insight?.semanticRange && (
+                    <Bloque label={t('analyzer.fields.semanticRange')}>{insight.semanticRange}</Bloque>
+                )}
+
+                {relations && relations.length > 0 && (
+                    <Bloque label={t('analyzer.fields.relations')}>
+                        {relations.map((r, i) => (
+                            <div key={i} className="text-xs">
+                                <span className="font-medium text-info">{t(`analyzer.relation.${r.type}`)}</span>{' '}
+                                <span lang="grc">{r.otherText}</span>
+                                <div className="text-muted-foreground">{r.note}</div>
+                            </div>
+                        ))}
+                    </Bloque>
+                )}
+
                 {insight?.nameNote && (
-                    <div className="rounded bg-muted/60 p-2 text-xs leading-relaxed">{insight.nameNote}</div>
+                    <Bloque label={t('analyzer.fields.nameNote')}>
+                        <p className="text-xs leading-relaxed">{insight.nameNote}</p>
+                    </Bloque>
                 )}
-                {insight && (
-                    <div>
-                        <span className="text-muted-foreground">{t('analyzer.fields.semanticRange')}: </span>
-                        {insight.semanticRange}
-                    </div>
-                )}
+
                 {ntCount !== null && ntCount > 0 && (
-                    <div className={cn('text-xs', esRara ? 'font-medium text-warning' : 'text-muted-foreground')}>
+                    <p className={cn('text-xs', esRara ? 'font-medium text-warning' : 'text-muted-foreground')}>
                         {t('analyzer.frequency', { nt: ntCount })}
                         {bookCount !== undefined && bookName && (
                             <> · {t('analyzer.frequencyInBook', { n: bookCount, book: bookName })}</>
                         )}
                         {esRara && <> · {t('analyzer.rareWord')}</>}
+                    </p>
+                )}
+
+                {/* 6 · SIGNIFICANCIA — cierra, y sólo si carga peso. */}
+                {keyInsight && (
+                    <div className="rounded-md border border-primary/20 bg-primary/5 p-2.5 space-y-1">
+                        <h4 className="text-[10px] font-semibold uppercase tracking-wide text-primary">
+                            {t('analyzer.significance')}
+                        </h4>
+                        <p className="text-xs leading-relaxed">{keyInsight.significance}</p>
                     </div>
                 )}
+
+                {pistas.length > 0 && (
+                    <p className="border-t border-border/60 pt-2 text-[10px] leading-relaxed text-muted-foreground">
+                        {t('analyzer.clues.source')}
+                    </p>
+                )}
             </div>
-
-            {keyInsight && (
-                <div className="rounded-md bg-primary/5 border border-primary/20 p-2.5 space-y-1">
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">
-                        {t('analyzer.significance')}
-                    </div>
-                    <p className="text-xs leading-relaxed">{keyInsight.significance}</p>
-                </div>
-            )}
-
-            {pistas.length > 0 && (
-                <div className="rounded-md bg-warning/10 p-2.5 space-y-1">
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-warning">
-                        {t('analyzer.clues.title')}
-                    </div>
-                    <ul className="space-y-0.5 text-xs">
-                        {pistas.map((p) => (
-                            <li key={p.id}>
-                                • {t(`analyzer.clues.${p.id}`, { marker: p.marker })}
-                            </li>
-                        ))}
-                    </ul>
-                    {/* La capa honesta: quién determinó el análisis. */}
-                    <p className="pt-1 text-[10px] text-muted-foreground">{t('analyzer.clues.source')}</p>
-                </div>
-            )}
         </div>
     );
 }

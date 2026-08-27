@@ -44,6 +44,21 @@ export function GreekInsightBlocks({ insight, generating, error, cacheUnavailabl
 
     return (
         <>
+            {/* AMPLIAR VA ARRIBA, pegado al versículo: es una acción SOBRE
+                el texto, no el pie de los análisis que precisamente le
+                faltan. Aparece cuando el caché es de una versión anterior —
+                adivinar por campos falló antes (el fundador tenía claves y
+                ningún botón para traer el orden de palabras). */}
+            {insight.promptVersion !== GREEK_INSIGHT_PROMPT_VERSION && (
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-border px-4 py-2">
+                    <p className="text-xs text-muted-foreground">{t('analyzer.expandPitch')}</p>
+                    <Button variant="ghost" size="sm" onClick={onGenerate} disabled={generating}>
+                        {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                        {t('analyzer.expandBtn')}
+                    </Button>
+                </div>
+            )}
+
             <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-lg border border-border p-4 space-y-1">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -77,20 +92,6 @@ export function GreekInsightBlocks({ insight, generating, error, cacheUnavailabl
                     </h4>
                     <p className="text-xs text-muted-foreground">{t('analyzer.wordOrderRule')}</p>
                     <p className="text-sm leading-relaxed">{insight.wordOrderNote}</p>
-                </div>
-            )}
-
-            {/* CACHÉ DE VERSIÓN ANTERIOR: ofrecer ampliar SIEMPRE que la
-                versión no sea la actual — adivinar por campos falló: el
-                fundador tenía claves (v2) y ningún botón para traer el orden
-                de palabras (v3). */}
-            {insight.promptVersion !== GREEK_INSIGHT_PROMPT_VERSION && (
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-border px-4 py-2">
-                    <p className="text-xs text-muted-foreground">{t('analyzer.expandPitch')}</p>
-                    <Button variant="ghost" size="sm" onClick={onGenerate} disabled={generating}>
-                        {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                        {t('analyzer.expandBtn')}
-                    </Button>
                 </div>
             )}
 

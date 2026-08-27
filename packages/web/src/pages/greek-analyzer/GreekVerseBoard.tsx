@@ -12,6 +12,7 @@ interface Props {
     data: GreekVerseTokens;
     insight: GreekVerseInsight | null;
     claveDe: (texto: string) => GreekKeyInsight | undefined;
+    relacionesDe: (i: number) => { type: string; note: string; otherText: string }[];
     lemmaCounts: Record<string, number>;
     bookName: string;
     fontScale: GreekFontScale;
@@ -75,6 +76,7 @@ export function GreekVerseBoard({
     data,
     insight,
     claveDe,
+    relacionesDe,
     lemmaCounts,
     bookName,
     fontScale,
@@ -144,11 +146,19 @@ export function GreekVerseBoard({
                         </TooltipTrigger>
                         {/* Mismo patrón que el hebreo: tooltip con contenido
                             rico, fondo de tarjeta. */}
-                        <TooltipContent className="bg-card text-card-foreground border border-border shadow-lg">
+                        <TooltipContent
+                            // `p-0` y `text-sm`: el tooltip base trae
+                            // `px-3 py-1.5 text-xs` para etiquetas cortas y
+                            // pelea con el encabezado fijo del contenido, que
+                            // pone su propio espaciado por sección.
+                            className="bg-card text-card-foreground border border-border shadow-xl rounded-lg p-0 text-sm max-w-none [&>svg]:bg-card [&>svg]:fill-card"
+                            sideOffset={6}
+                        >
                             <GreekWordHoverContent
                                 token={tok}
                                 insight={insight?.words[i]}
                                 keyInsight={claveDe(tok.text)}
+                                relations={relacionesDe(i)}
                                 bookCount={lemmaCounts[tok.lemma]}
                                 bookName={bookName}
                             />

@@ -140,7 +140,14 @@ export function GreekPassageView({ provider, book, bookName, chapter, versesInCh
                                                 </span>
                                             </span>
                                         </TooltipTrigger>
-                                        <TooltipContent className="bg-card text-card-foreground border border-border shadow-lg print:hidden">
+                                        <TooltipContent
+                            // `p-0` y `text-sm`: el tooltip base trae
+                            // `px-3 py-1.5 text-xs` para etiquetas cortas y
+                            // pelea con el encabezado fijo del contenido, que
+                            // pone su propio espaciado por sección.
+                            className="bg-card text-card-foreground border border-border shadow-xl rounded-lg p-0 text-sm max-w-none [&>svg]:bg-card [&>svg]:fill-card print:hidden"
+                            sideOffset={6}
+                        >
                                             <GreekWordHoverContent
                                                 token={tok}
                                                 insight={insight?.words[i]}

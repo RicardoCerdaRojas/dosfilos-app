@@ -226,6 +226,7 @@ export function GreekAnalyzerPage() {
                             data={data}
                             insight={insight}
                             claveDe={claveDe}
+                            relacionesDe={relacionesDe}
                             lemmaCounts={lemmaCounts}
                             bookName={libroActual ? nombre(libroActual) : book}
                             fontScale={fontScale}
