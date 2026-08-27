@@ -56,8 +56,9 @@ export interface GreekKeyInsight {
  * v4: genitivos en cadena — la aposición muestra "(de) X" y lo explica.
  * v5: + caseFunction (taxonomía cerrada) y nameNote (nombres propios).
  * v6: + relations (aposición/concordancia) y rhetoric (quiasmo/inclusión).
+ * v7: español latinoamericano (ustedes, no vosotros).
  */
-export const GREEK_INSIGHT_PROMPT_VERSION = 6;
+export const GREEK_INSIGHT_PROMPT_VERSION = 7;
 
 export interface GreekVerseInsight {
     /** "JAS 1:2" — la clave del caché. */

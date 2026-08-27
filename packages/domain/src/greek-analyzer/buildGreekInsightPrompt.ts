@@ -1,5 +1,6 @@
 import type { GreekWordToken } from './morphGntToken';
 import { CASE_FUNCTIONS } from './caseFunctionTaxonomy';
+import { SPANISH_REGISTER } from '../shared/spanishRegister';
 
 /** Expande el tag a texto plano para el prompt, sin códigos crípticos. */
 const TENSE: Record<string, string> = { P: 'presente', I: 'imperfecto', F: 'futuro', A: 'aoristo', X: 'perfecto', Y: 'pluscuamperfecto' };
@@ -131,6 +132,7 @@ paralelismo o devuelve null.
 
 REGLAS:
 - Todo en español, salvo las palabras griegas.
+- ${SPANISH_REGISTER}
 - NO inventes sentidos que el lema no tiene: el pastor va a predicar con esto.
 - La lista de salida tiene EXACTAMENTE ${input.tokens.length} palabras, en el mismo orden.
 
