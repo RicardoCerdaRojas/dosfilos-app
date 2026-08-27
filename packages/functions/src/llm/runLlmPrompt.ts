@@ -7,6 +7,7 @@ import { recordLlmUsage } from './llmUsageRecorder';
 import { LLM_PRICING } from './llmCost';
 import { consumeRateLimitToken } from '../shared/rateLimit';
 import { readBudgetConfig } from './llmBudget';
+import { MODEL_FAST } from './modelCatalog';
 
 /**
  * Proxy de LLM para las superficies que hoy llaman al modelo DESDE EL NAVEGADOR
@@ -210,7 +211,7 @@ export const runLlmPrompt = onCall(
 
         // Solo modelos con precio conocido: si no sabemos cuánto cuesta, no lo
         // corremos. Evita que un cliente pida un modelo caro fuera de la tabla.
-        const model = String(data.model ?? 'gemini-2.5-flash');
+        const model = String(data.model ?? MODEL_FAST);
         if (!(model in LLM_PRICING)) {
             throw new HttpsError('invalid-argument', `Modelo no autorizado: ${model}`);
         }

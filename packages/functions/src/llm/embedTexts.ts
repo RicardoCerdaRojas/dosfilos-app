@@ -4,6 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { recordLlmUsage } from './llmUsageRecorder';
 import { consumeRateLimitToken } from '../shared/rateLimit';
+import { MODEL_EMBEDDING } from './modelCatalog';
 
 /**
  * Embeddings en el servidor.
@@ -19,7 +20,7 @@ import { consumeRateLimitToken } from '../shared/rateLimit';
  * para el orden de magnitud, que es lo que el panel necesita.
  */
 
-const EMBEDDING_MODEL = 'gemini-embedding-001';
+const EMBEDDING_MODEL = MODEL_EMBEDDING;
 const MAX_TEXTS_PER_CALL = 100;
 const MAX_CHARS_PER_TEXT = 8000;
 const WINDOW_MS = 3_600_000;

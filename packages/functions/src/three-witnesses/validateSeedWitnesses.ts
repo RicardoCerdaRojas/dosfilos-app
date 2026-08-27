@@ -16,6 +16,7 @@ import {
     type SeedContext,
     type TraditionSection,
 } from './prompts';
+import { MODEL_FAST } from '../llm/modelCatalog';
 
 /**
  * Pastoral Fidelity Phase 2 — three-witnesses orchestrator (ADR-011).
@@ -244,7 +245,7 @@ export const validateSeedWitnesses = onCall(
 
         // Vía el port: el adapter mide el consumo (tokens → USD) que antes se
         // perdía al llamar al SDK directo. Mismo modelo, misma config.
-        const llm = new GeminiLlmClient(apiKey, 'gemini-2.5-flash', {
+        const llm = new GeminiLlmClient(apiKey, MODEL_FAST, {
             feature: 'validateSeedWitnesses',
             userId: request.auth?.uid,
         });

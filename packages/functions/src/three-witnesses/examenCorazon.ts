@@ -17,6 +17,7 @@ import {
     type AfectoPromptClaim,
     type HeartDoctrineLevel,
 } from './heartPrompts';
+import { MODEL_FAST } from '../llm/modelCatalog';
 
 /**
  * Examen del corazón — callable (manifiesto v1.3 §4). Espeja `validateSeedWitnesses`:
@@ -136,7 +137,7 @@ export const examenCorazon = onCall(
 
         // Vía el port: el adapter mide el consumo (tokens → USD) que antes se
         // perdía al llamar al SDK directo. Mismo modelo, misma config.
-        const llm = new GeminiLlmClient(apiKey, 'gemini-2.5-flash', {
+        const llm = new GeminiLlmClient(apiKey, MODEL_FAST, {
             feature: 'examenCorazon',
             userId: request.auth?.uid,
         });

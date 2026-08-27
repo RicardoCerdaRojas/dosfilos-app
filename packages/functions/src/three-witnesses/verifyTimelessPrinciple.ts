@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { GeminiLlmClient } from '../llm/GeminiLlmClient';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
+import { MODEL_FAST } from '../llm/modelCatalog';
 
 /**
  * Pastoral Fidelity Phase 1.6 (ADR-023) — timeless-principle verifier.
@@ -96,7 +97,7 @@ Devuelve SIEMPRE JSON válido (sin Markdown):
         try {
             // Vía el port: el adapter mide el consumo (tokens → USD) que antes se
             // perdía al llamar al SDK directo. Mismo modelo, misma config.
-            const llm = new GeminiLlmClient(apiKey, 'gemini-2.5-flash', {
+            const llm = new GeminiLlmClient(apiKey, MODEL_FAST, {
                 feature: 'verifyTimelessPrinciple',
                 userId: request.auth?.uid,
             });

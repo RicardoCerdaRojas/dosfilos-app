@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { GeminiLlmClient } from '../llm/GeminiLlmClient';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
+import { MODEL_FAST } from '../llm/modelCatalog';
 
 /**
  * Pastoral Fidelity Phase 1.5 — callable that identifies 5-8 theologically
@@ -141,7 +142,7 @@ export const identifyKeyWords = onCall(
 
         // Vía el port: el adapter mide el consumo (tokens → USD) que antes se
         // perdía al llamar al SDK directo. Mismo modelo, misma config.
-        const llm = new GeminiLlmClient(apiKey, 'gemini-2.5-flash', {
+        const llm = new GeminiLlmClient(apiKey, MODEL_FAST, {
             feature: 'identifyKeyWords',
             userId: request.auth?.uid,
         });

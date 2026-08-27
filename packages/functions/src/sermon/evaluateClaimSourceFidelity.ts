@@ -11,6 +11,7 @@ import {
 } from './fidelityEvaluatorPrompt';
 import { buildSubstantiveClaimDetectorPrompt } from './substantiveClaimDetectorPrompt';
 import { buildAuthorityDetectorPrompt } from './authorityDetectorPrompt';
+import { MODEL_FAST } from '../llm/modelCatalog';
 
 /**
  * Pastoral Fidelity — Phase 3 PR 1 callable.
@@ -174,7 +175,7 @@ export const evaluateClaimSourceFidelity = onCall(
         const prose = joinProse(content);
         const claims = extractClaims(content, manifestEntries);
 
-        const flash: ILlmClient = new GeminiLlmClient(geminiKey, 'gemini-2.5-flash', {
+        const flash: ILlmClient = new GeminiLlmClient(geminiKey, MODEL_FAST, {
             feature: 'evaluateClaimSourceFidelity',
             userId: request.auth?.uid,
         });

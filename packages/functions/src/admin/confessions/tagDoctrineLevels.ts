@@ -1,9 +1,11 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { writeAuditLog } from '../auditLog';
 import { appCheckCallableOptions } from '../../config/appCheckOptions';
+import { MODEL_FAST } from '../../llm/modelCatalog';
+import { GeminiLlmClient } from '../../llm/GeminiLlmClient';
+import type { ILlmClient } from '../../llm/LlmClient';
 
 /**
  * Cloud Function: Tag confession sections with doctrineLevel via LLM.
@@ -54,13 +56,13 @@ export const tagConfessionDoctrineLevels = onCall(
             )
             : (await db.collection('confessions').where('sectionType', '==', 'sectioned').get()).docs;
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
-            generationConfig: {
-                responseMimeType: 'application/json',
-                temperature: 0.2,
-            },
+        // Por el port, no por el SDK: esta clasificación es texto→texto de un
+        // solo turno, que es exactamente lo que `ILlmClient` cubre. De paso el
+        // gasto queda medido — con el SDK directo había que llamar al medidor a
+        // mano, y acá no se llamaba: el costo de etiquetar una confesión entera
+        // no aparecía en ninguna parte.
+        const llm: ILlmClient = new GeminiLlmClient(apiKey, MODEL_FAST, {
+            feature: 'admin.tagDoctrineLevels',
         });
 
         const report: Array<{
@@ -89,7 +91,7 @@ export const tagConfessionDoctrineLevels = onCall(
                     continue;
                 }
                 try {
-                    const result = await classifySection(model, {
+                    const result = await classifySection(llm, {
                         confessionTitle: confData.title,
                         sectionReference: section.sectionReference,
                         sectionTitle: section.title,
@@ -138,10 +140,12 @@ interface ClassifyResult {
     rationale: string;
 }
 
-async function classifySection(model: any, input: ClassifyInput): Promise<ClassifyResult> {
-    const prompt = buildClassificationPrompt(input);
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+async function classifySection(llm: ILlmClient, input: ClassifyInput): Promise<ClassifyResult> {
+    const text = await llm.generate({
+        prompt: buildClassificationPrompt(input),
+        responseMimeType: 'application/json',
+        temperature: 0.2,
+    });
     const parsed = JSON.parse(text);
 
     const level = parsed.level;

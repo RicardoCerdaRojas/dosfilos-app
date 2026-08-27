@@ -10,6 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { WorkflowPhase } from '@dosfilos/domain';
+import { DEFAULT_MODEL, resolveUserModel, selectableModels } from '@dosfilos/domain';
 import { BookOpen, Mic, PenTool, Settings, Library, Layers, Cog, Calendar, GraduationCap, Globe, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFirebase } from '@/context/firebase-context';
@@ -96,7 +97,7 @@ export function SettingsPage() {
         },
         // Advanced settings (NEW)
         advanced: {
-            aiModel: 'gemini-2.5-flash',
+            aiModel: DEFAULT_MODEL,
             globalTemperature: 0.7
         }
     });
@@ -250,7 +251,7 @@ export function SettingsPage() {
                     fileSearchStoreId: (config.greekTutor as any).fileSearchStoreId || 'exegesis'
                 },
                 advanced: {
-                    aiModel: String(config.advanced?.aiModel || 'gemini-2.5-flash'),
+                    aiModel: resolveUserModel(config.advanced?.aiModel),
                     globalTemperature: Number(config.advanced?.globalTemperature) || 0.7
                 },
                 updatedAt: new Date().toISOString()
@@ -813,25 +814,32 @@ export function SettingsPage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="space-y-2">
-                                <Label>Modelo de IA</Label>
-                                <Select 
-                                    value={config.advanced.aiModel}
+                                <Label>Motor de redacción</Label>
+                                {/* LAS OPCIONES SALEN DEL CATÁLOGO, NO DE ACÁ.
+                                    Esta lista estaba escrita a mano y ofrecía
+                                    dos modelos que el servidor RECHAZA por no
+                                    tener precio en la tabla: elegir cualquiera
+                                    de ellos rompía toda generación, y el pastor
+                                    no tenía cómo saber que la opción que le
+                                    dábamos era la que le rompía la aplicación. */}
+                                <Select
+                                    value={resolveUserModel(config.advanced.aiModel)}
                                     onValueChange={(value) => setConfig({
                                         ...config,
-                                        advanced: {...config.advanced, aiModel: value}
+                                        advanced: {...config.advanced, aiModel: resolveUserModel(value)}
                                     })}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un modelo" />
+                                        <SelectValue placeholder="Elige un motor" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash (Recomendado)</SelectItem>
-                                        <SelectItem value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</SelectItem>
-                                        <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro (Más lento)</SelectItem>
+                                        {selectableModels().map((m) => (
+                                            <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                                 <p className="text-xs text-muted-foreground">
-                                    El modelo usado para todas las generaciones de IA.
+                                    {selectableModels().find((m) => m.id === resolveUserModel(config.advanced.aiModel))?.hint}
                                 </p>
                             </div>
                             <div className="space-y-3">

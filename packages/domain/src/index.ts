@@ -143,6 +143,7 @@ export * from './entities/GeoEvent'; // 📊 Geographic Analytics: Events
 export type { GreekForm, TrainingUnit, ChatMessage as GreekTutorChatMessage, UserResponse, StudySession, ExegeticalInsight, MorphemeComponent, MorphologyBreakdown, QuizQuestion, QuizAttempt, UnitProgress, SessionProgress, BiblicalPassage, PassageWord, UnitPreview } from './greek-tutor/entities/entities'; // 🏛️ Greek Tutor Entities
 export * from './greek-tutor/syntax-analysis'; // 🏛️ Greek Syntax Analysis
 export * from './models/Plan'; // 🎯 Plan models (refactored system)
+export * from './llm/modelCatalog';
 
 
 // Multi-Agent Faculty Entities

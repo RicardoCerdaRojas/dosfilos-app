@@ -1,14 +1,35 @@
 /**
  * Thin LLM provider port (Phase 2.5, Q7 / ADR-025).
  *
- * New Pastoral Fidelity callables depend on this interface, NOT on the
- * `@google/generative-ai` SDK directly, so the model can be swapped
- * (Gemini → MiniMax/other) by replacing the adapter. The broad refactor of
- * the ~34 existing direct Gemini callers is a separate tech-debt sprint
- * (memory `tech_debt_llm_provider_abstraction`).
+ * Los llamadores dependen de esta interfaz y NO del SDK `@google/generative-ai`,
+ * así que cambiar de modelo —o de proveedor— es escribir un adapter hermano y
+ * tocar una línea de construcción. Ya hay dos adapters vivos (Gemini y
+ * Anthropic), que es la prueba de que el port sirve para lo que dice servir.
  *
  * Deliberately minimal: one `generate` call covering the only shape the
  * verifier-orienter callables need (system + prompt → text, optional JSON).
+
+ *
+ * QUÉ NO CUBRE ESTE PORT, Y POR QUÉ SE QUEDA ASÍ.
+ *
+ * Es texto→texto de un solo turno. Tres llamadas del servidor siguen usando el
+ * SDK directo porque necesitan capacidades que no caben en esa forma:
+ *
+ *   - `facultyChatStream` — conversación multi-turno con streaming.
+ *   - `geminiExtraction` — PDFs, que es multimodal.
+ *   - `runLlmPrompt` — herramientas (`fileSearch` del tutor de griego) y visión.
+ *
+ * NO ES DEUDA PENDIENTE: ampliar el port hasta cubrirlas lo convertiría en la
+ * API del proveedor con otro nombre, y un port que expone todo lo que expone su
+ * implementación ya no aísla de nada. La regla real —la que no se negocia— es
+ * que la llamada salga del servidor y quede MEDIDA; el port es la comodidad que
+ * hace eso fácil para el caso común, no un requisito. Las tres de arriba llaman
+ * al medidor a mano.
+ *
+ * El id del modelo NO se escribe acá ni en los llamadores: sale del catálogo
+ * (`llm/modelCatalog`), que nombra capacidades —rápido, profundo— en vez de
+ * versiones. Cambiar de modelo o de proveedor se hace ahí y en ningún otro
+ * lugar.
  */
 
 export interface LlmGenerateOptions {
