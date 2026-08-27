@@ -222,7 +222,7 @@ algo probable en tablet real.
 | Apple Sign-In | **En F1** (obligatorio por guideline 4.8 al ofrecer Google) |
 | Billing/quota en tablet | **V1 solo lee** — sin fricción de planes hasta el Redactor |
 | Plataformas | **iOS y Android desde F0** |
-| Branding | Necesario en F0. **Propuesta a confirmar**: nombre "Dos Filos Preach", bundle id `com.dosfilos.preach` |
+| Branding | ✅ **Confirmado**: nombre "Dos Filos Preach", bundle id `com.dosfilos.preach` (iOS y Android). Íconos se producen en F0 |
 | Hardware canvas | Apple Pencil + S Pen + **BOOX 10.3 Gen II** (fundador) → M-09 e-ink |
 | Beta | **Prueba interna con 2-3 usuarios** al cierre de F1 (TestFlight internal + Play internal testing: distribución privada por invitación, sin revisión pública de tienda) |
 | Merge PR #503 | Tras esta actualización |
