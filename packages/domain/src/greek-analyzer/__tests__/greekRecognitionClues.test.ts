@@ -125,3 +125,34 @@ describe('partículas pospositivas — determinista, propiedad del lema', () => 
         }
     });
 });
+
+describe('prepositionUsage — el caso cambia el sentido', () => {
+    it('ἐν sólo rige dativo: sin alternativas que contrastar', async () => {
+        const { prepositionUsage } = await import('../prepositionCases');
+        const u = prepositionUsage('ἐν', 'D');
+        expect(u?.active?.gloss).toContain('dentro de');
+        expect(u?.alternatives).toHaveLength(0);
+    });
+
+    it('διά: genitivo es el MEDIO, acusativo el MOTIVO — y el contraste se muestra', async () => {
+        const { prepositionUsage } = await import('../prepositionCases');
+        const gen = prepositionUsage('διά', 'G');
+        expect(gen?.active?.gloss).toContain('MEDIO');
+        expect(gen?.alternatives[0]?.gloss).toContain('MOTIVO');
+
+        const acc = prepositionUsage('διά', 'A');
+        expect(acc?.active?.gloss).toContain('MOTIVO');
+    });
+
+    it('sin caso del término: no hay sentido activo, pero sí las opciones', async () => {
+        const { prepositionUsage } = await import('../prepositionCases');
+        const u = prepositionUsage('κατά', undefined);
+        expect(u?.active).toBeUndefined();
+        expect(u?.alternatives).toHaveLength(2);
+    });
+
+    it('un lema fuera del catálogo no inventa régimen', async () => {
+        const { prepositionUsage } = await import('../prepositionCases');
+        expect(prepositionUsage('χαίρω', 'D')).toBeNull();
+    });
+});

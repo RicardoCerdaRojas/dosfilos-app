@@ -77,6 +77,19 @@ export function GreekAnalyzerPage() {
     const { insight, generating, error: insightError, cacheUnavailable, generate } = useGreekInsight(referencia, data?.tokens, previous);
 
     /**
+     * El caso del TÉRMINO de una preposición: el primer token siguiente que
+     * tenga caso. El artículo intermedio (ἐν τῇ διασπορᾷ) comparte el caso
+     * del sustantivo, así que tomarlo también acierta.
+     */
+    const casoDelTermino = (i: number) => {
+        for (let j = i + 1; j < (data?.tokens.length ?? 0) && j <= i + 4; j++) {
+            const c = data?.tokens[j]?.tag.case;
+            if (c) return c;
+        }
+        return undefined;
+    };
+
+    /**
      * Las relaciones de una palabra, ya resueltas al texto de la otra — la
      * aposición deja de ser prosa dentro de una sola tarjeta y pasa a ser un
      * vínculo que ambas muestran.
@@ -227,6 +240,7 @@ export function GreekAnalyzerPage() {
                             insight={insight}
                             claveDe={claveDe}
                             relacionesDe={relacionesDe}
+                            casoDelTermino={casoDelTermino}
                             lemmaCounts={lemmaCounts}
                             bookName={libroActual ? nombre(libroActual) : book}
                             fontScale={fontScale}
@@ -265,6 +279,7 @@ export function GreekAnalyzerPage() {
                                         insight={insight?.words[i]}
                                         keyInsight={claveDe(tok.text)}
                                         relations={relacionesDe(i)}
+                                        objectCase={casoDelTermino(i)}
                                         bookCount={lemmaCounts[tok.lemma]}
                                         bookName={libroActual ? nombre(libroActual) : book}
                                         onSaveFinding={

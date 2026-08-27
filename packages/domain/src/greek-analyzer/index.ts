@@ -10,3 +10,4 @@ export * from './segmentGreekWord';
 export * from './caseFunctionTaxonomy';
 export * from './rhetoricalStructure';
 export * from './articleUseTaxonomy';
+export * from './prepositionCases';

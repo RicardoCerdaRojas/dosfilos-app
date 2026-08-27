@@ -13,6 +13,7 @@ interface Props {
     insight: GreekVerseInsight | null;
     claveDe: (texto: string) => GreekKeyInsight | undefined;
     relacionesDe: (i: number) => { type: string; note: string; otherText: string }[];
+    casoDelTermino: (i: number) => string | undefined;
     lemmaCounts: Record<string, number>;
     bookName: string;
     fontScale: GreekFontScale;
@@ -28,7 +29,7 @@ interface Props {
 const FUENTE: Record<GreekFontScale, string> = { 0: 'text-2xl', 1: 'text-3xl', 2: 'text-4xl' };
 
 /** Capa 1: color de la palabra ENTERA por su categoría. */
-const POS_COLOR: Partial<Record<GreekWordToken['pos'], string>> = {
+const POS_COLOR: Record<GreekWordToken['pos'], string> = {
     V: 'text-primary',
     N: 'text-info',
     A: 'text-warning',
@@ -37,6 +38,16 @@ const POS_COLOR: Partial<Record<GreekWordToken['pos'], string>> = {
     RR: 'text-success',
     RD: 'text-success',
     RI: 'text-success',
+    // FALTABAN LAS PALABRAS DE ENLACE, y son las que articulan el argumento:
+    // καί, ἵνα y ἐν quedaban del color base, indistinguibles de "sin
+    // clasificar" — el fundador las marcó en su captura. Una capa de
+    // categorías que deja fuera una categoría no es una capa: es un descuido
+    // con leyenda.
+    C: 'text-destructive',
+    P: 'text-accent-foreground',
+    D: 'text-foreground/70',
+    X: 'text-destructive/70',
+    I: 'text-destructive/70',
 };
 
 /** Capa 2: color del MORFEMA según su función. La raíz queda en el color base. */
@@ -55,6 +66,9 @@ const LEYENDA: Record<Exclude<GreekColorMode, 'off'>, { key: string; className: 
         { key: 'legendAdj', className: 'bg-warning' },
         { key: 'legendPron', className: 'bg-success' },
         { key: 'legendArticle', className: 'bg-muted-foreground' },
+        { key: 'legendConj', className: 'bg-destructive' },
+        { key: 'legendPrep', className: 'bg-accent-foreground' },
+        { key: 'legendAdv', className: 'bg-foreground/70' },
     ],
     morph: [
         { key: 'legendCase', className: 'bg-info' },
@@ -77,6 +91,7 @@ export function GreekVerseBoard({
     insight,
     claveDe,
     relacionesDe,
+    casoDelTermino,
     lemmaCounts,
     bookName,
     fontScale,
@@ -163,6 +178,7 @@ export function GreekVerseBoard({
                                 insight={insight?.words[i]}
                                 keyInsight={claveDe(tok.text)}
                                 relations={relacionesDe(i)}
+                                objectCase={casoDelTermino(i)}
                                 bookCount={lemmaCounts[tok.lemma]}
                                 bookName={bookName}
                             />

@@ -784,7 +784,10 @@
       "legendCase": "Case ending",
       "legendTense": "Tense marker",
       "legendMood": "Mood marker",
-      "legendAugment": "Augment"
+      "legendAugment": "Augment",
+      "legendConj": "Conjunction",
+      "legendPrep": "Preposition",
+      "legendAdv": "Adverb"
     },
     "caseFn": {
       "N": {
@@ -930,6 +933,11 @@
       "purpose": "Introduces the purpose.",
       "temporal": "Places what follows in time.",
       "condition": "States the condition the rest depends on."
+    },
+    "preposition": {
+      "title": "Preposition and its case",
+      "contrast": "With other cases the sense changes:",
+      "noObject": "Could not identify the governed term."
     }
   }
 }

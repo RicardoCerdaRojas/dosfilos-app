@@ -808,7 +808,10 @@
       "legendCase": "Terminación de caso",
       "legendTense": "Marca de tiempo",
       "legendMood": "Marca de modo",
-      "legendAugment": "Aumento"
+      "legendAugment": "Aumento",
+      "legendConj": "Conjunción",
+      "legendPrep": "Preposición",
+      "legendAdv": "Adverbio"
     },
     "caseFn": {
       "N": {
@@ -954,6 +957,11 @@
       "purpose": "Introduce la finalidad: para qué.",
       "temporal": "Sitúa en el tiempo lo que sigue.",
       "condition": "Plantea la condición de la que depende lo demás."
+    },
+    "preposition": {
+      "title": "Preposición y su caso",
+      "contrast": "Con otros casos cambia el sentido:",
+      "noObject": "No se identificó el término que rige."
     }
   }
 }

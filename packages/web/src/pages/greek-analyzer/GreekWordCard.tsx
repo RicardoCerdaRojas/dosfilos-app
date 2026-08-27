@@ -1,8 +1,9 @@
-import { greekRecognitionClues, translationBridge, type GreekKeyInsight, type GreekWordInsight, type GreekWordToken } from '@dosfilos/domain';
+import { greekRecognitionClues, prepositionUsage, translationBridge, type GreekKeyInsight, type GreekWordInsight, type GreekWordToken } from '@dosfilos/domain';
 import { Star, BookmarkPlus, Check } from 'lucide-react';
 import { useNtLemmaFrequency } from './useLemmaFrequency';
 import { GreekCompositionBlock } from './GreekCompositionBlock';
 import { GreekParticleBlock } from './GreekParticleBlock';
+import { GreekPrepositionBlock } from './GreekPrepositionBlock';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +13,11 @@ interface Props {
     insight?: GreekWordInsight;
     /** La significancia homilética, si esta palabra es una de las claves. */
     keyInsight?: GreekKeyInsight;
+    /**
+     * El caso del TÉRMINO de la preposición (la palabra que rige) — lo pone
+     * quien conoce el versículo. Sin él no se sabe qué sentido toma.
+     */
+    objectCase?: string;
     /** Relaciones de ESTA palabra con otras, ya resueltas a texto. */
     relations?: { type: string; note: string; otherText: string }[];
     /** Frecuencia del lema en el libro actual (runtime, determinista). */
@@ -49,6 +55,7 @@ export function GreekWordCard({
     token,
     insight,
     keyInsight,
+    objectCase,
     relations,
     bookCount,
     bookName,
@@ -65,6 +72,7 @@ export function GreekWordCard({
     // 2 veces en todo el NT". Se destaca cuando de verdad es raro.
     const esRara = ntCount !== null && ntCount > 0 && ntCount <= 5;
     const puente = translationBridge(token);
+    const regimen = token.pos === 'P' ? prepositionUsage(token.lemma, objectCase as any) : null;
 
     const celdas: { labelKey: string; value: string }[] = [];
     const celda = (labelKey: string, dim: string, code?: string) => {
@@ -160,6 +168,8 @@ export function GreekWordCard({
             {puente && (
                 <div className="text-xs italic text-muted-foreground">{t(`analyzer.bridge.${puente}`)}</div>
             )}
+
+            {regimen && <GreekPrepositionBlock lemma={token.lemma} usage={regimen} />}
 
             {insight && <GreekParticleBlock insight={insight} />}
 

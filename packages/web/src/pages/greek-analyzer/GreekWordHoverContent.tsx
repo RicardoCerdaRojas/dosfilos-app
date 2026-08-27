@@ -1,5 +1,6 @@
 import {
     greekRecognitionClues,
+    prepositionUsage,
     translationBridge,
     type GreekKeyInsight,
     type GreekWordInsight,
@@ -11,12 +12,15 @@ import { cn } from '@/lib/utils';
 import { useNtLemmaFrequency } from './useLemmaFrequency';
 import { GreekCompositionBlock } from './GreekCompositionBlock';
 import { GreekParticleBlock } from './GreekParticleBlock';
+import { GreekPrepositionBlock } from './GreekPrepositionBlock';
 
 interface Props {
     token: GreekWordToken;
     insight?: GreekWordInsight;
     keyInsight?: GreekKeyInsight;
     relations?: { type: string; note: string; otherText: string }[];
+    /** Caso del término de la preposición, para su régimen. */
+    objectCase?: string;
     bookCount?: number;
     bookName?: string;
 }
@@ -50,12 +54,13 @@ function Bloque({ label, children }: { label: string; children: React.ReactNode 
  * Encabezado FIJO: al desplazarse por un análisis largo, la palabra que se
  * está mirando no debe salirse de la vista.
  */
-export function GreekWordHoverContent({ token, insight, keyInsight, relations, bookCount, bookName }: Props) {
+export function GreekWordHoverContent({ token, insight, keyInsight, relations, objectCase, bookCount, bookName }: Props) {
     const { t } = useTranslation('greekTutor');
     const pistas = greekRecognitionClues(token);
     const ntCount = useNtLemmaFrequency(token.lemma);
     const esRara = ntCount !== null && ntCount > 0 && ntCount <= 5;
     const puente = translationBridge(token);
+    const regimen = token.pos === 'P' ? prepositionUsage(token.lemma, objectCase as any) : null;
     const { tag } = token;
 
     const celdas: { label: string; value: string }[] = [];
@@ -117,6 +122,8 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
                 )}
 
                 {/* 3 · POR QUÉ ASÍ. */}
+                {regimen && <GreekPrepositionBlock lemma={token.lemma} usage={regimen} />}
+
                 {insight && <GreekParticleBlock insight={insight} />}
 
                 {insight?.composition && <GreekCompositionBlock composition={insight.composition} compact />}
