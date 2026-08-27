@@ -35,46 +35,65 @@ export function useSeriesData(seriesId: string | undefined) {
             }
             setSeries(seriesData);
 
+            /**
+             * LOS TRES GRUPOS SE LEEN EN PARALELO, Y EL ORDEN SE CONSERVA.
+             *
+             * Antes cada sermón de la serie se pedía en su propio `await` dentro
+             * de un `for`: abrir una serie de doce sermones costaba DOCE VIAJES
+             * A FIRESTORE EN FILA, y el pastor miraba una pantalla de carga
+             * mientras la red hacía uno detrás de otro algo que puede hacer a la
+             * vez. Ninguna lectura necesita el resultado de la anterior.
+             *
+             * EL ORDEN DE INSERCIÓN IMPORTA aunque después se ordene por fecha:
+             * el comparador devuelve 0 cuando NINGUNO de los dos tiene fecha
+             * programada, y `sort` en JavaScript es estable — así que en ese
+             * caso manda el orden en que entraron. Por eso los grupos se
+             * concatenan en la misma secuencia de antes (planificados, después
+             * borradores sueltos, después completados) y dentro de cada grupo se
+             * respeta el orden original: `Promise.all` conserva las posiciones.
+             */
+            const leerSermon = async (id: string) => {
+                try {
+                    // Un sermón borrado o sin permiso NO es un error: la serie
+                    // guarda referencias que pueden quedar huérfanas, y eso ya se
+                    // trataba como "no hay borrador".
+                    return await sermonService.getSermon(id);
+                } catch {
+                    return null;
+                }
+            };
+
+            const plannedSermons = seriesData.metadata?.plannedSermons || [];
+            const linkedDraftIds = new Set(plannedSermons.map(p => p.draftId).filter(Boolean));
+            const extraDraftIds = (seriesData.draftIds || []).filter(id => !linkedDraftIds.has(id));
+
+            const [borradoresPlanificados, borradoresSueltos, completados] = await Promise.all([
+                Promise.all(plannedSermons.map(p => (p.draftId ? leerSermon(p.draftId) : Promise.resolve(null)))),
+                Promise.all(extraDraftIds.map(leerSermon)),
+                Promise.all(seriesData.sermonIds.map(leerSermon)),
+            ]);
+
             const items: SermonItem[] = [];
 
-            // Load planned sermons
-            const plannedSermons = seriesData.metadata?.plannedSermons || [];
-            for (const planned of plannedSermons) {
-                if (planned.draftId) {
-                    let draft = null;
-                    try {
-                        draft = await sermonService.getSermon(planned.draftId);
-                    } catch (error) {
-                        // Draft may have been deleted or permissions changed - treat as no draft (expected for orphaned references)
-                    }
-
-                    if (draft) {
-                        const isComplete = draft.content && draft.content.length > 100 &&
-                            (!draft.wizardProgress || draft.wizardProgress.currentStep >= 4);
-                        items.push({
-                            id: planned.id,
-                            title: planned.title,
-                            description: planned.description,
-                            passage: planned.passage,
-                            scheduledDate: planned.scheduledDate,
-                            status: isComplete ? 'complete' : 'in_progress',
-                            plannedSermonId: planned.id,
-                            draftId: planned.draftId,
-                            wizardProgress: draft.wizardProgress
-                        });
-                    } else {
-                        // Draft was deleted or doesn't exist - show as planned
-                        items.push({
-                            id: planned.id,
-                            title: planned.title,
-                            description: planned.description,
-                            passage: planned.passage,
-                            scheduledDate: planned.scheduledDate,
-                            status: 'planned',
-                            plannedSermonId: planned.id
-                        });
-                    }
+            plannedSermons.forEach((planned, i) => {
+                const draft = planned.draftId ? borradoresPlanificados[i] : null;
+                if (draft) {
+                    const isComplete = draft.content && draft.content.length > 100 &&
+                        (!draft.wizardProgress || draft.wizardProgress.currentStep >= 4);
+                    items.push({
+                        id: planned.id,
+                        title: planned.title,
+                        description: planned.description,
+                        passage: planned.passage,
+                        scheduledDate: planned.scheduledDate,
+                        status: isComplete ? 'complete' : 'in_progress',
+                        plannedSermonId: planned.id,
+                        draftId: planned.draftId,
+                        wizardProgress: draft.wizardProgress
+                    });
                 } else {
+                    // Sin borrador, o con uno que ya no existe: sigue siendo un
+                    // sermón planificado, no uno perdido.
                     items.push({
                         id: planned.id,
                         title: planned.title,
@@ -85,48 +104,31 @@ export function useSeriesData(seriesId: string | undefined) {
                         plannedSermonId: planned.id
                     });
                 }
+            });
+
+            for (const draft of borradoresSueltos) {
+                if (!draft) continue;
+                items.push({
+                    id: draft.id,
+                    title: draft.title,
+                    description: draft.content || '',
+                    scheduledDate: draft.scheduledDate,
+                    status: 'in_progress',
+                    draftId: draft.id,
+                    wizardProgress: draft.wizardProgress
+                });
             }
 
-            // Load additional drafts
-            const linkedDraftIds = new Set(plannedSermons.map(p => p.draftId).filter(Boolean));
-            for (const draftId of (seriesData.draftIds || [])) {
-                if (!linkedDraftIds.has(draftId)) {
-                    try {
-                        const draft = await sermonService.getSermon(draftId);
-                        if (draft) {
-                            items.push({
-                                id: draft.id,
-                                title: draft.title,
-                                description: draft.content || '',
-                                scheduledDate: draft.scheduledDate,
-                                status: 'in_progress',
-                                draftId: draft.id,
-                                wizardProgress: draft.wizardProgress
-                            });
-                        }
-                    } catch (error) {
-                        // Draft may have been deleted or permissions changed - skip (expected for orphaned references)
-                    }
-                }
-            }
-
-            // Load completed sermons
-            for (const sermonId of seriesData.sermonIds) {
-                try {
-                    const sermon = await sermonService.getSermon(sermonId);
-                    if (sermon) {
-                        items.push({
-                            id: sermon.id,
-                            title: sermon.title,
-                            description: sermon.content?.substring(0, 200) || '',
-                            scheduledDate: sermon.scheduledDate,
-                            status: 'complete',
-                            draftId: sermon.id
-                        });
-                    }
-                } catch (error) {
-                    console.warn(`Could not load completed sermon ${sermonId}, skipping:`, error);
-                }
+            for (const sermon of completados) {
+                if (!sermon) continue;
+                items.push({
+                    id: sermon.id,
+                    title: sermon.title,
+                    description: sermon.content?.substring(0, 200) || '',
+                    scheduledDate: sermon.scheduledDate,
+                    status: 'complete',
+                    draftId: sermon.id
+                });
             }
 
             // Sort by scheduledDate

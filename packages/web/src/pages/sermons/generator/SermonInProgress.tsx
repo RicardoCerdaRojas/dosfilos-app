@@ -48,22 +48,45 @@ export function SermonsInProgress({ sermons, onContinue, onDiscard, onPublish, o
     const [versionModalSermon, setVersionModalSermon] = useState<SermonEntity | null>(null);
     const [versionCounts, setVersionCounts] = useState<Record<string, number>>({});
 
-    if (sermons.length === 0) return null;
-
-    // Load version counts for published sermons
+    /**
+     * Cuántas versiones publicadas tiene cada sermón.
+     *
+     * EN PARALELO: era un `for` con `await` adentro, así que el panel pedía las
+     * versiones de un sermón, esperaba, y recién ahí pedía las del siguiente.
+     * Con una docena de sermones publicados eso son doce viajes en fila para
+     * pintar doce contadores. El resultado va a un mapa por id, así que el orden
+     * de llegada da igual.
+     *
+     * Un sermón cuya lectura falla queda SIN contador, no en cero: cero diría
+     * que no tiene versiones, y eso es distinto de no haber podido averiguarlo.
+     */
     useEffect(() => {
-        const loadVersionCounts = async () => {
-            const counts: Record<string, number> = {};
-            for (const sermon of sermons) {
-                if (sermon.wizardProgress?.publishedCopyId) {
-                    const versions = await sermonService.getPublishedVersions(sermon.id, sermon.userId);
-                    counts[sermon.id] = versions.length;
-                }
-            }
-            setVersionCounts(counts);
+        let vigente = true;
+        const cargarConteos = async () => {
+            const publicados = sermons.filter((s) => s.wizardProgress?.publishedCopyId);
+            const conteos = await Promise.all(
+                publicados.map(async (sermon) => {
+                    try {
+                        const versions = await sermonService.getPublishedVersions(sermon.id, sermon.userId);
+                        return [sermon.id, versions.length] as const;
+                    } catch {
+                        return null;
+                    }
+                }),
+            );
+            if (!vigente) return;
+            setVersionCounts(Object.fromEntries(conteos.filter((c): c is readonly [string, number] => c !== null)));
         };
-        loadVersionCounts();
+        void cargarConteos();
+        return () => { vigente = false; };
     }, [sermons]);
+
+    // EL RETORNO TEMPRANO VA DESPUÉS DE LOS HOOKS. Estaba ARRIBA del `useEffect`,
+    // así que al pasar de cero sermones a uno —o al revés— React renderizaba una
+    // cantidad distinta de hooks y abortaba con "Rendered fewer hooks than
+    // expected". Es el mismo fallo que ya tiró el paso de Redacción en
+    // producción, esperando a que alguien vaciara la lista.
+    if (sermons.length === 0) return null;
 
     const getPhaseInfo = (sermon: SermonEntity) => {
         const step = sermon.wizardProgress?.currentStep || 0;

@@ -167,6 +167,52 @@ export class FirestoreVectorRepository implements IVectorRepository {
     /**
      * Check if a resource has been indexed
      */
+    /**
+     * Igual que `hasIndex` pero para muchos, en una consulta por cada 30.
+     *
+     * TREINTA ES EL TOPE DE FIRESTORE para el operador `in`, el mismo límite que
+     * ya respeta la búsqueda por recursos de este repositorio.
+     *
+     * No se puede pedir `limit(1)` como en la versión de uno solo: acá hace falta
+     * ver AL MENOS un chunk de cada recurso, y un límite global devolvería el
+     * primero del lote y dejaría a los demás pareciendo no indexados. Se leen los
+     * chunks del lote y se juntan los `resourceId` distintos que aparecen.
+     *
+     * Un lote que falla NO tumba a los demás: se registra y los otros siguen —
+     * si algo va mal, es preferible que unas insignias digan "sin indexar" a que
+     * la pantalla entera no cargue.
+     */
+    async hasIndexBatch(resourceIds: readonly string[]): Promise<Set<string>> {
+        const indexados = new Set<string>();
+        if (resourceIds.length === 0) return indexados;
+
+        const lotes: string[][] = [];
+        for (let i = 0; i < resourceIds.length; i += 30) {
+            lotes.push(resourceIds.slice(i, i + 30) as string[]);
+        }
+
+        await Promise.all(
+            lotes.map(async (lote) => {
+                try {
+                    const snapshot = await getDocs(
+                        query(
+                            collection(db, FirestoreVectorRepository.COLLECTION_NAME),
+                            where('resourceId', 'in', lote),
+                        ),
+                    );
+                    for (const d of snapshot.docs) {
+                        const id = d.data()?.resourceId;
+                        if (typeof id === 'string') indexados.add(id);
+                    }
+                } catch (error) {
+                    console.error('❌ hasIndexBatch error para un lote:', error);
+                }
+            }),
+        );
+
+        return indexados;
+    }
+
     async hasIndex(resourceId: string): Promise<boolean> {
         try {
             const chunksQuery = query(
