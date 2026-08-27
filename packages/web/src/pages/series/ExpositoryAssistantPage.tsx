@@ -83,6 +83,7 @@ import {
     formatRange,
 } from './expository/passState';
 import { useExpositoryViewPrefs } from './expository/useExpositoryViewPrefs';
+import { buildPassInput, sourceLanguageFromLoaded } from './expository/passInput';
 
 /**
  * v1.5 expository assistant wizard.
@@ -352,19 +353,15 @@ export function ExpositoryAssistantPage() {
         // preamble (original-greek / original-hebrew / translation
         // surrogate) so the model knows what it's reading.
         const sourceLanguage =
-            loaded.source === 'original-greek'
-                ? ('greek' as const)
-                : loaded.source === 'original-hebrew'
-                  ? ('hebrew' as const)
-                  : ('translation' as const);
+            sourceLanguageFromLoaded(loaded.source);
         setSourceLanguageInState(sourceLanguage);
-        const baseInput = {
+        const baseInput = buildPassInput({
             book: loaded.book,
             displayLanguage: lang,
             verses: loaded.verses,
             sourceLanguage,
             ...(scopeKey ? { scopeKey } : {}),
-        };
+        });
         const targetOpt = typeof targetCount === 'number' ? { targetPreachableCount: targetCount } : {};
 
         // Run the 5 passes in sequence via nested onSuccess. Each
@@ -550,13 +547,21 @@ export function ExpositoryAssistantPage() {
             return lines.join('\n');
         }).join('\n\n');
 
-        const baseInput = {
-            book: bookDisplay,
-            bookId,
+        // EL IDIOMA DEL TEXTO, NO EL DEL PAPER. Acá decía
+        // `lang === 'es' ? 'es' : 'en'`, que es el idioma en que se ESCRIBE el
+        // paper — y ni 'es' ni 'en' están en el contrato, que admite
+        // `greek | hebrew | translation`. El prompt usa este dato para decidir si
+        // cita sintaxis directamente o la aproxima desde una traducción: al
+        // refinar, esa información se perdía. Se manda también `scopeKey`, sin
+        // el cual un refinamiento sobre un fragmento puede recibir lo cacheado
+        // del libro entero.
+        const baseInput = buildPassInput({
+            book: bookDisplay ?? '',
             displayLanguage: lang,
-            sourceLanguage: lang === 'es' ? ('es' as const) : ('en' as const),
             verses,
-        };
+            sourceLanguage: sourceLanguageInState ?? 'translation',
+            ...(scopeKey ? { scopeKey } : {}),
+        });
         const targetOpt = targetCount ? { targetPreachableCount: targetCount } : {};
 
         assistant.runPreachable.mutate(
@@ -795,13 +800,13 @@ export function ExpositoryAssistantPage() {
             return;
         }
 
-        const sourceLanguage = sourceLanguageInState ?? 'translation';
-        const baseInput = {
-            book: bookDisplay,
+        const baseInput = buildPassInput({
+            book: bookDisplay ?? '',
             displayLanguage: lang,
             verses,
-            sourceLanguage,
-        };
+            sourceLanguage: sourceLanguageInState ?? 'translation',
+            ...(scopeKey ? { scopeKey } : {}),
+        });
         const targetOpt = typeof targetCount === 'number' ? { targetPreachableCount: targetCount } : {};
 
         assistant.runPreachable.mutate(
