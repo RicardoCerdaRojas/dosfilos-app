@@ -1,6 +1,7 @@
 import { greekRecognitionClues, translationBridge, type GreekKeyInsight, type GreekWordInsight, type GreekWordToken } from '@dosfilos/domain';
 import { Star, BookmarkPlus, Check } from 'lucide-react';
 import { useNtLemmaFrequency } from './useLemmaFrequency';
+import { GreekCompositionBlock } from './GreekCompositionBlock';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
@@ -158,6 +159,8 @@ export function GreekWordCard({
             {puente && (
                 <div className="text-xs italic text-muted-foreground">{t(`analyzer.bridge.${puente}`)}</div>
             )}
+
+            {insight?.composition && <GreekCompositionBlock composition={insight.composition} />}
 
             {insight?.articleUse && (
                 <div className="rounded-md border border-info/30 bg-info/5 p-2.5 space-y-1">

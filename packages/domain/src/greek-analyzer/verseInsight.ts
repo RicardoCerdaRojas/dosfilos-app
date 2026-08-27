@@ -42,6 +42,21 @@ export interface GreekWordInsight {
      * puede EMPEZAR con un artículo.
      */
     readonly antecedent?: string;
+    /**
+     * Descomposición de una palabra COMPUESTA (ὁλόκληροι = ὅλος + κλῆρος).
+     *
+     * CON LA SALVAGUARDA CONTRA LA FALACIA DE LA RAÍZ, que es la razón de que
+     * `meaningMatchesParts` exista: el error exegético más común es suponer
+     * que el sentido de un compuesto ES la suma de sus partes. A veces lo es
+     * y a veces el uso se alejó por completo — y un pastor que predica la
+     * etimología de una palabra cuyo uso ya no la respalda dice algo falso
+     * con aire de erudición. El campo obliga a declararlo.
+     */
+    readonly composition?: {
+        readonly parts: readonly { readonly text: string; readonly gloss: string }[];
+        readonly note: string;
+        readonly meaningMatchesParts: boolean;
+    };
     /** Traducción contextual de la palabra. */
     readonly translation: string;
 }
@@ -71,8 +86,9 @@ export interface GreekKeyInsight {
  * v6: + relations (aposición/concordancia) y rhetoric (quiasmo/inclusión).
  * v7: español latinoamericano (ustedes, no vosotros).
  * v8: + articleUse/antecedent, con el versículo anterior como contexto.
+ * v9: + composition (palabras compuestas) y artículo con uso obligatorio.
  */
-export const GREEK_INSIGHT_PROMPT_VERSION = 8;
+export const GREEK_INSIGHT_PROMPT_VERSION = 9;
 
 export interface GreekVerseInsight {
     /** "JAS 1:2" — la clave del caché. */

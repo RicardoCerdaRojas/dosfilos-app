@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNtLemmaFrequency } from './useLemmaFrequency';
+import { GreekCompositionBlock } from './GreekCompositionBlock';
 
 interface Props {
     token: GreekWordToken;
@@ -115,6 +116,8 @@ export function GreekWordHoverContent({ token, insight, keyInsight, relations, b
                 )}
 
                 {/* 3 · POR QUÉ ASÍ. */}
+                {insight?.composition && <GreekCompositionBlock composition={insight.composition} compact />}
+
                 {/* EL ARTÍCULO, EXPLICADO. Era nuestra palabra peor tratada:
                     paradigma y nada más. El uso anafórico es el que responde
                     "¿por qué este versículo empieza con un artículo?". */}

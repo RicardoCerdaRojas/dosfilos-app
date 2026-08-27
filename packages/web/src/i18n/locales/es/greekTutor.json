@@ -919,6 +919,10 @@
       "possessive": "Hace de posesivo: \"levantó LA mano\" = su mano.",
       "substantivizer": "Convierte en sustantivo un infinitivo, un adjetivo o una frase entera.",
       "withProperName": "Con nombre propio: marca familiaridad o retoma a alguien ya nombrado."
+    },
+    "composition": {
+      "title": "Palabra compuesta",
+      "rootFallacy": "Ojo: el uso real de esta palabra NO es la suma de sus partes. Predicar su etimología diría algo que el texto no dice."
     }
   }
 }

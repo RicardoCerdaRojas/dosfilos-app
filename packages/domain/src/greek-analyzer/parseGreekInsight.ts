@@ -68,6 +68,26 @@ export function parseGreekInsight(
         const antecedenteCrudo = typeof w.antecedent === 'string' ? w.antecedent.trim() : '';
         const antecedent = articleUse === 'anaphoric' && antecedenteCrudo ? antecedenteCrudo : undefined;
 
+        // COMPOSICIÓN: al menos DOS partes con glosa, y el veredicto sobre la
+        // falacia de la raíz es OBLIGATORIO — sin él la descomposición
+        // invitaría justo al error que pretende prevenir.
+        const comp = w.composition as Record<string, unknown> | undefined;
+        let composition: GreekWordInsight['composition'];
+        if (comp && typeof comp === 'object' && Array.isArray(comp.parts)) {
+            const parts = comp.parts
+                .map((c) => {
+                    const x = c as Record<string, unknown>;
+                    const text = typeof x.text === 'string' ? x.text.trim() : '';
+                    const gloss = typeof x.gloss === 'string' ? x.gloss.trim() : '';
+                    return text && gloss ? { text, gloss } : null;
+                })
+                .filter((c): c is { text: string; gloss: string } => c !== null);
+            const nota = typeof comp.note === 'string' ? comp.note.trim() : '';
+            if (parts.length >= 2 && nota && typeof comp.meaningMatchesParts === 'boolean') {
+                composition = { parts, note: nota, meaningMatchesParts: comp.meaningMatchesParts };
+            }
+        }
+
         words.push({
             text,
             semanticRange,
@@ -77,6 +97,7 @@ export function parseGreekInsight(
             ...(nameNote ? { nameNote } : {}),
             ...(articleUse ? { articleUse } : {}),
             ...(antecedent ? { antecedent } : {}),
+            ...(composition ? { composition } : {}),
         });
     }
 

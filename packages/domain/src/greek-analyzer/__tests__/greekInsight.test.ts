@@ -170,3 +170,45 @@ describe('articleUse — el artículo que abre Santiago 1:4 (v8)', () => {
         expect(out?.words[0].translation).toBe('la');
     });
 });
+
+describe('composition — ὁλόκληροι y la falacia de la raíz (v9)', () => {
+    const conComposicion = (composition: unknown) =>
+        JSON.stringify({
+            literalTranslation: 'lit',
+            fluidTranslation: 'fluida',
+            words: [{ text: 'ὁλόκληροι', semanticRange: 'íntegro', syntacticFunction: 'f', translation: 'íntegros', composition }],
+        });
+    const parse = (raw: string) =>
+        parseGreekInsight(raw, { reference: 'JAS 1:4', expectedWordCount: 1, cases: ['N'] });
+
+    it('descompone ὁλόκληροι en sus dos raíces con glosa', () => {
+        const out = parse(
+            conComposicion({
+                parts: [{ text: 'ὅλος', gloss: 'entero, completo' }, { text: 'κλῆρος', gloss: 'porción, parte' }],
+                note: 'Entero en todas sus partes: sin que le falte ninguna.',
+                meaningMatchesParts: true,
+            }),
+        );
+        expect(out?.words[0].composition?.parts).toHaveLength(2);
+        expect(out?.words[0].composition?.meaningMatchesParts).toBe(true);
+    });
+
+    it('EXIGE el veredicto sobre la falacia: sin él la descomposición se descarta', () => {
+        // Mostrar partes sin decir si el uso las respalda INVITA al error que
+        // se pretende prevenir.
+        const out = parse(
+            conComposicion({
+                parts: [{ text: 'ὅλος', gloss: 'entero' }, { text: 'κλῆρος', gloss: 'porción' }],
+                note: 'x',
+            }),
+        );
+        expect(out?.words[0].composition).toBeUndefined();
+    });
+
+    it('una sola parte no es un compuesto', () => {
+        const out = parse(
+            conComposicion({ parts: [{ text: 'ὅλος', gloss: 'entero' }], note: 'x', meaningMatchesParts: true }),
+        );
+        expect(out?.words[0].composition).toBeUndefined();
+    });
+});

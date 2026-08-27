@@ -123,12 +123,32 @@ Y para cada ARTÍCULO (categoría "artículo"), "articleUse": su uso según esta
 lista CERRADA —devuelve el id tal cual, y "" si ninguno encaja—:
   ${ARTICLE_USES.join(', ')}
 
-El artículo griego NO es "el/la" del español: hace trabajos que el castellano
-no marca. Si es "anaphoric", agrega "antecedent" con LA PALABRA a la que
-señala hacia atrás y dónde está ("ὑπομονήν, v. 3") — usa el versículo
-anterior que te di como contexto. Es lo que explica por qué un versículo
-puede EMPEZAR con un artículo: el autor está retomando lo que acaba de decir.
-Si no hay antecedente identificable, NO digas que es anafórico.
+TODO artículo tiene un uso: NO dejes "articleUse" vacío en un artículo —
+elige el MÁS ESPECÍFICO que aplique, y recurre a "generic" o "abstract" sólo
+cuando de verdad corresponda. El artículo griego NO es "el/la" del español:
+hace trabajos que el castellano no marca, y decir sólo "artículo definido"
+no le enseña nada al pastor.
+
+REVISA PRIMERO SI ES ANAFÓRICO, contra el versículo anterior que te di: si
+el sustantivo que acompaña ya apareció ahí, el artículo lo está RETOMANDO —
+y eso explica por qué un versículo puede EMPEZAR con un artículo. Entonces
+agrega "antecedent" con la palabra y su lugar ("ὑπομονήν, v. 3"). Si no hay
+antecedente identificable, NO digas que es anafórico.
+
+Y para las palabras COMPUESTAS (dos raíces unidas: ὁλόκληρος = ὅλος +
+κλῆρος; ἐκκλησία = ἐκ + καλέω), "composition":
+  · "parts": cada componente con su glosa ({"text": "ὅλος", "gloss": "entero,
+    completo"}).
+  · "meaningMatchesParts": true si el uso REAL de la palabra en el griego del
+    NT todavía corresponde a la suma de sus partes; false si el uso se alejó.
+  · "note": qué aporta la composición al sentido — y SI meaningMatchesParts
+    es false, DILO explícitamente y explica qué significa de verdad.
+
+⚠️ LA FALACIA DE LA RAÍZ es el error exegético más común: suponer que el
+sentido de un compuesto ES la suma de sus partes. A veces lo es y a veces el
+uso se alejó por completo. Un pastor que predica la etimología de una
+palabra cuyo uso ya no la respalda dice algo falso con aire de erudición.
+Si la palabra no es compuesta, omite "composition".
 
 Y para los NOMBRES PROPIOS, "nameNote": si el nombre castellano se aleja del
 griego por historia de la traducción (Ἰάκωβος → "Santiago", del latín
