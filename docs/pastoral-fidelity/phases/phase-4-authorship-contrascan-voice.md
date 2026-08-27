@@ -2,7 +2,13 @@
 
 ## Estado
 
-`in-progress` — contra-scan (sub-feature 2) EN PRODUCCIÓN, ADR-033. Sub-feature 1 **re-scopeada por [ADR-037](../decisions/ADR-037-socratic-drafting-idea-provenance.md)**: la autoría deja de medirse por palabras y pasa a medirse por PROCEDENCIA DE IDEAS sobre un flujo socrático por elementos. Sub-feature 3 (voice fingerprint) sigue `planning`.
+`in-progress` — **las tres sub-features tienen ya su respuesta** (2026-08-27):
+
+- **1 (autoría)** — re-scopeada por [ADR-037](../decisions/ADR-037-socratic-drafting-idea-provenance.md): deja de medirse por palabras y pasa a medirse por PROCEDENCIA DE IDEAS sobre un flujo socrático por elementos. En producción, incluido el estado `sin-medir` para sermones anteriores a la medición (PR #488).
+- **2 (contra-scan)** — EN PRODUCCIÓN desde 2026-06-04, [ADR-033](../decisions/ADR-033-contra-scan-independent-confrontation-step.md).
+- **3 (voice fingerprint)** — **ETAPA 1 EN PRODUCCIÓN** (PR #496, [ADR-038](../decisions/ADR-038-preacher-voice-learns-only-from-workshop-prose.md)), flag `voice_fingerprint` default off. La etapa 2 (perfil destilado) es CONDICIONAL: sólo se construye si la etapa 1 no resulta estable, y eso se decide leyendo un borrador en voz alta, no con una métrica.
+
+Cierra las tres preguntas que este doc dejaba abiertas: técnica (few-shot, luego perfil si hace falta), corpus mínimo (dos sermones del taller, de pasajes distintos) y privacidad (nada sale de su cuenta, nada entrena a ningún modelo).
 
 ## Objetivo
 
@@ -10,7 +16,7 @@ Tres sub-features que cierran el modelo de autoría pastoral:
 
 1. ~~**Autoría verbatim tracker**: diff entre draft AI y final del pastor por sección; badge visible; gate publish ≥50% verbatim.~~ **SUPERADO por ADR-037.** Medir palabras mide DESARROLLO, no origen — y P2 dice que la IA desarrolla. Un sermón construido sobre el estudio de ocho pasos marcaba 18% incluso rastreando el material del pastor, y el piso de 50% resultó inalcanzable. Ahora: redacción socrática por elementos + autoría por procedencia de ideas.
 2. **Contra-scan obligatorio**: surface chunks de la biblioteca que disienten del claim central; pastor marca uno como "considerado" con nota ≥100 chars. Implementa Hch 20:27.
-3. **Voice fingerprint** (tardía): adapter de estilo desde sermones previos del pastor para que output suene a ÉL. Resuelve homogeneización + autenticidad.
+3. **Voice fingerprint** (tardía): adapter de estilo desde sermones previos del pastor para que output suene a ÉL. Resuelve homogeneización + autenticidad. **Etapa 1 en producción — ADR-038.** Aprende SÓLO de sermones armados en el taller (discriminador: `authorshipSnapshot`, porque `assembledFrom` no sobrevive a la publicación); aprender de uno generado enseñaría NUESTRA voz de vuelta.
 
 ## Prerequisitos
 
