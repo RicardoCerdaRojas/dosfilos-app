@@ -22,6 +22,9 @@ module.exports = {
             },
             fontFamily: {
                 lexend: ["Lexend"],
+                "lexend-medium": ["Lexend-Medium"],
+                "lexend-semibold": ["Lexend-SemiBold"],
+                "lexend-bold": ["Lexend-Bold"],
             },
         },
     },
