@@ -2,38 +2,23 @@ import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { libraryService, categoryService, coreLibraryAdminService } from '@dosfilos/application';
-import { LibraryCategory, ResourceType } from '@dosfilos/domain';
-import { Upload } from 'lucide-react';
-import { RefreshCw, Database, FileText, CheckCircle, AlertTriangle, Loader2, BookOpen, Mic2, Library, Wand2, HelpCircle, ChevronDown, ChevronRight, GraduationCap, Folder, Sparkles, Activity, Pencil } from 'lucide-react';
+import { coreLibraryAdminService } from '@dosfilos/application';
+import { RefreshCw, Database, FileText, AlertTriangle, Loader2, BookOpen, Mic2, Library, Wand2, HelpCircle, ChevronRight, GraduationCap, Folder, Sparkles, Activity, Pencil } from 'lucide-react';
 import { RAGAuditDialog } from '@/components/admin/RAGAuditDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { useFirebase } from '@/context/firebase-context';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
+import { Dialog } from '@/components/ui/dialog';
 import { Plus, Trash2, Settings } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { MetricCard } from './core-library/MetricCard';
 import { annotateDocumentText, uploadAnnotatedTextToGemini } from './core-library/annotateDocument';
+import { EditDocDialog } from './coreLibrary/EditDocDialog';
+import { AddDocsDialog } from './coreLibrary/AddDocsDialog';
+import { CreateStoreDialog, EditStoreDialog } from './coreLibrary/StoreDialogs';
 
 // Spanish display labels for the rights-aware enum vocab that the
 // `core-library-seed.json` brings in. Kept local to this admin page
@@ -100,10 +85,8 @@ export default function CoreLibraryAdmin() {
     
     // Create Store State
     const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [newStoreKey, setNewStoreKey] = useState('');
-    const [newStoreName, setNewStoreName] = useState('');
-    const [newStoreDesc, setNewStoreDesc] = useState('');
-    const [isCreating, setIsCreating] = useState(false);
+    // Sólo CUÁL almacén se edita: sus campos viven dentro del diálogo.
+    const [editingStore, setEditingStore] = useState<{ key: string; name: string; description: string } | null>(null);
 
     // Dynamic Sync Status State
     const [syncStatus, setSyncStatus] = useState<Record<string, SyncStatus>>({});
@@ -645,116 +628,12 @@ export default function CoreLibraryAdmin() {
     };
 
     // Edit Store State
-    const [isEditOpen, setIsEditOpen] = useState(false);
-    const [editingStoreKey, setEditingStoreKey] = useState<string | null>(null);
-    const [editStoreName, setEditStoreName] = useState('');
-    const [editStoreDesc, setEditStoreDesc] = useState('');
-    const [isEditing, setIsEditing] = useState(false);
 
     // Add Documents State
     const [isAddDocsOpen, setIsAddDocsOpen] = useState(false);
-    const [availableDocs, setAvailableDocs] = useState<any[]>([]);
-    const [selectedDocs, setSelectedDocs] = useState<Set<string>>(new Set());
-    const [isAddingDocs, setIsAddingDocs] = useState(false);
-    const [isLoadingDocs, setIsLoadingDocs] = useState(false);
 
     // Direct Upload State
-    const [categories, setCategories] = useState<LibraryCategory[]>([]);
-    const [uploadFile, setUploadFile] = useState<File | null>(null);
-    const [uploadMetadata, setUploadMetadata] = useState({ title: '', author: '', type: 'theology' as ResourceType });
-    const [isUploading, setIsUploading] = useState(false);
-    const [fileSizeWarning, setFileSizeWarning] = useState(false);
-    const MAX_OPTIMAL_SIZE_MB = 50;
 
-    useEffect(() => {
-        if (firebase?.user) {
-            categoryService.getCategories(firebase.user.uid).then(setCategories).catch(console.error);
-        }
-    }, [firebase?.user]);
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const selectedFile = e.target.files[0];
-            const validTypes = ['application/pdf', 'application/epub+zip'];
-            if (!validTypes.includes(selectedFile.type) && !selectedFile.name.match(/\.(pdf|epub)$/i)) {
-                toast.error('Solo se permiten archivos PDF o EPUB');
-                return;
-            }
-            
-            const fileSizeMB = selectedFile.size / (1024 * 1024);
-            setFileSizeWarning(fileSizeMB > MAX_OPTIMAL_SIZE_MB);
-            setUploadFile(selectedFile);
-            setUploadMetadata(prev => ({ 
-                ...prev, 
-                title: selectedFile.name.replace(/\.[^/.]+$/, "") || "" 
-            }));
-        }
-    };
-
-    const handleUploadSubmit = async (e: React.FormEvent, contextKey: string) => {
-        e.preventDefault();
-        if (!firebase?.user || !uploadFile) return;
-
-        setIsUploading(true);
-        try {
-            const resource = await libraryService.uploadResource(firebase.user.uid, uploadFile, uploadMetadata);
-            await coreLibraryAdminService.addResourceToStore(resource.id, contextKey);
-
-            toast.success(`Documento subido y añadido a ${contextKey}. Procesando en segundo plano...`);
-            setUploadFile(null);
-            setFileSizeWarning(false);
-            setUploadMetadata({ title: '', author: '', type: 'theology' });
-            setIsAddDocsOpen(false);
-            await loadConfig();
-
-            // Phase 2: extraction + indexing fires automatically via Storage trigger
-            // (extractPdfWithGemini → autoIndexOnExtractionReady). No manual sync needed.
-
-        } catch (error: any) {
-            console.error('Upload error:', error);
-            toast.error('Error al subir el recurso: ' + error.message);
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const handleOpenAddDocs = async (contextKey: string) => {
-        setIsAddDocsOpen(true);
-        setSelectedDocs(new Set());
-        setIsLoadingDocs(true);
-        try {
-            const docs = await coreLibraryAdminService.getUserResources(firebase!.user!.uid);
-            // Phase 2 RAG does not require a Gemini File Search URI — any doc in the
-            // user's library is eligible, as long as it isn't already linked here.
-            setAvailableDocs(docs.filter(d => !d.coreStores?.includes(contextKey)));
-        } catch (error: any) {
-            toast.error('Error cargando documentos: ' + error.message);
-        } finally {
-            setIsLoadingDocs(false);
-        }
-    };
-
-    const handleAddSelectedDocs = async (contextKey: string) => {
-        if (selectedDocs.size === 0) return;
-        setIsAddingDocs(true);
-        try {
-            await coreLibraryAdminService.addResourcesToStore(Array.from(selectedDocs), contextKey);
-
-            toast.success(`${selectedDocs.size} documentos añadidos al store`);
-            setIsAddDocsOpen(false);
-            await loadConfig();
-
-            if (firebase?.user) {
-                const docs = await coreLibraryAdminService.getUserResources(firebase.user.uid);
-                setAvailableDocs(docs.filter(d => !d.coreStores?.includes(contextKey)));
-            }
-            
-        } catch (error: any) {
-            toast.error('Error al añadir documentos: ' + error.message);
-        } finally {
-            setIsAddingDocs(false);
-        }
-    };
 
     const handleRetrySync = async (resourceId: string, title: string) => {
         setIsRetrying(resourceId);
@@ -813,44 +692,9 @@ export default function CoreLibraryAdmin() {
     };
 
     // Edit document metadata state
-    const [editDocOpen, setEditDocOpen] = useState(false);
-    const [editingDocId, setEditingDocId] = useState<string | null>(null);
-    const [editDocTitle, setEditDocTitle] = useState('');
-    const [editDocAuthor, setEditDocAuthor] = useState('');
-    const [editDocPubliclyCitable, setEditDocPubliclyCitable] = useState(false);
-    const [isSavingDoc, setIsSavingDoc] = useState(false);
-
-    const handleOpenEditDoc = (doc: any) => {
-        setEditingDocId(doc.id);
-        setEditDocTitle(doc.title ?? '');
-        setEditDocAuthor(doc.author ?? '');
-        setEditDocPubliclyCitable(doc.publiclyCitable === true);
-        setEditDocOpen(true);
-    };
-
-    const handleSaveDocMetadata = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingDocId || !editDocTitle.trim()) {
-            toast.error('El título es obligatorio');
-            return;
-        }
-        try {
-            setIsSavingDoc(true);
-            await coreLibraryAdminService.updateResourceMetadata(editingDocId, {
-                title: editDocTitle.trim(),
-                author: editDocAuthor.trim(),
-                publiclyCitable: editDocPubliclyCitable,
-            });
-            toast.success('Metadata actualizada');
-            setEditDocOpen(false);
-            setEditingDocId(null);
-            await loadConfig();
-        } catch (error: any) {
-            toast.error(`Error actualizando metadata: ${error.message}`);
-        } finally {
-            setIsSavingDoc(false);
-        }
-    };
+    // Sólo CUÁL documento se edita: los campos del formulario viven dentro del
+    // diálogo, así que escribir en ellos ya no repinta esta página entera.
+    const [editingDoc, setEditingDoc] = useState<any | null>(null);
 
     const handleDeleteStore = async (key: string, name: string, fileCount: number) => {
         const ok = await askConfirm({
@@ -876,32 +720,6 @@ export default function CoreLibraryAdmin() {
             toast.error(`Error eliminando store: ${error.message}`);
         } finally {
             setDeletingStore(null);
-        }
-    };
-
-    const handleEditStore = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingStoreKey || !editStoreName.trim()) {
-            toast.error('El nombre es obligatorio');
-            return;
-        }
-
-        try {
-            setIsEditing(true);
-            await coreLibraryAdminService.updateStore(
-                editingStoreKey,
-                editStoreName.trim(),
-                editStoreDesc.trim(),
-            );
-
-            toast.success('Store actualizado exitosamente');
-            setIsEditOpen(false);
-            await loadConfig();
-        } catch (error: any) {
-            toast.error(`Error al actualizar store: ${error.message}`);
-        } finally {
-            setIsEditing(false);
-            setEditingStoreKey(null);
         }
     };
 
@@ -952,9 +770,33 @@ export default function CoreLibraryAdmin() {
         const newSyncStatus: Record<string, SyncStatus> = {};
         const newStoreResources: Record<string, any[]> = {};
 
-        for (const context of contexts) {
-            try {
-                const allDocs = await coreLibraryAdminService.getResourcesInStore(firebase.user.uid, context);
+        // EN PARALELO, NO EN FILA. Esto era un `for` con `await` adentro: cada
+        // almacén esperaba a que terminara el anterior, así que abrir la página
+        // costaba UN VIAJE A FIRESTORE POR ALMACÉN, uno detrás de otro. Con
+        // media docena de almacenes eso son segundos de pantalla de carga por
+        // nada: las lecturas son independientes entre sí y ninguna necesita el
+        // resultado de la anterior.
+        //
+        // Un almacén que falla NO tumba a los demás: se registra y los otros
+        // siguen. Antes el `try` por iteración ya lo hacía; acá se conserva.
+        const lecturas = await Promise.all(
+            contexts.map(async (context) => {
+                try {
+                    return {
+                        context,
+                        allDocs: await coreLibraryAdminService.getResourcesInStore(firebase.user!.uid, context),
+                    };
+                } catch (error) {
+                    console.error(`Error validating ${context}:`, error);
+                    return null;
+                }
+            }),
+        );
+
+        for (const lectura of lecturas) {
+            if (!lectura) continue;
+            {
+                const { context, allDocs } = lectura;
                 newStoreResources[context] = allDocs;
 
                 const desiredDocs = allDocs.filter((d: any) => d.metadata?.geminiUri);
@@ -976,8 +818,6 @@ export default function CoreLibraryAdmin() {
                     currentCount: currentFiles.length,
                     missing: [...missing, ...pendingProcessing.map((d: any) => d.title || d.name)] 
                 };
-            } catch (error) {
-                console.error(`Error validating ${context}:`, error);
             }
         }
         setSyncStatus(newSyncStatus);
@@ -1007,43 +847,6 @@ export default function CoreLibraryAdmin() {
             toast.error(`Error: ${err.message}`);
         } finally {
             setSyncing(prev => ({ ...prev, [context]: false }));
-        }
-    };
-
-    const handleCreateStore = async () => {
-        if (!newStoreKey || !newStoreName) {
-            toast.error("Clave y Nombre son requeridos");
-            return;
-        }
-
-        // Basic validation for key (slug format)
-        if (!/^[a-z0-9-]+$/.test(newStoreKey)) {
-            toast.error("La clave debe contener solo letras minúsculas, números y guiones");
-            return;
-        }
-
-        try {
-            setIsCreating(true);
-            await coreLibraryAdminService.createStore({
-                key: newStoreKey,
-                displayName: newStoreName,
-                description: newStoreDesc,
-            });
-
-            toast.success(`Store '${newStoreName}' creado correctamente`);
-            setIsCreateOpen(false);
-            setNewStoreKey('');
-            setNewStoreName('');
-            setNewStoreDesc('');
-            
-            await loadConfig();
-            setActiveTab(newStoreKey); // Switch to new tab
-            
-        } catch (error: any) {
-            console.error("Error creating store:", error);
-            toast.error(`Error al crear store: ${error.message}`);
-        } finally {
-            setIsCreating(false);
         }
     };
 
@@ -1130,62 +933,11 @@ export default function CoreLibraryAdmin() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="default" size="sm">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Nuevo Store
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Crear Nuevo Store</DialogTitle>
-                                <DialogDescription>
-                                    Crea un nuevo contexto de archivos para el asistente.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label>Nombre (Display Name)</Label>
-                                    <Input 
-                                        placeholder="Ej: Historia de la Iglesia" 
-                                        value={newStoreName}
-                                        onChange={(e) => {
-                                            setNewStoreName(e.target.value);
-                                            // Auto-generate slug if empty
-                                            if (!newStoreKey && e.target.value) {
-                                                setNewStoreKey(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '-'));
-                                            }
-                                        }}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Clave (Key ID)</Label>
-                                    <Input 
-                                        placeholder="ej: historia-iglesia" 
-                                        value={newStoreKey}
-                                        onChange={(e) => setNewStoreKey(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                                    />
-                                    <p className="text-xs text-muted-foreground">Identificador único (slug) usado internamente.</p>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Descripción</Label>
-                                    <Textarea 
-                                        placeholder="Descripción breve del contenido de este store..."
-                                        value={newStoreDesc}
-                                        onChange={(e) => setNewStoreDesc(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
-                                <Button onClick={handleCreateStore} disabled={isCreating}>
-                                    {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Crear Store
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                    <CreateStoreDialog
+                        open={isCreateOpen}
+                        onClose={() => setIsCreateOpen(false)}
+                        onCreated={async (key) => { await loadConfig(); setActiveTab(key); }}
+                    />
 
                     {advancedMode && (
                         <>
@@ -1614,12 +1366,11 @@ export default function CoreLibraryAdmin() {
                                             variant="outline"
                                             size="sm"
                                             className="h-8"
-                                            onClick={() => {
-                                                setEditingStoreKey(context.key);
-                                                setEditStoreName(context.name);
-                                                setEditStoreDesc(context.description || '');
-                                                setIsEditOpen(true);
-                                            }}
+                                            onClick={() => setEditingStore({
+                                                key: context.key,
+                                                name: context.name,
+                                                description: context.description || '',
+                                            })}
                                         >
                                             <Settings className="h-4 w-4 mr-2" />
                                             Editar Store
@@ -1715,7 +1466,7 @@ export default function CoreLibraryAdmin() {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() => handleOpenAddDocs(context.key)}
+                                                onClick={() => setIsAddDocsOpen(true)}
                                             >
                                                 <Plus className="h-4 w-4 mr-2" />
                                                 Añadir Archivos
@@ -1934,7 +1685,7 @@ export default function CoreLibraryAdmin() {
                                                                             variant="ghost"
                                                                             size="icon"
                                                                             className="h-8 w-8"
-                                                                            onClick={() => handleOpenEditDoc(file)}
+                                                                            onClick={() => setEditingDoc(file)}
                                                                             title="Editar título y autor"
                                                                         >
                                                                             <Pencil className="h-4 w-4" />
@@ -2158,269 +1909,27 @@ export default function CoreLibraryAdmin() {
                 availableStores={storeContexts.map(c => ({ key: c.key, displayName: c.name }))}
             />
 
-            {/* Edit Document Metadata Dialog */}
-            <Dialog open={editDocOpen} onOpenChange={(open) => { if (!open) { setEditDocOpen(false); setEditingDocId(null); } }}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Editar metadata del documento</DialogTitle>
-                        <DialogDescription>
-                            Corrige el título y autor si fueron extraídos incorrectamente. No afecta el contenido indexado.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleSaveDocMetadata} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="editDocTitle">Título <span className="text-destructive">*</span></Label>
-                            <Input
-                                id="editDocTitle"
-                                value={editDocTitle}
-                                onChange={e => setEditDocTitle(e.target.value)}
-                                placeholder="Título del documento"
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="editDocAuthor">Autor</Label>
-                            <Input
-                                id="editDocAuthor"
-                                value={editDocAuthor}
-                                onChange={e => setEditDocAuthor(e.target.value)}
-                                placeholder="Nombre del autor"
-                            />
-                        </div>
-                        <div className="flex items-start justify-between gap-4 rounded-lg border p-4 bg-muted/30">
-                            <div className="space-y-1 flex-1 min-w-0">
-                                <Label htmlFor="editDocPubliclyCitable" className="text-sm font-semibold">
-                                    Citable públicamente
-                                </Label>
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                    Activa este switch SOLO para material de dominio público (Calvino, Spurgeon,
-                                    Matthew Henry, patrística, Gesenius, etc.) o con licencia explícita firmada.
-                                    Cuando está apagado, los usuarios regulares NO ven las citas de este documento
-                                    aunque se use para RAG interno.
-                                </p>
-                            </div>
-                            <Switch
-                                id="editDocPubliclyCitable"
-                                checked={editDocPubliclyCitable}
-                                onCheckedChange={setEditDocPubliclyCitable}
-                            />
-                        </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setEditDocOpen(false)} disabled={isSavingDoc}>
-                                Cancelar
-                            </Button>
-                            <Button type="submit" disabled={isSavingDoc}>
-                                {isSavingDoc && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Guardar
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <EditDocDialog
+                doc={editingDoc}
+                onClose={() => setEditingDoc(null)}
+                onSaved={loadConfig}
+            />
 
             {/* Edit Store Dialog */}
-            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Editar Store</DialogTitle>
-                        <DialogDescription>
-                            Actualiza el nombre y descripción del store. Cambiar el nombre actualizará el Display Name en la API de Gemini.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleEditStore} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="editKey">Clave del Contexto (No editable)</Label>
-                            <Input
-                                id="editKey"
-                                value={editingStoreKey || ''}
-                                disabled
-                                className="bg-muted"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="editName">Nombre para Mostrar <span className="text-destructive">*</span></Label>
-                            <Input
-                                id="editName"
-                                placeholder="Ej: Teología Sistemática"
-                                value={editStoreName}
-                                onChange={e => setEditStoreName(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="editDesc">Descripción</Label>
-                            <Textarea
-                                id="editDesc"
-                                placeholder="Breve descripción del propósito de este store..."
-                                value={editStoreDesc}
-                                onChange={e => setEditStoreDesc(e.target.value)}
-                                rows={3}
-                            />
-                        </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)} disabled={isEditing}>
-                                Cancelar
-                            </Button>
-                            <Button type="submit" disabled={isEditing}>
-                                {isEditing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                                Guardar Cambios
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <EditStoreDialog
+                store={editingStore}
+                onClose={() => setEditingStore(null)}
+                onSaved={loadConfig}
+            />
 
             {/* Add Docs Dialog */}
-            <Dialog open={isAddDocsOpen} onOpenChange={setIsAddDocsOpen}>
-                <DialogContent className="sm:max-w-4xl max-h-[85vh] flex flex-col">
-                    <DialogHeader>
-                        <DialogTitle>Añadir Documentos al Store</DialogTitle>
-                        <DialogDescription>
-                            Selecciona documentos existentes de tu biblioteca o sube uno nuevo.
-                        </DialogDescription>
-                    </DialogHeader>
-                    
-                    <Tabs defaultValue="select" className="flex-1 flex flex-col min-h-0 mt-4">
-                        <TabsList className="grid w-full grid-cols-2 mb-4">
-                            <TabsTrigger value="select">Seleccionar de Biblioteca</TabsTrigger>
-                            <TabsTrigger value="upload">Subir Nuevo Documento</TabsTrigger>
-                        </TabsList>
-                        
-                        <TabsContent value="select" className="flex-1 overflow-hidden flex flex-col mt-0 data-[state=inactive]:hidden">
-                            <div className="flex-1 overflow-y-auto border rounded-md">
-                                {isLoadingDocs ? (
-                                    <div className="flex items-center justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-                                ) : availableDocs.length === 0 ? (
-                                    <div className="text-center py-12 text-muted-foreground">No hay documentos disponibles en tu biblioteca para añadir.</div>
-                                ) : (
-                                    <Table>
-                                        <TableHeader className="bg-muted/50 sticky top-0 z-10">
-                                            <TableRow>
-                                                <TableHead className="w-[50px] text-center">
-                                                    <CheckCircle className="h-4 w-4 mx-auto text-muted-foreground" />
-                                                </TableHead>
-                                                <TableHead>Nombre</TableHead>
-                                                <TableHead>Autor</TableHead>
-                                                <TableHead>Páginas</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {availableDocs.map(doc => {
-                                                const isSelected = selectedDocs.has(doc.id);
-                                                return (
-                                                    <TableRow 
-                                                        key={doc.id}
-                                                        className={cn("cursor-pointer", isSelected && "bg-primary/5")}
-                                                        onClick={() => {
-                                                            const newSet = new Set(selectedDocs);
-                                                            if (isSelected) newSet.delete(doc.id);
-                                                            else newSet.add(doc.id);
-                                                            setSelectedDocs(newSet);
-                                                        }}
-                                                    >
-                                                        <TableCell className="text-center">
-                                                            <div className={cn("h-4 w-4 mx-auto rounded-sm border flex items-center justify-center shrink-0", isSelected ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground")}>
-                                                                {isSelected && <CheckCircle className="h-3 w-3" />}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="font-medium">{doc.title}</TableCell>
-                                                        <TableCell className="text-muted-foreground">{doc.author || '---'}</TableCell>
-                                                        <TableCell>
-                                                            <Badge variant="outline">{doc.metadata?.pages || 0} pág</Badge>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            })}
-                                        </TableBody>
-                                    </Table>
-                                )}
-                            </div>
-
-                            <div className="flex justify-end pt-4 mt-auto">
-                                <Button variant="outline" className="mr-2" onClick={() => setIsAddDocsOpen(false)}>Cancelar</Button>
-                                <Button 
-                                    onClick={() => handleAddSelectedDocs(activeTab)} 
-                                    disabled={isAddingDocs || selectedDocs.size === 0}
-                                >
-                                    {isAddingDocs && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Añadir {selectedDocs.size > 0 ? `(${selectedDocs.size})` : ''} Documentos
-                                </Button>
-                            </div>
-                        </TabsContent>
-
-                        <TabsContent value="upload" className="flex-1 overflow-y-auto mt-0 data-[state=inactive]:hidden px-1">
-                            <form onSubmit={(e) => handleUploadSubmit(e, activeTab)} className="space-y-4 pt-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="file">Archivo</Label>
-                                    <Input 
-                                        id="file" 
-                                        type="file" 
-                                        accept=".pdf,.epub"
-                                        onChange={handleFileChange}
-                                        required
-                                    />
-                                    {fileSizeWarning && (
-                                        <Alert variant="destructive" className="bg-warning/5 border-warning/30 py-2">
-                                            <AlertTriangle className="h-3 w-3 text-warning" />
-                                            <AlertDescription className="text-warning text-xs">
-                                                Archivo &gt;50MB: calidad reducida o posible rechazo de la API de IA.
-                                            </AlertDescription>
-                                        </Alert>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="title">Título</Label>
-                                    <Input 
-                                        id="title" 
-                                        value={uploadMetadata.title}
-                                        onChange={e => setUploadMetadata({...uploadMetadata, title: e.target.value})}
-                                        placeholder="Título del documento"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="author">Autor</Label>
-                                    <Input 
-                                        id="author" 
-                                        value={uploadMetadata.author}
-                                        onChange={e => setUploadMetadata({...uploadMetadata, author: e.target.value})}
-                                        placeholder="Nombre del autor"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="type">Categoría</Label>
-                                    <Select 
-                                        value={uploadMetadata.type} 
-                                        onValueChange={(v: ResourceType) => setUploadMetadata({...uploadMetadata, type: v})}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecciona una categoría" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {categories.map((cat) => (
-                                                <SelectItem key={cat.id} value={cat.id}>{cat.label}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                
-                                <div className="flex justify-end pt-4 border-t mt-4">
-                                    <Button type="button" variant="outline" className="mr-2" onClick={() => setIsAddDocsOpen(false)}>Cancelar</Button>
-                                    <Button type="submit" disabled={isUploading || !uploadFile}>
-                                        {isUploading ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Upload className="mr-2 h-4 w-4" />
-                                        )}
-                                        Subir y Añadir a Store
-                                    </Button>
-                                </div>
-                            </form>
-                        </TabsContent>
-                    </Tabs>
-                </DialogContent>
-            </Dialog>
+            <AddDocsDialog
+                open={isAddDocsOpen}
+                contextKey={activeTab}
+                userId={firebase?.user?.uid}
+                onClose={() => setIsAddDocsOpen(false)}
+                onDone={loadConfig}
+            />
 
         </div>
     );
