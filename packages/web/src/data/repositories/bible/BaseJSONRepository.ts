@@ -32,7 +32,13 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
         const ref = this.parseReference(reference);
         if (!ref) return null;
 
-        const canonicalBookId = this.bookMapping[ref.book];
+        // `?? ref.book` NO ES DEFENSA DE MÁS: las dos subclases devuelven el
+        // ID del libro (`'phm'`) en `parseReference`, no la clave, así que
+        // indexar la tabla con eso daba `undefined` SIEMPRE y este método
+        // devolvía `null` para toda referencia. No se notó porque las pantallas
+        // leen por `LocalBibleService`; quedaba muerto y roto esperando al
+        // primero que lo usara.
+        const canonicalBookId = this.bookMapping[ref.book] ?? ref.book;
         if (!canonicalBookId) return null;
 
         const book = this.bibleData.find(b => b.id.toLowerCase() === canonicalBookId.toLowerCase());
