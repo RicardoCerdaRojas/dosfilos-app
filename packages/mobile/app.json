@@ -1,20 +1,20 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Dos Filos Preach",
+    "slug": "dos-filos-preach",
     "owner": "ricardocerdarojas",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "dosfilospreach",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.rcerda.mobile"
+      "bundleIdentifier": "com.dosfilos.preach"
     },
     "android": {
-      "package": "com.rcerda.mobile",
+      "package": "com.dosfilos.preach",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

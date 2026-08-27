@@ -52,25 +52,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="study"
-        options={{
-          title: t('common:study_tab'),
-          tabBarIcon: ({ color }) => <MaterialIcons size={24} name="school" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="tutor"
-        options={{
-          title: t('common:tutor_tab'),
-          tabBarIcon: ({ color }) => (
-            <View>
-              <MaterialIcons size={24} name="bolt" color={color} />
-              <View className="absolute -top-1 -right-1 w-2 h-2 bg-academic-gold rounded-full" />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="sermons"
         options={{
           title: t('common:sermons_tab'),
