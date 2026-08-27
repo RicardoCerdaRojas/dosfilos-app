@@ -1,5 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, RotateCcw, Sparkles, X, Plus } from 'lucide-react';
+import {
+    useEffect,
+    useMemo,
+    useState } from 'react';
+import { CheckCircle2,
+    RotateCcw,
+    Sparkles,
+    X,
+    Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     getEffectiveSectionStructuralExpectation,
@@ -9,6 +16,7 @@ import {
     type SourceRole,
     type SourceType,
     type StepEmphasis,
+    usesRoleCoverage,
 } from '@dosfilos/domain';
 import { UpdateStepPlanUseCase } from '@dosfilos/application';
 import { Button } from '@/components/ui/button';
@@ -205,7 +213,7 @@ export function StepKindEmphasisCard({ paper, kind, icon }: StepKindEmphasisCard
                 as the same conversation, not a context switch. Read-
                 only summary; the SourceType chips below are the
                 actual edit surface. */}
-            {(paper.exegeticalStrategy ?? 'free') === 'dialectical' && emphasized.length > 0 && (
+            {usesRoleCoverage(paper.exegeticalStrategy) && emphasized.length > 0 && (
                 <DialecticalRoleSummary types={emphasized} />
             )}
 

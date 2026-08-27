@@ -1,4 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import {
+    useEffect,
+    useMemo,
+    useState } from 'react';
 import {
     AlertTriangle,
     BookOpenText,
@@ -18,7 +21,7 @@ import {
     Sparkles,
     Upload,
     X,
-} from 'lucide-react';
+    } from 'lucide-react';
 import { toast } from 'sonner';
 import { libraryService } from '@dosfilos/application';
 import {
@@ -43,6 +46,9 @@ import {
     type SourceRole,
     type SourceType,
     type Testament,
+    resolveExegeticalStrategy,
+    usesRoleCoverage,
+    type ExegeticalStrategy,
 } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import { useLibrary } from '@/hooks/library';
@@ -150,7 +156,7 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                 </h2>
                 <div className="flex items-center gap-2 shrink-0">
                     <PageBalanceHint />
-                    <StrategyModeBadge strategy={paper.exegeticalStrategy ?? 'free'} />
+                    <StrategyModeBadge strategy={resolveExegeticalStrategy(paper.exegeticalStrategy)} />
                 </div>
             </header>
 
@@ -168,7 +174,7 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                 </>
             ) : (
                 <>
-                    {(paper.exegeticalStrategy ?? 'free') === 'dialectical' && (
+                    {usesRoleCoverage(paper.exegeticalStrategy) && (
                         <RoleCoverageCard paper={paper} onPickRole={openDialogForRole} />
                     )}
                     {/* Suppress the rubric-gap card for dialectical
@@ -183,7 +189,7 @@ export function CorpusSubStep({ paper }: CorpusSubStepProps) {
                         coexist (rubric answers "which types matter",
                         strategy answers "which roles are balanced"). */}
                     {!(
-                        (paper.exegeticalStrategy ?? 'free') === 'dialectical'
+                        usesRoleCoverage(paper.exegeticalStrategy)
                         && (paper.rubric?.sourceRequirements?.length ?? 0) === 0
                     ) && (
                         <RubricGapCard paper={paper} onPickType={(type) => openDialog(type)} />
@@ -229,7 +235,7 @@ function CorpusSourcesList({
 }) {
     const { t } = useTranslation('exegesis');
     const library = useLibrary();
-    const strategy = paper.exegeticalStrategy ?? 'free';
+    const strategy = resolveExegeticalStrategy(paper.exegeticalStrategy);
     const sorted = [...paper.sources].sort((a, b) => a.order - b.order);
     // When the user has a stocked library AND no sources on this paper,
     // the curated-extraction path is the differentiator we want them to
@@ -294,7 +300,7 @@ function CorpusSourcesList({
                             sourceCount={excerptedSources.length}
                         />
                     )}
-                    {strategy === 'dialectical' ? (
+                    {usesRoleCoverage(strategy) ? (
                         <GroupedByRoleList paper={paper} sources={sorted} onPickRole={onPickRole} />
                     ) : (
                         <ul className="space-y-2">
@@ -471,9 +477,9 @@ function CuratedSummaryBanner({
  * role-coverage card; or "Modo: Libre" and understand WHY they're
  * not.
  */
-function StrategyModeBadge({ strategy }: { strategy: 'free' | 'dialectical' }) {
+function StrategyModeBadge({ strategy }: { strategy: ExegeticalStrategy }) {
     const { t } = useTranslation('exegesis');
-    const dialectical = strategy === 'dialectical';
+    const dialectical = usesRoleCoverage(strategy);
     return (
         <span
             className={[
@@ -761,14 +767,14 @@ function ExtractHeroCard({
     onPickRole,
 }: {
     libraryCount: number;
-    strategy: 'free' | 'dialectical';
+    strategy: ExegeticalStrategy;
     onExtract: () => void;
     onAdd: () => void;
     onPickRole: (role: SourceRole) => void;
 }) {
     const { t } = useTranslation('exegesis');
 
-    if (strategy === 'dialectical') {
+    if (usesRoleCoverage(strategy)) {
         return (
             <div className="rounded-xl border border-success/30 bg-success-subtle/40 p-5 space-y-4">
                 <div className="flex items-start gap-3">
