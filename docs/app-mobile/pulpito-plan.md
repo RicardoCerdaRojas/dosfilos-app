@@ -127,6 +127,22 @@ des-sextuplicó. El Redactor (v2) edita **borradores existentes** y crea "sermó
 (trampa documentada de `sectionElements` con claves con puntos). El estudio profundo
 permanece en la web; la tablet lo consulta read-only.
 
+### M-08 — Auth v1: email/password + Google + Apple
+Google Sign-In **nativo** en F1 (decisión del fundador). El intento de febrero murió por el
+proxy de Expo Go + clientId hardcodeado; con dev builds (M-02) ese problema no existe:
+`@react-native-firebase/auth` + Google Sign-In nativo, mismo UID que la cuenta web. Política
+igual a web: Google = login-only, el registro sigue payment-first en web. **Consecuencia
+aceptada**: App Store guideline 4.8 exige ofrecer Sign in with Apple si hay Google → Apple
+entra también en F1. Costo: OAuth client ids iOS/Android + SHA-1 en consola, ~2 PRs.
+
+### M-09 — Soporte e-ink de primera clase (BOOX)
+El fundador predica con una BOOX 10.3 Gen II (Android e-ink, lápiz EMR Wacom). Dos
+consecuencias de diseño: (1) el modo púlpito ya navega **por sección, no por scroll** — ideal
+para e-ink; se agrega **modo tinta electrónica**: negro/blanco puro, cero animaciones,
+timer que refresca por minuto, transiciones de página completa. (2) **Riesgo App Check**:
+dispositivos e-ink pueden fallar Play Integrity (certificación GMS variable) — verificar en
+F0 con la BOOX real; mitigación: debug token provisionado para dispositivos internos.
+
 ## 6. Módulo 1 — Púlpito
 
 Flujo: **Mis sermones → Preparar (offline) → Ensayar → Predicar → Registrar.**
@@ -134,8 +150,9 @@ Flujo: **Mis sermones → Preparar (offline) → Ensayar → Predicar → Regist
 ### Pantalla de predicación
 - **Tipografía primero**: serif para el cuerpo, 20–40 pt ajustable, interlineado y medida
   configurables, persistidos y sincronizados. Respeta tamaño de fuente del sistema.
-- **Cuatro modos de luz**: claro, sepia, oscuro, y **modo atril** (alto contraste, brillo
-  fijo, `expo-keep-awake` siempre).
+- **Cinco modos de luz**: claro, sepia, oscuro, **modo atril** (alto contraste, brillo
+  fijo, `expo-keep-awake` siempre) y **modo tinta electrónica** (M-09: negro/blanco puro,
+  cero animaciones, refrescos mínimos).
 - **Layouts**: página completa / media página (sermón + canvas de tinta al margen).
 - **Avance**: zonas de tap (⅓ izq/der), swipe, teclas de volumen, **pasadores BT/pedales**
   (HID flechas — estándar de músicos/teleprompters). Navegación por sección, no scroll libre.
@@ -143,8 +160,14 @@ Flujo: **Mis sermones → Preparar (offline) → Ensayar → Predicar → Regist
   háptico) / rojo tenue (pasado). Sin sonidos. Blackout con doble tap de dos dedos.
 - **Citas vivas**: tap en `[N]` → popover con fuente del manifest; tap en referencia bíblica
   → pasaje en panel lateral desde la Biblia offline.
-- **Canvas de tinta** (react-native-skia + Apple Pencil / S Pen): margen por sección;
-  persiste en `annotations` (M-05). La tinta del ensayo del sábado aparece el domingo.
+- **Marcas sobre el texto** (dos etapas): en F1, resaltado por **frase/párrafo con tap
+  largo** (colores, sin selección por carácter — la selección fina en RN exige render propio
+  por spans). En F2, selección fina + **marcas de predicador**: glifos al margen de una
+  línea — pausa, énfasis, bajar la voz, mirar a la congregación, "aquí la ilustración" — lo
+  que se hace a lápiz en papel. Todo anclado por `(sectionSlug, offset)` y sincronizado (M-05).
+- **Canvas de tinta** (react-native-skia + Apple Pencil / S Pen / lápiz EMR BOOX): margen
+  por sección; persiste en `annotations` (M-05). La tinta del ensayo del sábado aparece el
+  domingo.
 
 ### Modo ensayo
 Mismo lector; el timer **registra tiempo real por sección**. Al terminar: tabla sección ×
@@ -174,24 +197,37 @@ algo probable en tablet real.
 
 | Fase | Contenido | ~PRs | Cierre |
 |---|---|---|---|
-| **F0** Cimientos | Upgrade Expo 52→56, `@react-native-firebase`, App Check + debug tokens, Metro workspace (`@dosfilos/domain` importable), rebrand (app.json, íconos, Lexend real), tokens con 4 modos, limpieza (eventos/template/dep fantasma), CI job mobile (typecheck + lint + bundle Metro) | 3 | Base sana, sin pantallas nuevas |
-| **F1** Púlpito mínimo | Lista real (`getSermonsListSummary`, published, agrupada por serie) → detalle → modo púlpito: markdown por secciones, tipografía ajustable, 4 modos, timer, keep-awake, blackout, tap/swipe/volumen, riel de secciones, `[N]` popover + footer atribuciones | 4 | Se predica un sermón real desde la tablet |
-| **F2** Maletín + anotaciones | "Preparar para predicar" (pin offline + indicador), highlights → Firestore (web migra de localStorage), canvas de tinta con Pencil/S Pen, panel Biblia offline (SQLite, parser compartido) | 4 | Domingo sin WiFi = cero riesgo |
+| **F0** Cimientos | Upgrade Expo 52→56, `@react-native-firebase`, App Check (App Attest + Play Integrity + **verificación en BOOX real**), Metro workspace (`@dosfilos/domain` importable), rebrand (app.json, íconos, Lexend real — nombre/bundle id: ver §10), tokens con 5 modos (incl. e-ink), limpieza (eventos/template/dep fantasma), CI job mobile (typecheck + lint + bundle Metro). **iOS y Android desde el inicio** | 3 | Base sana en ambas plataformas, sin pantallas nuevas |
+| **F1** Púlpito mínimo | Lista real (`getSermonsListSummary`, published, agrupada por serie) → detalle → modo púlpito: markdown por secciones, tipografía ajustable, 5 modos de luz, timer, keep-awake, blackout, tap/swipe/volumen, riel de secciones, `[N]` popover + footer atribuciones. **Google + Apple Sign-In (M-08). Resaltado por frase/párrafo (tap largo).** Al cierre: **beta interna** (TestFlight internal iOS + Play internal testing Android, 2-3 usuarios) | 5-6 | Se predica un sermón real desde la tablet; beta interna corriendo |
+| **F2** Maletín + anotaciones | "Preparar para predicar" (pin offline + indicador), highlights → Firestore (web migra de localStorage), **selección fina de texto + marcas de predicador (glifos)**, canvas de tinta con Pencil/S Pen/EMR BOOX, panel Biblia offline (SQLite, parser compartido), pulido modo e-ink | 5 | Domingo sin WiFi = cero riesgo |
 | **F3** Ensayo + registro | Modo ensayo con tiempos por sección, pantalla post-predicación → `addPreachingLog()`, historial visible en web, pasadores BT/pedal | 3 | Ciclo de vida del sermón cerrado |
 | **F4** Redactor | Editor de borradores por secciones, sermón rápido, panel estudio read-only, atajos teclado externo | 4 | Segunda entrega mayor |
 
-## 9. Riesgos y preguntas abiertas
+## 9. Riesgos
 
-| Riesgo / pregunta | Peso | Mitigación / decisión |
+| Riesgo | Peso | Mitigación |
 |---|---|---|
 | App Check en RN estorba el arranque | Alto | Prototipar primera semana de F0; debug tokens en README nuevo |
+| Play Integrity falla en la BOOX (e-ink, certificación GMS variable) | Medio | Verificar en F0 con el dispositivo real; debug token provisionado para equipos internos |
 | Upgrade Expo 52→56 rompe módulo Biblia | Medio | Es TS puro + AsyncStorage; migración JSON→SQLite (F2) reduce superficie |
+| Selección fina de texto en RN más cara de lo estimado | Medio | Por eso F1 lleva tap-largo por frase/párrafo; la selección fina no bloquea el resaltado |
 | Markdown con HTML crudo (`<br/>`) | Bajo | Render propio por bloques; no depender de librerías de render HTML muertas |
-| ¿Google Sign-In en v1? | Decidir | Propuesta: email/password primero; Google nativo en F2 |
-| ¿Planes/quota en tablet? | Decidir | V1 solo lee — sin fricción de billing hasta el Redactor |
 | Divergencia con Stitch de febrero | Bajo | Stitch sigue siendo referencia; `preaching_mode_(tablet)` coincide |
 
-## 10. Reglas de oro heredadas (de `definicion.md` §11, vigentes aquí)
+## 10. Decisiones del fundador (2026-08-27)
+
+| Pregunta | Decisión |
+|---|---|
+| Google Sign-In | **En v1 (F1)**, nativo, login-only |
+| Apple Sign-In | **En F1** (obligatorio por guideline 4.8 al ofrecer Google) |
+| Billing/quota en tablet | **V1 solo lee** — sin fricción de planes hasta el Redactor |
+| Plataformas | **iOS y Android desde F0** |
+| Branding | Necesario en F0. **Propuesta a confirmar**: nombre "Dos Filos Preach", bundle id `com.dosfilos.preach` |
+| Hardware canvas | Apple Pencil + S Pen + **BOOX 10.3 Gen II** (fundador) → M-09 e-ink |
+| Beta | **Prueba interna con 2-3 usuarios** al cierre de F1 (TestFlight internal + Play internal testing: distribución privada por invitación, sin revisión pública de tienda) |
+| Merge PR #503 | Tras esta actualización |
+
+## 11. Reglas de oro heredadas (de `definicion.md` §11, vigentes aquí)
 
 Ninguna pantalla fuera del router · ningún hex literal (tokens) · ningún string literal en
 JSX (i18n) · ninguna pantalla importa Firebase/SQLite (solo `src/data/`) · ningún `any` ·
