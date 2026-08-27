@@ -6,6 +6,7 @@ import {
     type IExegeticalPaperRepository,
     type IUserRubricRepository,
     type PaperRubric,
+    DEFAULT_STRATEGY_FOR_NEW_PAPER,
 } from '@dosfilos/domain';
 
 /**
@@ -75,7 +76,7 @@ export class CreateExegeticalPaperUseCase {
             ownerId: input.ownerId,
             passage: input.passage,
             displayLanguage: input.displayLanguage,
-            exegeticalStrategy: input.exegeticalStrategy ?? 'dialectical',
+            exegeticalStrategy: input.exegeticalStrategy ?? DEFAULT_STRATEGY_FOR_NEW_PAPER,
             title: input.title,
             assignmentBrief: normalizeBrief(input.assignmentBrief),
             styleGuideId: input.styleGuideId,

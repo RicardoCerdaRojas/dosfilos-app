@@ -149,6 +149,7 @@ export * from './models/Plan'; // 🎯 Plan models (refactored system)
 export * from './llm/modelCatalog';
 export * from './voice/selectVoiceSamples';
 export * from './voice/buildVoiceBlock';
+export * from './exegesis/services/exegeticalStrategy';
 
 
 // Multi-Agent Faculty Entities

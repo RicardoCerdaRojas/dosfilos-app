@@ -10,8 +10,9 @@ import {
     where,
     runTransaction,
     type DocumentData,
-} from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+    } from 'firebase/firestore';
+import { getFunctions,
+    httpsCallable } from 'firebase/functions';
 import { db } from '../config/firebase';
 import type {
     ExegeticalPaper,
@@ -30,6 +31,7 @@ import type {
     StepSourcePlan,
     VerificationSummary,
 } from '@dosfilos/domain';
+import { DEFAULT_STRATEGY_FOR_NEW_PAPER, resolveExegeticalStrategy } from '@dosfilos/domain';
 import {
     EMPTY_STEP_SOURCE_PLAN,
     EMPTY_VERIFICATION_SUMMARY,
@@ -157,7 +159,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             // can override at create time (the create UI surfaces the
             // choice). Pre-strategy docs that get re-saved through
             // this path will inherit the field naturally.
-            exegeticalStrategy: draft.exegeticalStrategy ?? 'dialectical',
+            exegeticalStrategy: draft.exegeticalStrategy ?? DEFAULT_STRATEGY_FOR_NEW_PAPER,
             title: draft.title,
             assignmentBrief: draft.assignmentBrief ?? null,
             styleGuideId: draft.styleGuideId,
@@ -747,7 +749,7 @@ function deserialize(id: string, data: DocumentData): ExegeticalPaper {
         // Pre-strategy papers default to 'free' so we don't suddenly
         // bug-banner about missing dialectical roles on existing work.
         // New papers always carry an explicit value.
-        exegeticalStrategy: data.exegeticalStrategy === 'dialectical' ? 'dialectical' : 'free',
+        exegeticalStrategy: resolveExegeticalStrategy(data.exegeticalStrategy),
         title: data.title,
         assignmentBrief: data.assignmentBrief ?? null,
         styleGuideId: data.styleGuideId ?? null,
