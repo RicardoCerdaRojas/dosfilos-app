@@ -1,7 +1,7 @@
 # Baseline de errores de tipo de packages/web — NO editar a mano.
 # Regenerar con: ./scripts/check-web-types.sh --update
 # Formato: <cantidad>\t<archivo relativo a packages/web>
-# Total: 572
+# Total: 568
 1	../application/src/greek-tutor/use-cases/AddPassageWordToUnitsUseCase.ts
 1	../application/src/greek-tutor/use-cases/GenerateTrainingUnitsUseCase.ts
 1	../application/src/greek-tutor/use-cases/SaveInsightUseCase.ts
@@ -206,7 +206,6 @@
 3	src/pages/sermons/detail.tsx
 1	src/pages/sermons/generator/PromptSettings.tsx
 5	src/pages/sermons/generator/SermonWizard.tsx
-4	src/pages/sermons/generator/StepDraft.tsx
 2	src/pages/sermons/generator/exegesis/greek-tutor/GreekTutorProvider.tsx
 15	src/pages/sermons/generator/exegesis/greek-tutor/GreekTutorSessionView.tsx
 1	src/pages/sermons/generator/exegesis/greek-tutor/MorphologyBreakdownCard.tsx

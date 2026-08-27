@@ -1,11 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import type { TFunction } from 'i18next';
+import type { SermonContent } from '@dosfilos/domain';
 import { buildFullContent } from '../sermonContent';
 
 // Stub t() — returns the key so assertions don't depend on i18n resources.
 const t = ((key: string) => key) as unknown as TFunction;
 
-const draft = {
+// El borrador de prueba es un `SermonContent` real, no una forma parcial: si el
+// fixture pudiera omitir campos, el test dejaría de proteger el caso verdadero.
+const draft: SermonContent = {
+    title: 'Sermón de prueba',
     introduction: 'Intro',
     conclusion: 'Concl',
     body: [
@@ -43,7 +47,7 @@ describe('buildFullContent — cross-reference rendering', () => {
     it('una referencia que no se puede resolver conserva la cita sola', () => {
         // Perder la referencia sería peor que no tener el texto.
         const md = buildFullContent(
-            { ...draft, body: [{ ...draft.body[0], scriptureReferences: ['Libro Inexistente 3:4'] }] } as typeof draft,
+            { ...draft, body: [{ ...draft.body[0], scriptureReferences: ['Libro Inexistente 3:4'] }] } as SermonContent,
             t,
         );
         expect(md).toContain('- Libro Inexistente 3:4');
