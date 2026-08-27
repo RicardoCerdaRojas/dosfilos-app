@@ -9,6 +9,19 @@ import { type AIChatSession, type AIProject } from '@dosfilos/domain';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
+/**
+ * PALETA CATEGÓRICA, NO SEMÁNTICA — y por eso NO son candidatas a los tokens
+ * `success/warning/info/destructive`.
+ *
+ * Estos colores no significan "bien" ni "peligro": sólo sirven para DISTINGUIR
+ * un agente de otro y un proyecto de otro de un vistazo. Traducirlos a tokens
+ * semánticos borraría justamente lo que hacen — ocho agentes con el color de
+ * "información" son ocho puntos iguales.
+ *
+ * En `PROJECT_COLOR_BG` hay una razón más fuerte: la clave es un `ProjectColor`
+ * del dominio y el pastor ELIGIÓ ese color para su proyecto. El nombre del
+ * color no es decoración, es el dato.
+ */
 const AGENT_DOT_COLORS = ['bg-sky-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-violet-500', 'bg-teal-500', 'bg-orange-500', 'bg-indigo-400'] as const;
 
 const PROJECT_COLOR_BG: Record<string, string> = {
@@ -167,7 +180,7 @@ function SessionItem({
 interface FacultySessionSidebarProps {
     isOpen: boolean;
     /** Open-state width in pixels. Driven by chat.tsx so the
-     *  RailDivider can resize the rail by mutating that state. */
+     *  PanelDivider can resize the rail by mutating that state. */
     width?: number;
     sessions: AIChatSession[];
     projects: AIProject[];
@@ -176,7 +189,7 @@ interface FacultySessionSidebarProps {
     renameConfirmId: string | null;
     /** Optional — kept for callers that still wire it. The rail
      *  itself no longer renders an internal close button; the
-     *  RailDivider on the rail boundary owns the open/close action. */
+     *  PanelDivider on the rail boundary owns the open/close action. */
     onToggle?: () => void;
     onNewConversation: () => void;
     onNewProject: () => void;
@@ -305,7 +318,7 @@ export function FacultySessionSidebar({
                                 <FolderPlus className="w-3.5 h-3.5" />
                             </button>
                             {/*
-                             * Open / close moved to the RailDivider on
+                             * Open / close moved to the PanelDivider on
                              * the rail boundary — single affordance,
                              * also supports drag-to-resize.
                              */}
