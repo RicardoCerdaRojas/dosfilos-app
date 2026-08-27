@@ -14,7 +14,7 @@ interface UIState {
     hideToast: () => void;
 }
 
-let timeoutId: NodeJS.Timeout;
+let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
 export const useUIStore = create<UIState>((set) => ({
     toast: null,

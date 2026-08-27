@@ -4,9 +4,15 @@
   "private": true,
   "packageManager": "yarn@1.22.22",
   "description": "Sistema de herramientas para pastores y predicadores - Gestor y Generador de Sermones",
-  "workspaces": [
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ],
+    "nohoist": [
+      "**/@dosfilos/mobile",
+      "@dosfilos/mobile/**"
+    ]
+  },
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
