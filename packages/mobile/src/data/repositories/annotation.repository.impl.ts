@@ -194,6 +194,14 @@ export class AnnotationRepositoryImpl implements AnnotationRepository {
         );
     }
 
+    /** Borra cualquier anotación por id — marca o nota de tinta. */
+    async deleteAnnotation(sermonId: string, annotationId: string): Promise<void> {
+        settleOffline(
+            deleteDoc(doc(annotationsRef(sermonId), annotationId)),
+            `delete ${annotationId}`,
+        );
+    }
+
     async remove(sermonId: string, annotationId: string): Promise<void> {
         settleOffline(deleteDoc(doc(annotationsRef(sermonId), annotationId)), `remove ${annotationId}`);
     }

@@ -41,6 +41,8 @@ interface Props {
     onPressApparatus: (text: string) => void;
     /** Familia de entrega elegida por el predicador. */
     face: DeliveryFace;
+    /** Sangría francesa encendida. Preferencia, no ajuste con respuesta única. */
+    hangingIndent: boolean;
     /** Posición de cada palabra en pantalla, para anclar la tinta. */
     onWordLayout?: (sourceStart: number, rect: { x: number; y: number; height: number }) => void;
 }
@@ -66,6 +68,7 @@ export function PreachSectionBody({
     onPressCitation,
     onPressApparatus,
     face,
+    hangingIndent,
     onWordLayout,
 }: Props) {
     /**
@@ -101,7 +104,7 @@ export function PreachSectionBody({
                 onTapAt={onTapAt}
                 onPressCitation={onPressCitation}
                 faceClass={FACE_CLASS[face].regular}
-                hangingIndent={fontSize * HANGING_INDENT_EM}
+                hangingIndent={hangingIndent ? fontSize * HANGING_INDENT_EM : 0}
                 onWordLayout={onWordLayout}
             />
         </View>

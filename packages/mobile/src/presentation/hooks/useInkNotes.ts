@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { buildAnnotationAnchor, resolveAnnotationAnchor } from '@dosfilos/domain';
-import type { InkNote, InkStroke } from '@dosfilos/domain';
+import type { InkColor, InkNote, InkStroke } from '@dosfilos/domain';
 
 import { SermonSection } from '@/core/utils/sermonSections';
 import { AnnotationRepositoryImpl } from '@/data/repositories/annotation.repository.impl';
@@ -19,6 +19,8 @@ const repository = new AnnotationRepositoryImpl();
 export function useInkNotes(sermonId: string, section: SermonSection | undefined) {
     const queryClient = useQueryClient();
     const [penActive, setPenActive] = useState(false);
+    const [penColor, setPenColor] = useState<InkColor>('ink');
+    const [eraser, setEraser] = useState(false);
 
     /** offset del texto → rectángulo en pantalla. Lo llena el cuerpo. */
     const wordRects = useRef<Map<number, AnchorRect>>(new Map());
@@ -38,6 +40,18 @@ export function useInkNotes(sermonId: string, section: SermonSection | undefined
 
     const rememberWord = (offset: number, rect: AnchorRect) => {
         wordRects.current.set(offset, rect);
+    };
+
+    /**
+     * Vacía el mapa de posiciones al cambiar de página, movimiento o layout.
+     *
+     * Sin esto el mapa ACUMULA: una palabra de la página anterior conserva su
+     * rectángulo viejo, `anchorRectFor` lo encuentra, y la tinta de esa página
+     * se sigue dibujando encima de la siguiente. Era el bug de "avanzo y los
+     * trazos no desaparecen".
+     */
+    const resetLayout = () => {
+        wordRects.current.clear();
     };
 
     /** Palabra más cercana a un punto de pantalla, para anclar un trazo nuevo. */
@@ -71,9 +85,46 @@ export function useInkNotes(sermonId: string, section: SermonSection | undefined
     };
 
     const append = useMutation({
-        mutationFn: async ({ offset, stroke }: { offset: number; stroke: InkStroke }) => {
+        // Se agrega el trazo a la caché ANTES de que Firestore conteste. Sin
+        // esto el trazo desaparece al soltar el dedo y reaparece cuando vuelve
+        // la consulta: el parpadeo que se veía al terminar de escribir.
+        onMutate: ({ offset, stroke }) => {
             if (!section) return;
             const existing = noteByOffset.current.get(offset);
+            queryClient.setQueryData<InkNote[]>(['ink', sermonId], (current) => {
+                const list = current ?? [];
+                if (existing) {
+                    return list.map((n) =>
+                        n.id === existing ? { ...n, strokes: [...n.strokes, stroke] } : n,
+                    );
+                }
+                const anchor = buildAnnotationAnchor(
+                    section.slug,
+                    section.body,
+                    offset,
+                    Math.min(offset + 24, section.body.length),
+                );
+                const optimisticId = `pending-${offset}-${list.length}`;
+                noteByOffset.current.set(offset, optimisticId);
+                return [
+                    ...list,
+                    {
+                        ...anchor,
+                        id: optimisticId,
+                        type: 'ink' as const,
+                        strokes: [stroke],
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                        updatedBy: 'mobile' as const,
+                    },
+                ];
+            });
+        },
+        mutationFn: async ({ offset, stroke }: { offset: number; stroke: InkStroke }) => {
+            if (!section) return;
+            const pending = noteByOffset.current.get(offset);
+            // El id optimista no existe en Firestore: se crea de verdad.
+            const existing = pending?.startsWith('pending-') ? undefined : pending;
             const anchor = buildAnnotationAnchor(
                 section.slug,
                 section.body,
@@ -86,10 +137,29 @@ export function useInkNotes(sermonId: string, section: SermonSection | undefined
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ink', sermonId] }),
     });
 
+    const erase = useMutation({
+        mutationFn: (noteId: string) => repository.deleteAnnotation(sermonId, noteId),
+        onMutate: (noteId) => {
+            queryClient.setQueryData<InkNote[]>(['ink', sermonId], (current) =>
+                (current ?? []).filter((n) => n.id !== noteId),
+            );
+            for (const [offset, id] of noteByOffset.current.entries()) {
+                if (id === noteId) noteByOffset.current.delete(offset);
+            }
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ink', sermonId] }),
+    });
+
     return {
         notes: sectionNotes,
         penActive,
         setPenActive,
+        penColor,
+        setPenColor,
+        eraser,
+        setEraser,
+        eraseNote: (noteId: string) => erase.mutate(noteId),
+        resetLayout,
         rememberWord,
         anchorAt,
         anchorRectFor,

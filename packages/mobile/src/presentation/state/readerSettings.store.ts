@@ -44,6 +44,9 @@ interface ReaderSettingsState {
      * para el texto.
      */
     /** Familia tipográfica del cuerpo de entrega. Preferencia del predicador. */
+    /** Sangría francesa: primera línea en el margen, el resto adentro. */
+    hangingIndent: boolean;
+    setHangingIndent: (on: boolean) => void;
     deliveryFace: DeliveryFace;
     setDeliveryFace: (face: DeliveryFace) => void;
     instrumentPanel: boolean;
@@ -69,6 +72,8 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
             gazeLine: false,
             setGazeLine: (on: boolean) =>
                 set((state) => ({ gazeLine: on, senseLines: on ? false : state.senseLines })),
+            hangingIndent: true,
+            setHangingIndent: (on: boolean) => set({ hangingIndent: on }),
             deliveryFace: 'lexend',
             setDeliveryFace: (face: DeliveryFace) => set({ deliveryFace: face }),
             instrumentPanel: true,

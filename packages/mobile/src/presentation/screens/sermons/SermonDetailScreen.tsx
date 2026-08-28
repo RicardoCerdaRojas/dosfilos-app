@@ -173,7 +173,7 @@ export default function SermonDetailScreen() {
                     onPress={() => router.push(`/sermon/edit/${sermon.id}`)}
                     accessibilityRole="button"
                     accessibilityLabel={t('sermons:edit')}
-                    className="px-6 py-3.5 rounded-full flex-row items-center mr-3 border border-slate-300 dark:border-slate-600 active:opacity-80"
+                    className="px-6 py-3.5 rounded-full flex-row items-center mr-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 active:opacity-80"
                 >
                     <MaterialIcons name="edit" size={20} className="text-slate-600" />
                     <Text className="font-lexend-semibold ml-2 text-slate-700 dark:text-slate-200">

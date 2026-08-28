@@ -27,4 +27,6 @@ export interface AnnotationRepository {
         style: MarkStyle,
     ): Promise<void>;
     remove(sermonId: string, annotationId: string): Promise<void>;
+    /** Borra cualquier anotación por id — marca o nota de tinta. */
+    deleteAnnotation(sermonId: string, annotationId: string): Promise<void>;
 }

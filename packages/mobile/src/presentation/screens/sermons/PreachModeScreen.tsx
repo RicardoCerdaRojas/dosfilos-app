@@ -64,6 +64,8 @@ export default function PreachModeScreen({
     const setFontSize = useReaderSettingsStore((s) => s.setDeliveryFontSize);
     const deliveryFace = useReaderSettingsStore((s) => s.deliveryFace);
     const setDeliveryFace = useReaderSettingsStore((s) => s.setDeliveryFace);
+    const hangingIndent = useReaderSettingsStore((s) => s.hangingIndent);
+    const setHangingIndent = useReaderSettingsStore((s) => s.setHangingIndent);
     const senseLines = useReaderSettingsStore((s) => s.senseLines);
     const setSenseLines = useReaderSettingsStore((s) => s.setSenseLines);
     const gazeLine = useReaderSettingsStore((s) => s.gazeLine);
@@ -141,6 +143,7 @@ export default function PreachModeScreen({
         sectionSlugRef.current = section?.slug ?? null;
     }, [section?.slug]);
 
+
     const blocks = section ? buildReadingBlocks(section.body) : [];
 
     // La caja de medida abarca TODO lo que se lee — título, título de
@@ -180,6 +183,7 @@ export default function PreachModeScreen({
             tokens={tokens}
             senseLines={senseLines}
             face={deliveryFace}
+            hangingIndent={hangingIndent}
             selection={null}
             onSelectionChange={() => undefined}
             onSelectionEnd={() => undefined}
@@ -195,7 +199,7 @@ export default function PreachModeScreen({
         renderBlock: renderBlockForMeasure,
         // La familia entra en la clave: distintas fuentes dan distinta altura
         // de línea, y paginar con las alturas de otra fuente corta mal.
-        layoutKey: `${section?.slug ?? ''}|${fontSize}|${senseLines}|${deliveryFace}|${measure ?? 0}`,
+        layoutKey: `${section?.slug ?? ''}|${fontSize}|${senseLines}|${deliveryFace}|${hangingIndent}|${measure ?? 0}`,
     });
 
     const safePageIndex = Math.min(pageIndex, Math.max(0, pages.length - 1));
@@ -205,6 +209,13 @@ export default function PreachModeScreen({
 
     // Texto de la página siguiente para el asomo. Sale del primer bloque que
     // viene: alcanza para saber si la idea sigue o si acá cerró.
+    // El mapa de posiciones de palabras se vacía al cambiar de página,
+    // movimiento o layout. Si no, acumula rectángulos viejos y la tinta de una
+    // página se sigue dibujando sobre la siguiente.
+    useEffect(() => {
+        ink.resetLayout();
+    }, [sectionIndex, safePageIndex, fontSize, senseLines, deliveryFace]);
+
     const nextPeek =
         pages.length && safePageIndex < pages.length - 1
             ? blocks[pages[safePageIndex + 1][0]]?.text ?? null
@@ -425,6 +436,7 @@ export default function PreachModeScreen({
                         tokens={tokens}
                         senseLines={senseLines}
                         face={deliveryFace}
+                        hangingIndent={hangingIndent}
                         onWordLayout={ink.rememberWord}
                         onTapAt={handleTap}
                         onPressApparatus={setApparatus}
@@ -552,6 +564,8 @@ export default function PreachModeScreen({
                 setInstrumentPanel={setInstrumentPanel}
                 deliveryFace={deliveryFace}
                 setDeliveryFace={setDeliveryFace}
+                hangingIndent={hangingIndent}
+                setHangingIndent={setHangingIndent}
                 targetMinutes={targetMinutes}
                 onPickDuration={(min) => {
                     setTargetMinutes(min);
@@ -633,7 +647,86 @@ export default function PreachModeScreen({
                 penActive={ink.penActive}
                 anchorAt={ink.anchorAt}
                 onFinishStroke={ink.addStroke}
+                color={ink.penColor}
+                eraser={ink.eraser}
+                onErase={ink.eraseNote}
+                top={chromeTop}
+                bottom={panelHeight + insets.bottom}
             />
+
+            {/* Barra del lápiz: colores, goma y salida. Va DESPUÉS de la capa
+                para quedar por encima — si quedara debajo, la propia capa
+                taparía el botón de salir y no habría cómo apagar el lápiz. */}
+            {ink.penActive ? (
+                <View
+                    className="absolute flex-row items-center rounded-full px-3 py-2"
+                    style={{
+                        right: 20,
+                        bottom: panelHeight + insets.bottom + 20,
+                        backgroundColor: tokens.surface,
+                        borderWidth: 1,
+                        borderColor: tokens.border,
+                    }}
+                >
+                    {(['ink', 'blue', 'red'] as const).map((c) => (
+                        <TouchableOpacity
+                            key={c}
+                            onPress={() => {
+                                ink.setPenColor(c);
+                                ink.setEraser(false);
+                            }}
+                            accessibilityRole="button"
+                            accessibilityLabel={t(`preach:ink_${c}`)}
+                            className="mr-2"
+                            style={{
+                                width: 30,
+                                height: 30,
+                                borderRadius: 15,
+                                backgroundColor:
+                                    c === 'red'
+                                        ? tokens.timerOver
+                                        : c === 'blue'
+                                          ? tokens.accent
+                                          : tokens.textPrimary,
+                                borderWidth: c === ink.penColor && !ink.eraser ? 3 : 0,
+                                borderColor: tokens.background,
+                            }}
+                        />
+                    ))}
+                    <TouchableOpacity
+                        onPress={() => ink.setEraser(!ink.eraser)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('preach:eraser')}
+                        className="items-center justify-center mr-1"
+                        style={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: 10,
+                            backgroundColor: ink.eraser ? tokens.accent : 'transparent',
+                        }}
+                    >
+                        <MaterialIcons
+                            name="auto-fix-normal"
+                            size={20}
+                            color={ink.eraser ? tokens.background : tokens.textPrimary}
+                        />
+                    </TouchableOpacity>
+                    <View style={{ width: 1, height: 24, backgroundColor: tokens.border }} className="mx-1" />
+                    <TouchableOpacity
+                        onPress={() => {
+                            ink.setPenActive(false);
+                            ink.setEraser(false);
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('preach:pen_done')}
+                        className="px-3 py-1"
+                    >
+                        <Text style={{ color: tokens.accent }} className="font-lexend-semibold text-sm">
+                            {t('preach:pen_done')}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            ) : null}
 
             {/* Salida: informe del ensayo y registro de la predicación (F3).
                 No es un modal apurado — al bajar del púlpito hay algo que

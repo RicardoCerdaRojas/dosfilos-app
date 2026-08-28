@@ -44,5 +44,13 @@
     "face_lexend": "Lexend",
     "face_literata": "Literata",
     "face_atkinson": "Atkinson",
-    "pen": "Pen"
+    "pen": "Pen",
+    "ink_ink": "Ink",
+    "ink_blue": "Blue",
+    "ink_red": "Red",
+    "eraser": "Eraser",
+    "pen_done": "Done",
+    "hanging_indent": "Hanging indent",
+    "indent_on": "Indent",
+    "indent_off": "No indent"
 }

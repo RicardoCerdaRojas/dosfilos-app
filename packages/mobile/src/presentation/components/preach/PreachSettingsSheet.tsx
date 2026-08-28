@@ -30,6 +30,8 @@ interface Props {
     setInstrumentPanel: (on: boolean) => void;
     deliveryFace: DeliveryFace;
     setDeliveryFace: (face: DeliveryFace) => void;
+    hangingIndent: boolean;
+    setHangingIndent: (on: boolean) => void;
     targetMinutes: number;
     onPickDuration: (minutes: number) => void;
     /** Reparto vigente, ya resuelto (automático + lo fijado a mano). */
@@ -59,6 +61,8 @@ export function PreachSettingsSheet({
     setInstrumentPanel,
     deliveryFace,
     setDeliveryFace,
+    hangingIndent,
+    setHangingIndent,
     targetMinutes,
     onPickDuration,
     budgets,
@@ -219,6 +223,36 @@ export function PreachSettingsSheet({
                                 </TouchableOpacity>
                             );
                         })}
+                    </View>
+
+                    <Text
+                        style={{ color: tokens.textSecondary }}
+                        className="font-lexend-semibold text-xs uppercase tracking-widest mb-2"
+                    >
+                        {t('preach:hanging_indent')}
+                    </Text>
+                    <View className="flex-row flex-wrap mb-5">
+                        {[true, false].map((on) => (
+                            <TouchableOpacity
+                                key={String(on)}
+                                onPress={() => setHangingIndent(on)}
+                                accessibilityRole="button"
+                                accessibilityLabel={t(on ? 'preach:indent_on' : 'preach:indent_off')}
+                                className="px-4 py-2 rounded-full mr-2 mb-2"
+                                style={{
+                                    backgroundColor: on === hangingIndent ? tokens.accent : 'transparent',
+                                    borderWidth: 1,
+                                    borderColor: on === hangingIndent ? tokens.accent : tokens.border,
+                                }}
+                            >
+                                <Text
+                                    style={{ color: on === hangingIndent ? tokens.background : tokens.textPrimary }}
+                                    className="font-lexend text-sm"
+                                >
+                                    {t(on ? 'preach:indent_on' : 'preach:indent_off')}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
                     </View>
 
                     <Text

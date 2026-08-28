@@ -44,5 +44,13 @@
     "face_lexend": "Lexend",
     "face_literata": "Literata",
     "face_atkinson": "Atkinson",
-    "pen": "Lápiz"
+    "pen": "Lápiz",
+    "ink_ink": "Tinta",
+    "ink_blue": "Azul",
+    "ink_red": "Rojo",
+    "eraser": "Goma",
+    "pen_done": "Listo",
+    "hanging_indent": "Sangría francesa",
+    "indent_on": "Sangrar",
+    "indent_off": "Sin sangría"
 }
