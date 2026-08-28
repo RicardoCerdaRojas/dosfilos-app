@@ -331,7 +331,17 @@ export default function PreachModeScreen({
                         senseLines={senseLines}
                         onTapAt={handleTap}
                         onPressApparatus={setApparatus}
-                        onLongPressUnit={highlighting.openPalette}
+                        // El cuerpo renderiza SÓLO los bloques de esta página,
+                        // así que emite índices locales; el hook los resuelve
+                        // contra los de toda la sección. Sin esta traducción,
+                        // resaltar en cualquier página que no sea la primera
+                        // marca el bloque equivocado.
+                        onLongPressUnit={(localBlock, unit) =>
+                            highlighting.openPalette(
+                                pages.length ? pages[safePageIndex][localBlock] : localBlock,
+                                unit,
+                            )
+                        }
                         onPressCitation={openCitation}
                     />
 
