@@ -14,6 +14,8 @@ import type { MovementBudget } from '@dosfilos/domain';
 
 const MODES: ReadingMode[] = ['claro', 'sepia', 'oscuro', 'atril', 'eink'];
 const DURATIONS = [20, 25, 30, 35, 40, 45];
+/** Guías de mirada, EXCLUYENTES entre sí. Ver el comentario del render. */
+const GAZE_GUIDES = ['none', 'sense', 'line'] as const;
 
 interface Props {
     visible: boolean;
@@ -25,6 +27,8 @@ interface Props {
     setFontSize: (size: number) => void;
     senseLines: boolean;
     setSenseLines: (on: boolean) => void;
+    gazeLine: boolean;
+    setGazeLine: (on: boolean) => void;
     targetMinutes: number;
     onPickDuration: (minutes: number) => void;
     /** Reparto vigente, ya resuelto (automático + lo fijado a mano). */
@@ -48,6 +52,8 @@ export function PreachSettingsSheet({
     setFontSize,
     senseLines,
     setSenseLines,
+    gazeLine,
+    setGazeLine,
     targetMinutes,
     onPickDuration,
     budgets,
@@ -121,30 +127,49 @@ export function PreachSettingsSheet({
                         style={{ color: tokens.textSecondary }}
                         className="font-lexend-semibold text-xs uppercase tracking-widest mb-2"
                     >
-                        {t('preach:line_breaks')}
+                        {t('preach:gaze_guide')}
                     </Text>
+                    {/* Tres estados EXCLUYENTES: la colometría y la línea al
+                        66 % resuelven lo mismo —dónde levantar la vista— y se
+                        estorban. No son dos niveles de una escala. */}
                     <View className="flex-row flex-wrap mb-5">
-                        {[false, true].map((on) => (
-                            <TouchableOpacity
-                                key={String(on)}
-                                onPress={() => setSenseLines(on)}
-                                accessibilityRole="button"
-                                accessibilityLabel={t(on ? 'preach:sense_lines' : 'preach:running_text')}
-                                className="px-4 py-2 rounded-full mr-2 mb-2"
-                                style={{
-                                    backgroundColor: on === senseLines ? tokens.accent : 'transparent',
-                                    borderWidth: 1,
-                                    borderColor: on === senseLines ? tokens.accent : tokens.border,
-                                }}
-                            >
-                                <Text
-                                    style={{ color: on === senseLines ? tokens.background : tokens.textPrimary }}
-                                    className="font-lexend text-sm"
+                        {GAZE_GUIDES.map((guide) => {
+                            const active =
+                                guide === 'sense'
+                                    ? senseLines
+                                    : guide === 'line'
+                                      ? gazeLine
+                                      : !senseLines && !gazeLine;
+                            const label = t(`preach:guide_${guide}`);
+                            return (
+                                <TouchableOpacity
+                                    key={guide}
+                                    onPress={() => {
+                                        if (guide === 'sense') setSenseLines(true);
+                                        else if (guide === 'line') setGazeLine(true);
+                                        else {
+                                            setSenseLines(false);
+                                            setGazeLine(false);
+                                        }
+                                    }}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={label}
+                                    className="px-4 py-2 rounded-full mr-2 mb-2"
+                                    style={{
+                                        backgroundColor: active ? tokens.accent : 'transparent',
+                                        borderWidth: 1,
+                                        borderColor: active ? tokens.accent : tokens.border,
+                                    }}
                                 >
-                                    {t(on ? 'preach:sense_lines' : 'preach:running_text')}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
+                                    <Text
+                                        style={{ color: active ? tokens.background : tokens.textPrimary }}
+                                        className="font-lexend text-sm"
+                                    >
+                                        {label}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
                     </View>
 
                     <Text

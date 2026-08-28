@@ -101,6 +101,17 @@ export default {
 					'Inter',
 					'sans-serif'
 				],
+				// D8 — La voz de ENTREGA es la misma en las dos superficies.
+				// El sermón que se predica desde la tablet y el que se predica
+				// desde el navegador son el mismo sermón, la misma semana: no
+				// pueden estar en dos tipografías. Se unifica por ARTEFACTO
+				// (entrega vs estudio), no por plataforma — el estudio conserva
+				// su serif, que es correcta para leer sentado y en silencio.
+				delivery: [
+					'Lexend',
+					'Inter',
+					'sans-serif'
+				],
 				serif: [
 					'Merriweather',
 					'serif'

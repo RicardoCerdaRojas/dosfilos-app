@@ -26,7 +26,7 @@ import { useSermon } from '@/presentation/hooks/useSermons';
 import { usePreachHighlights } from '@/presentation/hooks/usePreachHighlights';
 import { extractSectionsWithBody } from '@/core/utils/sermonSections';
 import { READING_MODES } from '@/core/theme/readingModes';
-import { TYPE_SCALE } from '@/core/theme/typography';
+import { GAZE_LINE_RATIO, TYPE_SCALE } from '@/core/theme/typography';
 import { useReaderSettingsStore } from '@/presentation/state/readerSettings.store';
 import { PreachSectionBody } from '@/presentation/components/preach/PreachSectionBody';
 import { useDeliveryMeasure } from '@/presentation/hooks/useDeliveryMeasure';
@@ -60,6 +60,8 @@ export default function PreachModeScreen({
     const setFontSize = useReaderSettingsStore((s) => s.setDeliveryFontSize);
     const senseLines = useReaderSettingsStore((s) => s.senseLines);
     const setSenseLines = useReaderSettingsStore((s) => s.setSenseLines);
+    const gazeLine = useReaderSettingsStore((s) => s.gazeLine);
+    const setGazeLine = useReaderSettingsStore((s) => s.setGazeLine);
     const budgetOverrides = useReaderSettingsStore((s) => s.budgetOverrides);
     const setBudgetOverride = useReaderSettingsStore((s) => s.setBudgetOverride);
     const tokens = READING_MODES[readingMode];
@@ -276,6 +278,23 @@ export default function PreachModeScreen({
                         }}
                     >
                         {pageProbe}
+                        {/* Guía de mirada al 66 % de la medida: se lee de
+                            corrido hasta acá y el resto se dice mirando a la
+                            gente. Sólo tiene sentido con la medida clavada. */}
+                        {gazeLine && measure ? (
+                            <View
+                                pointerEvents="none"
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    bottom: 0,
+                                    left: measure * GAZE_LINE_RATIO,
+                                    width: 1,
+                                    backgroundColor: tokens.accent,
+                                    opacity: 0.35,
+                                }}
+                            />
+                        ) : null}
                         {sectionIndex === 0 && safePageIndex === 0 && (
                             <Text
                                 style={{
@@ -406,6 +425,8 @@ export default function PreachModeScreen({
                 setFontSize={setFontSize}
                 senseLines={senseLines}
                 setSenseLines={setSenseLines}
+                gazeLine={gazeLine}
+                setGazeLine={setGazeLine}
                 targetMinutes={targetMinutes}
                 onPickDuration={(min) => {
                     setTargetMinutes(min);

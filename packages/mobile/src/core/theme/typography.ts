@@ -46,6 +46,23 @@ export const TYPE_SCALE = {
     timer: 1.4,
 } as const;
 
+/**
+ * Guía de mirada al 66 % de la MEDIDA (técnica clásica de atril).
+ *
+ * El predicador lee de corrido hasta la línea, levanta la vista y termina la
+ * frase de memoria mirando a la gente. En papel funciona porque la medida es
+ * fija; acá recién es fiel a la técnica ahora que la medida está clavada en
+ * caracteres (D1) — con un ancho variable la vertical cortaría unos renglones
+ * a mitad de palabra y a otros les pasaría de largo.
+ *
+ * EXCLUYENTE CON LA COLOMETRÍA: son dos respuestas al mismo problema —dónde
+ * levantar la vista— y se estorban. La línea corta por geometría; la
+ * colometría por gramática, y como deja renglones cortos la vertical queda
+ * pasada de largo en casi todos. Es preferencia del predicador, no dos
+ * niveles de una misma escala.
+ */
+export const GAZE_LINE_RATIO = 0.66;
+
 /** Interlínea del cuerpo de entrega. */
 export const DELIVERY_LINE_HEIGHT = 1.55;
 

@@ -538,7 +538,7 @@ export function PreachModePage() {
                   {/* Sermon Title - Discrete */}
                   <div className="text-center mb-12">
                     <h1 
-                      className="font-serif font-bold text-muted-foreground/70"
+                      className="font-delivery font-bold text-muted-foreground/70"
                       style={{ fontSize: `${Math.min(fontSize * 1.5, 48)}px` }}
                     >
                       {sermon.title}
@@ -551,7 +551,7 @@ export function PreachModePage() {
                   </div>
 
                   <div 
-                    className="prose prose-lg max-w-none dark:prose-invert font-serif transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
+                    className="prose prose-lg max-w-none dark:prose-invert font-delivery transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
                     style={{ fontSize: `${fontSize}px`, maxWidth: '48ch', marginInline: 'auto', lineHeight: 1.55 }}
                   >
                     <style>{`
@@ -613,7 +613,7 @@ export function PreachModePage() {
               {/* Sermon Title - Discrete */}
               <div className="text-center mb-12">
                 <h1 
-                  className="font-serif font-bold text-muted-foreground/70"
+                  className="font-delivery font-bold text-muted-foreground/70"
                   style={{ fontSize: `${Math.min(fontSize * 1.5, 48)}px` }}
                 >
                   {sermon.title}
@@ -626,7 +626,7 @@ export function PreachModePage() {
               </div>
 
               <div 
-                className="prose prose-lg max-w-none dark:prose-invert font-serif transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
+                className="prose prose-lg max-w-none dark:prose-invert font-delivery transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
                 style={{ fontSize: `${fontSize}px`, maxWidth: '48ch', marginInline: 'auto', lineHeight: 1.55 }}
               >
                 <style>{`

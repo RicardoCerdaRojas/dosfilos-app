@@ -25,5 +25,9 @@
     "movement_budget_hint": "Split automatically by text length. What you adjust stays fixed and the rest rebalances.",
     "budget_less": "Less time",
     "budget_more": "More time",
-    "budget_auto": "Back to automatic"
+    "budget_auto": "Back to automatic",
+    "gaze_guide": "Gaze guide",
+    "guide_none": "None",
+    "guide_sense": "One sentence per line",
+    "guide_line": "66% line"
 }

@@ -25,5 +25,9 @@
     "movement_budget_hint": "Se reparte solo según el texto. Lo que ajustes queda fijo y el resto se reacomoda.",
     "budget_less": "Menos tiempo",
     "budget_more": "Más tiempo",
-    "budget_auto": "Volver al automático"
+    "budget_auto": "Volver al automático",
+    "gaze_guide": "Guía de mirada",
+    "guide_none": "Ninguna",
+    "guide_sense": "Una frase por renglón",
+    "guide_line": "Línea al 66 %"
 }

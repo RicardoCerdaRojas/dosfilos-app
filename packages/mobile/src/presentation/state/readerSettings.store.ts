@@ -27,6 +27,12 @@ interface ReaderSettingsState {
     senseLines: boolean;
     setSenseLines: (on: boolean) => void;
     /**
+     * Línea vertical al 66 % de la medida. EXCLUYENTE con `senseLines`:
+     * encender una apaga la otra, porque resuelven lo mismo y se estorban.
+     */
+    gazeLine: boolean;
+    setGazeLine: (on: boolean) => void;
+    /**
      * Presupuesto de tiempo fijado a mano, en segundos, por
      * `${sermonId}|${sectionSlug}`. Lo que el pastor no toca se reparte solo.
      * Persiste porque se decide preparando, no en el atril.
@@ -45,7 +51,13 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
             readingMode: 'claro',
             setReadingMode: (mode: ReadingMode) => set({ readingMode: mode }),
             senseLines: false,
-            setSenseLines: (on: boolean) => set({ senseLines: on }),
+            // Encender una apaga la otra: resuelven el mismo problema y se
+            // estorban entre sí. No son dos niveles de una escala.
+            setSenseLines: (on: boolean) =>
+                set((state) => ({ senseLines: on, gazeLine: on ? false : state.gazeLine })),
+            gazeLine: false,
+            setGazeLine: (on: boolean) =>
+                set((state) => ({ gazeLine: on, senseLines: on ? false : state.senseLines })),
             budgetOverrides: {},
             setBudgetOverride: (key: string, seconds: number | null) =>
                 set((state) => {
