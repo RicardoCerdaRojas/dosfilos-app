@@ -116,6 +116,10 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    // Vista previa de desarrollo: pasa sin sesión a propósito — existe justo
+    // para mirar pantallas cuando el login no está disponible.
+    const inDevPreview = __DEV__ && String(segments[0]) === 'dev';
+    if (inDevPreview) return;
     
     if (!user && !inAuthGroup) {
       router.replace('/(auth)/sign-in');
@@ -147,6 +151,8 @@ function RootLayoutNav() {
             name="preach/[id]"
             options={{ headerShown: false, animation: 'fade', gestureEnabled: false }}
           />
+          {/* Grupo solo de desarrollo: sin header, como el púlpito real. */}
+          <Stack.Screen name="dev" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
         <ToastNotification />

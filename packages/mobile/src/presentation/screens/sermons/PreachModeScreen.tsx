@@ -25,6 +25,7 @@ import { READING_MODES } from '@/core/theme/readingModes';
 import { TYPE_SCALE } from '@/core/theme/typography';
 import { useReaderSettingsStore } from '@/presentation/state/readerSettings.store';
 import { PreachSectionBody } from '@/presentation/components/preach/PreachSectionBody';
+import { useDeliveryMeasure } from '@/presentation/hooks/useDeliveryMeasure';
 import { HighlightPalette } from '@/presentation/components/preach/HighlightPalette';
 import { PreachSettingsSheet } from '@/presentation/components/preach/PreachSettingsSheet';
 
@@ -35,8 +36,19 @@ const formatTime = (totalSeconds: number): string => {
     return `${totalSeconds < 0 ? '-' : ''}${m}:${String(s).padStart(2, '0')}`;
 };
 
-export default function PreachModeScreen() {
-    const { id } = useLocalSearchParams<{ id: string }>();
+interface PreachModeScreenProps {
+    /** Id inyectado: lo usa la vista previa de dev, que no llega por ruta. */
+    sermonId?: string;
+    /** Movimiento inicial: la vista previa de dev abre en el que se revisa. */
+    initialSectionIndex?: number;
+}
+
+export default function PreachModeScreen({
+    sermonId,
+    initialSectionIndex = 0,
+}: PreachModeScreenProps = {}) {
+    const params = useLocalSearchParams<{ id: string }>();
+    const id = sermonId ?? params.id;
     const router = useRouter();
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
@@ -55,7 +67,7 @@ export default function PreachModeScreen() {
     // incondicional por diseño; en el resto vale mientras dure la pantalla.
     useKeepAwake();
 
-    const [sectionIndex, setSectionIndex] = useState(0);
+    const [sectionIndex, setSectionIndex] = useState(initialSectionIndex);
     const [chromeVisible, setChromeVisible] = useState(true);
     const [blackout, setBlackout] = useState(false);
     const [showSections, setShowSections] = useState(false);
@@ -84,6 +96,11 @@ export default function PreachModeScreen() {
     const attributions = aggregateRequiredAttributions(manifest);
 
     const blocks = section ? buildReadingBlocks(section.body) : [];
+
+    // La caja de medida abarca TODO lo que se lee — título, título de
+    // movimiento, cuerpo y atribuciones. Cuando sólo la usaba el cuerpo, los
+    // títulos quedaban pegados al borde y el bloque se veía desalineado.
+    const { measure, probe } = useDeliveryMeasure(fontSize);
 
     // El resaltado por tap largo vive en su propio hook: la pantalla ya
     // carga timer, modos de luz, navegación por secciones y citas.
@@ -191,22 +208,35 @@ export default function PreachModeScreen() {
                         paddingBottom: insets.bottom + 56,
                     }}
                 >
-                    {sectionIndex === 0 && (
-                        <Text
-                            style={{ color: tokens.textPrimary, fontSize: Math.min(fontSize * 1.4, 46) }}
-                            className="font-lexend-bold leading-tight mb-4"
-                        >
-                            {sermon.title}
-                        </Text>
-                    )}
-                    {section?.title ? (
-                        <Text
-                            style={{ color: tokens.textPrimary, fontSize: fontSize * 1.15 }}
-                            className="font-lexend-semibold mb-4"
-                        >
-                            {section.title}
-                        </Text>
-                    ) : null}
+                    {probe}
+                    <View style={{ width: measure, alignSelf: 'center', opacity: measure ? 1 : 0 }}>
+                        {sectionIndex === 0 && (
+                            <Text
+                                style={{
+                                    color: tokens.textPrimary,
+                                    fontSize: Math.min(fontSize * 1.4, 46),
+                                    marginBottom: fontSize * 0.8,
+                                }}
+                                className="font-lexend-bold leading-tight"
+                            >
+                                {sermon.title}
+                            </Text>
+                        )}
+                        {section?.title ? (
+                            // Ubica, no compite: 0.6× en versalitas y color
+                            // secundario. A 1.15× le disputaba la pantalla al
+                            // título del sermón.
+                            <Text
+                                style={{
+                                    color: tokens.textSecondary,
+                                    fontSize: fontSize * TYPE_SCALE.movementTitle,
+                                    marginBottom: fontSize * 0.5,
+                                }}
+                                className="font-lexend-semibold uppercase tracking-widest"
+                            >
+                                {section.title}
+                            </Text>
+                        ) : null}
 
                     <PreachSectionBody
                         blocks={blocks}
@@ -243,6 +273,7 @@ export default function PreachModeScreen() {
                             ))}
                         </View>
                     )}
+                    </View>
                 </ScrollView>
             </Pressable>
 

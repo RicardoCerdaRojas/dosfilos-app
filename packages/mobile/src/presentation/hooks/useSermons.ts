@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { SermonListGroup, SermonSummary } from '@/domain/models/sermon.model';
 import { SermonRepositoryImpl } from '@/data/repositories/sermon.repository.impl';
+import { PREVIEW_SERMON, PREVIEW_SERMON_ID } from '@/core/dev/previewSermon';
 
 const repository = new SermonRepositoryImpl();
 
@@ -59,9 +60,12 @@ export const usePublishedSermons = () => {
 };
 
 export const useSermon = (id: string) => {
+    // Vista previa del púlpito sin backend: en esta máquina no hay firma, así
+    // que no hay login y sin login no hay Firestore. Ver previewSermon.ts.
+    const isPreview = __DEV__ && id === PREVIEW_SERMON_ID;
     return useQuery({
         queryKey: ['sermon', id],
-        queryFn: () => repository.getSermonById(id),
+        queryFn: () => (isPreview ? PREVIEW_SERMON : repository.getSermonById(id)),
         enabled: !!id,
     });
 };

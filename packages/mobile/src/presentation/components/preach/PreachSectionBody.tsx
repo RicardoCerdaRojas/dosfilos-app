@@ -1,19 +1,11 @@
-import React, { useState } from 'react';
-import { Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import type { HighlightColor, ReadingBlock, ReadingUnit } from '@dosfilos/domain';
 
 import { tokenizeCitations } from '@/core/utils/sermonSections';
 import { ReadingModeTokens } from '@/core/theme/readingModes';
-import {
-    DELIVERY_LINE_HEIGHT,
-    DELIVERY_MEASURE_CH,
-    MEASURE_REFERENCE_SIZE,
-    MEASURE_SAMPLE,
-    PARAGRAPH_GAP_EM,
-    TYPE_SCALE,
-    measureToWidth,
-} from '@/core/theme/typography';
+import { DELIVERY_LINE_HEIGHT, PARAGRAPH_GAP_EM, TYPE_SCALE } from '@/core/theme/typography';
 
 /** Resaltado ya reanclado al cuerpo crudo de ESTA sección. */
 export interface ResolvedHighlight {
@@ -64,17 +56,6 @@ export function PreachSectionBody({
     onPressCitation,
     onPressApparatus,
 }: Props) {
-    const { width: screenWidth } = useWindowDimensions();
-
-    // Ancho medio de carácter de la fuente REAL, a tamaño 1. Se mide en
-    // pantalla en vez de estimarse: una constante inventada reintroduce por la
-    // puerta de atrás el mismo error que fijar la medida en píxeles (D1).
-    const [charRatio, setCharRatio] = useState<number | null>(null);
-
-    const measure = charRatio
-        ? Math.min(measureToWidth(charRatio, fontSize, DELIVERY_MEASURE_CH), screenWidth - 48)
-        : undefined;
-
     const renderUnit = (
         unit: ReadingUnit,
         blockIndex: number,
@@ -134,23 +115,7 @@ export function PreachSectionBody({
     };
 
     return (
-        <View style={{ width: measure, alignSelf: 'center', opacity: measure ? 1 : 0 }}>
-            {/* Sonda de medición: fuera del flujo, invisible, una sola línea. */}
-            <Text
-                className="font-lexend"
-                numberOfLines={1}
-                style={{ position: 'absolute', opacity: 0, fontSize: MEASURE_REFERENCE_SIZE }}
-                onLayout={(e) => {
-                    if (charRatio !== null) return;
-                    const width = e.nativeEvent.layout.width;
-                    if (width > 0) {
-                        setCharRatio(width / MEASURE_SAMPLE.length / MEASURE_REFERENCE_SIZE);
-                    }
-                }}
-            >
-                {MEASURE_SAMPLE}
-            </Text>
-
+        <>
             {blocks.map((block, blockIndex) =>
                 block.kind === 'quote' ? (
                     // P5 — el aparato de estudio se colapsa a una marca al
@@ -257,6 +222,6 @@ export function PreachSectionBody({
                     </Text>
                 ),
             )}
-        </View>
+        </>
     );
 }
