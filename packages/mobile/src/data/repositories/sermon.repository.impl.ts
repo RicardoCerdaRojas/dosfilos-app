@@ -1,6 +1,6 @@
 import { getApp } from '@react-native-firebase/app';
 import { getFunctions, httpsCallable } from '@react-native-firebase/functions';
-import { doc, getDoc } from '@react-native-firebase/firestore';
+import { doc, getDoc, serverTimestamp, updateDoc } from '@react-native-firebase/firestore';
 
 import { Sermon, SermonSummary } from '@/domain/models/sermon.model';
 import { SermonRepository } from '@/domain/repositories/sermon.repository';
@@ -64,6 +64,23 @@ export class SermonRepositoryImpl implements SermonRepository {
             }),
         );
         return titles;
+    }
+
+    /**
+     * Escribe título y cuerpo. La lista de campos es EXPLÍCITA a propósito:
+     * un spread del sermón entero arrastraría `wizardProgress` y ahí vive la
+     * política pastoral que la tablet no debe tocar (M-07).
+     *
+     * No se espera el ack: sin red la promesa no resuelve hasta que el
+     * servidor confirma, y el pastor edita el miércoles en el sillón, no
+     * necesariamente con señal. La caché local ya aplicó el cambio.
+     */
+    async updateSermonDraft(id: string, patch: { title: string; content: string }): Promise<void> {
+        updateDoc(doc(getFirebaseDb(), 'sermons', id), {
+            title: patch.title,
+            content: patch.content,
+            updatedAt: serverTimestamp(),
+        }).catch((error) => console.warn(`[sermons] update ${id} failed:`, error));
     }
 
     async getSermonById(id: string): Promise<Sermon | null> {

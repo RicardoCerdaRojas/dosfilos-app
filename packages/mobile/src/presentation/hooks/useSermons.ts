@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { SermonListGroup, SermonSummary } from '@/domain/models/sermon.model';
+import { Sermon, SermonListGroup, SermonSummary } from '@/domain/models/sermon.model';
 import { SermonRepositoryImpl } from '@/data/repositories/sermon.repository.impl';
 import { PREVIEW_SERMON, PREVIEW_SERMON_ID } from '@/core/dev/previewSermon';
 
@@ -67,5 +67,23 @@ export const useSermon = (id: string) => {
         queryKey: ['sermon', id],
         queryFn: () => (isPreview ? PREVIEW_SERMON : repository.getSermonById(id)),
         enabled: !!id,
+    });
+};
+
+/**
+ * Guarda los cambios del editor. Escribe la caché primero: el pastor tiene
+ * que ver su texto guardado aunque la iglesia no tenga WiFi.
+ */
+export const useUpdateSermon = (id: string) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (patch: { title: string; content: string }) =>
+            repository.updateSermonDraft(id, patch),
+        onMutate: (patch) => {
+            queryClient.setQueryData(['sermon', id], (current: Sermon | null | undefined) =>
+                current ? { ...current, ...patch, updatedAt: new Date() } : current,
+            );
+            queryClient.invalidateQueries({ queryKey: ['sermons', 'published-groups'] });
+        },
     });
 };

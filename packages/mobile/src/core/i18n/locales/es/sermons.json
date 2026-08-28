@@ -18,5 +18,12 @@
     "error_loading_list": "No se pudo cargar la lista de sermones. Revisa tu conexión.",
     "empty_published": "Aún no tienes sermones publicados. Publica desde la web y aparecerán aquí.",
     "no_content": "Este sermón no tiene contenido todavía.",
-    "enter_preach_mode": "Entrar al púlpito"
+    "enter_preach_mode": "Entrar al púlpito",
+    "edit_title": "Editar sermón",
+    "save": "Guardar",
+    "field_title": "Título",
+    "field_content": "Cuerpo del sermón",
+    "content_hint": "Markdown: `##` abre un movimiento, `###` un subtítulo, `-` una viñeta.",
+    "title_length": "El título necesita entre 5 y 200 caracteres.",
+    "edit": "Editar"
 }

@@ -7,4 +7,10 @@ export interface SermonRepository {
     getSeriesTitles(seriesIds: string[]): Promise<Record<string, string>>;
     /** Detalle completo (lectura Firestore directa — cae en caché offline del SDK nativo). */
     getSermonById(id: string): Promise<Sermon | null>;
+    /**
+     * Guarda SÓLO título y cuerpo. Jamás `wizardProgress`: la espina pastoral
+     * del wizard vive en la web y tocarla desde acá duplicaría política que ya
+     * costó des-duplicar (M-07).
+     */
+    updateSermonDraft(id: string, patch: { title: string; content: string }): Promise<void>;
 }

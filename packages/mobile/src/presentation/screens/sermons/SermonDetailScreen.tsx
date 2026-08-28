@@ -127,9 +127,23 @@ export default function SermonDetailScreen() {
             </ScrollView>
 
             <View
-                className="absolute left-0 right-0 items-center"
+                className="absolute left-0 right-0 flex-row items-center justify-center"
                 style={{ bottom: insets.bottom + 16 }}
             >
+                {/* Editar vive acá, en la vista de estudio — no en el púlpito.
+                    Predicando no se corrige: se predica. */}
+                <TouchableOpacity
+                    onPress={() => router.push(`/sermon/edit/${sermon.id}`)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('sermons:edit')}
+                    className="px-6 py-3.5 rounded-full flex-row items-center mr-3 border border-slate-300 dark:border-slate-600 active:opacity-80"
+                >
+                    <MaterialIcons name="edit" size={20} className="text-slate-600" />
+                    <Text className="font-lexend-semibold ml-2 text-slate-700 dark:text-slate-200">
+                        {t('sermons:edit')}
+                    </Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity
                     onPress={() => router.push(`/preach/${sermon.id}`)}
                     disabled={sections.length === 0}

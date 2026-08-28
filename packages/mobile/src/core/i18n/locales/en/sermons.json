@@ -18,5 +18,12 @@
     "error_loading_list": "Couldn't load your sermons. Check your connection.",
     "empty_published": "No published sermons yet. Publish from the web and they will show up here.",
     "no_content": "This sermon doesn't have content yet.",
-    "enter_preach_mode": "Enter pulpit"
+    "enter_preach_mode": "Enter pulpit",
+    "edit_title": "Edit sermon",
+    "save": "Save",
+    "field_title": "Title",
+    "field_content": "Sermon body",
+    "content_hint": "Markdown: `##` opens a movement, `###` a subheading, `-` a bullet.",
+    "title_length": "The title needs between 5 and 200 characters.",
+    "edit": "Edit"
 }
