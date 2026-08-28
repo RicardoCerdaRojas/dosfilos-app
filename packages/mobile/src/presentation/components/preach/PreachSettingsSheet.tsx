@@ -4,7 +4,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { READING_MODE_LABELS, ReadingMode, ReadingModeTokens } from '@/core/theme/readingModes';
+import {
+    READING_MODE_LABEL_KEYS,
+    ReadingMode,
+    ReadingModeTokens,
+} from '@/core/theme/readingModes';
 import { DELIVERY_SIZE } from '@/core/theme/typography';
 
 const MODES: ReadingMode[] = ['claro', 'sepia', 'oscuro', 'atril', 'eink'];
@@ -74,7 +78,7 @@ export function PreachSettingsSheet({
                                     style={{ color: m === readingMode ? tokens.background : tokens.textPrimary }}
                                     className="font-lexend text-sm"
                                 >
-                                    {READING_MODE_LABELS[m]}
+                                    {t(READING_MODE_LABEL_KEYS[m])}
                                 </Text>
                             </TouchableOpacity>
                         ))}

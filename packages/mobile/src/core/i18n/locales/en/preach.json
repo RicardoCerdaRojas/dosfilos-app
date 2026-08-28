@@ -15,5 +15,10 @@
     "remove_highlight": "Remove highlight",
     "line_breaks": "Line breaks",
     "running_text": "Running text",
-    "sense_lines": "One sentence per line"
+    "sense_lines": "One sentence per line",
+    "mode_claro": "Light",
+    "mode_sepia": "Sepia",
+    "mode_oscuro": "Dark",
+    "mode_atril": "Lectern",
+    "mode_eink": "E-ink"
 }

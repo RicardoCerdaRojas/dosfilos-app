@@ -15,5 +15,10 @@
     "remove_highlight": "Quitar resaltado",
     "line_breaks": "Corte de línea",
     "running_text": "Párrafo corrido",
-    "sense_lines": "Una frase por renglón"
+    "sense_lines": "Una frase por renglón",
+    "mode_claro": "Claro",
+    "mode_sepia": "Sepia",
+    "mode_oscuro": "Oscuro",
+    "mode_atril": "Atril",
+    "mode_eink": "Tinta electrónica"
 }

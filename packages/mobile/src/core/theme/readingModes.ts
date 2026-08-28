@@ -140,10 +140,17 @@ export const READING_MODES: Record<ReadingMode, ReadingModeTokens> = {
     },
 };
 
-export const READING_MODE_LABELS: Record<ReadingMode, string> = {
-    claro: 'Claro',
-    sepia: 'Sepia',
-    oscuro: 'Oscuro',
-    atril: 'Atril',
-    eink: 'Tinta electrónica',
+/**
+ * Clave i18n del nombre de cada modo (`preach:mode_*`).
+ *
+ * Antes eran literales en español acá, así que en un iPad configurado en
+ * inglés la hoja de ajustes salía mezclada: los rótulos traducidos y los
+ * nombres de modo en español. Los tokens son diseño; el texto es catálogo.
+ */
+export const READING_MODE_LABEL_KEYS: Record<ReadingMode, string> = {
+    claro: 'preach:mode_claro',
+    sepia: 'preach:mode_sepia',
+    oscuro: 'preach:mode_oscuro',
+    atril: 'preach:mode_atril',
+    eink: 'preach:mode_eink',
 };
