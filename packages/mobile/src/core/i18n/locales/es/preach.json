@@ -39,5 +39,10 @@
     "log_notes": "Notas — qué aterrizó y qué no",
     "log_hint": "La fecha y la duración salen del cronómetro.",
     "log_save": "Guardar y salir",
-    "exit_without_log": "Salir sin registrar"
+    "exit_without_log": "Salir sin registrar",
+    "typeface": "Tipografía",
+    "face_lexend": "Lexend",
+    "face_literata": "Literata",
+    "face_atkinson": "Atkinson",
+    "pen": "Lápiz"
 }

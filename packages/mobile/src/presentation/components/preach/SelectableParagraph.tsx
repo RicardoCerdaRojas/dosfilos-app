@@ -36,6 +36,14 @@ interface Props {
     onTapAt: (pageX: number) => void;
     onPressCitation: (ordinals: number[]) => void;
     selectionColor: string;
+    /** Clase de NativeWind de la familia elegida (font-lexend, font-literata…). */
+    faceClass: string;
+    /**
+     * Reporta dónde quedó cada palabra en PANTALLA. Es lo que le permite a la
+     * capa de tinta anclarse al texto: sin esta geometría una nota sólo podría
+     * guardarse en coordenadas de pantalla, y se rompería al cambiar el cuerpo.
+     */
+    onWordLayout?: (sourceStart: number, rect: { x: number; y: number; height: number }) => void;
 }
 
 /**
@@ -64,6 +72,8 @@ export function SelectableParagraph({
     onTapAt,
     onPressCitation,
     selectionColor,
+    faceClass,
+    onWordLayout,
 }: Props) {
     const rects = useRef<Map<number, LayoutRectangle>>(new Map());
     const anchor = useRef<PlacedWord | null>(null);
@@ -212,7 +222,17 @@ export function SelectableParagraph({
                 return (
                     <View
                         key={index}
-                        onLayout={(e) => rects.current.set(index, e.nativeEvent.layout)}
+                        onLayout={(e) => {
+                            rects.current.set(index, e.nativeEvent.layout);
+                            if (!onWordLayout) return;
+                            // En coordenadas de pantalla: la tinta vive fuera
+                            // de este contenedor y necesita el mismo sistema.
+                            onWordLayout(word.sourceStart, {
+                                x: origin.current.x + e.nativeEvent.layout.x,
+                                y: origin.current.y + e.nativeEvent.layout.y,
+                                height: e.nativeEvent.layout.height,
+                            });
+                        }}
                         style={{
                             backgroundColor: selected
                                 ? selectionColor
@@ -236,7 +256,7 @@ export function SelectableParagraph({
                                       ? 'underline'
                                       : 'none',
                             }}
-                            className="font-lexend"
+                            className={faceClass}
                         >
                             {word.text}
                         </Text>

@@ -28,6 +28,7 @@ export * from './entities/UsageCounter';
 export * from './entities/Organization';
 export * from './entities/Sermon';
 export * from './entities/SermonAnnotation'; // 🌱 Púlpito M-05 — preacher marks anchored in the raw section body
+export * from './entities/InkNote'; // 🌱 Púlpito F2 — tinta anclada al texto, no a la pantalla
 export * from './services/sentenceSegmentation'; // 🌱 Púlpito M-05 — single sentence ruler (shared with the fidelity pass)
 export * from './services/sermonReading'; // 🌱 Púlpito M-05 — offset-preserving reading model of a section
 export * from './services/movementBudget'; // 🌱 Púlpito F2 — presupuesto de tiempo por movimiento (riel)

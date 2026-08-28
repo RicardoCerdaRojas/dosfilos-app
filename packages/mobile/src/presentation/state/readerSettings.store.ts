@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { READING_MODES, ReadingMode, ReadingModeTokens } from '@/core/theme/readingModes';
 import { DELIVERY_SIZE } from '@/core/theme/typography';
+import type { DeliveryFace } from '@/core/theme/typography';
 
 interface ReaderSettingsState {
     /** Cuerpo del lector de Biblia: lectura sentada. */
@@ -42,6 +43,9 @@ interface ReaderSettingsState {
      * púlpitos donde el atril tapa la parte de abajo y conviene todo el alto
      * para el texto.
      */
+    /** Familia tipográfica del cuerpo de entrega. Preferencia del predicador. */
+    deliveryFace: DeliveryFace;
+    setDeliveryFace: (face: DeliveryFace) => void;
     instrumentPanel: boolean;
     setInstrumentPanel: (on: boolean) => void;
     budgetOverrides: Record<string, number>;
@@ -65,6 +69,8 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
             gazeLine: false,
             setGazeLine: (on: boolean) =>
                 set((state) => ({ gazeLine: on, senseLines: on ? false : state.senseLines })),
+            deliveryFace: 'lexend',
+            setDeliveryFace: (face: DeliveryFace) => set({ deliveryFace: face }),
             instrumentPanel: true,
             setInstrumentPanel: (on: boolean) => set({ instrumentPanel: on }),
             budgetOverrides: {},

@@ -4,8 +4,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import type { HighlightColor, MarkStyle, ReadingBlock, ReadingUnit } from '@dosfilos/domain';
 
 import { ReadingModeTokens } from '@/core/theme/readingModes';
+import type { DeliveryFace } from '@/core/theme/typography';
 import {
     DELIVERY_LINE_HEIGHT,
+    FACE_CLASS,
     HANGING_INDENT_EM,
     PARAGRAPH_GAP_EM,
     TYPE_SCALE,
@@ -37,6 +39,10 @@ interface Props {
     onPressCitation: (ordinals: number[]) => void;
     /** Abre una cita de bloque colapsada (aparato de estudio, P5). */
     onPressApparatus: (text: string) => void;
+    /** Familia de entrega elegida por el predicador. */
+    face: DeliveryFace;
+    /** Posición de cada palabra en pantalla, para anclar la tinta. */
+    onWordLayout?: (sourceStart: number, rect: { x: number; y: number; height: number }) => void;
 }
 
 /** Marca que cubre un punto del cuerpo crudo. La unidad ahora es la palabra. */
@@ -59,6 +65,8 @@ export function PreachSectionBody({
     onTapAt,
     onPressCitation,
     onPressApparatus,
+    face,
+    onWordLayout,
 }: Props) {
     /**
      * Traduce las marcas guardadas al trazo que le toca a cada palabra.
@@ -92,6 +100,8 @@ export function PreachSectionBody({
                 onSelectionEnd={onSelectionEnd}
                 onTapAt={onTapAt}
                 onPressCitation={onPressCitation}
+                faceClass={FACE_CLASS[face].regular}
+                onWordLayout={onWordLayout}
             />
         </View>
     );
@@ -149,7 +159,7 @@ export function PreachSectionBody({
                                 lineHeight: fontSize * DELIVERY_LINE_HEIGHT,
                                 width: fontSize * 1.1,
                             }}
-                            className="font-lexend"
+                            className={FACE_CLASS[face].regular}
                         >
                             {'•'}
                         </Text>
@@ -164,7 +174,7 @@ export function PreachSectionBody({
                             marginTop: fontSize * 0.6,
                             marginBottom: fontSize * 0.4,
                         }}
-                        className="font-lexend-semibold uppercase tracking-wide"
+                        className={`${FACE_CLASS[face].semibold} uppercase tracking-wide`}
                     >
                         {block.text}
                     </Text>

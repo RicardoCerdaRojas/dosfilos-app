@@ -33,6 +33,8 @@ import { PreachSectionBody } from '@/presentation/components/preach/PreachSectio
 import { useDeliveryMeasure } from '@/presentation/hooks/useDeliveryMeasure';
 import { MarkPopover } from '@/presentation/components/preach/MarkPopover';
 import { PreachExitSheet } from '@/presentation/components/preach/PreachExitSheet';
+import { InkLayer } from '@/presentation/components/preach/InkLayer';
+import { useInkNotes } from '@/presentation/hooks/useInkNotes';
 import { PreachSettingsSheet } from '@/presentation/components/preach/PreachSettingsSheet';
 import { PreachInstrumentPanel } from '@/presentation/components/preach/PreachInstrumentPanel';
 import { usePagination } from '@/presentation/hooks/usePagination';
@@ -60,6 +62,8 @@ export default function PreachModeScreen({
     const setReadingMode = useReaderSettingsStore((s) => s.setReadingMode);
     const fontSize = useReaderSettingsStore((s) => s.deliveryFontSize);
     const setFontSize = useReaderSettingsStore((s) => s.setDeliveryFontSize);
+    const deliveryFace = useReaderSettingsStore((s) => s.deliveryFace);
+    const setDeliveryFace = useReaderSettingsStore((s) => s.setDeliveryFace);
     const senseLines = useReaderSettingsStore((s) => s.senseLines);
     const setSenseLines = useReaderSettingsStore((s) => s.setSenseLines);
     const gazeLine = useReaderSettingsStore((s) => s.gazeLine);
@@ -144,6 +148,9 @@ export default function PreachModeScreen({
     // títulos quedaban pegados al borde y el bloque se veía desalineado.
     const { measure, probe } = useDeliveryMeasure(fontSize);
 
+    // Capa de tinta: anclada al texto, no a la pantalla. Ver InkNote en domain.
+    const ink = useInkNotes(id ?? '', section);
+
     // El presupuesto de tiempo por movimiento alimenta el riel (D2). Por
     // defecto se reparte proporcional a las palabras; lo que el pastor fija a
     // mano se respeta y el resto se reacomoda, así que ajustar uno no
@@ -172,6 +179,7 @@ export default function PreachModeScreen({
             fontSize={fontSize}
             tokens={tokens}
             senseLines={senseLines}
+            face={deliveryFace}
             selection={null}
             onSelectionChange={() => undefined}
             onSelectionEnd={() => undefined}
@@ -185,7 +193,9 @@ export default function PreachModeScreen({
         blocks,
         availableHeight: pageHeight,
         renderBlock: renderBlockForMeasure,
-        layoutKey: `${section?.slug ?? ''}|${fontSize}|${senseLines}|${measure ?? 0}`,
+        // La familia entra en la clave: distintas fuentes dan distinta altura
+        // de línea, y paginar con las alturas de otra fuente corta mal.
+        layoutKey: `${section?.slug ?? ''}|${fontSize}|${senseLines}|${deliveryFace}|${measure ?? 0}`,
     });
 
     const safePageIndex = Math.min(pageIndex, Math.max(0, pages.length - 1));
@@ -297,6 +307,18 @@ export default function PreachModeScreen({
                                 color={running ? tokens.accent : tokens.textSecondary}
                             />
                         </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => ink.setPenActive(!ink.penActive)}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('preach:pen')}
+                            className="mr-4"
+                        >
+                            <MaterialIcons
+                                name={ink.penActive ? 'draw' : 'edit'}
+                                size={22}
+                                color={ink.penActive ? tokens.accent : tokens.textSecondary}
+                            />
+                        </TouchableOpacity>
                         <TouchableOpacity onPress={() => setShowSections(true)} className="mr-4">
                             <MaterialIcons name="format-list-numbered" size={22} color={tokens.textSecondary} />
                         </TouchableOpacity>
@@ -402,6 +424,8 @@ export default function PreachModeScreen({
                         fontSize={fontSize}
                         tokens={tokens}
                         senseLines={senseLines}
+                        face={deliveryFace}
+                        onWordLayout={ink.rememberWord}
                         onTapAt={handleTap}
                         onPressApparatus={setApparatus}
                         selection={highlighting.selection}
@@ -526,6 +550,8 @@ export default function PreachModeScreen({
                 setGazeLine={setGazeLine}
                 instrumentPanel={instrumentPanel}
                 setInstrumentPanel={setInstrumentPanel}
+                deliveryFace={deliveryFace}
+                setDeliveryFace={setDeliveryFace}
                 targetMinutes={targetMinutes}
                 onPickDuration={(min) => {
                     setTargetMinutes(min);
@@ -594,6 +620,19 @@ export default function PreachModeScreen({
                 onPick={highlighting.applyMark}
                 onRemove={highlighting.removeMark}
                 onClose={highlighting.close}
+            />
+
+            {/* Tinta encima de todo. Con el lápiz apagado la capa es
+                transparente al tacto: predicar no puede quedar detrás de una
+                capa de dibujo. */}
+            <InkLayer
+                tokens={tokens}
+                notes={ink.notes}
+                anchorRectFor={ink.anchorRectFor}
+                bodySize={fontSize}
+                penActive={ink.penActive}
+                anchorAt={ink.anchorAt}
+                onFinishStroke={ink.addStroke}
             />
 
             {/* Salida: informe del ensayo y registro de la predicación (F3).

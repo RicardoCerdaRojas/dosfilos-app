@@ -9,6 +9,14 @@ import {
   Lexend_600SemiBold,
   Lexend_700Bold,
 } from '@expo-google-fonts/lexend';
+// Tres familias de LECTURA, elegibles desde el púlpito. No son estilos: cada
+// una resuelve un problema distinto del ojo que vuelve del público. Ver
+// DELIVERY_FACES en core/theme/typography.
+import { Literata_400Regular, Literata_600SemiBold } from '@expo-google-fonts/literata';
+import {
+  AtkinsonHyperlegible_400Regular,
+  AtkinsonHyperlegible_700Bold,
+} from '@expo-google-fonts/atkinson-hyperlegible';
 import { useEffect, useMemo } from 'react';
 import { useColorScheme } from 'nativewind';
 import 'react-native-reanimated';
@@ -83,6 +91,10 @@ function RootLayoutNav() {
     'Lexend-Medium': Lexend_500Medium,
     'Lexend-SemiBold': Lexend_600SemiBold,
     'Lexend-Bold': Lexend_700Bold,
+    Literata: Literata_400Regular,
+    'Literata-SemiBold': Literata_600SemiBold,
+    Atkinson: AtkinsonHyperlegible_400Regular,
+    'Atkinson-Bold': AtkinsonHyperlegible_700Bold,
   });
   const segments = useSegments();
   const router = useRouter();

@@ -102,3 +102,29 @@ export const MEASURE_SAMPLE = 'abcdefghijklmnopqrstuvwxyz ';
 export function measureToWidth(charRatio: number, fontSize: number, ch: number): number {
     return charRatio * fontSize * ch;
 }
+
+/**
+ * Las tres familias de ENTREGA, elegibles desde el púlpito.
+ *
+ * No son gustos: cada una resuelve un problema distinto del ojo que lee de
+ * pie y vuelve del público.
+ *
+ *  - **Lexend** — diseñada para reducir el apiñamiento visual; hay evidencia
+ *    de que mejora la fluidez de lectura. Es la que menos cansa en párrafos
+ *    largos y por eso queda por defecto.
+ *  - **Literata** — serif hecha por Google para lectura larga en pantalla
+ *    (Google Books). Las serifas ayudan a mantener el renglón, que es
+ *    exactamente lo que cuesta al volver la mirada.
+ *  - **Atkinson Hyperlegible** — del Braille Institute, diseñada para máxima
+ *    distinción entre letras parecidas. La que mejor aguanta poca luz, poco
+ *    contraste y vista cansada.
+ */
+export const DELIVERY_FACES = ['lexend', 'literata', 'atkinson'] as const;
+export type DeliveryFace = (typeof DELIVERY_FACES)[number];
+
+/** Clases de NativeWind por familia y peso. */
+export const FACE_CLASS: Record<DeliveryFace, { regular: string; semibold: string }> = {
+    lexend: { regular: 'font-lexend', semibold: 'font-lexend-semibold' },
+    literata: { regular: 'font-literata', semibold: 'font-literata-semibold' },
+    atkinson: { regular: 'font-atkinson', semibold: 'font-atkinson-bold' },
+};

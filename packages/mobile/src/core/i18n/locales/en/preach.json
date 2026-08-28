@@ -39,5 +39,10 @@
     "log_notes": "Notes — what landed and what didn't",
     "log_hint": "Date and duration come from the timer.",
     "log_save": "Save and exit",
-    "exit_without_log": "Exit without logging"
+    "exit_without_log": "Exit without logging",
+    "typeface": "Typeface",
+    "face_lexend": "Lexend",
+    "face_literata": "Literata",
+    "face_atkinson": "Atkinson",
+    "pen": "Pen"
 }

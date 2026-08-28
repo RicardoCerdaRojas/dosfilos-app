@@ -1,4 +1,5 @@
 import {
+    arrayUnion,
     collection,
     deleteDoc,
     doc,
@@ -8,6 +9,7 @@ import {
     updateDoc,
 } from '@react-native-firebase/firestore';
 import { HIGHLIGHT_COLORS, MARK_STYLES } from '@dosfilos/domain';
+import type { InkNote, InkStroke } from '@dosfilos/domain';
 import type {
     HighlightColor,
     MarkStyle,
@@ -76,6 +78,70 @@ export class AnnotationRepositoryImpl implements AnnotationRepository {
                 };
             })
             .filter((a): a is SermonAnnotation => a !== null && a.exact.length > 0);
+    }
+
+    /**
+     * Notas de tinta. Viven en la MISMA subcolección que las marcas, con
+     * `type: 'ink'` — son la misma clase de cosa: algo que el pastor puso
+     * sobre su sermón, anclado al texto.
+     */
+    async listInk(sermonId: string): Promise<InkNote[]> {
+        const snap = await getDocs(annotationsRef(sermonId));
+        return snap.docs
+            .map((d): InkNote | null => {
+                const data = d.data() as any;
+                if (data?.type !== 'ink' || !Array.isArray(data.strokes)) return null;
+                return {
+                    id: d.id,
+                    type: 'ink',
+                    sectionSlug: String(data.sectionSlug ?? ''),
+                    offset: Number(data.offset ?? 0),
+                    length: Number(data.length ?? 0),
+                    exact: String(data.exact ?? ''),
+                    prefix: String(data.prefix ?? ''),
+                    suffix: String(data.suffix ?? ''),
+                    strokes: data.strokes as InkStroke[],
+                    createdAt: toDate(data.createdAt),
+                    updatedAt: toDate(data.updatedAt),
+                    updatedBy: data.updatedBy === 'web' ? 'web' : 'mobile',
+                };
+            })
+            .filter((n): n is InkNote => n !== null && n.exact.length > 0);
+    }
+
+    async appendInkStroke(
+        sermonId: string,
+        anchor: SermonAnnotationAnchor,
+        stroke: InkStroke,
+        existingId?: string,
+    ): Promise<string> {
+        // Un trazo por documento sería más simple pero multiplicaría las
+        // lecturas; una nota agrupa los trazos que comparten ancla.
+        if (existingId) {
+            settleOffline(
+                updateDoc(doc(annotationsRef(sermonId), existingId), {
+                    strokes: arrayUnion(stroke),
+                    updatedAt: serverTimestamp(),
+                    updatedBy: 'mobile',
+                }),
+                `ink append ${existingId}`,
+            );
+            return existingId;
+        }
+        const ref = doc(annotationsRef(sermonId));
+        settleOffline(
+            setDoc(ref, {
+                ...anchor,
+                type: 'ink',
+                strokes: [stroke],
+                userId: getFirebaseAuth().currentUser?.uid ?? null,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                updatedBy: 'mobile',
+            }),
+            `ink create ${ref.id}`,
+        );
+        return ref.id;
     }
 
     async createHighlight(

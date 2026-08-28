@@ -9,7 +9,8 @@ import {
     ReadingMode,
     ReadingModeTokens,
 } from '@/core/theme/readingModes';
-import { DELIVERY_SIZE } from '@/core/theme/typography';
+import { DELIVERY_FACES, DELIVERY_SIZE } from '@/core/theme/typography';
+import type { DeliveryFace } from '@/core/theme/typography';
 import type { MovementBudget } from '@dosfilos/domain';
 
 const MODES: ReadingMode[] = ['claro', 'sepia', 'oscuro', 'atril', 'eink'];
@@ -31,6 +32,8 @@ interface Props {
     setGazeLine: (on: boolean) => void;
     instrumentPanel: boolean;
     setInstrumentPanel: (on: boolean) => void;
+    deliveryFace: DeliveryFace;
+    setDeliveryFace: (face: DeliveryFace) => void;
     targetMinutes: number;
     onPickDuration: (minutes: number) => void;
     /** Reparto vigente, ya resuelto (automático + lo fijado a mano). */
@@ -58,6 +61,8 @@ export function PreachSettingsSheet({
     setGazeLine,
     instrumentPanel,
     setInstrumentPanel,
+    deliveryFace,
+    setDeliveryFace,
     targetMinutes,
     onPickDuration,
     budgets,
@@ -96,6 +101,36 @@ export function PreachSettingsSheet({
                                     className="font-lexend text-sm"
                                 >
                                     {t(READING_MODE_LABEL_KEYS[m])}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
+                    <Text
+                        style={{ color: tokens.textSecondary }}
+                        className="font-lexend-semibold text-xs uppercase tracking-widest mb-2"
+                    >
+                        {t('preach:typeface')}
+                    </Text>
+                    <View className="flex-row flex-wrap mb-5">
+                        {DELIVERY_FACES.map((face) => (
+                            <TouchableOpacity
+                                key={face}
+                                onPress={() => setDeliveryFace(face)}
+                                accessibilityRole="button"
+                                accessibilityLabel={t(`preach:face_${face}`)}
+                                className="px-4 py-2 rounded-full mr-2 mb-2"
+                                style={{
+                                    backgroundColor: face === deliveryFace ? tokens.accent : 'transparent',
+                                    borderWidth: 1,
+                                    borderColor: face === deliveryFace ? tokens.accent : tokens.border,
+                                }}
+                            >
+                                <Text
+                                    style={{ color: face === deliveryFace ? tokens.background : tokens.textPrimary }}
+                                    className="font-lexend text-sm"
+                                >
+                                    {t(`preach:face_${face}`)}
                                 </Text>
                             </TouchableOpacity>
                         ))}
