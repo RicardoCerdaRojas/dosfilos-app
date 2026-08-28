@@ -46,15 +46,12 @@
     "mobile:android": "npm run android --workspace=packages/mobile",
     "mobile:ios": "npm run ios --workspace=packages/mobile",
     "mobile:web": "npm run web --workspace=packages/mobile",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
     "test:root": "vitest run",
     "postinstall": "node scripts/dedupe-nested-react.js && node scripts/dedupe-nested-firebase.js"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
     "@types/node": "^20.10.0",
-    "expo": "~52.0.0",
     "happy-dom": "^20.9.0",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0",
@@ -70,7 +67,6 @@
     "@tiptap/extension-placeholder": "^3.11.1",
     "@tiptap/react": "^3.11.1",
     "@tiptap/starter-kit": "^3.11.1",
-    "expo": "~52.0.49",
     "react": "18.3.1",
     "react-native": "0.76.6"
   },
