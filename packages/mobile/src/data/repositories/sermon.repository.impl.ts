@@ -1,6 +1,13 @@
 import { getApp } from '@react-native-firebase/app';
 import { getFunctions, httpsCallable } from '@react-native-firebase/functions';
-import { doc, getDoc, serverTimestamp, updateDoc } from '@react-native-firebase/firestore';
+import {
+    arrayUnion,
+    doc,
+    getDoc,
+    serverTimestamp,
+    updateDoc,
+} from '@react-native-firebase/firestore';
+import type { PreachingLog } from '@dosfilos/domain';
 
 import { Sermon, SermonSummary } from '@/domain/models/sermon.model';
 import { SermonRepository } from '@/domain/repositories/sermon.repository';
@@ -81,6 +88,23 @@ export class SermonRepositoryImpl implements SermonRepository {
             content: patch.content,
             updatedAt: serverTimestamp(),
         }).catch((error) => console.warn(`[sermons] update ${id} failed:`, error));
+    }
+
+    /**
+     * Suma una predicación al historial. `arrayUnion` en vez de leer-modificar
+     * -escribir: si el pastor predica el mismo sermón en dos servicios y la
+     * tablet sincroniza tarde, no se pisan los registros.
+     */
+    async addPreachingLog(id: string, log: PreachingLog): Promise<void> {
+        updateDoc(doc(getFirebaseDb(), 'sermons', id), {
+            preachingHistory: arrayUnion({
+                date: log.date,
+                location: log.location,
+                durationMinutes: log.durationMinutes,
+                ...(log.notes ? { notes: log.notes } : {}),
+            }),
+            updatedAt: serverTimestamp(),
+        }).catch((error) => console.warn(`[sermons] preaching log ${id} failed:`, error));
     }
 
     async getSermonById(id: string): Promise<Sermon | null> {

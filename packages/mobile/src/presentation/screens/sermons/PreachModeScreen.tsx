@@ -20,6 +20,7 @@ import {
     aggregateRequiredAttributions,
     buildMovementBudgets,
     buildReadingBlocks,
+    buildRehearsalReport,
 } from '@dosfilos/domain';
 
 import { useSermon } from '@/presentation/hooks/useSermons';
@@ -31,6 +32,7 @@ import { useReaderSettingsStore } from '@/presentation/state/readerSettings.stor
 import { PreachSectionBody } from '@/presentation/components/preach/PreachSectionBody';
 import { useDeliveryMeasure } from '@/presentation/hooks/useDeliveryMeasure';
 import { MarkPopover } from '@/presentation/components/preach/MarkPopover';
+import { PreachExitSheet } from '@/presentation/components/preach/PreachExitSheet';
 import { PreachSettingsSheet } from '@/presentation/components/preach/PreachSettingsSheet';
 import { PreachInstrumentPanel } from '@/presentation/components/preach/PreachInstrumentPanel';
 import { usePagination } from '@/presentation/hooks/usePagination';
@@ -88,12 +90,38 @@ export default function PreachModeScreen({
     const [targetMinutes, setTargetMinutes] = useState(30);
     const [elapsed, setElapsed] = useState(0);
     const [running, setRunning] = useState(false);
+    /**
+     * F3 — el cronómetro con memoria. Acumula segundos POR MOVIMIENTO, que es
+     * lo que convierte la app de visor en entrenador: al terminar, el pastor
+     * ve que la introducción le comió 12 de sus 35 minutos.
+     */
+    const [spentBySlug, setSpentBySlug] = useState<Record<string, number>>({});
+    const [showExit, setShowExit] = useState(false);
     const scrollRef = useRef<ScrollView>(null);
     const lastTapRef = useRef(0);
+    const swipeStart = useRef<{ x: number; y: number } | null>(null);
+    // El intervalo no debe recrearse en cada cambio de sección: lee el slug
+    // vigente por ref en vez de entrar en las dependencias del efecto.
+    const sectionSlugRef = useRef<string | null>(null);
+
+    const swipeDelta = (event: { pageX: number; pageY: number }) => {
+        const from = swipeStart.current;
+        if (!from) return { dx: 0, dy: 0 };
+        return { dx: event.pageX - from.x, dy: event.pageY - from.y };
+    };
 
     useEffect(() => {
         if (!running) return;
-        const timer = setInterval(() => setElapsed((e) => e + 1), 1000);
+        const timer = setInterval(() => {
+            setElapsed((e) => e + 1);
+            // El segundo se le carga al movimiento que se está leyendo, no al
+            // que el reloj dice que tocaría: interesa lo que pasó de verdad.
+            setSpentBySlug((current) => {
+                const slug = sectionSlugRef.current;
+                if (!slug) return current;
+                return { ...current, [slug]: (current[slug] ?? 0) + 1 };
+            });
+        }, 1000);
         return () => clearInterval(timer);
     }, [running]);
 
@@ -101,6 +129,13 @@ export default function PreachModeScreen({
     const section = sections[sectionIndex];
     const manifest = sermon?.citationManifest;
     const attributions = aggregateRequiredAttributions(manifest);
+
+    // El slug vigente viaja por ref para que el intervalo no se recree en cada
+    // cambio de movimiento — recrearlo perdería la fracción de segundo en
+    // curso. Se escribe en un efecto: durante el render está prohibido.
+    useEffect(() => {
+        sectionSlugRef.current = section?.slug ?? null;
+    }, [section?.slug]);
 
     const blocks = section ? buildReadingBlocks(section.body) : [];
 
@@ -243,7 +278,12 @@ export default function PreachModeScreen({
                     className="flex-row items-center justify-between px-5 pb-2"
                     style={{ paddingTop: insets.top + 6, borderBottomWidth: 1, borderBottomColor: tokens.border }}
                 >
-                    <TouchableOpacity onPress={() => router.back()} className="flex-row items-center">
+                    <TouchableOpacity
+                        onPress={() => (elapsed > 60 ? setShowExit(true) : router.back())}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('preach:exit')}
+                        className="flex-row items-center"
+                    >
                         <MaterialIcons name="close" size={22} color={tokens.textSecondary} />
                     </TouchableOpacity>
 
@@ -267,7 +307,29 @@ export default function PreachModeScreen({
                 </View>
             )}
 
-            <Pressable className="flex-1" onPress={(e) => handleTap(e.nativeEvent.pageX)}>
+            {/* Swipe horizontal para pasar página, además de las zonas de tap.
+                Sólo reclama el gesto si es claramente horizontal y largo: si
+                no, se comería el arrastre de selección y el scroll vertical
+                de una página que no entró. */}
+            <Pressable
+                className="flex-1"
+                onPress={(e) => handleTap(e.nativeEvent.pageX)}
+                onMoveShouldSetResponder={(e) => {
+                    const { dx, dy } = swipeDelta(e.nativeEvent);
+                    return Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 2;
+                }}
+                // El origen se anota en onTouchStart, no en onResponderGrant:
+                // ese corre DESPUÉS de reclamar el gesto, y para decidir si
+                // reclamarlo ya hace falta saber de dónde salió el dedo.
+                onTouchStart={(e) => {
+                    swipeStart.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY };
+                }}
+                onResponderRelease={(e) => {
+                    const { dx } = swipeDelta(e.nativeEvent);
+                    swipeStart.current = null;
+                    if (Math.abs(dx) > 48) step(dx < 0 ? 1 : -1);
+                }}
+            >
                 <ScrollView
                     ref={scrollRef}
                     contentContainerStyle={{
@@ -532,6 +594,22 @@ export default function PreachModeScreen({
                 onPick={highlighting.applyMark}
                 onRemove={highlighting.removeMark}
                 onClose={highlighting.close}
+            />
+
+            {/* Salida: informe del ensayo y registro de la predicación (F3).
+                No es un modal apurado — al bajar del púlpito hay algo que
+                decir sobre lo que acaba de pasar. */}
+            <PreachExitSheet
+                visible={showExit}
+                tokens={tokens}
+                report={buildRehearsalReport(budgets, spentBySlug)}
+                sermonId={id ?? ''}
+                elapsedSeconds={elapsed}
+                onClose={() => setShowExit(false)}
+                onLeave={() => {
+                    setShowExit(false);
+                    router.back();
+                }}
             />
 
             {/* Blackout: pantalla negra total; un tap la retira */}

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Sermon, SermonListGroup, SermonSummary } from '@/domain/models/sermon.model';
+import type { PreachingLog } from '@dosfilos/domain';
 import { SermonRepositoryImpl } from '@/data/repositories/sermon.repository.impl';
 import { PREVIEW_SERMON, PREVIEW_SERMON_ID } from '@/core/dev/previewSermon';
 
@@ -85,5 +86,14 @@ export const useUpdateSermon = (id: string) => {
             );
             queryClient.invalidateQueries({ queryKey: ['sermons', 'published-groups'] });
         },
+    });
+};
+
+/** Registro post-predicación (F3): cierra el ciclo de vida del sermón. */
+export const useAddPreachingLog = (id: string) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (log: PreachingLog) => repository.addPreachingLog(id, log),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sermon', id] }),
     });
 };

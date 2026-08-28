@@ -30,5 +30,14 @@
     "peek_next": "Sigue…",
     "style_highlight": "Resaltar",
     "style_underline": "Subrayar",
-    "style_strike": "Tachar"
+    "style_strike": "Tachar",
+    "exit": "Salir",
+    "exit_title": "Cómo fue el tiempo",
+    "exit_total": "En total {{actual}} sobre {{budget}} presupuestados",
+    "log_title": "Registrar la predicación",
+    "log_place": "Lugar (iglesia, ocasión)",
+    "log_notes": "Notas — qué aterrizó y qué no",
+    "log_hint": "La fecha y la duración salen del cronómetro.",
+    "log_save": "Guardar y salir",
+    "exit_without_log": "Salir sin registrar"
 }

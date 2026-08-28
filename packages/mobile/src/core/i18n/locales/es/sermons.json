@@ -25,5 +25,8 @@
     "field_content": "Cuerpo del sermón",
     "content_hint": "Markdown: `##` abre un movimiento, `###` un subtítulo, `-` una viñeta.",
     "title_length": "El título necesita entre 5 y 200 caracteres.",
-    "edit": "Editar"
+    "edit": "Editar",
+    "prepare_offline": "Preparar para predicar",
+    "preparing_offline": "Preparando…",
+    "ready_offline": "Listo sin conexión"
 }

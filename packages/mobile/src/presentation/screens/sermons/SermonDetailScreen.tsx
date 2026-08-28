@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { buildReadingBlocks } from '@dosfilos/domain';
 
 import { useSermon } from '@/presentation/hooks/useSermons';
+import { useBriefcase, usePrepareBriefcase } from '@/presentation/hooks/useSermonBriefcase';
 import { extractSectionsWithBody } from '@/core/utils/sermonSections';
 
 export default function SermonDetailScreen() {
@@ -16,6 +17,8 @@ export default function SermonDetailScreen() {
     const { t, i18n } = useTranslation();
     const insets = useSafeAreaInsets();
     const { data: sermon, isLoading, error } = useSermon(id ?? '');
+    const { data: briefcase } = useBriefcase(id ?? '');
+    const prepare = usePrepareBriefcase(id ?? '');
 
     // Sin useMemo: el compilador de React memoiza solo (y la regla de lint
     // rechaza memoización manual que no puede preservar).
@@ -80,6 +83,40 @@ export default function SermonDetailScreen() {
                 {publishedDate && (
                     <Text className="text-xs text-slate-400 font-lexend mt-1">{publishedDate}</Text>
                 )}
+
+                {/* M-03 — el maletín. El pastor VE que el sermón está
+                    garantizado antes de subir al púlpito; no tiene que
+                    confiar en que la caché "probablemente" lo tenga. */}
+                <TouchableOpacity
+                    onPress={() => prepare.mutate()}
+                    disabled={prepare.isPending}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(briefcase ? 'sermons:ready_offline' : 'sermons:prepare_offline')}
+                    className="flex-row items-center mt-4 self-start px-3 py-2 rounded-full border"
+                    style={{ borderColor: briefcase ? '#15803d' : '#cbd5e1' }}
+                >
+                    <MaterialIcons
+                        name={
+                            prepare.isPending
+                                ? 'cloud-download'
+                                : briefcase
+                                  ? 'offline-pin'
+                                  : 'cloud-off'
+                        }
+                        size={18}
+                        color={briefcase ? '#15803d' : '#64748b'}
+                    />
+                    <Text
+                        className="font-lexend text-xs ml-2"
+                        style={{ color: briefcase ? '#15803d' : '#64748b' }}
+                    >
+                        {prepare.isPending
+                            ? t('sermons:preparing_offline')
+                            : briefcase
+                              ? t('sermons:ready_offline')
+                              : t('sermons:prepare_offline')}
+                    </Text>
+                </TouchableOpacity>
 
                 {sections.length === 0 ? (
                     <Text className="text-slate-500 dark:text-slate-400 font-lexend mt-8">

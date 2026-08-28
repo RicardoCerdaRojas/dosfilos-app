@@ -30,5 +30,14 @@
     "peek_next": "Continues…",
     "style_highlight": "Highlight",
     "style_underline": "Underline",
-    "style_strike": "Strikethrough"
+    "style_strike": "Strikethrough",
+    "exit": "Exit",
+    "exit_title": "How the time went",
+    "exit_total": "{{actual}} in total, out of {{budget}} budgeted",
+    "log_title": "Log this preaching",
+    "log_place": "Place (church, occasion)",
+    "log_notes": "Notes — what landed and what didn't",
+    "log_hint": "Date and duration come from the timer.",
+    "log_save": "Save and exit",
+    "exit_without_log": "Exit without logging"
 }

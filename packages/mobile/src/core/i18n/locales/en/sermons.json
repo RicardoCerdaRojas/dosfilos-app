@@ -25,5 +25,8 @@
     "field_content": "Sermon body",
     "content_hint": "Markdown: `##` opens a movement, `###` a subheading, `-` a bullet.",
     "title_length": "The title needs between 5 and 200 characters.",
-    "edit": "Edit"
+    "edit": "Edit",
+    "prepare_offline": "Prepare for preaching",
+    "preparing_offline": "Preparing…",
+    "ready_offline": "Ready offline"
 }
