@@ -12,6 +12,8 @@
  *     los tres estados comparten tinta.
  */
 
+import type { HighlightColor } from '@dosfilos/domain';
+
 export type ReadingMode = 'claro' | 'sepia' | 'oscuro' | 'atril' | 'eink';
 
 export interface ReadingModeTokens {
@@ -27,8 +29,13 @@ export interface ReadingModeTokens {
     accent: string;
     /** Divisores y bordes. */
     border: string;
-    /** Resaltado por defecto (F1: tap largo por frase/párrafo). */
-    highlight: string;
+    /** Fondo de cada color de resaltado (F1: tap largo por frase/párrafo). */
+    highlightColors: Record<HighlightColor, string>;
+    /**
+     * En e-ink el color no existe: el resaltado se marca con subrayado y los
+     * cuatro colores se ven igual. Es la degradación honesta, no un bug.
+     */
+    highlightUnderline: boolean;
     /** Timer: bajo el 80% del objetivo. */
     timerOk: string;
     /** Timer: entre 80% y 100%. */
@@ -53,7 +60,8 @@ export const READING_MODES: Record<ReadingMode, ReadingModeTokens> = {
         textSecondary: '#64748b',
         accent: primary,
         border: '#e2e8f0',
-        highlight: '#fef3c7',
+        highlightColors: { yellow: '#fef3c7', green: '#d7f0dc', blue: '#dbeafe', pink: '#fce7f3' },
+        highlightUnderline: false,
         timerOk: '#15803d',
         timerWarn: '#b45309',
         timerOver: '#b91c1c',
@@ -68,7 +76,8 @@ export const READING_MODES: Record<ReadingMode, ReadingModeTokens> = {
         textSecondary: '#8a7457',
         accent: '#8b5e2b',
         border: '#e0d3b8',
-        highlight: '#f0dfa8',
+        highlightColors: { yellow: '#f0dfa8', green: '#dfe8c4', blue: '#d8e2ef', pink: '#f2dcda' },
+        highlightUnderline: false,
         timerOk: '#4d7c0f',
         timerWarn: '#b45309',
         timerOver: '#b91c1c',
@@ -83,7 +92,8 @@ export const READING_MODES: Record<ReadingMode, ReadingModeTokens> = {
         textSecondary: '#94a3b8',
         accent: '#7ea2e8',
         border: 'rgba(255,255,255,0.08)',
-        highlight: '#3f3a1e',
+        highlightColors: { yellow: '#3f3a1e', green: '#1c3a2a', blue: '#1e3050', pink: '#3d2030' },
+        highlightUnderline: false,
         timerOk: '#4ade80',
         timerWarn: '#fbbf24',
         timerOver: '#f87171',
@@ -98,7 +108,8 @@ export const READING_MODES: Record<ReadingMode, ReadingModeTokens> = {
         textSecondary: '#d4d4d4',
         accent: '#ffd166',
         border: '#404040',
-        highlight: '#4d3f00',
+        highlightColors: { yellow: '#4d3f00', green: '#0f3a1c', blue: '#0f294d', pink: '#40142c' },
+        highlightUnderline: false,
         timerOk: '#22c55e',
         timerWarn: '#facc15',
         timerOver: '#ef4444',
@@ -113,7 +124,8 @@ export const READING_MODES: Record<ReadingMode, ReadingModeTokens> = {
         textSecondary: '#000000',
         accent: '#000000',
         border: '#000000',
-        highlight: '#ffffff',
+        highlightColors: { yellow: '#ffffff', green: '#ffffff', blue: '#ffffff', pink: '#ffffff' },
+        highlightUnderline: true,
         timerOk: '#000000',
         timerWarn: '#000000',
         timerOver: '#000000',

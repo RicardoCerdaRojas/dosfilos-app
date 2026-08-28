@@ -16,16 +16,15 @@ import { useTranslation } from 'react-i18next';
 import { useKeepAwake } from 'expo-keep-awake';
 import { StatusBar } from 'expo-status-bar';
 import type { CitationManifestEntry } from '@dosfilos/domain';
-import { aggregateRequiredAttributions } from '@dosfilos/domain';
+import { aggregateRequiredAttributions, buildReadingBlocks } from '@dosfilos/domain';
 
 import { useSermon } from '@/presentation/hooks/useSermons';
-import {
-    extractSectionsWithBody,
-    toPlainBlocks,
-    tokenizeCitations,
-} from '@/core/utils/sermonSections';
+import { usePreachHighlights } from '@/presentation/hooks/usePreachHighlights';
+import { extractSectionsWithBody } from '@/core/utils/sermonSections';
 import { READING_MODES, READING_MODE_LABELS, ReadingMode } from '@/core/theme/readingModes';
 import { useReaderSettingsStore } from '@/presentation/state/readerSettings.store';
+import { PreachSectionBody } from '@/presentation/components/preach/PreachSectionBody';
+import { HighlightPalette } from '@/presentation/components/preach/HighlightPalette';
 
 const MODES: ReadingMode[] = ['claro', 'sepia', 'oscuro', 'atril', 'eink'];
 const FONT_MIN = 20;
@@ -82,6 +81,14 @@ export default function PreachModeScreen() {
     const manifest = sermon?.citationManifest;
     const attributions = aggregateRequiredAttributions(manifest);
 
+    const blocks = section ? buildReadingBlocks(section.body) : [];
+
+    // El resaltado por tap largo vive en su propio hook: la pantalla ya
+    // carga timer, modos de luz, navegación por secciones y citas.
+    // El pulso se apaga solo en e-ink: los lectores BOOX no tienen motor
+    // háptico. Atril apaga animaciones pero conserva el pulso.
+    const highlighting = usePreachHighlights(id ?? '', section, blocks, readingMode !== 'eink');
+
     const goTo = (index: number) => {
         if (index < 0 || index >= sections.length) return;
         setSectionIndex(index);
@@ -90,6 +97,8 @@ export default function PreachModeScreen() {
 
     // Zonas de tap: ⅓ izquierda retrocede, ⅓ derecha avanza, centro
     // muestra/oculta controles. Doble tap con dos dedos → blackout.
+    // `x` es SIEMPRE absoluto de pantalla (pageX): el cuerpo del sermón
+    // reenvía sus taps desde adentro y su locationX sería relativo.
     const handleTap = (x: number) => {
         const now = Date.now();
         if (now - lastTapRef.current < 300) {
@@ -161,7 +170,7 @@ export default function PreachModeScreen() {
                 </View>
             )}
 
-            <Pressable className="flex-1" onPress={(e) => handleTap(e.nativeEvent.locationX)}>
+            <Pressable className="flex-1" onPress={(e) => handleTap(e.nativeEvent.pageX)}>
                 <ScrollView
                     ref={scrollRef}
                     contentContainerStyle={{
@@ -187,44 +196,15 @@ export default function PreachModeScreen() {
                         </Text>
                     ) : null}
 
-                    {section
-                        ? toPlainBlocks(section.body).map((block, i) =>
-                              block.kind === 'subheading' ? (
-                                  <Text
-                                      key={i}
-                                      style={{ color: tokens.textSecondary, fontSize: fontSize * 0.8 }}
-                                      className="font-lexend-semibold uppercase tracking-wide mt-4 mb-2"
-                                  >
-                                      {block.text}
-                                  </Text>
-                              ) : (
-                                  <Text
-                                      key={i}
-                                      style={{
-                                          color: tokens.textPrimary,
-                                          fontSize,
-                                          lineHeight: fontSize * 1.6,
-                                      }}
-                                      className="font-lexend mb-5"
-                                  >
-                                      {tokenizeCitations(block.text).map((tk, j) =>
-                                          tk.kind === 'citation' ? (
-                                              <Text
-                                                  key={j}
-                                                  style={{ color: tokens.accent }}
-                                                  onPress={() => openCitation(tk.ordinals)}
-                                                  suppressHighlighting
-                                              >
-                                                  {tk.text}
-                                              </Text>
-                                          ) : (
-                                              <Text key={j}>{tk.text}</Text>
-                                          ),
-                                      )}
-                                  </Text>
-                              ),
-                          )
-                        : null}
+                    <PreachSectionBody
+                        blocks={blocks}
+                        highlights={highlighting.highlights}
+                        fontSize={fontSize}
+                        tokens={tokens}
+                        onTapAt={handleTap}
+                        onLongPressUnit={highlighting.openPalette}
+                        onPressCitation={openCitation}
+                    />
 
                     {sectionIndex === sections.length - 1 && attributions.length > 0 && (
                         <View style={{ borderTopWidth: 1, borderTopColor: tokens.border }} className="mt-8 pt-4">
@@ -414,6 +394,18 @@ export default function PreachModeScreen() {
                     </View>
                 </Pressable>
             </Modal>
+
+            {/* Resaltado por tap largo: color y alcance (frase o párrafo) */}
+            <HighlightPalette
+                visible={highlighting.paletteOpen}
+                tokens={tokens}
+                scope={highlighting.scope}
+                onChangeScope={highlighting.setScope}
+                currentColor={highlighting.pendingColor}
+                onPick={highlighting.applyColor}
+                onRemove={highlighting.removeHighlight}
+                onClose={highlighting.closePalette}
+            />
 
             {/* Blackout: pantalla negra total; un tap la retira */}
             {blackout && (

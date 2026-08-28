@@ -75,11 +75,6 @@ export function extractSectionsWithBody(markdown: string): SermonSection[] {
     return sections;
 }
 
-export interface PlainBlock {
-    kind: 'subheading' | 'paragraph';
-    text: string;
-}
-
 /** Trozo de un párrafo: prosa o un marcador de cita `[N]` (o `[1, 3]`). */
 export type InlineToken =
     | { kind: 'text'; text: string }
@@ -112,52 +107,9 @@ export function tokenizeCitations(paragraph: string): InlineToken[] {
 }
 
 /**
- * Normaliza un cuerpo markdown a bloques renderizables en texto plano (F1; el
- * render rico llega con el modo púlpito):
- *   - `###`+ → subheading (los `##` ya son el corte de sección).
- *   - `<br/>` → salto; `---` fuera; énfasis sin marcar.
- *   - Links internos de biblia `[texto](#ancla)` → texto, y anclas `{#…}`
- *     fuera (la web los vuelve interactivos; aquí serán el panel de Biblia
- *     del modo púlpito).
- *   - Los marcadores [N] del manifest se conservan.
+ * El normalizador de markdown a bloques renderizables VIVE EN EL DOMINIO
+ * (`buildReadingBlocks` de @dosfilos/domain). No se reimplementa aquí: esa
+ * versión conserva, por cada carácter, de dónde salió en el markdown crudo,
+ * y sin ese mapa el resaltado que se hace en la tablet no cae sobre las
+ * mismas palabras en la web (M-05).
  */
-export function toPlainBlocks(body: string): PlainBlock[] {
-    const cleaned = body
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/^---\s*$/gm, '')
-        .replace(/\{#[^}]+\}/g, '')
-        .replace(/\[([^\]]+)\]\(#[^)]*\)/g, '$1')
-        .replace(/\*\*(.+?)\*\*/g, '$1')
-        .replace(/\*(.+?)\*/g, '$1');
-
-    const blocks: PlainBlock[] = [];
-    for (const raw of cleaned.split(/\n{2,}/)) {
-        const chunk = raw.trim();
-        if (!chunk) continue;
-        const heading = chunk.match(/^#{3,}\s+(.+?)\s*$/);
-        if (heading) {
-            blocks.push({ kind: 'subheading', text: heading[1] });
-            continue;
-        }
-        // un chunk puede traer heading pegado a texto en la misma pasada
-        const lines = chunk.split('\n');
-        let para: string[] = [];
-        const flush = () => {
-            if (para.length) {
-                blocks.push({ kind: 'paragraph', text: para.join(' ').trim() });
-                para = [];
-            }
-        };
-        for (const line of lines) {
-            const h = line.match(/^#{3,}\s+(.+?)\s*$/);
-            if (h) {
-                flush();
-                blocks.push({ kind: 'subheading', text: h[1] });
-            } else {
-                para.push(line.trim());
-            }
-        }
-        flush();
-    }
-    return blocks;
-}

@@ -5,8 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
+import { buildReadingBlocks } from '@dosfilos/domain';
+
 import { useSermon } from '@/presentation/hooks/useSermons';
-import { extractSectionsWithBody, toPlainBlocks } from '@/core/utils/sermonSections';
+import { extractSectionsWithBody } from '@/core/utils/sermonSections';
 
 export default function SermonDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -91,7 +93,7 @@ export default function SermonDetailScreen() {
                                     {section.title}
                                 </Text>
                             ) : null}
-                            {toPlainBlocks(section.body).map((block, i) =>
+                            {buildReadingBlocks(section.body).map((block, i) =>
                                 block.kind === 'subheading' ? (
                                     <Text
                                         key={i}

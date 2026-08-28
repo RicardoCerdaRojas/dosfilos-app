@@ -4,5 +4,13 @@
     "light_mode": "Light mode",
     "text_size": "Text size",
     "target_duration": "Target duration (min)",
-    "page": "p."
+    "page": "p.",
+    "highlight": "Highlight",
+    "scope_sentence": "Sentence",
+    "scope_paragraph": "Paragraph",
+    "color_yellow": "Yellow",
+    "color_green": "Green",
+    "color_blue": "Blue",
+    "color_pink": "Pink",
+    "remove_highlight": "Remove highlight"
 }

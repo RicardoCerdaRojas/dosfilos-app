@@ -4,5 +4,13 @@
     "light_mode": "Modo de luz",
     "text_size": "Tamaño del texto",
     "target_duration": "Duración objetivo (min)",
-    "page": "p."
+    "page": "p.",
+    "highlight": "Resaltar",
+    "scope_sentence": "Frase",
+    "scope_paragraph": "Párrafo",
+    "color_yellow": "Amarillo",
+    "color_green": "Verde",
+    "color_blue": "Azul",
+    "color_pink": "Rosa",
+    "remove_highlight": "Quitar resaltado"
 }

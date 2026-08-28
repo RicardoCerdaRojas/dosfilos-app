@@ -27,6 +27,9 @@ export * from './entities/PlanDefinition';
 export * from './entities/UsageCounter';
 export * from './entities/Organization';
 export * from './entities/Sermon';
+export * from './entities/SermonAnnotation'; // 🌱 Púlpito M-05 — preacher marks anchored in the raw section body
+export * from './services/sentenceSegmentation'; // 🌱 Púlpito M-05 — single sentence ruler (shared with the fidelity pass)
+export * from './services/sermonReading'; // 🌱 Púlpito M-05 — offset-preserving reading model of a section
 export * from './entities/SermonSeries';
 export * from './entities/LibraryResource';
 export * from './entities/LibraryCategory';
