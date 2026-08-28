@@ -26,7 +26,7 @@
     "font_size": "Font Size",
     "search_results": "Search Results",
     "no_results_found": "No verses found",
-    "search_placeholder": "Search for words or phrases...",
+    "search_placeholder": "Search a phrase…",
     "searching": "Searching the Scriptures...",
     "results_count": "{{count}} results found",
     "categories_list": {
@@ -40,5 +40,14 @@
         "pauline_epistles": "Pauline Epistles",
         "general_epistles": "General Epistles",
         "prophecy": "Prophecy"
-    }
+    },
+    "pick_passage": "Pick a passage",
+    "chapter": "Chapter",
+    "parallel": "Side by side",
+    "search": "Search",
+    "no_results": "No results",
+    "to_sermon": "To sermon",
+    "previous_chapter": "Previous chapter",
+    "next_chapter": "Next chapter",
+    "paste_into": "Into which sermon?"
 }

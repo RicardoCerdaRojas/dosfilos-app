@@ -152,6 +152,15 @@ service cloud.firestore {
     }
 
     // Greek Analyzer - hallazgos del pastor para su sermón (por usuario)
+    // Púlpito — marcas del pastor sobre el texto bíblico.
+    // Ancladas por (versión, libro, capítulo, versículo): a diferencia del
+    // sermón, el versículo es una dirección estable y no hace falta reanclar
+    // por offsets. Owner-scoped y editable: una marca se cambia de color o se
+    // borra, no es un registro de auditoría.
+    match /users/{userId}/bibleMarks/{markId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
     match /users/{userId}/greekFindings/{findingId} {
       allow read, create: if isAuthenticated() && request.auth.uid == userId;
       allow update, delete: if false;

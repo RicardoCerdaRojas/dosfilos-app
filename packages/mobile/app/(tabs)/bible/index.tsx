@@ -1,5 +1,6 @@
-import BibleLibraryScreen from '@/presentation/screens/bible/BibleLibraryScreen';
+import BibleReaderScreen from '@/presentation/screens/bible/BibleReaderScreen';
 
-export default function BibleLibraryRoute() {
-  return <BibleLibraryScreen />;
+// El lector ES la Biblia: una sola pantalla con controles, no cuatro destinos.
+export default function BibleTab() {
+  return <BibleReaderScreen />;
 }
