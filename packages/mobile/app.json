@@ -12,7 +12,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.dosfilos.preach",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.dosfilos.preach",
