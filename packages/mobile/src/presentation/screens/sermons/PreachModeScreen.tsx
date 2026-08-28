@@ -36,6 +36,7 @@ import { PreachExitSheet } from '@/presentation/components/preach/PreachExitShee
 import { InkLayer } from '@/presentation/components/preach/InkLayer';
 import { useInkNotes } from '@/presentation/hooks/useInkNotes';
 import { PreachSettingsSheet } from '@/presentation/components/preach/PreachSettingsSheet';
+import { BibleConsultSheet } from '@/presentation/components/bible/BibleConsultSheet';
 import { PreachInstrumentPanel } from '@/presentation/components/preach/PreachInstrumentPanel';
 import { usePagination } from '@/presentation/hooks/usePagination';
 
@@ -87,6 +88,7 @@ export default function PreachModeScreen({
     const [blackout, setBlackout] = useState(false);
     const [showSections, setShowSections] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [showBible, setShowBible] = useState(false);
     const [citation, setCitation] = useState<{ ordinal: number; entry: CitationManifestEntry }[] | null>(
         null,
     );
@@ -325,6 +327,18 @@ export default function PreachModeScreen({
                                 color={ink.penActive ? tokens.accent : tokens.textSecondary}
                             />
                         </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => setShowBible(true)}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('bible:title')}
+                            className="mr-4"
+                        >
+                            <MaterialIcons
+                                name="menu-book"
+                                size={22}
+                                color={tokens.textSecondary}
+                            />
+                        </TouchableOpacity>
                         <TouchableOpacity onPress={() => setShowSections(true)} className="mr-4">
                             <MaterialIcons name="format-list-numbered" size={22} color={tokens.textSecondary} />
                         </TouchableOpacity>
@@ -541,6 +555,16 @@ export default function PreachModeScreen({
                     </View>
                 </Pressable>
             </Modal>
+
+            {/* La Biblia sin salir del sermón: abre en la referencia propia. */}
+            <BibleConsultSheet
+                visible={showBible}
+                tokens={tokens}
+                face={deliveryFace}
+                fontSize={fontSize}
+                references={sermon.bibleReferences ?? []}
+                onClose={() => setShowBible(false)}
+            />
 
             {/* Ajustes: modo de luz, tipografía, corte de línea, duración */}
             <PreachSettingsSheet

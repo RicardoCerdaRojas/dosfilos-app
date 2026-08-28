@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +10,9 @@ import { buildReadingBlocks } from '@dosfilos/domain';
 import { useSermon } from '@/presentation/hooks/useSermons';
 import { useBriefcase, usePrepareBriefcase } from '@/presentation/hooks/useSermonBriefcase';
 import { extractSectionsWithBody } from '@/core/utils/sermonSections';
+import { READING_MODES } from '@/core/theme/readingModes';
+import { useReaderSettingsStore } from '@/presentation/state/readerSettings.store';
+import { BibleConsultSheet } from '@/presentation/components/bible/BibleConsultSheet';
 
 export default function SermonDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -17,6 +20,10 @@ export default function SermonDetailScreen() {
     const { t, i18n } = useTranslation();
     const insets = useSafeAreaInsets();
     const { data: sermon, isLoading, error } = useSermon(id ?? '');
+    const readingMode = useReaderSettingsStore((s) => s.readingMode);
+    const deliveryFace = useReaderSettingsStore((s) => s.deliveryFace);
+    const fontSize = useReaderSettingsStore((s) => s.deliveryFontSize);
+    const [showBible, setShowBible] = useState(false);
     const { data: briefcase } = useBriefcase(id ?? '');
     const prepare = usePrepareBriefcase(id ?? '');
 
@@ -66,7 +73,26 @@ export default function SermonDetailScreen() {
                 >
                     {sermon.title}
                 </Text>
+                {/* La Biblia al lado del sermón también acá: al preparar se
+                    consulta más que al predicar. */}
+                <TouchableOpacity
+                    onPress={() => setShowBible(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('bible:title')}
+                    className="p-2 active:opacity-60"
+                >
+                    <MaterialIcons name="menu-book" size={22} color="#64748b" />
+                </TouchableOpacity>
             </View>
+
+            <BibleConsultSheet
+                visible={showBible}
+                tokens={READING_MODES[readingMode]}
+                face={deliveryFace}
+                fontSize={fontSize}
+                references={sermon.bibleReferences ?? []}
+                onClose={() => setShowBible(false)}
+            />
 
             <ScrollView
                 className="flex-1"

@@ -12,7 +12,8 @@ import { FACE_CLASS } from '@/core/theme/typography';
 import { useReaderSettingsStore } from '@/presentation/state/readerSettings.store';
 import { useBibleMarks, useBibleMarkMutations } from '@/presentation/hooks/useBibleMarks';
 import { useDeliveryMeasure } from '@/presentation/hooks/useDeliveryMeasure';
-import { BiblePassage, formatPassageForSermon } from '@/presentation/components/bible/BiblePassage';
+import { SelectableVerses } from '@/presentation/components/bible/SelectableVerses';
+import { formatPassageForSermon } from '@/presentation/components/bible/passageFormat';
 import { BiblePickerSheet } from '@/presentation/components/bible/BiblePickerSheet';
 import { BibleSearchSheet } from '@/presentation/components/bible/BibleSearchSheet';
 import { BibleVersionFactory } from '@/data/repositories/bible/BibleVersionFactory';
@@ -66,6 +67,17 @@ export default function BibleReaderScreen() {
             else next.add(verse);
             return next;
         });
+
+    /** Rango arrastrado: reemplaza la selección, hacia adelante o hacia atrás. */
+    const selectRange = (from: number, to: number) =>
+        setSelected(
+            new Set(
+                Array.from(
+                    { length: Math.abs(to - from) + 1 },
+                    (_, i) => Math.min(from, to) + i,
+                ),
+            ),
+        );
 
     const selectedList = [...selected].sort((a, b) => a - b);
 
@@ -146,7 +158,7 @@ export default function BibleReaderScreen() {
                 <View style={{ alignSelf: 'center', width: '100%', maxWidth: measure ? measure * (parallelId ? 2.1 : 1) : undefined }}>
                     <View className={parallelId ? 'flex-row' : undefined}>
                         <View style={{ flex: 1, marginRight: parallelId ? 24 : 0 }}>
-                            <BiblePassage
+                            <SelectableVerses
                                 bookId={bookId}
                                 chapter={chapter}
                                 verses={verses}
@@ -156,11 +168,12 @@ export default function BibleReaderScreen() {
                                 fontSize={fontSize}
                                 selected={selected}
                                 onToggleVerse={toggleVerse}
+                                onSelectRange={selectRange}
                             />
                         </View>
                         {parallelId ? (
                             <View style={{ flex: 1 }}>
-                                <BiblePassage
+                                <SelectableVerses
                                     bookId={bookId}
                                     chapter={chapter}
                                     verses={parallelVerses}
@@ -170,6 +183,7 @@ export default function BibleReaderScreen() {
                                     fontSize={fontSize}
                                     selected={selected}
                                     onToggleVerse={toggleVerse}
+                                    onSelectRange={selectRange}
                                 />
                             </View>
                         ) : null}
