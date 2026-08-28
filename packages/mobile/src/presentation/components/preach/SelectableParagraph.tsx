@@ -14,6 +14,9 @@ interface PlacedWord {
     ordinals: number[] | null;
 }
 
+/** Umbral del long press propio. El de RN son ~500 ms y no se puede bajar. */
+const LONG_PRESS_MS = 240;
+
 export interface SelectionRange {
     start: number;
     end: number;
@@ -64,6 +67,20 @@ export function SelectableParagraph({
 }: Props) {
     const rects = useRef<Map<number, LayoutRectangle>>(new Map());
     const anchor = useRef<PlacedWord | null>(null);
+    const container = useRef<View | null>(null);
+    /**
+     * Origen del contenedor en coordenadas de PANTALLA.
+     *
+     * Hace falta porque los rectángulos de las palabras llegan relativos al
+     * contenedor, mientras que el toque sólo trae `pageX/pageY` fiables. Usar
+     * `locationX/locationY` fue el bug: en RN son relativas al elemento que
+     * recibió el toque —cada palabra es su propia vista—, así que al arrastrar
+     * llegaban valores casi en cero y la búsqueda resolvía siempre la primera
+     * palabra del párrafo. De ahí que seleccionara todo hacia atrás.
+     */
+    const origin = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+    const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const pressStart = useRef<{ x: number; y: number } | null>(null);
 
     const words: PlacedWord[] = [];
     units.forEach((unit) => {
@@ -79,7 +96,9 @@ export function SelectableParagraph({
         });
     });
 
-    const wordAt = (x: number, y: number): PlacedWord | null => {
+    const wordAt = (pageX: number, pageY: number): PlacedWord | null => {
+        const x = pageX - origin.current.x;
+        const y = pageY - origin.current.y;
         let closest: PlacedWord | null = null;
         let closestDistance = Number.POSITIVE_INFINITY;
         for (const [index, rect] of rects.current.entries()) {
@@ -106,28 +125,78 @@ export function SelectableParagraph({
     // leer `.current` durante el render, que el compilador de React prohíbe.
     // Así los handlers son funciones normales y ven las palabras de este
     // render, sin refs de por medio.
+    const cancelPress = () => {
+        if (pressTimer.current) clearTimeout(pressTimer.current);
+        pressTimer.current = null;
+        pressStart.current = null;
+    };
+
+    /**
+     * Long press propio en vez del de `Text`: el de RN tarda ~500 ms y no se
+     * puede bajar. A 240 ms el gesto se siente inmediato y sigue sin dispararse
+     * por un roce.
+     */
+    const handleTouchStart = (e: GestureResponderEvent) => {
+        const { pageX, pageY } = e.nativeEvent;
+        pressStart.current = { x: pageX, y: pageY };
+        cancelTimerOnly();
+        pressTimer.current = setTimeout(() => {
+            const word = wordAt(pageX, pageY);
+            if (!word) return;
+            anchor.current = word;
+            onSelectionChange({ start: word.sourceStart, end: word.sourceEnd });
+        }, LONG_PRESS_MS);
+    };
+
+    const cancelTimerOnly = () => {
+        if (pressTimer.current) clearTimeout(pressTimer.current);
+        pressTimer.current = null;
+    };
+
+    const handleTouchMove = (e: GestureResponderEvent) => {
+        // Si el dedo se fue antes de que prendiera la selección, era un swipe
+        // o un scroll: se cancela para no robarle el gesto a la navegación.
+        if (anchor.current || !pressStart.current) return;
+        const { pageX, pageY } = e.nativeEvent;
+        const moved =
+            Math.abs(pageX - pressStart.current.x) + Math.abs(pageY - pressStart.current.y);
+        if (moved > 12) cancelTimerOnly();
+    };
+
     const handleMove = (e: GestureResponderEvent) => {
         if (!anchor.current) return;
-        const word = wordAt(e.nativeEvent.locationX, e.nativeEvent.locationY);
+        const word = wordAt(e.nativeEvent.pageX, e.nativeEvent.pageY);
         if (word) onSelectionChange(rangeBetween(anchor.current, word));
     };
 
     const handleRelease = (e: GestureResponderEvent) => {
+        cancelPress();
         if (!anchor.current) return;
-        const word = wordAt(e.nativeEvent.locationX, e.nativeEvent.locationY) ?? anchor.current;
+        const word = wordAt(e.nativeEvent.pageX, e.nativeEvent.pageY) ?? anchor.current;
         const range = rangeBetween(anchor.current, word);
         anchor.current = null;
-        onSelectionEnd(range, e.nativeEvent.locationY);
+        onSelectionEnd(range, e.nativeEvent.pageY);
     };
 
     const handleTerminate = () => {
+        cancelPress();
         anchor.current = null;
         onSelectionChange(null);
     };
 
     return (
         <View
+            ref={container}
             className="flex-row flex-wrap"
+            onLayout={() =>
+                container.current?.measureInWindow((x, y) => {
+                    origin.current = { x, y };
+                })
+            }
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={cancelPress}
+            onTouchCancel={cancelPress}
             onStartShouldSetResponder={() => false}
             onMoveShouldSetResponder={() => anchor.current !== null}
             onResponderMove={handleMove}
@@ -155,13 +224,6 @@ export function SelectableParagraph({
                             onPress={(e) => {
                                 if (word.ordinals) onPressCitation(word.ordinals);
                                 else onTapAt(e.nativeEvent.pageX);
-                            }}
-                            onLongPress={() => {
-                                anchor.current = word;
-                                onSelectionChange({
-                                    start: word.sourceStart,
-                                    end: word.sourceEnd,
-                                });
                             }}
                             suppressHighlighting
                             style={{
