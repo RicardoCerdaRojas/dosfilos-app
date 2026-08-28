@@ -5,17 +5,11 @@
     "text_size": "Text size",
     "target_duration": "Target duration (min)",
     "page": "p.",
-    "highlight": "Highlight",
-    "scope_sentence": "Sentence",
-    "scope_paragraph": "Paragraph",
     "color_yellow": "Yellow",
     "color_green": "Green",
     "color_blue": "Blue",
     "color_pink": "Pink",
     "remove_highlight": "Remove highlight",
-    "line_breaks": "Line breaks",
-    "running_text": "Running text",
-    "sense_lines": "One sentence per line",
     "mode_claro": "Light",
     "mode_sepia": "Sepia",
     "mode_oscuro": "Dark",
@@ -33,5 +27,8 @@
     "instrument_panel": "Bottom panel",
     "panel_on": "Reserve the third",
     "panel_off": "Full height for text",
-    "peek_next": "Continues…"
+    "peek_next": "Continues…",
+    "style_highlight": "Highlight",
+    "style_underline": "Underline",
+    "style_strike": "Strikethrough"
 }

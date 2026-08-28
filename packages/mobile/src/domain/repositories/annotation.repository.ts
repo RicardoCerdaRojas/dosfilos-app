@@ -1,4 +1,9 @@
-import type { HighlightColor, SermonAnnotation, SermonAnnotationAnchor } from '@dosfilos/domain';
+import type {
+    HighlightColor,
+    MarkStyle,
+    SermonAnnotation,
+    SermonAnnotationAnchor,
+} from '@dosfilos/domain';
 
 /**
  * Puerto de las marcas del predicador sobre su sermón (plan Púlpito M-05).
@@ -12,8 +17,14 @@ export interface AnnotationRepository {
         sermonId: string,
         anchor: SermonAnnotationAnchor,
         color: HighlightColor,
+        style: MarkStyle,
     ): Promise<SermonAnnotation>;
-    /** Cambia el color de un resaltado existente (LWW por `updatedAt`). */
-    updateColor(sermonId: string, annotationId: string, color: HighlightColor): Promise<void>;
+    /** Cambia color o trazo de una marca existente (LWW por `updatedAt`). */
+    updateMark(
+        sermonId: string,
+        annotationId: string,
+        color: HighlightColor,
+        style: MarkStyle,
+    ): Promise<void>;
     remove(sermonId: string, annotationId: string): Promise<void>;
 }

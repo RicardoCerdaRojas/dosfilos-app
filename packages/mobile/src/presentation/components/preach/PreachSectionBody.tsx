@@ -1,9 +1,8 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import type { HighlightColor, ReadingBlock, ReadingUnit } from '@dosfilos/domain';
+import type { HighlightColor, MarkStyle, ReadingBlock, ReadingUnit } from '@dosfilos/domain';
 
-import { tokenizeCitations } from '@/core/utils/sermonSections';
 import { ReadingModeTokens } from '@/core/theme/readingModes';
 import {
     DELIVERY_LINE_HEIGHT,
@@ -11,11 +10,13 @@ import {
     PARAGRAPH_GAP_EM,
     TYPE_SCALE,
 } from '@/core/theme/typography';
+import { SelectableParagraph, SelectionRange } from './SelectableParagraph';
 
-/** Resaltado ya reanclado al cuerpo crudo de ESTA sección. */
+/** Marca ya reanclada al cuerpo crudo de ESTA sección. */
 export interface ResolvedHighlight {
     id: string;
     color: HighlightColor;
+    style: MarkStyle;
     start: number;
     end: number;
 }
@@ -25,29 +26,25 @@ interface Props {
     highlights: ResolvedHighlight[];
     fontSize: number;
     tokens: ReadingModeTokens;
-    /** Colometría: cada oración abre renglón (D6). */
+    /** Colometría: cada oración abre renglón, con sangría francesa (D6). */
     senseLines: boolean;
+    /** Selección en curso, para pintarla mientras el dedo se mueve. */
+    selection: SelectionRange | null;
+    onSelectionChange: (range: SelectionRange | null) => void;
+    onSelectionEnd: (range: SelectionRange, atY: number) => void;
     /** Tap sobre el texto: la navegación por zonas ⅓ sigue viva encima del cuerpo. */
     onTapAt: (pageX: number) => void;
-    onLongPressUnit: (blockIndex: number, unitIndex: number) => void;
     onPressCitation: (ordinals: number[]) => void;
     /** Abre una cita de bloque colapsada (aparato de estudio, P5). */
     onPressApparatus: (text: string) => void;
 }
 
-/**
- * En F1 el resaltado es por frase completa: una marca se pinta sobre la
- * unidad cuando cubre más de la mitad de sus caracteres. La selección fina
- * por carácter llega en F2 y exige render por spans.
- */
-function highlightFor(unit: ReadingUnit, highlights: ResolvedHighlight[]): ResolvedHighlight | null {
-    const span = Math.max(1, unit.sourceEnd - unit.sourceStart);
-    for (const mark of highlights) {
-        const overlap =
-            Math.min(mark.end, unit.sourceEnd) - Math.max(mark.start, unit.sourceStart);
-        if (overlap > span / 2) return mark;
-    }
-    return null;
+/** Marca que cubre un punto del cuerpo crudo. La unidad ahora es la palabra. */
+function highlightAt(
+    sourceStart: number,
+    highlights: ResolvedHighlight[],
+): ResolvedHighlight | null {
+    return highlights.find((h) => sourceStart >= h.start && sourceStart < h.end) ?? null;
 }
 
 export function PreachSectionBody({
@@ -56,68 +53,48 @@ export function PreachSectionBody({
     fontSize,
     tokens,
     senseLines,
+    selection,
+    onSelectionChange,
+    onSelectionEnd,
     onTapAt,
-    onLongPressUnit,
     onPressCitation,
     onPressApparatus,
 }: Props) {
-    const renderUnit = (
-        unit: ReadingUnit,
-        blockIndex: number,
-        unitIndex: number,
-        withTrailingSpace: boolean,
-    ) => {
-        const mark = highlightFor(unit, highlights);
-        return (
-            <React.Fragment key={unitIndex}>
-                <Text
-                    // El tap se reenvía para que las zonas ⅓ de avance sigan
-                    // funcionando sobre el texto: un Text con onLongPress se
-                    // queda con el toque y dejaría el sermón sin navegación.
-                    onPress={(e) => onTapAt(e.nativeEvent.pageX)}
-                    onLongPress={() => onLongPressUnit(blockIndex, unitIndex)}
-                    suppressHighlighting
-                    style={
-                        mark
-                            ? {
-                                  backgroundColor: tokens.highlightColors[mark.color],
-                                  textDecorationLine: tokens.highlightUnderline
-                                      ? 'underline'
-                                      : 'none',
-                              }
-                            : undefined
-                    }
-                >
-                    {tokenizeCitations(unit.text).map((token, tokenIndex) =>
-                        token.kind === 'citation' ? (
-                            <Text
-                                key={tokenIndex}
-                                style={{
-                                    color: tokens.accent,
-                                    fontSize: fontSize * TYPE_SCALE.citationMarker,
-                                }}
-                                onPress={() => onPressCitation(token.ordinals)}
-                                suppressHighlighting
-                            >
-                                {token.text}
-                            </Text>
-                        ) : (
-                            <Text key={tokenIndex}>{token.text}</Text>
-                        ),
-                    )}
-                </Text>
-                {/* El espacio va FUERA del resaltado: dentro, dos frases
-                    marcadas se verían como una. */}
-                {withTrailingSpace ? <Text>{' '}</Text> : null}
-            </React.Fragment>
-        );
+    /**
+     * Traduce las marcas guardadas al trazo que le toca a cada palabra.
+     * En tinta electrónica el color no existe, así que toda marca cae a
+     * subrayado — es la degradación honesta, no un bug.
+     */
+    const styleAt = (at: number) => {
+        const mark = highlightAt(at, highlights);
+        if (!mark) return null;
+        if (tokens.highlightUnderline) {
+            return { underline: mark.style !== 'strike', strike: mark.style === 'strike' };
+        }
+        return {
+            background: mark.style === 'highlight' ? tokens.highlightColors[mark.color] : undefined,
+            underline: mark.style === 'underline',
+            strike: mark.style === 'strike',
+        };
     };
 
-    const paragraphStyle = {
-        color: tokens.textPrimary,
-        fontSize,
-        lineHeight: fontSize * DELIVERY_LINE_HEIGHT,
-    };
+    const paragraph = (units: ReadingUnit[], key: React.Key, style?: object) => (
+        <View key={key} style={style}>
+            <SelectableParagraph
+                units={units}
+                fontSize={fontSize}
+                lineHeight={fontSize * DELIVERY_LINE_HEIGHT}
+                color={tokens.textPrimary}
+                selection={selection}
+                selectionColor={tokens.selection}
+                styleAt={styleAt}
+                onSelectionChange={onSelectionChange}
+                onSelectionEnd={onSelectionEnd}
+                onTapAt={onTapAt}
+                onPressCitation={onPressCitation}
+            />
+        </View>
+    );
 
     return (
         <>
@@ -166,21 +143,17 @@ export function PreachSectionBody({
                         style={{ marginBottom: fontSize * 0.45 }}
                     >
                         <Text
-                            style={{ ...paragraphStyle, width: fontSize * 1.1 }}
+                            style={{
+                                color: tokens.textPrimary,
+                                fontSize,
+                                lineHeight: fontSize * DELIVERY_LINE_HEIGHT,
+                                width: fontSize * 1.1,
+                            }}
                             className="font-lexend"
                         >
-                            {'\u2022'}
+                            {'•'}
                         </Text>
-                        <Text style={{ ...paragraphStyle, flex: 1 }} className="font-lexend">
-                            {block.units.map((unit, unitIndex) =>
-                                renderUnit(
-                                    unit,
-                                    blockIndex,
-                                    unitIndex,
-                                    unitIndex < block.units.length - 1,
-                                ),
-                            )}
-                        </Text>
+                        <View style={{ flex: 1 }}>{paragraph(block.units, 'li')}</View>
                     </View>
                 ) : block.kind === 'subheading' ? (
                     <Text
@@ -196,17 +169,13 @@ export function PreachSectionBody({
                         {block.text}
                     </Text>
                 ) : senseLines ? (
-                    // Colometría: cada oración es su propio bloque, así el ojo
-                    // que vuelve del público reengancha en el arranque de la
-                    // frase y no a mitad de renglón.
+                    // Colometría con sangría francesa: la oración abre en el
+                    // margen y sus continuaciones entran, así el ojo que vuelve
+                    // del público distingue de un golpe el comienzo de una
+                    // frase de su continuación. RN no tiene text-indent
+                    // negativo: de ahí el padding con margen negativo.
                     <View key={blockIndex} style={{ marginBottom: fontSize * PARAGRAPH_GAP_EM }}>
                         {block.units.map((unit, unitIndex) => (
-                            // Sangría francesa: la oración arranca en el margen
-                            // y sus renglones de continuación entran. Así el
-                            // ojo que vuelve del público distingue de un golpe
-                            // el comienzo de una frase de su continuación.
-                            // RN no tiene text-indent negativo, de ahí el
-                            // padding con margen negativo en el bloque.
                             <View
                                 key={unitIndex}
                                 style={{
@@ -214,33 +183,16 @@ export function PreachSectionBody({
                                     marginBottom: fontSize * 0.12,
                                 }}
                             >
-                                <Text
-                                    style={{
-                                        ...paragraphStyle,
-                                        marginLeft: -fontSize * HANGING_INDENT_EM,
-                                    }}
-                                    className="font-lexend"
-                                >
-                                    {renderUnit(unit, blockIndex, unitIndex, false)}
-                                </Text>
+                                <View style={{ marginLeft: -fontSize * HANGING_INDENT_EM }}>
+                                    {paragraph([unit], unitIndex)}
+                                </View>
                             </View>
                         ))}
                     </View>
                 ) : (
-                    <Text
-                        key={blockIndex}
-                        style={{ ...paragraphStyle, marginBottom: fontSize * PARAGRAPH_GAP_EM }}
-                        className="font-lexend"
-                    >
-                        {block.units.map((unit, unitIndex) =>
-                            renderUnit(
-                                unit,
-                                blockIndex,
-                                unitIndex,
-                                unitIndex < block.units.length - 1,
-                            ),
-                        )}
-                    </Text>
+                    paragraph(block.units, blockIndex, {
+                        marginBottom: fontSize * PARAGRAPH_GAP_EM,
+                    })
                 ),
             )}
         </>

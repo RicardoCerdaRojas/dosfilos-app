@@ -1,35 +1,32 @@
 import { useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import { buildAnnotationAnchor, resolveAnnotationAnchor } from '@dosfilos/domain';
-import type { HighlightColor, ReadingBlock } from '@dosfilos/domain';
+import type { HighlightColor, MarkStyle } from '@dosfilos/domain';
 
 import { SermonSection } from '@/core/utils/sermonSections';
 import { useAnnotations, useHighlightMutations } from '@/presentation/hooks/useAnnotations';
 import { ResolvedHighlight } from '@/presentation/components/preach/PreachSectionBody';
-import { HighlightScope } from '@/presentation/components/preach/HighlightPalette';
-
-/** Frase concreta bajo el dedo: bloque + unidad dentro del bloque. */
-interface PendingTarget {
-    blockIndex: number;
-    unitIndex: number;
-}
+import { SelectionRange } from '@/presentation/components/preach/SelectableParagraph';
 
 /**
- * Orquesta el resaltado por tap largo del modo púlpito (plan §6, F1):
- * reancla las marcas guardadas contra el cuerpo crudo de la sección visible,
- * resuelve el rango según el alcance elegido y aplica alta/recolor/borrado.
+ * Marcas del predicador sobre el sermón (plan §6, M-05).
  *
- * Vive fuera de la pantalla a propósito: la pantalla ya carga timer, modos de
- * luz, navegación por secciones y citas.
+ * La unidad de selección es el RANGO de caracteres en el cuerpo crudo de la
+ * sección, no un índice de bloque. Antes se pasaban `(bloque, unidad)` y eso
+ * se rompió apenas apareció la paginación: el cuerpo empezó a emitir índices
+ * locales a la página mientras el hook los resolvía contra toda la sección.
+ * Un rango de offsets no tiene ese problema — es la misma coordenada que usa
+ * el ancla que se guarda.
  */
 export function usePreachHighlights(
     sermonId: string,
     section: SermonSection | undefined,
-    blocks: ReadingBlock[],
     hapticsEnabled: boolean,
 ) {
-    const [pending, setPending] = useState<PendingTarget | null>(null);
-    const [scope, setScope] = useState<HighlightScope>('sentence');
+    /** Lo que el dedo está seleccionando ahora mismo. */
+    const [selection, setSelection] = useState<SelectionRange | null>(null);
+    /** Selección confirmada, con la Y donde soltó, para colocar el popover. */
+    const [pending, setPending] = useState<{ range: SelectionRange; y: number } | null>(null);
 
     const { data: annotations } = useAnnotations(sermonId);
     const { create, recolor, remove } = useHighlightMutations(sermonId);
@@ -42,72 +39,87 @@ export function usePreachHighlights(
               .filter((a) => a.sectionSlug === section.slug)
               .map((a) => {
                   const at = resolveAnnotationAnchor(a, section.body);
-                  return at ? { id: a.id, color: a.color, start: at.start, end: at.end } : null;
+                  return at
+                      ? {
+                            id: a.id,
+                            color: a.color,
+                            style: a.style ?? 'highlight',
+                            start: at.start,
+                            end: at.end,
+                        }
+                      : null;
               })
               .filter((h): h is ResolvedHighlight => h !== null)
         : [];
 
-    /** Rango a marcar según el alcance elegido: la frase o el párrafo entero. */
-    const pendingRange = (() => {
-        if (pending === null) return null;
-        const units = blocks[pending.blockIndex]?.units ?? [];
-        const unit = units[pending.unitIndex];
-        if (!unit) return null;
-        if (scope === 'sentence') return { start: unit.sourceStart, end: unit.sourceEnd };
-        return { start: units[0].sourceStart, end: units[units.length - 1].sourceEnd };
-    })();
+    /** Marca que cubre a la vez el punto dado. Para pintar palabra por palabra. */
+    const markAt = (sourceStart: number): ResolvedHighlight | null =>
+        highlights.find((h) => sourceStart >= h.start && sourceStart < h.end) ?? null;
 
-    // Misma regla de cobertura que pinta el cuerpo: más de media unidad.
-    const pendingHighlight = pendingRange
-        ? highlights.find(
+    const pendingMark = pending
+        ? (highlights.find(
               (h) =>
-                  Math.min(h.end, pendingRange.end) - Math.max(h.start, pendingRange.start) >
-                  (pendingRange.end - pendingRange.start) / 2,
-          ) ?? null
+                  Math.min(h.end, pending.range.end) - Math.max(h.start, pending.range.start) > 0,
+          ) ?? null)
         : null;
 
-    const openPalette = (blockIndex: number, unitIndex: number) => {
+    const beginSelection = (range: SelectionRange | null) => {
         // El pulso confirma que el texto quedó agarrado: en el púlpito nadie
-        // se queda mirando si el panel ya abrió. En e-ink no hay pulso porque
-        // ese modo apaga todo lo que no sea tinta.
-        if (hapticsEnabled) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setPending({ blockIndex, unitIndex });
+        // se queda mirando si la selección prendió. En e-ink no hay motor.
+        if (range && !selection && hapticsEnabled) {
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
+        setSelection(range);
     };
 
-    const applyColor = (color: HighlightColor) => {
-        if (!section || !pendingRange) return;
-        if (pendingHighlight) {
-            if (pendingHighlight.color !== color) {
-                recolor.mutate({ id: pendingHighlight.id, color });
+    const endSelection = (range: SelectionRange, y: number) => {
+        setSelection(range);
+        setPending({ range, y });
+    };
+
+    const applyMark = (color: HighlightColor, style: MarkStyle) => {
+        if (!section || !pending) return;
+        if (pendingMark) {
+            if (pendingMark.color !== color || pendingMark.style !== style) {
+                recolor.mutate({ id: pendingMark.id, color, style });
             }
         } else {
             create.mutate({
                 anchor: buildAnnotationAnchor(
                     section.slug,
                     section.body,
-                    pendingRange.start,
-                    pendingRange.end,
+                    pending.range.start,
+                    pending.range.end,
                 ),
                 color,
+                style,
             });
         }
-        setPending(null);
+        close();
     };
 
-    const removeHighlight = () => {
-        if (pendingHighlight) remove.mutate(pendingHighlight.id);
+    const removeMark = () => {
+        if (pendingMark) remove.mutate(pendingMark.id);
+        close();
+    };
+
+    const close = () => {
         setPending(null);
+        setSelection(null);
     };
 
     return {
         highlights,
-        paletteOpen: pending !== null,
-        scope,
-        setScope,
-        pendingColor: pendingHighlight?.color ?? null,
-        openPalette,
-        applyColor,
-        removeHighlight,
-        closePalette: () => setPending(null),
+        markAt,
+        selection,
+        beginSelection,
+        endSelection,
+        popoverOpen: pending !== null,
+        popoverY: pending?.y ?? 0,
+        pendingColor: pendingMark?.color ?? null,
+        pendingStyle: pendingMark?.style ?? null,
+        applyMark,
+        removeMark,
+        close,
     };
 }

@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { HighlightColor, SermonAnnotation, SermonAnnotationAnchor } from '@dosfilos/domain';
+import type {
+    HighlightColor,
+    MarkStyle,
+    SermonAnnotation,
+    SermonAnnotationAnchor,
+} from '@dosfilos/domain';
 
 import { AnnotationRepositoryImpl } from '@/data/repositories/annotation.repository.impl';
 import { PREVIEW_SERMON_ID } from '@/core/dev/previewSermon';
@@ -43,9 +48,11 @@ export const useHighlightMutations = (sermonId: string) => {
         mutationFn: async ({
             anchor,
             color,
+            style,
         }: {
             anchor: SermonAnnotationAnchor;
             color: HighlightColor;
+            style: MarkStyle;
         }): Promise<SermonAnnotation> => {
             if (isPreview(sermonId)) {
                 const now = new Date();
@@ -55,23 +62,24 @@ export const useHighlightMutations = (sermonId: string) => {
                     id: `preview-${previewSeq}`,
                     type: 'highlight',
                     color,
+                    style,
                     createdAt: now,
                     updatedAt: now,
                     updatedBy: 'mobile',
                 };
             }
-            return repository.createHighlight(sermonId, anchor, color);
+            return repository.createHighlight(sermonId, anchor, color, style);
         },
         onSuccess: (created) => write((current) => [...current, created]),
     });
 
     const recolor = useMutation({
-        mutationFn: ({ id, color }: { id: string; color: HighlightColor }) =>
+        mutationFn: ({ id, color, style }: { id: string; color: HighlightColor; style: MarkStyle }) =>
             isPreview(sermonId)
                 ? Promise.resolve()
-                : repository.updateColor(sermonId, id, color),
-        onMutate: ({ id, color }) => {
-            write((current) => current.map((a) => (a.id === id ? { ...a, color } : a)));
+                : repository.updateMark(sermonId, id, color, style),
+        onMutate: ({ id, color, style }) => {
+            write((current) => current.map((a) => (a.id === id ? { ...a, color, style } : a)));
         },
     });
 

@@ -5,6 +5,7 @@ import { splitSentences } from '../sentenceSegmentation';
 import {
     buildAnnotationAnchor,
     resolveAnnotationAnchor,
+    splitWords,
 } from '../../entities/SermonAnnotation';
 import { extractClaimForMarker } from '../../entities/FidelityReport';
 
@@ -183,5 +184,27 @@ describe('annotation anchors', () => {
     it('orphans the mark when the highlighted text is gone', () => {
         const anchor = buildAnnotationAnchor('el-llamado', body, 36, 66);
         expect(resolveAnnotationAnchor(anchor, 'Un sermón completamente distinto.')).toBeNull();
+    });
+});
+
+describe('splitWords', () => {
+    it('corta en palabras con offsets que reconstruyen el original', () => {
+        const text = 'Dios llama  a Moisés.';
+        const words = splitWords(text);
+        expect(words.map((w) => w.text)).toEqual(['Dios', 'llama', 'a', 'Moisés.']);
+        for (const w of words) expect(text.slice(w.start, w.end)).toBe(w.text);
+    });
+
+    it('ignora espacios de sobra y texto vacío', () => {
+        expect(splitWords('   ')).toEqual([]);
+        expect(splitWords('')).toEqual([]);
+    });
+
+    it('sirve para anclar: la primera y la última palabra dan el rango', () => {
+        const body = 'Dios llama a Moisés desde la zarza.';
+        const words = splitWords(body);
+        const from = words[2].start;
+        const to = words[4].end;
+        expect(body.slice(from, to)).toBe('a Moisés desde');
     });
 });

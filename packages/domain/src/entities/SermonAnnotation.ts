@@ -25,6 +25,15 @@
 export const HIGHLIGHT_COLORS = ['yellow', 'green', 'blue', 'pink'] as const;
 export type HighlightColor = (typeof HIGHLIGHT_COLORS)[number];
 
+/**
+ * Cómo se dibuja la marca. Son tres gestos distintos del lápiz sobre el
+ * papel y significan cosas distintas: el resaltado destaca, el subrayado
+ * enfatiza sin tapar, y el tachado marca lo que se decidió NO decir — que en
+ * un manuscrito de púlpito es información tan útil como el resto.
+ */
+export const MARK_STYLES = ['highlight', 'underline', 'strike'] as const;
+export type MarkStyle = (typeof MARK_STYLES)[number];
+
 /** Characters of context kept on each side of the highlighted text. */
 export const ANCHOR_CONTEXT_CHARS = 40;
 
@@ -47,6 +56,12 @@ export interface SermonAnnotation extends SermonAnnotationAnchor {
     id: string;
     /** F1 ships `highlight`; F2 adds `glyph` and `ink` on this union. */
     type: 'highlight';
+    /**
+     * Trazo de la marca. Ausente en las anotaciones anteriores a este campo:
+     * ausente significa `highlight`, que era lo único que existía. No se
+     * adivina nada más.
+     */
+    style?: MarkStyle;
     color: HighlightColor;
     createdAt: Date;
     updatedAt: Date;
@@ -131,4 +146,29 @@ function commonSuffixLength(a: string, b: string): number {
     let i = 0;
     while (i < max && a[a.length - 1 - i] === b[b.length - 1 - i]) i += 1;
     return i;
+}
+
+
+/**
+ * Corta un texto en palabras con sus offsets.
+ *
+ * La unidad de selección del púlpito es la PALABRA: con el dedo, a 28 pt y
+ * de pie, apuntar a un carácter es una promesa que el atril no cumple. La
+ * palabra es lo bastante fina para marcar lo que importa y lo bastante gruesa
+ * para acertarle sin mirar.
+ */
+export interface WordSpan {
+    text: string;
+    start: number;
+    end: number;
+}
+
+export function splitWords(text: string): WordSpan[] {
+    const spans: WordSpan[] = [];
+    const re = /\S+/g;
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(text ?? '')) !== null) {
+        spans.push({ text: match[0], start: match.index, end: match.index + match[0].length });
+    }
+    return spans;
 }

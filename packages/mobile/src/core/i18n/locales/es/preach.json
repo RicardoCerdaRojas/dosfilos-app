@@ -5,17 +5,11 @@
     "text_size": "Tamaño del texto",
     "target_duration": "Duración objetivo (min)",
     "page": "p.",
-    "highlight": "Resaltar",
-    "scope_sentence": "Frase",
-    "scope_paragraph": "Párrafo",
     "color_yellow": "Amarillo",
     "color_green": "Verde",
     "color_blue": "Azul",
     "color_pink": "Rosa",
     "remove_highlight": "Quitar resaltado",
-    "line_breaks": "Corte de línea",
-    "running_text": "Párrafo corrido",
-    "sense_lines": "Una frase por renglón",
     "mode_claro": "Claro",
     "mode_sepia": "Sepia",
     "mode_oscuro": "Oscuro",
@@ -33,5 +27,8 @@
     "instrument_panel": "Tablero inferior",
     "panel_on": "Reservar el tercio",
     "panel_off": "Todo el alto para el texto",
-    "peek_next": "Sigue…"
+    "peek_next": "Sigue…",
+    "style_highlight": "Resaltar",
+    "style_underline": "Subrayar",
+    "style_strike": "Tachar"
 }

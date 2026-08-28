@@ -30,7 +30,7 @@ import { GAZE_LINE_RATIO, TYPE_SCALE } from '@/core/theme/typography';
 import { useReaderSettingsStore } from '@/presentation/state/readerSettings.store';
 import { PreachSectionBody } from '@/presentation/components/preach/PreachSectionBody';
 import { useDeliveryMeasure } from '@/presentation/hooks/useDeliveryMeasure';
-import { HighlightPalette } from '@/presentation/components/preach/HighlightPalette';
+import { MarkPopover } from '@/presentation/components/preach/MarkPopover';
 import { PreachSettingsSheet } from '@/presentation/components/preach/PreachSettingsSheet';
 import { PreachInstrumentPanel } from '@/presentation/components/preach/PreachInstrumentPanel';
 import { usePagination } from '@/presentation/hooks/usePagination';
@@ -137,8 +137,10 @@ export default function PreachModeScreen({
             fontSize={fontSize}
             tokens={tokens}
             senseLines={senseLines}
+            selection={null}
+            onSelectionChange={() => undefined}
+            onSelectionEnd={() => undefined}
             onTapAt={() => undefined}
-            onLongPressUnit={() => undefined}
             onPressCitation={() => undefined}
             onPressApparatus={() => undefined}
         />
@@ -167,7 +169,7 @@ export default function PreachModeScreen({
     // carga timer, modos de luz, navegación por secciones y citas.
     // El pulso se apaga solo en e-ink: los lectores BOOX no tienen motor
     // háptico. Atril apaga animaciones pero conserva el pulso.
-    const highlighting = usePreachHighlights(id ?? '', section, blocks, readingMode !== 'eink');
+    const highlighting = usePreachHighlights(id ?? '', section, readingMode !== 'eink');
 
     const goTo = (index: number) => {
         if (index < 0 || index >= sections.length) return;
@@ -340,17 +342,9 @@ export default function PreachModeScreen({
                         senseLines={senseLines}
                         onTapAt={handleTap}
                         onPressApparatus={setApparatus}
-                        // El cuerpo renderiza SÓLO los bloques de esta página,
-                        // así que emite índices locales; el hook los resuelve
-                        // contra los de toda la sección. Sin esta traducción,
-                        // resaltar en cualquier página que no sea la primera
-                        // marca el bloque equivocado.
-                        onLongPressUnit={(localBlock, unit) =>
-                            highlighting.openPalette(
-                                pages.length ? pages[safePageIndex][localBlock] : localBlock,
-                                unit,
-                            )
-                        }
+                        selection={highlighting.selection}
+                        onSelectionChange={highlighting.beginSelection}
+                        onSelectionEnd={highlighting.endSelection}
                         onPressCitation={openCitation}
                     />
 
@@ -525,16 +519,19 @@ export default function PreachModeScreen({
                 </Pressable>
             </Modal>
 
-            {/* Resaltado por tap largo: color y alcance (frase o párrafo) */}
-            <HighlightPalette
-                visible={highlighting.paletteOpen}
+            {/* Marcas: popover contextual junto a lo que se seleccionó. Un
+                panel inferior tapaba el tablero y obligaba a mirar a otro
+                lado del que se estaba marcando. */}
+            <MarkPopover
+                visible={highlighting.popoverOpen}
                 tokens={tokens}
-                scope={highlighting.scope}
-                onChangeScope={highlighting.setScope}
+                anchorY={highlighting.popoverY}
+                screenHeight={screenHeight}
                 currentColor={highlighting.pendingColor}
-                onPick={highlighting.applyColor}
-                onRemove={highlighting.removeHighlight}
-                onClose={highlighting.closePalette}
+                currentStyle={highlighting.pendingStyle}
+                onPick={highlighting.applyMark}
+                onRemove={highlighting.removeMark}
+                onClose={highlighting.close}
             />
 
             {/* Blackout: pantalla negra total; un tap la retira */}

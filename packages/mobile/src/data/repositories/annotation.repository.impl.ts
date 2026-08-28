@@ -7,8 +7,13 @@ import {
     setDoc,
     updateDoc,
 } from '@react-native-firebase/firestore';
-import { HIGHLIGHT_COLORS } from '@dosfilos/domain';
-import type { HighlightColor, SermonAnnotation, SermonAnnotationAnchor } from '@dosfilos/domain';
+import { HIGHLIGHT_COLORS, MARK_STYLES } from '@dosfilos/domain';
+import type {
+    HighlightColor,
+    MarkStyle,
+    SermonAnnotation,
+    SermonAnnotationAnchor,
+} from '@dosfilos/domain';
 
 import { AnnotationRepository } from '@/domain/repositories/annotation.repository';
 import { getFirebaseAuth, getFirebaseDb } from '@/data/sources/firebase.source';
@@ -41,11 +46,15 @@ const toDate = (value: unknown): Date => {
 const isHighlightColor = (value: unknown): value is HighlightColor =>
     HIGHLIGHT_COLORS.includes(value as HighlightColor);
 
+// Ausente significa `highlight`: es lo único que existía antes del campo.
+const toMarkStyle = (value: unknown): MarkStyle =>
+    MARK_STYLES.includes(value as MarkStyle) ? (value as MarkStyle) : 'highlight';
+
 export class AnnotationRepositoryImpl implements AnnotationRepository {
     async list(sermonId: string): Promise<SermonAnnotation[]> {
         const snap = await getDocs(annotationsRef(sermonId));
         return snap.docs
-            .map((d) => {
+            .map((d): SermonAnnotation | null => {
                 const data = d.data() as any;
                 // F2 escribirá tinta y glifos en la misma colección: lo que no
                 // sea un resaltado se ignora en vez de romper la pantalla.
@@ -60,10 +69,11 @@ export class AnnotationRepositoryImpl implements AnnotationRepository {
                     prefix: String(data.prefix ?? ''),
                     suffix: String(data.suffix ?? ''),
                     color: data.color,
+                    style: toMarkStyle(data.style),
                     createdAt: toDate(data.createdAt),
                     updatedAt: toDate(data.updatedAt),
                     updatedBy: data.updatedBy === 'web' ? ('web' as const) : ('mobile' as const),
-                } satisfies SermonAnnotation;
+                };
             })
             .filter((a): a is SermonAnnotation => a !== null && a.exact.length > 0);
     }
@@ -72,6 +82,7 @@ export class AnnotationRepositoryImpl implements AnnotationRepository {
         sermonId: string,
         anchor: SermonAnnotationAnchor,
         color: HighlightColor,
+        style: MarkStyle,
     ): Promise<SermonAnnotation> {
         const now = new Date();
         const ref = doc(annotationsRef(sermonId));
@@ -80,6 +91,7 @@ export class AnnotationRepositoryImpl implements AnnotationRepository {
                 ...anchor,
                 type: 'highlight',
                 color,
+                style,
                 userId: getFirebaseAuth().currentUser?.uid ?? null,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
@@ -92,20 +104,27 @@ export class AnnotationRepositoryImpl implements AnnotationRepository {
             id: ref.id,
             type: 'highlight',
             color,
+            style,
             createdAt: now,
             updatedAt: now,
             updatedBy: 'mobile',
         };
     }
 
-    async updateColor(sermonId: string, annotationId: string, color: HighlightColor): Promise<void> {
+    async updateMark(
+        sermonId: string,
+        annotationId: string,
+        color: HighlightColor,
+        style: MarkStyle,
+    ): Promise<void> {
         settleOffline(
             updateDoc(doc(annotationsRef(sermonId), annotationId), {
                 color,
+                style,
                 updatedAt: serverTimestamp(),
                 updatedBy: 'mobile',
             }),
-            `updateColor ${annotationId}`,
+            `updateMark ${annotationId}`,
         );
     }
 
