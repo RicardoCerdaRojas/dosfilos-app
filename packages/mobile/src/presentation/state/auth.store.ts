@@ -11,6 +11,7 @@ interface AuthState {
     signIn: (email: string, password: string) => Promise<void>;
     signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
     signInWithGoogle: (idToken: string) => Promise<void>;
+    signInWithApple: (identityToken: string, rawNonce: string) => Promise<void>;
     signOut: () => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
     setUser: (user: User | null) => void;
@@ -49,6 +50,17 @@ export const useAuthStore = create<AuthState>((set) => ({
         } catch (error) {
             set({ isLoading: false });
             console.warn('Google sign in failed', error);
+            throw error;
+        }
+    },
+    signInWithApple: async (identityToken, rawNonce) => {
+        try {
+            set({ isLoading: true });
+            const user = await authRepository.signInWithApple(identityToken, rawNonce);
+            set({ user, isLoading: false });
+        } catch (error) {
+            set({ isLoading: false });
+            console.warn('Apple sign in failed', error);
             throw error;
         }
     },
