@@ -4,11 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import {
-    READING_MODE_LABEL_KEYS,
-    ReadingMode,
-    ReadingModeTokens,
-} from '@/core/theme/readingModes';
+import { READING_MODE_LABEL_KEYS, ReadingMode, ReadingModeTokens } from '@/core/theme/readingModes';
 import { DELIVERY_FACES, DELIVERY_SIZE } from '@/core/theme/typography';
 import type { DeliveryFace } from '@/core/theme/typography';
 import type { MovementBudget } from '@dosfilos/domain';
@@ -72,12 +68,26 @@ export function PreachSettingsSheet({
     const insets = useSafeAreaInsets();
 
     return (
-        <Modal visible={visible} transparent animationType={tokens.animations ? 'slide' : 'none'}>
-            <Pressable className="flex-1 bg-black/40" onPress={onClose}>
-                <View
-                    className="mt-auto rounded-t-2xl px-6 pt-5"
-                    style={{ backgroundColor: tokens.surface, paddingBottom: insets.bottom + 20 }}
+        <Modal visible={visible} transparent animationType={tokens.animations ? 'fade' : 'none'}>
+            {/* Cajón lateral derecho, no hoja inferior. En una tablet el ancho
+                sobra y el alto no: una hoja desde abajo tapaba justo el tablero
+                y dejaba media pantalla vacía a los costados. */}
+            <Pressable className="flex-1 flex-row bg-black/40" onPress={onClose}>
+                <View className="flex-1" />
+                <Pressable
+                    className="px-6 pt-6"
+                    onPress={() => undefined}
+                    style={{
+                        backgroundColor: tokens.surface,
+                        width: 420,
+                        maxWidth: '85%',
+                        height: '100%',
+                        paddingBottom: insets.bottom + 20,
+                        borderLeftWidth: 1,
+                        borderLeftColor: tokens.border,
+                    }}
                 >
+                    <ScrollView showsVerticalScrollIndicator={false}>
                     <Text
                         style={{ color: tokens.textSecondary }}
                         className="font-lexend-semibold text-xs uppercase tracking-widest mb-2"
@@ -169,16 +179,16 @@ export function PreachSettingsSheet({
                         {t('preach:gaze_guide')}
                     </Text>
                     {/* Tres estados EXCLUYENTES: la colometría y la línea al
-                        66 % resuelven lo mismo —dónde levantar la vista— y se
-                        estorban. No son dos niveles de una escala. */}
+                                                66 % resuelven lo mismo —dónde levantar la vista— y se
+                                                estorban. No son dos niveles de una escala. */}
                     <View className="flex-row flex-wrap mb-5">
                         {GAZE_GUIDES.map((guide) => {
                             const active =
                                 guide === 'sense'
                                     ? senseLines
                                     : guide === 'line'
-                                      ? gazeLine
-                                      : !senseLines && !gazeLine;
+                                        ? gazeLine
+                                        : !senseLines && !gazeLine;
                             const label = t(`preach:guide_${guide}`);
                             return (
                                 <TouchableOpacity
@@ -277,10 +287,7 @@ export function PreachSettingsSheet({
                             >
                                 {t('preach:movement_budget')}
                             </Text>
-                            <Text
-                                style={{ color: tokens.textSecondary }}
-                                className="font-lexend text-xs mb-2"
-                            >
+                            <Text style={{ color: tokens.textSecondary }} className="font-lexend text-xs mb-2">
                                 {t('preach:movement_budget_hint')}
                             </Text>
                             <ScrollView style={{ maxHeight: 220 }}>
@@ -294,9 +301,7 @@ export function PreachSettingsSheet({
                                             {budget.title}
                                         </Text>
                                         <TouchableOpacity
-                                            onPress={() =>
-                                                onSetBudget(budget.slug, Math.max(30, budget.seconds - 60))
-                                            }
+                                            onPress={() => onSetBudget(budget.slug, Math.max(30, budget.seconds - 60))}
                                             accessibilityRole="button"
                                             accessibilityLabel={t('preach:budget_less')}
                                             className="px-3 py-1 rounded-lg"
@@ -341,7 +346,8 @@ export function PreachSettingsSheet({
                             </ScrollView>
                         </>
                     ) : null}
-                </View>
+                    </ScrollView>
+                </Pressable>
             </Pressable>
         </Modal>
     );

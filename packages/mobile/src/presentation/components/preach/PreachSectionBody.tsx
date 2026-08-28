@@ -101,6 +101,7 @@ export function PreachSectionBody({
                 onTapAt={onTapAt}
                 onPressCitation={onPressCitation}
                 faceClass={FACE_CLASS[face].regular}
+                hangingIndent={fontSize * HANGING_INDENT_EM}
                 onWordLayout={onWordLayout}
             />
         </View>
@@ -185,19 +186,9 @@ export function PreachSectionBody({
                     // frase de su continuación. RN no tiene text-indent
                     // negativo: de ahí el padding con margen negativo.
                     <View key={blockIndex} style={{ marginBottom: fontSize * PARAGRAPH_GAP_EM }}>
-                        {block.units.map((unit, unitIndex) => (
-                            <View
-                                key={unitIndex}
-                                style={{
-                                    paddingLeft: fontSize * HANGING_INDENT_EM,
-                                    marginBottom: fontSize * 0.12,
-                                }}
-                            >
-                                <View style={{ marginLeft: -fontSize * HANGING_INDENT_EM }}>
-                                    {paragraph([unit], unitIndex)}
-                                </View>
-                            </View>
-                        ))}
+                        {block.units.map((unit, unitIndex) =>
+                            paragraph([unit], unitIndex, { marginBottom: fontSize * 0.12 }),
+                        )}
                     </View>
                 ) : (
                     paragraph(block.units, blockIndex, {

@@ -39,6 +39,12 @@ interface Props {
     /** Clase de NativeWind de la familia elegida (font-lexend, font-literata…). */
     faceClass: string;
     /**
+     * Sangría francesa, en unidades del cuerpo: la primera línea arranca en el
+     * margen y las siguientes entran. Marca dónde EMPIEZA cada párrafo, que es
+     * lo que el ojo busca al volver del público.
+     */
+    hangingIndent?: number;
+    /**
      * Reporta dónde quedó cada palabra en PANTALLA. Es lo que le permite a la
      * capa de tinta anclarse al texto: sin esta geometría una nota sólo podría
      * guardarse en coordenadas de pantalla, y se rompería al cambiar el cuerpo.
@@ -73,6 +79,7 @@ export function SelectableParagraph({
     onPressCitation,
     selectionColor,
     faceClass,
+    hangingIndent = 0,
     onWordLayout,
 }: Props) {
     const rects = useRef<Map<number, LayoutRectangle>>(new Map());
@@ -198,6 +205,7 @@ export function SelectableParagraph({
         <View
             ref={container}
             className="flex-row flex-wrap"
+            style={{ paddingLeft: hangingIndent }}
             onLayout={() =>
                 container.current?.measureInWindow((x, y) => {
                     origin.current = { x, y };
@@ -209,6 +217,11 @@ export function SelectableParagraph({
             onTouchCancel={cancelPress}
             onStartShouldSetResponder={() => false}
             onMoveShouldSetResponder={() => anchor.current !== null}
+            // Con una selección viva, NO se cede el gesto. Sin esto el swipe
+            // de pasar página lo reclama a mitad del arrastre, el párrafo
+            // recibe onResponderTerminate y la selección se borra sola: era
+            // el bug de "marco una palabra y al avanzar se desmarca todo".
+            onResponderTerminationRequest={() => anchor.current === null}
             onResponderMove={handleMove}
             onResponderRelease={handleRelease}
             onResponderTerminate={handleTerminate}
@@ -237,7 +250,13 @@ export function SelectableParagraph({
                             backgroundColor: selected
                                 ? selectionColor
                                 : (mark?.background ?? 'transparent'),
-                            marginRight: fontSize * 0.28,
+                            // Padding y no margen: el espacio entre palabras
+                            // queda DENTRO del fondo, así el resaltado sale
+                            // continuo en vez de entrecortado.
+                            paddingRight: fontSize * 0.28,
+                            // La primera palabra sale de la sangría: es lo que
+                            // deja la primera línea afuera y el resto adentro.
+                            marginLeft: index === 0 ? -hangingIndent : 0,
                         }}
                     >
                         <Text
