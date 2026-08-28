@@ -10,6 +10,13 @@ interface ReaderSettingsState {
     /** Modo de luz del lector/púlpito (plan §6). Persistido; sync llega en F1. */
     readingMode: ReadingMode;
     setReadingMode: (mode: ReadingMode) => void;
+    /**
+     * Colometría: cada oración abre renglón (D6). Preferencia del predicador,
+     * no un ajuste con respuesta correcta — hay quien reengancha mejor con el
+     * párrafo corrido.
+     */
+    senseLines: boolean;
+    setSenseLines: (on: boolean) => void;
 }
 
 export const useReaderSettingsStore = create<ReaderSettingsState>()(
@@ -19,6 +26,8 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
             setFontSize: (size: number) => set({ fontSize: size }),
             readingMode: 'claro',
             setReadingMode: (mode: ReadingMode) => set({ readingMode: mode }),
+            senseLines: false,
+            setSenseLines: (on: boolean) => set({ senseLines: on }),
         }),
         {
             name: 'reader-settings-storage',

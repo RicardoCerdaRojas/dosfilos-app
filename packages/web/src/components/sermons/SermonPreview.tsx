@@ -236,9 +236,13 @@ export function SermonPreview({
         </div>
 
         {/* Main Content */}
-        <div 
+        {/* D1 — la medida va en CARACTERES, no en píxeles: el contenedor fijo
+            daba ~92 car./línea a 18 px, así que el control de tamaño movía la
+            medida sin avisar. 62 ch es lectura sentada y en silencio; el
+            púlpito usa 48 porque leer en voz alta es otra cosa. */}
+        <div
           className="prose prose-lg max-w-none dark:prose-invert sermon-content transition-all duration-200"
-          style={{ fontSize: `${fontSize}px` }}
+          style={{ fontSize: `${fontSize}px`, maxWidth: '62ch', marginInline: 'auto' }}
         >
           <style>{`
             .sermon-content p {

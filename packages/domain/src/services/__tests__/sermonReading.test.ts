@@ -103,6 +103,50 @@ describe('buildReadingBlocks', () => {
         expect(blocks[2].units[0].text).toBe('Nadie discute con el fuego [1].');
     });
 
+    it('consumes blockquote markers and keeps the quote as one block', () => {
+        const quoted = [
+            'Texto de entrega.',
+            '',
+            '> «From the LORD. RSV has, more literally, from the presence.»',
+            '>',
+            '> — David W. Baker, Obadiah, Jonah and Micah [1]',
+        ].join('\n');
+        const blocks = buildReadingBlocks(quoted);
+        expect(blocks.map((b) => b.kind)).toEqual(['paragraph', 'quote']);
+        // Ni `>` literales ni el `> >` que producía la línea vacía de cita.
+        expect(blocks[1].text).not.toContain('>');
+        expect(blocks[1].text).toContain('David W. Baker');
+    });
+
+    it('splits bullets into one block each, marker consumed', () => {
+        const listed = [
+            '### Referencias Cruzadas',
+            '',
+            '- "Cuando anduviere por valle de sombra de muerte" (Salmo 23:4)',
+            '- "¿Soy yo Dios de cerca solamente?" (Jeremías 23:23)',
+        ].join('\n');
+        const blocks = buildReadingBlocks(listed);
+        expect(blocks.map((b) => b.kind)).toEqual(['subheading', 'listitem', 'listitem']);
+        expect(blocks[1].text.startsWith('-')).toBe(false);
+        expect(blocks[2].text).toContain('Jeremías 23:23');
+    });
+
+    it('keeps a wrapped bullet with its own item', () => {
+        const wrapped = ['- Primer punto que sigue', '  en la línea de abajo.', '- Segundo punto.'].join('\n');
+        const blocks = buildReadingBlocks(wrapped);
+        expect(blocks.map((b) => b.kind)).toEqual(['listitem', 'listitem']);
+        expect(blocks[0].text).toBe('Primer punto que sigue en la línea de abajo.');
+    });
+
+    it('does not let a star bullet open emphasis and swallow the next item', () => {
+        const blocks = buildReadingBlocks(['* Primero.', '* Segundo.'].join('\n'));
+        expect(blocks.map((b) => b.text)).toEqual(['Primero.', 'Segundo.']);
+    });
+
+    it('still unwraps real emphasis', () => {
+        expect(buildReadingBlocks('El *evangelio* es poder.')[0].text).toBe('El evangelio es poder.');
+    });
+
     it('returns nothing for an empty body', () => {
         expect(buildReadingBlocks('')).toEqual([]);
         expect(buildReadingBlocks('   \n\n  ')).toEqual([]);

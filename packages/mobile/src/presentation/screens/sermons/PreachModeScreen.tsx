@@ -21,14 +21,12 @@ import { aggregateRequiredAttributions, buildReadingBlocks } from '@dosfilos/dom
 import { useSermon } from '@/presentation/hooks/useSermons';
 import { usePreachHighlights } from '@/presentation/hooks/usePreachHighlights';
 import { extractSectionsWithBody } from '@/core/utils/sermonSections';
-import { READING_MODES, READING_MODE_LABELS, ReadingMode } from '@/core/theme/readingModes';
+import { READING_MODES } from '@/core/theme/readingModes';
+import { TYPE_SCALE } from '@/core/theme/typography';
 import { useReaderSettingsStore } from '@/presentation/state/readerSettings.store';
 import { PreachSectionBody } from '@/presentation/components/preach/PreachSectionBody';
 import { HighlightPalette } from '@/presentation/components/preach/HighlightPalette';
-
-const MODES: ReadingMode[] = ['claro', 'sepia', 'oscuro', 'atril', 'eink'];
-const FONT_MIN = 20;
-const FONT_MAX = 40;
+import { PreachSettingsSheet } from '@/presentation/components/preach/PreachSettingsSheet';
 
 const formatTime = (totalSeconds: number): string => {
     const abs = Math.abs(totalSeconds);
@@ -49,6 +47,8 @@ export default function PreachModeScreen() {
     const setReadingMode = useReaderSettingsStore((s) => s.setReadingMode);
     const fontSize = useReaderSettingsStore((s) => s.fontSize);
     const setFontSize = useReaderSettingsStore((s) => s.setFontSize);
+    const senseLines = useReaderSettingsStore((s) => s.senseLines);
+    const setSenseLines = useReaderSettingsStore((s) => s.setSenseLines);
     const tokens = READING_MODES[readingMode];
 
     // El púlpito nunca se apaga a mitad de sermón. En modo atril es
@@ -63,6 +63,8 @@ export default function PreachModeScreen() {
     const [citation, setCitation] = useState<{ ordinal: number; entry: CitationManifestEntry }[] | null>(
         null,
     );
+    /** Cita de bloque abierta desde su marca al margen (P5). */
+    const [apparatus, setApparatus] = useState<string | null>(null);
 
     const [targetMinutes, setTargetMinutes] = useState(30);
     const [elapsed, setElapsed] = useState(0);
@@ -150,11 +152,19 @@ export default function PreachModeScreen() {
                         <TouchableOpacity onPress={() => setRunning((r) => !r)} className="flex-row items-center mr-4">
                             <MaterialIcons
                                 name={running ? 'pause' : 'play-arrow'}
-                                size={20}
+                                size={Math.round(fontSize * TYPE_SCALE.timer * 0.8)}
                                 color={tokens.textSecondary}
                             />
+                            {/* D5: el timer se consulta de reojo desde el
+                                atril. Escala con el cuerpo en vez de quedarse
+                                en el tamaño más chico de la pantalla. */}
                             <Text
-                                style={{ color: timerColor, fontSize: 20, marginLeft: 4 }}
+                                style={{
+                                    color: timerColor,
+                                    fontSize: fontSize * TYPE_SCALE.timer,
+                                    marginLeft: 6,
+                                    fontVariant: ['tabular-nums'],
+                                }}
                                 className="font-lexend-semibold"
                             >
                                 {formatTime(remaining)}
@@ -174,7 +184,9 @@ export default function PreachModeScreen() {
                 <ScrollView
                     ref={scrollRef}
                     contentContainerStyle={{
-                        paddingHorizontal: 40,
+                        // Sin medida en píxeles: PreachSectionBody se centra a
+                        // sí mismo en 48 ch (D1). Esto es solo respiro mínimo.
+                        paddingHorizontal: 24,
                         paddingTop: chromeVisible ? 16 : insets.top + 24,
                         paddingBottom: insets.bottom + 56,
                     }}
@@ -201,7 +213,9 @@ export default function PreachModeScreen() {
                         highlights={highlighting.highlights}
                         fontSize={fontSize}
                         tokens={tokens}
+                        senseLines={senseLines}
                         onTapAt={handleTap}
+                        onPressApparatus={setApparatus}
                         onLongPressUnit={highlighting.openPalette}
                         onPressCitation={openCitation}
                     />
@@ -285,91 +299,23 @@ export default function PreachModeScreen() {
                 </Pressable>
             </Modal>
 
-            {/* Ajustes: modo de luz, tipografía, duración */}
-            <Modal visible={showSettings} transparent animationType={tokens.animations ? 'slide' : 'none'}>
-                <Pressable className="flex-1 bg-black/40" onPress={() => setShowSettings(false)}>
-                    <View
-                        className="mt-auto rounded-t-2xl px-6 pt-5"
-                        style={{ backgroundColor: tokens.surface, paddingBottom: insets.bottom + 20 }}
-                    >
-                        <Text style={{ color: tokens.textSecondary }} className="font-lexend-semibold text-xs uppercase tracking-widest mb-2">
-                            {t('preach:light_mode')}
-                        </Text>
-                        <View className="flex-row flex-wrap mb-5">
-                            {MODES.map((m) => (
-                                <TouchableOpacity
-                                    key={m}
-                                    onPress={() => setReadingMode(m)}
-                                    className="px-4 py-2 rounded-full mr-2 mb-2"
-                                    style={{
-                                        backgroundColor: m === readingMode ? tokens.accent : 'transparent',
-                                        borderWidth: 1,
-                                        borderColor: m === readingMode ? tokens.accent : tokens.border,
-                                    }}
-                                >
-                                    <Text
-                                        style={{ color: m === readingMode ? tokens.background : tokens.textPrimary }}
-                                        className="font-lexend text-sm"
-                                    >
-                                        {READING_MODE_LABELS[m]}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        <Text style={{ color: tokens.textSecondary }} className="font-lexend-semibold text-xs uppercase tracking-widest mb-2">
-                            {t('preach:text_size')}
-                        </Text>
-                        <View className="flex-row items-center mb-5">
-                            <TouchableOpacity
-                                onPress={() => setFontSize(Math.max(FONT_MIN, fontSize - 2))}
-                                className="px-4 py-2 rounded-lg"
-                                style={{ borderWidth: 1, borderColor: tokens.border }}
-                            >
-                                <MaterialIcons name="remove" size={20} color={tokens.textPrimary} />
-                            </TouchableOpacity>
-                            <Text style={{ color: tokens.textPrimary }} className="font-lexend mx-4">
-                                {fontSize}
-                            </Text>
-                            <TouchableOpacity
-                                onPress={() => setFontSize(Math.min(FONT_MAX, fontSize + 2))}
-                                className="px-4 py-2 rounded-lg"
-                                style={{ borderWidth: 1, borderColor: tokens.border }}
-                            >
-                                <MaterialIcons name="add" size={20} color={tokens.textPrimary} />
-                            </TouchableOpacity>
-                        </View>
-
-                        <Text style={{ color: tokens.textSecondary }} className="font-lexend-semibold text-xs uppercase tracking-widest mb-2">
-                            {t('preach:target_duration')}
-                        </Text>
-                        <View className="flex-row flex-wrap">
-                            {[20, 25, 30, 35, 40, 45].map((min) => (
-                                <TouchableOpacity
-                                    key={min}
-                                    onPress={() => {
-                                        setTargetMinutes(min);
-                                        setElapsed(0);
-                                    }}
-                                    className="px-4 py-2 rounded-full mr-2 mb-2"
-                                    style={{
-                                        backgroundColor: min === targetMinutes ? tokens.accent : 'transparent',
-                                        borderWidth: 1,
-                                        borderColor: min === targetMinutes ? tokens.accent : tokens.border,
-                                    }}
-                                >
-                                    <Text
-                                        style={{ color: min === targetMinutes ? tokens.background : tokens.textPrimary }}
-                                        className="font-lexend text-sm"
-                                    >
-                                        {min}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    </View>
-                </Pressable>
-            </Modal>
+            {/* Ajustes: modo de luz, tipografía, corte de línea, duración */}
+            <PreachSettingsSheet
+                visible={showSettings}
+                onClose={() => setShowSettings(false)}
+                tokens={tokens}
+                readingMode={readingMode}
+                setReadingMode={setReadingMode}
+                fontSize={fontSize}
+                setFontSize={setFontSize}
+                senseLines={senseLines}
+                setSenseLines={setSenseLines}
+                targetMinutes={targetMinutes}
+                onPickDuration={(min) => {
+                    setTargetMinutes(min);
+                    setElapsed(0);
+                }}
+            />
 
             {/* Popover de cita [N] — primer cliente del citationManifest */}
             <Modal visible={citation !== null} transparent animationType={tokens.animations ? 'fade' : 'none'}>
@@ -391,6 +337,28 @@ export default function PreachModeScreen() {
                                 </Text>
                             </View>
                         ))}
+                    </View>
+                </Pressable>
+            </Modal>
+
+            {/* Aparato de estudio: fuera del flujo de entrega, en capa (P5) */}
+            <Modal visible={apparatus !== null} transparent animationType={tokens.animations ? 'fade' : 'none'}>
+                <Pressable
+                    className="flex-1 bg-black/50 items-center justify-center px-8"
+                    onPress={() => setApparatus(null)}
+                >
+                    <View
+                        className="rounded-2xl p-6 w-full max-w-2xl"
+                        style={{ backgroundColor: tokens.surface, maxHeight: '70%' }}
+                    >
+                        <ScrollView>
+                            <Text
+                                style={{ color: tokens.textPrimary, fontSize: fontSize * 0.7 }}
+                                className="font-lexend leading-6"
+                            >
+                                {apparatus}
+                            </Text>
+                        </ScrollView>
                     </View>
                 </Pressable>
             </Modal>

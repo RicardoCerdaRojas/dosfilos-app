@@ -102,9 +102,14 @@ export const READING_MODES: Record<ReadingMode, ReadingModeTokens> = {
         statusBarStyle: 'light',
     },
     atril: {
-        background: '#000000',
-        surface: '#0a0a0a',
-        textPrimary: '#ffffff',
+        // Blanco puro sobre negro puro produce HALACIÓN bajo luz de escenario
+        // y con la pupila dilatada: los trazos claros se derraman sobre el
+        // fondo y el texto pierde definición justo en la condición para la que
+        // se diseñó el modo. Blanco cálido sobre negro casi puro conserva el
+        // contraste sin el derrame. (E-ink sí quiere puros, por el refresco.)
+        background: '#0b0b0c',
+        surface: '#131316',
+        textPrimary: '#f2efe9',
         textSecondary: '#d4d4d4',
         accent: '#ffd166',
         border: '#404040',

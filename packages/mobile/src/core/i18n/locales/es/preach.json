@@ -12,5 +12,8 @@
     "color_green": "Verde",
     "color_blue": "Azul",
     "color_pink": "Rosa",
-    "remove_highlight": "Quitar resaltado"
+    "remove_highlight": "Quitar resaltado",
+    "line_breaks": "Corte de línea",
+    "running_text": "Párrafo corrido",
+    "sense_lines": "Una frase por renglón"
 }

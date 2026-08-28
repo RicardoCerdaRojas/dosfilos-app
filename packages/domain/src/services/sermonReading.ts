@@ -24,6 +24,23 @@ export interface SourceMappedText {
     map: number[];
 }
 
+/**
+ * What a block IS, which decides how the pulpit treats it.
+ *
+ *  - `paragraph` / `subheading` / `listitem` — delivery material: the pastor
+ *    says these out loud.
+ *  - `quote` — a markdown blockquote. This is STUDY apparatus: the commentary
+ *    excerpt he read on Tuesday, often in another language. On Sunday it must
+ *    collapse to a mark he can open, not sit in the delivery flow taking a
+ *    whole screen at delivery size.
+ *
+ * The split is structural, not a guess about content. Cross-reference lists
+ * are study material too, but telling them apart from a delivery list needs
+ * heuristics over heading names — that belongs upstream, in what the
+ * generator writes into the delivery markdown, not in the reader.
+ */
+export type ReadingBlockKind = 'subheading' | 'paragraph' | 'listitem' | 'quote';
+
 /** One long-pressable unit: a sentence, with its range in the raw body. */
 export interface ReadingUnit {
     text: string;
@@ -33,7 +50,7 @@ export interface ReadingUnit {
 }
 
 export interface ReadingBlock {
-    kind: 'subheading' | 'paragraph';
+    kind: ReadingBlockKind;
     text: string;
     /** Sentences of a paragraph; a subheading is a single unit. */
     units: ReadingUnit[];
@@ -61,7 +78,10 @@ const RULES: RewriteRule[] = [
     { re: /\{#[^}]+\}/g, emit: () => null },
     { re: /\[([^\]]+)\]\(#[^)]*\)/g, emit: (m) => ({ text: m[1], offsetInMatch: 1 }) },
     { re: /\*\*(.+?)\*\*/g, emit: (m) => ({ text: m[1], offsetInMatch: 2 }) },
-    { re: /\*(.+?)\*/g, emit: (m) => ({ text: m[1], offsetInMatch: 1 }) },
+    // El abridor de énfasis no puede ir seguido de espacio: si no, un
+    // marcador de lista `* punto` abre énfasis y se come hasta el próximo
+    // asterisco, fundiendo dos viñetas en una.
+    { re: /\*(\S(?:.*?\S)?)\*/g, emit: (m) => ({ text: m[1], offsetInMatch: 1 }) },
 ];
 
 function identity(text: string): SourceMappedText {
@@ -142,6 +162,10 @@ function toUnits(src: SourceMappedText): ReadingUnit[] {
 }
 
 const SUBHEADING_RE = /^#{3,}\s+(.+?)\s*$/;
+/** Cita de bloque markdown: `>` con o sin espacio. */
+const QUOTE_RE = /^>\s?/;
+/** Viñeta o numeral. El asterisco exige espacio, para no chocar con énfasis. */
+const LIST_RE = /^(?:[-•+]\s+|\*\s+|\d+[.)]\s+)/;
 
 /**
  * Turn the raw markdown body of one section into renderable blocks whose
@@ -149,6 +173,10 @@ const SUBHEADING_RE = /^#{3,}\s+(.+?)\s*$/;
  *
  * `##` headers are the section cut itself (see `extractSectionsWithBody`), so
  * only `###` and deeper appear here, as subheadings.
+ *
+ * Blockquote and list markers are consumed HERE. Left in the text they reach
+ * the pulpit as literal `>` and `-` characters in the middle of the sermon,
+ * and consecutive quoted lines collapse into one run-on line.
  */
 export function buildReadingBlocks(body: string): ReadingBlock[] {
     const normalized = normalizeSectionBody(body);
@@ -167,56 +195,72 @@ export function buildReadingBlocks(body: string): ReadingBlock[] {
     }
     chunkBounds.push({ start: cursor, end: normalized.text.length });
 
+    const push = (kind: ReadingBlockKind, lines: { start: number; end: number }[]) => {
+        if (!lines.length) return;
+        const joined = trimMapped(joinLines(normalized, lines));
+        if (!joined.text) return;
+        blocks.push({ kind, text: joined.text, units: toUnits(joined) });
+    };
+
     for (const chunk of chunkBounds) {
         if (chunk.end <= chunk.start) continue;
 
-        // A chunk may mix subheadings and prose lines; flush prose on each
-        // subheading so the two never merge into one paragraph.
-        let paragraph: { start: number; end: number }[] = [];
+        // Un chunk mezcla subtítulos, prosa, citas y viñetas. Se acumula por
+        // tipo y se descarga al cambiar, para que nunca se fundan entre sí.
+        let mode: ReadingBlockKind | null = null;
+        let buffer: { start: number; end: number }[] = [];
         const flush = () => {
-            if (!paragraph.length) return;
-            const joined = joinLines(normalized, paragraph);
-            const trimmed = trimMapped(joined);
-            if (trimmed.text) {
-                blocks.push({ kind: 'paragraph', text: trimmed.text, units: toUnits(trimmed) });
-            }
-            paragraph = [];
+            if (mode) push(mode, buffer);
+            mode = null;
+            buffer = [];
         };
 
         let lineStart = chunk.start;
         for (let i = chunk.start; i <= chunk.end; i += 1) {
             if (i !== chunk.end && normalized.text[i] !== '\n') continue;
 
-            // Trim in NORMALIZED coordinates so the joined paragraph never
-            // carries a line's leading indentation into the map.
+            // Trim in NORMALIZED coordinates so the joined block never carries
+            // a line's leading indentation into the map.
             let ls = lineStart;
             let le = i;
             while (ls < le && /\s/.test(normalized.text[ls])) ls += 1;
             while (le > ls && /\s/.test(normalized.text[le - 1])) le -= 1;
+            lineStart = i + 1;
 
-            const line = sliceMapped(normalized, ls, le);
-            const heading = line.text.match(SUBHEADING_RE);
+            const text = normalized.text.slice(ls, le);
+            if (!text) continue;
+
+            const heading = text.match(SUBHEADING_RE);
             if (heading) {
                 flush();
-                const offset = line.text.indexOf(heading[1]);
-                const headingText = sliceMapped(line, offset, offset + heading[1].length);
-                blocks.push({
-                    kind: 'subheading',
-                    text: headingText.text,
-                    units: headingText.text
-                        ? [
-                              {
-                                  text: headingText.text,
-                                  sourceStart: headingText.map[0],
-                                  sourceEnd: headingText.map[headingText.map.length - 1] + 1,
-                              },
-                          ]
-                        : [],
-                });
-            } else if (line.text) {
-                paragraph.push({ start: ls, end: le });
+                const offset = text.indexOf(heading[1]);
+                push('subheading', [{ start: ls + offset, end: ls + offset + heading[1].length }]);
+                continue;
             }
-            lineStart = i + 1;
+
+            const quote = text.match(QUOTE_RE);
+            if (quote) {
+                if (mode !== 'quote') flush();
+                mode = 'quote';
+                // Una línea `>` sola es separador dentro de la cita, no texto.
+                if (le > ls + quote[0].length) buffer.push({ start: ls + quote[0].length, end: le });
+                continue;
+            }
+
+            const bullet = text.match(LIST_RE);
+            if (bullet) {
+                flush();
+                mode = 'listitem';
+                buffer.push({ start: ls + bullet[0].length, end: le });
+                continue;
+            }
+
+            // Una línea suelta tras una viñeta es su continuación envuelta.
+            if (mode !== 'listitem') {
+                if (mode !== 'paragraph') flush();
+                mode = 'paragraph';
+            }
+            buffer.push({ start: ls, end: le });
         }
         flush();
     }

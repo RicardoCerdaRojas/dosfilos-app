@@ -12,5 +12,8 @@
     "color_green": "Green",
     "color_blue": "Blue",
     "color_pink": "Pink",
-    "remove_highlight": "Remove highlight"
+    "remove_highlight": "Remove highlight",
+    "line_breaks": "Line breaks",
+    "running_text": "Running text",
+    "sense_lines": "One sentence per line"
 }

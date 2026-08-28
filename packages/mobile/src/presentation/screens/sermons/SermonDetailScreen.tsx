@@ -101,11 +101,22 @@ export default function SermonDetailScreen() {
                                     >
                                         {block.text}
                                     </Text>
+                                ) : block.kind === 'quote' ? (
+                                    // El detalle es la vista de ESTUDIO: acá la
+                                    // cita del comentario sí va en el flujo. La
+                                    // que se colapsa es la del púlpito (P5).
+                                    <Text
+                                        key={i}
+                                        className="text-base leading-7 italic text-slate-600 dark:text-slate-400 border-l-2 border-slate-300 dark:border-slate-600 pl-3 mb-3"
+                                    >
+                                        {block.text}
+                                    </Text>
                                 ) : (
                                     <Text
                                         key={i}
                                         className="text-base leading-7 text-slate-700 dark:text-slate-300 mb-3"
                                     >
+                                        {block.kind === 'listitem' ? '•  ' : ''}
                                         {block.text}
                                     </Text>
                                 ),
