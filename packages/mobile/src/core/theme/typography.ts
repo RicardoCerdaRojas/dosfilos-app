@@ -23,6 +23,15 @@ export const DELIVERY_MEASURE_CH = 48;
 /** Lectura sentada y en silencio (detalle del sermón): medida editorial. */
 export const STUDY_MEASURE_CH = 62;
 
+/**
+ * Cuerpo de entrega, calibrado para tablet de 11-13″ a 60-70 cm, DE PIE.
+ *
+ * Es una escala aparte de la del lector de Biblia a propósito: predicar y
+ * estudiar sentado no piden el mismo cuerpo, y compartir un solo ajuste hacía
+ * que tocar uno cambiara el otro por la espalda.
+ */
+export const DELIVERY_SIZE = { min: 22, max: 40, default: 28 } as const;
+
 /** Múltiplos del cuerpo. El cuerpo es 1.0 y no aparece en la tabla. */
 export const TYPE_SCALE = {
     /** Título del movimiento: ubica, no compite. */

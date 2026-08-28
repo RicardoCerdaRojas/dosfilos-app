@@ -45,8 +45,8 @@ export default function PreachModeScreen() {
 
     const readingMode = useReaderSettingsStore((s) => s.readingMode);
     const setReadingMode = useReaderSettingsStore((s) => s.setReadingMode);
-    const fontSize = useReaderSettingsStore((s) => s.fontSize);
-    const setFontSize = useReaderSettingsStore((s) => s.setFontSize);
+    const fontSize = useReaderSettingsStore((s) => s.deliveryFontSize);
+    const setFontSize = useReaderSettingsStore((s) => s.setDeliveryFontSize);
     const senseLines = useReaderSettingsStore((s) => s.senseLines);
     const setSenseLines = useReaderSettingsStore((s) => s.setSenseLines);
     const tokens = READING_MODES[readingMode];

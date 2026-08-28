@@ -3,10 +3,19 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { READING_MODES, ReadingMode, ReadingModeTokens } from '@/core/theme/readingModes';
+import { DELIVERY_SIZE } from '@/core/theme/typography';
 
 interface ReaderSettingsState {
+    /** Cuerpo del lector de Biblia: lectura sentada. */
     fontSize: number;
     setFontSize: (size: number) => void;
+    /**
+     * Cuerpo del modo púlpito: se predica de pie, a 60-70 cm. Separado del
+     * anterior porque compartirlos hacía que ajustar la Biblia cambiara el
+     * sermón, y al revés.
+     */
+    deliveryFontSize: number;
+    setDeliveryFontSize: (size: number) => void;
     /** Modo de luz del lector/púlpito (plan §6). Persistido; sync llega en F1. */
     readingMode: ReadingMode;
     setReadingMode: (mode: ReadingMode) => void;
@@ -24,6 +33,8 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
         (set) => ({
             fontSize: 18, // Default font size
             setFontSize: (size: number) => set({ fontSize: size }),
+            deliveryFontSize: DELIVERY_SIZE.default,
+            setDeliveryFontSize: (size: number) => set({ deliveryFontSize: size }),
             readingMode: 'claro',
             setReadingMode: (mode: ReadingMode) => set({ readingMode: mode }),
             senseLines: false,
