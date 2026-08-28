@@ -29,5 +29,9 @@
     "gaze_guide": "Guía de mirada",
     "guide_none": "Ninguna",
     "guide_sense": "Una frase por renglón",
-    "guide_line": "Línea al 66 %"
+    "guide_line": "Línea al 66 %",
+    "instrument_panel": "Tablero inferior",
+    "panel_on": "Reservar el tercio",
+    "panel_off": "Todo el alto para el texto",
+    "peek_next": "Sigue…"
 }

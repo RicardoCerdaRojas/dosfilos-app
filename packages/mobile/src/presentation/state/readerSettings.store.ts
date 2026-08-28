@@ -37,6 +37,13 @@ interface ReaderSettingsState {
      * `${sermonId}|${sectionSlug}`. Lo que el pastor no toca se reparte solo.
      * Persiste porque se decide preparando, no en el atril.
      */
+    /**
+     * Reserva del tercio inferior para el tablero (P7). Se puede apagar: hay
+     * púlpitos donde el atril tapa la parte de abajo y conviene todo el alto
+     * para el texto.
+     */
+    instrumentPanel: boolean;
+    setInstrumentPanel: (on: boolean) => void;
     budgetOverrides: Record<string, number>;
     setBudgetOverride: (key: string, seconds: number | null) => void;
 }
@@ -58,6 +65,8 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
             gazeLine: false,
             setGazeLine: (on: boolean) =>
                 set((state) => ({ gazeLine: on, senseLines: on ? false : state.senseLines })),
+            instrumentPanel: true,
+            setInstrumentPanel: (on: boolean) => set({ instrumentPanel: on }),
             budgetOverrides: {},
             setBudgetOverride: (key: string, seconds: number | null) =>
                 set((state) => {

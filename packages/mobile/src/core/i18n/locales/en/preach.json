@@ -29,5 +29,9 @@
     "gaze_guide": "Gaze guide",
     "guide_none": "None",
     "guide_sense": "One sentence per line",
-    "guide_line": "66% line"
+    "guide_line": "66% line",
+    "instrument_panel": "Bottom panel",
+    "panel_on": "Reserve the third",
+    "panel_off": "Full height for text",
+    "peek_next": "Continues…"
 }

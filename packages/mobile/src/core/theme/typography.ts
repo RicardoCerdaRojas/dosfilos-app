@@ -67,6 +67,13 @@ export const GAZE_LINE_RATIO = 0.66;
 export const DELIVERY_LINE_HEIGHT = 1.55;
 
 /**
+ * Sangría francesa de la colometría, en em: la oración abre en el margen y
+ * sus continuaciones entran. Es lo que distingue "empieza una frase" de
+ * "sigue la anterior" sin leerla.
+ */
+export const HANGING_INDENT_EM = 1.2;
+
+/**
  * Espacio entre párrafos, en em. Una línea entera desarma el movimiento en
  * fragmentos sueltos; menos que esto lo apelmaza.
  */

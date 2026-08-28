@@ -5,7 +5,12 @@ import type { HighlightColor, ReadingBlock, ReadingUnit } from '@dosfilos/domain
 
 import { tokenizeCitations } from '@/core/utils/sermonSections';
 import { ReadingModeTokens } from '@/core/theme/readingModes';
-import { DELIVERY_LINE_HEIGHT, PARAGRAPH_GAP_EM, TYPE_SCALE } from '@/core/theme/typography';
+import {
+    DELIVERY_LINE_HEIGHT,
+    HANGING_INDENT_EM,
+    PARAGRAPH_GAP_EM,
+    TYPE_SCALE,
+} from '@/core/theme/typography';
 
 /** Resaltado ya reanclado al cuerpo crudo de ESTA sección. */
 export interface ResolvedHighlight {
@@ -196,13 +201,29 @@ export function PreachSectionBody({
                     // frase y no a mitad de renglón.
                     <View key={blockIndex} style={{ marginBottom: fontSize * PARAGRAPH_GAP_EM }}>
                         {block.units.map((unit, unitIndex) => (
-                            <Text
+                            // Sangría francesa: la oración arranca en el margen
+                            // y sus renglones de continuación entran. Así el
+                            // ojo que vuelve del público distingue de un golpe
+                            // el comienzo de una frase de su continuación.
+                            // RN no tiene text-indent negativo, de ahí el
+                            // padding con margen negativo en el bloque.
+                            <View
                                 key={unitIndex}
-                                style={{ ...paragraphStyle, marginBottom: fontSize * 0.12 }}
-                                className="font-lexend"
+                                style={{
+                                    paddingLeft: fontSize * HANGING_INDENT_EM,
+                                    marginBottom: fontSize * 0.12,
+                                }}
                             >
-                                {renderUnit(unit, blockIndex, unitIndex, false)}
-                            </Text>
+                                <Text
+                                    style={{
+                                        ...paragraphStyle,
+                                        marginLeft: -fontSize * HANGING_INDENT_EM,
+                                    }}
+                                    className="font-lexend"
+                                >
+                                    {renderUnit(unit, blockIndex, unitIndex, false)}
+                                </Text>
+                            </View>
                         ))}
                     </View>
                 ) : (

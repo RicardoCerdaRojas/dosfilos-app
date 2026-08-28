@@ -62,6 +62,8 @@ export default function PreachModeScreen({
     const setSenseLines = useReaderSettingsStore((s) => s.setSenseLines);
     const gazeLine = useReaderSettingsStore((s) => s.gazeLine);
     const setGazeLine = useReaderSettingsStore((s) => s.setGazeLine);
+    const instrumentPanel = useReaderSettingsStore((s) => s.instrumentPanel);
+    const setInstrumentPanel = useReaderSettingsStore((s) => s.setInstrumentPanel);
     const budgetOverrides = useReaderSettingsStore((s) => s.budgetOverrides);
     const setBudgetOverride = useReaderSettingsStore((s) => s.setBudgetOverride);
     const tokens = READING_MODES[readingMode];
@@ -125,7 +127,7 @@ export default function PreachModeScreen({
     // mentón y la cara sale de la congregación. Ahí va el tablero.
     const chromeTop = chromeVisible ? insets.top + 44 : insets.top + 16;
     const readableHeight = screenHeight - chromeTop - insets.bottom;
-    const panelHeight = Math.round(readableHeight / 3);
+    const panelHeight = instrumentPanel ? Math.round(readableHeight / 3) : 0;
     const pageHeight = readableHeight - panelHeight - fontSize * 2;
 
     const renderBlockForMeasure = (block: ReadingBlock, index: number) => (
@@ -153,6 +155,13 @@ export default function PreachModeScreen({
     const pageBlocks = pages.length
         ? pages[safePageIndex].map((i) => blocks[i])
         : blocks;
+
+    // Texto de la página siguiente para el asomo. Sale del primer bloque que
+    // viene: alcanza para saber si la idea sigue o si acá cerró.
+    const nextPeek =
+        pages.length && safePageIndex < pages.length - 1
+            ? blocks[pages[safePageIndex + 1][0]]?.text ?? null
+            : null;
 
     // El resaltado por tap largo vive en su propio hook: la pantalla ya
     // carga timer, modos de luz, navegación por secciones y citas.
@@ -345,6 +354,28 @@ export default function PreachModeScreen({
                         onPressCitation={openCitation}
                     />
 
+                    {/* Asomo: dos renglones de lo que viene, atenuados. Avisa
+                        que el bloque sigue, y quita la duda de si la página
+                        terminó la idea o la cortó. */}
+                    {nextPeek ? (
+                        <View
+                            pointerEvents="none"
+                            style={{ marginTop: fontSize * 0.6, opacity: 0.32 }}
+                        >
+                            <Text
+                                numberOfLines={2}
+                                style={{
+                                    color: tokens.textPrimary,
+                                    fontSize,
+                                    lineHeight: fontSize * 1.4,
+                                }}
+                                className="font-lexend"
+                            >
+                                {nextPeek}
+                            </Text>
+                        </View>
+                    ) : null}
+
                     {sectionIndex === sections.length - 1 &&
                         safePageIndex === Math.max(0, pages.length - 1) &&
                         attributions.length > 0 && (
@@ -376,7 +407,7 @@ export default function PreachModeScreen({
 
             {/* P7 — el tercio inferior es el tablero: timer y riel, los dos
                 datos que se consultan de reojo desde el atril. */}
-            {budgets.length > 0 && (
+            {instrumentPanel && budgets.length > 0 && (
                 <View style={{ paddingBottom: insets.bottom }}>
                     <PreachInstrumentPanel
                         tokens={tokens}
@@ -437,6 +468,8 @@ export default function PreachModeScreen({
                 setSenseLines={setSenseLines}
                 gazeLine={gazeLine}
                 setGazeLine={setGazeLine}
+                instrumentPanel={instrumentPanel}
+                setInstrumentPanel={setInstrumentPanel}
                 targetMinutes={targetMinutes}
                 onPickDuration={(min) => {
                     setTargetMinutes(min);

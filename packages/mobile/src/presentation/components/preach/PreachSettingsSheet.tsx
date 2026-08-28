@@ -29,6 +29,8 @@ interface Props {
     setSenseLines: (on: boolean) => void;
     gazeLine: boolean;
     setGazeLine: (on: boolean) => void;
+    instrumentPanel: boolean;
+    setInstrumentPanel: (on: boolean) => void;
     targetMinutes: number;
     onPickDuration: (minutes: number) => void;
     /** Reparto vigente, ya resuelto (automático + lo fijado a mano). */
@@ -54,6 +56,8 @@ export function PreachSettingsSheet({
     setSenseLines,
     gazeLine,
     setGazeLine,
+    instrumentPanel,
+    setInstrumentPanel,
     targetMinutes,
     onPickDuration,
     budgets,
@@ -170,6 +174,36 @@ export function PreachSettingsSheet({
                                 </TouchableOpacity>
                             );
                         })}
+                    </View>
+
+                    <Text
+                        style={{ color: tokens.textSecondary }}
+                        className="font-lexend-semibold text-xs uppercase tracking-widest mb-2"
+                    >
+                        {t('preach:instrument_panel')}
+                    </Text>
+                    <View className="flex-row flex-wrap mb-5">
+                        {[true, false].map((on) => (
+                            <TouchableOpacity
+                                key={String(on)}
+                                onPress={() => setInstrumentPanel(on)}
+                                accessibilityRole="button"
+                                accessibilityLabel={t(on ? 'preach:panel_on' : 'preach:panel_off')}
+                                className="px-4 py-2 rounded-full mr-2 mb-2"
+                                style={{
+                                    backgroundColor: on === instrumentPanel ? tokens.accent : 'transparent',
+                                    borderWidth: 1,
+                                    borderColor: on === instrumentPanel ? tokens.accent : tokens.border,
+                                }}
+                            >
+                                <Text
+                                    style={{ color: on === instrumentPanel ? tokens.background : tokens.textPrimary }}
+                                    className="font-lexend text-sm"
+                                >
+                                    {t(on ? 'preach:panel_on' : 'preach:panel_off')}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
                     </View>
 
                     <Text

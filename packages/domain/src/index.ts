@@ -31,6 +31,7 @@ export * from './entities/SermonAnnotation'; // 🌱 Púlpito M-05 — preacher 
 export * from './services/sentenceSegmentation'; // 🌱 Púlpito M-05 — single sentence ruler (shared with the fidelity pass)
 export * from './services/sermonReading'; // 🌱 Púlpito M-05 — offset-preserving reading model of a section
 export * from './services/movementBudget'; // 🌱 Púlpito F2 — presupuesto de tiempo por movimiento (riel)
+export * from './services/pageGrouping'; // 🌱 Púlpito F2 — bloques que no se separan entre páginas
 export * from './entities/SermonSeries';
 export * from './entities/LibraryResource';
 export * from './entities/LibraryCategory';

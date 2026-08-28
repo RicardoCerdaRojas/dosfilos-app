@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import type { ReadingBlock } from '@dosfilos/domain';
+import { groupUnbreakableBlocks } from '@dosfilos/domain';
 
 /**
  * Paginación real del púlpito (D7, P1).
@@ -16,6 +17,13 @@ import type { ReadingBlock } from '@dosfilos/domain';
  * entonces se arman las páginas empaquetando bloques enteros. El bloque es el
  * átomo: nunca se parte, y como los bloques ya vienen cortados en unidades de
  * sentido, ninguna página corta una oración.
+ *
+ * GRUPOS QUE NO SE SEPARAN. Empaquetar bloques sueltos cortaba donde no debe:
+ * una proposición homilética con sus puntos es UNA unidad de lectura, y
+ * partirla obliga a pasar página en medio de la idea. `groupUnbreakableBlocks`
+ * decide qué va junto; acá se empaquetan grupos, no bloques. Si un grupo no
+ * entra en una página vacía se parte igual — mejor cortar donde no queríamos
+ * que perder texto.
  *
  * LÍMITE CONOCIDO: si un bloque solo excede el alto disponible —un párrafo de
  * ~150 palabras a 28 pt— ocupa su propia página y esa página se puede
@@ -73,20 +81,41 @@ export function usePagination({
         let current: number[] = [];
         let used = 0;
 
-        blocks.forEach((_, index) => {
-            const height = measured[index];
-            // Un bloque que no entra en una página vacía va solo: partirlo
-            // rompería una oración, que es justo lo que se evita.
-            if (current.length > 0 && used + height > availableHeight) {
-                result.push(current);
-                current = [];
-                used = 0;
-            }
-            current.push(index);
-            used += height;
-        });
+        const flush = () => {
+            if (current.length) result.push(current);
+            current = [];
+            used = 0;
+        };
 
-        if (current.length) result.push(current);
+        for (const group of groupUnbreakableBlocks(blocks)) {
+            const groupHeight = group.reduce((sum, i) => sum + measured[i], 0);
+
+            // El grupo entra entero en lo que queda: va junto.
+            if (used + groupHeight <= availableHeight) {
+                current.push(...group);
+                used += groupHeight;
+                continue;
+            }
+
+            // No entra acá pero sí en una página vacía: se pasa entero.
+            if (groupHeight <= availableHeight) {
+                flush();
+                current.push(...group);
+                used = groupHeight;
+                continue;
+            }
+
+            // Ni siquiera en una página vacía: se parte por bloques. Perder el
+            // agrupamiento es peor que perder el texto, pero sólo un poco.
+            for (const index of group) {
+                const height = measured[index];
+                if (current.length > 0 && used + height > availableHeight) flush();
+                current.push(index);
+                used += height;
+            }
+        }
+
+        flush();
         return result;
     }, [blocks, measured, complete, availableHeight]);
 
