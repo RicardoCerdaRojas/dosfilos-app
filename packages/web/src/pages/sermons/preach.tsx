@@ -394,15 +394,15 @@ export function PreachModePage() {
           {sections.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" title={t('preachMode.sections', { defaultValue: 'Secciones' })}>
+                <Button variant="outline" size="sm" title={t('preachMode.sections')}>
                   <ListOrdered className="h-4 w-4" />
                   <span className="ml-2 hidden md:inline">
-                    {t('preachMode.sections', { defaultValue: 'Secciones' })}
+                    {t('preachMode.sections')}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64 max-h-[60vh] overflow-y-auto">
-                <DropdownMenuLabel>{t('preachMode.sectionsLabel', { defaultValue: 'Saltar a sección' })}</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('preachMode.sectionsLabel')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {sections.map((s) => (
                   <DropdownMenuItem

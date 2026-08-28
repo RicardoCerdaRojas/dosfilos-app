@@ -167,7 +167,9 @@
       "source": "Fuente: {{version}}",
       "notFound": "No se pudo encontrar el texto. Verifique la referencia.",
       "error": "Error al cargar el texto bíblico."
-    }
+    },
+    "sections": "Secciones",
+    "sectionsLabel": "Saltar a sección"
   },
   "fidelityReview": {
     "title": "Revisión de fidelidad",
