@@ -1,5 +1,6 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useRef } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import type { HighlightColor, MarkStyle, ReadingBlock, ReadingUnit } from '@dosfilos/domain';
 
@@ -55,6 +56,17 @@ interface Props {
      * la nota vive al lado de SU párrafo.
      */
     onBlockLayout?: (sourceStart: number, rect: { x: number; y: number; height: number }) => void;
+    /**
+     * Firma del layout vigente. Cuando cambia, los bloques se vuelven a MEDIR
+     * a mano en vez de esperar a `onLayout`.
+     *
+     * Esperar era el bug: RN sólo dispara `onLayout` de una vista que
+     * efectivamente se movió. Al apagar el tercio inferior los párrafos de
+     * arriba se quedan quietos, así que reportaban unos pocos y no los demás,
+     * y la tinta quedaba a medias — trazos que desaparecen, trazos que se
+     * corren. Medir explícitamente no deja a nadie sin posición.
+     */
+    layoutKey?: string;
 }
 
 /** Marca que cubre un punto del cuerpo crudo. La unidad ahora es la palabra. */
@@ -80,7 +92,25 @@ export function PreachSectionBody({
     face,
     hangingIndent,
     onBlockLayout,
+    layoutKey,
 }: Props) {
+    /** Vista de cada bloque, para poder medirla sin depender de `onLayout`. */
+    const blockNodes = useRef<Map<number, View>>(new Map());
+
+    useEffect(() => {
+        if (!onBlockLayout) return;
+        // En el frame siguiente: al correr el efecto, el layout nativo puede
+        // no haber bajado todavía y se mediría la posición vieja.
+        const frame = requestAnimationFrame(() => {
+            for (const [offset, node] of blockNodes.current.entries()) {
+                node.measureInWindow((x, y, _width, height) => {
+                    onBlockLayout(offset, { x, y, height });
+                });
+            }
+        });
+        return () => cancelAnimationFrame(frame);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [layoutKey, blocks]);
     /**
      * Traduce las marcas guardadas al trazo que le toca a cada palabra.
      * En tinta electrónica el color no existe, así que toda marca cae a
@@ -103,6 +133,14 @@ export function PreachSectionBody({
         <View
             key={key}
             style={style}
+            ref={(node) => {
+                const first = units[0];
+                if (!first || !node) return;
+                blockNodes.current.set(first.sourceStart, node);
+                return () => {
+                    blockNodes.current.delete(first.sourceStart);
+                };
+            }}
             onLayout={(e) => {
                 const first = units[0];
                 if (!first || !onBlockLayout) return;

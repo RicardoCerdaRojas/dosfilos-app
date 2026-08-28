@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { GestureResponderEvent, View } from 'react-native';
 import { Canvas, Path, Skia, type SkPath } from '@shopify/react-native-skia';
 import { useSharedValue } from 'react-native-reanimated';
@@ -105,6 +105,21 @@ export function InkLayer({
     const livePath = useSharedValue<SkPath>(Skia.Path.Make());
     const points = useRef<{ x: number; y: number }[]>([]);
     const anchor = useRef<{ offset: number; rect: AnchorRect } | null>(null);
+    /**
+     * El trazo recién soltado, dibujado tal cual quedó en pantalla.
+     *
+     * EL PARPADEO ERA UN FRAME VACÍO. Al levantar el dedo se borraba el trazo
+     * vivo, pero la nota guardada todavía no había llegado al render: entre
+     * una cosa y la otra no había nada dibujado y eso es lo que se ve como un
+     * pestañeo. Este trazo puente cubre el hueco y se apaga solo cuando la
+     * nota aparece — no con un efecto ni un temporizador, sino comparando
+     * cuántos trazos había cuando se soltó contra cuántos hay ahora.
+     */
+    const [pending, setPending] = useState<{ path: SkPath; baseline: number } | null>(null);
+
+    // Cuántos trazos hay guardados AHORA. Si superan a los que había al
+    // soltar, la nota ya llegó y el trazo puente sobra.
+    const strokeCount = notes.reduce((total, note) => total + note.strokes.length, 0);
 
     // El lienzo empieza debajo del chrome: sus coordenadas están corridas
     // respecto de las de pantalla.
@@ -157,6 +172,10 @@ export function InkLayer({
         // Un trazo sin ancla no se guarda: mejor perder un garabato suelto que
         // guardar tinta que no sabe a qué se refiere.
         if (!held || captured.length < 2) return;
+        setPending({
+            path: buildPath(captured.map(toCanvas)),
+            baseline: notes.reduce((total, note) => total + note.strokes.length, 0),
+        });
         onFinishStroke(held.offset, {
             points: captured.map((p) => toNoteSpace(p, held.rect, bodySize)),
             width: STROKE_WIDTH_EM,
@@ -195,6 +214,17 @@ export function InkLayer({
                         />
                     ));
                 })}
+
+                {pending && strokeCount <= pending.baseline ? (
+                    <Path
+                        path={pending.path}
+                        color={inkColor(color, tokens)}
+                        style="stroke"
+                        strokeWidth={STROKE_WIDTH_EM * bodySize}
+                        strokeCap="round"
+                        strokeJoin="round"
+                    />
+                ) : null}
 
                 <Path
                     path={livePath}

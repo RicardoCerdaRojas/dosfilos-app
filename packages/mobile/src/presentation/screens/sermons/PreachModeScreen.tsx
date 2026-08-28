@@ -447,6 +447,7 @@ export default function PreachModeScreen({
                         face={deliveryFace}
                         hangingIndent={hangingIndent}
                         onBlockLayout={ink.rememberBlock}
+                        layoutKey={inkLayoutKey}
                         onTapAt={handleTap}
                         onPressApparatus={setApparatus}
                         selection={highlighting.selection}
