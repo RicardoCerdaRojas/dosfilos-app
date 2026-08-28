@@ -1,12 +1,13 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { GestureResponderEvent, View } from 'react-native';
-import { Canvas, Path, Skia } from '@shopify/react-native-skia';
+import { Canvas, Path, Skia, type SkPath } from '@shopify/react-native-skia';
+import { useSharedValue } from 'react-native-reanimated';
 import type { InkColor, InkNote, InkStroke } from '@dosfilos/domain';
 import { toNoteSpace, toScreenSpace } from '@dosfilos/domain';
 
 import { ReadingModeTokens } from '@/core/theme/readingModes';
 
-/** Dónde está en pantalla la palabra a la que se ancla una nota. */
+/** Dónde está en pantalla el párrafo al que se ancla una nota. */
 export interface AnchorRect {
     x: number;
     y: number;
@@ -15,39 +16,26 @@ export interface AnchorRect {
 
 interface Props {
     tokens: ReadingModeTokens;
-    /** Notas de ESTA sección, ya filtradas. */
     notes: InkNote[];
-    /** Resuelve la posición actual del ancla de una nota. `null` = no está en
-     *  esta página, así que no se dibuja. */
     anchorRectFor: (note: InkNote) => AnchorRect | null;
-    /** Cuerpo actual: las coordenadas de la nota están en estas unidades. */
     bodySize: number;
-    /** `true` mientras el lápiz está activo: sólo entonces la capa toma toques. */
     penActive: boolean;
-    /** Devuelve el ancla para un trazo que empezó en este punto de pantalla. */
+    /** Párrafo más cercano al punto donde empezó el trazo. */
     anchorAt: (screenX: number, screenY: number) => { offset: number; rect: AnchorRect } | null;
     onFinishStroke: (offset: number, stroke: InkStroke) => void;
-    /** Color del lápiz. */
     color: InkColor;
-    /** Goma: en vez de dibujar, un toque borra la nota que se tocó. */
     eraser: boolean;
     onErase: (noteId: string) => void;
-    /**
-     * Alto del chrome superior. La capa arranca DEBAJO: si cubriera la barra
-     * taparía su propio botón de salida y no habría cómo apagar el lápiz.
-     */
+    /** Alto del chrome superior: la capa arranca debajo para no taparlo. */
     top: number;
     /** Alto del tablero inferior, por la misma razón. */
     bottom: number;
 }
 
 const STROKE_WIDTH_EM = 0.07;
+/** Puntos más juntos que esto son ruido del dedo, no intención. */
+const MIN_POINT_DISTANCE = 1.5;
 
-/**
- * El color del lápiz sale de los tokens del modo de luz, no de literales: en
- * tinta electrónica los tres caen a negro, que es lo único que ese modo puede
- * mostrar.
- */
 function inkColor(color: InkColor, tokens: ReadingModeTokens): string {
     if (tokens.highlightUnderline) return tokens.textPrimary;
     if (color === 'red') return tokens.timerOver;
@@ -56,18 +44,49 @@ function inkColor(color: InkColor, tokens: ReadingModeTokens): string {
 }
 
 /**
- * La capa de tinta: lo que el predicador escribe a mano, encima del sermón.
+ * Construye el trazo con curvas cuadráticas entre puntos medios.
  *
- * NO GUARDA COORDENADAS DE PANTALLA. Cada trazo se ancla a la palabra sobre
- * la que empezó y se guarda en unidades del cuerpo, relativas a esa palabra.
- * Al dibujar se pregunta dónde está esa palabra AHORA. Por eso la nota sigue
- * a su pasaje cuando se cambia el tamaño de letra, se prende la colometría o
- * se edita el sermón — y por eso margen y sobre-el-texto no son dos sistemas
- * distintos, sino dos lugares donde caen los trazos del mismo mecanismo.
+ * Unir los puntos con rectas produce el trazo "robótico": se ven los
+ * segmentos. Curvar entre los puntos medios, usando el punto capturado como
+ * control, da una curva continua que atraviesa la mano del que escribe en vez
+ * de perseguirla.
+ */
+function buildPath(points: { x: number; y: number }[]): SkPath {
+    const path = Skia.Path.Make();
+    if (!points.length) return path;
+    path.moveTo(points[0].x, points[0].y);
+    if (points.length === 1) return path;
+    for (let i = 1; i < points.length - 1; i += 1) {
+        const mid = {
+            x: (points[i].x + points[i + 1].x) / 2,
+            y: (points[i].y + points[i + 1].y) / 2,
+        };
+        path.quadTo(points[i].x, points[i].y, mid.x, mid.y);
+    }
+    const last = points[points.length - 1];
+    path.lineTo(last.x, last.y);
+    return path;
+}
+
+/**
+ * La capa de tinta.
  *
- * `pointerEvents` sigue al lápiz: apagado, la capa es transparente al tacto y
- * el pastor pasa página, selecciona y toca citas como siempre. Predicar no
- * puede quedar detrás de una capa de dibujo.
+ * ANCLADA AL PÁRRAFO. Cada nota se ata al bloque sobre el que se empezó a
+ * escribir, y sus puntos se guardan relativos a ese bloque en unidades del
+ * cuerpo. Al dibujar se pregunta dónde está ese párrafo AHORA: la nota lo
+ * sigue cuando cambia el cuerpo, la sangría, la colometría o la reserva del
+ * tercio inferior.
+ *
+ * Antes se anclaba a la PALABRA. Era más preciso y demasiado frágil: cientos
+ * de posiciones por página que sólo se actualizaban si `onLayout` volvía a
+ * dispararse, cosa que RN no hace si la vista no se movió. Apagar el tablero
+ * dejaba quietas a las palabras de arriba, nadie re-reportaba, y la tinta se
+ * quedaba sin dónde dibujarse. Un párrafo es igual de significativo como
+ * referencia y son unos pocos por página.
+ *
+ * EL TRAZO NO PASA POR REACT. Los puntos van a un valor compartido que Skia
+ * dibuja directo. Meterlos en el estado provocaba un render por punto: lento,
+ * con muestras perdidas, y de ahí los segmentos rectos.
  */
 export function InkLayer({
     tokens,
@@ -83,21 +102,14 @@ export function InkLayer({
     top,
     bottom,
 }: Props) {
-    const [draft, setDraft] = useState<{ x: number; y: number }[]>([]);
+    const livePath = useSharedValue<SkPath>(Skia.Path.Make());
+    const points = useRef<{ x: number; y: number }[]>([]);
     const anchor = useRef<{ offset: number; rect: AnchorRect } | null>(null);
 
-    const begin = (e: GestureResponderEvent) => {
-        const { pageX, pageY } = e.nativeEvent;
-        if (eraser) {
-            const hit = noteNear(pageX, pageY);
-            if (hit) onErase(hit);
-            return;
-        }
-        anchor.current = anchorAt(pageX, pageY);
-        setDraft([{ x: pageX, y: pageY }]);
-    };
+    // El lienzo empieza debajo del chrome: sus coordenadas están corridas
+    // respecto de las de pantalla.
+    const toCanvas = (p: { x: number; y: number }) => ({ x: p.x, y: p.y - top });
 
-    /** Nota cuyo trazo pasa cerca del punto tocado, para la goma. */
     const noteNear = (x: number, y: number): string | null => {
         const RADIUS = 28;
         for (const note of notes) {
@@ -113,52 +125,43 @@ export function InkLayer({
         return null;
     };
 
-    const extend = (e: GestureResponderEvent) => {
-        if (eraser) return;
+    const begin = (e: GestureResponderEvent) => {
         const { pageX, pageY } = e.nativeEvent;
-        setDraft((current) => [...current, { x: pageX, y: pageY }]);
+        if (eraser) {
+            const hit = noteNear(pageX, pageY);
+            if (hit) onErase(hit);
+            return;
+        }
+        anchor.current = anchorAt(pageX, pageY);
+        points.current = [{ x: pageX, y: pageY }];
+        livePath.value = buildPath(points.current.map(toCanvas));
+    };
+
+    const extend = (e: GestureResponderEvent) => {
+        if (eraser || !anchor.current) return;
+        const { pageX, pageY } = e.nativeEvent;
+        const last = points.current[points.current.length - 1];
+        if (last && Math.hypot(pageX - last.x, pageY - last.y) < MIN_POINT_DISTANCE) return;
+        points.current.push({ x: pageX, y: pageY });
+        // Asignar el valor compartido redibuja en Skia sin re-renderizar React.
+        livePath.value = buildPath(points.current.map(toCanvas));
     };
 
     const finish = () => {
         if (eraser) return;
         const held = anchor.current;
-        const points = draft;
+        const captured = points.current;
         anchor.current = null;
-        setDraft([]);
-        // Un trazo sin ancla no se guarda: preferimos perder un garabato
-        // suelto antes que guardar tinta que no sabe a qué se refiere.
-        if (!held || points.length < 2) return;
+        points.current = [];
+        livePath.value = Skia.Path.Make();
+        // Un trazo sin ancla no se guarda: mejor perder un garabato suelto que
+        // guardar tinta que no sabe a qué se refiere.
+        if (!held || captured.length < 2) return;
         onFinishStroke(held.offset, {
-            points: points.map((p) => toNoteSpace(p, held.rect, bodySize)),
+            points: captured.map((p) => toNoteSpace(p, held.rect, bodySize)),
             width: STROKE_WIDTH_EM,
             color,
         });
-    };
-
-    /**
-     * El lienzo empieza DEBAJO del chrome, así que sus coordenadas están
-     * corridas respecto de las de pantalla. Todo lo que se dibuja pasa por
-     * acá; sin esta resta los trazos aparecerían desplazados hacia abajo.
-     */
-    const toCanvas = (p: { x: number; y: number }) => ({ x: p.x, y: p.y - top });
-
-    const pathFrom = (screenPoints: { x: number; y: number }[]) => {
-        const points = screenPoints.map(toCanvas);
-        const path = Skia.Path.Make();
-        if (!points.length) return path;
-        path.moveTo(points[0].x, points[0].y);
-        // Curvas cuadráticas entre puntos medios: el trazo sale suave sin
-        // tener que muestrear más rápido de lo que el responder entrega.
-        for (let i = 1; i < points.length - 1; i += 1) {
-            const mid = {
-                x: (points[i].x + points[i + 1].x) / 2,
-                y: (points[i].y + points[i + 1].y) / 2,
-            };
-            path.quadTo(points[i].x, points[i].y, mid.x, mid.y);
-        }
-        const last = points[points.length - 1];
-        path.lineTo(last.x, last.y);
-        return path;
     };
 
     return (
@@ -179,8 +182,10 @@ export function InkLayer({
                     return note.strokes.map((stroke, index) => (
                         <Path
                             key={`${note.id}-${index}`}
-                            path={pathFrom(
-                                stroke.points.map((p) => toScreenSpace(p, rect, bodySize)),
+                            path={buildPath(
+                                stroke.points.map((p) =>
+                                    toCanvas(toScreenSpace(p, rect, bodySize)),
+                                ),
                             )}
                             color={inkColor(stroke.color, tokens)}
                             style="stroke"
@@ -191,16 +196,14 @@ export function InkLayer({
                     ));
                 })}
 
-                {draft.length > 1 ? (
-                    <Path
-                        path={pathFrom(draft)}
-                        color={inkColor(color, tokens)}
-                        style="stroke"
-                        strokeWidth={STROKE_WIDTH_EM * bodySize}
-                        strokeCap="round"
-                        strokeJoin="round"
-                    />
-                ) : null}
+                <Path
+                    path={livePath}
+                    color={inkColor(color, tokens)}
+                    style="stroke"
+                    strokeWidth={STROKE_WIDTH_EM * bodySize}
+                    strokeCap="round"
+                    strokeJoin="round"
+                />
             </Canvas>
         </View>
     );

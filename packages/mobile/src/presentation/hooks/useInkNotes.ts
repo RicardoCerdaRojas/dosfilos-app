@@ -16,14 +16,25 @@ const repository = new AnnotationRepositoryImpl();
  * el cuerpo mientras se dibuja— y con eso resuelve dos cosas: dónde pintar
  * una nota guardada, y a qué palabra anclar un trazo nuevo.
  */
-export function useInkNotes(sermonId: string, section: SermonSection | undefined) {
+export function useInkNotes(
+    sermonId: string,
+    section: SermonSection | undefined,
+    /**
+     * Firma del layout vigente (cuerpo, sangría, colometría, página…). Las
+     * posiciones se guardan bajo ESTA clave en vez de vaciarse al cambiar: si
+     * se vacían, hace falta que `onLayout` vuelva a disparar para todo — y RN
+     * sólo lo hace si la vista se movió. Apagar el tablero no mueve los
+     * párrafos de arriba, así que nadie re-reportaba y la tinta desaparecía.
+     */
+    layoutKey: string,
+) {
     const queryClient = useQueryClient();
     const [penActive, setPenActive] = useState(false);
     const [penColor, setPenColor] = useState<InkColor>('ink');
     const [eraser, setEraser] = useState(false);
 
-    /** offset del texto → rectángulo en pantalla. Lo llena el cuerpo. */
-    const wordRects = useRef<Map<number, AnchorRect>>(new Map());
+    /** layoutKey → (offset del párrafo → rectángulo en pantalla). */
+    const blockRects = useRef<Map<string, Map<number, AnchorRect>>>(new Map());
     /** Nota abierta por ancla, para que trazos seguidos no creen documentos sueltos. */
     const noteByOffset = useRef<Map<number, string>>(new Map());
 
@@ -38,29 +49,26 @@ export function useInkNotes(sermonId: string, section: SermonSection | undefined
         ? (notes ?? []).filter((n) => n.sectionSlug === section.slug)
         : [];
 
-    const rememberWord = (offset: number, rect: AnchorRect) => {
-        wordRects.current.set(offset, rect);
+    const rectsForLayout = () => {
+        let map = blockRects.current.get(layoutKey);
+        if (!map) {
+            map = new Map();
+            blockRects.current.set(layoutKey, map);
+        }
+        return map;
     };
 
-    /**
-     * Vacía el mapa de posiciones al cambiar de página, movimiento o layout.
-     *
-     * Sin esto el mapa ACUMULA: una palabra de la página anterior conserva su
-     * rectángulo viejo, `anchorRectFor` lo encuentra, y la tinta de esa página
-     * se sigue dibujando encima de la siguiente. Era el bug de "avanzo y los
-     * trazos no desaparecen".
-     */
-    const resetLayout = () => {
-        wordRects.current.clear();
+    const rememberBlock = (offset: number, rect: AnchorRect) => {
+        rectsForLayout().set(offset, rect);
     };
 
-    /** Palabra más cercana a un punto de pantalla, para anclar un trazo nuevo. */
+    /** Párrafo más cercano a un punto de pantalla, para anclar un trazo nuevo. */
     const anchorAt = (screenX: number, screenY: number) => {
         if (!section) return null;
         let bestOffset: number | null = null;
         let bestRect: AnchorRect | null = null;
         let bestDistance = Number.POSITIVE_INFINITY;
-        for (const [offset, rect] of wordRects.current.entries()) {
+        for (const [offset, rect] of rectsForLayout().entries()) {
             // Se mide contra el renglón, no contra el punto exacto: se escribe
             // AL LADO de lo que se anota, no encima.
             const dy = Math.abs(screenY - (rect.y + rect.height / 2));
@@ -81,7 +89,9 @@ export function useInkNotes(sermonId: string, section: SermonSection | undefined
         // en la web, la nota sigue encontrando su pasaje.
         const at = resolveAnnotationAnchor(note, section.body);
         if (!at) return null;
-        return wordRects.current.get(at.start) ?? null;
+        // Sólo las posiciones de ESTE layout: las de otros quedan guardadas
+        // aparte y no pueden dibujar tinta de una página sobre otra.
+        return rectsForLayout().get(at.start) ?? null;
     };
 
     const append = useMutation({
@@ -159,8 +169,7 @@ export function useInkNotes(sermonId: string, section: SermonSection | undefined
         eraser,
         setEraser,
         eraseNote: (noteId: string) => erase.mutate(noteId),
-        resetLayout,
-        rememberWord,
+        rememberBlock,
         anchorAt,
         anchorRectFor,
         addStroke: (offset: number, stroke: InkStroke) => append.mutate({ offset, stroke }),

@@ -152,7 +152,8 @@ export default function PreachModeScreen({
     const { measure, probe } = useDeliveryMeasure(fontSize);
 
     // Capa de tinta: anclada al texto, no a la pantalla. Ver InkNote en domain.
-    const ink = useInkNotes(id ?? '', section);
+    const inkLayoutKey = `${sectionIndex}|${pageIndex}|${fontSize}|${senseLines}|${hangingIndent}|${deliveryFace}|${instrumentPanel}`;
+    const ink = useInkNotes(id ?? '', section, inkLayoutKey);
 
     // El presupuesto de tiempo por movimiento alimenta el riel (D2). Por
     // defecto se reparte proporcional a las palabras; lo que el pastor fija a
@@ -209,12 +210,6 @@ export default function PreachModeScreen({
 
     // Texto de la página siguiente para el asomo. Sale del primer bloque que
     // viene: alcanza para saber si la idea sigue o si acá cerró.
-    // El mapa de posiciones de palabras se vacía al cambiar de página,
-    // movimiento o layout. Si no, acumula rectángulos viejos y la tinta de una
-    // página se sigue dibujando sobre la siguiente.
-    useEffect(() => {
-        ink.resetLayout();
-    }, [sectionIndex, safePageIndex, fontSize, senseLines, deliveryFace]);
 
     const nextPeek =
         pages.length && safePageIndex < pages.length - 1
@@ -437,7 +432,7 @@ export default function PreachModeScreen({
                         senseLines={senseLines}
                         face={deliveryFace}
                         hangingIndent={hangingIndent}
-                        onWordLayout={ink.rememberWord}
+                        onBlockLayout={ink.rememberBlock}
                         onTapAt={handleTap}
                         onPressApparatus={setApparatus}
                         selection={highlighting.selection}

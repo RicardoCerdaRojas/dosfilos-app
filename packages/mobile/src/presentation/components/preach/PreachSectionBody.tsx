@@ -43,8 +43,18 @@ interface Props {
     face: DeliveryFace;
     /** Sangría francesa encendida. Preferencia, no ajuste con respuesta única. */
     hangingIndent: boolean;
-    /** Posición de cada palabra en pantalla, para anclar la tinta. */
-    onWordLayout?: (sourceStart: number, rect: { x: number; y: number; height: number }) => void;
+    /**
+     * Posición de cada BLOQUE en pantalla, para anclar la tinta.
+     *
+     * Antes se reportaba palabra por palabra. Eran cientos de entradas por
+     * página y dependía de que `onLayout` volviera a dispararse para cada una
+     * — cosa que RN sólo hace si la vista efectivamente se movió. Al apagar el
+     * tercio inferior, por ejemplo, las palabras de arriba no se mueven, así
+     * que nadie re-reportaba y la tinta se quedaba sin dónde dibujarse. Con
+     * bloques son unos pocos por página y el ancla es igual de significativa:
+     * la nota vive al lado de SU párrafo.
+     */
+    onBlockLayout?: (sourceStart: number, rect: { x: number; y: number; height: number }) => void;
 }
 
 /** Marca que cubre un punto del cuerpo crudo. La unidad ahora es la palabra. */
@@ -69,7 +79,7 @@ export function PreachSectionBody({
     onPressApparatus,
     face,
     hangingIndent,
-    onWordLayout,
+    onBlockLayout,
 }: Props) {
     /**
      * Traduce las marcas guardadas al trazo que le toca a cada palabra.
@@ -90,7 +100,17 @@ export function PreachSectionBody({
     };
 
     const paragraph = (units: ReadingUnit[], key: React.Key, style?: object) => (
-        <View key={key} style={style}>
+        <View
+            key={key}
+            style={style}
+            onLayout={(e) => {
+                const first = units[0];
+                if (!first || !onBlockLayout) return;
+                e.currentTarget.measureInWindow((x, y, _width, height) => {
+                    onBlockLayout(first.sourceStart, { x, y, height });
+                });
+            }}
+        >
             <SelectableParagraph
                 units={units}
                 fontSize={fontSize}
@@ -105,7 +125,6 @@ export function PreachSectionBody({
                 onPressCitation={onPressCitation}
                 faceClass={FACE_CLASS[face].regular}
                 hangingIndent={hangingIndent ? fontSize * HANGING_INDENT_EM : 0}
-                onWordLayout={onWordLayout}
             />
         </View>
     );
