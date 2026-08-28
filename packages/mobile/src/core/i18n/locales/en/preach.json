@@ -20,5 +20,10 @@
     "mode_sepia": "Sepia",
     "mode_oscuro": "Dark",
     "mode_atril": "Lectern",
-    "mode_eink": "E-ink"
+    "mode_eink": "E-ink",
+    "movement_budget": "Time per movement",
+    "movement_budget_hint": "Split automatically by text length. What you adjust stays fixed and the rest rebalances.",
+    "budget_less": "Less time",
+    "budget_more": "More time",
+    "budget_auto": "Back to automatic"
 }

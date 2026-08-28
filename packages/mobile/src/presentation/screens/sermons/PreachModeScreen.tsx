@@ -15,8 +15,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useKeepAwake } from 'expo-keep-awake';
 import { StatusBar } from 'expo-status-bar';
-import type { CitationManifestEntry } from '@dosfilos/domain';
-import { aggregateRequiredAttributions, buildReadingBlocks } from '@dosfilos/domain';
+import type { CitationManifestEntry, ReadingBlock } from '@dosfilos/domain';
+import {
+    aggregateRequiredAttributions,
+    buildMovementBudgets,
+    buildReadingBlocks,
+} from '@dosfilos/domain';
 
 import { useSermon } from '@/presentation/hooks/useSermons';
 import { usePreachHighlights } from '@/presentation/hooks/usePreachHighlights';
@@ -28,13 +32,8 @@ import { PreachSectionBody } from '@/presentation/components/preach/PreachSectio
 import { useDeliveryMeasure } from '@/presentation/hooks/useDeliveryMeasure';
 import { HighlightPalette } from '@/presentation/components/preach/HighlightPalette';
 import { PreachSettingsSheet } from '@/presentation/components/preach/PreachSettingsSheet';
-
-const formatTime = (totalSeconds: number): string => {
-    const abs = Math.abs(totalSeconds);
-    const m = Math.floor(abs / 60);
-    const s = abs % 60;
-    return `${totalSeconds < 0 ? '-' : ''}${m}:${String(s).padStart(2, '0')}`;
-};
+import { PreachInstrumentPanel } from '@/presentation/components/preach/PreachInstrumentPanel';
+import { usePagination } from '@/presentation/hooks/usePagination';
 
 interface PreachModeScreenProps {
     /** Id inyectado: lo usa la vista previa de dev, que no llega por ruta. */
@@ -52,7 +51,7 @@ export default function PreachModeScreen({
     const router = useRouter();
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
-    const { width } = useWindowDimensions();
+    const { width, height: screenHeight } = useWindowDimensions();
     const { data: sermon, isLoading } = useSermon(id ?? '');
 
     const readingMode = useReaderSettingsStore((s) => s.readingMode);
@@ -61,6 +60,8 @@ export default function PreachModeScreen({
     const setFontSize = useReaderSettingsStore((s) => s.setDeliveryFontSize);
     const senseLines = useReaderSettingsStore((s) => s.senseLines);
     const setSenseLines = useReaderSettingsStore((s) => s.setSenseLines);
+    const budgetOverrides = useReaderSettingsStore((s) => s.budgetOverrides);
+    const setBudgetOverride = useReaderSettingsStore((s) => s.setBudgetOverride);
     const tokens = READING_MODES[readingMode];
 
     // El púlpito nunca se apaga a mitad de sermón. En modo atril es
@@ -68,6 +69,8 @@ export default function PreachModeScreen({
     useKeepAwake();
 
     const [sectionIndex, setSectionIndex] = useState(initialSectionIndex);
+    /** Página dentro del movimiento. La unidad de avance bajo el pulgar (D7). */
+    const [pageIndex, setPageIndex] = useState(0);
     const [chromeVisible, setChromeVisible] = useState(true);
     const [blackout, setBlackout] = useState(false);
     const [showSections, setShowSections] = useState(false);
@@ -102,6 +105,53 @@ export default function PreachModeScreen({
     // títulos quedaban pegados al borde y el bloque se veía desalineado.
     const { measure, probe } = useDeliveryMeasure(fontSize);
 
+    // El presupuesto de tiempo por movimiento alimenta el riel (D2). Por
+    // defecto se reparte proporcional a las palabras; lo que el pastor fija a
+    // mano se respeta y el resto se reacomoda, así que ajustar uno no
+    // descuadra el total. F3 lo reemplazará con tiempos reales del ensayo.
+    const budgets = buildMovementBudgets(
+        sections.map((sec) => ({ slug: sec.slug, title: sec.title || t('preach:opening'), body: sec.body })),
+        targetMinutes * 60,
+        Object.fromEntries(
+            sections
+                .map((sec) => [sec.slug, budgetOverrides[`${id}|${sec.slug}`]] as const)
+                .filter(([, value]) => typeof value === 'number'),
+        ),
+    );
+
+    // P7 — el tercio inferior no se llena de prosa: leerlo obliga a bajar el
+    // mentón y la cara sale de la congregación. Ahí va el tablero.
+    const chromeTop = chromeVisible ? insets.top + 44 : insets.top + 16;
+    const readableHeight = screenHeight - chromeTop - insets.bottom;
+    const panelHeight = Math.round(readableHeight / 3);
+    const pageHeight = readableHeight - panelHeight - fontSize * 2;
+
+    const renderBlockForMeasure = (block: ReadingBlock, index: number) => (
+        <PreachSectionBody
+            blocks={[block]}
+            highlights={[]}
+            fontSize={fontSize}
+            tokens={tokens}
+            senseLines={senseLines}
+            onTapAt={() => undefined}
+            onLongPressUnit={() => undefined}
+            onPressCitation={() => undefined}
+            onPressApparatus={() => undefined}
+        />
+    );
+
+    const { pages, measuring, probe: pageProbe } = usePagination({
+        blocks,
+        availableHeight: pageHeight,
+        renderBlock: renderBlockForMeasure,
+        layoutKey: `${section?.slug ?? ''}|${fontSize}|${senseLines}|${measure ?? 0}`,
+    });
+
+    const safePageIndex = Math.min(pageIndex, Math.max(0, pages.length - 1));
+    const pageBlocks = pages.length
+        ? pages[safePageIndex].map((i) => blocks[i])
+        : blocks;
+
     // El resaltado por tap largo vive en su propio hook: la pantalla ya
     // carga timer, modos de luz, navegación por secciones y citas.
     // El pulso se apaga solo en e-ink: los lectores BOOX no tienen motor
@@ -111,7 +161,31 @@ export default function PreachModeScreen({
     const goTo = (index: number) => {
         if (index < 0 || index >= sections.length) return;
         setSectionIndex(index);
+        setPageIndex(0);
         scrollRef.current?.scrollTo({ y: 0, animated: tokens.animations });
+    };
+
+    /**
+     * El avance es POR PÁGINA, no por movimiento. Al llegar al borde salta al
+     * movimiento vecino: para el predicador el sermón es continuo, la división
+     * en movimientos sirve para ubicarse, no para tener que navegarla.
+     */
+    const step = (delta: number) => {
+        const next = safePageIndex + delta;
+        if (next >= 0 && next < pages.length) {
+            setPageIndex(next);
+            scrollRef.current?.scrollTo({ y: 0, animated: tokens.animations });
+            return;
+        }
+        if (delta > 0 && sectionIndex < sections.length - 1) {
+            goTo(sectionIndex + 1);
+        } else if (delta < 0 && sectionIndex > 0) {
+            // Al retroceder de movimiento se entra por su ÚLTIMA página, que
+            // es donde estabas leyendo cuando avanzaste.
+            setSectionIndex(sectionIndex - 1);
+            setPageIndex(Number.MAX_SAFE_INTEGER);
+            scrollRef.current?.scrollTo({ y: 0, animated: tokens.animations });
+        }
     };
 
     // Zonas de tap: ⅓ izquierda retrocede, ⅓ derecha avanza, centro
@@ -126,8 +200,8 @@ export default function PreachModeScreen({
             return;
         }
         lastTapRef.current = now;
-        if (x < width / 3) goTo(sectionIndex - 1);
-        else if (x > (width * 2) / 3) goTo(sectionIndex + 1);
+        if (x < width / 3) step(-1);
+        else if (x > (width * 2) / 3) step(1);
         else setChromeVisible((v) => !v);
     };
 
@@ -147,11 +221,6 @@ export default function PreachModeScreen({
         );
     }
 
-    const targetSeconds = targetMinutes * 60;
-    const remaining = targetSeconds - elapsed;
-    const ratio = elapsed / targetSeconds;
-    const timerColor = ratio < 0.8 ? tokens.timerOk : ratio <= 1 ? tokens.timerWarn : tokens.timerOver;
-
     return (
         <View className="flex-1" style={{ backgroundColor: tokens.background }}>
             <StatusBar style={tokens.statusBarStyle} hidden={!chromeVisible} />
@@ -166,26 +235,14 @@ export default function PreachModeScreen({
                     </TouchableOpacity>
 
                     <View className="flex-row items-center">
-                        <TouchableOpacity onPress={() => setRunning((r) => !r)} className="flex-row items-center mr-4">
+                        {/* El timer vive abajo, en el tablero (P7). Acá queda
+                            sólo arrancarlo y pararlo. */}
+                        <TouchableOpacity onPress={() => setRunning((r) => !r)} className="mr-5">
                             <MaterialIcons
                                 name={running ? 'pause' : 'play-arrow'}
-                                size={Math.round(fontSize * TYPE_SCALE.timer * 0.8)}
-                                color={tokens.textSecondary}
+                                size={26}
+                                color={running ? tokens.accent : tokens.textSecondary}
                             />
-                            {/* D5: el timer se consulta de reojo desde el
-                                atril. Escala con el cuerpo en vez de quedarse
-                                en el tamaño más chico de la pantalla. */}
-                            <Text
-                                style={{
-                                    color: timerColor,
-                                    fontSize: fontSize * TYPE_SCALE.timer,
-                                    marginLeft: 6,
-                                    fontVariant: ['tabular-nums'],
-                                }}
-                                className="font-lexend-semibold"
-                            >
-                                {formatTime(remaining)}
-                            </Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => setShowSections(true)} className="mr-4">
                             <MaterialIcons name="format-list-numbered" size={22} color={tokens.textSecondary} />
@@ -209,8 +266,17 @@ export default function PreachModeScreen({
                     }}
                 >
                     {probe}
-                    <View style={{ width: measure, alignSelf: 'center', opacity: measure ? 1 : 0 }}>
-                        {sectionIndex === 0 && (
+                    <View
+                        style={{
+                            width: measure,
+                            alignSelf: 'center',
+                            // Sin esto, mientras se miden las alturas se ve el
+                            // movimiento entero de un flash antes de paginar.
+                            opacity: measure && !measuring ? 1 : 0,
+                        }}
+                    >
+                        {pageProbe}
+                        {sectionIndex === 0 && safePageIndex === 0 && (
                             <Text
                                 style={{
                                     color: tokens.textPrimary,
@@ -222,7 +288,7 @@ export default function PreachModeScreen({
                                 {sermon.title}
                             </Text>
                         )}
-                        {section?.title ? (
+                        {section?.title && safePageIndex === 0 ? (
                             // Ubica, no compite: 0.6× en versalitas y color
                             // secundario. A 1.15× le disputaba la pantalla al
                             // título del sermón.
@@ -239,7 +305,7 @@ export default function PreachModeScreen({
                         ) : null}
 
                     <PreachSectionBody
-                        blocks={blocks}
+                        blocks={pageBlocks}
                         highlights={highlighting.highlights}
                         fontSize={fontSize}
                         tokens={tokens}
@@ -250,7 +316,9 @@ export default function PreachModeScreen({
                         onPressCitation={openCitation}
                     />
 
-                    {sectionIndex === sections.length - 1 && attributions.length > 0 && (
+                    {sectionIndex === sections.length - 1 &&
+                        safePageIndex === Math.max(0, pages.length - 1) &&
+                        attributions.length > 0 && (
                         <View style={{ borderTopWidth: 1, borderTopColor: tokens.border }} className="mt-8 pt-4">
                             {attributions.map((block) => (
                                 <View key={block.sourceId} className="mb-3">
@@ -277,23 +345,20 @@ export default function PreachModeScreen({
                 </ScrollView>
             </Pressable>
 
-            {chromeVisible && sections.length > 0 && (
-                <View
-                    className="flex-row items-center justify-center pb-2"
-                    style={{ paddingBottom: insets.bottom + 8 }}
-                >
-                    {sections.map((s, i) => (
-                        <View
-                            key={s.slug}
-                            style={{
-                                width: i === sectionIndex ? 22 : 7,
-                                height: 7,
-                                borderRadius: 4,
-                                marginHorizontal: 3,
-                                backgroundColor: i === sectionIndex ? tokens.accent : tokens.border,
-                            }}
-                        />
-                    ))}
+            {/* P7 — el tercio inferior es el tablero: timer y riel, los dos
+                datos que se consultan de reojo desde el atril. */}
+            {budgets.length > 0 && (
+                <View style={{ paddingBottom: insets.bottom }}>
+                    <PreachInstrumentPanel
+                        tokens={tokens}
+                        fontSize={fontSize}
+                        budgets={budgets}
+                        elapsedSeconds={elapsed}
+                        readingIndex={sectionIndex}
+                        pageIndex={safePageIndex}
+                        pageCount={Math.max(1, pages.length)}
+                        height={panelHeight}
+                    />
                 </View>
             )}
 
@@ -346,6 +411,8 @@ export default function PreachModeScreen({
                     setTargetMinutes(min);
                     setElapsed(0);
                 }}
+                budgets={budgets}
+                onSetBudget={(slug, seconds) => setBudgetOverride(`${id}|${slug}`, seconds)}
             />
 
             {/* Popover de cita [N] — primer cliente del citationManifest */}

@@ -20,5 +20,10 @@
     "mode_sepia": "Sepia",
     "mode_oscuro": "Oscuro",
     "mode_atril": "Atril",
-    "mode_eink": "Tinta electrónica"
+    "mode_eink": "Tinta electrónica",
+    "movement_budget": "Tiempo por movimiento",
+    "movement_budget_hint": "Se reparte solo según el texto. Lo que ajustes queda fijo y el resto se reacomoda.",
+    "budget_less": "Menos tiempo",
+    "budget_more": "Más tiempo",
+    "budget_auto": "Volver al automático"
 }

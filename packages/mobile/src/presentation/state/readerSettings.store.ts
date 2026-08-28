@@ -26,6 +26,13 @@ interface ReaderSettingsState {
      */
     senseLines: boolean;
     setSenseLines: (on: boolean) => void;
+    /**
+     * Presupuesto de tiempo fijado a mano, en segundos, por
+     * `${sermonId}|${sectionSlug}`. Lo que el pastor no toca se reparte solo.
+     * Persiste porque se decide preparando, no en el atril.
+     */
+    budgetOverrides: Record<string, number>;
+    setBudgetOverride: (key: string, seconds: number | null) => void;
 }
 
 export const useReaderSettingsStore = create<ReaderSettingsState>()(
@@ -39,6 +46,14 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
             setReadingMode: (mode: ReadingMode) => set({ readingMode: mode }),
             senseLines: false,
             setSenseLines: (on: boolean) => set({ senseLines: on }),
+            budgetOverrides: {},
+            setBudgetOverride: (key: string, seconds: number | null) =>
+                set((state) => {
+                    const next = { ...state.budgetOverrides };
+                    if (seconds === null) delete next[key];
+                    else next[key] = seconds;
+                    return { budgetOverrides: next };
+                }),
         }),
         {
             name: 'reader-settings-storage',

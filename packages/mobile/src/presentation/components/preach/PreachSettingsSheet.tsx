@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import {
     ReadingModeTokens,
 } from '@/core/theme/readingModes';
 import { DELIVERY_SIZE } from '@/core/theme/typography';
+import type { MovementBudget } from '@dosfilos/domain';
 
 const MODES: ReadingMode[] = ['claro', 'sepia', 'oscuro', 'atril', 'eink'];
 const DURATIONS = [20, 25, 30, 35, 40, 45];
@@ -26,6 +27,10 @@ interface Props {
     setSenseLines: (on: boolean) => void;
     targetMinutes: number;
     onPickDuration: (minutes: number) => void;
+    /** Reparto vigente, ya resuelto (automático + lo fijado a mano). */
+    budgets: MovementBudget[];
+    /** Fija o suelta el presupuesto de un movimiento. `null` vuelve al automático. */
+    onSetBudget: (slug: string, seconds: number | null) => void;
 }
 
 /**
@@ -45,6 +50,8 @@ export function PreachSettingsSheet({
     setSenseLines,
     targetMinutes,
     onPickDuration,
+    budgets,
+    onSetBudget,
 }: Props) {
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
@@ -167,6 +174,79 @@ export function PreachSettingsSheet({
                             </TouchableOpacity>
                         ))}
                     </View>
+
+                    {budgets.length > 1 ? (
+                        <>
+                            <Text
+                                style={{ color: tokens.textSecondary }}
+                                className="font-lexend-semibold text-xs uppercase tracking-widest mt-5 mb-1"
+                            >
+                                {t('preach:movement_budget')}
+                            </Text>
+                            <Text
+                                style={{ color: tokens.textSecondary }}
+                                className="font-lexend text-xs mb-2"
+                            >
+                                {t('preach:movement_budget_hint')}
+                            </Text>
+                            <ScrollView style={{ maxHeight: 220 }}>
+                                {budgets.map((budget) => (
+                                    <View key={budget.slug} className="flex-row items-center py-2">
+                                        <Text
+                                            numberOfLines={1}
+                                            style={{ color: tokens.textPrimary, flex: 1 }}
+                                            className="font-lexend text-sm"
+                                        >
+                                            {budget.title}
+                                        </Text>
+                                        <TouchableOpacity
+                                            onPress={() =>
+                                                onSetBudget(budget.slug, Math.max(30, budget.seconds - 60))
+                                            }
+                                            accessibilityRole="button"
+                                            accessibilityLabel={t('preach:budget_less')}
+                                            className="px-3 py-1 rounded-lg"
+                                            style={{ borderWidth: 1, borderColor: tokens.border }}
+                                        >
+                                            <MaterialIcons name="remove" size={16} color={tokens.textPrimary} />
+                                        </TouchableOpacity>
+                                        <Text
+                                            style={{
+                                                color: budget.pinned ? tokens.accent : tokens.textSecondary,
+                                                width: 60,
+                                                textAlign: 'center',
+                                                fontVariant: ['tabular-nums'],
+                                            }}
+                                            className="font-lexend text-sm"
+                                        >
+                                            {Math.round(budget.seconds / 60)} min
+                                        </Text>
+                                        <TouchableOpacity
+                                            onPress={() => onSetBudget(budget.slug, budget.seconds + 60)}
+                                            accessibilityRole="button"
+                                            accessibilityLabel={t('preach:budget_more')}
+                                            className="px-3 py-1 rounded-lg"
+                                            style={{ borderWidth: 1, borderColor: tokens.border }}
+                                        >
+                                            <MaterialIcons name="add" size={16} color={tokens.textPrimary} />
+                                        </TouchableOpacity>
+                                        {budget.pinned ? (
+                                            <TouchableOpacity
+                                                onPress={() => onSetBudget(budget.slug, null)}
+                                                accessibilityRole="button"
+                                                accessibilityLabel={t('preach:budget_auto')}
+                                                className="ml-2"
+                                            >
+                                                <MaterialIcons name="undo" size={18} color={tokens.textSecondary} />
+                                            </TouchableOpacity>
+                                        ) : (
+                                            <View style={{ width: 26 }} />
+                                        )}
+                                    </View>
+                                ))}
+                            </ScrollView>
+                        </>
+                    ) : null}
                 </View>
             </Pressable>
         </Modal>
