@@ -2,7 +2,7 @@
   "expo": {
     "name": "Dos Filos Preach",
     "slug": "dos-filos-preach",
-    "owner": "ricardocerdarojas",
+    "owner": "rcerda",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
@@ -65,6 +65,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ff8a554a-96a5-4f5c-b121-4ab8374bae14"
+      }
     }
   }
 }
