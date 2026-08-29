@@ -263,6 +263,20 @@ for (const r of ran) {
 // precios recordados. Sin tarifa, el informe dice NO CALCULABLE en vez de
 // inventar un número que después se cita como si fuera medido.
 const ratesInfo = loadRates(__dirname);
+
+// Delta del contador de CUENTA entre trabajos consecutivos de LlamaParse.
+// Es la medición fiable: el campo por trabajo devolvió 0 en las tres
+// modalidades mientras el panel acumulaba consumo real. Los motores corren en
+// serie, así que la diferencia entre el contador de uno y el del siguiente es
+// lo que costó el primero.
+const lpRuns = ran.filter(r => r.id?.startsWith('llamaparse') && r.billing?.creditsUsedAccount != null);
+for (let i = 0; i < lpRuns.length; i++) {
+    const next = lpRuns[i + 1];
+    if (!next) continue;   // al último no se le puede medir el delta: falta el de después
+    lpRuns[i].billing.creditsDelta =
+        next.billing.creditsUsedAccount - lpRuns[i].billing.creditsUsedAccount;
+}
+
 for (const r of ran) {
     r.cost = computeCost(r, ratesInfo.rates);
     r.costPerBook = extrapolate(r.cost.usd, slice.pages, args.bookPages ?? totalPages);

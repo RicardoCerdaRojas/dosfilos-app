@@ -56,22 +56,31 @@ export function computeCost(result, rates) {
     if (result.id === 'pdftotext') return { usd: 0, basis: 'local, sin servicio externo', caveat: null };
 
     if (result.id?.startsWith('llamaparse')) {
-        const credits = b.credits;
-        if (credits === null || credits === undefined) {
-            return { usd: null, basis: null, caveat: 'la API no reportó créditos' };
-        }
-        if (credits === 0) {
+        // El contador de la CUENTA es la fuente fiable, no el del trabajo.
+        // Medido: `job_credits_usage` devolvió 0 en las tres modalidades
+        // mientras el panel mostraba 1.670 créditos consumidos. El campo por
+        // trabajo no refleja el gasto; el delta del contador de cuenta entre
+        // dos trabajos consecutivos sí, porque es el mismo número que factura.
+        const credits = b.creditsDelta ?? null;
+        const rate = rates?.llamaparse?.usdPorCredito;
+
+        if (credits === null) {
             return {
                 usd: null,
-                basis: `${credits} créditos reportados`,
-                caveat: 'CERO créditos y la API no marcó caché. No se puede concluir que sea '
-                    + 'gratis: puede ser un trabajo reusado sin la bandera, o un plan que no '
-                    + 'desglosa por trabajo. Confírmalo en el panel de LlamaParse.',
+                basis: b.credits === 0 ? 'la API reportó 0 en job_credits_usage' : null,
+                caveat: 'sin delta del contador de cuenta. `job_credits_usage` no es fiable: '
+                    + 'devolvió 0 mientras el panel sí acumulaba consumo. Corre con --fresh y '
+                    + 'al menos dos motores de LlamaParse para obtener deltas.',
             };
         }
-        const rate = rates?.llamaparse?.usdPorCredito;
-        if (rate == null) return { usd: null, basis: `${credits} créditos`, caveat: 'falta usdPorCredito en rates.json' };
-        return { usd: credits * rate, basis: `${credits} créditos × ${rate} USD`, caveat: null };
+        if (rate == null) {
+            return { usd: null, basis: `${credits} créditos (delta de cuenta)`, caveat: 'falta usdPorCredito en rates.json' };
+        }
+        return {
+            usd: credits * rate,
+            basis: `${credits} créditos (delta de cuenta) × ${rate} USD`,
+            caveat: credits === 0 ? 'delta cero: puede ser caché o granularidad del contador' : null,
+        };
     }
 
     if (result.id === 'mistral-ocr') {

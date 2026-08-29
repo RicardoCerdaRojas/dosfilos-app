@@ -21,19 +21,16 @@
     "                la salida cuesta bastante más, y una transcripción es casi",
     "                toda salida."
   ],
-
   "moneda": "USD",
-
   "llamaparse": {
     "usdPorCredito": null,
-    "_nota": "La API reporta job_credits_usage por trabajo. dinero = créditos × usdPorCredito"
+    "_nota": "La API reporta job_credits_usage por trabajo, pero MIDE MAL: devolvió 0 en las tres modalidades mientras el panel acumulaba consumo. El banco usa el delta del contador de cuenta entre trabajos consecutivos. `creditosPorMes` es el cupo del plan (Free = 10000): en un plan con cupo, la restricción real no es el dinero sino cuántos libros caben en el mes.",
+    "creditosPorMes": null
   },
-
   "mistral": {
     "usdPorPagina": null,
     "_nota": "La API reporta pages_processed. dinero = páginas × usdPorPagina"
   },
-
   "gemini": {
     "usdPorMillonTokensEntrada": null,
     "usdPorMillonTokensSalida": null,

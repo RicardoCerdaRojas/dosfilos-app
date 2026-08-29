@@ -232,6 +232,30 @@ export function renderMarkdown(run) {
         lines.push('```');
         lines.push('');
     }
+    // En un plan con cupo mensual, la pregunta que decide no es cuánto cuesta
+    // sino cuántos libros caben. Medido: plan Free = 10.000 créditos/mes, y un
+    // solo comentario de 425 páginas puede llevarse una fracción enorme.
+    const cupo = run.rates?.values?.llamaparse?.creditosPorMes;
+    const lp = ran.filter(r => r.id?.startsWith('llamaparse') && r.billing?.creditsDelta != null);
+    if (cupo && lp.length) {
+        lines.push('### Cupo mensual de créditos');
+        lines.push('');
+        lines.push(`Plan de ${cupo.toLocaleString()} créditos/mes. Extrapolado a un libro de ${doc.bookPages ?? '?'} páginas:`);
+        lines.push('');
+        lines.push('| Motor | Créditos / recorte | Créditos / libro | Libros por mes |');
+        lines.push('|---|---:|---:|---:|');
+        for (const r of lp) {
+            const perPage = r.billing.creditsDelta / doc.slicePages;
+            const perBook = Math.round(perPage * (doc.bookPages ?? 0));
+            const books = perBook > 0 ? Math.floor(cupo / perBook) : '∞';
+            lines.push(`| ${r.label} | ${r.billing.creditsDelta} | ${perBook.toLocaleString()} | **${books}** |`);
+        }
+        lines.push('');
+        lines.push('Si «libros por mes» sale bajo, el motor no es viable en producción por más');
+        lines.push('barato que se vea en dólares: el cupo se agota y las subidas siguientes fallan.');
+        lines.push('');
+    }
+
     lines.push(`«USD por libro» extrapola linealmente del recorte (${doc.slicePages} págs) al libro`);
     lines.push(`completo (${doc.bookPages ?? '?'} págs). Es el número sobre el que se decide, y el más`);
     lines.push('fácil de citar sin sus supuestos: vale para cobro por página, y hay que desconfiar');
