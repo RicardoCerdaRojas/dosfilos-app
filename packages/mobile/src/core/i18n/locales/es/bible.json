@@ -49,5 +49,15 @@
     "to_sermon": "Al sermón",
     "previous_chapter": "Capítulo anterior",
     "next_chapter": "Capítulo siguiente",
-    "paste_into": "¿A qué sermón?"
+    "paste_into": "¿A qué sermón?",
+    "scope_all": "Toda la Biblia",
+    "author_moses": "Moisés",
+    "author_solomon": "Salomón",
+    "author_luke": "Lucas",
+    "author_paul": "Pablo",
+    "author_peter": "Pedro",
+    "author_john": "Juan",
+    "author_note": "Agrupación por autoría tradicional. Hebreos y los Salmos quedan fuera: su autoría no se sostiene o es de muchas manos.",
+    "no_results_scope": "Sin resultados en este ámbito",
+    "full_width": "Ancho de lectura"
 }

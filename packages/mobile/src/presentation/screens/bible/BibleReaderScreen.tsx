@@ -68,6 +68,8 @@ export default function BibleReaderScreen() {
     const { data: marks } = useBibleMarks();
     const { set: setMark, clear: clearMark } = useBibleMarkMutations();
     const { measure, probe } = useDeliveryMeasure(fontSize);
+    const fullWidth = useReaderSettingsStore((s) => s.fullWidth);
+    const setFullWidth = useReaderSettingsStore((s) => s.setFullWidth);
 
     /**
      * Firma del layout: al cambiar, los versículos se vuelven a medir.
@@ -76,7 +78,7 @@ export default function BibleReaderScreen() {
      * las vistas que efectivamente se movieron. Es exactamente el bug que ya
      * costó dos vueltas en el púlpito.
      */
-    const inkLayoutKey = `${bookId}|${chapter}|${fontSize}|${parallelId ?? ''}|${readingMode}`;
+    const inkLayoutKey = `${bookId}|${chapter}|${fontSize}|${parallelId ?? ''}|${readingMode}|${fullWidth}`;
     const ink = useBibleInk(bookId, chapter, inkLayoutKey);
 
     const repo = BibleVersionFactory.getByVersion(versionId);
@@ -187,6 +189,21 @@ export default function BibleReaderScreen() {
 
                 <View className="flex-1" />
 
+                {/* Columna medida o página entera. La columna es lo correcto
+                    para leer; el ancho completo sirve para mirar de un vistazo,
+                    y en una tablet de 13″ la diferencia se nota. */}
+                <TouchableOpacity
+                    onPress={() => setFullWidth(!fullWidth)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('bible:full_width')}
+                    className="mr-4"
+                >
+                    <MaterialIcons
+                        name={fullWidth ? 'format-align-justify' : 'format-align-center'}
+                        size={22}
+                        color={fullWidth ? tokens.accent : tokens.textSecondary}
+                    />
+                </TouchableOpacity>
                 <TouchableOpacity
                     onPress={() => setParallelId(parallelId ? null : versionId === 'rvr1960' ? 'asv' : 'rvr1960')}
                     accessibilityRole="button"
@@ -270,7 +287,17 @@ export default function BibleReaderScreen() {
 
             <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: insets.bottom + 120 }}>
                 {probe}
-                <View style={{ alignSelf: 'center', width: '100%', maxWidth: measure ? measure * (parallelId ? 2.1 : 1) : undefined }}>
+                <View
+                    style={{
+                        alignSelf: 'center',
+                        width: '100%',
+                        maxWidth: fullWidth
+                            ? undefined
+                            : measure
+                              ? measure * (parallelId ? 2.1 : 1)
+                              : undefined,
+                    }}
+                >
                     <View className={parallelId ? 'flex-row' : undefined}>
                         <View style={{ flex: 1, marginRight: parallelId ? 24 : 0 }}>
                             <SelectableVerses
@@ -393,6 +420,8 @@ export default function BibleReaderScreen() {
                 tokens={tokens}
                 face={face}
                 versionId={versionId}
+                currentBookId={bookId}
+                currentBookName={book?.name ?? ''}
                 onOpen={(nextBook, nextChapter) => {
                     setBookId(nextBook);
                     setChapter(nextChapter);

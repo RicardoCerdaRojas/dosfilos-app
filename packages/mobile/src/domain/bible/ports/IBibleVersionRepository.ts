@@ -21,5 +21,12 @@ export interface IBibleVersionRepository {
     getBooks(): { id: string; name: string; chapters: number }[];
     getChapterCount(bookNameOrId: string): number;
     getChapterContent(bookNameOrId: string, chapter: number): string[] | null;
-    search(query: string, limit?: number): { reference: string; text: string }[];
+    /**
+     * Busca una frase. `bookIds` acota el ámbito; sin él, los 66 libros.
+     */
+    search(
+        query: string,
+        limit?: number,
+        bookIds?: string[],
+    ): { reference: string; text: string }[];
 }

@@ -122,13 +122,17 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
         return book.chapters[chapterIdx].map(verse => verse ? verse.replace(/\\s*\\n\\s*/g, ' ').trim() : verse);
     }
 
-    search(query: string, limit = 20): { reference: string; text: string }[] {
+    search(query: string, limit = 20, bookIds?: string[]): { reference: string; text: string }[] {
         const results: { reference: string; text: string }[] = [];
         const q = query.toLowerCase().trim();
         if (!q || q.length < 3) return [];
 
         let count = 0;
-        const books = this.getBooks();
+        // El ámbito se filtra ACÁ y no sobre los resultados: buscar en los 66
+        // libros para después descartar 65 es recorrer un millón de
+        // versículos de más en cada tecla.
+        const scope = bookIds ? new Set(bookIds.map((id) => id.toLowerCase())) : null;
+        const books = this.getBooks().filter((b) => !scope || scope.has(b.id.toLowerCase()));
 
         for (const bInfo of books) {
             const book = this.bibleData.find(b => b.id === bInfo.id);

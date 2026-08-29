@@ -59,6 +59,16 @@ interface ReaderSettingsState {
      * lee un libro entero a lo largo de una semana vuelve al mismo lugar
      * todos los días.
      */
+    /**
+     * Lectura a ancho completo en vez de la columna medida.
+     *
+     * La columna es lo correcto para leer —una línea de mil píxeles hace
+     * perder el renglón al volver— pero a veces se quiere la página entera:
+     * comparar dos versiones, mirar un capítulo de un vistazo. Es preferencia,
+     * no ajuste con respuesta única, así que se guarda.
+     */
+    fullWidth: boolean;
+    setFullWidth: (on: boolean) => void;
     lastRead: { versionId: string; bookId: string; chapter: number } | null;
     setLastRead: (at: { versionId: string; bookId: string; chapter: number }) => void;
     budgetOverrides: Record<string, number>;
@@ -88,6 +98,8 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
             setDeliveryFace: (face: DeliveryFace) => set({ deliveryFace: face }),
             instrumentPanel: true,
             setInstrumentPanel: (on: boolean) => set({ instrumentPanel: on }),
+            fullWidth: false,
+            setFullWidth: (on) => set({ fullWidth: on }),
             lastRead: null,
             setLastRead: (at) => set({ lastRead: at }),
             budgetOverrides: {},

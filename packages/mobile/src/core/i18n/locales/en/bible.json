@@ -49,5 +49,15 @@
     "to_sermon": "To sermon",
     "previous_chapter": "Previous chapter",
     "next_chapter": "Next chapter",
-    "paste_into": "Into which sermon?"
+    "paste_into": "Into which sermon?",
+    "scope_all": "Whole Bible",
+    "author_moses": "Moses",
+    "author_solomon": "Solomon",
+    "author_luke": "Luke",
+    "author_paul": "Paul",
+    "author_peter": "Peter",
+    "author_john": "John",
+    "author_note": "Grouped by traditional authorship. Hebrews and the Psalms are left out: their authorship does not hold up, or is of many hands.",
+    "no_results_scope": "No results in this scope",
+    "full_width": "Reading width"
 }
