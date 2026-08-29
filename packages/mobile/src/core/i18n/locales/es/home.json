@@ -14,5 +14,10 @@
     "edited_ago": "Editado hace {{time}}",
     "yesterday": "Ayer",
     "days_ago": "Hace {{count}} días",
-    "go_preach": "Predicar"
+    "go_preach": "Predicar",
+    "next_to_preach": "Lo próximo",
+    "open_pulpit": "Abrir el púlpito",
+    "no_sermons_title": "Todavía no hay sermones publicados",
+    "no_sermons_hint": "Los sermones que publiques en la web aparecen acá, listos para el atril.",
+    "ready_offline_short": "Sin conexión listo"
 }

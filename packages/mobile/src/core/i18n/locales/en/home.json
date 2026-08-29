@@ -14,5 +14,10 @@
     "edited_ago": "Edited {{time}} ago",
     "yesterday": "Yesterday",
     "days_ago": "{{count}} days ago",
-    "go_preach": "Preach"
+    "go_preach": "Preach",
+    "next_to_preach": "Up next",
+    "open_pulpit": "Open the pulpit",
+    "no_sermons_title": "No published sermons yet",
+    "no_sermons_hint": "Sermons you publish on the web show up here, ready for the pulpit.",
+    "ready_offline_short": "Offline ready"
 }

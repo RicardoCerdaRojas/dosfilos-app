@@ -1,32 +1,42 @@
-import { Link, Stack } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { useAppTheme } from '@/core/theme/appTheme';
+import { EmptyState } from '@/presentation/components/ui/kit';
 
+/** Ruta que no existe. Del andamio de Expo quedaba el "Oops!" en inglés. */
 export default function NotFoundScreen() {
-  return (
-    <>
-      <Stack.Screen options={{ title: 'Oops!' }} />
-      <ThemedView style={styles.container}>
-        <ThemedText type="title">Esta pantalla no existe.</ThemedText>
-        <Link href="/" style={styles.link}>
-          <ThemedText type="link">Volver al inicio</ThemedText>
-        </Link>
-      </ThemedView>
-    </>
-  );
-}
+    const theme = useAppTheme();
+    const router = useRouter();
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
-  },
-});
+    return (
+        <>
+            <Stack.Screen options={{ headerShown: false }} />
+            <View
+                className="flex-1 justify-center"
+                style={{ backgroundColor: theme.background }}
+            >
+                <EmptyState
+                    theme={theme}
+                    title="Esta pantalla no existe"
+                    action={
+                        <TouchableOpacity
+                            onPress={() => router.replace('/')}
+                            accessibilityRole="button"
+                            className="px-6 py-3 rounded-full active:opacity-85"
+                            style={{ backgroundColor: theme.accent }}
+                        >
+                            <Text
+                                style={{ color: theme.onAccent }}
+                                className="font-lexend-semibold"
+                            >
+                                Volver al inicio
+                            </Text>
+                        </TouchableOpacity>
+                    }
+                />
+            </View>
+        </>
+    );
+}

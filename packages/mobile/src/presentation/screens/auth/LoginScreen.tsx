@@ -12,6 +12,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import { useTranslation } from 'react-i18next';
 
+import { useAppTheme } from '@/core/theme/appTheme';
 import { useAuthStore } from '@/presentation/state/auth.store';
 import { useUIStore } from '@/presentation/state/ui.store';
 import { getGoogleIdToken } from '@/core/config/socialAuth';
@@ -23,7 +24,17 @@ import { getGoogleIdToken } from '@/core/config/socialAuth';
  */
 const WEB_REGISTER_URL = 'https://app.preach.dosfilos.com/register';
 
+/**
+ * La puerta de entrada.
+ *
+ * Era la única pantalla clavada en blanco: al abrir la app de noche, con el
+ * dispositivo en oscuro, daba un fogonazo. Ahora respeta el tema como todo lo
+ * demás. La marca sube a un rótulo tenue en versalita y el peso tipográfico se
+ * lo lleva la acción — el pastor no viene a leer el nombre del producto, viene
+ * a entrar.
+ */
 export const LoginScreen = () => {
+    const theme = useAppTheme();
     const [resetMode, setResetMode] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -129,19 +140,35 @@ export const LoginScreen = () => {
     };
 
     return (
-        <View className="flex-1 justify-center items-center bg-white p-6">
-            <View className="w-full max-w-sm">
-                <Text className="text-3xl font-lexend-bold text-center mb-1 text-slate-900">
+        <View
+            className="flex-1 justify-center items-center p-6"
+            style={{ backgroundColor: theme.background }}
+        >
+            <View className="w-full" style={{ maxWidth: 400 }}>
+                <Text
+                    style={{ color: theme.textMuted, fontSize: 11, letterSpacing: 1.6 }}
+                    className="font-lexend-semibold text-center uppercase"
+                >
                     Dos Filos Preach
                 </Text>
-                <Text className="text-center text-slate-500 font-lexend mb-8">
+                <Text
+                    style={{ color: theme.textPrimary, fontSize: 27, marginTop: 10 }}
+                    className="font-lexend-bold text-center"
+                >
                     {resetMode ? t('auth:reset_title') : t('auth:sign_in')}
                 </Text>
 
                 <TextInput
-                    className="w-full bg-slate-100 border border-slate-200 rounded-lg p-4 mb-4 text-base font-lexend"
+                    className="w-full rounded-xl p-4 mt-8 font-lexend"
+                    style={{
+                        backgroundColor: theme.surfaceSunken,
+                        borderWidth: 1,
+                        borderColor: theme.border,
+                        color: theme.textPrimary,
+                        fontSize: 16,
+                    }}
                     placeholder={t('auth:email')}
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={theme.textMuted}
                     value={email}
                     onChangeText={setEmail}
                     autoCapitalize="none"
@@ -152,9 +179,16 @@ export const LoginScreen = () => {
 
                 {!resetMode && (
                     <TextInput
-                        className="w-full bg-slate-100 border border-slate-200 rounded-lg p-4 mb-6 text-base font-lexend"
+                        className="w-full rounded-xl p-4 mt-3 font-lexend"
+                        style={{
+                            backgroundColor: theme.surfaceSunken,
+                            borderWidth: 1,
+                            borderColor: theme.border,
+                            color: theme.textPrimary,
+                            fontSize: 16,
+                        }}
                         placeholder={t('auth:password')}
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={theme.textMuted}
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry
@@ -164,15 +198,19 @@ export const LoginScreen = () => {
                 )}
 
                 <TouchableOpacity
-                    className="w-full bg-primary rounded-lg p-4 flex-row justify-center items-center mb-5 active:opacity-80"
-                    style={{ opacity: localLoading ? 0.7 : 1 }}
+                    className="w-full rounded-xl p-4 flex-row justify-center items-center mt-6 active:opacity-85"
+                    style={{ backgroundColor: theme.accent, opacity: localLoading ? 0.7 : 1 }}
                     onPress={resetMode ? handlePasswordReset : handleLogin}
                     disabled={localLoading}
+                    accessibilityRole="button"
                 >
                     {localLoading ? (
-                        <ActivityIndicator color="white" />
+                        <ActivityIndicator color={theme.onAccent} />
                     ) : (
-                        <Text className="text-white font-lexend-semibold text-lg">
+                        <Text
+                            style={{ color: theme.onAccent, fontSize: 16 }}
+                            className="font-lexend-semibold"
+                        >
                             {resetMode ? t('auth:send_reset') : t('auth:sign_in')}
                         </Text>
                     )}
@@ -180,20 +218,32 @@ export const LoginScreen = () => {
 
                 {!resetMode && (
                     <>
-                        <View className="flex-row items-center mb-5">
-                            <View className="flex-1 h-px bg-slate-200" />
-                            <Text className="text-slate-400 font-lexend text-xs mx-3">
+                        <View className="flex-row items-center my-6">
+                            <View className="flex-1" style={{ height: 1, backgroundColor: theme.border }} />
+                            <Text
+                                style={{ color: theme.textMuted, fontSize: 12 }}
+                                className="font-lexend mx-3"
+                            >
                                 {t('auth:or')}
                             </Text>
-                            <View className="flex-1 h-px bg-slate-200" />
+                            <View className="flex-1" style={{ height: 1, backgroundColor: theme.border }} />
                         </View>
 
                         <TouchableOpacity
                             onPress={handleGoogle}
                             disabled={localLoading}
-                            className="w-full bg-white border border-slate-300 rounded-lg p-4 flex-row justify-center items-center mb-3 active:opacity-80"
+                            accessibilityRole="button"
+                            className="w-full rounded-xl p-4 flex-row justify-center items-center mb-3 active:opacity-80"
+                            style={{
+                                backgroundColor: theme.surface,
+                                borderWidth: 1,
+                                borderColor: theme.borderStrong,
+                            }}
                         >
-                            <Text className="text-slate-700 font-lexend-semibold text-base">
+                            <Text
+                                style={{ color: theme.textPrimary, fontSize: 15 }}
+                                className="font-lexend-semibold"
+                            >
                                 {t('auth:continue_google')}
                             </Text>
                         </TouchableOpacity>
@@ -201,9 +251,13 @@ export const LoginScreen = () => {
                         {appleAvailable && (
                             <AppleAuthentication.AppleAuthenticationButton
                                 buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                                cornerRadius={8}
-                                style={{ width: '100%', height: 52, marginBottom: 12 }}
+                                buttonStyle={
+                                    theme.isDark
+                                        ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                                        : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+                                }
+                                cornerRadius={12}
+                                style={{ width: '100%', height: 54, marginBottom: 12 }}
                                 onPress={handleApple}
                             />
                         )}
@@ -212,10 +266,11 @@ export const LoginScreen = () => {
 
                 <TouchableOpacity
                     onPress={() => setResetMode(!resetMode)}
-                    className="self-center mt-2"
+                    className="self-center mt-4"
                     disabled={localLoading}
+                    accessibilityRole="button"
                 >
-                    <Text className="text-primary font-lexend">
+                    <Text style={{ color: theme.accent, fontSize: 14 }} className="font-lexend">
                         {resetMode ? t('auth:back_to_sign_in') : t('auth:forgot_password')}
                     </Text>
                 </TouchableOpacity>
@@ -223,12 +278,16 @@ export const LoginScreen = () => {
                 {!resetMode && (
                     <TouchableOpacity
                         onPress={() => Linking.openURL(WEB_REGISTER_URL)}
-                        className="self-center mt-6"
+                        className="self-center mt-8"
                         disabled={localLoading}
+                        accessibilityRole="button"
                     >
-                        <Text className="text-slate-500 font-lexend text-center">
+                        <Text
+                            style={{ color: theme.textSecondary, fontSize: 14 }}
+                            className="font-lexend text-center"
+                        >
                             {t('auth:no_account')}{' '}
-                            <Text className="text-primary font-lexend-semibold">
+                            <Text style={{ color: theme.accent }} className="font-lexend-semibold">
                                 {t('auth:register_on_web')}
                             </Text>
                         </Text>

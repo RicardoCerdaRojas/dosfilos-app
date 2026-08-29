@@ -52,5 +52,9 @@
     "pen_done": "Done",
     "hanging_indent": "Hanging indent",
     "indent_on": "Indent",
-    "indent_off": "No indent"
+    "indent_off": "No indent",
+    "reading_mode": "Reading mode",
+    "font_size": "Text size",
+    "font_smaller": "Smaller text",
+    "font_bigger": "Larger text"
 }

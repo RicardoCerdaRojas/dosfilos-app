@@ -1,63 +1,75 @@
 import { Tabs } from 'expo-router';
-import React, { useMemo } from 'react';
-import { View, useColorScheme as useDeviceColorScheme } from 'react-native';
+import React from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { useThemeStore } from '@/presentation/state/theme.store';
 import { useTranslation } from 'react-i18next';
 
+import { HapticTab } from '@/components/haptic-tab';
+import { useAppTheme } from '@/core/theme/appTheme';
+import { useLayout } from '@/core/theme/layout';
+
+/**
+ * Las tres puertas: inicio, Biblia, sermones.
+ *
+ * La barra tomaba sus colores de constantes sueltas (`#1754cf`, `#0b1120`) que
+ * ya no coincidían con ninguna pantalla. Ahora sale del tema, así que cambiar
+ * un neutro cambia la app entera y no cinco archivos a mano.
+ *
+ * En tablet crece: los blancos de toque de un teléfono, en una pantalla que se
+ * usa apoyada y a distancia de brazo, quedan chicos.
+ */
 export default function TabLayout() {
-  const deviceColorScheme = useDeviceColorScheme();
-  const themeMode = useThemeStore((state) => state.themeMode);
-  const { t } = useTranslation();
+    const theme = useAppTheme();
+    const { isTablet } = useLayout();
+    const { t } = useTranslation();
 
-  const isDark = useMemo(() => {
-    if (themeMode === 'system') return deviceColorScheme === 'dark';
-    return themeMode === 'dark';
-  }, [themeMode, deviceColorScheme]);
-
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: '#1754cf',
-        tabBarInactiveTintColor: isDark ? '#64748b' : '#94a3b8',
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarStyle: {
-          backgroundColor: isDark ? '#0b1120' : '#ffffff',
-          borderTopWidth: 1,
-          borderTopColor: isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0',
-          paddingTop: 8,
-          height: 85,
-        },
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '700',
-          marginTop: -4,
-        }
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t('common:home_tab'),
-          tabBarIcon: ({ color }) => <MaterialIcons size={24} name="home" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="bible"
-        options={{
-          title: t('common:bible_tab'),
-          tabBarIcon: ({ color }) => <MaterialIcons size={24} name="book" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="sermons"
-        options={{
-          title: t('common:sermons_tab'),
-          tabBarIcon: ({ color }) => <MaterialIcons size={24} name="history-edu" color={color} />,
-        }}
-      />
-    </Tabs>
-  );
+    return (
+        <Tabs
+            screenOptions={{
+                tabBarActiveTintColor: theme.accent,
+                tabBarInactiveTintColor: theme.textMuted,
+                headerShown: false,
+                tabBarButton: HapticTab,
+                tabBarStyle: {
+                    backgroundColor: theme.surface,
+                    borderTopWidth: 1,
+                    borderTopColor: theme.border,
+                    paddingTop: isTablet ? 12 : 8,
+                    height: isTablet ? 92 : 85,
+                },
+                tabBarLabelStyle: {
+                    fontSize: isTablet ? 12 : 10,
+                    fontWeight: '600',
+                    marginTop: isTablet ? 0 : -4,
+                },
+            }}
+        >
+            <Tabs.Screen
+                name="index"
+                options={{
+                    title: t('common:home_tab'),
+                    tabBarIcon: ({ color }) => (
+                        <MaterialIcons size={isTablet ? 27 : 24} name="home" color={color} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="bible"
+                options={{
+                    title: t('common:bible_tab'),
+                    tabBarIcon: ({ color }) => (
+                        <MaterialIcons size={isTablet ? 27 : 24} name="book" color={color} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="sermons"
+                options={{
+                    title: t('common:sermons_tab'),
+                    tabBarIcon: ({ color }) => (
+                        <MaterialIcons size={isTablet ? 27 : 24} name="history-edu" color={color} />
+                    ),
+                }}
+            />
+        </Tabs>
+    );
 }

@@ -1,11 +1,14 @@
 import React from 'react';
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
+import { useAppTheme } from '@/core/theme/appTheme';
+import { STUDY_COLUMN } from '@/core/theme/layout';
 import { usePublishedSermons, useSermon, useUpdateSermon } from '@/presentation/hooks/useSermons';
+import { Card, EmptyState, SectionLabel, Skeleton } from '@/presentation/components/ui/kit';
 
 /**
  * Pegar un pasaje en un sermón.
@@ -20,43 +23,80 @@ export default function SermonPasteScreen() {
     const router = useRouter();
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
+    const theme = useAppTheme();
     const { data: groups, isLoading } = usePublishedSermons();
 
     const sermons = (groups ?? []).flatMap((group) => group.sermons);
 
     return (
-        <View className="flex-1 bg-white dark:bg-slate-900">
+        <View className="flex-1" style={{ backgroundColor: theme.background }}>
             <View
-                className="flex-row items-center px-5 pb-3 border-b border-slate-200 dark:border-slate-700"
-                style={{ paddingTop: insets.top + 8 }}
+                className="flex-row items-center px-5 pb-3"
+                style={{
+                    paddingTop: insets.top + 8,
+                    borderBottomWidth: 1,
+                    borderBottomColor: theme.border,
+                }}
             >
                 <TouchableOpacity
                     onPress={() => router.back()}
                     accessibilityRole="button"
                     accessibilityLabel={t('common:cancel')}
                 >
-                    <MaterialIcons name="close" size={24} color="#64748b" />
+                    <MaterialIcons name="close" size={23} color={theme.textSecondary} />
                 </TouchableOpacity>
-                <Text className="font-lexend-semibold text-base text-slate-900 dark:text-white ml-4">
+                <Text
+                    style={{ color: theme.textPrimary, fontSize: 16 }}
+                    className="font-lexend-semibold ml-4"
+                >
                     {t('bible:paste_into')}
                 </Text>
             </View>
 
-            <View className="px-6 pt-5">
-                <Text
-                    numberOfLines={3}
-                    className="font-lexend text-sm text-slate-500 dark:text-slate-400 italic"
-                >
-                    {markdown}
-                </Text>
+            {/* El pasaje que viaja, citado tal como va a quedar: se pega a
+                ciegas si no se ve antes. */}
+            <View
+                style={{
+                    paddingHorizontal: 24,
+                    paddingTop: 20,
+                    width: '100%',
+                    maxWidth: STUDY_COLUMN,
+                    alignSelf: 'center',
+                }}
+            >
+                <Card theme={theme} className="p-4">
+                    <Text
+                        numberOfLines={4}
+                        style={{ color: theme.textSecondary, fontSize: 15, lineHeight: 24 }}
+                        className="font-literata italic"
+                    >
+                        {markdown}
+                    </Text>
+                </Card>
+                <SectionLabel theme={theme} style={{ marginTop: 24 }}>
+                    {t('bible:paste_into')}
+                </SectionLabel>
             </View>
 
             {isLoading ? (
-                <View className="flex-1 items-center justify-center">
-                    <ActivityIndicator />
+                <View style={{ padding: 24, maxWidth: STUDY_COLUMN, width: '100%', alignSelf: 'center' }}>
+                    {[0, 1, 2].map((i) => (
+                        <Skeleton theme={theme} key={i} height={20} style={{ marginTop: 18 }} />
+                    ))}
                 </View>
+            ) : sermons.length === 0 ? (
+                <EmptyState theme={theme} title={t('home:no_sermons_title')} />
             ) : (
-                <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: insets.bottom + 40 }}>
+                <ScrollView
+                    contentContainerStyle={{
+                        paddingHorizontal: 24,
+                        paddingTop: 8,
+                        paddingBottom: insets.bottom + 40,
+                        width: '100%',
+                        maxWidth: STUDY_COLUMN,
+                        alignSelf: 'center',
+                    }}
+                >
                     {sermons.map((sermon) => (
                         <PasteTarget
                             key={sermon.id}
@@ -83,6 +123,7 @@ function PasteTarget({
     markdown: string;
     onDone: () => void;
 }) {
+    const theme = useAppTheme();
     const { data: sermon } = useSermon(id);
     const update = useUpdateSermon(id);
 
@@ -98,9 +139,17 @@ function PasteTarget({
             }}
             accessibilityRole="button"
             accessibilityLabel={title}
-            className="py-4 border-b border-slate-100 dark:border-slate-800"
+            className="flex-row items-center py-4"
+            style={{ borderBottomWidth: 1, borderBottomColor: theme.border }}
         >
-            <Text className="font-lexend text-base text-slate-800 dark:text-slate-200">{title}</Text>
+            <Text
+                style={{ color: theme.textPrimary, fontSize: 16 }}
+                className="flex-1 font-lexend"
+                numberOfLines={2}
+            >
+                {title}
+            </Text>
+            <MaterialIcons name="add" size={20} color={theme.textMuted} />
         </TouchableOpacity>
     );
 }

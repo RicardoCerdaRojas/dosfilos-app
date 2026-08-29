@@ -44,6 +44,8 @@ configureGoogleSignIn();
 import { useLanguageStore } from '@/presentation/state/language.store';
 import { useTranslation } from 'react-i18next';
 
+import { APP_DARK, APP_LIGHT } from '@/core/theme/appTheme';
+
 export const unstable_settings = {
   initialRouteName: '(tabs)',
   bible: {
@@ -54,16 +56,18 @@ export const unstable_settings = {
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-// Custom navigation themes based on our design system
+// El tema de navegación sale del MISMO catálogo que las pantallas. Tenía su
+// propia copia de los colores, con un fondo azulado que ya no coincidía con
+// nada: al empujar una pantalla se veía el gris viejo un instante.
 const CustomDarkTheme = {
   ...navigationDarkTheme,
   colors: {
     ...navigationDarkTheme.colors,
-    primary: '#1754cf',
-    background: '#0b1120',
-    card: '#0b1120',
-    text: '#f8fafc',
-    border: 'rgba(255, 255, 255, 0.05)',
+    primary: APP_DARK.accent,
+    background: APP_DARK.background,
+    card: APP_DARK.surface,
+    text: APP_DARK.textPrimary,
+    border: APP_DARK.border,
   },
 };
 
@@ -71,11 +75,11 @@ const CustomDefaultTheme = {
   ...navigationDefaultTheme,
   colors: {
     ...navigationDefaultTheme.colors,
-    primary: '#1754cf',
-    background: '#f6f6f8',
-    card: '#ffffff',
-    text: '#0f172a',
-    border: '#e2e8f0',
+    primary: APP_LIGHT.accent,
+    background: APP_LIGHT.background,
+    card: APP_LIGHT.surface,
+    text: APP_LIGHT.textPrimary,
+    border: APP_LIGHT.border,
   },
 };
 

@@ -1,19 +1,46 @@
 import React from 'react';
-import { Image, TouchableOpacity } from 'react-native';
+import { Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 
-export function UserAvatar() {
-  const router = useRouter();
+import { useAppTheme } from '@/core/theme/appTheme';
+import { useAuthStore } from '@/presentation/state/auth.store';
 
-  return (
-    <TouchableOpacity 
-      onPress={() => router.navigate('/profile')}
-      className="active:opacity-70"
-    >
-      <Image
-        source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAGHn54S6_m1wDutT6kqJOFnk4aCvf9Mle5k1eoYl_0o_2QRYut_df-lQdAl9SrVEkFTkUjQUirljQ4w6bZFP-81ryIHmnpNtZqUNAdHEc2CFakcDlX3UpSpzSXzuDgV8p5MeZC6SNlbbLlyS3cIF7HH5EC35YcdjVRbYdyeTO0_9UkHz-9j3aCISu7kw-0LUvj-6dhkYA5g5ElNmx6A5ptV2nc6KUPe6s5AYiz-SykD6UebkSOjav-wen3niVy4ug1wf4pFAviAoYL' }}
-        className="w-10 h-10 rounded-full border-2 border-primary/30"
-      />
-    </TouchableOpacity>
-  );
+/** Iniciales del nombre; si no hay nombre, del correo. */
+function initials(first?: string, last?: string, email?: string): string {
+    const fromName = `${first?.[0] ?? ''}${last?.[0] ?? ''}`.trim();
+    if (fromName) return fromName.toUpperCase();
+    return (email?.[0] ?? '·').toUpperCase();
+}
+
+/**
+ * El avatar del pastor.
+ *
+ * Era una foto de archivo cargada por URL: la misma cara para todos los
+ * usuarios, traída de internet en una app que tiene que funcionar sin señal.
+ * Las iniciales son de verdad, son suyas y no piden red.
+ */
+export function UserAvatar() {
+    const router = useRouter();
+    const theme = useAppTheme();
+    const user = useAuthStore((s) => s.user);
+
+    return (
+        <TouchableOpacity
+            onPress={() => router.navigate('/profile')}
+            accessibilityRole="button"
+            className="items-center justify-center active:opacity-70"
+            style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: theme.accentSoft,
+                borderWidth: 1,
+                borderColor: theme.border,
+            }}
+        >
+            <Text style={{ color: theme.accent, fontSize: 14 }} className="font-lexend-semibold">
+                {initials(user?.firstName, user?.lastName, user?.email)}
+            </Text>
+        </TouchableOpacity>
+    );
 }

@@ -28,5 +28,8 @@
     "edit": "Editar",
     "prepare_offline": "Preparar para predicar",
     "preparing_offline": "Preparando…",
-    "ready_offline": "Listo sin conexión"
+    "ready_offline": "Listo sin conexión",
+    "read": "Leer",
+    "movement": "Movimiento",
+    "pick_one": "Elige un sermón de la lista"
 }

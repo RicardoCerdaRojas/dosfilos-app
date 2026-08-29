@@ -52,5 +52,9 @@
     "pen_done": "Listo",
     "hanging_indent": "Sangría francesa",
     "indent_on": "Sangrar",
-    "indent_off": "Sin sangría"
+    "indent_off": "Sin sangría",
+    "reading_mode": "Modo de lectura",
+    "font_size": "Tamaño del texto",
+    "font_smaller": "Achicar el texto",
+    "font_bigger": "Agrandar el texto"
 }

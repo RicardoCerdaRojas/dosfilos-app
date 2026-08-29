@@ -28,5 +28,8 @@
     "edit": "Edit",
     "prepare_offline": "Prepare for preaching",
     "preparing_offline": "Preparing…",
-    "ready_offline": "Ready offline"
+    "ready_offline": "Ready offline",
+    "read": "Read",
+    "movement": "Movement",
+    "pick_one": "Pick a sermon from the list"
 }
