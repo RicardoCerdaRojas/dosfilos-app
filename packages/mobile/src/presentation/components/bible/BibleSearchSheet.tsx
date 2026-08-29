@@ -59,8 +59,9 @@ export function BibleSearchSheet({
             onPress={onPress}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
-            className="px-3.5 py-2 rounded-full mr-2"
+            className="px-3.5 rounded-full mr-2 justify-center"
             style={{
+                height: 34,
                 backgroundColor: active ? tokens.accent : tokens.background,
                 borderWidth: 1,
                 borderColor: active ? tokens.accent : tokens.border,
@@ -110,8 +111,12 @@ export function BibleSearchSheet({
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
-                        className="mt-3"
-                        contentContainerStyle={{ paddingVertical: 4 }}
+                        // `flexGrow: 0` y alto propio: un ScrollView horizontal
+                        // dentro de una columna se estira a todo lo alto que
+                        // encuentre, y sus hijos con él. Sin esto los chips
+                        // salían como columnas de 300 puntos.
+                        style={{ flexGrow: 0, marginTop: 12 }}
+                        contentContainerStyle={{ alignItems: 'center', paddingVertical: 2 }}
                     >
                         {chip('all', t('bible:scope_all'), scope.kind === 'all', () =>
                             setScope({ kind: 'all' }),

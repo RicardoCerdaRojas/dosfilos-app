@@ -211,7 +211,7 @@ export default function BibleReaderScreen() {
                     className="mr-4"
                 >
                     <MaterialIcons
-                        name="vertical-split"
+                        name="view-column"
                         size={22}
                         color={parallelId ? tokens.accent : tokens.textSecondary}
                     />
