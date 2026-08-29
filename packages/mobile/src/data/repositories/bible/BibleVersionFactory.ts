@@ -22,14 +22,24 @@ export class BibleVersionFactory {
         return this.getByVersion(version.id);
     }
 
+    /**
+     * El id se normaliza a MAYÚSCULAS antes de buscar.
+     *
+     * El catálogo los tiene como `RVR1960`/`ASV` y la interfaz los pide como
+     * `rvr1960`/`asv`. La comparación era exacta, así que NINGUNO de los dos
+     * encontraba nada y todo caía en el `|| VERSIONS[0]` — que devuelve la
+     * Reina Valera. Por eso pedir la ASV entregaba otra vez la RVR y el
+     * paralelo mostraba dos veces el mismo texto: no fallaba, mentía.
+     */
     static getByVersion(versionId: string): IBibleVersionRepository {
-        if (!this.repositories.has(versionId)) {
-            const versionConfig = VERSIONS.find(v => v.id === versionId) || VERSIONS[0];
+        const id = versionId.toUpperCase();
+        if (!this.repositories.has(id)) {
+            const versionConfig = VERSIONS.find(v => v.id === id) || VERSIONS[0];
             const repo = new versionConfig.repoClass();
-            this.repositories.set(versionId, repo);
+            this.repositories.set(id, repo);
         }
 
-        return this.repositories.get(versionId)!;
+        return this.repositories.get(id)!;
     }
 
     static getAllVersions(): { id: string; name: string; language: string }[] {

@@ -18,6 +18,16 @@ export interface IBibleVersionRepository {
      * afuera es cómo terminamos mostrando Juan bajo el título "Jonás".
      */
     resolveBookId(bookNameOrId: string): string;
+    /**
+     * Id canónico (`JON`) del libro, para poder hablar entre versiones.
+     *
+     * Cada juego de datos numera a su manera —la RVR usa `jn` y la ASV usa
+     * `32`— así que un id de una versión no significa nada en la otra. El
+     * canónico es el único vocabulario común.
+     */
+    getCanonicalBookId(bookNameOrId: string): string;
+    /** El id propio que corresponde a un canónico, o `null` si no lo tiene. */
+    getBookIdForCanonical(canonicalId: string): string | null;
     getBooks(): { id: string; name: string; chapters: number }[];
     getChapterCount(bookNameOrId: string): number;
     getChapterContent(bookNameOrId: string, chapter: number): string[] | null;

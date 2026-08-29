@@ -87,7 +87,19 @@ export default function BibleReaderScreen() {
     const books = repo?.getBooks() ?? [];
     const book = books.find((b) => b.id === bookId) ?? books[0];
     const verses = repo?.getChapterContent(bookId, chapter) ?? [];
-    const parallelVerses = parallelRepo?.getChapterContent(bookId, chapter) ?? [];
+    /**
+     * El mismo capítulo EN LA OTRA VERSIÓN.
+     *
+     * El id del libro no cruza de una versión a la otra: `jn` es Jonás en la
+     * RVR y no existe en la ASV, que lo numera `32`. Se traduce por el id
+     * canónico, que es el único vocabulario común.
+     */
+    const parallelBookId = parallelRepo
+        ? parallelRepo.getBookIdForCanonical(repo.getCanonicalBookId(bookId))
+        : null;
+    const parallelVerses = parallelBookId
+        ? (parallelRepo?.getChapterContent(parallelBookId, chapter) ?? [])
+        : [];
     const chapterCount = repo?.getChapterCount(bookId) ?? 1;
 
     /** Los versículos que toca la selección, con sus extremos de palabra. */
@@ -150,6 +162,21 @@ export default function BibleReaderScreen() {
     const currentMark = selection
         ? marks?.get(verseKey(bookId, chapter, selection.startVerse))
         : undefined;
+
+    /**
+     * Cambiar de versión conserva el libro.
+     *
+     * El id no cruza entre versiones, así que sin traducir por el canónico
+     * pasar de la RVR a la ASV dejaba un id que la otra no reconoce y el
+     * lector volvía a Génesis.
+     */
+    const changeVersion = (nextVersionId: string) => {
+        const next = BibleVersionFactory.getByVersion(nextVersionId);
+        const translated = next.getBookIdForCanonical(repo.getCanonicalBookId(bookId));
+        setVersionId(nextVersionId);
+        if (translated) setBookId(translated);
+        if (parallelId === nextVersionId) setParallelId(null);
+    };
 
     const goChapter = (delta: number) => {
         const next = chapter + delta;
@@ -300,6 +327,16 @@ export default function BibleReaderScreen() {
                 >
                     <View className={parallelId ? 'flex-row' : undefined}>
                         <View style={{ flex: 1, marginRight: parallelId ? 24 : 0 }}>
+                            {parallelId ? (
+                                // Sin rótulo, dos columnas de texto parecido no
+                                // dicen cuál es cuál.
+                                <Text
+                                    style={{ color: tokens.textSecondary, marginBottom: 10 }}
+                                    className={`${FACE_CLASS[face].semibold} text-xs`}
+                                >
+                                    {versionId.toUpperCase()}
+                                </Text>
+                            ) : null}
                             <SelectableVerses
                                 bookId={bookId}
                                 chapter={chapter}
@@ -321,8 +358,14 @@ export default function BibleReaderScreen() {
                         </View>
                         {parallelId ? (
                             <View style={{ flex: 1 }}>
+                                <Text
+                                    style={{ color: tokens.textSecondary, marginBottom: 10 }}
+                                    className={`${FACE_CLASS[face].semibold} text-xs`}
+                                >
+                                    {parallelId.toUpperCase()}
+                                </Text>
                                 <SelectableVerses
-                                    bookId={bookId}
+                                    bookId={parallelBookId ?? bookId}
                                     chapter={chapter}
                                     verses={parallelVerses}
                                     marks={new Map()}
@@ -411,7 +454,7 @@ export default function BibleReaderScreen() {
                     setSelection(null);
                     setShowPicker(false);
                 }}
-                onPickVersion={setVersionId}
+                onPickVersion={changeVersion}
                 onClose={() => setShowPicker(false)}
             />
 

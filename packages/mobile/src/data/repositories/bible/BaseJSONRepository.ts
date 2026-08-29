@@ -105,6 +105,17 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
         return bookNameOrId;
     }
 
+    getCanonicalBookId(bookNameOrId: string): string {
+        return getCanonicalId(this.resolveBookId(bookNameOrId), this.versionId);
+    }
+
+    getBookIdForCanonical(canonicalId: string): string | null {
+        const found = this.bibleData.find(
+            (b) => getCanonicalId(b.id, this.versionId) === canonicalId,
+        );
+        return found ? found.id : null;
+    }
+
     getChapterCount(bookNameOrId: string): number {
         const bookId = this.resolveBookId(bookNameOrId);
         const book = this.bibleData.find(b => b.id.toLowerCase() === bookId.toLowerCase());
