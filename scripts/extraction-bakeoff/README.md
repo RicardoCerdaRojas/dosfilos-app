@@ -53,8 +53,43 @@ mide leyendo el panel antes y después de una corrida `--fresh`.
 6.017 de entrada + 13.330 candidatos contra 39.253 totales. Cobrar sólo los
 candidatos subestimaba el costo 2,4 veces.
 
-Falta medir: **un escaneado y un léxico**, que son las clases que el tier
-Premium promete resolver y las únicas sin probar.
+### La causa: fuentes griegas sin mapa Unicode, no PDFs escaneados
+
+La hipótesis de trabajo era "escaneados". Se comprobó y es FALSA: de los 15
+sospechosos, **cero** son escaneados. Todos tienen capa de texto sana, entre
+1.800 y 5.700 caracteres por página.
+
+El griego no falta — **está mal codificado**. Mismo pasaje, mismo PDF:
+
+| | |
+|---|---|
+| Gemini (lee los glifos renderizados) | `Ἀκούσατε, λαοί, λόγους` · `כֻּלָּם` |
+| Capa de texto (lee los códigos) | `’AKOwarE, Xaoi, ^oyoix;` · `0^0` |
+
+`pdffonts` lo explica: las fuentes del cuerpo son subconjuntos TrueType con
+encoding `WinAnsi` y **`uni: no`** — sin `ToUnicode`. Es una fuente griega
+antigua donde los glifos son griegos y los códigos son latinos. Cualquier
+extractor de capa de texto reporta fielmente los códigos, o sea la basura.
+
+**Y esa basura está en el índice de producción.** `'AKOwarE, Xaoi, ^oyoix;`
+aparece literal en el `structured.md` que generó los 1.185 chunks. El índice
+no sólo carece de griego: contiene ruido latino donde el griego debería estar,
+que ensucia los embeddings y puede aparecer en una cita.
+
+Tres consecuencias:
+
+1. **La re-extracción es obligatoria, no opcional.** No es que falte contenido;
+   hay contenido incorrecto.
+2. **"¿Es escaneado?" no sirve como criterio.** Estos PDFs tienen capa de texto
+   perfecta. Sólo el análisis por escritura lo detecta.
+3. **El disparador de escalada queda confirmado**: "la escritura esperada no
+   aparece en la capa de texto", que es exactamente lo que mide
+   `scriptFidelity` — el griego sale como latín, así que `greekLetters` da 0.
+   Como pre-filtro barato, `pdffonts` con `uni: no` marca los sospechosos sin
+   llamar a ninguna API.
+
+Falta medir: **un léxico** bajo el banco completo. La clase "escaneado" resultó
+no existir en esta biblioteca.
 
 ## Setup
 

@@ -41,6 +41,10 @@
  *   --sample N      Páginas a muestrear por libro en nivel 2 (por defecto 3)
  *   --limit N       Máximo de recursos a sondear en nivel 2 (por defecto 10)
  *   --json <ruta>   Volcar el resultado crudo
+ *   --classify      Descarga los PDF sospechosos y detecta cuáles son
+ *                   ESCANEADOS (sin capa de texto). Gratis: sólo usa poppler,
+ *                   ninguna API. Es la clase de documento que el tier Premium
+ *                   promete resolver y la única que faltaba identificar.
  */
 
 import fs from 'node:fs/promises';
@@ -51,8 +55,8 @@ import admin from 'firebase-admin';
 import { config as loadEnv } from 'dotenv';
 
 import { scriptFidelity } from './lib/metrics.mjs';
-import { runMistralOcr } from './lib/engines.mjs';
-import { slicePdf, parseStorageLocation } from './lib/pdf.mjs';
+import { runMistralOcr, runPdfToText } from './lib/engines.mjs';
+import { slicePdf, parseStorageLocation, pdfPageCount } from './lib/pdf.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..');
@@ -85,6 +89,7 @@ function parseArgs(argv) {
         else if (a === '--sample') out.sample = Number(next());
         else if (a === '--limit') out.limit = Number(next());
         else if (a === '--json') out.json = next();
+        else if (a === '--classify') out.classify = true;
     }
     return out;
 }
@@ -214,6 +219,54 @@ if (healthy.length) {
 }
 
 // ── Nivel 2 ────────────────────────────────────────────────────────────────
+
+if (args.classify && suspects.length) {
+    console.log('━━ Clasificando: ¿cuáles son escaneados? ━━\n');
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'classify-'));
+
+    for (const r of suspects) {
+        if (!r.storageUrl) { console.log(`  ${r.title.slice(0, 46).padEnd(48)} sin storageUrl`); continue; }
+        process.stdout.write(`  ${r.title.slice(0, 46).padEnd(48)} `);
+        try {
+            const { objectPath } = parseStorageLocation(r.storageUrl, bucketName);
+            const pdfPath = path.join(tmp, `${r.id}.pdf`);
+            await bucket.file(objectPath).download({ destination: pdfPath });
+
+            // Muestra del medio: el principio es portada e índice, que a veces
+            // sí traen texto aunque el cuerpo del libro esté escaneado.
+            const total = await pdfPageCount(pdfPath);
+            const mid = Math.max(1, Math.floor((total ?? 40) / 2));
+            const slicePath = path.join(tmp, `${r.id}-s.pdf`);
+            await slicePdf(pdfPath, slicePath, mid, mid + 4);
+
+            const out = await runPdfToText(slicePath);
+            if (out.skipped) { console.log(`no se pudo leer (${out.reason})`); continue; }
+
+            const texto = out.markdown.replace(/<!--[^>]*-->/g, '').trim();
+            const porPagina = Math.round(texto.length / 5);
+            // Un PDF con capa de texto da miles de caracteres por página. Un
+            // escaneado da casi nada: sólo lo que el editor haya incrustado.
+            r.scanned = porPagina < 200;
+            console.log(r.scanned
+                ? `ESCANEADO — ${porPagina} chars/pág, sin capa de texto útil`
+                : `tiene capa de texto (${porPagina} chars/pág) — el griego/hebreo falta por OTRA razón`);
+        } catch (err) {
+            console.log(`error: ${err.message}`);
+        }
+    }
+    await fs.rm(tmp, { recursive: true, force: true });
+
+    const escaneados = suspects.filter(r => r.scanned);
+    console.log(`\n  Escaneados: ${escaneados.length} de ${suspects.length} sospechosos.`);
+    if (escaneados.length) {
+        console.log('  Estos son los que el tier Premium promete resolver:');
+        for (const r of escaneados) console.log(`    ${r.id}  ${r.title.slice(0, 55)}`);
+    } else {
+        console.log('  Ninguno es escaneado: todos tienen capa de texto y aun así les falta');
+        console.log('  el griego/hebreo. Eso apunta a fuentes sin mapa Unicode, no a imágenes.');
+    }
+    console.log();
+}
 
 if (args.probe && suspects.length) {
     if (!process.env.MISTRAL_API_KEY) {
