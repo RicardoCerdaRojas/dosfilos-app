@@ -35,6 +35,29 @@ export function loadRates(dir) {
 }
 
 /**
+ * Where each rate came from.
+ *
+ * A price with no stated origin is indistinguishable from a price somebody
+ * half-remembered, and this comparison already produced one confident table
+ * built on an uninterpretable zero. Every figure that reaches the report
+ * carries its provenance so a reader can check it against the invoice
+ * instead of trusting the person who typed it.
+ */
+export function rateProvenance(rates) {
+    const out = [];
+    const add = (label, value, source) => {
+        if (value == null) out.push({ label, value: null, source: 'SIN DATO — el informe no calcula dinero para esto' });
+        else out.push({ label, value, source: source || '⚠️ sin procedencia declarada — verifícalo antes de citarlo' });
+    };
+    add('LlamaParse · USD/crédito', rates?.llamaparse?.usdPorCredito, rates?.llamaparse?._fuente);
+    add('LlamaParse · créditos/mes', rates?.llamaparse?.creditosPorMes, rates?.llamaparse?._fuenteCupo);
+    add('Mistral · USD/página', rates?.mistral?.usdPorPagina, rates?.mistral?._fuente);
+    add('Gemini · USD/M tokens entrada', rates?.gemini?.usdPorMillonTokensEntrada, rates?.gemini?._fuente);
+    add('Gemini · USD/M tokens salida', rates?.gemini?.usdPorMillonTokensSalida, rates?.gemini?._fuente);
+    return out;
+}
+
+/**
  * Money for one engine run.
  *
  * Returns `{ usd, basis, caveat }`, where `usd` is null whenever the figure

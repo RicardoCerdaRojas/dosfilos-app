@@ -225,11 +225,16 @@ export function renderMarkdown(run) {
         lines.push('');
     }
     if (run.rates?.present) {
-        lines.push('Tarifas usadas (de `rates.json`):');
+        lines.push('### Tarifas usadas y de dónde salen');
         lines.push('');
-        lines.push('```json');
-        lines.push(JSON.stringify(run.rates.values, (k, v) => (k.startsWith('_') ? undefined : v), 2));
-        lines.push('```');
+        lines.push('| Tarifa | Valor | Procedencia |');
+        lines.push('|---|---:|---|');
+        for (const p of run.rates.provenance ?? []) {
+            lines.push(`| ${p.label} | ${p.value ?? '—'} | ${p.source} |`);
+        }
+        lines.push('');
+        lines.push('Un precio sin origen declarado no se distingue de uno recordado a medias.');
+        lines.push('Contrasta esta tabla con tu factura antes de citar cualquier cifra de abajo.');
         lines.push('');
     }
     // En un plan con cupo mensual, la pregunta que decide no es cuánto cuesta

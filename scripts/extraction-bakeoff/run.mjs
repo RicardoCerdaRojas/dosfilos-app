@@ -60,7 +60,7 @@ import {
     scriptFidelity, pageIntegrity, structure, novelty, pageDrift, verdict, detectScripts,
 } from './lib/metrics.mjs';
 import { renderMarkdown, renderHtml } from './lib/report.mjs';
-import { loadRates, computeCost, extrapolate } from './lib/cost.mjs';
+import { loadRates, computeCost, extrapolate, rateProvenance } from './lib/cost.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..');
@@ -284,7 +284,7 @@ for (const r of ran) {
 
 const run = {
     generatedAt: new Date().toISOString(),
-    rates: { present: ratesInfo.present, path: ratesInfo.path, values: ratesInfo.rates },
+    rates: { present: ratesInfo.present, path: ratesInfo.path, values: ratesInfo.rates, provenance: rateProvenance(ratesInfo.rates) },
     doc: {
         title,
         resourceId,
