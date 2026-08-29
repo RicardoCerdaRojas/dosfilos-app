@@ -124,13 +124,30 @@ export function PreachInstrumentPanel({
 
             ) : null}
 
-            {/* Riel: un segmento por movimiento, ancho = presupuesto */}
+            {/* Riel: un segmento por movimiento, ancho = presupuesto, y cada
+                uno SE LLENA con el reloj.
+
+                El relleno lo manda el TIEMPO, no la posición de lectura: es el
+                reloj el que avanza solo. Y por eso el riel dice algo sin
+                números — el segmento que se está leyendo lleva borde, así que
+                si el relleno va más adelante que el borde, el predicador va
+                tarde. Ver esa distancia es el instrumento; el resto es
+                decoración. */}
             <View
                 className="flex-row"
                 style={{ height: 14, marginTop: numbers ? fontSize * 0.45 : 0 }}
             >
                 {budgets.map((budget, index) => {
                     const isReading = index === readingIndex;
+                    const startsAt = budgets
+                        .slice(0, index)
+                        .reduce((sum, b) => sum + b.seconds, 0);
+                    // Cuánto del presupuesto de ESTE movimiento ya consumió el
+                    // reloj: 0 antes de llegar, 1 una vez pasado.
+                    const filled = Math.min(
+                        1,
+                        Math.max(0, (elapsedSeconds - startsAt) / Math.max(1, budget.seconds)),
+                    );
                     return (
                         <View
                             key={budget.slug}
@@ -144,23 +161,42 @@ export function PreachInstrumentPanel({
                                         ? tokens.timerOver
                                         : tokens.accent
                                     : tokens.border,
-                                backgroundColor:
-                                    index < readingIndex ? tokens.border : 'transparent',
+                                overflow: 'hidden',
                             }}
-                        />
+                        >
+                            <View
+                                style={{
+                                    width: `${filled * 100}%`,
+                                    height: '100%',
+                                    backgroundColor:
+                                        // El movimiento que se está leyendo se
+                                        // llena con el acento; los ya pasados,
+                                        // con el gris del borde: cumplido no es
+                                        // lo mismo que en curso.
+                                        isReading
+                                            ? late
+                                                ? tokens.timerOver
+                                                : tokens.accent
+                                            : tokens.border,
+                                }}
+                            />
+                        </View>
                     );
                 })}
             </View>
 
-            {/* Cursor del reloj sobre el riel, en escala del total */}
-            <View style={{ height: 10, marginTop: 2 }}>
+            {/* Cursor del reloj sobre el riel, en escala del total. Sigue
+                estando aunque el relleno diga casi lo mismo: el relleno dice
+                cuánto se consumió de cada movimiento y el cursor dice dónde
+                está el reloj en el sermón entero. */}
+            <View style={{ height: 8, marginTop: 2 }}>
                 <View
                     style={{
                         position: 'absolute',
                         left: `${Math.min(100, total > 0 ? (elapsedSeconds / total) * 100 : 0)}%`,
                         width: 2,
-                        height: 10,
-                        backgroundColor: tokens.textPrimary,
+                        height: 8,
+                        backgroundColor: late ? tokens.timerOver : tokens.textPrimary,
                     }}
                 />
             </View>
