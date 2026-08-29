@@ -95,3 +95,6 @@ packages/mobile/android/
 .atl/
 .mcp.json
 .husky/post-commit
+
+# Salidas del banco de pruebas de extracción (contienen texto de libros con derechos)
+bakeoff-out/
