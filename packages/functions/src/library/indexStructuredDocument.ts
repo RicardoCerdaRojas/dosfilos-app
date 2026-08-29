@@ -230,6 +230,10 @@ export const indexStructuredDocument = onCall<IndexRequest>(
                 indexedAt: now,
                 needsReindex: false,
                 indexingError: null, // clear any prior failure on success
+            // Re-arm the daily failure alert. Without this, a resource
+            // that fails, gets fixed, then fails again would stay silent
+            // forever — the alert stamps once and never un-stamps.
+            indexFailureAlertedAt: null,
                 updatedAt: now,
             });
 
@@ -246,9 +250,11 @@ export const indexStructuredDocument = onCall<IndexRequest>(
             const errorMessage = err?.message ?? 'Unknown error';
             console.error(`[IndexStructured] ❌ ${resourceId}: ${errorMessage}`);
             console.error('[IndexStructured] Stack:', err?.stack);
+            await discardPartialIndex(db, resourceId);
             await resourceRef.update({
                 indexingStatus: 'failed',
                 indexingError: errorMessage,
+                indexedChunkCount: 0,
                 updatedAt: new Date(),
             });
             throw new HttpsError('internal', `Indexing failed: ${errorMessage}`);
@@ -401,6 +407,10 @@ export async function indexResourceChunks(
             indexedAt: now,
             needsReindex: false,
             indexingError: null, // clear any prior failure on success
+            // Re-arm the daily failure alert. Without this, a resource
+            // that fails, gets fixed, then fails again would stay silent
+            // forever — the alert stamps once and never un-stamps.
+            indexFailureAlertedAt: null,
             updatedAt: now,
         });
 
@@ -414,9 +424,11 @@ export async function indexResourceChunks(
         };
     } catch (err: any) {
         const errorMessage = err?.message ?? 'Unknown error';
+        await discardPartialIndex(db, resourceId);
         await resourceRef.update({
             indexingStatus: 'failed',
             indexingError: errorMessage,
+            indexedChunkCount: 0,
             updatedAt: new Date(),
         });
         throw err;
@@ -564,6 +576,37 @@ async function embedBatch(texts: string[], apiKey: string): Promise<number[][]> 
     const json = await res.json() as { embeddings?: Array<{ values: number[] }> };
     if (!json.embeddings) throw new Error('Gemini embedding response missing embeddings field');
     return json.embeddings.map(e => e.values);
+}
+
+/**
+ * Best-effort rollback for an indexing run that died mid-write.
+ *
+ * The write loop is not transactional: it deletes the previous chunks
+ * up front, then writes the new ones batch by batch. If it throws at
+ * batch N, batches 0..N-1 are already committed and the resource is
+ * about to be marked `'failed'` — leaving a book that reports itself
+ * broken while a partial, silently truncated slice of it stays live in
+ * `findNearest`. Retrieval would quote page 40 of a 425-page commentary
+ * and never reveal that the other 385 pages are missing.
+ *
+ * Deleting the partial index is the safer end state: the resource is
+ * plainly absent from retrieval until a retry succeeds. Failures here
+ * are swallowed on purpose — this runs inside a `catch`, and masking
+ * the original indexing error with a cleanup error would hide the
+ * reason the user actually needs to see.
+ */
+async function discardPartialIndex(
+    db: FirebaseFirestore.Firestore,
+    resourceId: string
+): Promise<void> {
+    try {
+        await deleteExistingChunks(db, resourceId);
+    } catch (cleanupErr: any) {
+        console.error(
+            `[IndexStructured] ${resourceId}: could not discard partial index — `
+            + `chunks may be orphaned: ${cleanupErr?.message ?? cleanupErr}`,
+        );
+    }
 }
 
 async function deleteExistingChunks(

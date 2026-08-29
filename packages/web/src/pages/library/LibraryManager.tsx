@@ -245,8 +245,9 @@ export function LibraryManager() {
 
                 {/* Status callouts — stacked, each fires only when its
                     state has resources. Order: actionable (needs click)
-                    → extracting (just wait) → failed (needs re-upload).
-                    User sees only what's relevant to them. */}
+                    → extracting (just wait) → index failed (retry, free)
+                    → extraction failed (needs re-upload). User sees only
+                    what's relevant to them. */}
                 <LibraryAttentionCallout
                     pendingCount={data.actionablePendingCount}
                     isProcessing={processing.bulkProcessing}
@@ -255,6 +256,12 @@ export function LibraryManager() {
                 <LibraryStatusCallout
                     variant="extracting"
                     count={data.extractingCount}
+                />
+                <LibraryStatusCallout
+                    variant="indexFailed"
+                    count={data.indexFailedResources.length}
+                    onRetry={() => processing.retryFailedIndexing(data.indexFailedResources)}
+                    isRetrying={processing.bulkProcessing}
                 />
                 <LibraryStatusCallout
                     variant="failed"

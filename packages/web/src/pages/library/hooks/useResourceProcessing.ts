@@ -29,6 +29,16 @@ interface UseResourceProcessingResult {
     reprocessResource: (resource: LibraryResourceEntity) => Promise<void>;
     /** Bulk-process every resource in `resources` whose status is `not-indexed`. */
     processAll: (resources: LibraryResourceEntity[], indexStatus: Record<string, IndexStatus>) => Promise<void>;
+    /**
+     * Rebuild the index for resources whose indexing FAILED. Forces a
+     * clean rebuild and skips the `confirm()` dialog that guards
+     * `reprocessResource`: there is no healthy index to destroy here,
+     * and making the user confirm their way out of our own failure is
+     * friction on top of a bug. Costs the user nothing — the retry
+     * re-reads the extractor's `structured.md` from Cloud Storage
+     * rather than re-extracting the PDF.
+     */
+    retryFailedIndexing: (resources: LibraryResourceEntity[]) => Promise<void>;
 }
 
 /**
@@ -154,6 +164,44 @@ export function useResourceProcessing({ setIndexStatus }: UseResourceProcessingO
         }
     }, [t, setIndexStatus]);
 
+    const retryFailedIndexing = useCallback(async (resources: LibraryResourceEntity[]) => {
+        if (resources.length === 0) return;
+        setBulkProcessing(true);
+        try {
+            let totalChunks = 0;
+            let processedCount = 0;
+            let errorCount = 0;
+
+            for (const resource of resources) {
+                processedCount++;
+                setBulkProgress({
+                    current: processedCount,
+                    total: resources.length,
+                    currentTitle: resource.title,
+                });
+                setProcessingResourceId(resource.id);
+                try {
+                    const chunks = await libraryService.indexResource(resource, { force: true });
+                    totalChunks += chunks;
+                    setIndexStatus(prev => ({ ...prev, [resource.id]: 'indexed' }));
+                } catch (error) {
+                    console.error(`Retry indexing failed for ${resource.title}:`, error);
+                    errorCount++;
+                }
+            }
+
+            if (errorCount > 0) {
+                toast.error(t('toast.retryIndexingError', { count: errorCount }));
+            } else {
+                toast.success(t('toast.processingSuccess', { chunks: totalChunks }));
+            }
+        } finally {
+            setBulkProcessing(false);
+            setProcessingResourceId(null);
+            setBulkProgress(null);
+        }
+    }, [t, setIndexStatus]);
+
     return {
         processingResourceId,
         bulkProcessing,
@@ -161,5 +209,6 @@ export function useResourceProcessing({ setIndexStatus }: UseResourceProcessingO
         processResource,
         reprocessResource,
         processAll,
+        retryFailedIndexing,
     };
 }

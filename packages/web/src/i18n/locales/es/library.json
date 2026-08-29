@@ -29,6 +29,13 @@
       "title_one": "{{count}} recurso con error de extracción",
       "title_other": "{{count}} recursos con error de extracción",
       "description": "Algo falló mientras procesábamos el archivo. Revisa cada recurso afectado más abajo y bórralo o vuelve a subirlo."
+    },
+    "indexFailed": {
+      "label": "Falló la indexación",
+      "title_one": "{{count}} recurso extraído pero sin indexar",
+      "title_other": "{{count}} recursos extraídos pero sin indexar",
+      "description": "El texto se extrajo bien, pero algo falló al construir el índice de búsqueda, así que estos recursos todavía no se pueden consultar ni citar. Reintentar no consume páginas de tu saldo.",
+      "actionButton": "Reintentar indexación"
     }
   },
   "progress": {
@@ -323,7 +330,9 @@
     "retryPremiumSuccess": "Listo: extraído con Premium",
     "retryPremiumNoBalance": "No tienes suficientes páginas Premium para reintentar",
     "retryPremiumDenied": "Solo puedes reintentar tus propios recursos",
-    "retryPremiumError": "Error al reintentar con Premium"
+    "retryPremiumError": "Error al reintentar con Premium",
+    "retryIndexingError_one": "No se pudo indexar {{count}} recurso. Vuelve a intentarlo en unos minutos.",
+    "retryIndexingError_other": "No se pudieron indexar {{count}} recursos. Vuelve a intentarlo en unos minutos."
   },
   "citedResourceMissing": "La fuente que citaste ya no está en tu biblioteca. Puede que la hayas eliminado después de preparar ese sermón.",
   "citedResourceDismiss": "Entendido"

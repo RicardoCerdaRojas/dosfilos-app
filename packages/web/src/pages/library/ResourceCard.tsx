@@ -196,7 +196,7 @@ export function ResourceCard({
     // `extractionWarning` to the resource. We hoist the read here so
     // BOTH the inline action button and the engine-badge tooltip below
     // can use the same value.
-    const extractionWarning = (resource as { extractionWarning?: string | null }).extractionWarning;
+    const extractionWarning = resource.extractionWarning;
     const canRetryPremium = !!extractionWarning && !!onRetryPremium && resource.textExtractionStatus === 'ready';
 
     // Cancel is available WHILE the resource is in an active processing
@@ -337,8 +337,8 @@ export function ResourceCard({
     //     no signal beyond the badge and has to guess what's wrong)
     // Both are written by the cloud functions and persist on the
     // resource doc so the UI can read them on demand.
-    const failureMessage = (resource as { extractionError?: string }).extractionError;
-    const indexingErrorMessage = (resource as { indexingError?: string | null }).indexingError;
+    const failureMessage = resource.extractionError;
+    const indexingErrorMessage = resource.indexingError;
     const statusTooltip = (() => {
         if (resource.textExtractionStatus === 'failed' && failureMessage) return failureMessage;
         if (indexStatus === 'not-indexed' && indexingErrorMessage) return `Indexación: ${indexingErrorMessage}`;
@@ -399,8 +399,8 @@ export function ResourceCard({
     // are correct with empty arrays so they never trip this. Hidden
     // when the resource is still extracting — no point nagging while
     // the user is waiting on the cascade.
-    const scope = (resource as { scope?: 'whole-bible' | 'whole-testament' | 'book' | 'pericope' }).scope ?? 'book';
-    const coversBibleBooks = (resource as { coversBibleBooks?: ReadonlyArray<string> }).coversBibleBooks ?? [];
+    const scope = resource.scope ?? 'book';
+    const coversBibleBooks = resource.coversBibleBooks ?? [];
     const metadataIncomplete =
         resource.textExtractionStatus === 'ready'
         && (scope === 'book' || scope === 'pericope')

@@ -128,7 +128,7 @@ function useElapsedLabel(
         return () => clearInterval(interval);
     }, []);
 
-    const startedAt = (resource as { processingStartedAt?: Date }).processingStartedAt;
+    const startedAt = resource.processingStartedAt;
     if (!startedAt) return null;
 
     // Don't render a stale "elapsed" once the work finished — the
@@ -150,7 +150,7 @@ function useElapsedLabel(
     // "remaining") because remaining gets weird when our estimate is
     // off — better to show the user the actual elapsed AND the
     // expected total so they can judge.
-    const requestedMode = (resource as { requestedExtractionMode?: 'standard' | 'premium' }).requestedExtractionMode;
+    const requestedMode = resource.requestedExtractionMode;
     const estimateMs = estimateExtractionDurationMs({
         sizeBytes: resource.sizeBytes,
         mode: requestedMode,
