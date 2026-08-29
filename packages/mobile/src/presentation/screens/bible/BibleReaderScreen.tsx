@@ -325,7 +325,12 @@ export default function BibleReaderScreen() {
                               : undefined,
                     }}
                 >
-                    <View className={parallelId ? 'flex-row' : undefined}>
+                    {/* La dirección va por ESTILO y no por `className`: ya nos
+                        pasó en el rail que una clase condicional junto a un
+                        estilo no llegue a aplicarse, y acá el síntoma sería
+                        justamente éste — las dos versiones una debajo de la
+                        otra en vez de lado a lado. */}
+                    <View style={{ flexDirection: parallelId ? 'row' : 'column' }}>
                         <View style={{ flex: 1, marginRight: parallelId ? 24 : 0 }}>
                             {parallelId ? (
                                 // Sin rótulo, dos columnas de texto parecido no
@@ -364,6 +369,14 @@ export default function BibleReaderScreen() {
                                 >
                                     {parallelId.toUpperCase()}
                                 </Text>
+                                {parallelVerses.length === 0 ? (
+                                    <Text
+                                        style={{ color: tokens.textSecondary }}
+                                        className={`${FACE_CLASS[face].regular} text-sm`}
+                                    >
+                                        {t('bible:not_in_version')}
+                                    </Text>
+                                ) : null}
                                 <SelectableVerses
                                     bookId={parallelBookId ?? bookId}
                                     chapter={chapter}
@@ -465,9 +478,20 @@ export default function BibleReaderScreen() {
                 versionId={versionId}
                 currentBookId={bookId}
                 currentBookName={book?.name ?? ''}
-                onOpen={(nextBook, nextChapter) => {
+                onOpen={(nextBook, nextChapter, nextVerse) => {
                     setBookId(nextBook);
                     setChapter(nextChapter);
+                    // El versículo encontrado queda SELECCIONADO: abrir el
+                    // capítulo y dejar que el pastor lo busque de nuevo con la
+                    // vista es devolverle el trabajo que acababa de hacer.
+                    setSelection({
+                        startVerse: nextVerse,
+                        startWord: 0,
+                        endVerse: nextVerse,
+                        // Sin contar las palabras: cualquier índice del
+                        // versículo cae dentro, que es justo lo que se quiere.
+                        endWord: Number.MAX_SAFE_INTEGER,
+                    });
                     setShowSearch(false);
                 }}
                 onClose={() => setShowSearch(false)}

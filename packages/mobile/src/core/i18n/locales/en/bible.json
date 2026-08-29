@@ -59,5 +59,9 @@
     "author_john": "John",
     "author_note": "Grouped by traditional authorship. Hebrews and the Psalms are left out: their authorship does not hold up, or is of many hands.",
     "no_results_scope": "No results in this scope",
-    "full_width": "Reading width"
+    "full_width": "Reading width",
+    "not_in_version": "This book is not in the other version",
+    "results_in_scope": "{{count}} results",
+    "recent_searches": "Recent searches",
+    "search_hint": "Type at least 3 letters. Accents are not needed."
 }

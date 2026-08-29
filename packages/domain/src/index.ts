@@ -139,6 +139,7 @@ export * from './entities/WitnessValidation'; // 🌱 Pastoral Fidelity Phase 2 
 export * from './bible/inferLanguageFromBook'; // 🌱 Phase 1.5 — book → original language heuristic
 export * from './bible/bibleBookTable';
 export * from './bible/parseBibleReferenceParts';
+export * from './bible/searchMatching'; // 🌱 Biblia — búsqueda sin acentos y por términos
 export * from './bible/inferGenreFromBook'; // 🌱 Phase 1.6 — book → literary genre proposal (ADR-024)
 export * from './services/IPastoralWordStudyService'; // 🌱 Phase 1.5 — service port
 export * from './repositories/IPastoralWordAnalysisCacheRepository'; // 🌱 Phase 1.5 — analysis cache

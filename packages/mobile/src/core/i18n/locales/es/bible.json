@@ -59,5 +59,9 @@
     "author_john": "Juan",
     "author_note": "Agrupación por autoría tradicional. Hebreos y los Salmos quedan fuera: su autoría no se sostiene o es de muchas manos.",
     "no_results_scope": "Sin resultados en este ámbito",
-    "full_width": "Ancho de lectura"
+    "full_width": "Ancho de lectura",
+    "not_in_version": "Este libro no está en la otra versión",
+    "results_in_scope": "{{count}} resultados",
+    "recent_searches": "Búsquedas recientes",
+    "search_hint": "Escribe al menos 3 letras. No hacen falta acentos."
 }

@@ -8,6 +8,8 @@ import { FACE_CLASS } from '@/core/theme/typography';
 import type { DeliveryFace } from '@/core/theme/typography';
 import { BibleVersionFactory } from '@/data/repositories/bible/BibleVersionFactory';
 import { AUTHOR_KEYS, bookIdsForScope, type SearchScope } from '@/domain/bible/utils/BibleScopes';
+import { splitByMatches } from '@dosfilos/domain';
+import { useReaderSettingsStore } from '@/presentation/state/readerSettings.store';
 
 interface Props {
     visible: boolean;
@@ -17,7 +19,8 @@ interface Props {
     /** Libro abierto: es el ámbito más útil y por eso tiene chip propio. */
     currentBookId: string;
     currentBookName: string;
-    onOpen: (bookId: string, chapter: number) => void;
+    /** Abre en el versículo exacto, no sólo en el capítulo. */
+    onOpen: (bookId: string, chapter: number, verse: number) => void;
     onClose: () => void;
 }
 
@@ -42,6 +45,8 @@ export function BibleSearchSheet({
     const insets = useSafeAreaInsets();
     const [query, setQuery] = useState('');
     const [scope, setScope] = useState<SearchScope>({ kind: 'all' });
+    const recentSearches = useReaderSettingsStore((s) => s.recentSearches);
+    const rememberSearch = useReaderSettingsStore((s) => s.rememberSearch);
 
     const repo = BibleVersionFactory.getByVersion(versionId);
     const scopeIds = repo ? bookIdsForScope(scope, repo.getBooks(), versionId) : null;
@@ -149,6 +154,15 @@ export function BibleSearchSheet({
                         )}
                     </ScrollView>
 
+                    {results.length > 0 ? (
+                        <Text
+                            style={{ color: tokens.textSecondary }}
+                            className={`${FACE_CLASS[face].regular} text-xs mt-2`}
+                        >
+                            {t('bible:results_in_scope', { count: results.length })}
+                        </Text>
+                    ) : null}
+
                     {scope.kind === 'author' ? (
                         // Se dice, no se sobreentiende: varias de estas
                         // atribuciones se discuten, y la interfaz no debería
@@ -165,45 +179,98 @@ export function BibleSearchSheet({
                         {results.length === 0 && query.trim().length >= 3 ? (
                             <Text
                                 style={{ color: tokens.textSecondary }}
-                                className="font-lexend text-sm mt-4"
+                                className={`${FACE_CLASS[face].regular} text-sm mt-4`}
                             >
                                 {t('bible:no_results')}
                             </Text>
                         ) : null}
 
-                        {results.map((result, index) => {
-                            const parsed = repo?.parseReference(result.reference);
-                            return (
-                                <TouchableOpacity
-                                    key={`${result.reference}-${index}`}
-                                    onPress={() =>
-                                        // `parsed.book` es el NOMBRE del
-                                        // libro; arriba se espera el id del
-                                        // dato. Sin traducir, abrir un
-                                        // resultado caía en Génesis.
-                                        parsed &&
-                                        onOpen(repo.resolveBookId(parsed.book), parsed.chapter)
-                                    }
-                                    accessibilityRole="button"
-                                    accessibilityLabel={result.reference}
-                                    className="py-3"
-                                    style={{ borderBottomWidth: 1, borderBottomColor: tokens.border }}
+                        {/* Con menos de tres letras no hay búsqueda: en vez de
+                            una lista vacía, lo último que se buscó. */}
+                        {query.trim().length < 3 ? (
+                            <View className="mt-4">
+                                <Text
+                                    style={{ color: tokens.textSecondary }}
+                                    className={`${FACE_CLASS[face].regular} text-xs mb-3`}
                                 >
-                                    <Text
-                                        style={{ color: tokens.accent }}
-                                        className={`${FACE_CLASS[face].semibold} text-xs mb-1`}
-                                    >
-                                        {result.reference}
-                                    </Text>
-                                    <Text
-                                        style={{ color: tokens.textPrimary }}
-                                        className={`${FACE_CLASS[face].regular} text-base leading-6`}
-                                    >
-                                        {result.text}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
+                                    {t('bible:search_hint')}
+                                </Text>
+                                {recentSearches.length > 0 ? (
+                                    <>
+                                        <Text
+                                            style={{ color: tokens.textSecondary }}
+                                            className={`${FACE_CLASS[face].semibold} text-xs mb-2`}
+                                        >
+                                            {t('bible:recent_searches')}
+                                        </Text>
+                                        {recentSearches.map((recent) => (
+                                            <TouchableOpacity
+                                                key={recent}
+                                                onPress={() => setQuery(recent)}
+                                                accessibilityRole="button"
+                                                className="flex-row items-center py-2.5"
+                                            >
+                                                <Text
+                                                    style={{ color: tokens.textPrimary }}
+                                                    className={`${FACE_CLASS[face].regular} text-base`}
+                                                >
+                                                    {recent}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </>
+                                ) : null}
+                            </View>
+                        ) : null}
+
+                        {results.map((result, index) => (
+                            <TouchableOpacity
+                                key={`${result.reference}-${index}`}
+                                onPress={() => {
+                                    // La dirección viene EN el resultado: no
+                                    // hay que re-interpretar la referencia
+                                    // escrita, que es de donde salía el caer
+                                    // siempre en Génesis.
+                                    rememberSearch(query.trim());
+                                    onOpen(result.bookId, result.chapter, result.verse);
+                                }}
+                                accessibilityRole="button"
+                                accessibilityLabel={result.reference}
+                                className="py-3"
+                                style={{ borderBottomWidth: 1, borderBottomColor: tokens.border }}
+                            >
+                                <Text
+                                    style={{ color: tokens.accent }}
+                                    className={`${FACE_CLASS[face].semibold} text-xs mb-1`}
+                                >
+                                    {result.reference}
+                                </Text>
+                                <Text
+                                    style={{ color: tokens.textPrimary }}
+                                    className={`${FACE_CLASS[face].regular} text-base leading-6`}
+                                >
+                                    {/* Lo encontrado va resaltado: sin eso hay
+                                        que releer el versículo entero para ver
+                                        por qué apareció en la lista. */}
+                                    {splitByMatches(result.text, result.ranges).map((part, i) =>
+                                        part.match ? (
+                                            <Text
+                                                key={i}
+                                                style={{
+                                                    backgroundColor: tokens.highlightColors.yellow,
+                                                    color: tokens.textPrimary,
+                                                }}
+                                                className={FACE_CLASS[face].semibold}
+                                            >
+                                                {part.text}
+                                            </Text>
+                                        ) : (
+                                            <Text key={i}>{part.text}</Text>
+                                        ),
+                                    )}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
                     </ScrollView>
                 </Pressable>
             </Pressable>

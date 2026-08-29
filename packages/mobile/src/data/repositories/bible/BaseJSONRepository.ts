@@ -1,4 +1,9 @@
-import { IBibleVersionRepository } from '@/domain/bible/ports/IBibleVersionRepository';
+import { matchRanges } from '@dosfilos/domain';
+
+import {
+    IBibleVersionRepository,
+    BibleSearchResult,
+} from '@/domain/bible/ports/IBibleVersionRepository';
 import { BibleReference } from '@/domain/bible/entities/BibleEntities';
 import { getCanonicalId, BOOK_METADATA } from '@/domain/bible/utils/BibleMetadata';
 
@@ -133,9 +138,9 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
         return book.chapters[chapterIdx].map(verse => verse ? verse.replace(/\\s*\\n\\s*/g, ' ').trim() : verse);
     }
 
-    search(query: string, limit = 20, bookIds?: string[]): { reference: string; text: string }[] {
-        const results: { reference: string; text: string }[] = [];
-        const q = query.toLowerCase().trim();
+    search(query: string, limit = 20, bookIds?: string[]): BibleSearchResult[] {
+        const results: BibleSearchResult[] = [];
+        const q = query.trim();
         if (!q || q.length < 3) return [];
 
         let count = 0;
@@ -152,11 +157,19 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
             for (let c = 0; c < book.chapters.length; c++) {
                 const chapter = book.chapters[c];
                 for (let v = 0; v < chapter.length; v++) {
-                    const verseText = chapter[v];
-                    if (verseText.toLowerCase().includes(q)) {
+                    const verseText = (chapter[v] ?? '').replace(/\s*\n\s*/g, ' ').trim();
+                    // Coincide sin acentos y por términos sueltos: el que
+                    // escribe en una tablet pone "ninive", y "Jonás Nínive"
+                    // tiene que encontrar el versículo que dice las dos cosas.
+                    const ranges = matchRanges(verseText, q);
+                    if (ranges.length) {
                         results.push({
                             reference: `${bInfo.name} ${c + 1}:${v + 1}`,
-                            text: verseText.replace(/\\s*\\n\\s*/g, ' ').trim()
+                            text: verseText,
+                            bookId: bInfo.id,
+                            chapter: c + 1,
+                            verse: v + 1,
+                            ranges,
                         });
                         count++;
                         if (count >= limit) return results;

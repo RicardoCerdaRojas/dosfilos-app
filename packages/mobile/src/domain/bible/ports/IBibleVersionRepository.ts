@@ -1,4 +1,16 @@
+import type { MatchRange } from '@dosfilos/domain';
+
 import { BibleReference } from '../entities/BibleEntities';
+
+export interface BibleSearchResult {
+    reference: string;
+    text: string;
+    bookId: string;
+    chapter: number;
+    verse: number;
+    /** Dónde cae cada término, para resaltarlo en la lista. */
+    ranges: MatchRange[];
+}
 
 /**
  * Port (Interface) for Bible version repository access
@@ -33,10 +45,10 @@ export interface IBibleVersionRepository {
     getChapterContent(bookNameOrId: string, chapter: number): string[] | null;
     /**
      * Busca una frase. `bookIds` acota el ámbito; sin él, los 66 libros.
+     *
+     * El resultado trae la DIRECCIÓN además del texto: sin ella, abrir un
+     * resultado obligaba a re-interpretar la referencia escrita, que es de
+     * donde salió el bug de caer siempre en Génesis.
      */
-    search(
-        query: string,
-        limit?: number,
-        bookIds?: string[],
-    ): { reference: string; text: string }[];
+    search(query: string, limit?: number, bookIds?: string[]): BibleSearchResult[];
 }

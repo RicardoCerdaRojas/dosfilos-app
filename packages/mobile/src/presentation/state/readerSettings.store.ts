@@ -67,6 +67,15 @@ interface ReaderSettingsState {
      * comparar dos versiones, mirar un capítulo de un vistazo. Es preferencia,
      * no ajuste con respuesta única, así que se guarda.
      */
+    /**
+     * Últimas búsquedas, de la más reciente a la más vieja.
+     *
+     * Un pastor busca la misma frase varias veces durante una semana de
+     * preparación: escribirla de nuevo cada vez es trabajo que la app puede
+     * ahorrarle.
+     */
+    recentSearches: string[];
+    rememberSearch: (query: string) => void;
     fullWidth: boolean;
     setFullWidth: (on: boolean) => void;
     lastRead: { versionId: string; bookId: string; chapter: number } | null;
@@ -98,6 +107,16 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
             setDeliveryFace: (face: DeliveryFace) => set({ deliveryFace: face }),
             instrumentPanel: true,
             setInstrumentPanel: (on: boolean) => set({ instrumentPanel: on }),
+            recentSearches: [],
+            rememberSearch: (query) =>
+                set((state) => ({
+                    // Sin repetidas y con tope: una lista infinita de
+                    // búsquedas deja de ser un atajo.
+                    recentSearches: [query, ...state.recentSearches.filter((q) => q !== query)].slice(
+                        0,
+                        8,
+                    ),
+                })),
             fullWidth: false,
             setFullWidth: (on) => set({ fullWidth: on }),
             lastRead: null,
