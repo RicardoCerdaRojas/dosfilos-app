@@ -1,75 +1,153 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import React, { forwardRef } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Tabs, TabList, TabSlot, TabTrigger, type TabTriggerSlotProps } from 'expo-router/ui';
+import type { Href } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { useAppTheme } from '@/core/theme/appTheme';
+import { useAppTheme, type AppTheme } from '@/core/theme/appTheme';
 import { useLayout } from '@/core/theme/layout';
+import { UserAvatar } from '@/presentation/components/UserAvatar';
 
 /**
  * Las tres puertas: inicio, Biblia, sermones.
  *
- * La barra tomaba sus colores de constantes sueltas (`#1754cf`, `#0b1120`) que
- * ya no coincidían con ninguna pantalla. Ahora sale del tema, así que cambiar
- * un neutro cambia la app entera y no cinco archivos a mano.
+ * EN TABLET LA BARRA SE PARA DE COSTADO. Una barra abajo es una convención de
+ * teléfono: el pulgar llega al borde inferior porque el aparato se sostiene con
+ * una mano. Una tablet se usa apoyada, con las dos manos o con el lápiz, y ese
+ * borde queda lejos — además de comerle 85 puntos de alto a una pantalla que
+ * los usa para leer. De costado, el rail cuesta ancho, que es lo que sobra.
  *
- * En tablet crece: los blancos de toque de un teléfono, en una pantalla que se
- * usa apoyada y a distancia de brazo, quedan chicos.
+ * Se arma con las pestañas sin cabeza de Expo Router (`expo-router/ui`) en vez
+ * de la barra de siempre: es la misma navegación, pero el rail es nuestro y
+ * puede ser una columna con el perfil al pie.
+ *
+ * En teléfono vuelve abajo. Es la misma navegación con dos formas, no dos
+ * navegaciones.
  */
 export default function TabLayout() {
     const theme = useAppTheme();
     const { isTablet } = useLayout();
+    const insets = useSafeAreaInsets();
     const { t } = useTranslation();
 
+    const items: {
+        name: string;
+        href: Href;
+        icon: keyof typeof MaterialIcons.glyphMap;
+        label: string;
+    }[] = [
+        { name: 'index', href: '/', icon: 'home', label: t('common:home_tab') },
+        { name: 'bible', href: '/(tabs)/bible', icon: 'book', label: t('common:bible_tab') },
+        {
+            name: 'sermons',
+            href: '/(tabs)/sermons',
+            icon: 'history-edu',
+            label: t('common:sermons_tab'),
+        },
+    ];
+
+    const triggers = items.map((item) => (
+        <TabTrigger key={item.name} name={item.name} href={item.href} asChild>
+            <TabButton theme={theme} icon={item.icon} label={item.label} rail={isTablet} />
+        </TabTrigger>
+    ));
+
+    if (isTablet) {
+        return (
+            <Tabs style={{ flexDirection: 'row' }}>
+                <TabList
+                    style={{
+                        width: 92,
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        paddingTop: insets.top + 18,
+                        paddingBottom: insets.bottom + 16,
+                        backgroundColor: theme.surface,
+                        borderRightWidth: 1,
+                        borderRightColor: theme.border,
+                    }}
+                >
+                    {triggers}
+                    {/* El perfil al pie: no es un destino del mismo orden que
+                        los tres anteriores, y en el rail hay lugar para que
+                        deje de esconderse en la esquina del inicio. */}
+                    <View className="flex-1" />
+                    <UserAvatar />
+                </TabList>
+                <TabSlot />
+            </Tabs>
+        );
+    }
+
     return (
-        <Tabs
-            screenOptions={{
-                tabBarActiveTintColor: theme.accent,
-                tabBarInactiveTintColor: theme.textMuted,
-                headerShown: false,
-                tabBarButton: HapticTab,
-                tabBarStyle: {
+        <Tabs>
+            <TabSlot />
+            <TabList
+                style={{
+                    flexDirection: 'row',
+                    paddingTop: 8,
+                    paddingBottom: insets.bottom || 10,
                     backgroundColor: theme.surface,
                     borderTopWidth: 1,
                     borderTopColor: theme.border,
-                    paddingTop: isTablet ? 12 : 8,
-                    height: isTablet ? 92 : 85,
-                },
-                tabBarLabelStyle: {
-                    fontSize: isTablet ? 12 : 10,
-                    fontWeight: '600',
-                    marginTop: isTablet ? 0 : -4,
-                },
-            }}
-        >
-            <Tabs.Screen
-                name="index"
-                options={{
-                    title: t('common:home_tab'),
-                    tabBarIcon: ({ color }) => (
-                        <MaterialIcons size={isTablet ? 27 : 24} name="home" color={color} />
-                    ),
                 }}
-            />
-            <Tabs.Screen
-                name="bible"
-                options={{
-                    title: t('common:bible_tab'),
-                    tabBarIcon: ({ color }) => (
-                        <MaterialIcons size={isTablet ? 27 : 24} name="book" color={color} />
-                    ),
-                }}
-            />
-            <Tabs.Screen
-                name="sermons"
-                options={{
-                    title: t('common:sermons_tab'),
-                    tabBarIcon: ({ color }) => (
-                        <MaterialIcons size={isTablet ? 27 : 24} name="history-edu" color={color} />
-                    ),
-                }}
-            />
+            >
+                {triggers}
+            </TabList>
         </Tabs>
     );
 }
+
+interface TabButtonProps extends TabTriggerSlotProps {
+    theme: AppTheme;
+    icon: keyof typeof MaterialIcons.glyphMap;
+    label: string;
+    /** De costado el botón es alto y angosto; abajo, ancho y bajo. */
+    rail: boolean;
+}
+
+/**
+ * Un destino.
+ *
+ * El elegido se marca con FONDO, no sólo con color de ícono. En el atril el
+ * pastor mira la pantalla de reojo y a un metro: un azul contra un gris no se
+ * distingue, una pastilla sí.
+ */
+const TabButton = forwardRef<View, TabButtonProps>(
+    ({ theme, icon, label, rail, isFocused, ...props }, ref) => {
+        const color = isFocused ? theme.accent : theme.textMuted;
+        return (
+            <Pressable
+                ref={ref}
+                {...props}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: !!isFocused }}
+                // `Pressable` y no `TouchableOpacity`: el slot de Expo Router
+                // tipa media docena de props como `T | null`, que es lo que
+                // `Pressable` acepta y `TouchableOpacity` no.
+                className="items-center justify-center"
+                style={({ pressed }) => ({
+                    width: rail ? 62 : undefined,
+                    flex: rail ? undefined : 1,
+                    paddingVertical: rail ? 12 : 6,
+                    marginBottom: rail ? 10 : 0,
+                    borderRadius: 16,
+                    opacity: pressed ? 0.6 : 1,
+                    backgroundColor: isFocused ? theme.accentSoft : 'transparent',
+                })}
+            >
+                <MaterialIcons name={icon} size={rail ? 25 : 23} color={color} />
+                <Text
+                    style={{ color, fontSize: rail ? 11 : 10, marginTop: 3 }}
+                    className="font-lexend-semibold"
+                    numberOfLines={1}
+                >
+                    {label}
+                </Text>
+            </Pressable>
+        );
+    },
+);
+TabButton.displayName = 'TabButton';
