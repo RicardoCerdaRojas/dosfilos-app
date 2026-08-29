@@ -19,5 +19,15 @@
     "open_pulpit": "Abrir el púlpito",
     "no_sermons_title": "Todavía no hay sermones publicados",
     "no_sermons_hint": "Los sermones que publiques en la web aparecen acá, listos para el atril.",
-    "ready_offline_short": "Sin conexión listo"
+    "ready_offline_short": "Sin conexión listo",
+    "continue_reading": "Seguir leyendo",
+    "recent_marks": "Marcas recientes",
+    "no_marks": "Todavía no hay versículos marcados",
+    "series_in_progress": "Serie en curso",
+    "of_total": "{{done}} de {{total}}",
+    "estimated_minutes": "≈ {{minutes}} min",
+    "offline_ready_count": "{{count}} listos sin conexión",
+    "week_summary": "Tu semana",
+    "sermons_total": "{{count}} sermones publicados",
+    "marks_total": "{{count}} versículos marcados"
 }

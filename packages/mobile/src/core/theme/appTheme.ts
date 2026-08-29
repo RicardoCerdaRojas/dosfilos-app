@@ -93,10 +93,46 @@ export const APP_DARK: AppTheme = {
     isDark: true,
 };
 
+/**
+ * TINTA ELECTRÓNICA (Boox y compañía).
+ *
+ * Una pantalla de e-ink no tiene color ni matices: los grises intermedios se
+ * aplastan y los rellenos suaves —el `accentSoft` que marca la pestaña
+ * elegida, el gris de un campo— desaparecen o se ven como manchas sucias. Y
+ * como el refresco es lento, cada superficie de más es un parpadeo de más.
+ *
+ * Así que acá no hay superficies suaves: negro sobre blanco, y lo que estaba
+ * distinguido por relleno pasa a distinguirse por BORDE. Es el mismo criterio
+ * que ya sigue el modo `eink` del atril, donde toda marca cae a subrayado
+ * porque el color no existe.
+ */
+export const APP_EINK: AppTheme = {
+    background: '#ffffff',
+    surface: '#ffffff',
+    surfaceSunken: '#ffffff',
+    border: '#000000',
+    borderStrong: '#000000',
+    textPrimary: '#000000',
+    textSecondary: '#000000',
+    // El único gris que sobrevive: los metadatos tienen que pesar menos que el
+    // texto, y en e-ink eso se paga con contraste, no con color.
+    textMuted: '#555555',
+    accent: '#000000',
+    accentSoft: '#ffffff',
+    onAccent: '#ffffff',
+    positive: '#000000',
+    positiveSoft: '#ffffff',
+    warning: '#000000',
+    danger: '#000000',
+    shadow: 'transparent',
+    isDark: false,
+};
+
 /** El tema vigente, respetando la preferencia guardada y la del sistema. */
 export function useAppTheme(): AppTheme {
     const device = useColorScheme();
     const mode = useThemeStore((s) => s.themeMode);
+    if (mode === 'eink') return APP_EINK;
     const dark = mode === 'system' ? device === 'dark' : mode === 'dark';
     return dark ? APP_DARK : APP_LIGHT;
 }

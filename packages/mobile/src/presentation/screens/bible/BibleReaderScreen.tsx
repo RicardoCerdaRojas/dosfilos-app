@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,10 +39,13 @@ export default function BibleReaderScreen() {
     const fontSize = useReaderSettingsStore((s) => s.deliveryFontSize);
     const tokens = READING_MODES[readingMode];
 
-    const [versionId, setVersionId] = useState('rvr1960');
+    // Retoma donde quedó: el estado inicial sale de lo guardado.
+    const lastRead = useReaderSettingsStore((s) => s.lastRead);
+    const setLastRead = useReaderSettingsStore((s) => s.setLastRead);
+    const [versionId, setVersionId] = useState(lastRead?.versionId ?? 'rvr1960');
     const [parallelId, setParallelId] = useState<string | null>(null);
-    const [bookId, setBookId] = useState('jon');
-    const [chapter, setChapter] = useState(1);
+    const [bookId, setBookId] = useState(lastRead?.bookId ?? 'jon');
+    const [chapter, setChapter] = useState(lastRead?.chapter ?? 1);
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [showPicker, setShowPicker] = useState(false);
     const [showSearch, setShowSearch] = useState(false);
@@ -94,6 +97,12 @@ export default function BibleReaderScreen() {
         // esté el cursor. Copiar al portapapeles obligaría a pegar a mano.
         router.push(`/sermon/paste?markdown=${encodeURIComponent(markdown)}`);
     };
+
+    // Se anota después de pintar, no durante el render: escribir en un store
+    // mientras React renderiza puede reentrar en el mismo árbol.
+    useEffect(() => {
+        setLastRead({ versionId, bookId, chapter });
+    }, [versionId, bookId, chapter, setLastRead]);
 
     const goChapter = (delta: number) => {
         const next = chapter + delta;

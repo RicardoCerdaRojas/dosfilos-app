@@ -52,6 +52,10 @@ export default function ProfileScreen() {
         { label: t('common:light'), value: 'light', icon: 'light-mode' },
         { label: t('common:dark'), value: 'dark', icon: 'dark-mode' },
         { label: t('common:system'), value: 'system', icon: 'settings-brightness' },
+        // Tinta electrónica: la app entera pasa a negro sobre blanco y los
+        // rellenos se vuelven bordes. En un Boox es la diferencia entre
+        // usable e ilegible.
+        { label: t('common:eink'), value: 'eink', icon: 'chrome-reader-mode' },
     ];
 
     const languageOptions: { label: string; value: Language }[] = [

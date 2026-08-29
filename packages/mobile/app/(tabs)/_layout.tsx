@@ -56,10 +56,10 @@ export default function TabLayout() {
 
     if (isTablet) {
         return (
-            <Tabs style={{ flexDirection: 'row' }}>
+            <Tabs style={{ flex: 1, flexDirection: 'row' }}>
                 <TabList
                     style={{
-                        width: 92,
+                        width: 104,
                         flexDirection: 'column',
                         alignItems: 'center',
                         paddingTop: insets.top + 18,
@@ -76,14 +76,17 @@ export default function TabLayout() {
                     <View className="flex-1" />
                     <UserAvatar />
                 </TabList>
-                <TabSlot />
+                {/* `flex: 1` explícito: sin esto el contenedor de pantallas no
+                    se estira y la pantalla queda cortada a la altura de su
+                    primer bloque, con el resto en negro. */}
+                <TabSlot style={{ flex: 1 }} />
             </Tabs>
         );
     }
 
     return (
-        <Tabs>
-            <TabSlot />
+        <Tabs style={{ flex: 1 }}>
+            <TabSlot style={{ flex: 1 }} />
             <TabList
                 style={{
                     flexDirection: 'row',
@@ -129,7 +132,7 @@ const TabButton = forwardRef<View, TabButtonProps>(
                 // `Pressable` acepta y `TouchableOpacity` no.
                 className="items-center justify-center"
                 style={({ pressed }) => ({
-                    width: rail ? 62 : undefined,
+                    width: rail ? 88 : undefined,
                     flex: rail ? undefined : 1,
                     paddingVertical: rail ? 12 : 6,
                     marginBottom: rail ? 10 : 0,
@@ -140,9 +143,16 @@ const TabButton = forwardRef<View, TabButtonProps>(
             >
                 <MaterialIcons name={icon} size={rail ? 25 : 23} color={color} />
                 <Text
-                    style={{ color, fontSize: rail ? 11 : 10, marginTop: 3 }}
+                    // Sin `numberOfLines`: el rail es angosto y "Sermones"
+                    // entraba cortado como "Sermo…". Prefiere dos renglones
+                    // antes que una palabra mutilada.
+                    style={{
+                        color,
+                        fontSize: rail ? 11 : 10,
+                        marginTop: 4,
+                        textAlign: 'center',
+                    }}
                     className="font-lexend-semibold"
-                    numberOfLines={1}
                 >
                     {label}
                 </Text>

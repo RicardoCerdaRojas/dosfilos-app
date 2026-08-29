@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
     buildMovementBudgets,
     countWords,
+    estimateSpokenMinutes,
     locateInBudget,
     totalBudget,
 } from '../movementBudget';
@@ -86,5 +87,21 @@ describe('locateInBudget', () => {
 
     it('no explota sin presupuestos', () => {
         expect(locateInBudget([], 500)).toMatchObject({ index: 0, late: false });
+    });
+});
+
+describe('estimateSpokenMinutes', () => {
+    it('estima la duración hablada a ritmo de predicación', () => {
+        // 260 palabras a 130 ppm son exactamente dos minutos.
+        const text = Array.from({ length: 260 }, () => 'palabra').join(' ');
+        expect(estimateSpokenMinutes(text)).toBe(2);
+    });
+
+    it('un texto vacío dura cero, no un minuto', () => {
+        expect(estimateSpokenMinutes('   ')).toBe(0);
+    });
+
+    it('nunca devuelve cero para un texto que existe: el piso es un minuto', () => {
+        expect(estimateSpokenMinutes('tres palabras sueltas')).toBe(1);
     });
 });

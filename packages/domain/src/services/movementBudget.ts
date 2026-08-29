@@ -43,6 +43,29 @@ export function countWords(text: string): number {
 }
 
 /**
+ * Palabras por minuto de PREDICACIÓN, no de lectura.
+ *
+ * Leer en silencio son 230-250 y leer en voz alta 150-160. Predicar es más
+ * lento todavía: hay pausas deliberadas, se repite una frase para que entre,
+ * se mira a la gente. La bibliografía homilética trabaja entre 120 y 140; 130
+ * es el centro y no promete precisión que no se puede tener.
+ */
+export const PREACHING_WORDS_PER_MINUTE = 130;
+
+/**
+ * Cuánto dura un texto dicho en voz alta, en minutos.
+ *
+ * Es una ESTIMACIÓN y se redondea a minutos enteros: dar "27,4" fingiría una
+ * exactitud que ningún predicador tiene. Sirve para lo que el pastor pregunta
+ * antes de subir —"¿me paso de la hora?"— no para cronometrar.
+ */
+export function estimateSpokenMinutes(text: string): number {
+    const words = countWords(text);
+    if (!words) return 0;
+    return Math.max(1, Math.round(words / PREACHING_WORDS_PER_MINUTE));
+}
+
+/**
  * Reparte `targetSeconds` entre los movimientos.
  *
  * Los fijados a mano se respetan tal cual; el resto se reparte lo que queda,

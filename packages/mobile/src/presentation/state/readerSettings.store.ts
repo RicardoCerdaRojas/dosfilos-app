@@ -51,6 +51,16 @@ interface ReaderSettingsState {
     setDeliveryFace: (face: DeliveryFace) => void;
     instrumentPanel: boolean;
     setInstrumentPanel: (on: boolean) => void;
+    /**
+     * Dónde quedó la lectura de la Biblia.
+     *
+     * Se guarda para poder RETOMARLA desde el inicio. Abrir siempre en el
+     * mismo capítulo obliga a rehacer la búsqueda cada vez, y un pastor que
+     * lee un libro entero a lo largo de una semana vuelve al mismo lugar
+     * todos los días.
+     */
+    lastRead: { versionId: string; bookId: string; chapter: number } | null;
+    setLastRead: (at: { versionId: string; bookId: string; chapter: number }) => void;
     budgetOverrides: Record<string, number>;
     setBudgetOverride: (key: string, seconds: number | null) => void;
 }
@@ -78,6 +88,8 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
             setDeliveryFace: (face: DeliveryFace) => set({ deliveryFace: face }),
             instrumentPanel: true,
             setInstrumentPanel: (on: boolean) => set({ instrumentPanel: on }),
+            lastRead: null,
+            setLastRead: (at) => set({ lastRead: at }),
             budgetOverrides: {},
             setBudgetOverride: (key: string, seconds: number | null) =>
                 set((state) => {

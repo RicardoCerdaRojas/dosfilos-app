@@ -4,24 +4,38 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { estimateSpokenMinutes } from '@dosfilos/domain';
 
-import { useAppTheme } from '@/core/theme/appTheme';
+import { useAppTheme, type AppTheme } from '@/core/theme/appTheme';
 import { useLayout } from '@/core/theme/layout';
 import { SermonSummary } from '@/domain/models/sermon.model';
 import { useAuthStore } from '@/presentation/state/auth.store';
-import { usePublishedSermons } from '@/presentation/hooks/useSermons';
+import { useReaderSettingsStore } from '@/presentation/state/readerSettings.store';
+import { usePublishedSermons, useSermon } from '@/presentation/hooks/useSermons';
 import { useBriefcase } from '@/presentation/hooks/useSermonBriefcase';
+import { useBibleMarks } from '@/presentation/hooks/useBibleMarks';
+import { BibleVersionFactory } from '@/data/repositories/bible/BibleVersionFactory';
 import { SermonCard } from '@/presentation/components/SermonCard';
 import { UserAvatar } from '@/presentation/components/UserAvatar';
 import { Card, Chip, EmptyState, SectionLabel, Skeleton } from '@/presentation/components/ui/kit';
 
 /**
- * El inicio responde UNA pregunta: qué predico ahora.
+ * El tablero de inicio.
  *
- * Antes eran dos botones grandes —"Predicar" y "Abrir Biblia"— que duplicaban
- * la barra de pestañas y no decían nada que el pastor no supiera. En su lugar
- * va el sermón más próximo, entero y accionable: referencia, título, si está
- * garantizado sin conexión, y la puerta al atril. Lo demás es archivo.
+ * QUÉ RESPONDE, EN ESTE ORDEN: qué predico ahora, cuánto dura, si está
+ * garantizado sin conexión, dónde iba leyendo, qué marqué últimamente, y en
+ * qué punto de la serie estoy. Son las preguntas que un pastor se hace el
+ * sábado a la noche y el domingo a la mañana.
+ *
+ * NADA SE INVENTA. Cada dato de acá sale de algo que la app ya sabe —las
+ * palabras del sermón, el maletín, el último capítulo leído, las marcas
+ * guardadas—. Un tablero con números decorativos es peor que no tenerlo: se
+ * aprende a no mirarlo.
+ *
+ * SE ADAPTA A TRES PANTALLAS. En tablet las tarjetas van en dos columnas; en
+ * teléfono, apiladas. Y todo lo que distingue estado usa además de color un
+ * borde o un ícono, porque en un lector de tinta electrónica el color no
+ * existe.
  */
 export default function HomeScreen() {
     const user = useAuthStore((state) => state.user);
@@ -32,12 +46,18 @@ export default function HomeScreen() {
     const insets = useSafeAreaInsets();
     const { data: groups, isLoading } = usePublishedSermons();
 
-    const recent = (groups ?? [])
-        .flatMap((g) => g.sermons)
-        .sort((a, b) => (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0));
+    const all = (groups ?? []).flatMap((g) => g.sermons);
+    const recent = [...all].sort(
+        (a, b) => (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0),
+    );
 
     const next = recent[0];
     const rest = recent.slice(1, 5);
+
+    // La serie del próximo sermón: es la que el pastor está recorriendo.
+    const series = next?.seriesId
+        ? (groups ?? []).find((g) => g.seriesId === next.seriesId)
+        : undefined;
 
     return (
         <View className="flex-1" style={{ backgroundColor: theme.background, paddingTop: insets.top }}>
@@ -45,7 +65,7 @@ export default function HomeScreen() {
                 className="flex-1"
                 contentContainerStyle={{
                     paddingHorizontal: gutter,
-                    paddingBottom: insets.bottom + 32,
+                    paddingBottom: insets.bottom + 40,
                 }}
                 showsVerticalScrollIndicator={false}
             >
@@ -60,15 +80,16 @@ export default function HomeScreen() {
                             {t('home:welcome')} {user?.firstName ?? ''}
                         </Text>
                     </View>
-                    <UserAvatar />
+                    {/* En tablet el perfil vive al pie del rail; acá sobra. */}
+                    {isTablet ? null : <UserAvatar />}
                 </View>
 
                 {isLoading ? (
-                    <Card theme={theme} className="p-6">
+                    <Card theme={theme} style={{ padding: 24 }}>
                         <Skeleton theme={theme} height={12} width={120} />
                         <Skeleton theme={theme} height={26} style={{ marginTop: 14 }} />
                         <Skeleton theme={theme} height={26} width="70%" style={{ marginTop: 8 }} />
-                        <Skeleton theme={theme} height={44} width={180} style={{ marginTop: 24 }} />
+                        <Skeleton theme={theme} height={44} width={200} style={{ marginTop: 24 }} />
                     </Card>
                 ) : next ? (
                     <NextSermon sermon={next} />
@@ -81,6 +102,19 @@ export default function HomeScreen() {
                         />
                     </Card>
                 )}
+
+                {/* Las tres tarjetas de apoyo. En tablet, en fila. */}
+                <View
+                    style={{
+                        flexDirection: isTablet ? 'row' : 'column',
+                        marginTop: 14,
+                        gap: 14,
+                    }}
+                >
+                    <ContinueReading />
+                    <RecentMarks />
+                    {series ? <SeriesProgress title={series.seriesTitle} sermons={series.sermons} /> : null}
+                </View>
 
                 {rest.length > 0 ? (
                     <>
@@ -109,37 +143,63 @@ export default function HomeScreen() {
 }
 
 /**
- * El sermón próximo, con todo lo que se necesita antes de subir.
+ * El sermón próximo, con lo que hay que saber antes de subir.
  *
- * El estado del maletín se muestra ACÁ y no sólo en el detalle: enterarse de
- * que el sermón no está garantizado sin conexión mientras se camina al atril
- * es tarde.
+ * La DURACIÓN se estima de las palabras del propio sermón a ritmo de
+ * predicación. Es la pregunta que se hace todo el mundo antes de empezar —"¿me
+ * paso de la hora?"— y hasta ahora sólo se respondía adentro del atril, con el
+ * cronómetro ya corriendo.
+ *
+ * El MALETÍN se muestra acá y no sólo en el detalle: enterarse de que el
+ * sermón no está garantizado sin conexión camino al púlpito es tarde.
  */
 function NextSermon({ sermon }: { sermon: SermonSummary }) {
     const theme = useAppTheme();
     const router = useRouter();
     const { t } = useTranslation();
     const { data: briefcase } = useBriefcase(sermon.id);
+    const { data: full } = useSermon(sermon.id);
+
+    const minutes = full?.content ? estimateSpokenMinutes(full.content) : 0;
 
     return (
-        <Card theme={theme} className="p-6">
+        <Card theme={theme} style={{ padding: 24 }}>
             <View className="flex-row items-center justify-between">
                 <SectionLabel theme={theme}>{t('home:next_to_preach')}</SectionLabel>
-                {briefcase ? (
+                <View className="flex-row items-center">
+                    {minutes > 0 ? (
+                        <View className="mr-2">
+                            <Chip
+                                theme={theme}
+                                label={t('home:estimated_minutes', { minutes })}
+                                icon={
+                                    <MaterialIcons
+                                        name="schedule"
+                                        size={13}
+                                        color={theme.textSecondary}
+                                    />
+                                }
+                            />
+                        </View>
+                    ) : null}
                     <Chip
                         theme={theme}
-                        tone="positive"
-                        label={t('home:ready_offline_short')}
+                        tone={briefcase ? 'positive' : 'neutral'}
+                        label={t(briefcase ? 'home:ready_offline_short' : 'sermons:prepare_offline')}
                         icon={
-                            <MaterialIcons name="offline-pin" size={13} color={theme.positive} />
+                            <MaterialIcons
+                                name={briefcase ? 'offline-pin' : 'cloud-off'}
+                                size={13}
+                                color={briefcase ? theme.positive : theme.textSecondary}
+                            />
                         }
                     />
-                ) : null}
+                </View>
             </View>
 
             {sermon.bibleReferences.length > 0 ? (
                 <Text
-                    style={{ color: theme.accent, fontSize: 13, letterSpacing: 0.6, marginTop: 14 }}
+                    style={{ color: theme.accent, fontSize: 13, letterSpacing: 0.6, marginTop: 16 }}
                     className="font-lexend-semibold"
                 >
                     {sermon.bibleReferences.join(' · ').toUpperCase()}
@@ -184,5 +244,154 @@ function NextSermon({ sermon }: { sermon: SermonSummary }) {
                 </TouchableOpacity>
             </View>
         </Card>
+    );
+}
+
+/** Tarjeta de apoyo: mismo alto, mismo encabezado, distinto contenido. */
+function SupportCard({
+    theme,
+    label,
+    icon,
+    onPress,
+    children,
+}: {
+    theme: AppTheme;
+    label: string;
+    icon: keyof typeof MaterialIcons.glyphMap;
+    onPress?: () => void;
+    children: React.ReactNode;
+}) {
+    return (
+        <TouchableOpacity
+            onPress={onPress}
+            disabled={!onPress}
+            accessibilityRole={onPress ? 'button' : undefined}
+            activeOpacity={0.8}
+            className="flex-1"
+        >
+            <Card theme={theme} style={{ padding: 18, minHeight: 132 }}>
+                <View className="flex-row items-center">
+                    <MaterialIcons name={icon} size={15} color={theme.textMuted} />
+                    <SectionLabel theme={theme} style={{ marginLeft: 6 }}>
+                        {label}
+                    </SectionLabel>
+                </View>
+                <View className="mt-3">{children}</View>
+            </Card>
+        </TouchableOpacity>
+    );
+}
+
+/** Dónde quedó la lectura. Vacía la primera vez, y eso también se dice. */
+function ContinueReading() {
+    const theme = useAppTheme();
+    const router = useRouter();
+    const { t } = useTranslation();
+    const lastRead = useReaderSettingsStore((s) => s.lastRead);
+
+    const repo = BibleVersionFactory.getByVersion(lastRead?.versionId ?? 'rvr1960');
+    const book = lastRead ? repo?.getBooks().find((b) => b.id === lastRead.bookId) : undefined;
+
+    return (
+        <SupportCard
+            theme={theme}
+            label={t('home:continue_reading')}
+            icon="auto-stories"
+            onPress={() => router.push('/(tabs)/bible')}
+        >
+            <Text
+                style={{ color: theme.textPrimary, fontSize: 20, lineHeight: 26 }}
+                className="font-lexend-semibold"
+            >
+                {book ? `${book.name} ${lastRead?.chapter}` : t('home:open_bible')}
+            </Text>
+        </SupportCard>
+    );
+}
+
+/**
+ * Lo último que el pastor marcó en la Biblia.
+ *
+ * Es memoria de trabajo: lo que subrayó estudiando el martes es exactamente lo
+ * que quiere reencontrar el sábado, y hasta ahora sólo aparecía si volvía a
+ * abrir ese capítulo por su cuenta.
+ */
+function RecentMarks() {
+    const theme = useAppTheme();
+    const router = useRouter();
+    const { t } = useTranslation();
+    const { data: marks } = useBibleMarks();
+
+    const repo = BibleVersionFactory.getByVersion('rvr1960');
+    const latest = [...(marks?.values() ?? [])]
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(0, 3);
+
+    return (
+        <SupportCard
+            theme={theme}
+            label={t('home:recent_marks')}
+            icon="bookmark-border"
+            onPress={() => router.push('/(tabs)/bible')}
+        >
+            {latest.length === 0 ? (
+                <Text
+                    style={{ color: theme.textMuted, fontSize: 14, lineHeight: 20 }}
+                    className="font-lexend"
+                >
+                    {t('home:no_marks')}
+                </Text>
+            ) : (
+                latest.map((mark) => {
+                    const book = repo?.getBooks().find((b) => b.id === mark.bookId);
+                    return (
+                        <Text
+                            key={mark.id}
+                            style={{ color: theme.textPrimary, fontSize: 15, marginBottom: 4 }}
+                            className="font-lexend"
+                        >
+                            {book?.name ?? mark.bookId} {mark.chapter}:{mark.verse}
+                        </Text>
+                    );
+                })
+            )}
+        </SupportCard>
+    );
+}
+
+/**
+ * En qué punto va la serie.
+ *
+ * Un pastor que predica una serie de ocho sobre Jonás quiere saber que va por
+ * el tercero sin tener que contar la lista.
+ */
+function SeriesProgress({ title, sermons }: { title: string | null; sermons: SermonSummary[] }) {
+    const theme = useAppTheme();
+    const router = useRouter();
+    const { t } = useTranslation();
+
+    const preached = sermons.filter((s) => s.publishedAt).length;
+
+    return (
+        <SupportCard
+            theme={theme}
+            label={t('home:series_in_progress')}
+            icon="layers"
+            onPress={() => router.push('/(tabs)/sermons')}
+        >
+            <Text
+                style={{ color: theme.textPrimary, fontSize: 16, lineHeight: 22 }}
+                className="font-lexend-semibold"
+                numberOfLines={2}
+            >
+                {title ?? ''}
+            </Text>
+            <Text
+                style={{ color: theme.textMuted, fontSize: 13, marginTop: 6 }}
+                className="font-lexend"
+            >
+                {t('home:of_total', { done: preached, total: sermons.length })}
+            </Text>
+        </SupportCard>
     );
 }
