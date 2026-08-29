@@ -8,18 +8,13 @@ export interface SermonVersionGroup {
 }
 
 /**
- * Identidad de respaldo para publicaciones ANTERIORES a la cadena de versiones.
+ * Identidad de respaldo, para los pares que no tienen NINGÚN enlace.
  *
- * Publicar creaba un documento nuevo sin `versionOf`, así que el borrador y su
- * publicación quedaban como dos sermones sueltos: en la lista se veían dos
- * veces "Firme en la Verdad", mismo plan, mismo pasaje, mismo día, y sin el
- * distintivo de versiones. No es una hipótesis — está en cualquier cuenta con
- * historial anterior a esa función.
- *
- * Serie + título + pasajes alcanza para reconocerlos: dos sermones DISTINTOS
- * no comparten las tres cosas. Es la misma identidad que ya usa la app de la
- * tablet para no ofrecer el mismo sermón dos veces en el atril; acá se
- * agrupan en vez de descartarse, porque en la web el historial es el punto.
+ * Con `versionOf` y `sourceSermonId` ya cubiertos, esto queda para el
+ * historial más viejo: sermones publicados antes de que existiera cualquiera
+ * de los dos campos. Serie + título + pasajes alcanza para reconocerlos —
+ * dos sermones DISTINTOS no comparten las tres cosas, y el test lo fija con
+ * dos "El Verbo es Dios" sobre pasajes distintos, que siguen siendo dos.
  */
 const fallbackIdentity = (sermon: SermonEntity): string =>
     [
@@ -46,10 +41,18 @@ export function groupSermonVersions(sermons: SermonEntity[]): SermonVersionGroup
     const roots: SermonEntity[] = [];
 
     for (const sermon of sermons) {
-        if (sermon.versionOf && ids.has(sermon.versionOf)) {
-            const arr = versionsByRoot.get(sermon.versionOf) ?? [];
+        // DOS CAMPOS ENLAZAN, NO UNO. `versionOf` lo pone "crear versión";
+        // `sourceSermonId` lo pone PUBLICAR, que crea una copia publicada
+        // apuntando a su borrador. Esta función sólo miraba el primero, así que
+        // el par borrador+publicado —que es el caso más común de todos— se
+        // mostraba como dos sermones distintos. El dato siempre estuvo bien: se
+        // leía el campo equivocado. El tablero de inicio ya deduplicaba por
+        // `sourceSermonId`; la lista no.
+        const parent = sermon.versionOf ?? sermon.sourceSermonId;
+        if (parent && ids.has(parent)) {
+            const arr = versionsByRoot.get(parent) ?? [];
             arr.push(sermon);
-            versionsByRoot.set(sermon.versionOf, arr);
+            versionsByRoot.set(parent, arr);
         } else {
             roots.push(sermon);
         }

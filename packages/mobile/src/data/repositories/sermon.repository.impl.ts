@@ -25,6 +25,7 @@ interface RawSummary {
     publishedAt?: number;
     updatedAt?: number;
     versionOf?: string;
+    sourceSermonId?: string;
     timesPreached?: number;
     lastPreachedAt?: number;
 }
@@ -53,6 +54,7 @@ export class SermonRepositoryImpl implements SermonRepository {
             publishedAt: toDate(s.publishedAt),
             updatedAt: toDate(s.updatedAt),
             versionOf: s.versionOf,
+            sourceSermonId: s.sourceSermonId,
             timesPreached: s.timesPreached ?? 0,
             lastPreachedAt: toDate(s.lastPreachedAt),
         }));

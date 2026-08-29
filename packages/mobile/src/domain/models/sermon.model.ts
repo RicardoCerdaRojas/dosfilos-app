@@ -24,6 +24,8 @@ export interface SermonSummary {
     updatedAt?: Date;
     /** Si este doc es una versión publicada de otro sermón, el id raíz. */
     versionOf?: string;
+    /** Si es la COPIA publicada de un borrador, el id de ese borrador. */
+    sourceSermonId?: string;
     /** Cuántas veces se predicó. Cero es "todavía no". */
     timesPreached: number;
     /** La última vez que se predicó, si alguna. */

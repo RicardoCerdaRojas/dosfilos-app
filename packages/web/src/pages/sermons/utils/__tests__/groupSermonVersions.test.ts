@@ -110,3 +110,45 @@ describe('groupSermonVersions — duplicados anteriores a la cadena de versiones
         expect(groups[0]!.versions.map((s) => s.id)).toEqual(['b', 'a2']);
     });
 });
+
+describe('groupSermonVersions — la copia publicada enlaza por sourceSermonId', () => {
+    it('anida la publicación bajo su borrador', () => {
+        const draft = SermonEntity.createSummary({
+            id: 'draft-1',
+            userId: 'u',
+            title: 'El Verbo es Dios',
+            status: 'draft',
+            createdAt: new Date('2026-05-25T09:00:00Z'),
+        });
+        const publishedCopy = SermonEntity.createSummary({
+            id: 'pub-1',
+            userId: 'u',
+            title: 'El Verbo es Dios',
+            status: 'published',
+            createdAt: new Date('2026-05-25T11:00:00Z'),
+            sourceSermonId: 'draft-1',
+        });
+
+        const groups = groupSermonVersions([draft, publishedCopy]);
+
+        expect(groups).toHaveLength(1);
+        expect(groups[0]!.root.id).toBe('draft-1');
+        expect(groups[0]!.versions.map((s) => s.id)).toEqual(['pub-1']);
+    });
+
+    it('si el borrador no está en la lista, la publicación no desaparece', () => {
+        const orphan = SermonEntity.createSummary({
+            id: 'pub-1',
+            userId: 'u',
+            title: 'El Verbo es Dios',
+            status: 'published',
+            createdAt: new Date('2026-05-25T11:00:00Z'),
+            sourceSermonId: 'draft-ausente',
+        });
+
+        const groups = groupSermonVersions([orphan]);
+
+        expect(groups).toHaveLength(1);
+        expect(groups[0]!.root.id).toBe('pub-1');
+    });
+});

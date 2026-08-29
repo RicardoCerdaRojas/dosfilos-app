@@ -19,15 +19,21 @@ export const usePublishedSermons = () => {
         queryKey: ['sermons', 'published-groups'],
         queryFn: async (): Promise<SermonListGroup[]> => {
             const all = await repository.getPublishedSummaries();
-            // Publicar varias veces crea copias — a veces enlazadas
-            // (versionOf → raíz), a veces docs independientes idénticos
-            // (publicaciones previas a la cadena de versiones). Para predicar
-            // interesa solo la más reciente de cada sermón; el historial vive
-            // en la web. Identidad de respaldo: serie + título + pasajes.
+            // Publicar varias veces crea copias, enlazadas por uno de dos
+            // campos: `versionOf` lo pone "crear versión" y `sourceSermonId`
+            // lo pone PUBLICAR, que copia el borrador. Acá se miraba sólo el
+            // primero y el resto caía en la identidad de respaldo —que
+            // funciona, pero adivina—; con el enlace explícito, adivinar queda
+            // para el historial viejo que no tiene ninguno de los dos.
+            //
+            // Para predicar interesa sólo la más reciente de cada cadena; el
+            // historial vive en la web.
             const byChain = new Map<string, SermonSummary>();
             for (const s of all) {
                 const chain =
-                    s.versionOf ?? `${s.seriesId ?? ''}|${s.title}|${s.bibleReferences.join(',')}`;
+                    s.versionOf ??
+                    s.sourceSermonId ??
+                    `${s.seriesId ?? ''}|${s.title}|${s.bibleReferences.join(',')}`;
                 const prev = byChain.get(chain);
                 if (!prev || (s.publishedAt?.getTime() ?? 0) > (prev.publishedAt?.getTime() ?? 0)) {
                     byChain.set(chain, s);
