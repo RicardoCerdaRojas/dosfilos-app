@@ -330,6 +330,30 @@ export class LibraryResourceEntity implements LibraryResource {
      */
     public isSystemSource?: boolean;
     /**
+     * Extraction + indexing pipeline metadata, written by the cloud
+     * functions and owned by deserialization — none of it goes through
+     * the constructor.
+     *
+     * These are declared on the interface but were missing from the
+     * class. Because they're optional, `implements LibraryResource`
+     * never complained, so every consumer that read one got
+     * `TS2339: Property does not exist` and worked around it with an
+     * inline cast (`(resource as { indexingError?: string }).indexingError`)
+     * or simply added to the type-check ratchet's frozen debt. Declaring
+     * them here is what those casts were standing in for.
+     */
+    public textContentUrl?: string;
+    public structuredContentUrl?: string;
+    public extractionVersion?: ExtractionVersion;
+    public extractedWithLlamaParse?: boolean;
+    public extractionWarning?: string | null;
+    public extractionError?: string;
+    public indexingStatus?: IndexingStatus;
+    public indexingError?: string | null;
+    public indexerVersion?: string;
+    public characterCount?: number;
+    public processingStartedAt?: Date;
+    /**
      * ADR-006 / PR 0.3 — rights-aware citation metadata. Owned by
      * deserialization; legacy docs default to `license: 'unknown'` +
      * `ingestionStatus: 'requires_manual_review'` in the repo so the
