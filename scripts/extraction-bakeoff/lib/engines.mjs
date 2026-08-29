@@ -224,11 +224,15 @@ export async function runMistralOcr(pdfPath, { apiKey, model = 'mistral-ocr-late
  * founder will ask immediately: is the cheap tier already good enough for
  * Greek, making the premium tier's price hard to justify?
  *
+ * El id del modelo se retira cada tanto y la API responde 404 con el nombre
+ * del reemplazo. `BAKEOFF_GEMINI_MODEL` permite fijarlo sin editar código
+ * cuando eso vuelva a pasar; el mensaje de error del 404 dice cuál poner.
+ *
  * Asks for the same page-marker contract in the prompt. An LLM asked to
  * transcribe will sometimes renumber or merge pages — the page-integrity
  * metric is what catches that, and it is the reason that metric exists.
  */
-export async function runGemini(pdfPath, { apiKey, model = 'gemini-2.0-flash' }) {
+export async function runGemini(pdfPath, { apiKey, model = process.env.BAKEOFF_GEMINI_MODEL || 'gemini-3.6-flash' }) {
     if (!apiKey) return { skipped: true, reason: 'falta GEMINI_API_KEY' };
     const started = Date.now();
 

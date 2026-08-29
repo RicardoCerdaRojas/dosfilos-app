@@ -186,6 +186,22 @@ describe('verdict', () => {
         expect(v.status).toBe('NO APTO');
     });
 
+    it('reprueba griego FABRICADO aunque no se haya pedido --greek', () => {
+        // Firma real de LlamaParse balanced: mucho griego, casi sin diacríticos,
+        // porque transliteró bibliografía inglesa y alemana al alfabeto griego.
+        const fabricado = 'Μιχαίας Θεολογία αλττεσταντλιχεν '.repeat(20);
+        const m = { script: scriptFidelity(fabricado), page: okPage };
+        const v = verdict(m, { expectGreek: false, expectHebrew: false });
+        expect(v.status).toBe('NO APTO');
+        expect(v.notes.join(' ')).toMatch(/FABRICADO/);
+    });
+
+    it('no confunde griego politónico legítimo con fabricación', () => {
+        const m = { script: scriptFidelity(JOHN_1_1_POLYTONIC.repeat(30)), page: okPage };
+        const v = verdict(m, { expectGreek: false, expectHebrew: false });
+        expect(v.status).toBe('INSPECCIONAR');
+    });
+
     it('deja pasar a inspección lo que cumple griego y hebreo', () => {
         const m = {
             script: scriptFidelity(`${JOHN_1_1_POLYTONIC}\n${GEN_1_1_POINTED}`),

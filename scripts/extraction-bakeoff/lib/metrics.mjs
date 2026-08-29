@@ -337,6 +337,26 @@ export function verdict(m, { expectGreek, expectHebrew }) {
     const notes = [];
     let fatal = false;
 
+    // Escritura FABRICADA. Se evalúa SIEMPRE, pase o no el flag, porque no es
+    // un problema de fidelidad sino de invención: un motor que devuelve mucho
+    // griego con ratio diacrítico bajo no está recuperando griego del libro,
+    // está produciendo algo con forma de griego.
+    //
+    // Visto en producción: LlamaParse `balanced` devolvió 2065 letras griegas
+    // en 11 páginas de bibliografía inglesa y alemana — "Micah" salió como
+    // «Μιχαίας», "Theologie" como «Θεολογία», y "alttestamentlichen" como
+    // «αλττεσταντlichen». Ninguna estaba en el libro. En un corpus teológico
+    // eso es la falla más peligrosa posible: griego inventado que un pastor
+    // citaría como si el comentario lo trajera.
+    if (m.script.greekLetters >= 100 && m.script.greekDiacriticRatio < 0.15) {
+        notes.push(
+            `${m.script.greekLetters} letras griegas con ratio diacrítico `
+            + `${m.script.greekDiacriticRatio.toFixed(3)} — griego probablemente FABRICADO, `
+            + 'no recuperado del documento. Revisa las muestras antes de creerle.',
+        );
+        fatal = true;
+    }
+
     if (m.script.replacementChars > 0) {
         notes.push(`${m.script.replacementChars} caracteres de reemplazo (�) — fallo de decodificación`);
         fatal = true;
