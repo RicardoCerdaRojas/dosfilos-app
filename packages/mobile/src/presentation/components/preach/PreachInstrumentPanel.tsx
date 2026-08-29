@@ -185,6 +185,46 @@ export function PreachInstrumentPanel({
                 })}
             </View>
 
+            {/* El nombre de cada movimiento bajo su segmento.
+
+                Sin ellos el riel muestra proporciones de nada: el pastor ve
+                que el tercer bloque es el más ancho y no sabe cuál es. Van
+                recortados a un renglón —un segmento de un sexto de pantalla no
+                da para más— y eso alcanza, porque el pastor reconoce sus
+                propios movimientos por las primeras palabras.
+
+                Sólo con números: en modo "sólo la marca" el riel existe
+                justamente para no tener texto que leer. */}
+            {numbers ? (
+                <View className="flex-row" style={{ marginTop: 4 }}>
+                    {budgets.map((budget, index) => (
+                        <View
+                            key={`${budget.slug}-label`}
+                            style={{
+                                flex: budget.seconds,
+                                marginRight: index === budgets.length - 1 ? 0 : 3,
+                            }}
+                        >
+                            <Text
+                                numberOfLines={1}
+                                style={{
+                                    color:
+                                        index === readingIndex
+                                            ? tokens.textPrimary
+                                            : tokens.textSecondary,
+                                    fontSize: Math.max(9, fontSize * 0.34),
+                                }}
+                                className={
+                                    index === readingIndex ? 'font-lexend-semibold' : 'font-lexend'
+                                }
+                            >
+                                {budget.title}
+                            </Text>
+                        </View>
+                    ))}
+                </View>
+            ) : null}
+
             {/* Cursor del reloj sobre el riel, en escala del total. Sigue
                 estando aunque el relleno diga casi lo mismo: el relleno dice
                 cuánto se consumió de cada movimiento y el cursor dice dónde
