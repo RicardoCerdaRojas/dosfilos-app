@@ -25,6 +25,8 @@ interface RawSummary {
     publishedAt?: number;
     updatedAt?: number;
     versionOf?: string;
+    timesPreached?: number;
+    lastPreachedAt?: number;
 }
 
 const toDate = (v: unknown): Date | undefined => {
@@ -51,6 +53,8 @@ export class SermonRepositoryImpl implements SermonRepository {
             publishedAt: toDate(s.publishedAt),
             updatedAt: toDate(s.updatedAt),
             versionOf: s.versionOf,
+            timesPreached: s.timesPreached ?? 0,
+            lastPreachedAt: toDate(s.lastPreachedAt),
         }));
     }
 

@@ -55,15 +55,21 @@ export function PreachExitSheet({
     const [location, setLocation] = useState('');
     const [notes, setNotes] = useState('');
 
+    /**
+     * Salir del atril MARCA el sermón como predicado.
+     *
+     * Antes el registro dependía de que el pastor escribiera el lugar, así que
+     * quien salía sin escribir nada dejaba el sermón como no predicado — y no
+     * había ninguna otra forma de marcarlo. El lugar y las notas siguen siendo
+     * opcionales: son detalle del registro, no la condición para que exista.
+     */
     const saveAndLeave = () => {
-        if (location.trim()) {
-            addLog.mutate({
-                date: new Date(),
-                location: location.trim(),
-                durationMinutes: Math.max(1, Math.round(elapsedSeconds / 60)),
-                ...(notes.trim() ? { notes: notes.trim() } : {}),
-            });
-        }
+        addLog.mutate({
+            date: new Date(),
+            location: location.trim(),
+            durationMinutes: Math.max(1, Math.round(elapsedSeconds / 60)),
+            ...(notes.trim() ? { notes: notes.trim() } : {}),
+        });
         onLeave();
     };
 

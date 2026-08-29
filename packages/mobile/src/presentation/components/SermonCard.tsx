@@ -29,7 +29,7 @@ interface SermonCardProps {
 export const SermonCard: React.FC<SermonCardProps> = ({ sermon, active, onPress }) => {
     const router = useRouter();
     const theme = useAppTheme();
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const formattedDate = sermon.publishedAt
         ? sermon.publishedAt.toLocaleDateString(i18n.language, {
@@ -71,6 +71,21 @@ export const SermonCard: React.FC<SermonCardProps> = ({ sermon, active, onPress 
             </Text>
 
             <View className="flex-row items-center mt-2">
+                {/* Predicado o no: es el estado que el pastor consulta para
+                    saber qué le queda por delante, y no estaba en ningún lado. */}
+                {sermon.timesPreached > 0 ? (
+                    <View className="flex-row items-center mr-3">
+                        <MaterialIcons name="check-circle" size={13} color={theme.positive} />
+                        <Text
+                            style={{ color: theme.positive, fontSize: 12 }}
+                            className="font-lexend-semibold ml-1"
+                        >
+                            {sermon.timesPreached > 1
+                                ? `${t('sermons:preached')} ×${sermon.timesPreached}`
+                                : t('sermons:preached')}
+                        </Text>
+                    </View>
+                ) : null}
                 {formattedDate ? (
                     <Text style={{ color: theme.textMuted, fontSize: 12 }} className="font-lexend">
                         {formattedDate}

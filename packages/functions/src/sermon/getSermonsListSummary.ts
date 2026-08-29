@@ -82,6 +82,21 @@ export const getSermonsListSummary = onCall(
                 // Whether the (heavy, stripped) content body is non-empty — lets
                 // the list tell a finished sermon from an in-progress draft.
                 hasContent: !!(typeof d.content === 'string' && d.content.trim()),
+                // Dos ESCALARES del historial de predicación, no el historial.
+                // La lista necesita saber si un sermón ya se predicó y cuándo
+                // fue la última vez —para marcarlo y para elegir el próximo—
+                // y traerse los registros enteros para eso sería cargar la
+                // parte pesada por dos números.
+                timesPreached: Array.isArray(d.preachingHistory) ? d.preachingHistory.length : 0,
+                lastPreachedAt: Array.isArray(d.preachingHistory)
+                    ? d.preachingHistory.reduce(
+                          (latest: number | undefined, log: any) => {
+                              const at = toMillis(log?.date);
+                              return at && (!latest || at > latest) ? at : latest;
+                          },
+                          undefined as number | undefined,
+                      )
+                    : undefined,
                 authorName: d.authorName,
                 isShared: d.isShared,
                 shareToken: d.shareToken,
@@ -96,7 +111,8 @@ export const getSermonsListSummary = onCall(
                     : undefined,
                 // Dropped on purpose (not read by the list): content,
                 // citationManifest, fidelityReport, studyDepthSnapshot,
-                // bibliography, preachingHistory, wizardProgress.draft/outline.
+                // bibliography, preachingHistory (sólo sus dos escalares),
+                // wizardProgress.draft/outline.
             };
         });
 

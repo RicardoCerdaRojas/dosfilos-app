@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,7 +10,7 @@ import { useAppTheme } from '@/core/theme/appTheme';
 import { STUDY_COLUMN, useLayout } from '@/core/theme/layout';
 import { READING_MODES } from '@/core/theme/readingModes';
 import { extractSectionsWithBody } from '@/core/utils/sermonSections';
-import { useSermon } from '@/presentation/hooks/useSermons';
+import { useAddPreachingLog, useSermon } from '@/presentation/hooks/useSermons';
 import { useBriefcase, usePrepareBriefcase } from '@/presentation/hooks/useSermonBriefcase';
 import { useReaderSettingsStore } from '@/presentation/state/readerSettings.store';
 import { BibleConsultSheet } from '@/presentation/components/bible/BibleConsultSheet';
@@ -52,6 +52,7 @@ export function SermonDetailView({ sermonId, showBack = true }: Props) {
     const fontSize = useReaderSettingsStore((s) => s.deliveryFontSize);
     const { data: briefcase } = useBriefcase(sermonId);
     const prepare = usePrepareBriefcase(sermonId);
+    const addLog = useAddPreachingLog(sermonId);
     const [showBible, setShowBible] = useState(false);
 
     // Sin useMemo: el compilador de React memoiza solo (y la regla de lint
@@ -81,6 +82,13 @@ export function SermonDetailView({ sermonId, showBack = true }: Props) {
             </View>
         );
     }
+
+    const preachedTimes = sermon.preachingHistory?.length ?? 0;
+    const lastPreached = sermon.preachingHistory?.length
+        ? new Date(
+              Math.max(...sermon.preachingHistory.map((log) => new Date(log.date).getTime())),
+          ).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' })
+        : '';
 
     const publishedDate = sermon.publishedAt
         ? new Date(sermon.publishedAt).toLocaleDateString(i18n.language, {
@@ -168,7 +176,65 @@ export function SermonDetailView({ sermonId, showBack = true }: Props) {
                         {sermon.title}
                     </Text>
 
-                    <View className="flex-row items-center mt-3">
+                    <View className="flex-row items-center flex-wrap mt-3">
+                        {/* Predicado: el estado que decide qué queda por
+                            delante. Se marca acá y no sólo al salir del atril,
+                            porque se predica sin la tablet más seguido de lo
+                            que uno cree. */}
+                        <TouchableOpacity
+                            onPress={() => {
+                                if (addLog.isPending) return;
+                                const record = () =>
+                                    addLog.mutate({
+                                        date: new Date(),
+                                        // Sin lugar: el registro completo se
+                                        // pide al salir del púlpito. Exigirlo
+                                        // acá haría que marcar cueste más que
+                                        // predicar.
+                                        location: '',
+                                        durationMinutes: 0,
+                                    });
+                                // Ya marcado, se pregunta: un toque de más no
+                                // debería inventar una predicación que no
+                                // ocurrió, y un sermón SÍ se predica dos veces.
+                                if (preachedTimes > 0) {
+                                    Alert.alert(
+                                        t('sermons:mark_preached'),
+                                        t('sermons:mark_preached_again'),
+                                        [
+                                            { text: t('common:cancel'), style: 'cancel' },
+                                            { text: t('sermons:mark_preached'), onPress: record },
+                                        ],
+                                    );
+                                    return;
+                                }
+                                record();
+                            }}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('sermons:mark_preached')}
+                            className="mr-3 mb-1"
+                        >
+                            <Chip
+                                theme={theme}
+                                tone={preachedTimes > 0 ? 'positive' : 'neutral'}
+                                label={
+                                    preachedTimes > 1
+                                        ? t('sermons:preached_times', { count: preachedTimes })
+                                        : preachedTimes === 1
+                                          ? t('sermons:preached_on', { date: lastPreached })
+                                          : t('sermons:mark_preached')
+                                }
+                                icon={
+                                    <MaterialIcons
+                                        name={preachedTimes > 0 ? 'check-circle' : 'add-task'}
+                                        size={13}
+                                        color={
+                                            preachedTimes > 0 ? theme.positive : theme.textSecondary
+                                        }
+                                    />
+                                }
+                            />
+                        </TouchableOpacity>
                         {publishedDate ? (
                             <Text
                                 style={{ color: theme.textMuted, fontSize: 13 }}

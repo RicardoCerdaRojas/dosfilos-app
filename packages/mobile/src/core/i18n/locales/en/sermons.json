@@ -31,5 +31,12 @@
     "ready_offline": "Ready offline",
     "read": "Read",
     "movement": "Movement",
-    "pick_one": "Pick a sermon from the list"
+    "pick_one": "Pick a sermon from the list",
+    "preached": "Preached",
+    "mark_preached": "Mark as preached",
+    "preached_on": "Preached on {{date}}",
+    "preached_times": "Preached {{count}} times",
+    "not_preached_yet": "Not preached",
+    "mark_preached_confirm": "Recorded with today's date. You can add place and notes when leaving the pulpit.",
+    "mark_preached_again": "Already marked as preached. Record another one?"
 }

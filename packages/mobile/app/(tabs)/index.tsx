@@ -51,8 +51,16 @@ export default function HomeScreen() {
         (a, b) => (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0),
     );
 
-    const next = recent[0];
-    const rest = recent.slice(1, 5);
+    /**
+     * "Lo próximo" es el más reciente SIN PREDICAR.
+     *
+     * Antes era simplemente el más reciente, así que el domingo a la tarde el
+     * tablero seguía ofreciendo el sermón que se acababa de predicar. Si ya se
+     * predicaron todos, se muestra el último: es preferible ofrecer algo que
+     * dejar la tarjeta vacía.
+     */
+    const next = recent.find((s) => s.timesPreached === 0) ?? recent[0];
+    const rest = recent.filter((s) => s.id !== next?.id).slice(0, 4);
 
     // La serie del próximo sermón: es la que el pastor está recorriendo.
     const series = next?.seriesId

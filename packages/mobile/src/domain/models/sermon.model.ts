@@ -24,6 +24,10 @@ export interface SermonSummary {
     updatedAt?: Date;
     /** Si este doc es una versión publicada de otro sermón, el id raíz. */
     versionOf?: string;
+    /** Cuántas veces se predicó. Cero es "todavía no". */
+    timesPreached: number;
+    /** La última vez que se predicó, si alguna. */
+    lastPreachedAt?: Date;
 }
 
 /** Grupo de lista: una serie con sus sermones, o los sueltos (seriesId null). */

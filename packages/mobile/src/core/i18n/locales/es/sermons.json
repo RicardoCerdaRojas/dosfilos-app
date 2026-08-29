@@ -31,5 +31,12 @@
     "ready_offline": "Listo sin conexión",
     "read": "Leer",
     "movement": "Movimiento",
-    "pick_one": "Elige un sermón de la lista"
+    "pick_one": "Elige un sermón de la lista",
+    "preached": "Predicado",
+    "mark_preached": "Marcar como predicado",
+    "preached_on": "Predicado el {{date}}",
+    "preached_times": "Predicado {{count}} veces",
+    "not_preached_yet": "Sin predicar",
+    "mark_preached_confirm": "Se registra con la fecha de hoy. Puedes agregar lugar y notas al salir del púlpito.",
+    "mark_preached_again": "Ya está marcado como predicado. ¿Registrar otra predicación?"
 }
