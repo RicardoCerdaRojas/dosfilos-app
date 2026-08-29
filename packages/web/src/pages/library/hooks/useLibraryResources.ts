@@ -74,6 +74,20 @@ interface UseLibraryResourcesResult {
      * re-upload or contact support.
      */
     failedCount: number;
+    /**
+     * Resources whose text extracted fine but whose INDEXING failed
+     * (`indexingStatus === 'failed'`). Distinct from `failedCount`,
+     * which covers extraction failures and usually means "re-upload".
+     *
+     * These are recoverable without spending a single page of the
+     * user's balance: the extractor's `structured.md` is already in
+     * Cloud Storage, so a retry re-chunks and re-embeds from it. Until
+     * this list existed the state was effectively invisible — the amber
+     * "por procesar" callout deliberately skips auto-indexable
+     * resources, so an indexing failure surfaced nowhere but a tooltip
+     * on one card.
+     */
+    indexFailedResources: LibraryResourceEntity[];
 }
 
 /**
@@ -188,10 +202,11 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
 
     // Derived counts split by what the user actually needs to do (or
     // not do). Re-computed on every render but cheap — small N.
-    const { actionablePendingCount, extractingCount, failedCount } = useMemo(() => {
+    const { actionablePendingCount, extractingCount, failedCount, indexFailedResources } = useMemo(() => {
         let actionable = 0;
         let extracting = 0;
         let failed = 0;
+        const indexFailed: LibraryResourceEntity[] = [];
         for (const r of resources) {
             // System sources (the `core-library-seed.json` catalog entries:
             // SBLGNT, the Chicago Statements, the confessional witnesses)
@@ -211,6 +226,16 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
                 failed++;
                 continue;
             }
+            // Extraction succeeded but the indexer blew up. Collected
+            // separately from `actionable` because the recovery is a
+            // free retry (the extractor's output is already in Storage),
+            // and because the skip below would otherwise swallow it —
+            // every resource that reaches the indexer at all carries an
+            // auto-indexable `extractionVersion`.
+            if (r.indexingStatus === 'failed') {
+                indexFailed.push(r);
+                continue;
+            }
             if (r.textExtractionStatus === 'ready' && status === 'not-indexed') {
                 // Skip if extraction version triggers auto-indexing —
                 // the cloud function will (re)build chunks shortly.
@@ -218,7 +243,12 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
                 actionable++;
             }
         }
-        return { actionablePendingCount: actionable, extractingCount: extracting, failedCount: failed };
+        return {
+            actionablePendingCount: actionable,
+            extractingCount: extracting,
+            failedCount: failed,
+            indexFailedResources: indexFailed,
+        };
     }, [resources, indexStatus]);
 
     return {
@@ -231,5 +261,6 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
         actionablePendingCount,
         extractingCount,
         failedCount,
+        indexFailedResources,
     };
 }

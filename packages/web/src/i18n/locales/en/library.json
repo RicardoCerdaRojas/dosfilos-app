@@ -29,6 +29,13 @@
       "title_one": "{{count}} resource with extraction error",
       "title_other": "{{count}} resources with extraction error",
       "description": "Something failed while processing the file. Check each affected resource below and either delete or re-upload it."
+    },
+    "indexFailed": {
+      "label": "Indexing failed",
+      "title_one": "{{count}} resource extracted but not indexed",
+      "title_other": "{{count}} resources extracted but not indexed",
+      "description": "The text extracted fine, but building the search index failed, so these resources can't be searched or cited yet. Retrying doesn't use up any of your page balance.",
+      "actionButton": "Retry indexing"
     }
   },
   "progress": {
@@ -323,7 +330,9 @@
     "retryPremiumSuccess": "Done: extracted with Premium",
     "retryPremiumNoBalance": "You don't have enough Premium pages to retry",
     "retryPremiumDenied": "You can only retry your own resources",
-    "retryPremiumError": "Error retrying with Premium"
+    "retryPremiumError": "Error retrying with Premium",
+    "retryIndexingError_one": "Couldn't index {{count}} resource. Try again in a few minutes.",
+    "retryIndexingError_other": "Couldn't index {{count}} resources. Try again in a few minutes."
   },
   "citedResourceMissing": "The source you cited is no longer in your library. You may have deleted it after preparing that sermon.",
   "citedResourceDismiss": "Got it"

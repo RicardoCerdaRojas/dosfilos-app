@@ -1,7 +1,8 @@
 import { useTranslation } from '@/i18n';
-import { Loader2, AlertOctagon } from 'lucide-react';
+import { Loader2, AlertOctagon, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-type Variant = 'extracting' | 'failed';
+type Variant = 'extracting' | 'failed' | 'indexFailed';
 
 interface LibraryStatusCalloutProps {
     /**
@@ -12,10 +13,20 @@ interface LibraryStatusCalloutProps {
      * `'failed'` — recursos cuya extracción falló. Requiere acción
      * (re-subir o borrar) pero la acción vive per-card en el menú,
      * no acá. El callout solo da visibilidad agregada.
+     *
+     * `'indexFailed'` — el texto se extrajo bien pero la indexación
+     * reventó. Es el único de los tres que se recupera desde acá: el
+     * `structured.md` ya está en Storage, así que reintentar no gasta
+     * páginas del saldo. Antes este estado no tenía superficie propia
+     * y quedaba invisible salvo por un tooltip en una tarjeta.
      */
     variant: Variant;
     /** Number of resources in this state. Hides the callout when 0. */
     count: number;
+    /** Retry action. Only rendered for `'indexFailed'`. */
+    onRetry?: () => void;
+    /** Disables the retry button while a bulk job is running. */
+    isRetrying?: boolean;
 }
 
 /**
@@ -32,7 +43,12 @@ interface LibraryStatusCalloutProps {
  * "Procesar pendientes" button (which would have failed anyway for
  * resources still extracting or in error).
  */
-export function LibraryStatusCallout({ variant, count }: LibraryStatusCalloutProps) {
+export function LibraryStatusCallout({
+    variant,
+    count,
+    onRetry,
+    isRetrying = false,
+}: LibraryStatusCalloutProps) {
     const { t } = useTranslation('library');
 
     if (count <= 0) return null;
@@ -43,15 +59,16 @@ export function LibraryStatusCallout({ variant, count }: LibraryStatusCalloutPro
         : 'bg-destructive/10 border border-destructive/30';
     const iconBox = isExtracting
         ? 'bg-info text-info-foreground'
-        : 'bg-destructive text-white';
+        : 'bg-destructive text-destructive-foreground';
     const labelTone = isExtracting
         ? 'text-info-subtle-foreground'
         : 'text-destructive';
     const Icon = isExtracting ? Loader2 : AlertOctagon;
     const iconClass = isExtracting ? 'h-5 w-5 animate-spin' : 'h-5 w-5';
+    const showRetry = variant === 'indexFailed' && !!onRetry;
 
     return (
-        <div className={`${tone} rounded-xl p-4 flex items-center gap-4`}>
+        <div className={`${tone} rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-4`}>
             <div className={`h-10 w-10 rounded-lg ${iconBox} flex items-center justify-center shrink-0`}>
                 <Icon className={iconClass} />
             </div>
@@ -66,6 +83,16 @@ export function LibraryStatusCallout({ variant, count }: LibraryStatusCalloutPro
                     {t(`statusCallout.${variant}.description`)}
                 </p>
             </div>
+            {showRetry && (
+                <Button
+                    onClick={onRetry}
+                    disabled={isRetrying}
+                    className="bg-destructive hover:bg-destructive/90 text-destructive-foreground gap-2 shrink-0"
+                >
+                    <RefreshCw className={`h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
+                    {t('statusCallout.indexFailed.actionButton')}
+                </Button>
+            )}
         </div>
     );
 }
