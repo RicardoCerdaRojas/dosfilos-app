@@ -669,7 +669,7 @@ export default function PreachModeScreen({
                 onFinishStroke={ink.addStroke}
                 color={ink.penColor}
                 eraser={ink.eraser}
-                onErase={ink.eraseNote}
+                onErase={ink.eraseStroke}
                 top={chromeTop}
                 bottom={panelHeight + insets.bottom}
             />

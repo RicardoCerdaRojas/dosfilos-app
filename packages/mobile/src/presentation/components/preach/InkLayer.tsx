@@ -38,7 +38,8 @@ interface Props {
     onFinishStroke: (offset: number, stroke: InkStroke) => void;
     color: InkColor;
     eraser: boolean;
-    onErase: (noteId: string) => void;
+    /** Borra UN trazo, no la nota entera. */
+    onErase: (noteId: string, strokeIndex: number) => void;
     /** Alto del chrome superior: la capa arranca debajo para no taparlo. */
     top: number;
     /** Alto del tablero inferior, por la misma razón. */
@@ -152,26 +153,39 @@ export function InkLayer({
         y: p.y - origin.y,
     });
 
-    const noteNear = (x: number, y: number): string | null => {
+    /**
+     * El trazo más cercano al punto, si hay alguno al alcance.
+     *
+     * Devuelve el TRAZO y no la nota: una nota agrupa todo lo escrito sobre el
+     * mismo párrafo o versículo, así que borrar la nota entera se llevaba
+     * puesto medio margen por tocar una raya. La goma borra lo que toca.
+     */
+    const strokeNear = (x: number, y: number): { noteId: string; index: number } | null => {
         const RADIUS = 28;
+        let best: { noteId: string; index: number } | null = null;
+        let bestDistance = RADIUS;
         for (const note of notes) {
             const rect = anchorRectFor(note);
             if (!rect) continue;
-            for (const stroke of note.strokes) {
+            note.strokes.forEach((stroke, index) => {
                 for (const point of stroke.points) {
                     const screen = toScreenSpace(point, rect, bodySize);
-                    if (Math.hypot(screen.x - x, screen.y - y) < RADIUS) return note.id;
+                    const distance = Math.hypot(screen.x - x, screen.y - y);
+                    if (distance < bestDistance) {
+                        bestDistance = distance;
+                        best = { noteId: note.id, index };
+                    }
                 }
-            }
+            });
         }
-        return null;
+        return best;
     };
 
     const begin = (e: GestureResponderEvent) => {
         const { pageX, pageY } = e.nativeEvent;
         if (eraser) {
-            const hit = noteNear(pageX, pageY);
-            if (hit) onErase(hit);
+            const hit = strokeNear(pageX, pageY);
+            if (hit) onErase(hit.noteId, hit.index);
             return;
         }
         anchor.current = anchorAt(pageX, pageY);
@@ -180,7 +194,14 @@ export function InkLayer({
     };
 
     const extend = (e: GestureResponderEvent) => {
-        if (eraser || !anchor.current) return;
+        // Con la goma, arrastrar sigue borrando: se pasa por encima de varios
+        // trazos como se pasaría una goma de verdad.
+        if (eraser) {
+            const hit = strokeNear(e.nativeEvent.pageX, e.nativeEvent.pageY);
+            if (hit) onErase(hit.noteId, hit.index);
+            return;
+        }
+        if (!anchor.current) return;
         const { pageX, pageY } = e.nativeEvent;
         const last = points.current[points.current.length - 1];
         if (last && Math.hypot(pageX - last.x, pageY - last.y) < MIN_POINT_DISTANCE) return;
@@ -222,8 +243,14 @@ export function InkLayer({
             }
             style={{ position: 'absolute', top, left: 0, right: 0, bottom }}
             pointerEvents={penActive ? 'auto' : 'none'}
-            onStartShouldSetResponder={() => penActive}
-            onMoveShouldSetResponder={() => penActive}
+            // UN DEDO ESCRIBE, DOS DESPLAZAN. Con el lápiz encendido la capa
+            // se quedaba con todos los gestos, así que en un texto que scrollea
+            // —la Biblia es un capítulo entero, no una página paginada— bajar
+            // al versículo 10 dibujaba una raya en vez de desplazar. Al no
+            // reclamar el gesto de dos dedos, éste baja al lector que está
+            // debajo.
+            onStartShouldSetResponder={(e) => penActive && e.nativeEvent.touches.length === 1}
+            onMoveShouldSetResponder={(e) => penActive && e.nativeEvent.touches.length === 1}
             onResponderGrant={begin}
             onResponderMove={extend}
             onResponderRelease={finish}

@@ -152,16 +152,36 @@ export function useBibleInk(bookId: string, chapter: number, layoutKey: string) 
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bibleInk'] }),
     });
 
+    /** Quita un trazo; si era el último, el documento se va con él. */
     const erase = useMutation({
-        mutationFn: async (id: string) => {
+        onMutate: ({ id, index }: { id: string; index: number }) => {
+            queryClient.setQueryData<BibleInkNote[]>(['bibleInk'], (current) =>
+                (current ?? [])
+                    .map((n) =>
+                        n.id === id
+                            ? { ...n, strokes: n.strokes.filter((_, i) => i !== index) }
+                            : n,
+                    )
+                    .filter((n) => n.strokes.length > 0),
+            );
+        },
+        mutationFn: async ({ id }: { id: string; index: number }) => {
             const ref = inkRef();
             if (!ref) return;
-            await deleteDoc(doc(ref, id));
-        },
-        onMutate: (id: string) => {
-            queryClient.setQueryData<BibleInkNote[]>(['bibleInk'], (current) =>
-                (current ?? []).filter((n) => n.id !== id),
-            );
+            const remaining =
+                queryClient.getQueryData<BibleInkNote[]>(['bibleInk'])?.find((n) => n.id === id)
+                    ?.strokes ?? [];
+            if (!remaining.length) {
+                await deleteDoc(doc(ref, id));
+                return;
+            }
+            await setDoc(doc(ref, id), {
+                bookId,
+                chapter,
+                verse: Number(id.split('.').pop() ?? 0),
+                strokes: remaining,
+                updatedAt: serverTimestamp(),
+            });
         },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bibleInk'] }),
     });
@@ -178,6 +198,6 @@ export function useBibleInk(bookId: string, chapter: number, layoutKey: string) 
         anchorAt,
         anchorRectFor,
         addStroke: (verse: number, stroke: InkStroke) => append.mutate({ verse, stroke }),
-        eraseNote: (id: string) => erase.mutate(id),
+        eraseStroke: (id: string, index: number) => erase.mutate({ id, index }),
     };
 }

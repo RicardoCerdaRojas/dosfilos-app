@@ -71,5 +71,7 @@
     "verse_numbers_hint": "Apagados, el capítulo vuelve a ser prosa continua.",
     "full_width_hint": "La columna medida cansa menos; el ancho completo muestra más.",
     "keep_awake": "Mantener la pantalla encendida",
-    "keep_awake_hint": "Leer no es tocar: la tablet se apaga sola a los treinta segundos."
+    "keep_awake_hint": "Leer no es tocar: la tablet se apaga sola a los treinta segundos.",
+    "pen_hint": "Un dedo escribe · dos dedos desplazan",
+    "eraser_hint": "Goma: toca o arrastra sobre un trazo para borrarlo"
 }

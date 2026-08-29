@@ -144,6 +144,22 @@ export class AnnotationRepositoryImpl implements AnnotationRepository {
         return ref.id;
     }
 
+    /** Deja la nota con exactamente estos trazos. Lo usa la goma. */
+    async replaceInkStrokes(
+        sermonId: string,
+        annotationId: string,
+        strokes: InkStroke[],
+    ): Promise<void> {
+        settleOffline(
+            updateDoc(doc(annotationsRef(sermonId), annotationId), {
+                strokes,
+                updatedAt: serverTimestamp(),
+                updatedBy: 'mobile',
+            }),
+            `ink replace ${annotationId}`,
+        );
+    }
+
     async createHighlight(
         sermonId: string,
         anchor: SermonAnnotationAnchor,

@@ -151,15 +151,37 @@ export function useInkNotes(
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ink', sermonId] }),
     });
 
+    /**
+     * Borra UN trazo. Si era el último de la nota, se va la nota.
+     *
+     * Antes la goma se llevaba la nota entera —todo lo escrito sobre ese
+     * párrafo— por tocar una sola raya. Una goma borra lo que toca.
+     */
     const erase = useMutation({
-        mutationFn: (noteId: string) => repository.deleteAnnotation(sermonId, noteId),
-        onMutate: (noteId) => {
+        onMutate: ({ noteId, index }: { noteId: string; index: number }) => {
             queryClient.setQueryData<InkNote[]>(['ink', sermonId], (current) =>
-                (current ?? []).filter((n) => n.id !== noteId),
+                (current ?? [])
+                    .map((n) =>
+                        n.id === noteId
+                            ? { ...n, strokes: n.strokes.filter((_, i) => i !== index) }
+                            : n,
+                    )
+                    .filter((n) => n.strokes.length > 0),
             );
-            for (const [offset, id] of noteByOffset.current.entries()) {
-                if (id === noteId) noteByOffset.current.delete(offset);
+        },
+        mutationFn: async ({ noteId }: { noteId: string; index: number }) => {
+            const remaining =
+                queryClient
+                    .getQueryData<InkNote[]>(['ink', sermonId])
+                    ?.find((n) => n.id === noteId)?.strokes ?? [];
+            if (!remaining.length) {
+                for (const [offset, id] of noteByOffset.current.entries()) {
+                    if (id === noteId) noteByOffset.current.delete(offset);
+                }
+                await repository.deleteAnnotation(sermonId, noteId);
+                return;
             }
+            await repository.replaceInkStrokes(sermonId, noteId, remaining);
         },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ink', sermonId] }),
     });
@@ -172,7 +194,7 @@ export function useInkNotes(
         setPenColor,
         eraser,
         setEraser,
-        eraseNote: (noteId: string) => erase.mutate(noteId),
+        eraseStroke: (noteId: string, index: number) => erase.mutate({ noteId, index }),
         rememberBlock,
         anchorAt,
         anchorRectFor,

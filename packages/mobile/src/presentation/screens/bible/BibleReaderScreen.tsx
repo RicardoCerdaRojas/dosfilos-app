@@ -80,6 +80,8 @@ export default function BibleReaderScreen() {
     const { height: screenHeight } = useWindowDimensions();
     /** Alto de la cabecera: la capa de tinta empieza debajo para no taparla. */
     const [headerHeight, setHeaderHeight] = useState(0);
+    /** Alto de la barra de ayuda del lápiz: la tinta también empieza debajo. */
+    const [hintHeight, setHintHeight] = useState(0);
     /**
      * Ancho disponible para leer, MEDIDO.
      *
@@ -477,6 +479,28 @@ export default function BibleReaderScreen() {
                 </View>
             </ScrollView>
 
+            {ink.penActive ? (
+                // El gesto hay que enseñarlo: nadie adivina que dos dedos
+                // desplazan mientras uno escribe.
+                <View
+                    onLayout={(e) => setHintHeight(e.nativeEvent.layout.height)}
+                    style={{
+                        paddingVertical: 6,
+                        paddingHorizontal: 24,
+                        backgroundColor: tokens.surface,
+                        borderBottomWidth: 1,
+                        borderBottomColor: tokens.border,
+                    }}
+                >
+                    <Text
+                        style={{ color: tokens.textSecondary }}
+                        className={`${FACE_CLASS[face].regular} text-xs`}
+                    >
+                        {ink.eraser ? t('bible:eraser_hint') : t('bible:pen_hint')}
+                    </Text>
+                </View>
+            ) : null}
+
             {/* La tinta va encima del texto pero debajo de la cabecera: si la
                 tapara, no habría cómo apagar el lápiz. */}
             <InkLayer
@@ -489,8 +513,8 @@ export default function BibleReaderScreen() {
                 onFinishStroke={ink.addStroke}
                 color={ink.penColor}
                 eraser={ink.eraser}
-                onErase={ink.eraseNote}
-                top={headerHeight}
+                onErase={ink.eraseStroke}
+                top={headerHeight + hintHeight}
                 bottom={0}
             />
 
