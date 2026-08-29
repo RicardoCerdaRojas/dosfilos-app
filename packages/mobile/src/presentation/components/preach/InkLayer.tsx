@@ -116,6 +116,19 @@ export function InkLayer({
     bottom,
 }: Props) {
     const livePath = useSharedValue<SkPath>(Skia.Path.Make());
+    /**
+     * Dónde arranca el lienzo, en coordenadas de PANTALLA.
+     *
+     * Los toques llegan con `pageX/pageY`, que son de la ventana entera, y el
+     * lienzo dibuja en las suyas. Antes se restaba sólo `top`, dando por
+     * sentado que a la izquierda no había nada — cierto en el púlpito, que
+     * ocupa toda la pantalla. En la Biblia hay un rail de 130 puntos a la
+     * izquierda, así que cada trazo aparecía corrido ese mismo ancho hacia la
+     * derecha. Se MIDE en vez de suponerse: así también sobrevive al panel
+     * dividido y a cualquier cosa que se ponga al costado.
+     */
+    const [origin, setOrigin] = useState({ x: 0, y: top });
+    const canvas = useRef<View | null>(null);
     const points = useRef<{ x: number; y: number }[]>([]);
     const anchor = useRef<{ offset: number; rect: AnchorRect } | null>(null);
     /**
@@ -134,9 +147,10 @@ export function InkLayer({
     // soltar, la nota ya llegó y el trazo puente sobra.
     const strokeCount = notes.reduce((total, note) => total + note.strokes.length, 0);
 
-    // El lienzo empieza debajo del chrome: sus coordenadas están corridas
-    // respecto de las de pantalla.
-    const toCanvas = (p: { x: number; y: number }) => ({ x: p.x, y: p.y - top });
+    const toCanvas = (p: { x: number; y: number }) => ({
+        x: p.x - origin.x,
+        y: p.y - origin.y,
+    });
 
     const noteNear = (x: number, y: number): string | null => {
         const RADIUS = 28;
@@ -198,6 +212,14 @@ export function InkLayer({
 
     return (
         <View
+            ref={canvas}
+            onLayout={() =>
+                canvas.current?.measureInWindow((x, y) =>
+                    setOrigin((current) =>
+                        current.x === x && current.y === y ? current : { x, y },
+                    ),
+                )
+            }
             style={{ position: 'absolute', top, left: 0, right: 0, bottom }}
             pointerEvents={penActive ? 'auto' : 'none'}
             onStartShouldSetResponder={() => penActive}

@@ -59,7 +59,7 @@ export default function TabLayout() {
             <Tabs style={{ flex: 1, flexDirection: 'row' }}>
                 <TabList
                     style={{
-                        width: 124,
+                        width: 132,
                         flexDirection: 'column',
                         alignItems: 'center',
                         paddingTop: insets.top + 18,
@@ -130,29 +130,37 @@ const TabButton = forwardRef<View, TabButtonProps>(
                 // `Pressable` y no `TouchableOpacity`: el slot de Expo Router
                 // tipa media docena de props como `T | null`, que es lo que
                 // `Pressable` acepta y `TouchableOpacity` no.
-                className="items-center justify-center"
-                style={({ pressed }) => ({
-                    width: rail ? 108 : undefined,
+                // TODO EL ESTILO EN UN OBJETO PLANO, sin `className` y sin
+                // función. Con las dos cosas juntas el ancho no llegaba a
+                // aplicarse —el botón terminaba midiendo lo que mide el
+                // ícono— y la etiqueta se cortaba contra ese borde
+                // invisible: era el "Inici(" de la captura, no un problema
+                // de rail angosto.
+                style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: rail ? 116 : undefined,
                     flex: rail ? undefined : 1,
                     // 44 pt es el mínimo de un blanco de toque cómodo; con el
-                    // ícono y la etiqueta esto queda en unos 68.
+                    // ícono y la etiqueta esto queda en unos 70.
                     paddingVertical: rail ? 14 : 6,
-                    marginBottom: rail ? 8 : 0,
+                    paddingHorizontal: rail ? 4 : 0,
+                    // Aire entre destinos: pegados se tocan por error.
+                    marginBottom: rail ? 14 : 0,
                     borderRadius: 16,
-                    opacity: pressed ? 0.6 : 1,
                     backgroundColor: isFocused ? theme.accentSoft : 'transparent',
-                })}
+                }}
             >
                 <MaterialIcons name={icon} size={rail ? 25 : 23} color={color} />
                 <Text
-                    // Sin `numberOfLines`: el rail es angosto y "Sermones"
-                    // entraba cortado como "Sermo…". Prefiere dos renglones
-                    // antes que una palabra mutilada.
+                    // Dos renglones antes que una palabra mutilada.
+                    numberOfLines={2}
                     style={{
                         color,
                         fontSize: rail ? 11 : 10,
                         marginTop: 4,
                         textAlign: 'center',
+                        width: '100%',
                     }}
                     className="font-lexend-semibold"
                 >
