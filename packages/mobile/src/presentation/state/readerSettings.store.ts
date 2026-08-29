@@ -11,6 +11,36 @@ interface ReaderSettingsState {
     fontSize: number;
     setFontSize: (size: number) => void;
     /**
+     * Interlínea del lector, como múltiplo de la del atril.
+     *
+     * Es el ajuste que más piden los lectores después del cuerpo: un texto
+     * apretado cansa aunque la letra sea grande, y quien lee capítulos enteros
+     * lo nota antes que nadie.
+     */
+    lineSpacing: number;
+    setLineSpacing: (value: number) => void;
+    /** Familia del lector, separada de la del atril por la misma razón que el cuerpo. */
+    bibleFace: DeliveryFace;
+    setBibleFace: (face: DeliveryFace) => void;
+    /**
+     * Números de versículo a la vista.
+     *
+     * Apagarlos devuelve la página a prosa pura, que es como se leía antes de
+     * que Estienne la numerara en 1551. Para leer un libro entero de corrido
+     * es lo correcto; para predicar sobre un versículo, no. Por eso se elige.
+     */
+    verseNumbers: boolean;
+    setVerseNumbers: (on: boolean) => void;
+    /**
+     * Pantalla encendida mientras se lee.
+     *
+     * Una tablet apoyada en el escritorio se apaga a los treinta segundos
+     * porque nadie la toca — leer no es tocar. Es el mismo problema que el
+     * atril resuelve, y aparece igual estudiando.
+     */
+    keepAwake: boolean;
+    setKeepAwake: (on: boolean) => void;
+    /**
      * Cuerpo del modo púlpito: se predica de pie, a 60-70 cm. Separado del
      * anterior porque compartirlos hacía que ajustar la Biblia cambiara el
      * sermón, y al revés.
@@ -89,6 +119,14 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
         (set) => ({
             fontSize: 18, // Default font size
             setFontSize: (size: number) => set({ fontSize: size }),
+            lineSpacing: 1,
+            setLineSpacing: (value: number) => set({ lineSpacing: value }),
+            bibleFace: 'literata',
+            setBibleFace: (face: DeliveryFace) => set({ bibleFace: face }),
+            verseNumbers: true,
+            setVerseNumbers: (on: boolean) => set({ verseNumbers: on }),
+            keepAwake: true,
+            setKeepAwake: (on: boolean) => set({ keepAwake: on }),
             deliveryFontSize: DELIVERY_SIZE.default,
             setDeliveryFontSize: (size: number) => set({ deliveryFontSize: size }),
             readingMode: 'claro',

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { INK_COLORS } from '@dosfilos/domain';
@@ -24,6 +25,7 @@ import { useBibleInk } from '@/presentation/hooks/useBibleInk';
 import { formatSelectionForSermon } from '@/presentation/components/bible/passageFormat';
 import { BiblePickerSheet } from '@/presentation/components/bible/BiblePickerSheet';
 import { BibleSearchSheet } from '@/presentation/components/bible/BibleSearchSheet';
+import { BibleSettingsSheet } from '@/presentation/components/bible/BibleSettingsSheet';
 import { BibleVersionFactory } from '@/data/repositories/bible/BibleVersionFactory';
 
 /**
@@ -40,14 +42,23 @@ import { BibleVersionFactory } from '@/data/repositories/bible/BibleVersionFacto
 /** Aire entre las dos columnas del paralelo. */
 const COLUMN_GAP = 28;
 
+/** Etiqueta propia: no apaga la que mantiene el atril encendido. */
+const KEEP_AWAKE_TAG = 'bible-reader';
+
 export default function BibleReaderScreen() {
     const router = useRouter();
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
 
     const readingMode = useReaderSettingsStore((s) => s.readingMode);
-    const face = useReaderSettingsStore((s) => s.deliveryFace);
-    const fontSize = useReaderSettingsStore((s) => s.deliveryFontSize);
+    // Cuerpo y familia PROPIOS del lector, no los del atril: predicar de pie a
+    // 70 cm y estudiar sentado no piden lo mismo, y compartir el valor hacía
+    // que tocar uno cambiara el otro por la espalda.
+    const face = useReaderSettingsStore((s) => s.bibleFace);
+    const fontSize = useReaderSettingsStore((s) => s.fontSize);
+    const lineSpacing = useReaderSettingsStore((s) => s.lineSpacing);
+    const verseNumbers = useReaderSettingsStore((s) => s.verseNumbers);
+    const keepAwake = useReaderSettingsStore((s) => s.keepAwake);
     const tokens = READING_MODES[readingMode];
 
     // Retoma donde quedó: el estado inicial sale de lo guardado.
@@ -64,6 +75,7 @@ export default function BibleReaderScreen() {
     const [showPopover, setShowPopover] = useState(false);
     const [showPicker, setShowPicker] = useState(false);
     const [showSearch, setShowSearch] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
 
     const { height: screenHeight } = useWindowDimensions();
     /** Alto de la cabecera: la capa de tinta empieza debajo para no taparla. */
@@ -91,7 +103,7 @@ export default function BibleReaderScreen() {
      * las vistas que efectivamente se movieron. Es exactamente el bug que ya
      * costó dos vueltas en el púlpito.
      */
-    const inkLayoutKey = `${bookId}|${chapter}|${fontSize}|${parallelId ?? ''}|${readingMode}|${fullWidth}`;
+    const inkLayoutKey = `${bookId}|${chapter}|${fontSize}|${parallelId ?? ''}|${readingMode}|${fullWidth}|${lineSpacing}|${verseNumbers}|${face}`;
     const ink = useBibleInk(bookId, chapter, inkLayoutKey);
 
     const repo = BibleVersionFactory.getByVersion(versionId);
@@ -164,6 +176,21 @@ export default function BibleReaderScreen() {
         // esté el cursor. Copiar al portapapeles obligaría a pegar a mano.
         router.push(`/sermon/paste?markdown=${encodeURIComponent(markdown)}`);
     };
+
+    // La tablet apoyada en el escritorio se apaga a los treinta segundos
+    // porque nadie la toca, y leer no es tocar.
+    //
+    // Con `activate/deactivate` y no con `useKeepAwake`: ese hook mantiene la
+    // pantalla encendida SIEMPRE que está montado —el argumento es una
+    // etiqueta, no un interruptor— así que con él el ajuste no se podría
+    // apagar.
+    useEffect(() => {
+        if (!keepAwake) return;
+        activateKeepAwakeAsync(KEEP_AWAKE_TAG);
+        return () => {
+            deactivateKeepAwake(KEEP_AWAKE_TAG);
+        };
+    }, [keepAwake]);
 
     // Se anota después de pintar, no durante el render: escribir en un store
     // mientras React renderiza puede reentrar en el mismo árbol.
@@ -280,6 +307,15 @@ export default function BibleReaderScreen() {
                     <MaterialIcons name="search" size={22} color={tokens.textSecondary} />
                 </TouchableOpacity>
 
+                <TouchableOpacity
+                    onPress={() => setShowSettings(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('bible:reader_settings')}
+                    className="mr-4"
+                >
+                    <MaterialIcons name="tune" size={22} color={tokens.textSecondary} />
+                </TouchableOpacity>
+
                 {/* Lápiz. La Biblia del pastor está escrita al margen: era lo
                     único que el atril sabía hacer y el lector no. */}
                 <TouchableOpacity
@@ -371,6 +407,8 @@ export default function BibleReaderScreen() {
                                 tokens={tokens}
                                 face={face}
                                 fontSize={fontSize}
+                                lineSpacing={lineSpacing}
+                                showVerseNumbers={verseNumbers}
                                 selection={selection}
                                 onSelectionChange={setSelection}
                                 onSelectionEnd={(range, atY) => {
@@ -406,6 +444,8 @@ export default function BibleReaderScreen() {
                                     tokens={tokens}
                                     face={face}
                                     fontSize={fontSize}
+                                    lineSpacing={lineSpacing}
+                                    showVerseNumbers={verseNumbers}
                                     selection={null}
                                     onSelectionChange={() => undefined}
                                     onSelectionEnd={() => undefined}
@@ -472,6 +512,12 @@ export default function BibleReaderScreen() {
                     label: t('bible:to_sermon'),
                     onPress: copyToSermon,
                 }}
+            />
+
+            <BibleSettingsSheet
+                visible={showSettings}
+                tokens={tokens}
+                onClose={() => setShowSettings(false)}
             />
 
             <BiblePickerSheet

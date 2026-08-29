@@ -37,6 +37,10 @@ interface Props {
     tokens: ReadingModeTokens;
     face: DeliveryFace;
     fontSize: number;
+    /** Múltiplo de la interlínea base. 1 es la del atril. */
+    lineSpacing?: number;
+    /** Números de versículo a la vista. Apagados, la página vuelve a prosa. */
+    showVerseNumbers?: boolean;
     selection: WordSelection | null;
     onSelectionChange: (selection: WordSelection | null) => void;
     /** Al soltar: el rango final y la Y donde terminó, para el popover. */
@@ -93,6 +97,8 @@ export function SelectableVerses({
     tokens,
     face,
     fontSize,
+    lineSpacing = 1,
+    showVerseNumbers = true,
     selection,
     onSelectionChange,
     onSelectionEnd,
@@ -224,7 +230,7 @@ export function SelectableVerses({
         onSelectionEnd(range, pageY);
     };
 
-    const lineHeight = fontSize * DELIVERY_LINE_HEIGHT;
+    const lineHeight = fontSize * DELIVERY_LINE_HEIGHT * lineSpacing;
 
     return (
         <View
@@ -313,7 +319,7 @@ export function SelectableVerses({
                             }}
                             className={FACE_CLASS[face].regular}
                         >
-                            {word.leading ? (
+                            {word.leading && showVerseNumbers ? (
                                 <Text
                                     style={{
                                         color: tokens.textSecondary,

@@ -22,7 +22,7 @@
     "books_tab": "Books",
     "chapters_tab": "Chaps",
     "available_chapters": "Available Chapters",
-    "reader_settings": "Reader Settings",
+    "reader_settings": "Reading settings",
     "font_size": "Font Size",
     "search_results": "Search Results",
     "no_results_found": "No verses found",
@@ -63,5 +63,13 @@
     "not_in_version": "This book is not in the other version",
     "results_in_scope": "{{count}} results",
     "recent_searches": "Recent searches",
-    "search_hint": "Type at least 3 letters. Accents are not needed."
+    "search_hint": "Type at least 3 letters. Accents are not needed.",
+    "line_spacing": "Line spacing",
+    "typeface": "Typeface",
+    "page": "Page",
+    "verse_numbers": "Verse numbers",
+    "verse_numbers_hint": "Turned off, the chapter goes back to continuous prose.",
+    "full_width_hint": "The measured column tires less; full width shows more.",
+    "keep_awake": "Keep the screen on",
+    "keep_awake_hint": "Reading is not touching: the tablet sleeps after thirty seconds."
 }
