@@ -23,6 +23,25 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
 
     private booksCache: { id: string; name: string; chapters: number }[] | null = null;
 
+    /**
+     * Limpia el texto de un versículo.
+     *
+     * EL DATO TRAE "/n" —barra ene, no salto de línea— como marca de renglón
+     * poético, en 4.738 versículos de la Reina Valera: uno de cada siete. La
+     * limpieza que había buscaba `\n` con barra invertida, así que no encontró
+     * NUNCA nada y el "/n" se venía leyendo en pantalla desde siempre. En Job
+     * se veía como "con tempestad, /nY ha aumentado mis heridas".
+     *
+     * Se reemplaza por un espacio porque acá el texto corre como prosa; el
+     * renglón poético lo pondría el diseño, no el dato.
+     */
+    protected cleanVerse(text: string): string {
+        return (text ?? '')
+            .replace(/\s*\/n\s*/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
     getVersionId(): string {
         return this.versionId;
     }
@@ -49,7 +68,7 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
         const chapter = book.chapters[chapterIdx];
         const verses = chapter.slice(ref.verseStart - 1, ref.verseEnd ? ref.verseEnd : ref.verseStart);
 
-        return verses.join(' ').replace(/\\s*\\n\\s*/g, ' ').trim();
+        return this.cleanVerse(verses.join(' '));
     }
 
     isValidBook(bookName: string): boolean {
@@ -135,7 +154,7 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
         const chapterIdx = chapter - 1;
         if (chapterIdx < 0 || chapterIdx >= book.chapters.length) return null;
 
-        return book.chapters[chapterIdx].map(verse => verse ? verse.replace(/\\s*\\n\\s*/g, ' ').trim() : verse);
+        return book.chapters[chapterIdx].map(verse => this.cleanVerse(verse));
     }
 
     search(query: string, limit = 20, bookIds?: string[]): BibleSearchResult[] {
@@ -157,7 +176,7 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
             for (let c = 0; c < book.chapters.length; c++) {
                 const chapter = book.chapters[c];
                 for (let v = 0; v < chapter.length; v++) {
-                    const verseText = (chapter[v] ?? '').replace(/\s*\n\s*/g, ' ').trim();
+                    const verseText = this.cleanVerse(chapter[v]);
                     // Coincide sin acentos y por términos sueltos: el que
                     // escribe en una tablet pone "ninive", y "Jonás Nínive"
                     // tiene que encontrar el versículo que dice las dos cosas.

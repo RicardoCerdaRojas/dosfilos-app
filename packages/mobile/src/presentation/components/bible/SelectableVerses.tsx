@@ -229,7 +229,12 @@ export function SelectableVerses({
     return (
         <View
             ref={container}
-            className="flex-row flex-wrap"
+            // Dirección y envoltura POR ESTILO. Con `className` la envoltura
+            // podía no aplicarse y entonces cada versículo salía en un solo
+            // renglón interminable, corriéndose fuera de la pantalla. Ya nos
+            // pasó lo mismo en el rail y en el paralelo: donde el layout es
+            // crítico, no se delega.
+            style={{ flexDirection: 'row', flexWrap: 'wrap' }}
             onLayout={() =>
                 container.current?.measureInWindow((x, y) => {
                     origin.current = { x, y };

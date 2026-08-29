@@ -37,6 +37,9 @@ import { BibleVersionFactory } from '@/data/repositories/bible/BibleVersionFacto
  * de luz. No es prolijidad: el ojo del pastor no debería cambiar de registro
  * entre el sermón y el pasaje que lo sostiene.
  */
+/** Aire entre las dos columnas del paralelo. */
+const COLUMN_GAP = 28;
+
 export default function BibleReaderScreen() {
     const router = useRouter();
     const { t } = useTranslation();
@@ -65,6 +68,16 @@ export default function BibleReaderScreen() {
     const { height: screenHeight } = useWindowDimensions();
     /** Alto de la cabecera: la capa de tinta empieza debajo para no taparla. */
     const [headerHeight, setHeaderHeight] = useState(0);
+    /**
+     * Ancho disponible para leer, MEDIDO.
+     *
+     * Las columnas se calculan en píxeles a partir de esto en vez de repartirse
+     * con `flex` y porcentajes. Con porcentajes, el ancho de la columna dependía
+     * de una cadena de contenedores —y bastaba que uno no resolviera su ancho
+     * para que el texto se saliera de la pantalla, que es lo que pasaba al
+     * abrir el paralelo.
+     */
+    const [availableWidth, setAvailableWidth] = useState(0);
     const { data: marks } = useBibleMarks();
     const { set: setMark, clear: clearMark } = useBibleMarkMutations();
     const { measure, probe } = useDeliveryMeasure(fontSize);
@@ -177,6 +190,21 @@ export default function BibleReaderScreen() {
         if (translated) setBookId(translated);
         if (parallelId === nextVersionId) setParallelId(null);
     };
+
+    /**
+     * Ancho de cada columna y del bloque entero.
+     *
+     * Con paralelo, las dos columnas se reparten lo disponible: leer dos
+     * versiones exige ver las dos, y una medida "ideal" que no entra en
+     * pantalla no es una medida, es un desborde. Sin paralelo manda la medida
+     * de lectura, salvo que el pastor haya pedido ancho completo.
+     */
+    const columnWidth = parallelId
+        ? Math.max(200, (availableWidth - COLUMN_GAP) / 2)
+        : fullWidth
+          ? availableWidth
+          : Math.min(availableWidth, measure ?? availableWidth);
+    const totalWidth = parallelId ? availableWidth : columnWidth;
 
     const goChapter = (delta: number) => {
         const next = chapter + delta;
@@ -312,26 +340,19 @@ export default function BibleReaderScreen() {
                 ) : null}
             </View>
 
-            <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: insets.bottom + 120 }}>
+            <ScrollView
+                onLayout={(e) => setAvailableWidth(e.nativeEvent.layout.width - 48)}
+                contentContainerStyle={{ padding: 24, paddingBottom: insets.bottom + 120 }}
+            >
                 {probe}
-                <View
-                    style={{
-                        alignSelf: 'center',
-                        width: '100%',
-                        maxWidth: fullWidth
-                            ? undefined
-                            : measure
-                              ? measure * (parallelId ? 2.1 : 1)
-                              : undefined,
-                    }}
-                >
+                <View style={{ alignSelf: 'center', width: totalWidth }}>
                     {/* La dirección va por ESTILO y no por `className`: ya nos
                         pasó en el rail que una clase condicional junto a un
                         estilo no llegue a aplicarse, y acá el síntoma sería
                         justamente éste — las dos versiones una debajo de la
                         otra en vez de lado a lado. */}
                     <View style={{ flexDirection: parallelId ? 'row' : 'column' }}>
-                        <View style={{ flex: 1, marginRight: parallelId ? 24 : 0 }}>
+                        <View style={{ width: columnWidth, marginRight: parallelId ? COLUMN_GAP : 0 }}>
                             {parallelId ? (
                                 // Sin rótulo, dos columnas de texto parecido no
                                 // dicen cuál es cuál.
@@ -362,7 +383,7 @@ export default function BibleReaderScreen() {
                             />
                         </View>
                         {parallelId ? (
-                            <View style={{ flex: 1 }}>
+                            <View style={{ width: columnWidth }}>
                                 <Text
                                     style={{ color: tokens.textSecondary, marginBottom: 10 }}
                                     className={`${FACE_CLASS[face].semibold} text-xs`}

@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -83,16 +93,38 @@ export function BibleSearchSheet({
 
     return (
         <Modal visible={visible} transparent animationType={tokens.animations ? 'fade' : 'none'}>
-            <Pressable className="flex-1 bg-black/40" onPress={onClose}>
-                <Pressable
-                    className="mt-auto rounded-t-3xl px-6 pt-5"
-                    onPress={() => undefined}
-                    style={{
-                        backgroundColor: tokens.surface,
-                        paddingBottom: insets.bottom + 20,
-                        height: '80%',
-                    }}
-                >
+            {/* El teclado tapaba media lista: la hoja se levanta con él en vez
+                de quedarse clavada al 80 % de la pantalla. */}
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+                <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={onClose}>
+                    <Pressable
+                        onPress={() => undefined}
+                        style={{
+                            marginTop: 'auto',
+                            borderTopLeftRadius: 24,
+                            borderTopRightRadius: 24,
+                            paddingHorizontal: 24,
+                            paddingTop: 20,
+                            backgroundColor: tokens.surface,
+                            paddingBottom: insets.bottom + 16,
+                            // Alto máximo, no alto fijo: con pocos resultados la
+                            // hoja no tiene por qué ocupar la pantalla entera.
+                            maxHeight: '86%',
+                        }}
+                    >
+                        <View
+                            style={{
+                                alignSelf: 'center',
+                                width: 44,
+                                height: 4,
+                                borderRadius: 2,
+                                backgroundColor: tokens.border,
+                                marginBottom: 16,
+                            }}
+                        />
                     <TextInput
                         value={query}
                         onChangeText={setQuery}
@@ -272,8 +304,9 @@ export function BibleSearchSheet({
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
+                    </Pressable>
                 </Pressable>
-            </Pressable>
+            </KeyboardAvoidingView>
         </Modal>
     );
 }
