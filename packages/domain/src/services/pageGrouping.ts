@@ -30,17 +30,14 @@ export function groupUnbreakableBlocks(blocks: ReadingBlock[]): number[][] {
         let cursor = index;
 
         // (1) Un subtítulo arrastra lo que sigue hasta incluir contenido real.
-        while (
-            cursor < blocks.length - 1 &&
-            blocks[cursor].kind === 'subheading'
-        ) {
+        while (cursor < blocks.length - 1 && blocks[cursor]!.kind === 'subheading') {
             cursor += 1;
             group.push(cursor);
         }
 
         // (2) Las viñetas que vienen a continuación entran al mismo grupo,
         // junto con el bloque que las introduce (ya está en `group`).
-        while (cursor < blocks.length - 1 && blocks[cursor + 1].kind === 'listitem') {
+        while (cursor < blocks.length - 1 && blocks[cursor + 1]!.kind === 'listitem') {
             cursor += 1;
             group.push(cursor);
         }

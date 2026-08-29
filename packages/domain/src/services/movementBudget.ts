@@ -80,8 +80,14 @@ export function buildMovementBudgets(
 ): MovementBudget[] {
     if (!movements.length) return [];
 
+    // `overrides[slug]` se lee con piso: bajo índices sin chequear, el tipo de
+    // un acceso a diccionario incluye `undefined` aunque `isPinned` ya lo haya
+    // descartado, y el compilador no puede saberlo.
+    const pinnedSeconds = (slug: string): number =>
+        Math.max(MIN_SECONDS, overrides[slug] ?? MIN_SECONDS);
+
     const pinnedTotal = movements.reduce(
-        (sum, m) => sum + (isPinned(overrides, m.slug) ? Math.max(MIN_SECONDS, overrides[m.slug]) : 0),
+        (sum, m) => sum + (isPinned(overrides, m.slug) ? pinnedSeconds(m.slug) : 0),
         0,
     );
     const free = movements.filter((m) => !isPinned(overrides, m.slug));
@@ -93,7 +99,7 @@ export function buildMovementBudgets(
             return {
                 slug: m.slug,
                 title: m.title,
-                seconds: Math.max(MIN_SECONDS, Math.round(overrides[m.slug])),
+                seconds: Math.round(pinnedSeconds(m.slug)),
                 pinned: true,
             };
         }
@@ -135,7 +141,7 @@ export function locateInBudget(budgets: MovementBudget[], elapsedSeconds: number
     }
     let accumulated = 0;
     for (let i = 0; i < budgets.length; i += 1) {
-        accumulated += budgets[i].seconds;
+        accumulated += budgets[i]!.seconds;
         if (elapsedSeconds < accumulated || i === budgets.length - 1) {
             const remaining = accumulated - elapsedSeconds;
             return {
@@ -182,7 +188,7 @@ export function expectedElapsed(
     if (!budgets.length) return 0;
     const index = Math.max(0, Math.min(movementIndex, budgets.length - 1));
     const before = budgets.slice(0, index).reduce((sum, b) => sum + b.seconds, 0);
-    const current = budgets[index].seconds;
+    const current = budgets[index]!.seconds;
     const pages = Math.max(1, pageCount);
     const page = Math.max(0, Math.min(pageIndex, pages - 1));
     return Math.round(before + (current * page) / pages);

@@ -60,14 +60,16 @@ const MIN_SPAN_CHARS = 12;
 function isFalseBoundary(text: string, index: number): boolean {
     if (text[index] !== '.') return false;
 
-    // 3.16, 1.500 — a period between digits never ends a sentence.
-    const prev = text[index - 1];
-    const next = text[index + 1];
+    // 3.16, 1.500 — a period between digits never ends a sentence. Reading a
+    // character past either edge of the string yields `undefined`, which is
+    // exactly "no digit there": the empty string keeps the comparisons honest.
+    const prev = text[index - 1] ?? '';
+    const next = text[index + 1] ?? '';
     if (prev >= '0' && prev <= '9' && next >= '0' && next <= '9') return true;
 
     // Walk back over the word that owns the period.
     let start = index;
-    while (start > 0 && !/[\s(«"']/.test(text[start - 1])) start -= 1;
+    while (start > 0 && !/[\s(«"']/.test(text[start - 1] ?? '')) start -= 1;
     const word = text.slice(start, index).toLowerCase();
     return ABBREVIATIONS.has(word);
 }
@@ -89,8 +91,8 @@ export function splitSentences(text: string): SentenceSpan[] {
         // Trim the span without losing the mapping to the source offsets.
         let s = start;
         let e = end;
-        while (s < e && /\s/.test(text[s])) s += 1;
-        while (e > s && /\s/.test(text[e - 1])) e -= 1;
+        while (s < e && /\s/.test(text[s] ?? '')) s += 1;
+        while (e > s && /\s/.test(text[e - 1] ?? '')) e -= 1;
         if (e <= s) return;
 
         const previous = spans[spans.length - 1];
@@ -110,7 +112,10 @@ export function splitSentences(text: string): SentenceSpan[] {
 
         // Swallow repeated terminators (`¿…?!`) and closing punctuation.
         let end = match.index + 1;
-        while (end < text.length && (TRAILING_CLOSERS.has(text[end]) || /[.!?]/.test(text[end]))) {
+        while (
+            end < text.length &&
+            (TRAILING_CLOSERS.has(text[end] ?? '') || /[.!?]/.test(text[end] ?? ''))
+        ) {
             end += 1;
         }
         push(cursor, end);

@@ -76,12 +76,12 @@ const RULES: RewriteRule[] = [
     { re: /<br\s*\/?>/gi, emit: () => ({ text: '\n', offsetInMatch: -1 }) },
     { re: /^---\s*$/gm, emit: () => null },
     { re: /\{#[^}]+\}/g, emit: () => null },
-    { re: /\[([^\]]+)\]\(#[^)]*\)/g, emit: (m) => ({ text: m[1], offsetInMatch: 1 }) },
-    { re: /\*\*(.+?)\*\*/g, emit: (m) => ({ text: m[1], offsetInMatch: 2 }) },
+    { re: /\[([^\]]+)\]\(#[^)]*\)/g, emit: (m) => ({ text: m[1] ?? '', offsetInMatch: 1 }) },
+    { re: /\*\*(.+?)\*\*/g, emit: (m) => ({ text: m[1] ?? '', offsetInMatch: 2 }) },
     // El abridor de énfasis no puede ir seguido de espacio: si no, un
     // marcador de lista `* punto` abre énfasis y se come hasta el próximo
     // asterisco, fundiendo dos viñetas en una.
-    { re: /\*(\S(?:.*?\S)?)\*/g, emit: (m) => ({ text: m[1], offsetInMatch: 1 }) },
+    { re: /\*(\S(?:.*?\S)?)\*/g, emit: (m) => ({ text: m[1] ?? '', offsetInMatch: 1 }) },
 ];
 
 function identity(text: string): SourceMappedText {
@@ -99,8 +99,8 @@ function applyRule(src: SourceMappedText, rule: RewriteRule): SourceMappedText {
 
     const copy = (from: number, to: number) => {
         for (let i = from; i < to; i += 1) {
-            out.push(src.text[i]);
-            map.push(src.map[i]);
+            out.push(src.text[i]!);
+            map.push(src.map[i]!);
         }
     };
 
@@ -115,8 +115,14 @@ function applyRule(src: SourceMappedText, rule: RewriteRule): SourceMappedText {
         if (emitted) {
             const base = emitted.offsetInMatch >= 0 ? match.index + emitted.offsetInMatch : -1;
             for (let k = 0; k < emitted.text.length; k += 1) {
-                out.push(emitted.text[k]);
-                map.push(base >= 0 ? src.map[base + k] : src.map[match.index]);
+                out.push(emitted.text[k]!);
+                // Fuera del texto original no hay a dónde mapear: se ancla al
+                // comienzo del match, que es de donde salió lo emitido.
+                map.push(
+                    (base >= 0 ? src.map[base + k] : src.map[match.index]) ??
+                        src.map[match.index] ??
+                        0,
+                );
             }
         }
         last = match.index + match[0].length;
@@ -145,20 +151,25 @@ function joinLines(src: SourceMappedText, lines: { start: number; end: number }[
             map.push(src.map[line.start] ?? src.map[src.map.length - 1] ?? 0);
         }
         for (let i = line.start; i < line.end; i += 1) {
-            out.push(src.text[i]);
-            map.push(src.map[i]);
+            out.push(src.text[i]!);
+            map.push(src.map[i]!);
         }
     });
     return { text: out.join(''), map };
 }
 
 function toUnits(src: SourceMappedText): ReadingUnit[] {
-    return splitSentences(src.text).map((span) => ({
-        text: span.text,
-        sourceStart: src.map[span.start],
-        // `end` is exclusive: the last mapped char plus one.
-        sourceEnd: (src.map[span.end - 1] ?? src.map[span.start]) + 1,
-    }));
+    return splitSentences(src.text).map((span) => {
+        // Un span siempre cae dentro del texto mapeado; el cero es el ancla
+        // honesta para el caso imposible en vez de una aserción.
+        const start = src.map[span.start] ?? 0;
+        return {
+            text: span.text,
+            sourceStart: start,
+            // `end` is exclusive: the last mapped char plus one.
+            sourceEnd: (src.map[span.end - 1] ?? start) + 1,
+        };
+    });
 }
 
 const SUBHEADING_RE = /^#{3,}\s+(.+?)\s*$/;
@@ -223,8 +234,8 @@ export function buildReadingBlocks(body: string): ReadingBlock[] {
             // a line's leading indentation into the map.
             let ls = lineStart;
             let le = i;
-            while (ls < le && /\s/.test(normalized.text[ls])) ls += 1;
-            while (le > ls && /\s/.test(normalized.text[le - 1])) le -= 1;
+            while (ls < le && /\s/.test(normalized.text[ls] ?? '')) ls += 1;
+            while (le > ls && /\s/.test(normalized.text[le - 1] ?? '')) le -= 1;
             lineStart = i + 1;
 
             const text = normalized.text.slice(ls, le);
@@ -233,8 +244,11 @@ export function buildReadingBlocks(body: string): ReadingBlock[] {
             const heading = text.match(SUBHEADING_RE);
             if (heading) {
                 flush();
-                const offset = text.indexOf(heading[1]);
-                push('subheading', [{ start: ls + offset, end: ls + offset + heading[1].length }]);
+                // El grupo 1 existe si la regex casó — pero eso lo sabe la
+                // regex, no el compilador.
+                const title = heading[1] ?? '';
+                const offset = text.indexOf(title);
+                push('subheading', [{ start: ls + offset, end: ls + offset + title.length }]);
                 continue;
             }
 
@@ -271,7 +285,7 @@ export function buildReadingBlocks(body: string): ReadingBlock[] {
 function trimMapped(src: SourceMappedText): SourceMappedText {
     let start = 0;
     let end = src.text.length;
-    while (start < end && /\s/.test(src.text[start])) start += 1;
-    while (end > start && /\s/.test(src.text[end - 1])) end -= 1;
+    while (start < end && /\s/.test(src.text[start] ?? '')) start += 1;
+    while (end > start && /\s/.test(src.text[end - 1] ?? '')) end -= 1;
     return sliceMapped(src, start, end);
 }
