@@ -16,6 +16,23 @@ const CHUNK_COLLECTION = 'document_chunks';
 const EMBEDDING_BATCH_SIZE = 20;  // Gemini batch embedding limit
 
 /**
+ * Last line of defence before the chunk write.
+ *
+ * Firestore rejects an ENTIRE document when any nested value is
+ * `undefined`, and a chunk write that throws aborts the whole indexing
+ * job — the resource ends at `indexingStatus: 'failed'` with zero
+ * chunks, so the book silently stops being retrievable. The chunker no
+ * longer produces sparse `sectionPath` arrays (see the depth clamp in
+ * `markdownChunker.ts`), but the breadcrumb is derived from arbitrary
+ * user-uploaded markdown, so we do not let a future regression there
+ * take a 400-page book's index down with it.
+ */
+function safeSectionPath(path: unknown): string[] {
+    if (!Array.isArray(path)) return [];
+    return path.filter((s): s is string => typeof s === 'string' && s.length > 0);
+}
+
+/**
  * Callable Cloud Function: builds the Phase 2 RAG index for a single library_resource.
  *
  * Pipeline:
@@ -190,7 +207,7 @@ export const indexStructuredDocument = onCall<IndexRequest>(
                     metadata: {
                         page: c.page,
                         section: c.section ?? null,
-                        sectionPath: c.sectionPath,
+                        sectionPath: safeSectionPath(c.sectionPath),
                         chunkType: c.chunkType,
                         startChar: c.charStart,
                         endChar: c.charEnd,
@@ -357,7 +374,7 @@ export async function indexResourceChunks(
                     metadata: {
                         page: c.page,
                         section: c.section ?? null,
-                        sectionPath: c.sectionPath,
+                        sectionPath: safeSectionPath(c.sectionPath),
                         chunkType: c.chunkType,
                         startChar: c.charStart,
                         endChar: c.charEnd,

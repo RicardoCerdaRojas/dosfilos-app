@@ -59,8 +59,20 @@ export function chunkStructuredMarkdown(
         for (const section of sections) {
             // Update the heading stack when we encounter a heading
             if (section.headingLevel !== null && section.headingText) {
-                // Pop stack to proper depth, then push new heading
-                headingStack.length = section.headingLevel - 1;
+                // Pop stack to proper depth, then push new heading.
+                //
+                // The depth is clamped to the stack's current length on
+                // purpose. A document that SKIPS a heading level (`#` then
+                // `###` with no `##` between — routine in LlamaParse output
+                // of real commentaries) would otherwise grow the array by
+                // assigning `.length`, which leaves a HOLE. The spread below
+                // materialises that hole as `undefined`, and Firestore
+                // rejects the entire chunk write with "Cannot use undefined
+                // as a Firestore value (found in field
+                // metadata.sectionPath.`1`)" — killing the whole indexing job.
+                // Clamping collapses the skipped level instead, which also
+                // reads better as a breadcrumb.
+                headingStack.length = Math.min(section.headingLevel - 1, headingStack.length);
                 headingStack.push(section.headingText);
             }
 
