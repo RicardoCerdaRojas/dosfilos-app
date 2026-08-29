@@ -12,6 +12,7 @@ import { SermonSummary } from '@/domain/models/sermon.model';
 import { useAuthStore } from '@/presentation/state/auth.store';
 import { useReaderSettingsStore } from '@/presentation/state/readerSettings.store';
 import { usePublishedSermons, useSermon } from '@/presentation/hooks/useSermons';
+import { usePlanBoard, type PlanBoard } from '@/presentation/hooks/usePlanBoard';
 import { useBriefcase } from '@/presentation/hooks/useSermonBriefcase';
 import { useBibleMarks } from '@/presentation/hooks/useBibleMarks';
 import { BibleVersionFactory } from '@/data/repositories/bible/BibleVersionFactory';
@@ -45,6 +46,7 @@ export default function HomeScreen() {
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
     const { data: groups, isLoading } = usePublishedSermons();
+    const { current: plan } = usePlanBoard();
 
     const all = (groups ?? []).flatMap((g) => g.sermons);
     const recent = [...all].sort(
@@ -52,14 +54,25 @@ export default function HomeScreen() {
     );
 
     /**
-     * "Lo próximo" es el más reciente SIN PREDICAR.
+     * QUÉ SERMÓN OFRECE EL TABLERO, EN ESTE ORDEN:
      *
-     * Antes era simplemente el más reciente, así que el domingo a la tarde el
-     * tablero seguía ofreciendo el sermón que se acababa de predicar. Si ya se
-     * predicaron todos, se muestra el último: es preferible ofrecer algo que
-     * dejar la tarjeta vacía.
+     * 1. EL QUE SIGUE EN EL PLAN ACTIVO. Si el pastor está recorriendo una
+     *    serie, lo próximo es la semana que toca — no hay nada que adivinar.
+     * 2. EL MÁS VIEJO SIN PREDICAR. Fuera de un plan, el que espera hace más
+     *    tiempo es el que sigue.
+     * 3. El más reciente, si ya se predicaron todos: mejor ofrecer algo que
+     *    dejar la tarjeta vacía.
+     *
+     * El criterio anterior era "el más reciente sin predicar", y estaba mal en
+     * el caso más común: quien escribe cuatro sermones de una serie en una
+     * tarde publica el cuarto al final, y el que predica el domingo es el
+     * primero. El tablero le ofrecía el final de la serie.
      */
-    const next = recent.find((s) => s.timesPreached === 0) ?? recent[0];
+    const planned = plan?.next?.sermon;
+    const oldestUnpreached = [...recent]
+        .filter((s) => s.timesPreached === 0)
+        .sort((a, b) => (a.publishedAt?.getTime() ?? 0) - (b.publishedAt?.getTime() ?? 0))[0];
+    const next = planned ?? oldestUnpreached ?? recent[0];
     const rest = recent.filter((s) => s.id !== next?.id).slice(0, 4);
 
     // La serie del próximo sermón: es la que el pastor está recorriendo.
@@ -110,6 +123,8 @@ export default function HomeScreen() {
                         />
                     </Card>
                 )}
+
+                {plan ? <ActivePlan plan={plan} /> : null}
 
                 {/* Las tres tarjetas de apoyo. En tablet, en fila. */}
                 <View
@@ -250,6 +265,104 @@ function NextSermon({ sermon }: { sermon: SermonSummary }) {
                         {t('sermons:read')}
                     </Text>
                 </TouchableOpacity>
+            </View>
+        </Card>
+    );
+}
+
+/**
+ * El plan que se está recorriendo, con las próximas semanas.
+ *
+ * Es la respuesta a "dónde voy" puesta al lado de "qué predico ahora". Y
+ * muestra las que TODAVÍA NO ESTÁN ESCRITAS con su aviso: saltearlas dejaría
+ * un plan que parece más corto de lo que es, y el domingo que viene no
+ * desaparece porque el sermón no esté listo.
+ */
+function ActivePlan({ plan }: { plan: PlanBoard }) {
+    const theme = useAppTheme();
+    const router = useRouter();
+    const { t } = useTranslation();
+
+    const upcoming = plan.items.filter((item) => !item.preached).slice(0, 3);
+    if (!upcoming.length) return null;
+
+    return (
+        <Card theme={theme} style={{ padding: 20, marginTop: 14 }}>
+            <View className="flex-row items-center justify-between">
+                <SectionLabel theme={theme}>
+                    {t(plan.status === 'active' ? 'plans:active_plan' : 'plans:upcoming_plan')}
+                </SectionLabel>
+                <TouchableOpacity
+                    onPress={() => router.push('/(tabs)/plans')}
+                    accessibilityRole="button"
+                >
+                    <Text
+                        style={{ color: theme.accent, fontSize: 13 }}
+                        className="font-lexend-semibold"
+                    >
+                        {t('home:view_all')}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+
+            <Text
+                style={{ color: theme.textPrimary, fontSize: 18, lineHeight: 24, marginTop: 10 }}
+                className="font-lexend-semibold"
+                numberOfLines={2}
+            >
+                {plan.title}
+            </Text>
+            <Text
+                style={{ color: theme.textMuted, fontSize: 12, marginTop: 4 }}
+                className="font-lexend"
+            >
+                {t('plans:preached_of_total', {
+                    preached: plan.preachedCount,
+                    total: plan.items.length,
+                })}
+            </Text>
+
+            <View style={{ marginTop: 14 }}>
+                {upcoming.map((item) => (
+                    <TouchableOpacity
+                        key={item.id}
+                        disabled={!item.sermon}
+                        onPress={() =>
+                            item.sermon ? router.push(`/preach/${item.sermon.id}`) : undefined
+                        }
+                        accessibilityRole={item.sermon ? 'button' : undefined}
+                        className="flex-row items-center py-2.5"
+                        style={{ borderTopWidth: 1, borderTopColor: theme.border }}
+                    >
+                        <Text
+                            style={{ color: theme.textMuted, fontSize: 12, width: 82 }}
+                            className="font-lexend"
+                        >
+                            {t('plans:week', { week: item.week })}
+                        </Text>
+                        <Text
+                            style={{ color: theme.textPrimary, fontSize: 14, flex: 1 }}
+                            className="font-lexend"
+                            numberOfLines={1}
+                        >
+                            {item.title}
+                        </Text>
+                        {item.ready ? (
+                            <MaterialIcons
+                                name="record-voice-over"
+                                size={17}
+                                color={theme.accent}
+                            />
+                        ) : (
+                            <Text
+                                style={{ color: theme.textMuted, fontSize: 11 }}
+                                className="font-lexend"
+                            >
+                                {t('plans:not_written')}
+                            </Text>
+                        )}
+                    </TouchableOpacity>
+                ))}
             </View>
         </Card>
     );

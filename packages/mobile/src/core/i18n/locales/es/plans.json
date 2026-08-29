@@ -2,12 +2,20 @@
     "title": "Planes",
     "sermons": "Sermones del plan",
     "week": "Semana {{week}}",
-    "ready_of_total": "{{ready}} de {{total}} listos para predicar",
     "finish_on_web": "Terminar en la web",
     "start_on_web": "Empezar en la web",
     "open_web": "Abrir el planificador",
     "empty_title": "Todavía no hay planes de predicación",
     "empty_hint": "Los planes se arman en la web; acá aparecen para predicarlos.",
     "no_items": "Este plan no tiene sermones",
-    "no_items_hint": "Agrega sus semanas desde el planificador."
+    "no_items_hint": "Agrega sus semanas desde el planificador.",
+    "active_plan": "Plan en curso",
+    "upcoming_plan": "Próximo plan",
+    "preached_of_total": "{{preached}} de {{total}} predicados",
+    "not_written": "Sin escribir",
+    "status_active": "En curso",
+    "status_upcoming": "Por empezar",
+    "status_finished": "Terminado",
+    "status_empty": "Sin sermones",
+    "next_up": "Toca ahora"
 }

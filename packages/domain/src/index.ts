@@ -31,6 +31,7 @@ export * from './entities/SermonAnnotation'; // 🌱 Púlpito M-05 — preacher 
 export * from './entities/InkNote'; // 🌱 Púlpito F2 — tinta anclada al texto, no a la pantalla
 export * from './services/sentenceSegmentation'; // 🌱 Púlpito M-05 — single sentence ruler (shared with the fidelity pass)
 export * from './services/sermonReading'; // 🌱 Púlpito M-05 — offset-preserving reading model of a section
+export * from './services/planStatus'; // 🌱 Planes — estado deducido, no guardado
 export * from './services/movementBudget'; // 🌱 Púlpito F2 — presupuesto de tiempo por movimiento (riel)
 export * from './services/pageGrouping'; // 🌱 Púlpito F2 — bloques que no se separan entre páginas
 export * from './services/rehearsalReport'; // 🌱 Púlpito F3 — informe del ensayo (tiempo real vs presupuesto)

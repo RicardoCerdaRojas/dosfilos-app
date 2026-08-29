@@ -7,13 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useAppTheme, type AppTheme } from '@/core/theme/appTheme';
 import { STUDY_COLUMN, useLayout } from '@/core/theme/layout';
-import { usePublishedSermons } from '@/presentation/hooks/useSermons';
-import {
-    useSeriesPlans,
-    type PlannedSermonItem,
-    type SeriesPlan,
-} from '@/presentation/hooks/useSeriesPlans';
-import { SermonSummary } from '@/domain/models/sermon.model';
+import { usePlanBoard, type PlanBoard } from '@/presentation/hooks/usePlanBoard';
 import { Card, Chip, EmptyState, SectionLabel, Skeleton } from '@/presentation/components/ui/kit';
 
 /** Dónde termina de escribirse un sermón: la tablet no genera, acompaña. */
@@ -42,17 +36,21 @@ export default function PlansScreen() {
     const { t } = useTranslation();
     const { isSplit, gutter } = useLayout();
 
-    const { data: plans, isLoading } = useSeriesPlans();
-    const { data: groups } = usePublishedSermons();
+    const { plans, current, isLoading } = usePlanBoard();
     const [openId, setOpenId] = useState<string | null>(null);
 
-    const published = new Map<string, SermonSummary>();
-    for (const group of groups ?? []) {
-        for (const sermon of group.sermons) published.set(sermon.id, sermon);
-    }
+    /**
+     * Los planes se ordenan por ESTADO, no por fecha: primero el que se está
+     * predicando, después el que viene, y los terminados al final. Un plan
+     * cerrado en marzo no tiene por qué encabezar la lista en agosto sólo
+     * porque se creó después.
+     */
+    const rank: Record<string, number> = { active: 0, upcoming: 1, empty: 2, finished: 3 };
+    const ordered = [...plans].sort((a, b) => rank[a.status] - rank[b.status]);
 
-    const selectedId = openId ?? plans?.[0]?.id ?? null;
-    const selected = plans?.find((p) => p.id === selectedId) ?? null;
+    // Abre en el plan en curso, que es el que se viene a mirar.
+    const selectedId = openId ?? current?.id ?? ordered[0]?.id ?? null;
+    const selected = ordered.find((p) => p.id === selectedId) ?? null;
 
     const header = (
         <View style={{ paddingHorizontal: isSplit ? 16 : gutter, paddingTop: 8, paddingBottom: 12 }}>
@@ -78,7 +76,7 @@ export default function PlansScreen() {
         );
     }
 
-    if (!plans?.length) {
+    if (!ordered.length) {
         return (
             <View
                 className="flex-1 justify-center"
@@ -126,23 +124,20 @@ export default function PlansScreen() {
                     paddingBottom: insets.bottom + 24,
                 }}
             >
-                {plans.map((plan) => (
+                {ordered.map((plan) => (
                     <PlanRow
                         key={plan.id}
                         plan={plan}
                         theme={theme}
                         active={isSplit && plan.id === selectedId}
                         onPress={() => setOpenId(plan.id)}
-                        published={published}
                     />
                 ))}
             </ScrollView>
         </View>
     );
 
-    const detail = selected ? (
-        <PlanDetail plan={selected} published={published} standalone={!isSplit} />
-    ) : null;
+    const detail = selected ? <PlanDetail plan={selected} standalone={!isSplit} /> : null;
 
     if (!isSplit) {
         // En pantalla angosta el plan elegido va debajo de la lista: son pocos
@@ -171,16 +166,13 @@ function PlanRow({
     theme,
     active,
     onPress,
-    published,
 }: {
-    plan: SeriesPlan;
+    plan: PlanBoard;
     theme: AppTheme;
     active: boolean;
     onPress: () => void;
-    published: Map<string, SermonSummary>;
 }) {
     const { t } = useTranslation();
-    const ready = plan.items.filter((item) => isReady(item, published)).length;
 
     return (
         <TouchableOpacity
@@ -202,26 +194,34 @@ function PlanRow({
             >
                 {plan.title}
             </Text>
-            <Text
-                style={{ color: theme.textMuted, fontSize: 12, marginTop: 5 }}
-                className="font-lexend"
-            >
-                {t('plans:ready_of_total', { ready, total: plan.items.length })}
-            </Text>
+            <View className="flex-row items-center mt-2">
+                <Chip
+                    theme={theme}
+                    tone={
+                        plan.status === 'active'
+                            ? 'accent'
+                            : plan.status === 'finished'
+                              ? 'positive'
+                              : 'neutral'
+                    }
+                    label={t(`plans:status_${plan.status}`)}
+                />
+                <Text
+                    style={{ color: theme.textMuted, fontSize: 12, marginLeft: 8 }}
+                    className="font-lexend"
+                >
+                    {t('plans:preached_of_total', {
+                        preached: plan.preachedCount,
+                        total: plan.items.length,
+                    })}
+                </Text>
+            </View>
         </TouchableOpacity>
     );
 }
 
 /** El plan abierto: sus sermones en orden, con lo que se puede hacer con cada uno. */
-function PlanDetail({
-    plan,
-    published,
-    standalone,
-}: {
-    plan: SeriesPlan;
-    published: Map<string, SermonSummary>;
-    standalone: boolean;
-}) {
+function PlanDetail({ plan, standalone }: { plan: PlanBoard; standalone: boolean }) {
     const theme = useAppTheme();
     const insets = useSafeAreaInsets();
     const router = useRouter();
@@ -270,7 +270,8 @@ function PlanDetail({
                     />
                 ) : (
                     plan.items.map((item) => {
-                        const sermon = item.draftId ? published.get(item.draftId) : undefined;
+                        const sermon = item.sermon;
+                        const isNext = plan.next?.id === item.id;
                         const date = item.scheduledDate
                             ? item.scheduledDate.toLocaleDateString(i18n.language, {
                                   month: 'short',
@@ -281,7 +282,13 @@ function PlanDetail({
                             <Card
                                 key={item.id}
                                 theme={theme}
-                                style={{ padding: 16, marginBottom: 10 }}
+                                style={{
+                                    padding: 16,
+                                    marginBottom: 10,
+                                    // El que toca se destaca por borde: en el
+                                    // atril el color solo no se distingue.
+                                    borderColor: isNext ? theme.accent : theme.border,
+                                }}
                             >
                                 <View className="flex-row items-center">
                                     <Text
@@ -298,8 +305,16 @@ function PlanDetail({
                                             · {date}
                                         </Text>
                                     ) : null}
+                                    {isNext ? (
+                                        <Text
+                                            style={{ color: theme.accent, fontSize: 12 }}
+                                            className="font-lexend-semibold ml-2"
+                                        >
+                                            · {t('plans:next_up')}
+                                        </Text>
+                                    ) : null}
                                     <View className="flex-1" />
-                                    {sermon && sermon.timesPreached > 0 ? (
+                                    {item.preached ? (
                                         <Chip
                                             theme={theme}
                                             tone="positive"
@@ -412,7 +427,4 @@ function PlanDetail({
     );
 }
 
-/** Listo = hay un sermón publicado detrás. Lo demás todavía se escribe. */
-function isReady(item: PlannedSermonItem, published: Map<string, SermonSummary>): boolean {
-    return !!item.draftId && published.has(item.draftId);
-}
+

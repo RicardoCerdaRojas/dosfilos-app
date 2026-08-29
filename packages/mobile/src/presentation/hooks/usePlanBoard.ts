@@ -1,0 +1,74 @@
+import { nextInPlan, pickCurrentPlan, planOrder, planStatus } from '@dosfilos/domain';
+import type { PlanStatus } from '@dosfilos/domain';
+
+import { SermonSummary } from '@/domain/models/sermon.model';
+import { usePublishedSermons } from '@/presentation/hooks/useSermons';
+import { useSeriesPlans, type PlannedSermonItem, type SeriesPlan } from '@/presentation/hooks/useSeriesPlans';
+
+/** Una semana del plan con lo que la app sabe del sermón que hay detrás. */
+export interface PlanBoardItem extends PlannedSermonItem {
+    /** Hay un sermón publicado detrás: se puede predicar hoy. */
+    ready: boolean;
+    preached: boolean;
+    sermon?: SermonSummary;
+}
+
+export interface PlanBoard extends Omit<SeriesPlan, 'items'> {
+    items: PlanBoardItem[];
+    status: PlanStatus;
+    /** Lo que toca predicar, esté escrito o no. */
+    next: PlanBoardItem | null;
+    readyCount: number;
+    preachedCount: number;
+}
+
+/**
+ * Los planes con su estado y su próximo sermón resueltos.
+ *
+ * ACÁ SE CRUZAN LAS DOS MITADES: el plan sabe qué semanas tiene y a qué
+ * sermón apunta cada una; la lista de publicados sabe cuáles están escritos y
+ * cuáles ya se predicaron. Ninguna de las dos alcanza sola, y hacer el cruce
+ * en cada pantalla era garantizar que dos pantallas dieran respuestas
+ * distintas a la misma pregunta.
+ */
+export function usePlanBoard() {
+    const { data: plans, isLoading } = useSeriesPlans();
+    const { data: groups, isLoading: loadingSermons } = usePublishedSermons();
+
+    const published = new Map<string, SermonSummary>();
+    for (const group of groups ?? []) {
+        for (const sermon of group.sermons) published.set(sermon.id, sermon);
+    }
+
+    const boards: PlanBoard[] = (plans ?? []).map((plan) => {
+        const items: PlanBoardItem[] = plan.items
+            .map((item) => {
+                const sermon = item.draftId ? published.get(item.draftId) : undefined;
+                return {
+                    ...item,
+                    sermon,
+                    ready: !!sermon,
+                    // Predicado según el registro del propio sermón, que es el
+                    // único lugar donde eso se marca.
+                    preached: (sermon?.timesPreached ?? 0) > 0,
+                };
+            })
+            .sort(planOrder);
+
+        return {
+            ...plan,
+            items,
+            status: planStatus(items),
+            next: nextInPlan(items),
+            readyCount: items.filter((i) => i.ready).length,
+            preachedCount: items.filter((i) => i.preached).length,
+        };
+    });
+
+    return {
+        isLoading: isLoading || loadingSermons,
+        plans: boards,
+        /** El plan que la app debe mostrar: el activo, o el que va a empezar. */
+        current: pickCurrentPlan(boards, (plan) => plan.status),
+    };
+}
