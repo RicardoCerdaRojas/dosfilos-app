@@ -63,6 +63,37 @@ export type ExtractionVersion =
     | 'fallback-pdfparse';
 
 /**
+ * Extraction versions whose output follows the `<!-- page: N -->`
+ * structured-markdown contract, so the CLOUD indexer
+ * (`indexStructuredDocument`) can chunk them with REAL page numbers,
+ * section breadcrumbs and character offsets.
+ *
+ * This distinction is not cosmetic. The legacy browser-side indexer in
+ * `RAGService` chunks the flat `textContent` field and FABRICATES the
+ * page number (`Math.floor(chunkIndex / 3) + 1`). For a resource whose
+ * extractor produced a structured document, routing to that path
+ * silently replaces verifiable citations with invented ones — so
+ * anything in this list must go to the cloud callable.
+ *
+ * The cloud functions keep their own copy in
+ * `packages/functions/src/library/extractionVersions.ts` because
+ * `packages/functions` deliberately does not depend on
+ * `@dosfilos/domain`. That one duplication is accepted and documented;
+ * every consumer on this side of the boundary imports from here.
+ */
+export const STRUCTURED_EXTRACTION_VERSIONS: readonly ExtractionVersion[] = [
+    '3.0-llamaparse',
+    '4.0-gemini-standard',
+    '5.0-pdfparse-structured',
+] as const;
+
+/** Membership check for {@link STRUCTURED_EXTRACTION_VERSIONS}. */
+export function isStructuredExtractionVersion(version: string | null | undefined): boolean {
+    if (!version) return false;
+    return (STRUCTURED_EXTRACTION_VERSIONS as readonly string[]).includes(version);
+}
+
+/**
  * Indexing job status (chunks + embeddings) written by the cloud
  * functions in `packages/functions/src/library/indexStructuredDocument.ts`.
  * Distinct from `textExtractionStatus` — a resource can be `ready`-extracted

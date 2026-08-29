@@ -1,6 +1,8 @@
 import {
     LibraryResourceEntity,
     ResourceType,
+    STRUCTURED_EXTRACTION_VERSIONS,
+    isStructuredExtractionVersion,
     type LibraryResource,
     type ResourceIndexStatus,
     type SourceType as ExegesisSourceType,
@@ -159,22 +161,25 @@ export class LibraryService {
     }
 
     /**
-     * Index a resource for semantic search
-     * Should be called after Cloud Function has extracted text
+     * Index a resource for semantic search. Call after extraction finished.
+     *
+     * Dispatches between two indexers that are NOT equivalent — see the
+     * routing comment in the body. Resources from a structured extractor
+     * go to the `indexStructuredDocument` callable (real page numbers,
+     * writes `indexingStatus`); only pre-contract legacy resources fall
+     * through to the browser-side `RAGService`.
+     *
      * @param resource - The resource to index
-     * @param onProgress - Optional callback for progress updates (0-100, stage name)
+     * @param options.force - Rebuild even if already indexed
+     * @param options.onProgress - Progress callback (0-100, stage name).
+     *   Only fires on the legacy browser path; the cloud callable is a
+     *   single opaque round-trip.
      */
     async indexResource(
         resource: LibraryResourceEntity,
         options: { force?: boolean; onProgress?: (progress: number, stage: string) => void } = {}
     ): Promise<number> {
-        const rag = this.getRAGService();
-        if (!rag) {
-            console.warn('RAGService not available, skipping indexing');
-            return 0;
-        }
-
-        // Refresh resource from Firestore to get latest textContent
+        // Refresh resource from Firestore to get latest extraction state.
         const freshResource = await this.libraryRepository.findById(resource.id);
         if (!freshResource) {
             console.warn(`Resource ${resource.id} not found`);
@@ -185,6 +190,42 @@ export class LibraryService {
         if (freshResource.textExtractionStatus !== 'ready') {
             console.warn(`Resource ${resource.id} text extraction status: ${freshResource.textExtractionStatus}`);
             throw new Error('TEXT_NOT_READY');
+        }
+
+        // ── Route: cloud indexer vs legacy browser indexer ─────────────────
+        //
+        // These two paths are NOT interchangeable, and picking the wrong one
+        // silently corrupts citations rather than failing.
+        //
+        //   Cloud (`indexStructuredDocument`) reads the extractor's
+        //   `structured.md`, so every chunk carries the REAL page number, a
+        //   section breadcrumb and character offsets — and the callable
+        //   records `indexingStatus` on the resource when it finishes.
+        //
+        //   Legacy (`RAGService`, in the browser) chunks the flat
+        //   `textContent` field and INVENTS the page as
+        //   `Math.floor(chunkIndex / 3) + 1`. It also never writes
+        //   `indexingStatus`, so the resource stays stuck on whatever it
+        //   said before.
+        //
+        // Everything the structured extractors produced must go to the
+        // cloud. The browser path survives only for pre-contract resources
+        // ('2.0-gemini', 'fallback-pdfparse'), which the callable refuses
+        // outright — for those, an approximate index beats none.
+        if (isStructuredExtractionVersion(freshResource.extractionVersion)
+            && freshResource.structuredContentUrl) {
+            const fn = httpsCallable<
+                { resourceId: string; force: boolean },
+                { chunkCount?: number; skipped?: boolean }
+            >(getFunctions(), 'indexStructuredDocument', { timeout: 900_000 });
+            const result = await fn({ resourceId: resource.id, force: options.force ?? false });
+            return result.data?.chunkCount ?? 0;
+        }
+
+        const rag = this.getRAGService();
+        if (!rag) {
+            console.warn('RAGService not available, skipping indexing');
+            return 0;
         }
 
         // Get text content from Firestore (Gemini stores it there directly)
@@ -330,7 +371,7 @@ export class LibraryService {
      * "extract excerpts" toggle for those.
      */
     getResourceIndexStatus(resource: LibraryResource): ResourceIndexStatus {
-        const AUTO_INDEX_EXTRACTORS: ReadonlyArray<string> = ['3.0-llamaparse', '4.0-gemini-standard', '5.0-pdfparse-structured'];
+        const AUTO_INDEX_EXTRACTORS: ReadonlyArray<string> = STRUCTURED_EXTRACTION_VERSIONS;
 
         // Status decision mirrors `useLibraryResources.checkAllIndexStatus`
         // exactly so the corpus picker and the library card never disagree
