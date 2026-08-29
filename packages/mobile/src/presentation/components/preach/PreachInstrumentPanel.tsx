@@ -17,6 +17,8 @@ interface Props {
     pageIndex: number;
     pageCount: number;
     height: number;
+    /** Con reloj y título, o sólo el riel de movimientos. */
+    numbers: boolean;
 }
 
 const formatTime = (seconds: number): string => {
@@ -53,6 +55,7 @@ export function PreachInstrumentPanel({
     pageIndex,
     pageCount,
     height,
+    numbers,
 }: Props) {
     const total = totalBudget(budgets);
 
@@ -83,6 +86,7 @@ export function PreachInstrumentPanel({
                 justifyContent: 'center',
             }}
         >
+            {numbers ? (
             <View className="flex-row items-baseline">
                 <Text
                     style={{
@@ -118,8 +122,13 @@ export function PreachInstrumentPanel({
                 </Text>
             </View>
 
+            ) : null}
+
             {/* Riel: un segmento por movimiento, ancho = presupuesto */}
-            <View className="flex-row" style={{ height: 14, marginTop: fontSize * 0.45 }}>
+            <View
+                className="flex-row"
+                style={{ height: 14, marginTop: numbers ? fontSize * 0.45 : 0 }}
+            >
                 {budgets.map((budget, index) => {
                     const isReading = index === readingIndex;
                     return (

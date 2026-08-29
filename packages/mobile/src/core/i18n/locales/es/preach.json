@@ -24,9 +24,7 @@
     "guide_none": "Ninguna",
     "guide_sense": "Una frase por renglón",
     "guide_line": "Línea al 66 %",
-    "instrument_panel": "Tablero inferior",
-    "panel_on": "Reservar el tercio",
-    "panel_off": "Todo el alto para el texto",
+    "instrument_panel": "Tablero de abajo",
     "peek_next": "Sigue…",
     "style_highlight": "Resaltar",
     "style_underline": "Subrayar",
@@ -59,5 +57,9 @@
     "font_bigger": "Agrandar el texto",
     "panel_small": "Tablero chico",
     "panel_medium": "Tablero medio",
-    "panel_large": "Tablero grande"
+    "panel_large": "Tablero grande",
+    "status_bar": "Franja de arriba",
+    "instrument_full": "Con números",
+    "instrument_minimal": "Sólo la marca",
+    "instrument_off": "Oculto"
 }

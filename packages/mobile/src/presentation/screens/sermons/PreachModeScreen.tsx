@@ -72,10 +72,12 @@ export default function PreachModeScreen({
     const setSenseLines = useReaderSettingsStore((s) => s.setSenseLines);
     const gazeLine = useReaderSettingsStore((s) => s.gazeLine);
     const setGazeLine = useReaderSettingsStore((s) => s.setGazeLine);
-    const instrumentPanel = useReaderSettingsStore((s) => s.instrumentPanel);
+    const statusBarMode = useReaderSettingsStore((s) => s.statusBarMode);
+    const setStatusBarMode = useReaderSettingsStore((s) => s.setStatusBarMode);
+    const panelMode = useReaderSettingsStore((s) => s.panelMode);
+    const setPanelMode = useReaderSettingsStore((s) => s.setPanelMode);
     const panelRatio = useReaderSettingsStore((s) => s.panelRatio);
     const setPanelRatio = useReaderSettingsStore((s) => s.setPanelRatio);
-    const setInstrumentPanel = useReaderSettingsStore((s) => s.setInstrumentPanel);
     const budgetOverrides = useReaderSettingsStore((s) => s.budgetOverrides);
     const setBudgetOverride = useReaderSettingsStore((s) => s.setBudgetOverride);
     const tokens = READING_MODES[readingMode];
@@ -157,7 +159,7 @@ export default function PreachModeScreen({
     const { measure, probe } = useDeliveryMeasure(fontSize);
 
     // Capa de tinta: anclada al texto, no a la pantalla. Ver InkNote en domain.
-    const inkLayoutKey = `${sectionIndex}|${pageIndex}|${fontSize}|${senseLines}|${hangingIndent}|${deliveryFace}|${instrumentPanel}|${panelRatio}`;
+    const inkLayoutKey = `${sectionIndex}|${pageIndex}|${fontSize}|${senseLines}|${hangingIndent}|${deliveryFace}|${panelMode}|${statusBarMode}|${panelRatio}`;
     const ink = useInkNotes(id ?? '', section, inkLayoutKey);
 
     // El presupuesto de tiempo por movimiento alimenta el riel (D2). Por
@@ -178,14 +180,23 @@ export default function PreachModeScreen({
     // mentón y la cara sale de la congregación. Ahí va el tablero.
     // La línea de vuelo ocupa dos renglones bajo la barra: si no se descuenta,
     // la última línea de cada página queda debajo del borde.
-    const statusBarHeight = chromeVisible && budgets.length > 0 ? 34 : 0;
+    const statusBarHeight =
+        chromeVisible && budgets.length > 0 && statusBarMode !== 'off'
+            ? statusBarMode === 'full'
+                ? 34
+                : 12
+            : 0;
     const chromeTop = (chromeVisible ? insets.top + 44 : insets.top + 16) + statusBarHeight;
     const readableHeight = screenHeight - chromeTop - insets.bottom;
     // El tablero ya no es un tercio fijo: el reloj y el riel entran en poco
     // más de cien puntos, y lo que sobraba se lo estaba comiendo al texto.
-    const panelHeight = instrumentPanel
-        ? Math.max(96, Math.round(readableHeight * panelRatio))
-        : 0;
+    const panelHeight =
+        panelMode === 'off'
+            ? 0
+            : panelMode === 'minimal'
+              ? // Sólo el riel: no hace falta más que su alto y un poco de aire.
+                44
+              : Math.max(96, Math.round(readableHeight * panelRatio));
     const pageHeight = readableHeight - panelHeight - fontSize * 2;
 
     const renderBlockForMeasure = (block: ReadingBlock, index: number) => (
@@ -361,7 +372,7 @@ export default function PreachModeScreen({
 
             {/* La línea de vuelo va SIEMPRE, con tablero o sin él: apagarlo
                 dejaba al predicador sin hora y sin saber por dónde va. */}
-            {chromeVisible && budgets.length > 0 && (
+            {chromeVisible && budgets.length > 0 && statusBarMode !== 'off' && (
                 <PreachStatusBar
                     tokens={tokens}
                     budgets={budgets}
@@ -370,6 +381,7 @@ export default function PreachModeScreen({
                     pageIndex={safePageIndex}
                     pageCount={Math.max(1, pages.length)}
                     running={running}
+                    numbers={statusBarMode === 'full'}
                 />
             )}
 
@@ -533,7 +545,7 @@ export default function PreachModeScreen({
 
             {/* P7 — el tercio inferior es el tablero: timer y riel, los dos
                 datos que se consultan de reojo desde el atril. */}
-            {instrumentPanel && budgets.length > 0 && (
+            {panelMode !== 'off' && budgets.length > 0 && (
                 <View style={{ paddingBottom: insets.bottom }}>
                     <PreachInstrumentPanel
                         tokens={tokens}
@@ -544,6 +556,7 @@ export default function PreachModeScreen({
                         pageIndex={safePageIndex}
                         pageCount={Math.max(1, pages.length)}
                         height={panelHeight}
+                        numbers={panelMode === 'full'}
                     />
                 </View>
             )}
@@ -604,10 +617,12 @@ export default function PreachModeScreen({
                 setSenseLines={setSenseLines}
                 gazeLine={gazeLine}
                 setGazeLine={setGazeLine}
-                instrumentPanel={instrumentPanel}
+                statusBarMode={statusBarMode}
+                setStatusBarMode={setStatusBarMode}
+                panelMode={panelMode}
+                setPanelMode={setPanelMode}
                 panelRatio={panelRatio}
                 setPanelRatio={setPanelRatio}
-                setInstrumentPanel={setInstrumentPanel}
                 deliveryFace={deliveryFace}
                 setDeliveryFace={setDeliveryFace}
                 hangingIndent={hangingIndent}

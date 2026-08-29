@@ -8,6 +8,7 @@ import { READING_MODE_LABEL_KEYS, ReadingMode, ReadingModeTokens } from '@/core/
 import { DELIVERY_FACES, DELIVERY_SIZE } from '@/core/theme/typography';
 import type { DeliveryFace } from '@/core/theme/typography';
 import type { MovementBudget } from '@dosfilos/domain';
+import type { InstrumentMode } from '@/presentation/state/readerSettings.store';
 
 const MODES: ReadingMode[] = ['claro', 'sepia', 'oscuro', 'atril', 'eink'];
 const DURATIONS = [20, 25, 30, 35, 40, 45];
@@ -26,10 +27,12 @@ interface Props {
     setSenseLines: (on: boolean) => void;
     gazeLine: boolean;
     setGazeLine: (on: boolean) => void;
-    instrumentPanel: boolean;
+    statusBarMode: InstrumentMode;
+    setStatusBarMode: (mode: InstrumentMode) => void;
+    panelMode: InstrumentMode;
+    setPanelMode: (mode: InstrumentMode) => void;
     panelRatio: number;
     setPanelRatio: (ratio: number) => void;
-    setInstrumentPanel: (on: boolean) => void;
     deliveryFace: DeliveryFace;
     setDeliveryFace: (face: DeliveryFace) => void;
     hangingIndent: boolean;
@@ -47,6 +50,13 @@ interface Props {
   * objetivo. Vive aparte porque la pantalla ya carga timer, navegación por
   * secciones, citas, resaltado y aparato de estudio.
   */
+/** Qué dice cada instrumento: todo, sólo la marca, o nada. */
+const INSTRUMENT_MODES = [
+    { value: 'full' as const, key: 'preach:instrument_full' },
+    { value: 'minimal' as const, key: 'preach:instrument_minimal' },
+    { value: 'off' as const, key: 'preach:instrument_off' },
+];
+
 /** Tres alturas de tablero. La chica alcanza para el reloj y el riel. */
 const PANEL_SIZES = [
     { ratio: 0.17, key: 'preach:panel_small' },
@@ -66,10 +76,12 @@ export function PreachSettingsSheet({
     setSenseLines,
     gazeLine,
     setGazeLine,
-    instrumentPanel,
+    statusBarMode,
+    setStatusBarMode,
+    panelMode,
+    setPanelMode,
     panelRatio,
     setPanelRatio,
-    setInstrumentPanel,
     deliveryFace,
     setDeliveryFace,
     hangingIndent,
@@ -266,6 +278,48 @@ export function PreachSettingsSheet({
                         ))}
                     </View>
 
+                    {/* DOS INSTRUMENTOS, DOS CONTROLES. La franja de arriba y
+                        el tablero de abajo no son dos vistas de lo mismo: quien
+                        quiere el riel de movimientos abajo puede no querer el
+                        reloj arriba, y al revés. Y "sin números" no es apagar:
+                        deja la marca, que es posición sin cifra que leer. */}
+                    <Text
+                        style={{ color: tokens.textSecondary }}
+                        className="font-lexend-semibold text-xs uppercase tracking-widest mb-2"
+                    >
+                        {t('preach:status_bar')}
+                    </Text>
+                    <View className="flex-row flex-wrap mb-5">
+                        {INSTRUMENT_MODES.map((mode) => (
+                            <TouchableOpacity
+                                key={`top-${mode.value}`}
+                                onPress={() => setStatusBarMode(mode.value)}
+                                accessibilityRole="button"
+                                accessibilityLabel={t(mode.key)}
+                                className="px-4 py-2 rounded-full mr-2 mb-2"
+                                style={{
+                                    backgroundColor:
+                                        mode.value === statusBarMode ? tokens.accent : 'transparent',
+                                    borderWidth: 1,
+                                    borderColor:
+                                        mode.value === statusBarMode ? tokens.accent : tokens.border,
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        color:
+                                            mode.value === statusBarMode
+                                                ? tokens.background
+                                                : tokens.textPrimary,
+                                    }}
+                                    className="font-lexend text-sm"
+                                >
+                                    {t(mode.key)}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
                     <Text
                         style={{ color: tokens.textSecondary }}
                         className="font-lexend-semibold text-xs uppercase tracking-widest mb-2"
@@ -273,24 +327,31 @@ export function PreachSettingsSheet({
                         {t('preach:instrument_panel')}
                     </Text>
                     <View className="flex-row flex-wrap mb-5">
-                        {[true, false].map((on) => (
+                        {INSTRUMENT_MODES.map((mode) => (
                             <TouchableOpacity
-                                key={String(on)}
-                                onPress={() => setInstrumentPanel(on)}
+                                key={`bottom-${mode.value}`}
+                                onPress={() => setPanelMode(mode.value)}
                                 accessibilityRole="button"
-                                accessibilityLabel={t(on ? 'preach:panel_on' : 'preach:panel_off')}
+                                accessibilityLabel={t(mode.key)}
                                 className="px-4 py-2 rounded-full mr-2 mb-2"
                                 style={{
-                                    backgroundColor: on === instrumentPanel ? tokens.accent : 'transparent',
+                                    backgroundColor:
+                                        mode.value === panelMode ? tokens.accent : 'transparent',
                                     borderWidth: 1,
-                                    borderColor: on === instrumentPanel ? tokens.accent : tokens.border,
+                                    borderColor:
+                                        mode.value === panelMode ? tokens.accent : tokens.border,
                                 }}
                             >
                                 <Text
-                                    style={{ color: on === instrumentPanel ? tokens.background : tokens.textPrimary }}
+                                    style={{
+                                        color:
+                                            mode.value === panelMode
+                                                ? tokens.background
+                                                : tokens.textPrimary,
+                                    }}
                                     className="font-lexend text-sm"
                                 >
-                                    {t(on ? 'preach:panel_on' : 'preach:panel_off')}
+                                    {t(mode.key)}
                                 </Text>
                             </TouchableOpacity>
                         ))}
@@ -299,7 +360,7 @@ export function PreachSettingsSheet({
                     {/* Cuánto se lleva el tablero. Era un tercio fijo, y un
                         tercio es más de lo que el reloj y el riel necesitan:
                         lo que sobraba se lo comía al texto. */}
-                    {instrumentPanel ? (
+                    {panelMode === 'full' ? (
                         <View className="flex-row flex-wrap mb-5">
                             {PANEL_SIZES.map((size) => (
                                 <TouchableOpacity

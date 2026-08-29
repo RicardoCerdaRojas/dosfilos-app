@@ -6,6 +6,16 @@ import { READING_MODES, ReadingMode, ReadingModeTokens } from '@/core/theme/read
 import { DELIVERY_SIZE } from '@/core/theme/typography';
 import type { DeliveryFace } from '@/core/theme/typography';
 
+/**
+ * Cuánto dice un instrumento.
+ *
+ * `full` lleva números; `minimal` deja sólo la barra —la posición sin cifras—
+ * y `off` lo apaga. Los números son útiles y también son ruido: mirarlos
+ * predicando cuesta atención, y el predicador que ya sabe dónde va sólo
+ * necesita ver la marca moverse.
+ */
+export type InstrumentMode = 'full' | 'minimal' | 'off';
+
 interface ReaderSettingsState {
     /** Cuerpo del lector de Biblia: lectura sentada. */
     fontSize: number;
@@ -79,8 +89,15 @@ interface ReaderSettingsState {
     setHangingIndent: (on: boolean) => void;
     deliveryFace: DeliveryFace;
     setDeliveryFace: (face: DeliveryFace) => void;
-    instrumentPanel: boolean;
-    setInstrumentPanel: (on: boolean) => void;
+    /**
+     * La línea de vuelo de arriba y el tablero de abajo se controlan POR
+     * SEPARADO: son dos instrumentos distintos, no dos vistas del mismo. Quien
+     * quiere el riel de movimientos abajo puede no querer el reloj arriba.
+     */
+    statusBarMode: InstrumentMode;
+    setStatusBarMode: (mode: InstrumentMode) => void;
+    panelMode: InstrumentMode;
+    setPanelMode: (mode: InstrumentMode) => void;
     /**
      * Dónde quedó la lectura de la Biblia.
      *
@@ -152,8 +169,10 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
             setHangingIndent: (on: boolean) => set({ hangingIndent: on }),
             deliveryFace: 'lexend',
             setDeliveryFace: (face: DeliveryFace) => set({ deliveryFace: face }),
-            instrumentPanel: true,
-            setInstrumentPanel: (on: boolean) => set({ instrumentPanel: on }),
+            statusBarMode: 'full',
+            setStatusBarMode: (mode: InstrumentMode) => set({ statusBarMode: mode }),
+            panelMode: 'full',
+            setPanelMode: (mode: InstrumentMode) => set({ panelMode: mode }),
             recentSearches: [],
             rememberSearch: (query) =>
                 set((state) => ({
@@ -182,6 +201,16 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
         {
             name: 'reader-settings-storage',
             storage: createJSONStorage(() => AsyncStorage),
+            // El tablero era un booleano y ahora tiene tres estados. Sin migrar,
+            // quien ya lo había apagado se lo encontraría encendido.
+            version: 1,
+            migrate: (persisted: any, version: number) => {
+                if (version === 0 && persisted && 'instrumentPanel' in persisted) {
+                    persisted.panelMode = persisted.instrumentPanel ? 'full' : 'off';
+                    delete persisted.instrumentPanel;
+                }
+                return persisted;
+            },
         }
     )
 );

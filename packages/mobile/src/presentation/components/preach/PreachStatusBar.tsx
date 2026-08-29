@@ -14,6 +14,14 @@ interface Props {
     pageCount: number;
     /** Cronómetro detenido: el reloj se muestra apagado, no en blanco. */
     running: boolean;
+    /**
+     * Con números o sólo la marca.
+     *
+     * Predicando, una cifra pide ser leída y leerla cuesta atención. El
+     * predicador que ya sabe dónde va sólo necesita ver la marca moverse — y
+     * el que quiere el dato exacto lo enciende.
+     */
+    numbers: boolean;
 }
 
 /** mm:ss, con signo cuando el número es un desfase. */
@@ -54,6 +62,7 @@ export function PreachStatusBar({
     pageIndex,
     pageCount,
     running,
+    numbers,
 }: Props) {
     const total = totalBudget(budgets);
     const remaining = total - elapsedSeconds;
@@ -79,6 +88,7 @@ export function PreachStatusBar({
                 opacity: running ? 1 : 0.55,
             }}
         >
+            {numbers ? (
             <View className="flex-row items-baseline">
                 <Text
                     style={{
@@ -124,12 +134,13 @@ export function PreachStatusBar({
                     {pageIndex + 1}/{pageCount}
                 </Text>
             </View>
+            ) : null}
 
             {/* Dos marcas sobre la misma línea: el texto y el reloj. */}
             <View
                 style={{
                     height: 3,
-                    marginTop: 5,
+                    marginTop: numbers ? 5 : 3,
                     borderRadius: 2,
                     backgroundColor: tokens.border,
                 }}
