@@ -44,7 +44,9 @@ export default function BibleReaderScreen() {
     const setLastRead = useReaderSettingsStore((s) => s.setLastRead);
     const [versionId, setVersionId] = useState(lastRead?.versionId ?? 'rvr1960');
     const [parallelId, setParallelId] = useState<string | null>(null);
-    const [bookId, setBookId] = useState(lastRead?.bookId ?? 'jon');
+    // `jn` es Jonás EN ESTE juego de datos (Juan es `jo`). El id se escribe
+    // acá y no se adivina: los ids del dato no son los del dominio.
+    const [bookId, setBookId] = useState(lastRead?.bookId ?? 'jn');
     const [chapter, setChapter] = useState(lastRead?.chapter ?? 1);
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [showPicker, setShowPicker] = useState(false);

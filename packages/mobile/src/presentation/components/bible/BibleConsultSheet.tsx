@@ -51,11 +51,19 @@ export function BibleConsultSheet({
 
     const opening = references.map(parseBibleReferenceParts).find((parts) => parts !== null);
     const [versionId, setVersionId] = useState('rvr1960');
-    const [bookId, setBookId] = useState(opening?.bookId ?? 'jhn');
     const [chapter, setChapter] = useState(opening?.chapter ?? 1);
     const [showPicker, setShowPicker] = useState(false);
 
     const repo = BibleVersionFactory.getByVersion(versionId);
+    /**
+     * La referencia del sermón trae el id del DOMINIO (`jon`), que no es el
+     * del juego de datos (`jn`). Se traduce por el NOMBRE, que es lo único que
+     * las dos tablas comparten; sin traducir, el pasaje del sermón abría en
+     * otro libro.
+     */
+    const [bookId, setBookId] = useState(
+        opening ? (repo?.resolveBookId(opening.bookKey) ?? 'jn') : 'jn',
+    );
     const books = repo?.getBooks() ?? [];
     const book = books.find((b) => b.id === bookId) ?? books[0];
     const verses = repo?.getChapterContent(bookId, chapter) ?? [];

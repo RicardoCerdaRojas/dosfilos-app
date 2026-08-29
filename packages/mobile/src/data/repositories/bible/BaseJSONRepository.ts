@@ -64,46 +64,55 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
         });
 
         this.booksCache = sortedData.map(b => {
+            // El nombre sale de la tabla de alias: se elige el MÁS LARGO que
+            // empiece en mayúscula. Pedir más de tres letras dejaba a Rut y a
+            // Job sin nombre —se veían como "RT" y "JOB"— porque su nombre
+            // completo tiene exactamente tres.
             let name = b.id.toUpperCase();
-            // Try to find a human readable name from mapping
+            let best = '';
             for (const [key, val] of Object.entries(this.bookMapping)) {
-                if (val === b.id && key.length > 3 && key[0] === key[0].toUpperCase()) {
-                    name = key;
-                    break;
-                }
+                if (val !== b.id) continue;
+                if (key[0] !== key[0].toUpperCase()) continue;
+                if (key.length > best.length) best = key;
             }
+            if (best) name = best;
             return { id: b.id, name, chapters: b.chapters.length };
         });
 
         return this.booksCache;
     }
 
-    getChapterCount(bookNameOrId: string): number {
-        let bookId = bookNameOrId;
+    /**
+     * Traduce lo que llegue —id del propio dato o nombre del libro— al id real.
+     *
+     * EL ID SE PRUEBA PRIMERO, Y NO ES UN DETALLE. Antes se buscaba por NOMBRE
+     * antes que por id, y en este juego de datos Jonás es `jn` mientras que
+     * `Jn` es un alias de Juan. Pedir el capítulo de `jn` devolvía Juan 1: la
+     * cabecera decía "Jonás 1" —esa sí resuelve por id— y el cuerpo mostraba
+     * "En el principio era el Verbo". Un id nunca debe caer en la tabla de
+     * alias de otro libro.
+     */
+    resolveBookId(bookNameOrId: string): string {
+        const direct = this.bibleData.find(
+            (b) => b.id.toLowerCase() === bookNameOrId.toLowerCase(),
+        );
+        if (direct) return direct.id;
+
         const searchName = bookNameOrId.toLowerCase();
-
         for (const [key, val] of Object.entries(this.bookMapping)) {
-            if (key.toLowerCase() === searchName) {
-                bookId = val;
-                break;
-            }
+            if (key.toLowerCase() === searchName) return val;
         }
+        return bookNameOrId;
+    }
 
+    getChapterCount(bookNameOrId: string): number {
+        const bookId = this.resolveBookId(bookNameOrId);
         const book = this.bibleData.find(b => b.id.toLowerCase() === bookId.toLowerCase());
         return book ? book.chapters.length : 0;
     }
 
     getChapterContent(bookNameOrId: string, chapter: number): string[] | null {
-        let bookId = bookNameOrId;
-        const searchName = bookNameOrId.toLowerCase();
-
-        for (const [key, val] of Object.entries(this.bookMapping)) {
-            if (key.toLowerCase() === searchName) {
-                bookId = val;
-                break;
-            }
-        }
-
+        const bookId = this.resolveBookId(bookNameOrId);
         const book = this.bibleData.find(b => b.id.toLowerCase() === bookId.toLowerCase());
         if (!book) return null;
 

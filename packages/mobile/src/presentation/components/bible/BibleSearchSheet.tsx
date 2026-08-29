@@ -79,7 +79,12 @@ export function BibleSearchSheet({ visible, tokens, face, versionId, onOpen, onC
                                 <TouchableOpacity
                                     key={`${result.reference}-${index}`}
                                     onPress={() =>
-                                        parsed && onOpen(parsed.book, parsed.chapter)
+                                        // `parsed.book` es el NOMBRE del
+                                        // libro; arriba se espera el id del
+                                        // dato. Sin traducir, abrir un
+                                        // resultado caía en Génesis.
+                                        parsed &&
+                                        onOpen(repo.resolveBookId(parsed.book), parsed.chapter)
                                     }
                                     accessibilityRole="button"
                                     accessibilityLabel={result.reference}
