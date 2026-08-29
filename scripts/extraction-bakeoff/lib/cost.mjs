@@ -115,15 +115,32 @@ export function computeCost(result, rates) {
     }
 
     if (result.id === 'gemini') {
-        const { inputTokens: i, outputTokens: o } = b;
+        const { inputTokens: i, outputTokens: o, totalTokens: t } = b;
         const ri = rates?.gemini?.usdPorMillonTokensEntrada;
         const ro = rates?.gemini?.usdPorMillonTokensSalida;
-        if (i == null || o == null) return { usd: null, basis: null, caveat: 'la API no desglosó entrada/salida' };
+        if (i == null || t == null) return { usd: null, basis: null, caveat: 'la API no reportó el desglose de tokens' };
         if (ri == null || ro == null) {
-            return { usd: null, basis: `${i} entrada + ${o} salida`, caveat: 'faltan tarifas de Gemini en rates.json' };
+            return { usd: null, basis: `${i} entrada, ${t} total`, caveat: 'faltan tarifas de Gemini en rates.json' };
         }
-        const usd = (i / 1e6) * ri + (o / 1e6) * ro;
-        return { usd, basis: `${i} entrada × ${ri}/M + ${o} salida × ${ro}/M`, caveat: null };
+
+        // `candidatesTokenCount` NO es todo lo que se factura como salida.
+        // Medido: 6.017 entrada + 13.330 candidatos = 19.347, contra 39.253
+        // totales. Los 19.906 de diferencia son tokens de PENSAMIENTO, y la
+        // página de precios dice explícitamente "Precio de salida (incluidos
+        // los tokens de pensamiento)". Cobrar sólo los candidatos subestimaba
+        // el costo 2,4 veces — de $4,21 a $9,98 por libro, que es la
+        // diferencia entre elegir Gemini y descartarlo.
+        const billableOutput = t - i;
+        const thinking = billableOutput - (o ?? billableOutput);
+        const usd = (i / 1e6) * ri + (billableOutput / 1e6) * ro;
+        return {
+            usd,
+            basis: `${i} entrada × ${ri}/M + ${billableOutput} salida × ${ro}/M`
+                + (thinking > 0 ? ` (incluye ${thinking} de pensamiento)` : ''),
+            caveat: thinking > 0
+                ? `${thinking} tokens de pensamiento (${Math.round((thinking / billableOutput) * 100)}% de la salida facturable) — se cobran a tarifa de salida`
+                : null,
+        };
     }
 
     return { usd: null, basis: null, caveat: 'motor sin modelo de costo' };

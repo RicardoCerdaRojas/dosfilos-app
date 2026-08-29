@@ -241,7 +241,28 @@ export function renderMarkdown(run) {
     // sino cuántos libros caben. Medido: plan Free = 10.000 créditos/mes, y un
     // solo comentario de 425 páginas puede llevarse una fracción enorme.
     const cupo = run.rates?.values?.llamaparse?.creditosPorMes;
-    const lp = ran.filter(r => r.id?.startsWith('llamaparse') && r.billing?.creditsDelta != null);
+    // Sólo con créditos > 0. Medido: en plan Free la API devuelve 0 tanto en
+    // `job_credits_usage` como en `credits_used`, así que el delta da 0 y la
+    // sección concluía "∞ libros por mes" — un número seguro de sí mismo y
+    // completamente vacío, que es justo lo que este banco existe para evitar.
+    const lp = ran.filter(r => r.id?.startsWith('llamaparse') && r.billing?.creditsDelta > 0);
+    const lpSinDato = ran.filter(r => r.id?.startsWith('llamaparse') && !(r.billing?.creditsDelta > 0));
+    if (cupo && lpSinDato.length && !lp.length) {
+        lines.push('### Cupo mensual de créditos');
+        lines.push('');
+        lines.push('**No medible con esta corrida.** La API de LlamaParse devolvió 0 tanto en');
+        lines.push('`job_credits_usage` como en `credits_used`, sin marcar caché. En plan Free');
+        lines.push('parece no desglosar consumo por trabajo.');
+        lines.push('');
+        lines.push('Sí reporta páginas facturadas, así que el consumo se puede reconstruir con');
+        lines.push('los multiplicadores de crédito por página de cada modo (`creditosPorPagina`');
+        lines.push('en `rates.json`, desde la documentación de LlamaParse).');
+        lines.push('');
+        lines.push('Alternativa empírica, más fiable que cualquier tabla: anota los créditos');
+        lines.push('disponibles en el panel ANTES y DESPUÉS de una corrida `--fresh`. La');
+        lines.push('diferencia es lo que costó, sin intermediarios.');
+        lines.push('');
+    }
     if (cupo && lp.length) {
         lines.push('### Cupo mensual de créditos');
         lines.push('');
