@@ -44,6 +44,10 @@ export default function SermonListScreen() {
             s.bibleReferences.some((r) => r.toLowerCase().includes(q));
         return groups
             .map((g) => ({
+                // "Plan" y no "serie": es la palabra que ve el pastor en la
+                // web y en el planificador. El dominio los llama `seriesId` y
+                // la colección `series`, pero la interfaz no tiene por qué
+                // heredar el nombre de la tabla.
                 title: g.seriesTitle ?? t('sermons:no_series'),
                 data: g.sermons.filter(matches),
             }))
