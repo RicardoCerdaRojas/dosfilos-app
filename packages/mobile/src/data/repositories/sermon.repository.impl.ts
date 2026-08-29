@@ -1,6 +1,13 @@
 import { getApp } from '@react-native-firebase/app';
 import { getFunctions, httpsCallable } from '@react-native-firebase/functions';
-import { doc, getDoc } from '@react-native-firebase/firestore';
+import {
+    arrayUnion,
+    doc,
+    getDoc,
+    serverTimestamp,
+    updateDoc,
+} from '@react-native-firebase/firestore';
+import type { PreachingLog } from '@dosfilos/domain';
 
 import { Sermon, SermonSummary } from '@/domain/models/sermon.model';
 import { SermonRepository } from '@/domain/repositories/sermon.repository';
@@ -18,6 +25,9 @@ interface RawSummary {
     publishedAt?: number;
     updatedAt?: number;
     versionOf?: string;
+    sourceSermonId?: string;
+    timesPreached?: number;
+    lastPreachedAt?: number;
 }
 
 const toDate = (v: unknown): Date | undefined => {
@@ -44,6 +54,9 @@ export class SermonRepositoryImpl implements SermonRepository {
             publishedAt: toDate(s.publishedAt),
             updatedAt: toDate(s.updatedAt),
             versionOf: s.versionOf,
+            sourceSermonId: s.sourceSermonId,
+            timesPreached: s.timesPreached ?? 0,
+            lastPreachedAt: toDate(s.lastPreachedAt),
         }));
     }
 
@@ -64,6 +77,40 @@ export class SermonRepositoryImpl implements SermonRepository {
             }),
         );
         return titles;
+    }
+
+    /**
+     * Escribe título y cuerpo. La lista de campos es EXPLÍCITA a propósito:
+     * un spread del sermón entero arrastraría `wizardProgress` y ahí vive la
+     * política pastoral que la tablet no debe tocar (M-07).
+     *
+     * No se espera el ack: sin red la promesa no resuelve hasta que el
+     * servidor confirma, y el pastor edita el miércoles en el sillón, no
+     * necesariamente con señal. La caché local ya aplicó el cambio.
+     */
+    async updateSermonDraft(id: string, patch: { title: string; content: string }): Promise<void> {
+        updateDoc(doc(getFirebaseDb(), 'sermons', id), {
+            title: patch.title,
+            content: patch.content,
+            updatedAt: serverTimestamp(),
+        }).catch((error) => console.warn(`[sermons] update ${id} failed:`, error));
+    }
+
+    /**
+     * Suma una predicación al historial. `arrayUnion` en vez de leer-modificar
+     * -escribir: si el pastor predica el mismo sermón en dos servicios y la
+     * tablet sincroniza tarde, no se pisan los registros.
+     */
+    async addPreachingLog(id: string, log: PreachingLog): Promise<void> {
+        updateDoc(doc(getFirebaseDb(), 'sermons', id), {
+            preachingHistory: arrayUnion({
+                date: log.date,
+                location: log.location,
+                durationMinutes: log.durationMinutes,
+                ...(log.notes ? { notes: log.notes } : {}),
+            }),
+            updatedAt: serverTimestamp(),
+        }).catch((error) => console.warn(`[sermons] preaching log ${id} failed:`, error));
     }
 
     async getSermonById(id: string): Promise<Sermon | null> {

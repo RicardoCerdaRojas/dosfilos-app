@@ -166,7 +166,9 @@
       "source": "Source: {{version}}",
       "notFound": "Could not find text. Check reference.",
       "error": "Error loading bible text."
-    }
+    },
+    "sections": "Sections",
+    "sectionsLabel": "Jump to section"
   },
   "fidelityReview": {
     "title": "Fidelity review",

@@ -394,15 +394,15 @@ export function PreachModePage() {
           {sections.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" title={t('preachMode.sections', { defaultValue: 'Secciones' })}>
+                <Button variant="outline" size="sm" title={t('preachMode.sections')}>
                   <ListOrdered className="h-4 w-4" />
                   <span className="ml-2 hidden md:inline">
-                    {t('preachMode.sections', { defaultValue: 'Secciones' })}
+                    {t('preachMode.sections')}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64 max-h-[60vh] overflow-y-auto">
-                <DropdownMenuLabel>{t('preachMode.sectionsLabel', { defaultValue: 'Saltar a sección' })}</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('preachMode.sectionsLabel')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {sections.map((s) => (
                   <DropdownMenuItem
@@ -420,7 +420,11 @@ export function PreachModePage() {
           {/* Timer Controls */}
           <div className="flex items-center gap-2 bg-muted/50 rounded-full px-3 py-1.5">
             <Clock className={cn("h-4 w-4", getTimerColor())} />
-            <span className={cn("font-mono font-medium tabular-nums min-w-[50px] text-center text-sm", getTimerColor())}>
+            {/* D5 — escala con el cuerpo: desde el atril, a 14 px no se lee. */}
+            <span
+              className={cn("font-mono font-semibold tabular-nums text-center", getTimerColor())}
+              style={{ fontSize: `${Math.round(fontSize * 1.4)}px`, minWidth: '3.4em' }}
+            >
               {formatTime(timeLeft)}
             </span>
             <div className="flex items-center gap-0.5">
@@ -534,7 +538,7 @@ export function PreachModePage() {
                   {/* Sermon Title - Discrete */}
                   <div className="text-center mb-12">
                     <h1 
-                      className="font-serif font-bold text-muted-foreground/70"
+                      className="font-delivery font-bold text-muted-foreground/70"
                       style={{ fontSize: `${Math.min(fontSize * 1.5, 48)}px` }}
                     >
                       {sermon.title}
@@ -547,8 +551,8 @@ export function PreachModePage() {
                   </div>
 
                   <div 
-                    className="prose prose-lg max-w-none dark:prose-invert font-serif leading-relaxed transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
-                    style={{ fontSize: `${fontSize}px` }}
+                    className="prose prose-lg max-w-none dark:prose-invert font-delivery transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
+                    style={{ fontSize: `${fontSize}px`, maxWidth: '48ch', marginInline: 'auto', lineHeight: 1.55 }}
                   >
                     <style>{`
                       .prose p {
@@ -609,7 +613,7 @@ export function PreachModePage() {
               {/* Sermon Title - Discrete */}
               <div className="text-center mb-12">
                 <h1 
-                  className="font-serif font-bold text-muted-foreground/70"
+                  className="font-delivery font-bold text-muted-foreground/70"
                   style={{ fontSize: `${Math.min(fontSize * 1.5, 48)}px` }}
                 >
                   {sermon.title}
@@ -622,8 +626,8 @@ export function PreachModePage() {
               </div>
 
               <div 
-                className="prose prose-lg max-w-none dark:prose-invert font-serif leading-relaxed transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
-                style={{ fontSize: `${fontSize}px` }}
+                className="prose prose-lg max-w-none dark:prose-invert font-delivery transition-all duration-200 prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-blockquote:px-4 prose-strong:text-foreground"
+                style={{ fontSize: `${fontSize}px`, maxWidth: '48ch', marginInline: 'auto', lineHeight: 1.55 }}
               >
                 <style>{`
                   .prose p {

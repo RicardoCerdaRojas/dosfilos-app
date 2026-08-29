@@ -3,13 +3,141 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { READING_MODES, ReadingMode, ReadingModeTokens } from '@/core/theme/readingModes';
+import { DELIVERY_SIZE } from '@/core/theme/typography';
+import type { DeliveryFace } from '@/core/theme/typography';
+
+/**
+ * Cuánto dice un instrumento.
+ *
+ * `full` lleva números; `minimal` deja sólo la barra —la posición sin cifras—
+ * y `off` lo apaga. Los números son útiles y también son ruido: mirarlos
+ * predicando cuesta atención, y el predicador que ya sabe dónde va sólo
+ * necesita ver la marca moverse.
+ */
+export type InstrumentMode = 'full' | 'minimal' | 'off';
 
 interface ReaderSettingsState {
+    /** Cuerpo del lector de Biblia: lectura sentada. */
     fontSize: number;
     setFontSize: (size: number) => void;
+    /**
+     * Interlínea del lector, como múltiplo de la del atril.
+     *
+     * Es el ajuste que más piden los lectores después del cuerpo: un texto
+     * apretado cansa aunque la letra sea grande, y quien lee capítulos enteros
+     * lo nota antes que nadie.
+     */
+    lineSpacing: number;
+    setLineSpacing: (value: number) => void;
+    /** Familia del lector, separada de la del atril por la misma razón que el cuerpo. */
+    bibleFace: DeliveryFace;
+    setBibleFace: (face: DeliveryFace) => void;
+    /**
+     * Números de versículo a la vista.
+     *
+     * Apagarlos devuelve la página a prosa pura, que es como se leía antes de
+     * que Estienne la numerara en 1551. Para leer un libro entero de corrido
+     * es lo correcto; para predicar sobre un versículo, no. Por eso se elige.
+     */
+    verseNumbers: boolean;
+    setVerseNumbers: (on: boolean) => void;
+    /**
+     * Pantalla encendida mientras se lee.
+     *
+     * Una tablet apoyada en el escritorio se apaga a los treinta segundos
+     * porque nadie la toca — leer no es tocar. Es el mismo problema que el
+     * atril resuelve, y aparece igual estudiando.
+     */
+    keepAwake: boolean;
+    setKeepAwake: (on: boolean) => void;
+    /**
+     * Cuerpo del modo púlpito: se predica de pie, a 60-70 cm. Separado del
+     * anterior porque compartirlos hacía que ajustar la Biblia cambiara el
+     * sermón, y al revés.
+     */
+    deliveryFontSize: number;
+    setDeliveryFontSize: (size: number) => void;
     /** Modo de luz del lector/púlpito (plan §6). Persistido; sync llega en F1. */
     readingMode: ReadingMode;
     setReadingMode: (mode: ReadingMode) => void;
+    /**
+     * Colometría: cada oración abre renglón (D6). Preferencia del predicador,
+     * no un ajuste con respuesta correcta — hay quien reengancha mejor con el
+     * párrafo corrido.
+     */
+    senseLines: boolean;
+    setSenseLines: (on: boolean) => void;
+    /**
+     * Línea vertical al 66 % de la medida. EXCLUYENTE con `senseLines`:
+     * encender una apaga la otra, porque resuelven lo mismo y se estorban.
+     */
+    gazeLine: boolean;
+    setGazeLine: (on: boolean) => void;
+    /**
+     * Presupuesto de tiempo fijado a mano, en segundos, por
+     * `${sermonId}|${sectionSlug}`. Lo que el pastor no toca se reparte solo.
+     * Persiste porque se decide preparando, no en el atril.
+     */
+    /**
+     * Reserva del tercio inferior para el tablero (P7). Se puede apagar: hay
+     * púlpitos donde el atril tapa la parte de abajo y conviene todo el alto
+     * para el texto.
+     */
+    /** Familia tipográfica del cuerpo de entrega. Preferencia del predicador. */
+    /** Sangría francesa: primera línea en el margen, el resto adentro. */
+    hangingIndent: boolean;
+    setHangingIndent: (on: boolean) => void;
+    deliveryFace: DeliveryFace;
+    setDeliveryFace: (face: DeliveryFace) => void;
+    /**
+     * La línea de vuelo de arriba y el tablero de abajo se controlan POR
+     * SEPARADO: son dos instrumentos distintos, no dos vistas del mismo. Quien
+     * quiere el riel de movimientos abajo puede no querer el reloj arriba.
+     */
+    statusBarMode: InstrumentMode;
+    setStatusBarMode: (mode: InstrumentMode) => void;
+    panelMode: InstrumentMode;
+    setPanelMode: (mode: InstrumentMode) => void;
+    /**
+     * Dónde quedó la lectura de la Biblia.
+     *
+     * Se guarda para poder RETOMARLA desde el inicio. Abrir siempre en el
+     * mismo capítulo obliga a rehacer la búsqueda cada vez, y un pastor que
+     * lee un libro entero a lo largo de una semana vuelve al mismo lugar
+     * todos los días.
+     */
+    /**
+     * Lectura a ancho completo en vez de la columna medida.
+     *
+     * La columna es lo correcto para leer —una línea de mil píxeles hace
+     * perder el renglón al volver— pero a veces se quiere la página entera:
+     * comparar dos versiones, mirar un capítulo de un vistazo. Es preferencia,
+     * no ajuste con respuesta única, así que se guarda.
+     */
+    /**
+     * Últimas búsquedas, de la más reciente a la más vieja.
+     *
+     * Un pastor busca la misma frase varias veces durante una semana de
+     * preparación: escribirla de nuevo cada vez es trabajo que la app puede
+     * ahorrarle.
+     */
+    recentSearches: string[];
+    rememberSearch: (query: string) => void;
+    fullWidth: boolean;
+    setFullWidth: (on: boolean) => void;
+    lastRead: { versionId: string; bookId: string; chapter: number } | null;
+    setLastRead: (at: { versionId: string; bookId: string; chapter: number }) => void;
+    /**
+     * Cuánto alto se lleva el tablero, como fracción de lo legible.
+     *
+     * Era un TERCIO fijo, y un tercio es mucho: el reloj y el riel entran en
+     * poco más de cien puntos y el resto quedaba en blanco, comiéndose el
+     * texto. Ahora se elige, y el valor por defecto es el chico.
+     */
+    panelRatio: number;
+    setPanelRatio: (ratio: number) => void;
+    budgetOverrides: Record<string, number>;
+    setBudgetOverride: (key: string, seconds: number | null) => void;
 }
 
 export const useReaderSettingsStore = create<ReaderSettingsState>()(
@@ -17,12 +145,72 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
         (set) => ({
             fontSize: 18, // Default font size
             setFontSize: (size: number) => set({ fontSize: size }),
+            lineSpacing: 1,
+            setLineSpacing: (value: number) => set({ lineSpacing: value }),
+            bibleFace: 'literata',
+            setBibleFace: (face: DeliveryFace) => set({ bibleFace: face }),
+            verseNumbers: true,
+            setVerseNumbers: (on: boolean) => set({ verseNumbers: on }),
+            keepAwake: true,
+            setKeepAwake: (on: boolean) => set({ keepAwake: on }),
+            deliveryFontSize: DELIVERY_SIZE.default,
+            setDeliveryFontSize: (size: number) => set({ deliveryFontSize: size }),
             readingMode: 'claro',
             setReadingMode: (mode: ReadingMode) => set({ readingMode: mode }),
+            senseLines: false,
+            // Encender una apaga la otra: resuelven el mismo problema y se
+            // estorban entre sí. No son dos niveles de una escala.
+            setSenseLines: (on: boolean) =>
+                set((state) => ({ senseLines: on, gazeLine: on ? false : state.gazeLine })),
+            gazeLine: false,
+            setGazeLine: (on: boolean) =>
+                set((state) => ({ gazeLine: on, senseLines: on ? false : state.senseLines })),
+            hangingIndent: true,
+            setHangingIndent: (on: boolean) => set({ hangingIndent: on }),
+            deliveryFace: 'lexend',
+            setDeliveryFace: (face: DeliveryFace) => set({ deliveryFace: face }),
+            statusBarMode: 'full',
+            setStatusBarMode: (mode: InstrumentMode) => set({ statusBarMode: mode }),
+            panelMode: 'full',
+            setPanelMode: (mode: InstrumentMode) => set({ panelMode: mode }),
+            recentSearches: [],
+            rememberSearch: (query) =>
+                set((state) => ({
+                    // Sin repetidas y con tope: una lista infinita de
+                    // búsquedas deja de ser un atajo.
+                    recentSearches: [query, ...state.recentSearches.filter((q) => q !== query)].slice(
+                        0,
+                        8,
+                    ),
+                })),
+            fullWidth: false,
+            setFullWidth: (on) => set({ fullWidth: on }),
+            lastRead: null,
+            setLastRead: (at) => set({ lastRead: at }),
+            panelRatio: 0.17,
+            setPanelRatio: (ratio: number) => set({ panelRatio: ratio }),
+            budgetOverrides: {},
+            setBudgetOverride: (key: string, seconds: number | null) =>
+                set((state) => {
+                    const next = { ...state.budgetOverrides };
+                    if (seconds === null) delete next[key];
+                    else next[key] = seconds;
+                    return { budgetOverrides: next };
+                }),
         }),
         {
             name: 'reader-settings-storage',
             storage: createJSONStorage(() => AsyncStorage),
+            // El tablero era un booleano y ahora tiene tres estados. Sin migrar,
+            // quien ya lo había apagado se lo encontraría encendido.
+            version: 1,
+            migrate: (persisted: any, version: number) => {
+                if (version === 0 && persisted && 'instrumentPanel' in persisted) {
+                    persisted.panelMode = persisted.instrumentPanel ? 'full' : 'off';
+                    delete persisted.instrumentPanel;
+                }
+                return persisted;
+            },
         }
     )
 );

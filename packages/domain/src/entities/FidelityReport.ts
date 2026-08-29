@@ -24,6 +24,7 @@
 
 import type { DoctrineLevel } from './Confession';
 import type { AttributionBlock } from '../services/aggregateRequiredAttributions';
+import { SENTENCE_TERMINATOR } from '../services/sentenceSegmentation';
 
 /**
  * Verdict the evaluator emits for a single marker.
@@ -310,13 +311,16 @@ export function buildEmptyFidelityReport(input: {
 const MARKER_REGEX = /\[(\d+(?:\s*,\s*\d+)*)\]/g;
 
 /**
- * Sentence terminators considered for "the sentence before [N]". Period,
- * question mark, and exclamation mark — matches the conventions used by
- * `SermonContent` prose (Spanish + English). Trailing punctuation is
- * preserved on the extracted claim because the evaluator's prompt asks the
+ * Sentence terminators considered for "the sentence before [N]".
+ *
+ * Shared with the pulpit reader's highlight unit (`services/sentenceSegmentation`)
+ * on purpose: the span the evaluator judges and the span the pastor highlights
+ * on the tablet must be the same sentence, or an anchor written from the
+ * tablet would not line up with the claim the web shows. Trailing punctuation
+ * is preserved on the extracted claim because the evaluator's prompt asks the
  * LLM to evaluate the full sentence, not a trimmed proposition.
  */
-const SENTENCE_BOUNDARY = /[.!?](?=\s|$)/g;
+const SENTENCE_BOUNDARY = new RegExp(SENTENCE_TERMINATOR.source, SENTENCE_TERMINATOR.flags);
 
 /**
  * Extract the sentence immediately to the left of the FIRST occurrence of

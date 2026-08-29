@@ -1,4 +1,9 @@
-import { IBibleVersionRepository } from '@/domain/bible/ports/IBibleVersionRepository';
+import { matchRanges } from '@dosfilos/domain';
+
+import {
+    IBibleVersionRepository,
+    BibleSearchResult,
+} from '@/domain/bible/ports/IBibleVersionRepository';
 import { BibleReference } from '@/domain/bible/entities/BibleEntities';
 import { getCanonicalId, BOOK_METADATA } from '@/domain/bible/utils/BibleMetadata';
 
@@ -17,6 +22,25 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
     protected abstract readonly bookMapping: Record<string, string>;
 
     private booksCache: { id: string; name: string; chapters: number }[] | null = null;
+
+    /**
+     * Limpia el texto de un versículo.
+     *
+     * EL DATO TRAE "/n" —barra ene, no salto de línea— como marca de renglón
+     * poético, en 4.738 versículos de la Reina Valera: uno de cada siete. La
+     * limpieza que había buscaba `\n` con barra invertida, así que no encontró
+     * NUNCA nada y el "/n" se venía leyendo en pantalla desde siempre. En Job
+     * se veía como "con tempestad, /nY ha aumentado mis heridas".
+     *
+     * Se reemplaza por un espacio porque acá el texto corre como prosa; el
+     * renglón poético lo pondría el diseño, no el dato.
+     */
+    protected cleanVerse(text: string): string {
+        return (text ?? '')
+            .replace(/\s*\/n\s*/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
 
     getVersionId(): string {
         return this.versionId;
@@ -44,7 +68,7 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
         const chapter = book.chapters[chapterIdx];
         const verses = chapter.slice(ref.verseStart - 1, ref.verseEnd ? ref.verseEnd : ref.verseStart);
 
-        return verses.join(' ').replace(/\\s*\\n\\s*/g, ' ').trim();
+        return this.cleanVerse(verses.join(' '));
     }
 
     isValidBook(bookName: string): boolean {
@@ -64,62 +88,86 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
         });
 
         this.booksCache = sortedData.map(b => {
+            // El nombre sale de la tabla de alias: se elige el MÁS LARGO que
+            // empiece en mayúscula. Pedir más de tres letras dejaba a Rut y a
+            // Job sin nombre —se veían como "RT" y "JOB"— porque su nombre
+            // completo tiene exactamente tres.
             let name = b.id.toUpperCase();
-            // Try to find a human readable name from mapping
+            let best = '';
             for (const [key, val] of Object.entries(this.bookMapping)) {
-                if (val === b.id && key.length > 3 && key[0] === key[0].toUpperCase()) {
-                    name = key;
-                    break;
-                }
+                if (val !== b.id) continue;
+                if (key[0] !== key[0].toUpperCase()) continue;
+                if (key.length > best.length) best = key;
             }
+            if (best) name = best;
             return { id: b.id, name, chapters: b.chapters.length };
         });
 
         return this.booksCache;
     }
 
-    getChapterCount(bookNameOrId: string): number {
-        let bookId = bookNameOrId;
+    /**
+     * Traduce lo que llegue —id del propio dato o nombre del libro— al id real.
+     *
+     * EL ID SE PRUEBA PRIMERO, Y NO ES UN DETALLE. Antes se buscaba por NOMBRE
+     * antes que por id, y en este juego de datos Jonás es `jn` mientras que
+     * `Jn` es un alias de Juan. Pedir el capítulo de `jn` devolvía Juan 1: la
+     * cabecera decía "Jonás 1" —esa sí resuelve por id— y el cuerpo mostraba
+     * "En el principio era el Verbo". Un id nunca debe caer en la tabla de
+     * alias de otro libro.
+     */
+    resolveBookId(bookNameOrId: string): string {
+        const direct = this.bibleData.find(
+            (b) => b.id.toLowerCase() === bookNameOrId.toLowerCase(),
+        );
+        if (direct) return direct.id;
+
         const searchName = bookNameOrId.toLowerCase();
-
         for (const [key, val] of Object.entries(this.bookMapping)) {
-            if (key.toLowerCase() === searchName) {
-                bookId = val;
-                break;
-            }
+            if (key.toLowerCase() === searchName) return val;
         }
+        return bookNameOrId;
+    }
 
+    getCanonicalBookId(bookNameOrId: string): string {
+        return getCanonicalId(this.resolveBookId(bookNameOrId), this.versionId);
+    }
+
+    getBookIdForCanonical(canonicalId: string): string | null {
+        const found = this.bibleData.find(
+            (b) => getCanonicalId(b.id, this.versionId) === canonicalId,
+        );
+        return found ? found.id : null;
+    }
+
+    getChapterCount(bookNameOrId: string): number {
+        const bookId = this.resolveBookId(bookNameOrId);
         const book = this.bibleData.find(b => b.id.toLowerCase() === bookId.toLowerCase());
         return book ? book.chapters.length : 0;
     }
 
     getChapterContent(bookNameOrId: string, chapter: number): string[] | null {
-        let bookId = bookNameOrId;
-        const searchName = bookNameOrId.toLowerCase();
-
-        for (const [key, val] of Object.entries(this.bookMapping)) {
-            if (key.toLowerCase() === searchName) {
-                bookId = val;
-                break;
-            }
-        }
-
+        const bookId = this.resolveBookId(bookNameOrId);
         const book = this.bibleData.find(b => b.id.toLowerCase() === bookId.toLowerCase());
         if (!book) return null;
 
         const chapterIdx = chapter - 1;
         if (chapterIdx < 0 || chapterIdx >= book.chapters.length) return null;
 
-        return book.chapters[chapterIdx].map(verse => verse ? verse.replace(/\\s*\\n\\s*/g, ' ').trim() : verse);
+        return book.chapters[chapterIdx].map(verse => this.cleanVerse(verse));
     }
 
-    search(query: string, limit = 20): { reference: string; text: string }[] {
-        const results: { reference: string; text: string }[] = [];
-        const q = query.toLowerCase().trim();
+    search(query: string, limit = 20, bookIds?: string[]): BibleSearchResult[] {
+        const results: BibleSearchResult[] = [];
+        const q = query.trim();
         if (!q || q.length < 3) return [];
 
         let count = 0;
-        const books = this.getBooks();
+        // El ámbito se filtra ACÁ y no sobre los resultados: buscar en los 66
+        // libros para después descartar 65 es recorrer un millón de
+        // versículos de más en cada tecla.
+        const scope = bookIds ? new Set(bookIds.map((id) => id.toLowerCase())) : null;
+        const books = this.getBooks().filter((b) => !scope || scope.has(b.id.toLowerCase()));
 
         for (const bInfo of books) {
             const book = this.bibleData.find(b => b.id === bInfo.id);
@@ -128,11 +176,19 @@ export abstract class BaseJSONRepository implements IBibleVersionRepository {
             for (let c = 0; c < book.chapters.length; c++) {
                 const chapter = book.chapters[c];
                 for (let v = 0; v < chapter.length; v++) {
-                    const verseText = chapter[v];
-                    if (verseText.toLowerCase().includes(q)) {
+                    const verseText = this.cleanVerse(chapter[v]);
+                    // Coincide sin acentos y por términos sueltos: el que
+                    // escribe en una tablet pone "ninive", y "Jonás Nínive"
+                    // tiene que encontrar el versículo que dice las dos cosas.
+                    const ranges = matchRanges(verseText, q);
+                    if (ranges.length) {
                         results.push({
                             reference: `${bInfo.name} ${c + 1}:${v + 1}`,
-                            text: verseText.replace(/\\s*\\n\\s*/g, ' ').trim()
+                            text: verseText,
+                            bookId: bInfo.id,
+                            chapter: c + 1,
+                            verse: v + 1,
+                            ranges,
                         });
                         count++;
                         if (count >= limit) return results;

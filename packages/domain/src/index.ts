@@ -27,6 +27,14 @@ export * from './entities/PlanDefinition';
 export * from './entities/UsageCounter';
 export * from './entities/Organization';
 export * from './entities/Sermon';
+export * from './entities/SermonAnnotation'; // 🌱 Púlpito M-05 — preacher marks anchored in the raw section body
+export * from './entities/InkNote'; // 🌱 Púlpito F2 — tinta anclada al texto, no a la pantalla
+export * from './services/sentenceSegmentation'; // 🌱 Púlpito M-05 — single sentence ruler (shared with the fidelity pass)
+export * from './services/sermonReading'; // 🌱 Púlpito M-05 — offset-preserving reading model of a section
+export * from './services/planStatus'; // 🌱 Planes — estado deducido, no guardado
+export * from './services/movementBudget'; // 🌱 Púlpito F2 — presupuesto de tiempo por movimiento (riel)
+export * from './services/pageGrouping'; // 🌱 Púlpito F2 — bloques que no se separan entre páginas
+export * from './services/rehearsalReport'; // 🌱 Púlpito F3 — informe del ensayo (tiempo real vs presupuesto)
 export * from './entities/SermonSeries';
 export * from './entities/LibraryResource';
 export * from './entities/LibraryCategory';
@@ -132,6 +140,7 @@ export * from './entities/WitnessValidation'; // 🌱 Pastoral Fidelity Phase 2 
 export * from './bible/inferLanguageFromBook'; // 🌱 Phase 1.5 — book → original language heuristic
 export * from './bible/bibleBookTable';
 export * from './bible/parseBibleReferenceParts';
+export * from './bible/searchMatching'; // 🌱 Biblia — búsqueda sin acentos y por términos
 export * from './bible/inferGenreFromBook'; // 🌱 Phase 1.6 — book → literary genre proposal (ADR-024)
 export * from './services/IPastoralWordStudyService'; // 🌱 Phase 1.5 — service port
 export * from './repositories/IPastoralWordAnalysisCacheRepository'; // 🌱 Phase 1.5 — analysis cache

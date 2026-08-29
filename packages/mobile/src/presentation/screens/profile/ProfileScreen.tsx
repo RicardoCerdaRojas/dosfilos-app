@@ -1,164 +1,271 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, Image, ScrollView } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+
+import { useAppTheme } from '@/core/theme/appTheme';
+import { STUDY_COLUMN, useLayout } from '@/core/theme/layout';
+import { DELIVERY_SIZE } from '@/core/theme/typography';
+import { READING_MODES, READING_MODE_LABEL_KEYS } from '@/core/theme/readingModes';
+import type { ReadingMode } from '@/core/theme/readingModes';
 import { useAuthStore } from '@/presentation/state/auth.store';
 import { useThemeStore, ThemeMode } from '@/presentation/state/theme.store';
 import { useLanguageStore, Language } from '@/presentation/state/language.store';
-import { useTranslation } from 'react-i18next';
-import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useReaderSettingsStore } from '@/presentation/state/readerSettings.store';
+import { Card, SectionLabel } from '@/presentation/components/ui/kit';
 
+/**
+ * La cuenta y los ajustes.
+ *
+ * QUÉ SE FUE, Y POR QUÉ. Había una foto de archivo traída de internet —la
+ * misma cara para todos—, un "Plan Teólogo" escrito a mano que no consultaba
+ * nada, y dos filas ("editar perfil", "notificaciones") que no hacían nada al
+ * tocarlas. Eran restos de la maqueta. Una pantalla que promete lo que no
+ * cumple enseña a desconfiar del resto.
+ *
+ * QUÉ ENTRÓ: los ajustes de LECTURA. Modo de luz y cuerpo del texto vivían
+ * sólo dentro del púlpito, donde se descubren tarde — parado, con gente
+ * mirando. Acá se prueban sentado y quedan listos.
+ */
 export default function ProfileScreen() {
-  const router = useRouter();
-  const { user, signOut } = useAuthStore();
-  const { themeMode, setThemeMode } = useThemeStore();
-  const { language, setLanguage } = useLanguageStore();
-  const { t } = useTranslation();
+    const router = useRouter();
+    const insets = useSafeAreaInsets();
+    const theme = useAppTheme();
+    const { gutter } = useLayout();
+    const { t } = useTranslation();
 
-  const themeOptions: { label: string; value: ThemeMode; icon: keyof typeof MaterialIcons.glyphMap }[] = [
-    { label: t('common:light'), value: 'light', icon: 'light-mode' },
-    { label: t('common:dark'), value: 'dark', icon: 'dark-mode' },
-    { label: t('common:system'), value: 'system', icon: 'settings-brightness' },
-  ];
+    const { user, signOut } = useAuthStore();
+    const { themeMode, setThemeMode } = useThemeStore();
+    const { language, setLanguage } = useLanguageStore();
+    const readingMode = useReaderSettingsStore((s) => s.readingMode);
+    const setReadingMode = useReaderSettingsStore((s) => s.setReadingMode);
+    const fontSize = useReaderSettingsStore((s) => s.deliveryFontSize);
+    const setFontSize = useReaderSettingsStore((s) => s.setDeliveryFontSize);
 
-  const languageOptions: { label: string; value: Language; flag: string }[] = [
-    { label: t('common:spanish'), value: 'es', flag: '🇪🇸' },
-    { label: t('common:english'), value: 'en', flag: '🇺🇸' },
-  ];
+    const themeOptions: {
+        label: string;
+        value: ThemeMode;
+        icon: keyof typeof MaterialIcons.glyphMap;
+    }[] = [
+        { label: t('common:light'), value: 'light', icon: 'light-mode' },
+        { label: t('common:dark'), value: 'dark', icon: 'dark-mode' },
+        { label: t('common:system'), value: 'system', icon: 'settings-brightness' },
+        // Tinta electrónica: la app entera pasa a negro sobre blanco y los
+        // rellenos se vuelven bordes. En un Boox es la diferencia entre
+        // usable e ilegible.
+        { label: t('common:eink'), value: 'eink', icon: 'chrome-reader-mode' },
+    ];
 
-  return (
-    <SafeAreaView className="flex-1 bg-background-light dark:bg-background-primary">
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="px-6 py-8">
-          <View className="flex-row items-center mb-8">
-            <TouchableOpacity 
-              onPress={() => router.back()}
-              className="mr-4 p-2 bg-slate-100 dark:bg-background-secondary rounded-full border border-slate-200 dark:border-white/5"
+    const languageOptions: { label: string; value: Language }[] = [
+        { label: t('common:spanish'), value: 'es' },
+        { label: t('common:english'), value: 'en' },
+    ];
+
+    const initials = `${user?.firstName?.[0] ?? ''}${user?.lastName?.[0] ?? ''}`.toUpperCase() ||
+        (user?.email?.[0] ?? '·').toUpperCase();
+
+    /** Celda de opción: misma forma para tema, idioma y modo de luz. */
+    const option = (key: string, label: string, chosen: boolean, onPress: () => void, icon?: React.ReactNode) => (
+        <TouchableOpacity
+            key={key}
+            onPress={onPress}
+            accessibilityRole="button"
+            accessibilityState={{ selected: chosen }}
+            className="flex-1 items-center py-3.5 mx-1 rounded-xl"
+            style={{
+                backgroundColor: chosen ? theme.accentSoft : theme.surfaceSunken,
+                borderWidth: 1,
+                borderColor: chosen ? theme.accent : 'transparent',
+            }}
+        >
+            {icon}
+            <Text
+                style={{ color: chosen ? theme.accent : theme.textSecondary, fontSize: 12 }}
+                className="font-lexend-semibold mt-1.5"
             >
-              <MaterialIcons name="arrow-back" size={24} className="text-slate-900 dark:text-white" color={themeMode === 'light' ? '#0f172a' : 'white'} />
-            </TouchableOpacity>
-            <Text className="text-3xl font-bold text-slate-900 dark:text-white">{t('common:profile')}</Text>
-          </View>
-          
-          {/* User Profile Info */}
-          <View className="items-center mb-10">
-            <View className="relative">
-              <View className="w-24 h-24 rounded-full border-4 border-primary/20 p-1">
-                <Image
-                  source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAGHn54S6_m1wDutT6kqJOFnk4aCvf9Mle5k1eoYl_0o_2QRYut_df-lQdAl9SrVEkFTkUjQUirljQ4w6bZFP-81ryIHmnpNtZqUNAdHEc2CFakcDlX3UpSpzSXzuDgV8p5MeZC6SNlbbLlyS3cIF7HH5EC35YcdjVRbYdyeTO0_9UkHz-9j3aCISu7kw-0LUvj-6dhkYA5g5ElNmx6A5ptV2nc6KUPe6s5AYiz-SykD6UebkSOjav-wen3niVy4ug1wf4pFAviAoYL' }}
-                  className="w-full h-full rounded-full"
-                />
-              </View>
-              <TouchableOpacity 
-                className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full items-center justify-center border-2 border-white dark:border-background-primary"
-              >
-                <MaterialIcons name="edit" size={16} color="white" />
-              </TouchableOpacity>
-            </View>
-            
-            <Text className="text-2xl font-bold text-slate-900 dark:text-white mt-4">
-              {user?.firstName} {user?.lastName}
+                {label}
             </Text>
-            <Text className="text-slate-500 dark:text-slate-400 font-medium">
-              {user?.email}
-            </Text>
-            
-            <View className="mt-4 px-4 py-1.5 bg-academic-gold/10 rounded-full border border-academic-gold/20">
-              <Text className="text-xs font-bold text-academic-gold uppercase tracking-wider">Plan Teólogo</Text>
-            </View>
-          </View>
+        </TouchableOpacity>
+    );
 
-          {/* Theme Section */}
-          <View className="bg-white dark:bg-background-secondary rounded-[32px] p-6 mb-6 shadow-sm border border-slate-100 dark:border-white/5">
-            <Text className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-6">{t('common:appearance')}</Text>
-            
-            <View className="flex-row justify-between">
-              {themeOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.value}
-                  onPress={() => setThemeMode(option.value)}
-                  className={`flex-1 items-center py-4 rounded-2xl border ${
-                    themeMode === option.value 
-                      ? 'bg-primary/10 border-primary' 
-                      : 'bg-slate-50 dark:bg-background-primary border-slate-100 dark:border-white/5'
-                  } mx-1`}
-                >
-                  <MaterialIcons 
-                    name={option.icon} 
-                    size={24} 
-                    color={themeMode === option.value ? '#1754cf' : '#64748b'} 
-                  />
-                  <Text className={`mt-2 text-xs font-bold ${
-                    themeMode === option.value ? 'text-primary' : 'text-slate-500'
-                  }`}>
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Language Section */}
-          <View className="bg-white dark:bg-background-secondary rounded-[32px] p-6 mb-6 shadow-sm border border-slate-100 dark:border-white/5">
-            <Text className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-6">{t('common:language')}</Text>
-            
-            <View className="flex-row justify-between">
-              {languageOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.value}
-                  onPress={() => setLanguage(option.value)}
-                  className={`flex-1 items-center py-4 rounded-2xl border ${
-                    language === option.value 
-                      ? 'bg-primary/10 border-primary' 
-                      : 'bg-slate-50 dark:bg-background-primary border-slate-100 dark:border-white/5'
-                  } mx-1`}
-                >
-                  <Text className="text-2xl mb-1">{option.flag}</Text>
-                  <Text className={`text-xs font-bold ${
-                    language === option.value ? 'text-primary' : 'text-slate-500'
-                  }`}>
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Settings Section */}
-          <View className="bg-white dark:bg-background-secondary rounded-[32px] p-2 shadow-sm border border-slate-100 dark:border-white/5 mb-6">
-            <TouchableOpacity className="flex-row items-center p-4 border-b border-slate-50 dark:border-white/5">
-              <View className="w-10 h-10 rounded-full bg-slate-100 dark:bg-background-primary items-center justify-center mr-4">
-                <MaterialIcons name="person-outline" size={20} color="#64748b" />
-              </View>
-              <Text className="flex-1 text-base font-bold text-slate-700 dark:text-slate-200">{t('common:edit_profile')}</Text>
-              <MaterialIcons name="chevron-right" size={24} color="#94a3b8" />
-            </TouchableOpacity>
-            
-            <TouchableOpacity className="flex-row items-center p-4 border-b border-slate-50 dark:border-white/5">
-              <View className="w-10 h-10 rounded-full bg-slate-100 dark:bg-background-primary items-center justify-center mr-4">
-                <MaterialIcons name="notifications-none" size={20} color="#64748b" />
-              </View>
-              <Text className="flex-1 text-base font-bold text-slate-700 dark:text-slate-200">{t('common:notifications')}</Text>
-              <MaterialIcons name="chevron-right" size={24} color="#94a3b8" />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              onPress={signOut}
-              className="flex-row items-center p-4"
+    return (
+        <View className="flex-1" style={{ backgroundColor: theme.background, paddingTop: insets.top }}>
+            <ScrollView
+                contentContainerStyle={{
+                    paddingHorizontal: gutter,
+                    paddingBottom: insets.bottom + 40,
+                }}
+                showsVerticalScrollIndicator={false}
             >
-              <View className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 items-center justify-center mr-4">
-                <MaterialIcons name="logout" size={20} color="#EF4444" />
-              </View>
-              <Text className="flex-1 text-base font-bold text-red-500">{t('common:logout')}</Text>
-              <MaterialIcons name="chevron-right" size={24} color="#EF4444" />
-            </TouchableOpacity>
-          </View>
+                <View style={{ width: '100%', maxWidth: STUDY_COLUMN, alignSelf: 'center' }}>
+                    <View className="flex-row items-center py-4">
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            accessibilityRole="button"
+                            className="p-2 -ml-2 active:opacity-60"
+                        >
+                            <MaterialIcons name="arrow-back" size={23} color={theme.textSecondary} />
+                        </TouchableOpacity>
+                        <Text
+                            style={{ color: theme.textPrimary, fontSize: 22 }}
+                            className="font-lexend-bold ml-2"
+                        >
+                            {t('common:profile')}
+                        </Text>
+                    </View>
 
-          <View className="items-center pb-10">
-            <Text className="text-[10px] text-slate-400 dark:text-slate-600 font-bold uppercase tracking-[4px]">Dos Filos App</Text>
-            <Text className="text-[10px] text-slate-400 dark:text-slate-600 mt-1">v0.1.2</Text>
-          </View>
+                    <View className="flex-row items-center mb-8 mt-2">
+                        <View
+                            className="items-center justify-center"
+                            style={{
+                                width: 64,
+                                height: 64,
+                                borderRadius: 32,
+                                backgroundColor: theme.accentSoft,
+                                borderWidth: 1,
+                                borderColor: theme.border,
+                            }}
+                        >
+                            <Text
+                                style={{ color: theme.accent, fontSize: 22 }}
+                                className="font-lexend-semibold"
+                            >
+                                {initials}
+                            </Text>
+                        </View>
+                        <View className="flex-1 ml-4">
+                            <Text
+                                style={{ color: theme.textPrimary, fontSize: 19 }}
+                                className="font-lexend-semibold"
+                                numberOfLines={1}
+                            >
+                                {user?.firstName} {user?.lastName}
+                            </Text>
+                            <Text
+                                style={{ color: theme.textSecondary, fontSize: 14 }}
+                                className="font-lexend mt-0.5"
+                                numberOfLines={1}
+                            >
+                                {user?.email}
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* Lectura primero: es lo que el pastor cambia de verdad. */}
+                    <Card theme={theme} className="p-5 mb-4">
+                        <SectionLabel theme={theme}>{t('preach:reading_mode')}</SectionLabel>
+                        <View className="flex-row mt-4 -mx-1">
+                            {(Object.keys(READING_MODE_LABEL_KEYS) as ReadingMode[]).map((mode) =>
+                                option(
+                                    mode,
+                                    t(READING_MODE_LABEL_KEYS[mode]),
+                                    readingMode === mode,
+                                    () => setReadingMode(mode),
+                                    <View
+                                        style={{
+                                            width: 22,
+                                            height: 22,
+                                            borderRadius: 11,
+                                            backgroundColor: READING_MODES[mode].background,
+                                            borderWidth: 1,
+                                            borderColor: theme.borderStrong,
+                                        }}
+                                    />,
+                                ),
+                            )}
+                        </View>
+
+                        <SectionLabel theme={theme} style={{ marginTop: 24 }}>
+                            {t('preach:font_size')}
+                        </SectionLabel>
+                        <View className="flex-row items-center mt-3">
+                            <TouchableOpacity
+                                onPress={() => setFontSize(Math.max(DELIVERY_SIZE.min, fontSize - 2))}
+                                accessibilityRole="button"
+                                accessibilityLabel={t('preach:font_smaller')}
+                                className="items-center justify-center rounded-full"
+                                style={{
+                                    width: 40,
+                                    height: 40,
+                                    backgroundColor: theme.surfaceSunken,
+                                }}
+                            >
+                                <MaterialIcons name="remove" size={20} color={theme.textPrimary} />
+                            </TouchableOpacity>
+                            <Text
+                                style={{ color: theme.textPrimary, fontSize: 15, width: 64 }}
+                                className="font-lexend-semibold text-center"
+                            >
+                                {fontSize}
+                            </Text>
+                            <TouchableOpacity
+                                onPress={() => setFontSize(Math.min(DELIVERY_SIZE.max, fontSize + 2))}
+                                accessibilityRole="button"
+                                accessibilityLabel={t('preach:font_bigger')}
+                                className="items-center justify-center rounded-full"
+                                style={{
+                                    width: 40,
+                                    height: 40,
+                                    backgroundColor: theme.surfaceSunken,
+                                }}
+                            >
+                                <MaterialIcons name="add" size={20} color={theme.textPrimary} />
+                            </TouchableOpacity>
+                        </View>
+                    </Card>
+
+                    <Card theme={theme} className="p-5 mb-4">
+                        <SectionLabel theme={theme}>{t('common:appearance')}</SectionLabel>
+                        <View className="flex-row mt-4 -mx-1">
+                            {themeOptions.map((o) =>
+                                option(
+                                    o.value,
+                                    o.label,
+                                    themeMode === o.value,
+                                    () => setThemeMode(o.value),
+                                    <MaterialIcons
+                                        name={o.icon}
+                                        size={22}
+                                        color={themeMode === o.value ? theme.accent : theme.textSecondary}
+                                    />,
+                                ),
+                            )}
+                        </View>
+
+                        <SectionLabel theme={theme} style={{ marginTop: 24 }}>
+                            {t('common:language')}
+                        </SectionLabel>
+                        <View className="flex-row mt-4 -mx-1">
+                            {languageOptions.map((o) =>
+                                option(o.value, o.label, language === o.value, () =>
+                                    setLanguage(o.value),
+                                ),
+                            )}
+                        </View>
+                    </Card>
+
+                    <TouchableOpacity
+                        onPress={signOut}
+                        accessibilityRole="button"
+                        className="flex-row items-center justify-center py-4 rounded-2xl active:opacity-80"
+                        style={{ borderWidth: 1, borderColor: theme.border }}
+                    >
+                        <MaterialIcons name="logout" size={18} color={theme.danger} />
+                        <Text
+                            style={{ color: theme.danger, fontSize: 15 }}
+                            className="font-lexend-semibold ml-2"
+                        >
+                            {t('common:logout')}
+                        </Text>
+                    </TouchableOpacity>
+
+                    <View className="items-center mt-10">
+                        <SectionLabel theme={theme}>Dos Filos Preach</SectionLabel>
+                    </View>
+                </View>
+            </ScrollView>
         </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+    );
 }

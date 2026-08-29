@@ -9,6 +9,14 @@ import {
   Lexend_600SemiBold,
   Lexend_700Bold,
 } from '@expo-google-fonts/lexend';
+// Tres familias de LECTURA, elegibles desde el púlpito. No son estilos: cada
+// una resuelve un problema distinto del ojo que vuelve del público. Ver
+// DELIVERY_FACES en core/theme/typography.
+import { Literata_400Regular, Literata_600SemiBold } from '@expo-google-fonts/literata';
+import {
+  AtkinsonHyperlegible_400Regular,
+  AtkinsonHyperlegible_700Bold,
+} from '@expo-google-fonts/atkinson-hyperlegible';
 import { useEffect, useMemo } from 'react';
 import { useColorScheme } from 'nativewind';
 import 'react-native-reanimated';
@@ -36,6 +44,8 @@ configureGoogleSignIn();
 import { useLanguageStore } from '@/presentation/state/language.store';
 import { useTranslation } from 'react-i18next';
 
+import { APP_DARK, APP_LIGHT } from '@/core/theme/appTheme';
+
 export const unstable_settings = {
   initialRouteName: '(tabs)',
   bible: {
@@ -46,16 +56,18 @@ export const unstable_settings = {
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-// Custom navigation themes based on our design system
+// El tema de navegación sale del MISMO catálogo que las pantallas. Tenía su
+// propia copia de los colores, con un fondo azulado que ya no coincidía con
+// nada: al empujar una pantalla se veía el gris viejo un instante.
 const CustomDarkTheme = {
   ...navigationDarkTheme,
   colors: {
     ...navigationDarkTheme.colors,
-    primary: '#1754cf',
-    background: '#0b1120',
-    card: '#0b1120',
-    text: '#f8fafc',
-    border: 'rgba(255, 255, 255, 0.05)',
+    primary: APP_DARK.accent,
+    background: APP_DARK.background,
+    card: APP_DARK.surface,
+    text: APP_DARK.textPrimary,
+    border: APP_DARK.border,
   },
 };
 
@@ -63,11 +75,11 @@ const CustomDefaultTheme = {
   ...navigationDefaultTheme,
   colors: {
     ...navigationDefaultTheme.colors,
-    primary: '#1754cf',
-    background: '#f6f6f8',
-    card: '#ffffff',
-    text: '#0f172a',
-    border: '#e2e8f0',
+    primary: APP_LIGHT.accent,
+    background: APP_LIGHT.background,
+    card: APP_LIGHT.surface,
+    text: APP_LIGHT.textPrimary,
+    border: APP_LIGHT.border,
   },
 };
 
@@ -83,6 +95,10 @@ function RootLayoutNav() {
     'Lexend-Medium': Lexend_500Medium,
     'Lexend-SemiBold': Lexend_600SemiBold,
     'Lexend-Bold': Lexend_700Bold,
+    Literata: Literata_400Regular,
+    'Literata-SemiBold': Literata_600SemiBold,
+    Atkinson: AtkinsonHyperlegible_400Regular,
+    'Atkinson-Bold': AtkinsonHyperlegible_700Bold,
   });
   const segments = useSegments();
   const router = useRouter();
@@ -116,6 +132,10 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    // Vista previa de desarrollo: pasa sin sesión a propósito — existe justo
+    // para mirar pantallas cuando el login no está disponible.
+    const inDevPreview = __DEV__ && String(segments[0]) === 'dev';
+    if (inDevPreview) return;
     
     if (!user && !inAuthGroup) {
       router.replace('/(auth)/sign-in');
@@ -143,11 +163,20 @@ function RootLayoutNav() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="sermon/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="sermon/edit/[id]" options={{ headerShown: false, presentation: 'modal' }} />
+          <Stack.Screen name="sermon/paste" options={{ headerShown: false, presentation: 'modal' }} />
           <Stack.Screen
             name="preach/[id]"
             options={{ headerShown: false, animation: 'fade', gestureEnabled: false }}
           />
-          <Stack.Screen name="+not-found" />
+          {/* Grupo solo de desarrollo: sin header, como el púlpito real. */}
+          {/* El perfil dibuja su propia cabecera. Sin esto encima quedaba la
+              del sistema, con el título en minúscula y sin traducir
+              ("profile") y un "atrás" que decía "(tabs)". */}
+          <Stack.Screen name="profile" options={{ headerShown: false }} />
+          {/* Grupo solo de desarrollo: sin header, como el púlpito real. */}
+          <Stack.Screen name="dev" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" options={{ headerShown: false }} />
         </Stack>
         <ToastNotification />
         <StatusBar style={isDark ? 'light' : 'dark'} />

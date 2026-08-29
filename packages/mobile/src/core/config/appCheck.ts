@@ -1,29 +1,61 @@
 import { getApp } from '@react-native-firebase/app';
-import { initializeAppCheck, ReactNativeFirebaseAppCheckProvider } from '@react-native-firebase/app-check';
+import {
+    getToken,
+    initializeAppCheck,
+    ReactNativeFirebaseAppCheckProvider,
+} from '@react-native-firebase/app-check';
 
 /**
  * App Check desde el día 1 (M-04): la primera llamada real de la app
- * (getSermonsListSummary) lo exige. Producción: App Attest (iOS, con
- * fallback a DeviceCheck) + Play Integrity (Android). Desarrollo: provider
- * de debug — el token sale en el log nativo al arrancar y se registra en
- * Firebase console → App Check → Apps → Manage debug tokens.
+ * (getSermonsListSummary) lo exige.
  *
- * Riesgo abierto (M-09): Play Integrity puede fallar en la BOOX (e-ink,
- * certificación GMS variable). Verificar en F0 con el dispositivo real;
- * si falla, la BOOX interna corre con debug token provisionado.
+ * LA CARRERA CONTRA EL ARRANQUE NATIVO. Firebase inicializa App Check dentro
+ * de `FirebaseApp.configure()`, en el lanzamiento, ANTES de que corra el
+ * bundle de JS — y su proveedor por defecto en Apple es DeviceCheck. El
+ * syslog del iPad lo mostró sin lugar a dudas: `devicecheckd` responde a las
+ * .434 y el JS recién configura `appAttest` a las .905. El token que sale en
+ * el medio va contra `exchangeDeviceCheckToken`, y como sólo registramos App
+ * Attest en la consola, el servidor contesta 400 "App not registered".
+ *
+ * Por eso el primer `getToken` va con `forceRefresh: true`: descarta lo que
+ * haya emitido el arranque nativo y vuelve a pedirlo con el proveedor que
+ * efectivamente configuramos.
+ *
+ * ESCAPE PARA BUILDS INTERNOS. `EXPO_PUBLIC_APPCHECK_DEBUG=1` fuerza el
+ * proveedor de debug en builds firmados, y `EXPO_PUBLIC_APPCHECK_DEBUG_TOKEN`
+ * fija el token —así no hay que leerlo del log nativo, que en release es
+ * inaccesible—. El token se registra a mano en la consola. Viene APAGADO.
+ * Debilita App Check en el build que lo lleve: es sólo para distribución
+ * interna, nunca para producción. El token NO se commitea: entra por variable
+ * de entorno de EAS, porque quien lo tenga pasa App Check.
  */
 export async function initAppCheck(): Promise<void> {
-  const provider = new ReactNativeFirebaseAppCheckProvider();
-  provider.configure({
-    apple: {
-      provider: __DEV__ ? 'debug' : 'appAttestWithDeviceCheckFallback',
-    },
-    android: {
-      provider: __DEV__ ? 'debug' : 'playIntegrity',
-    },
-  });
-  await initializeAppCheck(getApp(), {
-    provider,
-    isTokenAutoRefreshEnabled: true,
-  });
+    const debugToken = process.env.EXPO_PUBLIC_APPCHECK_DEBUG_TOKEN;
+    const forceDebug = process.env.EXPO_PUBLIC_APPCHECK_DEBUG === '1';
+    const useDebug = __DEV__ || forceDebug;
+
+    const provider = new ReactNativeFirebaseAppCheckProvider();
+    provider.configure({
+        apple: useDebug
+            ? { provider: 'debug', debugToken }
+            : { provider: 'appAttest' },
+        android: useDebug ? { provider: 'debug', debugToken } : { provider: 'playIntegrity' },
+    });
+
+    const appCheck = await initializeAppCheck(getApp(), {
+        provider,
+        isTokenAutoRefreshEnabled: true,
+    });
+
+    // Se pide el token al arrancar por dos razones: forzar el refresco que
+    // descarta el del proveedor por defecto, y dejar el fallo en el log — sin
+    // esto el motivo vive en el log nativo y desde el servidor sólo se ve
+    // "el token no es un JWT". Nunca se registra el token en sí.
+    const label = useDebug ? 'debug' : 'attest';
+    try {
+        const result = await getToken(appCheck, true);
+        console.log(`[appCheck] proveedor=${label} token=${result?.token ? 'ok' : 'vacío'}`);
+    } catch (error) {
+        console.error(`[appCheck] no se pudo emitir el token (${label}):`, error);
+    }
 }

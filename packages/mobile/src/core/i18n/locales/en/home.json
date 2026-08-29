@@ -14,5 +14,20 @@
     "edited_ago": "Edited {{time}} ago",
     "yesterday": "Yesterday",
     "days_ago": "{{count}} days ago",
-    "go_preach": "Preach"
+    "go_preach": "Preach",
+    "next_to_preach": "Up next",
+    "open_pulpit": "Open the pulpit",
+    "no_sermons_title": "No published sermons yet",
+    "no_sermons_hint": "Sermons you publish on the web show up here, ready for the pulpit.",
+    "ready_offline_short": "Offline ready",
+    "continue_reading": "Keep reading",
+    "recent_marks": "Recent marks",
+    "no_marks": "No marked verses yet",
+    "series_in_progress": "Series in progress",
+    "of_total": "{{done}} of {{total}}",
+    "estimated_minutes": "≈ {{minutes}} min",
+    "offline_ready_count": "{{count}} ready offline",
+    "week_summary": "Your week",
+    "sermons_total": "{{count}} published sermons",
+    "marks_total": "{{count}} marked verses"
 }
