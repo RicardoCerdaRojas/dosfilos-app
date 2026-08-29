@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { libraryService, categoryService } from '@dosfilos/application';
-import { LibraryCategory, LibraryResourceEntity } from '@dosfilos/domain';
+import { LibraryCategory, LibraryResourceEntity, STRUCTURED_EXTRACTION_VERSIONS } from '@dosfilos/domain';
 import { useLibrary } from '@/hooks/library';
 
 /** Index check status for a resource — derived from the vector store, not the
@@ -26,14 +26,12 @@ export type IndexStatus = 'unknown' | 'indexed' | 'not-indexed' | 'checking' | '
  * with one of these doesn't need the user to click "Procesar
  * pendientes" — the indexer runs by itself.
  *
- * Keep in sync with `SUPPORTED_VERSIONS` in
- * `packages/functions/src/library/autoIndexOnExtractionReady.ts`.
+ * Sourced from the domain constant rather than re-listed here. This
+ * used to be a hand-maintained third copy of the same list, which is
+ * how the frontend and the indexer got to disagree about what counts
+ * as structured.
  */
-const AUTO_INDEXED_VERSIONS = new Set<string>([
-    '3.0-llamaparse',
-    '4.0-gemini-standard',
-    '5.0-pdfparse-structured',
-]);
+const AUTO_INDEXED_VERSIONS = new Set<string>(STRUCTURED_EXTRACTION_VERSIONS);
 
 interface UseLibraryResourcesResult {
     /** All resources owned by the user, sorted by Firestore listener order. */
