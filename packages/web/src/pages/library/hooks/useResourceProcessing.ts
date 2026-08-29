@@ -183,7 +183,20 @@ export function useResourceProcessing({ setIndexStatus }: UseResourceProcessingO
                 try {
                     const chunks = await libraryService.indexResource(resource, { force: true });
                     totalChunks += chunks;
-                    setIndexStatus(prev => ({ ...prev, [resource.id]: 'indexed' }));
+                    // Only claim success when chunks actually landed. A
+                    // resolved promise is not proof of an index: the legacy
+                    // path swallows its own errors and returns 0, and the
+                    // callable returns 0 when it skips. Flipping the card to
+                    // "Listo" on a bare non-throw showed a green pill and a
+                    // bumped ready-count for an index that did not exist —
+                    // the optimism evaporated on the next page load, which is
+                    // a worse way to find out than never having seen it.
+                    if (chunks > 0) {
+                        setIndexStatus(prev => ({ ...prev, [resource.id]: 'indexed' }));
+                    } else {
+                        console.warn(`Retry indexing produced 0 chunks for ${resource.title}`);
+                        errorCount++;
+                    }
                 } catch (error) {
                     console.error(`Retry indexing failed for ${resource.title}:`, error);
                     errorCount++;
