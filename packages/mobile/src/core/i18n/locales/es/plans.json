@@ -1,0 +1,13 @@
+{
+    "title": "Planes",
+    "sermons": "Sermones del plan",
+    "week": "Semana {{week}}",
+    "ready_of_total": "{{ready}} de {{total}} listos para predicar",
+    "finish_on_web": "Terminar en la web",
+    "start_on_web": "Empezar en la web",
+    "open_web": "Abrir el planificador",
+    "empty_title": "Todavía no hay planes de predicación",
+    "empty_hint": "Los planes se arman en la web; acá aparecen para predicarlos.",
+    "no_items": "Este plan no tiene sermones",
+    "no_items_hint": "Agrega sus semanas desde el planificador."
+}

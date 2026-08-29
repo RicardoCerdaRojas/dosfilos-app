@@ -46,6 +46,9 @@ export default function TabLayout() {
             icon: 'history-edu',
             label: t('common:sermons_tab'),
         },
+        // Los planes son un destino propio: el tablero contesta "qué predico
+        // ahora" y el plan contesta "dónde voy", que no es lo mismo.
+        { name: 'plans', href: '/(tabs)/plans', icon: 'event-note', label: t('plans:title') },
     ];
 
     const triggers = items.map((item) => (

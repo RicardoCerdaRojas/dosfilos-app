@@ -1,0 +1,13 @@
+{
+    "title": "Plans",
+    "sermons": "Sermons in the plan",
+    "week": "Week {{week}}",
+    "ready_of_total": "{{ready}} of {{total}} ready to preach",
+    "finish_on_web": "Finish on the web",
+    "start_on_web": "Start on the web",
+    "open_web": "Open the planner",
+    "empty_title": "No preaching plans yet",
+    "empty_hint": "Plans are built on the web; they show up here to be preached.",
+    "no_items": "This plan has no sermons",
+    "no_items_hint": "Add its weeks from the planner."
+}

@@ -15,6 +15,8 @@ import preachEs from './locales/es/preach.json';
 import preachEn from './locales/en/preach.json';
 import authEs from './locales/es/auth.json';
 import authEn from './locales/en/auth.json';
+import plansEs from './locales/es/plans.json';
+import plansEn from './locales/en/plans.json';
 
 const resources = {
     es: {
@@ -24,6 +26,7 @@ const resources = {
         sermons: sermonsEs,
         preach: preachEs,
         auth: authEs,
+        plans: plansEs,
     },
     en: {
         common: commonEn,
@@ -32,6 +35,7 @@ const resources = {
         sermons: sermonsEn,
         preach: preachEn,
         auth: authEn,
+        plans: plansEn,
     },
 };
 
@@ -44,7 +48,7 @@ i18n
         resources,
         lng: deviceLanguage, // Initial language
         fallbackLng: 'es',
-        ns: ['common', 'home', 'bible', 'sermons', 'preach', 'auth'],
+        ns: ['common', 'home', 'bible', 'sermons', 'preach', 'auth', 'plans'],
         defaultNS: 'common',
         interpolation: {
             escapeValue: false, // React already escapes values
