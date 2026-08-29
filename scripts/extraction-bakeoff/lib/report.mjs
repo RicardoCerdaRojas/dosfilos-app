@@ -46,6 +46,24 @@ export function renderMarkdown(run) {
     const ran = results.filter(r => !r.skipped);
     const skipped = results.filter(r => r.skipped);
 
+    if (doc.detected) {
+        lines.push(`- **Escritura detectada**: griego ${doc.detected.greek} letras · hebreo ${doc.detected.hebrew} consonantes`);
+        lines.push('');
+    }
+
+    if (doc.flagWarnings?.length) {
+        lines.push('> ### ⚠️ Leer antes que el veredicto');
+        lines.push('>');
+        for (const w of doc.flagWarnings) lines.push(`> - ${w}`);
+        lines.push('');
+    }
+
+    if (ran.length < 3) {
+        lines.push(`> Sólo corrieron ${ran.length} motor(es). Esto todavía no es una comparación:`);
+        lines.push('> falta el resto para poder decir cuál conviene. Revisa las claves de API.');
+        lines.push('');
+    }
+
     // ── Verdicts first: this is what the reader came for.
     lines.push('## Veredicto');
     lines.push('');
@@ -124,7 +142,7 @@ export function renderMarkdown(run) {
     lines.push('');
 
     // ── Novelty, gated.
-    if (doc.hasEmbeddedText) {
+    if (doc.noveltyUsable) {
         lines.push('## Texto que ningún otro motor produjo');
         lines.push('');
         lines.push('| Motor | Ratio de novedad |');
@@ -139,6 +157,15 @@ export function renderMarkdown(run) {
         lines.push('');
     }
 
+    if (!doc.noveltyUsable && doc.hasEmbeddedText && doc.enginesRan < 3) {
+        lines.push('## Texto que ningún otro motor produjo');
+        lines.push('');
+        lines.push(`Omitida: con ${doc.enginesRan} motor(es) esta métrica degenera en una diferencia`);
+        lines.push('por pares — ambos salen con el mismo número alto y no distingue quién inventó');
+        lines.push('texto de quién se comió texto. Necesita tres o más para decir algo.');
+        lines.push('');
+    }
+
     // ── Page drift vs the reference.
     const withDrift = ran.filter(r => r.metrics.drift);
     if (withDrift.length) {
@@ -148,6 +175,10 @@ export function renderMarkdown(run) {
         lines.push('|---|---:|---:|---|');
         for (const r of withDrift) {
             const d = r.metrics.drift;
+            if (d.inapplicable) {
+                lines.push(`| ${r.label} | — | no aplica | ${d.inapplicable} |`);
+                continue;
+            }
             const worst = d.disagreements.slice(0, 5).map(x => x.page).join(', ') || '—';
             lines.push(`| ${r.label} | ${d.comparedPages} | ${fmt(d.agreementRatio)} | ${worst} |`);
         }

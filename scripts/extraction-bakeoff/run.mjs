@@ -53,7 +53,7 @@ import { fileURLToPath } from 'node:url';
 import { ENGINES } from './lib/engines.mjs';
 import { fetchResourcePdf, pdfPageCount, slicePdf } from './lib/pdf.mjs';
 import {
-    scriptFidelity, pageIntegrity, structure, novelty, pageDrift, verdict,
+    scriptFidelity, pageIntegrity, structure, novelty, pageDrift, verdict, detectScripts,
 } from './lib/metrics.mjs';
 import { renderMarkdown, renderHtml } from './lib/report.mjs';
 
@@ -187,6 +187,40 @@ if (ran.length === 0) {
 const baseline = ran.find(r => r.id === 'pdftotext');
 const hasEmbeddedText = !!baseline && baseline.markdown.replace(/<!--[^>]*-->/g, '').trim().length > 200;
 
+// La novedad compara a cada motor contra TODOS los demás. Con menos de tres
+// que hayan corrido, degenera en una diferencia por pares: los dos salen con
+// el mismo número alto y no distingue quién inventó de quién se comió texto.
+// Reportarla así invita a concluir cualquier cosa, así que se calla.
+const noveltyUsable = hasEmbeddedText && ran.length >= 3;
+
+// Qué escrituras hay REALMENTE, según el motor que más encontró. Atrapa el
+// error de operador más fácil: pedir --greek sobre páginas que están en
+// hebreo. Sin esto el veredicto reprueba a todos por no traer un griego que
+// nunca estuvo ahí, y el informe afirma algo falso con total seguridad.
+const detected = detectScripts(ran.map(r => r.markdown));
+const flagWarnings = [];
+if (args.greek && !detected.hasGreek) {
+    flagWarnings.push(
+        `Pediste --greek pero ningún motor encontró griego (máximo ${detected.greek} letras). `
+        + 'Revisa el rango de páginas o quita el flag: tal como está, el veredicto reprueba '
+        + 'a todos por no recuperar algo que probablemente no está en estas páginas.');
+}
+if (args.hebrew && !detected.hasHebrew) {
+    flagWarnings.push(
+        `Pediste --hebrew pero ningún motor encontró hebreo (máximo ${detected.hebrew} consonantes). `
+        + 'Revisa el rango de páginas o quita el flag.');
+}
+if (!args.greek && detected.hasGreek) {
+    flagWarnings.push(
+        `Hay griego en estas páginas (${detected.greek} letras) y NO pasaste --greek, `
+        + 'así que nadie está siendo evaluado por conservar los diacríticos.');
+}
+if (!args.hebrew && detected.hasHebrew) {
+    flagWarnings.push(
+        `Hay hebreo en estas páginas (${detected.hebrew} consonantes) y NO pasaste --hebrew, `
+        + 'así que nadie está siendo evaluado por conservar el niqqud.');
+}
+
 for (const r of ran) {
     const others = ran.filter(o => o.id !== r.id).map(o => o.markdown);
     r.metrics = {
@@ -194,7 +228,7 @@ for (const r of ran) {
         script: scriptFidelity(r.markdown),
         page: pageIntegrity(r.markdown, slice.pages),
         structure: structure(r.markdown),
-        novelty: hasEmbeddedText ? novelty(r.markdown, others) : { novelRatio: null, sampleNovel: [] },
+        novelty: noveltyUsable ? novelty(r.markdown, others) : { novelRatio: null, sampleNovel: [] },
         drift: baseline && r.id !== 'pdftotext' ? pageDrift(baseline.markdown, r.markdown) : null,
     };
     r.verdict = verdict(r.metrics, { expectGreek: !!args.greek, expectHebrew: !!args.hebrew });
@@ -213,6 +247,10 @@ const run = {
         expectGreek: !!args.greek,
         expectHebrew: !!args.hebrew,
         hasEmbeddedText,
+        noveltyUsable,
+        detected,
+        flagWarnings,
+        enginesRan: ran.length,
     },
     results,
 };
@@ -221,7 +259,7 @@ await fs.writeFile(path.join(outDir, 'informe.md'), renderMarkdown(run), 'utf8')
 await fs.writeFile(path.join(outDir, 'comparar.html'), renderHtml(run, { probes: args.probes }), 'utf8');
 await fs.writeFile(path.join(outDir, 'datos.json'), JSON.stringify(run, null, 2), 'utf8');
 
-if (hasEmbeddedText) {
+if (noveltyUsable) {
     const novelLines = ran.flatMap(r => [
         `── ${r.label} (novedad ${r.metrics.novelty.novelRatio?.toFixed(3)}) ──`,
         ...(r.metrics.novelty.sampleNovel.map(s => `  ${s}`)),
@@ -231,6 +269,11 @@ if (hasEmbeddedText) {
 }
 
 // ── Console summary ────────────────────────────────────────────────────────
+
+if (flagWarnings.length) {
+    console.log('\n⚠  Advertencias sobre los flags');
+    for (const w of flagWarnings) console.log(`   ${w}`);
+}
 
 console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 console.log('Veredicto');

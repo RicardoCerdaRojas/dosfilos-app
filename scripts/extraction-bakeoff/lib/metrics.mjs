@@ -203,6 +203,25 @@ export function scriptDensityByPage(text) {
 export function pageDrift(textA, textB, { minSignal = 5 } = {}) {
     const a = scriptDensityByPage(textA);
     const b = scriptDensityByPage(textB);
+
+    // Si la referencia no encontró NADA de griego ni hebreo, esto no puede
+    // medir corrimiento: cada página donde el otro motor sí encontró algo
+    // contaría como desacuerdo y el resultado sería 0% de coincidencia,
+    // que se lee como "numeración corrida" cuando en realidad lo que pasó
+    // es que un motor vio la escritura y el otro no. Son diagnósticos
+    // opuestos y confundirlos manda a arreglar el problema equivocado.
+    const totalA = Object.values(a).reduce((n, d) => n + d.greek + d.hebrew, 0);
+    const totalB = Object.values(b).reduce((n, d) => n + d.greek + d.hebrew, 0);
+    if (totalA < minSignal || totalB < minSignal) {
+        return {
+            comparedPages: 0,
+            agreementRatio: null,
+            disagreements: [],
+            inapplicable: totalA < minSignal
+                ? 'la referencia no recuperó escritura griega ni hebrea — sin base para comparar'
+                : 'este motor no recuperó escritura griega ni hebrea',
+        };
+    }
     const pages = [...new Set([...Object.keys(a), ...Object.keys(b)])].map(Number).sort((x, y) => x - y);
 
     let compared = 0;
@@ -361,6 +380,25 @@ export function verdict(m, { expectGreek, expectHebrew }) {
     }
 
     return { status: fatal ? 'NO APTO' : 'INSPECCIONAR', notes };
+}
+
+/**
+ * Qué escrituras aparecen de verdad, según el motor que más encontró.
+ *
+ * Sirve para atrapar el error de operador más fácil de cometer: pedir
+ * `--greek` sobre páginas de un comentario a los Profetas Menores, que están
+ * en hebreo. El veredicto entonces reprueba a todos por no traer griego que
+ * nunca estuvo ahí, y el informe queda diciendo algo falso con mucha
+ * seguridad.
+ */
+export function detectScripts(texts) {
+    let greek = 0, hebrew = 0;
+    for (const t of texts) {
+        const s = scriptFidelity(t);
+        greek = Math.max(greek, s.greekLetters);
+        hebrew = Math.max(hebrew, s.hebrewConsonants);
+    }
+    return { greek, hebrew, hasGreek: greek >= 10, hasHebrew: hebrew >= 10 };
 }
 
 function ratio(num, den) {
