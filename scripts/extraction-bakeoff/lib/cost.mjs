@@ -84,16 +84,38 @@ export function computeCost(result, rates) {
         // mientras el panel mostraba 1.670 créditos consumidos. El campo por
         // trabajo no refleja el gasto; el delta del contador de cuenta entre
         // dos trabajos consecutivos sí, porque es el mismo número que factura.
-        const credits = b.creditsDelta ?? null;
         const rate = rates?.llamaparse?.usdPorCredito;
+
+        // En plan Free la API devuelve 0 en los dos campos de crédito, así que
+        // el delta no sirve. Lo que SÍ reporta bien es `job_pages`. Con el
+        // consumo por página de cada modo —medido aislando un motor por
+        // corrida y leyendo el panel antes y después— el costo se reconstruye
+        // exactamente. Es una medición del operador, no de la API, y por eso
+        // es la única que hasta ahora resultó fiable: el panel marcó 539
+        // créditos mientras la API insistía en 0.
+        const mode = result.id.replace('llamaparse-', '');
+        const perPage = rates?.llamaparse?.creditosPorPagina?.[mode];
+        if (perPage != null && b.pagesBilled) {
+            const c = perPage * b.pagesBilled;
+            if (rate == null) return { usd: null, basis: `${c} créditos (${perPage}/pág × ${b.pagesBilled})`, caveat: 'falta usdPorCredito' };
+            return {
+                usd: c * rate,
+                credits: c,
+                basis: `${b.pagesBilled} págs × ${perPage} créd/pág × ${rate} USD`,
+                caveat: null,
+            };
+        }
+
+        const credits = b.creditsDelta ?? null;
 
         if (credits === null) {
             return {
                 usd: null,
-                basis: b.credits === 0 ? 'la API reportó 0 en job_credits_usage' : null,
-                caveat: 'sin delta del contador de cuenta. `job_credits_usage` no es fiable: '
-                    + 'devolvió 0 mientras el panel sí acumulaba consumo. Corre con --fresh y '
-                    + 'al menos dos motores de LlamaParse para obtener deltas.',
+                basis: b.credits === 0 ? `la API reportó 0 créditos; ${b.pagesBilled ?? '?'} páginas facturadas` : null,
+                caveat: `sin \`creditosPorPagina.${mode}\` en rates.json. La API no reporta créditos `
+                    + 'en plan Free (0 en job_credits_usage y en credits_used). Aísla este modo en '
+                    + 'una corrida --fresh, lee el panel antes y después, divide por las páginas, '
+                    + 'y anota el valor.',
             };
         }
         if (rate == null) {

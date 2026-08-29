@@ -30,7 +30,13 @@
   "llamaparse": {
     "usdPorCredito": null,
     "_nota": "La API reporta job_credits_usage por trabajo, pero MIDE MAL: devolvió 0 en las tres modalidades mientras el panel acumulaba consumo. El banco usa el delta del contador de cuenta entre trabajos consecutivos. `creditosPorMes` es el cupo del plan (Free = 10000): en un plan con cupo, la restricción real no es el dinero sino cuántos libros caben en el mes.",
-    "creditosPorMes": null
+    "creditosPorMes": null,
+    "creditosPorPagina": {
+      "fast": null,
+      "balanced": null,
+      "premium": null
+    },
+    "_fuenteCreditosPorPagina": "MEDIR aislando un modo por corrida: anotar créditos del panel, correr con --engines llamaparse-<modo> --fresh, volver a anotar, dividir el delta por las páginas del recorte. Medido el 2026-08-29 con los tres modos juntos: 539 créditos por 33 páginas (11 × 3 modos) = 16,3 créd/pág de PROMEDIO MEZCLADO, que no sirve para decidir porque premium y fast no cuestan lo mismo. Hay que separarlos."
   },
   "mistral": {
     "usdPorPagina": null,
