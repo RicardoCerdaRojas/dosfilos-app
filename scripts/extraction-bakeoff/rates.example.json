@@ -1,0 +1,42 @@
+{
+  "_leeme": [
+    "Tarifas para convertir unidades facturables en dinero.",
+    "",
+    "NINGUNA de estas cifras viene precargada a propósito. Los precios de estos",
+    "servicios cambian, dependen del plan contratado y de descuentos por volumen,",
+    "y un número recordado de memoria produce una comparación que parece rigurosa",
+    "y no lo es. Copia este archivo a `rates.json`, llénalo con lo que dice TU",
+    "factura o TU panel, y el informe calculará el dinero mostrando siempre qué",
+    "tarifas usó.",
+    "",
+    "Deja en null lo que no sepas: el informe reporta las unidades facturables",
+    "igual, y marca el dinero como NO CALCULABLE en vez de inventarlo.",
+    "",
+    "Dónde mirar cada una:",
+    "  llamaparse  → cloud.llamaindex.ai, panel de uso. El costo por crédito",
+    "                depende del plan; el modo premium consume MUCHOS más",
+    "                créditos por página que fast.",
+    "  mistral     → console.mistral.ai, precios de mistral-ocr-latest.",
+    "  gemini      → ai.google.dev/pricing. Entrada y salida se cobran distinto;",
+    "                la salida cuesta bastante más, y una transcripción es casi",
+    "                toda salida."
+  ],
+
+  "moneda": "USD",
+
+  "llamaparse": {
+    "usdPorCredito": null,
+    "_nota": "La API reporta job_credits_usage por trabajo. dinero = créditos × usdPorCredito"
+  },
+
+  "mistral": {
+    "usdPorPagina": null,
+    "_nota": "La API reporta pages_processed. dinero = páginas × usdPorPagina"
+  },
+
+  "gemini": {
+    "usdPorMillonTokensEntrada": null,
+    "usdPorMillonTokensSalida": null,
+    "_nota": "Entrada y salida separadas. Una transcripción de PDF es mayormente salida."
+  }
+}

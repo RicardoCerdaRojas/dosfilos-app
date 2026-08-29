@@ -63,7 +63,9 @@ export async function runPdfToText(pdfPath) {
             markdown: joinPages(pages),
             pageCount: pages.length,
             costUnits: 0,
+            costUnit: '—',
             costNote: 'gratis (local)',
+            billing: { cacheHit: false },
             elapsedMs: Date.now() - started,
         };
     } catch (err) {
@@ -82,7 +84,7 @@ const LLAMAPARSE_BASE = 'https://api.cloud.llamaindex.ai/api/v1/parsing';
  * included here precisely so the report can put a number on that decision
  * instead of an argument.
  */
-export async function runLlamaParse(pdfPath, { mode, apiKey, maxPollSeconds = 900 }) {
+export async function runLlamaParse(pdfPath, { mode, apiKey, maxPollSeconds = 900, invalidateCache = false }) {
     if (!apiKey) return { skipped: true, reason: 'falta LLAMAPARSE_API_KEY' };
     const started = Date.now();
 
@@ -95,6 +97,12 @@ export async function runLlamaParse(pdfPath, { mode, apiKey, maxPollSeconds = 90
         if (mode === 'fast') form.append('fast_mode', 'true');
         else if (mode === 'premium') form.append('premium_mode', 'true');
         // 'balanced' = neither flag: the default LLM-based parse.
+        // LlamaParse cachea por hash de archivo. Re-medir el mismo recorte
+        // devuelve el resultado guardado y factura 0 créditos, lo que hace
+        // que una comparación de costos mienta sin avisar. Con esto se fuerza
+        // trabajo real; `job_is_cache_hit` en la respuesta confirma si surtió
+        // efecto, así que la instrumentación se verifica a sí misma.
+        if (invalidateCache) form.append('invalidate_cache', 'true');
 
         const upRes = await fetch(`${LLAMAPARSE_BASE}/upload`, {
             method: 'POST',
@@ -137,13 +145,24 @@ export async function runLlamaParse(pdfPath, { mode, apiKey, maxPollSeconds = 90
             content: (p.md && p.md.trim()) || (p.text && p.text.trim()) || '',
         }));
 
+        // Metadata de facturación COMPLETA. Antes sólo se guardaba el número
+        // de créditos, y una lectura de 0 no se podía distinguir de un cache
+        // hit — se reportó 0 como si fuera el costo real. Guardar la bandera
+        // hace que el informe pueda decir "0 porque vino de caché" en vez de
+        // "0 porque es gratis".
+        const meta = result.job_metadata ?? {};
         return {
             markdown: joinPages(pages),
             pageCount: pages.length,
-            // LlamaParse bills in credits and reports what it actually charged;
-            // cached jobs cost 0 even though pages come back.
-            costUnits: result.job_metadata?.job_credits_usage ?? null,
+            costUnits: meta.job_credits_usage ?? null,
+            costUnit: 'créditos',
             costNote: 'créditos LlamaParse (reportados por la API)',
+            billing: {
+                credits: meta.job_credits_usage ?? null,
+                pagesBilled: meta.job_pages ?? null,
+                cacheHit: meta.job_is_cache_hit ?? null,
+                creditsUsedAccount: meta.credits_used ?? null,
+            },
             elapsedMs: Date.now() - started,
         };
     } catch (err) {
@@ -209,7 +228,9 @@ export async function runMistralOcr(pdfPath, { apiKey, model = 'mistral-ocr-late
             markdown: joinPages(pages),
             pageCount: pages.length,
             costUnits: pagesProcessed,
-            costNote: 'páginas procesadas (multiplica por tu tarifa vigente por página)',
+            costUnit: 'páginas',
+            costNote: 'páginas procesadas',
+            billing: { pagesBilled: pagesProcessed, cacheHit: false },
             elapsedMs: Date.now() - started,
         };
     } catch (err) {
@@ -279,7 +300,17 @@ export async function runGemini(pdfPath, { apiKey, model = process.env.BAKEOFF_G
             markdown,
             pageCount: new Set([...markdown.matchAll(/<!--\s*page:\s*(\d+)\s*-->/g)].map(m => m[1])).size,
             costUnits: usage.totalTokenCount ?? null,
-            costNote: 'tokens totales (entrada + salida)',
+            costUnit: 'tokens',
+            costNote: 'tokens totales',
+            // Entrada y salida se tarifan distinto —la salida cuesta bastante
+            // más—, así que sumarlas y multiplicar por una sola tarifa da un
+            // número equivocado. Se guardan separadas.
+            billing: {
+                inputTokens: usage.promptTokenCount ?? null,
+                outputTokens: usage.candidatesTokenCount ?? null,
+                totalTokens: usage.totalTokenCount ?? null,
+                cacheHit: false,
+            },
             elapsedMs: Date.now() - started,
             truncated: body.candidates?.[0]?.finishReason === 'MAX_TOKENS',
         };
@@ -293,9 +324,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 /** Registry consumed by run.mjs. Order here is the order in the report. */
 export const ENGINES = [
     { id: 'pdftotext', label: 'pdftotext (referencia)', run: (p, env) => runPdfToText(p, env) },
-    { id: 'llamaparse-fast', label: 'LlamaParse fast (PRODUCCIÓN HOY)', run: (p, env) => runLlamaParse(p, { mode: 'fast', apiKey: env.LLAMAPARSE_API_KEY }) },
-    { id: 'llamaparse-balanced', label: 'LlamaParse balanced', run: (p, env) => runLlamaParse(p, { mode: 'balanced', apiKey: env.LLAMAPARSE_API_KEY }) },
-    { id: 'llamaparse-premium', label: 'LlamaParse premium', run: (p, env) => runLlamaParse(p, { mode: 'premium', apiKey: env.LLAMAPARSE_API_KEY }) },
+    { id: 'llamaparse-fast', label: 'LlamaParse fast (PRODUCCIÓN HOY)', run: (p, env, o) => runLlamaParse(p, { mode: 'fast', apiKey: env.LLAMAPARSE_API_KEY, invalidateCache: o?.invalidateCache }) },
+    { id: 'llamaparse-balanced', label: 'LlamaParse balanced', run: (p, env, o) => runLlamaParse(p, { mode: 'balanced', apiKey: env.LLAMAPARSE_API_KEY, invalidateCache: o?.invalidateCache }) },
+    { id: 'llamaparse-premium', label: 'LlamaParse premium', run: (p, env, o) => runLlamaParse(p, { mode: 'premium', apiKey: env.LLAMAPARSE_API_KEY, invalidateCache: o?.invalidateCache }) },
     { id: 'mistral-ocr', label: 'Mistral OCR', run: (p, env) => runMistralOcr(p, { apiKey: env.MISTRAL_API_KEY }) },
     { id: 'gemini', label: 'Gemini Flash (tier Estándar)', run: (p, env) => runGemini(p, { apiKey: env.GEMINI_API_KEY }) },
 ];

@@ -34,6 +34,10 @@
  *   --hebrew           Espera hebreo: reprueba a quien pierda el niqqud
  *   --engines a,b,c    Subconjunto de motores (por defecto: todos)
  *   --probe "texto"    Pasaje a buscar en cada salida (repetible)
+ *   --fresh            Invalida la caché de LlamaParse para medir COSTO REAL.
+ *                      Sin esto, re-medir el mismo recorte factura 0 y la
+ *                      comparación de costos miente sin avisar.
+ *   --book-pages N     Páginas del libro completo, para extrapolar el costo
  *   --out <dir>        Dónde escribir (por defecto ./bakeoff-out/<timestamp>)
  *
  * CLAVES (por variable de entorno; ninguna se imprime)
@@ -56,6 +60,7 @@ import {
     scriptFidelity, pageIntegrity, structure, novelty, pageDrift, verdict, detectScripts,
 } from './lib/metrics.mjs';
 import { renderMarkdown, renderHtml } from './lib/report.mjs';
+import { loadRates, computeCost, extrapolate } from './lib/cost.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..');
@@ -75,6 +80,8 @@ function parseArgs(argv) {
         else if (a === '--out') out.out = next();
         else if (a === '--greek') out.greek = true;
         else if (a === '--hebrew') out.hebrew = true;
+        else if (a === '--fresh') out.fresh = true;
+        else if (a === '--book-pages') out.bookPages = Number(next());
         else if (a === '--help' || a === '-h') out.help = true;
     }
     return out;
@@ -158,7 +165,7 @@ for (const engine of selected) {
     process.stdout.write(`▶ ${engine.label} … `);
     let res;
     try {
-        res = await engine.run(slicePath, env);
+        res = await engine.run(slicePath, env, { invalidateCache: !!args.fresh });
     } catch (err) {
         res = { skipped: true, reason: `excepción no controlada: ${err.message}` };
     }
@@ -172,6 +179,7 @@ for (const engine of selected) {
     console.log(`ok — ${res.markdown.length} chars, ${(res.elapsedMs / 1000).toFixed(1)}s`);
     await fs.writeFile(path.join(outDir, `${engine.id}.md`), res.markdown, 'utf8');
     results.push({ id: engine.id, label: engine.label, ...res });
+    if (res.billing?.cacheHit) console.log('    ⚠  vino de CACHÉ — el costo de esta corrida no es real');
 }
 
 const ran = results.filter(r => !r.skipped);
@@ -251,8 +259,18 @@ for (const r of ran) {
 
 // ── Report ─────────────────────────────────────────────────────────────────
 
+// Costo: sale de tarifas que el operador confirma en `rates.json`, nunca de
+// precios recordados. Sin tarifa, el informe dice NO CALCULABLE en vez de
+// inventar un número que después se cita como si fuera medido.
+const ratesInfo = loadRates(__dirname);
+for (const r of ran) {
+    r.cost = computeCost(r, ratesInfo.rates);
+    r.costPerBook = extrapolate(r.cost.usd, slice.pages, args.bookPages ?? totalPages);
+}
+
 const run = {
     generatedAt: new Date().toISOString(),
+    rates: { present: ratesInfo.present, path: ratesInfo.path, values: ratesInfo.rates },
     doc: {
         title,
         resourceId,
@@ -266,6 +284,8 @@ const run = {
         detected,
         flagWarnings,
         enginesRan: ran.length,
+        fresh: !!args.fresh,
+        bookPages: args.bookPages ?? totalPages,
     },
     results,
 };

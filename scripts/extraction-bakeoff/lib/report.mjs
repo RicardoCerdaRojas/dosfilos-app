@@ -192,15 +192,50 @@ export function renderMarkdown(run) {
     // ── Cost and latency.
     lines.push('## Costo y latencia');
     lines.push('');
-    lines.push('| Motor | Unidades | Unidad | Segundos |');
-    lines.push('|---|---:|---|---:|');
+    if (!run.rates?.present) {
+        lines.push(`> Sin \`rates.json\` (esperado en \`${run.rates?.path ?? 'scripts/extraction-bakeoff/'}\`).`);
+        lines.push('> Se reportan las unidades facturables; el dinero queda NO CALCULABLE.');
+        lines.push('> Copia `rates.example.json` y llénalo con las tarifas de TU factura.');
+        lines.push('');
+    }
+    if (!doc.fresh) {
+        lines.push('> Corrida SIN `--fresh`: si un recorte ya se había medido, LlamaParse puede');
+        lines.push('> devolverlo desde caché y facturar 0. La columna "caché" lo indica cuando la');
+        lines.push('> API lo reporta.');
+        lines.push('');
+    }
+    lines.push('| Motor | Unidades facturables | Caché | USD medido | USD por libro | Segundos |');
+    lines.push('|---|---|---|---|---|---:|');
     for (const r of ran) {
-        lines.push(`| ${r.label} | ${r.costUnits ?? '—'} | ${r.costNote} | ${(r.elapsedMs / 1000).toFixed(1)} |`);
+        const b = r.billing ?? {};
+        const units = r.costUnits === null || r.costUnits === undefined
+            ? '—'
+            : `${r.costUnits} ${r.costUnit ?? ''}`.trim();
+        const cache = b.cacheHit === true ? 'SÍ' : b.cacheHit === false ? 'no' : '?';
+        const usd = r.cost?.usd == null ? '**NO CALCULABLE**' : `$${r.cost.usd.toFixed(4)}`;
+        const perBook = r.costPerBook?.usd == null ? '—' : `$${r.costPerBook.usd.toFixed(2)}`;
+        lines.push(`| ${r.label} | ${units} | ${cache} | ${usd} | ${perBook} | ${(r.elapsedMs / 1000).toFixed(1)} |`);
     }
     lines.push('');
-    lines.push('Las unidades NO son comparables entre sí: LlamaParse cobra créditos, Mistral cobra');
-    lines.push('páginas y Gemini cobra tokens. Para comparar dinero, multiplica cada una por tu');
-    lines.push('tarifa vigente — y verifícala hoy, que los precios de estos servicios se mueven.');
+    const caveats = ran.filter(r => r.cost?.caveat);
+    if (caveats.length) {
+        lines.push('**Advertencias de costo**');
+        lines.push('');
+        for (const r of caveats) lines.push(`- **${r.label}**: ${r.cost.caveat}`);
+        lines.push('');
+    }
+    if (run.rates?.present) {
+        lines.push('Tarifas usadas (de `rates.json`):');
+        lines.push('');
+        lines.push('```json');
+        lines.push(JSON.stringify(run.rates.values, (k, v) => (k.startsWith('_') ? undefined : v), 2));
+        lines.push('```');
+        lines.push('');
+    }
+    lines.push(`«USD por libro» extrapola linealmente del recorte (${doc.slicePages} págs) al libro`);
+    lines.push(`completo (${doc.bookPages ?? '?'} págs). Es el número sobre el que se decide, y el más`);
+    lines.push('fácil de citar sin sus supuestos: vale para cobro por página, y hay que desconfiar');
+    lines.push('de él en cualquier motor con costo fijo por trabajo.');
     lines.push('');
 
     lines.push('---');
