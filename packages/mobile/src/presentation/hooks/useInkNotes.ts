@@ -83,7 +83,11 @@ export function useInkNotes(
         return bestOffset !== null && bestRect ? { offset: bestOffset, rect: bestRect } : null;
     };
 
-    const anchorRectFor = (note: InkNote): AnchorRect | null => {
+    // Recibe la forma mínima que dibuja la capa; adentro se usa como nota del
+    // sermón, que es lo que efectivamente guarda este hook.
+    const anchorRectFor = (drawable: { id: string }): AnchorRect | null => {
+        const note = sectionNotes.find((n) => n.id === drawable.id);
+        if (!note) return null;
         if (!section) return null;
         // El ancla se re-resuelve contra el texto ACTUAL: si el sermón se editó
         // en la web, la nota sigue encontrando su pasaje.

@@ -17,7 +17,27 @@ export interface BibleMark {
     verse: number;
     color: HighlightColor;
     style: MarkStyle;
+    /**
+     * Palabras marcadas DENTRO del versículo, por índice, ambas incluidas.
+     *
+     * Ausentes significa el versículo entero — que es como se guardaban todas
+     * las marcas antes, así que las viejas siguen leyéndose sin migrar nada.
+     *
+     * El índice de palabra alcanza como ancla porque el texto bíblico no se
+     * edita: la palabra 4 de Jonás 1:3 va a seguir siendo la misma palabra
+     * dentro de veinte años. Es la misma razón por la que acá no hace falta
+     * el reanclado por offsets que sí necesita el sermón.
+     */
+    from?: number;
+    to?: number;
     createdAt: Date;
+}
+
+/** Rango de palabras a marcar dentro de un versículo. Sin extremos, entero. */
+export interface VerseWordRange {
+    verse: number;
+    from?: number;
+    to?: number;
 }
 
 /** Clave estable de un versículo, para buscar marcas sin recorrer la lista. */

@@ -163,9 +163,9 @@ export function BibleConsultSheet({
                             // Un punto menos que el sermón: es texto de apoyo,
                             // no lo que se está leyendo en voz alta.
                             fontSize={Math.max(16, fontSize - 4)}
-                            selected={EMPTY_SELECTION}
-                            onToggleVerse={NOOP}
-                            onSelectRange={NOOP_RANGE}
+                            selection={null}
+                            onSelectionChange={NOOP}
+                            onSelectionEnd={NOOP}
                         />
                     </ScrollView>
 
@@ -191,7 +191,5 @@ export function BibleConsultSheet({
     );
 }
 
-/** Constantes fuera del render: en el atril no se marca, se lee. */
-const EMPTY_SELECTION = new Set<number>();
+/** Constante fuera del render: en el atril no se marca, se lee. */
 const NOOP = () => undefined;
-const NOOP_RANGE = () => undefined;

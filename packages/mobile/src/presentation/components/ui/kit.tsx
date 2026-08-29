@@ -65,10 +65,16 @@ export function SectionLabel({
                     fontSize: 11,
                     letterSpacing: 1.4,
                     textTransform: 'uppercase',
+                    flexShrink: 1,
                 },
                 style,
             ]}
             className="font-lexend-semibold"
+            // El rótulo lleva espaciado entre letras y RN no lo cuenta al
+            // medir: el ancho calculado queda corto y la última letra se
+            // corta. Con `flexShrink: 1` y una sola línea, encoge en vez de
+            // mutilarse — se veía como "KEEP READIN(".
+            numberOfLines={1}
             {...rest}
         >
             {children}

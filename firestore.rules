@@ -161,6 +161,13 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Notas manuscritas sobre el texto bíblico. Colección propia y no dentro
+    // de bibleMarks: son documentos de otra forma (trazos, no color y estilo)
+    // y mezclarlos obligaría a filtrar por tipo en cada lectura.
+    match /users/{userId}/bibleInk/{noteId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
     match /users/{userId}/greekFindings/{findingId} {
       allow read, create: if isAuthenticated() && request.auth.uid == userId;
       allow update, delete: if false;

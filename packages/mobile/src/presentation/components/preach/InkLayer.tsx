@@ -2,7 +2,20 @@ import React, { useRef, useState } from 'react';
 import { GestureResponderEvent, View } from 'react-native';
 import { Canvas, Path, Skia, type SkPath } from '@shopify/react-native-skia';
 import { useSharedValue } from 'react-native-reanimated';
-import type { InkColor, InkNote, InkStroke } from '@dosfilos/domain';
+import type { InkColor, InkStroke } from '@dosfilos/domain';
+
+/**
+ * Lo ÚNICO que la capa necesita de una nota: su id y sus trazos.
+ *
+ * Era `InkNote`, el tipo del sermón, con su ancla de texto y su reanclado. La
+ * Biblia no necesita nada de eso —un versículo no se edita— pero sí necesita
+ * exactamente el mismo lienzo. Pedir menos es lo que deja usarlo en los dos
+ * lados sin que uno le imponga su modelo al otro.
+ */
+export interface InkDrawable {
+    id: string;
+    strokes: InkStroke[];
+}
 import { toNoteSpace, toScreenSpace } from '@dosfilos/domain';
 
 import { ReadingModeTokens } from '@/core/theme/readingModes';
@@ -16,8 +29,8 @@ export interface AnchorRect {
 
 interface Props {
     tokens: ReadingModeTokens;
-    notes: InkNote[];
-    anchorRectFor: (note: InkNote) => AnchorRect | null;
+    notes: InkDrawable[];
+    anchorRectFor: (note: InkDrawable) => AnchorRect | null;
     bodySize: number;
     penActive: boolean;
     /** Párrafo más cercano al punto donde empezó el trazo. */

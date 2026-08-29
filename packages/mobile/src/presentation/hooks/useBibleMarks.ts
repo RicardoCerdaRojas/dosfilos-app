@@ -10,7 +10,7 @@ import {
 import type { HighlightColor, MarkStyle } from '@dosfilos/domain';
 
 import { getFirebaseAuth, getFirebaseDb } from '@/data/sources/firebase.source';
-import type { BibleMark } from '@/domain/bible/entities/BibleMark';
+import type { BibleMark, VerseWordRange } from '@/domain/bible/entities/BibleMark';
 import { verseKey } from '@/domain/bible/entities/BibleMark';
 
 /**
@@ -44,6 +44,10 @@ export const useBibleMarks = () => {
                     verse: Number(data.verse ?? 0),
                     color: data.color,
                     style: data.style ?? 'highlight',
+                    // `null` en Firestore y `undefined` acá: sin extremos, la
+                    // marca cubre el versículo entero.
+                    from: typeof data.from === 'number' ? data.from : undefined,
+                    to: typeof data.to === 'number' ? data.to : undefined,
                     createdAt: data.createdAt?.toDate?.() ?? new Date(),
                 };
                 map.set(verseKey(mark.bookId, mark.chapter, mark.verse), mark);
@@ -65,7 +69,8 @@ export const useBibleMarkMutations = () => {
             versionId: string;
             bookId: string;
             chapter: number;
-            verses: number[];
+            /** Un rango por versículo; sin extremos, el versículo entero. */
+            ranges: VerseWordRange[];
             color: HighlightColor;
             style: MarkStyle;
         }) => {
@@ -74,15 +79,20 @@ export const useBibleMarkMutations = () => {
             // Un documento por versículo: el id ES la dirección, así que
             // volver a marcar el mismo versículo reemplaza en vez de duplicar.
             await Promise.all(
-                input.verses.map((verse) => {
-                    const id = verseKey(input.bookId, input.chapter, verse);
+                input.ranges.map((range) => {
+                    const id = verseKey(input.bookId, input.chapter, range.verse);
                     return setDoc(doc(ref, id), {
                         versionId: input.versionId,
                         bookId: input.bookId,
                         chapter: input.chapter,
-                        verse,
+                        verse: range.verse,
                         color: input.color,
                         style: input.style,
+                        // `null` y no ausente: Firestore con merge no borra una
+                        // clave que no viene, y una marca de versículo entero
+                        // encima de una parcial tiene que limpiar los extremos.
+                        from: range.from ?? null,
+                        to: range.to ?? null,
                         createdAt: serverTimestamp(),
                     }).catch((error) => console.warn(`[bibleMarks] ${id} failed:`, error));
                 }),

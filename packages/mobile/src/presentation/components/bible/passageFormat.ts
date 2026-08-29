@@ -1,15 +1,23 @@
-/** Cita en el formato de markdown que ya usa el sermón, para copiar. */
-export function formatPassageForSermon(
+/**
+ * Cita de un rango elegido a mano, que puede empezar y terminar a mitad de
+ * versículo.
+ *
+ * El texto ya viene armado por quien selecciona: cuando el pastor elige media
+ * frase, lo que hay que citar es esa media frase y no los versículos enteros
+ * que la contienen. Antes se citaba el versículo completo porque era la única
+ * unidad que la Biblia sabía seleccionar.
+ */
+export function formatSelectionForSermon(
     bookName: string,
     chapter: number,
-    verses: { verse: number; text: string }[],
+    fromVerse: number,
+    toVerse: number,
+    text: string,
 ): string {
-    if (!verses.length) return '';
-    const first = verses[0].verse;
-    const last = verses[verses.length - 1].verse;
-    const ref = first === last ? `${bookName} ${chapter}:${first}` : `${bookName} ${chapter}:${first}-${last}`;
-    // Cita de bloque: en el púlpito se colapsa a una marca al margen, que es
-    // exactamente lo que corresponde a un pasaje citado.
-    const body = verses.map((v) => v.text).join(' ');
-    return `> **${ref}** ${body}\n`;
+    if (!text.trim()) return '';
+    const ref =
+        fromVerse === toVerse
+            ? `${bookName} ${chapter}:${fromVerse}`
+            : `${bookName} ${chapter}:${fromVerse}-${toVerse}`;
+    return `> **${ref}** ${text.trim()}\n`;
 }

@@ -19,6 +19,13 @@ interface Props {
     onPick: (color: HighlightColor, style: MarkStyle) => void;
     onRemove: () => void;
     onClose: () => void;
+    /**
+     * Acción propia del contexto, a la derecha de las marcas.
+     *
+     * En la Biblia es "al sermón": lo que se hace con un pasaje elegido, más
+     * que marcarlo, es llevárselo. En el púlpito no existe.
+     */
+    extraAction?: { icon: keyof typeof MaterialIcons.glyphMap; label: string; onPress: () => void };
 }
 
 const STYLE_ICONS: Record<MarkStyle, keyof typeof MaterialIcons.glyphMap> = {
@@ -48,6 +55,7 @@ export function MarkPopover({
     onPick,
     onRemove,
     onClose,
+    extraAction,
 }: Props) {
     const { t } = useTranslation();
     const below = anchorY < screenHeight * 0.6;
@@ -152,6 +160,28 @@ export function MarkPopover({
                                     size={20}
                                     color={tokens.textSecondary}
                                 />
+                            </Pressable>
+                        ) : null}
+
+                        {extraAction ? (
+                            <Pressable
+                                onPress={extraAction.onPress}
+                                accessibilityRole="button"
+                                accessibilityLabel={extraAction.label}
+                                className="flex-row items-center ml-2 px-3 rounded-full"
+                                style={{ height: 40, backgroundColor: tokens.accent }}
+                            >
+                                <MaterialIcons
+                                    name={extraAction.icon}
+                                    size={17}
+                                    color={tokens.background}
+                                />
+                                <Text
+                                    style={{ color: tokens.background, fontSize: 13 }}
+                                    className="font-lexend-semibold ml-1.5"
+                                >
+                                    {extraAction.label}
+                                </Text>
                             </Pressable>
                         ) : null}
                     </View>

@@ -1,19 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { HIGHLIGHT_COLORS } from '@dosfilos/domain';
+import { INK_COLORS } from '@dosfilos/domain';
 import type { HighlightColor, MarkStyle } from '@dosfilos/domain';
 
 import { READING_MODES } from '@/core/theme/readingModes';
 import { FACE_CLASS } from '@/core/theme/typography';
 import { useReaderSettingsStore } from '@/presentation/state/readerSettings.store';
 import { useBibleMarks, useBibleMarkMutations } from '@/presentation/hooks/useBibleMarks';
+import { verseKey } from '@/domain/bible/entities/BibleMark';
 import { useDeliveryMeasure } from '@/presentation/hooks/useDeliveryMeasure';
-import { SelectableVerses } from '@/presentation/components/bible/SelectableVerses';
-import { formatPassageForSermon } from '@/presentation/components/bible/passageFormat';
+import {
+    SelectableVerses,
+    selectionText,
+    type WordSelection,
+} from '@/presentation/components/bible/SelectableVerses';
+import { InkLayer } from '@/presentation/components/preach/InkLayer';
+import { MarkPopover } from '@/presentation/components/preach/MarkPopover';
+import { useBibleInk } from '@/presentation/hooks/useBibleInk';
+import { formatSelectionForSermon } from '@/presentation/components/bible/passageFormat';
 import { BiblePickerSheet } from '@/presentation/components/bible/BiblePickerSheet';
 import { BibleSearchSheet } from '@/presentation/components/bible/BibleSearchSheet';
 import { BibleVersionFactory } from '@/data/repositories/bible/BibleVersionFactory';
@@ -48,13 +56,28 @@ export default function BibleReaderScreen() {
     // acá y no se adivina: los ids del dato no son los del dominio.
     const [bookId, setBookId] = useState(lastRead?.bookId ?? 'jn');
     const [chapter, setChapter] = useState(lastRead?.chapter ?? 1);
-    const [selected, setSelected] = useState<Set<number>>(new Set());
+    const [selection, setSelection] = useState<WordSelection | null>(null);
+    const [popoverY, setPopoverY] = useState(0);
+    const [showPopover, setShowPopover] = useState(false);
     const [showPicker, setShowPicker] = useState(false);
     const [showSearch, setShowSearch] = useState(false);
 
+    const { height: screenHeight } = useWindowDimensions();
+    /** Alto de la cabecera: la capa de tinta empieza debajo para no taparla. */
+    const [headerHeight, setHeaderHeight] = useState(0);
     const { data: marks } = useBibleMarks();
     const { set: setMark, clear: clearMark } = useBibleMarkMutations();
     const { measure, probe } = useDeliveryMeasure(fontSize);
+
+    /**
+     * Firma del layout: al cambiar, los versículos se vuelven a medir.
+     *
+     * Sin esto la tinta queda a medias, porque `onLayout` sólo dispara para
+     * las vistas que efectivamente se movieron. Es exactamente el bug que ya
+     * costó dos vueltas en el púlpito.
+     */
+    const inkLayoutKey = `${bookId}|${chapter}|${fontSize}|${parallelId ?? ''}|${readingMode}`;
+    const ink = useBibleInk(bookId, chapter, inkLayoutKey);
 
     const repo = BibleVersionFactory.getByVersion(versionId);
     const parallelRepo = parallelId ? BibleVersionFactory.getByVersion(parallelId) : null;
@@ -65,36 +88,51 @@ export default function BibleReaderScreen() {
     const parallelVerses = parallelRepo?.getChapterContent(bookId, chapter) ?? [];
     const chapterCount = repo?.getChapterCount(bookId) ?? 1;
 
-    const toggleVerse = (verse: number) =>
-        setSelected((current) => {
-            const next = new Set(current);
-            if (next.has(verse)) next.delete(verse);
-            else next.add(verse);
-            return next;
-        });
+    /** Los versículos que toca la selección, con sus extremos de palabra. */
+    const selectedRanges = () => {
+        if (!selection) return [];
+        const ranges = [];
+        for (let verse = selection.startVerse; verse <= selection.endVerse; verse += 1) {
+            ranges.push({
+                verse,
+                from: verse === selection.startVerse ? selection.startWord : undefined,
+                to: verse === selection.endVerse ? selection.endWord : undefined,
+            });
+        }
+        return ranges;
+    };
 
-    /** Rango arrastrado: reemplaza la selección, hacia adelante o hacia atrás. */
-    const selectRange = (from: number, to: number) =>
-        setSelected(
-            new Set(
-                Array.from(
-                    { length: Math.abs(to - from) + 1 },
-                    (_, i) => Math.min(from, to) + i,
-                ),
-            ),
-        );
-
-    const selectedList = [...selected].sort((a, b) => a - b);
+    const closePopover = () => {
+        setShowPopover(false);
+        setSelection(null);
+    };
 
     const applyMark = (color: HighlightColor, style: MarkStyle) => {
-        setMark.mutate({ versionId, bookId, chapter, verses: selectedList, color, style });
-        setSelected(new Set());
+        setMark.mutate({ versionId, bookId, chapter, ranges: selectedRanges(), color, style });
+        closePopover();
+    };
+
+    const removeMark = () => {
+        clearMark.mutate({
+            bookId,
+            chapter,
+            verses: selectedRanges().map((r) => r.verse),
+        });
+        closePopover();
     };
 
     const copyToSermon = () => {
-        const picked = selectedList.map((verse) => ({ verse, text: verses[verse - 1] ?? '' }));
-        const markdown = formatPassageForSermon(book?.name ?? bookId, chapter, picked);
-        setSelected(new Set());
+        if (!selection) return;
+        // Viaja lo SELECCIONADO, no el versículo entero: si el pastor eligió
+        // media frase, es esa media frase la que quiere en el sermón.
+        const markdown = formatSelectionForSermon(
+            book?.name ?? bookId,
+            chapter,
+            selection.startVerse,
+            selection.endVerse,
+            selectionText(verses, selection),
+        );
+        closePopover();
         // El pasaje viaja por parámetro: el editor lo recibe y lo inserta donde
         // esté el cursor. Copiar al portapapeles obligaría a pegar a mano.
         router.push(`/sermon/paste?markdown=${encodeURIComponent(markdown)}`);
@@ -106,11 +144,16 @@ export default function BibleReaderScreen() {
         setLastRead({ versionId, bookId, chapter });
     }, [versionId, bookId, chapter, setLastRead]);
 
+    /** Marca ya existente bajo la selección, para que el popover la muestre. */
+    const currentMark = selection
+        ? marks?.get(verseKey(bookId, chapter, selection.startVerse))
+        : undefined;
+
     const goChapter = (delta: number) => {
         const next = chapter + delta;
         if (next >= 1 && next <= chapterCount) {
             setChapter(next);
-            setSelected(new Set());
+            setSelection(null);
         }
     };
 
@@ -120,6 +163,7 @@ export default function BibleReaderScreen() {
                 interruptor, no una pantalla previa. */}
             <View
                 className="flex-row items-center px-5 pb-3"
+                onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
                 style={{
                     paddingTop: insets.top + 8,
                     borderBottomWidth: 1,
@@ -159,9 +203,69 @@ export default function BibleReaderScreen() {
                     onPress={() => setShowSearch(true)}
                     accessibilityRole="button"
                     accessibilityLabel={t('bible:search')}
+                    className="mr-4"
                 >
                     <MaterialIcons name="search" size={22} color={tokens.textSecondary} />
                 </TouchableOpacity>
+
+                {/* Lápiz. La Biblia del pastor está escrita al margen: era lo
+                    único que el atril sabía hacer y el lector no. */}
+                <TouchableOpacity
+                    onPress={() => {
+                        ink.setPenActive(!ink.penActive);
+                        ink.setEraser(false);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('preach:pen')}
+                >
+                    <MaterialIcons
+                        name={ink.penActive ? 'draw' : 'edit'}
+                        size={22}
+                        color={ink.penActive ? tokens.accent : tokens.textSecondary}
+                    />
+                </TouchableOpacity>
+
+                {ink.penActive ? (
+                    <>
+                        {INK_COLORS.map((color) => (
+                            <TouchableOpacity
+                                key={color}
+                                onPress={() => {
+                                    ink.setPenColor(color);
+                                    ink.setEraser(false);
+                                }}
+                                accessibilityRole="button"
+                                accessibilityLabel={t(`preach:ink_${color}`)}
+                                className="ml-3"
+                                style={{
+                                    width: 22,
+                                    height: 22,
+                                    borderRadius: 11,
+                                    backgroundColor:
+                                        color === 'red'
+                                            ? tokens.timerOver
+                                            : color === 'blue'
+                                              ? tokens.accent
+                                              : tokens.textPrimary,
+                                    borderWidth: ink.penColor === color && !ink.eraser ? 2 : 0,
+                                    borderColor: tokens.background,
+                                }}
+                            />
+                        ))}
+                        <TouchableOpacity
+                            onPress={() => ink.setEraser(!ink.eraser)}
+                            accessibilityRole="button"
+                            accessibilityLabel={t('preach:eraser')}
+                            className="ml-3"
+                        >
+                            <MaterialIcons
+                                name="auto-fix-normal"
+                                size={22}
+                                color={ink.eraser ? tokens.accent : tokens.textSecondary}
+                            />
+                        </TouchableOpacity>
+                    </>
+                ) : null}
             </View>
 
             <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: insets.bottom + 120 }}>
@@ -177,9 +281,15 @@ export default function BibleReaderScreen() {
                                 tokens={tokens}
                                 face={face}
                                 fontSize={fontSize}
-                                selected={selected}
-                                onToggleVerse={toggleVerse}
-                                onSelectRange={selectRange}
+                                selection={selection}
+                                onSelectionChange={setSelection}
+                                onSelectionEnd={(range, atY) => {
+                                    setSelection(range);
+                                    setPopoverY(atY);
+                                    setShowPopover(true);
+                                }}
+                                onVerseLayout={ink.rememberVerse}
+                                layoutKey={inkLayoutKey}
                             />
                         </View>
                         {parallelId ? (
@@ -192,9 +302,9 @@ export default function BibleReaderScreen() {
                                     tokens={tokens}
                                     face={face}
                                     fontSize={fontSize}
-                                    selected={selected}
-                                    onToggleVerse={toggleVerse}
-                                    onSelectRange={selectRange}
+                                    selection={null}
+                                    onSelectionChange={() => undefined}
+                                    onSelectionEnd={() => undefined}
                                 />
                             </View>
                         ) : null}
@@ -223,74 +333,42 @@ export default function BibleReaderScreen() {
                 </View>
             </ScrollView>
 
-            {/* Barra de acción: aparece sólo con versículos elegidos. Marcar y
-                copiar son las dos cosas que se hacen con un pasaje. */}
-            {selectedList.length > 0 ? (
-                <View
-                    className="absolute left-0 right-0 flex-row items-center px-5 py-3"
-                    style={{
-                        bottom: 0,
-                        paddingBottom: insets.bottom + 12,
-                        backgroundColor: tokens.surface,
-                        borderTopWidth: 1,
-                        borderTopColor: tokens.border,
-                    }}
-                >
-                    {HIGHLIGHT_COLORS.map((color) => (
-                        <TouchableOpacity
-                            key={color}
-                            onPress={() => applyMark(color, 'highlight')}
-                            accessibilityRole="button"
-                            accessibilityLabel={t(`preach:color_${color}`)}
-                            style={{
-                                width: 34,
-                                height: 34,
-                                borderRadius: 17,
-                                marginRight: 8,
-                                backgroundColor: tokens.highlightColors[color],
-                                borderWidth: 1,
-                                borderColor: tokens.border,
-                            }}
-                        />
-                    ))}
-                    <TouchableOpacity
-                        onPress={() => applyMark('yellow', 'underline')}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('preach:style_underline')}
-                        className="ml-1 mr-1"
-                    >
-                        <MaterialIcons name="format-underlined" size={22} color={tokens.textPrimary} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        onPress={() => {
-                            clearMark.mutate({ bookId, chapter, verses: selectedList });
-                            setSelected(new Set());
-                        }}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('preach:remove_highlight')}
-                    >
-                        <MaterialIcons name="format-clear" size={22} color={tokens.textSecondary} />
-                    </TouchableOpacity>
+            {/* La tinta va encima del texto pero debajo de la cabecera: si la
+                tapara, no habría cómo apagar el lápiz. */}
+            <InkLayer
+                tokens={tokens}
+                notes={ink.notes}
+                anchorRectFor={ink.anchorRectFor}
+                bodySize={fontSize}
+                penActive={ink.penActive}
+                anchorAt={ink.anchorAt}
+                onFinishStroke={ink.addStroke}
+                color={ink.penColor}
+                eraser={ink.eraser}
+                onErase={ink.eraseNote}
+                top={headerHeight}
+                bottom={0}
+            />
 
-                    <View className="flex-1" />
-
-                    <TouchableOpacity
-                        onPress={copyToSermon}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('bible:to_sermon')}
-                        className="flex-row items-center px-4 py-2 rounded-full"
-                        style={{ backgroundColor: tokens.accent }}
-                    >
-                        <MaterialIcons name="post-add" size={18} color={tokens.background} />
-                        <Text
-                            style={{ color: tokens.background }}
-                            className={`${FACE_CLASS[face].semibold} text-sm ml-2`}
-                        >
-                            {t('bible:to_sermon')}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            ) : null}
+            {/* Popover contextual, igual que en el púlpito: aparece al lado
+                de lo que se eligió. La barra inferior obligaba a mirar al
+                otro extremo de la pantalla del que se estaba marcando. */}
+            <MarkPopover
+                visible={showPopover}
+                tokens={tokens}
+                anchorY={popoverY}
+                screenHeight={screenHeight}
+                currentColor={currentMark?.color ?? null}
+                currentStyle={currentMark?.style ?? null}
+                onPick={applyMark}
+                onRemove={removeMark}
+                onClose={closePopover}
+                extraAction={{
+                    icon: 'post-add',
+                    label: t('bible:to_sermon'),
+                    onPress: copyToSermon,
+                }}
+            />
 
             <BiblePickerSheet
                 visible={showPicker}
@@ -303,7 +381,7 @@ export default function BibleReaderScreen() {
                 onPick={(nextBook, nextChapter) => {
                     setBookId(nextBook);
                     setChapter(nextChapter);
-                    setSelected(new Set());
+                    setSelection(null);
                     setShowPicker(false);
                 }}
                 onPickVersion={setVersionId}

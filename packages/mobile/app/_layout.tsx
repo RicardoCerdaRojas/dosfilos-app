@@ -170,8 +170,13 @@ function RootLayoutNav() {
             options={{ headerShown: false, animation: 'fade', gestureEnabled: false }}
           />
           {/* Grupo solo de desarrollo: sin header, como el púlpito real. */}
+          {/* El perfil dibuja su propia cabecera. Sin esto encima quedaba la
+              del sistema, con el título en minúscula y sin traducir
+              ("profile") y un "atrás" que decía "(tabs)". */}
+          <Stack.Screen name="profile" options={{ headerShown: false }} />
+          {/* Grupo solo de desarrollo: sin header, como el púlpito real. */}
           <Stack.Screen name="dev" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
+          <Stack.Screen name="+not-found" options={{ headerShown: false }} />
         </Stack>
         <ToastNotification />
         <StatusBar style={isDark ? 'light' : 'dark'} />

@@ -59,7 +59,7 @@ export default function TabLayout() {
             <Tabs style={{ flex: 1, flexDirection: 'row' }}>
                 <TabList
                     style={{
-                        width: 104,
+                        width: 124,
                         flexDirection: 'column',
                         alignItems: 'center',
                         paddingTop: insets.top + 18,
@@ -132,10 +132,12 @@ const TabButton = forwardRef<View, TabButtonProps>(
                 // `Pressable` acepta y `TouchableOpacity` no.
                 className="items-center justify-center"
                 style={({ pressed }) => ({
-                    width: rail ? 88 : undefined,
+                    width: rail ? 108 : undefined,
                     flex: rail ? undefined : 1,
-                    paddingVertical: rail ? 12 : 6,
-                    marginBottom: rail ? 10 : 0,
+                    // 44 pt es el mínimo de un blanco de toque cómodo; con el
+                    // ícono y la etiqueta esto queda en unos 68.
+                    paddingVertical: rail ? 14 : 6,
+                    marginBottom: rail ? 8 : 0,
                     borderRadius: 16,
                     opacity: pressed ? 0.6 : 1,
                     backgroundColor: isFocused ? theme.accentSoft : 'transparent',
