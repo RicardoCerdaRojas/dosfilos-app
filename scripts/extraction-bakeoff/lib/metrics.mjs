@@ -150,9 +150,21 @@ export function pageIntegrity(text, expectedPages) {
         .filter(([, chars]) => chars < 20)
         .map(([p]) => Number(p));
 
+    // ¿Numeración corrida en bloque? Todas las páginas presentes, consecutivas,
+    // pero empezando en otro número.
+    let offsetNumbering = null;
+    if (expectedPages && unique.size === expectedPages && missing.length > 0) {
+        const sorted = [...unique].sort((a, b) => a - b);
+        const consecutive = sorted.every((n, i) => i === 0 || n === sorted[i - 1] + 1);
+        if (consecutive && sorted[0] !== 1) {
+            offsetNumbering = { first: sorted[0], last: sorted[sorted.length - 1], offset: sorted[0] - 1 };
+        }
+    }
+
     return {
         markersFound: seen.length,
         uniquePages: unique.size,
+        offsetNumbering,
         duplicated: seen.length !== unique.size,
         ascending,
         expectedPages: expectedPages ?? null,
@@ -348,11 +360,27 @@ export function verdict(m, { expectGreek, expectHebrew }) {
     // «αλττεσταντlichen». Ninguna estaba en el libro. En un corpus teológico
     // eso es la falla más peligrosa posible: griego inventado que un pastor
     // citaría como si el comentario lo trajera.
-    if (m.script.greekLetters >= 100 && m.script.greekDiacriticRatio < 0.15) {
+    // La señal fiable NO es el ratio absoluto sino el desacuerdo con el resto.
+    // Medido: `balanced` devolvió 3354 letras griegas donde otros tres motores
+    // coincidieron en ~33. Su ratio era 0,225 — por encima de cualquier umbral
+    // absoluto razonable, y aun así el texto era una traducción al griego
+    // moderno del comentario en inglés (συνδέουν, ποικίλους, ζωντανών).
+    // Cien veces más griego que el consenso no es mejor extracción; es
+    // producción de texto.
+    if (m.consensus && m.consensus.greekMedian >= 5
+        && m.script.greekLetters > m.consensus.greekMedian * 10) {
         notes.push(
-            `${m.script.greekLetters} letras griegas con ratio diacrítico `
-            + `${m.script.greekDiacriticRatio.toFixed(3)} — griego probablemente FABRICADO, `
-            + 'no recuperado del documento. Revisa las muestras antes de creerle.',
+            `${m.script.greekLetters} letras griegas contra ~${m.consensus.greekMedian} `
+            + 'del consenso de los demás motores — griego FABRICADO, no recuperado. '
+            + 'Revisa las muestras antes de creerle una sola palabra.',
+        );
+        fatal = true;
+    }
+    if (m.consensus && m.consensus.hebrewMedian >= 5
+        && m.script.hebrewConsonants > m.consensus.hebrewMedian * 10) {
+        notes.push(
+            `${m.script.hebrewConsonants} consonantes hebreas contra `
+            + `~${m.consensus.hebrewMedian} del consenso — hebreo FABRICADO.`,
         );
         fatal = true;
     }
@@ -370,8 +398,18 @@ export function verdict(m, { expectGreek, expectHebrew }) {
             notes.push('no recuperó NADA de griego');
             fatal = true;
         } else if (m.script.greekDiacriticRatio < 0.15) {
-            notes.push(`griego sin diacríticos (ratio ${m.script.greekDiacriticRatio.toFixed(3)}) — inservible para exégesis`);
-            fatal = true;
+            // Con pocas letras el ratio es ruidoso: unas pocas citas sueltas no
+            // se parecen a griego politónico corrido, donde casi cada palabra
+            // lleva espíritu o acento. Se reporta igual —la diferencia entre
+            // Ἀκούσατε y Ακούσατε es real y decisiva— pero sin reprobar por un
+            // número que a esta escala puede moverse por una sola palabra.
+            const small = m.script.greekLetters < 100;
+            notes.push(
+                `griego con pocos diacríticos (ratio ${m.script.greekDiacriticRatio.toFixed(3)}`
+                + `, sobre ${m.script.greekLetters} letras)`
+                + (small ? ' — MUESTRA PEQUEÑA: confírmalo en el lado a lado' : ' — inservible para exégesis'),
+            );
+            if (!small) fatal = true;
         }
     }
     if (expectHebrew) {
@@ -383,7 +421,21 @@ export function verdict(m, { expectGreek, expectHebrew }) {
             fatal = true;
         }
     }
-    if (m.page.missingPages.length > 0) {
+    // Un motor puede numerar con las páginas IMPRESAS del libro en vez de la
+    // posición en el recorte. Medido: Gemini emitió 615-625 para el recorte
+    // 1-11, porque el libro es un segundo volumen que arranca en la 495. Eso
+    // NO es contenido perdido —emitió las once— y para citar es incluso más
+    // útil; pero rompe el contrato que espera el chunker, así que se reporta
+    // distinto. Confundirlo con páginas faltantes manda a buscar un problema
+    // que no existe.
+    if (m.page.offsetNumbering) {
+        notes.push(
+            `numera con las páginas impresas del libro (${m.page.offsetNumbering.first}–`
+            + `${m.page.offsetNumbering.last}, desplazamiento ${m.page.offsetNumbering.offset}) `
+            + 'en vez de la posición en el recorte — emitió todas las páginas, pero el '
+            + 'contrato de página no coincide',
+        );
+    } else if (m.page.missingPages.length > 0) {
         notes.push(`${m.page.missingPages.length} página(s) sin emitir: ${m.page.missingPages.slice(0, 8).join(', ')}`);
         fatal = true;
     }

@@ -221,9 +221,24 @@ if (!args.hebrew && detected.hasHebrew) {
         + 'así que nadie está siendo evaluado por conservar el niqqud.');
 }
 
+// Consenso: la mediana de lo que encontraron LOS DEMÁS. Es la vara contra la
+// que se detecta fabricación — un motor que devuelve cien veces más griego que
+// todos los otros juntos no está extrayendo mejor, está escribiendo.
+const medianOf = xs => {
+    if (xs.length === 0) return 0;
+    const v = [...xs].sort((a, b) => a - b);
+    const mid = Math.floor(v.length / 2);
+    return v.length % 2 ? v[mid] : Math.round((v[mid - 1] + v[mid]) / 2);
+};
+
 for (const r of ran) {
     const others = ran.filter(o => o.id !== r.id).map(o => o.markdown);
+    const otherScripts = others.map(t => scriptFidelity(t));
     r.metrics = {
+        consensus: {
+            greekMedian: medianOf(otherScripts.map(s => s.greekLetters)),
+            hebrewMedian: medianOf(otherScripts.map(s => s.hebrewConsonants)),
+        },
         chars: r.markdown.length,
         script: scriptFidelity(r.markdown),
         page: pageIntegrity(r.markdown, slice.pages),
