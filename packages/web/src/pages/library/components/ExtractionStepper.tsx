@@ -58,6 +58,12 @@ export function ExtractionStepper({ resource, indexStatus }: ExtractionStepperPr
     // Don't render once the user no longer cares about progression —
     // the green "Listo" pill above already conveys completion.
     if (indexStatus === 'indexed') return null;
+    // Catalog entries (`isSystemSource`) never enter the extraction
+    // pipeline — they are metadata-only records of a canonical source.
+    // Rendering a 4-step progress bar for them showed a spinner on work
+    // that was never queued; the card's system badge already says what
+    // they are.
+    if (resource.isSystemSource) return null;
 
     const phases = computePhases(resource, indexStatus);
 

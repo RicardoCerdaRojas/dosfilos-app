@@ -156,7 +156,13 @@ export function ResourceCard({
     const label = category?.label || t('editModal.categoryOptions.other');
     const colorClasses = colorMap[category?.color || 'gray'] || colorMap.gray;
     const Icon = iconMap[category?.icon || 'FileQuestion'] || FileQuestion;
-    const fileSizeMB = (resource.sizeBytes / (1024 * 1024)).toFixed(2);
+    // Catalog entries (`isSystemSource`) and legacy docs written before the
+    // ingest stamped `sizeBytes` carry no size at all. Dividing `undefined`
+    // rendered a literal "NaN MB" on the card, so the size is only shown
+    // when there is a real file behind it.
+    const fileSizeMB = resource.sizeBytes > 0
+        ? (resource.sizeBytes / (1024 * 1024)).toFixed(2)
+        : null;
     const pageCount = resource.pageCount || resource.metadata?.pageCount;
     const isProcessing = resource.textExtractionStatus === 'processing' || resource.textExtractionStatus === 'pending';
 
@@ -504,8 +510,12 @@ export function ResourceCard({
                         </div>
                         <div className="text-[12.5px] text-muted-foreground truncate">
                             {resource.author}
-                            <span className="mx-1.5 text-border">·</span>
-                            {fileSizeMB} MB
+                            {fileSizeMB ? (
+                                <>
+                                    <span className="mx-1.5 text-border">·</span>
+                                    {fileSizeMB} MB
+                                </>
+                            ) : null}
                             {pageCount ? (
                                 <>
                                     <span className="mx-1.5 text-border">·</span>
@@ -585,15 +595,17 @@ export function ResourceCard({
                 dense scholarly PDFs (~52KB/page vs the assumed ~2KB/page),
                 so showing it just confused the user (e.g. "10076 p. (est.)"
                 for a 378-page WBC volume). */}
-            <div className="text-[12px] text-muted-foreground font-mono">
-                {fileSizeMB} MB
-                {pageCount ? (
-                    <>
-                        <span className="mx-1.5 text-border">·</span>
-                        {t('card.metaPagesActual', { count: pageCount })}
-                    </>
-                ) : null}
-            </div>
+            {(fileSizeMB || pageCount) ? (
+                <div className="text-[12px] text-muted-foreground font-mono">
+                    {fileSizeMB ? `${fileSizeMB} MB` : null}
+                    {pageCount ? (
+                        <>
+                            {fileSizeMB ? <span className="mx-1.5 text-border">·</span> : null}
+                            {t('card.metaPagesActual', { count: pageCount })}
+                        </>
+                    ) : null}
+                </div>
+            ) : null}
 
             {/* Action bar */}
             <div className="flex items-center gap-0.5 pt-1 border-t border-border/40 -mx-1 px-1">

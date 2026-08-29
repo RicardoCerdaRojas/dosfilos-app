@@ -111,6 +111,18 @@ function mapSourceToResource(source: SeedSource, callerUid: string): Record<stri
     return {
         userId: callerUid,
         isSystemSource: true,
+        // Seed entries are metadata-only: no Cloud Storage object, no text
+        // to extract, no chunks to build. These two fields MUST be stamped
+        // explicitly even though nothing ever runs on them, because the
+        // repository deserializer defaults an ABSENT `textExtractionStatus`
+        // to `'pending'` — which the library UI then counted as "extracting
+        // text", showing a permanent phantom "N recursos extrayendo texto"
+        // banner for work that was never queued. `sizeBytes` has the same
+        // problem: absent → `NaN MB` on the card. `'ready'` here means
+        // "the extraction pipeline owes this resource nothing", which is
+        // the accurate reading for a catalog entry.
+        textExtractionStatus: 'ready',
+        sizeBytes: 0,
         title: source.title,
         shortTitle: source.short_title ?? null,
         author: source.author_or_editor ?? source.editor ?? null,

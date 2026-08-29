@@ -124,10 +124,17 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
         // Initialise to 'checking' for all resources synchronously so the UI
         // doesn't flicker between unknown → checking → final.
         const initial: Record<string, IndexStatus> = {};
-        for (const r of list) initial[r.id] = 'checking';
+        // System sources hold no chunks by design, so they start (and stay)
+        // at 'unknown' — that's the one value the card reads as "render no
+        // status pill at all", which is what a metadata-only catalog entry
+        // deserves. Marking them 'checking' spun a verifying spinner, and
+        // letting them fall through to the probe below fired one pointless
+        // Firestore query per seed doc on every snapshot.
+        for (const r of list) initial[r.id] = r.isSystemSource ? 'unknown' : 'checking';
         setIndexStatus(initial);
 
         for (const r of list) {
+            if (r.isSystemSource) continue;
             // Fast path: use the doc field (no I/O, no race).
             if (r.indexingStatus === 'ready') {
                 setIndexStatus(prev => ({ ...prev, [r.id]: 'indexed' }));
@@ -186,6 +193,15 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
         let extracting = 0;
         let failed = 0;
         for (const r of resources) {
+            // System sources (the `core-library-seed.json` catalog entries:
+            // SBLGNT, the Chicago Statements, the confessional witnesses)
+            // are metadata-only — no file, no extraction, no chunks. They
+            // must never land in any of these counters: they'd report work
+            // that is not queued and cannot be acted on. Legacy seed docs
+            // written before the ingest stamped `textExtractionStatus` read
+            // back as `'pending'` via the repository default, which is what
+            // produced the permanent "8 recursos extrayendo texto" banner.
+            if (r.isSystemSource) continue;
             const status = indexStatus[r.id] ?? 'unknown';
             if (r.textExtractionStatus === 'pending' || r.textExtractionStatus === 'processing') {
                 extracting++;
