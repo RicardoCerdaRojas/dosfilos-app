@@ -14,6 +14,48 @@ que es justo el modo que **se salta el OCR y la reconstrucción de layout**.
 Eso puede estar bien o puede estar costando calidad. La discusión no se cierra
 leyendo listas de precios: se cierra midiendo sobre nuestros propios libros.
 
+## Hallazgos medidos (2026-08-29)
+
+Primera evaluación completa, sobre *The Minor Prophets* (McComiskey), páginas
+132–142. Todo lo de esta tabla está medido, no estimado.
+
+| Motor | USD / libro 425p | Niqqud | Espíritus griegos | Veredicto |
+|---|---:|---:|---|---|
+| LlamaParse `fast` ← producción | ~0 | **0** | **0** | no recupera **nada** |
+| LlamaParse `balanced` | — | 0.192 | **fabricado** | traduce al griego moderno |
+| LlamaParse `premium` | **$23.91** | 0.815 | ✓ | calidad sí, costo no |
+| Mistral OCR | **$1.70** | 0.735 | **✗** | pierde el espíritu inicial |
+| **Gemini 3.6 Flash** | **$9.98** | **0.825** | ✓ | mejor relación medida |
+
+**`fast` no recupera lengua original cuando no está en la capa de texto.** La
+auditoría de la biblioteca dio 15 de 27 libros indexados sin una sola letra
+griega ni hebrea — incluida una gramática griega de 711 páginas. Pero los 27
+salieron del mismo extractor y 12 sí la traen (uno con 681.644 letras griegas):
+la variable es el PDF, no el motor. Eso apunta a escalar a OCR sólo cuando la
+capa de texto no trae lo que el libro declara, no a cambiar el motor para todo.
+
+**`balanced` fabrica escritura sagrada.** Devolvió 4.564 letras griegas donde
+otros tres motores coincidieron en ~27: transliteró bibliografía inglesa y
+alemana («Micah» → «Μιχαίας», «alttestamentlichen» → «αλττεσταντlichen») y
+tradujo prosa al griego moderno. Nunca debe entrar a la cascada.
+
+**`premium` no cabe en el cupo.** Medido aislando el modo y leyendo el panel:
+495 créditos por 11 páginas = **45 créditos/página**. Un libro de 425 páginas
+son 19.125 créditos contra un cupo mensual de 10.000 — el 191%. No es que
+salgan pocos libros al mes: no cabe ninguno. Además tarda 5-8 s/página, que
+sobre un libro entero desborda el timeout de 540 s de la función de extracción.
+
+**La API de LlamaParse reporta 0 créditos en plan Free**, en `job_credits_usage`
+y en `credits_used`, mientras el panel sí acumula. Todo costo de LlamaParse se
+mide leyendo el panel antes y después de una corrida `--fresh`.
+
+**La salida de Gemini incluye tokens de pensamiento**, y son más de la mitad:
+6.017 de entrada + 13.330 candidatos contra 39.253 totales. Cobrar sólo los
+candidatos subestimaba el costo 2,4 veces.
+
+Falta medir: **un escaneado y un léxico**, que son las clases que el tier
+Premium promete resolver y las únicas sin probar.
+
 ## Setup
 
 ```bash
