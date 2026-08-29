@@ -56,5 +56,8 @@
     "reading_mode": "Reading mode",
     "font_size": "Text size",
     "font_smaller": "Smaller text",
-    "font_bigger": "Larger text"
+    "font_bigger": "Larger text",
+    "panel_small": "Small panel",
+    "panel_medium": "Medium panel",
+    "panel_large": "Large panel"
 }

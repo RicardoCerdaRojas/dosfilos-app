@@ -110,6 +110,15 @@ interface ReaderSettingsState {
     setFullWidth: (on: boolean) => void;
     lastRead: { versionId: string; bookId: string; chapter: number } | null;
     setLastRead: (at: { versionId: string; bookId: string; chapter: number }) => void;
+    /**
+     * Cuánto alto se lleva el tablero, como fracción de lo legible.
+     *
+     * Era un TERCIO fijo, y un tercio es mucho: el reloj y el riel entran en
+     * poco más de cien puntos y el resto quedaba en blanco, comiéndose el
+     * texto. Ahora se elige, y el valor por defecto es el chico.
+     */
+    panelRatio: number;
+    setPanelRatio: (ratio: number) => void;
     budgetOverrides: Record<string, number>;
     setBudgetOverride: (key: string, seconds: number | null) => void;
 }
@@ -159,6 +168,8 @@ export const useReaderSettingsStore = create<ReaderSettingsState>()(
             setFullWidth: (on) => set({ fullWidth: on }),
             lastRead: null,
             setLastRead: (at) => set({ lastRead: at }),
+            panelRatio: 0.17,
+            setPanelRatio: (ratio: number) => set({ panelRatio: ratio }),
             budgetOverrides: {},
             setBudgetOverride: (key: string, seconds: number | null) =>
                 set((state) => {

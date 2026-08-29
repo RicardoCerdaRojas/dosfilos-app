@@ -4,6 +4,7 @@ import {
     buildMovementBudgets,
     countWords,
     estimateSpokenMinutes,
+    expectedElapsed,
     locateInBudget,
     totalBudget,
 } from '../movementBudget';
@@ -103,5 +104,31 @@ describe('estimateSpokenMinutes', () => {
 
     it('nunca devuelve cero para un texto que existe: el piso es un minuto', () => {
         expect(estimateSpokenMinutes('tres palabras sueltas')).toBe(1);
+    });
+});
+
+describe('expectedElapsed', () => {
+    const budgets = [mv('intro', 100), mv('cuerpo', 300), mv('cierre', 100)];
+    const plan = buildMovementBudgets(budgets, 500);
+
+    it('al empezar un movimiento, lo esperado es la suma de los anteriores', () => {
+        expect(expectedElapsed(plan, 1, 0, 4)).toBe(100);
+    });
+
+    it('interpola por página dentro del movimiento', () => {
+        // Segunda página de cuatro en un movimiento de 300 s: 100 + 75.
+        expect(expectedElapsed(plan, 1, 1, 4)).toBe(175);
+    });
+
+    it('el primer movimiento en su primera página espera cero', () => {
+        expect(expectedElapsed(plan, 0, 0, 3)).toBe(0);
+    });
+
+    it('un índice fuera de rango no rompe: se acota al último movimiento', () => {
+        expect(expectedElapsed(plan, 99, 0, 1)).toBe(400);
+    });
+
+    it('sin movimientos no hay expectativa', () => {
+        expect(expectedElapsed([], 0, 0, 1)).toBe(0);
     });
 });

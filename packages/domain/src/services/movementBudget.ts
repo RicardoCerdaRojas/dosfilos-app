@@ -159,3 +159,31 @@ export function locateInBudget(budgets: MovementBudget[], elapsedSeconds: number
 export function totalBudget(budgets: MovementBudget[]): number {
     return budgets.reduce((sum, b) => sum + b.seconds, 0);
 }
+
+/**
+ * Cuánto tiempo DEBERÍA haber pasado al llegar a este punto del texto.
+ *
+ * Es la mitad que faltaba. El tablero sabía cuánto le queda al movimiento
+ * actual, pero no si el predicador va adelantado o atrasado — y ésa es la
+ * pregunta que se hace mirando el reloj desde el atril. Con esto, restar da
+ * el DESFASE: positivo, va tarde; negativo, va sobrado.
+ *
+ * Dentro del movimiento se interpola por página, que es la mejor
+ * aproximación disponible: no se sabe en qué palabra va el predicador, pero sí
+ * en qué página, y las páginas de un movimiento son parejas en cantidad de
+ * texto.
+ */
+export function expectedElapsed(
+    budgets: MovementBudget[],
+    movementIndex: number,
+    pageIndex: number,
+    pageCount: number,
+): number {
+    if (!budgets.length) return 0;
+    const index = Math.max(0, Math.min(movementIndex, budgets.length - 1));
+    const before = budgets.slice(0, index).reduce((sum, b) => sum + b.seconds, 0);
+    const current = budgets[index].seconds;
+    const pages = Math.max(1, pageCount);
+    const page = Math.max(0, Math.min(pageIndex, pages - 1));
+    return Math.round(before + (current * page) / pages);
+}

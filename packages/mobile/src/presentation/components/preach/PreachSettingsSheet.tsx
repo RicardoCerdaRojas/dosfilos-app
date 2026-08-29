@@ -27,6 +27,8 @@ interface Props {
     gazeLine: boolean;
     setGazeLine: (on: boolean) => void;
     instrumentPanel: boolean;
+    panelRatio: number;
+    setPanelRatio: (ratio: number) => void;
     setInstrumentPanel: (on: boolean) => void;
     deliveryFace: DeliveryFace;
     setDeliveryFace: (face: DeliveryFace) => void;
@@ -45,6 +47,13 @@ interface Props {
   * objetivo. Vive aparte porque la pantalla ya carga timer, navegación por
   * secciones, citas, resaltado y aparato de estudio.
   */
+/** Tres alturas de tablero. La chica alcanza para el reloj y el riel. */
+const PANEL_SIZES = [
+    { ratio: 0.17, key: 'preach:panel_small' },
+    { ratio: 0.25, key: 'preach:panel_medium' },
+    { ratio: 0.33, key: 'preach:panel_large' },
+] as const;
+
 export function PreachSettingsSheet({
     visible,
     onClose,
@@ -58,6 +67,8 @@ export function PreachSettingsSheet({
     gazeLine,
     setGazeLine,
     instrumentPanel,
+    panelRatio,
+    setPanelRatio,
     setInstrumentPanel,
     deliveryFace,
     setDeliveryFace,
@@ -284,6 +295,42 @@ export function PreachSettingsSheet({
                             </TouchableOpacity>
                         ))}
                     </View>
+
+                    {/* Cuánto se lleva el tablero. Era un tercio fijo, y un
+                        tercio es más de lo que el reloj y el riel necesitan:
+                        lo que sobraba se lo comía al texto. */}
+                    {instrumentPanel ? (
+                        <View className="flex-row flex-wrap mb-5">
+                            {PANEL_SIZES.map((size) => (
+                                <TouchableOpacity
+                                    key={size.ratio}
+                                    onPress={() => setPanelRatio(size.ratio)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={t(size.key)}
+                                    className="px-4 py-2 rounded-full mr-2 mb-2"
+                                    style={{
+                                        backgroundColor:
+                                            size.ratio === panelRatio ? tokens.accent : 'transparent',
+                                        borderWidth: 1,
+                                        borderColor:
+                                            size.ratio === panelRatio ? tokens.accent : tokens.border,
+                                    }}
+                                >
+                                    <Text
+                                        style={{
+                                            color:
+                                                size.ratio === panelRatio
+                                                    ? tokens.background
+                                                    : tokens.textPrimary,
+                                        }}
+                                        className="font-lexend text-sm"
+                                    >
+                                        {t(size.key)}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    ) : null}
 
                     <Text
                         style={{ color: tokens.textSecondary }}

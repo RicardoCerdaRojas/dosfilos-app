@@ -33,6 +33,7 @@ import { PreachSectionBody } from '@/presentation/components/preach/PreachSectio
 import { useDeliveryMeasure } from '@/presentation/hooks/useDeliveryMeasure';
 import { MarkPopover } from '@/presentation/components/preach/MarkPopover';
 import { PreachExitSheet } from '@/presentation/components/preach/PreachExitSheet';
+import { PreachStatusBar } from '@/presentation/components/preach/PreachStatusBar';
 import { InkLayer } from '@/presentation/components/preach/InkLayer';
 import { useInkNotes } from '@/presentation/hooks/useInkNotes';
 import { PreachSettingsSheet } from '@/presentation/components/preach/PreachSettingsSheet';
@@ -72,6 +73,8 @@ export default function PreachModeScreen({
     const gazeLine = useReaderSettingsStore((s) => s.gazeLine);
     const setGazeLine = useReaderSettingsStore((s) => s.setGazeLine);
     const instrumentPanel = useReaderSettingsStore((s) => s.instrumentPanel);
+    const panelRatio = useReaderSettingsStore((s) => s.panelRatio);
+    const setPanelRatio = useReaderSettingsStore((s) => s.setPanelRatio);
     const setInstrumentPanel = useReaderSettingsStore((s) => s.setInstrumentPanel);
     const budgetOverrides = useReaderSettingsStore((s) => s.budgetOverrides);
     const setBudgetOverride = useReaderSettingsStore((s) => s.setBudgetOverride);
@@ -154,7 +157,7 @@ export default function PreachModeScreen({
     const { measure, probe } = useDeliveryMeasure(fontSize);
 
     // Capa de tinta: anclada al texto, no a la pantalla. Ver InkNote en domain.
-    const inkLayoutKey = `${sectionIndex}|${pageIndex}|${fontSize}|${senseLines}|${hangingIndent}|${deliveryFace}|${instrumentPanel}`;
+    const inkLayoutKey = `${sectionIndex}|${pageIndex}|${fontSize}|${senseLines}|${hangingIndent}|${deliveryFace}|${instrumentPanel}|${panelRatio}`;
     const ink = useInkNotes(id ?? '', section, inkLayoutKey);
 
     // El presupuesto de tiempo por movimiento alimenta el riel (D2). Por
@@ -173,9 +176,16 @@ export default function PreachModeScreen({
 
     // P7 — el tercio inferior no se llena de prosa: leerlo obliga a bajar el
     // mentón y la cara sale de la congregación. Ahí va el tablero.
-    const chromeTop = chromeVisible ? insets.top + 44 : insets.top + 16;
+    // La línea de vuelo ocupa dos renglones bajo la barra: si no se descuenta,
+    // la última línea de cada página queda debajo del borde.
+    const statusBarHeight = chromeVisible && budgets.length > 0 ? 34 : 0;
+    const chromeTop = (chromeVisible ? insets.top + 44 : insets.top + 16) + statusBarHeight;
     const readableHeight = screenHeight - chromeTop - insets.bottom;
-    const panelHeight = instrumentPanel ? Math.round(readableHeight / 3) : 0;
+    // El tablero ya no es un tercio fijo: el reloj y el riel entran en poco
+    // más de cien puntos, y lo que sobraba se lo estaba comiendo al texto.
+    const panelHeight = instrumentPanel
+        ? Math.max(96, Math.round(readableHeight * panelRatio))
+        : 0;
     const pageHeight = readableHeight - panelHeight - fontSize * 2;
 
     const renderBlockForMeasure = (block: ReadingBlock, index: number) => (
@@ -347,6 +357,20 @@ export default function PreachModeScreen({
                         </TouchableOpacity>
                     </View>
                 </View>
+            )}
+
+            {/* La línea de vuelo va SIEMPRE, con tablero o sin él: apagarlo
+                dejaba al predicador sin hora y sin saber por dónde va. */}
+            {chromeVisible && budgets.length > 0 && (
+                <PreachStatusBar
+                    tokens={tokens}
+                    budgets={budgets}
+                    elapsedSeconds={elapsed}
+                    readingIndex={sectionIndex}
+                    pageIndex={safePageIndex}
+                    pageCount={Math.max(1, pages.length)}
+                    running={running}
+                />
             )}
 
             {/* Swipe horizontal para pasar página, además de las zonas de tap.
@@ -581,6 +605,8 @@ export default function PreachModeScreen({
                 gazeLine={gazeLine}
                 setGazeLine={setGazeLine}
                 instrumentPanel={instrumentPanel}
+                panelRatio={panelRatio}
+                setPanelRatio={setPanelRatio}
                 setInstrumentPanel={setInstrumentPanel}
                 deliveryFace={deliveryFace}
                 setDeliveryFace={setDeliveryFace}

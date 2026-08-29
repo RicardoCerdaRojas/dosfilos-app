@@ -56,5 +56,8 @@
     "reading_mode": "Modo de lectura",
     "font_size": "Tamaño del texto",
     "font_smaller": "Achicar el texto",
-    "font_bigger": "Agrandar el texto"
+    "font_bigger": "Agrandar el texto",
+    "panel_small": "Tablero chico",
+    "panel_medium": "Tablero medio",
+    "panel_large": "Tablero grande"
 }
