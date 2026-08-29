@@ -123,6 +123,17 @@ function mapSourceToResource(source: SeedSource, callerUid: string): Record<stri
         // the accurate reading for a catalog entry.
         textExtractionStatus: 'ready',
         sizeBytes: 0,
+        // Declared coverage. Without it the deserializer defaults `scope`
+        // to 'book' with an empty `coversBibleBooks`, and the library then
+        // nags "faltan libros bíblicos asignados" on entries where the
+        // question is a category error: a confession, a catechism, a
+        // doctrinal statement and a creed collection do not comment on any
+        // single biblical book. `whole-bible` says exactly that, and keeps
+        // them visible for every passage in the corpus picker (see
+        // `resourceMatchesTestament`). The one real scriptural text in the
+        // seed is the SBL Greek NT, which is testament-wide.
+        scope: source.source_type === 'Biblical text' ? 'whole-testament' : 'whole-bible',
+        coversBibleBooks: [],
         title: source.title,
         shortTitle: source.short_title ?? null,
         author: source.author_or_editor ?? source.editor ?? null,
