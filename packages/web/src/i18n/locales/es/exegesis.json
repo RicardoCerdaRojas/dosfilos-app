@@ -770,7 +770,9 @@
                         "sheetCount_other": "{{count}} hojas",
                         "printedShort": "impresa {{printed}}",
                         "addSheet": "Agregar la hoja {{sheet}}",
-                        "removeSheet": "Quitar la hoja {{sheet}}"
+                        "removeSheet": "Quitar la hoja {{sheet}}",
+                        "endRange": "Cerrar el rango en la hoja {{sheet}}",
+                        "resize": "Ancho del índice"
                     },
                     "viewer": {
                         "loading": "Abriendo el documento…",
@@ -783,7 +785,10 @@
                         "previous": "Hoja anterior",
                         "next": "Hoja siguiente",
                         "addSheet": "Agregar esta hoja",
-                        "removeSheet": "Quitar esta hoja"
+                        "removeSheet": "Quitar esta hoja",
+                        "startRange": "Iniciar rango",
+                        "endRange": "Cerrar rango desde la hoja {{sheet}}",
+                        "rangeHint": "Rango abierto desde la hoja {{sheet}}. Elegí la hoja final acá o en el índice."
                     },
                     "adjustPages": "Ajustar páginas",
                     "sourceNotFound": "No encontramos esta fuente en el trabajo.",
@@ -810,6 +815,7 @@
                         "withPrinted": "{{base}} · impresa {{printed}}",
                         "remove": "Quitar {{range}}",
                         "budget": "Presupuesto del trabajo",
+                        "resize": "Ancho del panel de selección",
                         "statSheets_one": "{{count}} hoja",
                         "statSheets_other": "{{count}} hojas",
                         "statChars": "{{count}} caracteres",

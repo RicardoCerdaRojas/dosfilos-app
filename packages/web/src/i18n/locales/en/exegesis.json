@@ -770,7 +770,9 @@
                         "sheetCount_other": "{{count}} sheets",
                         "printedShort": "printed {{printed}}",
                         "addSheet": "Add sheet {{sheet}}",
-                        "removeSheet": "Remove sheet {{sheet}}"
+                        "removeSheet": "Remove sheet {{sheet}}",
+                        "endRange": "End the range at sheet {{sheet}}",
+                        "resize": "Index width"
                     },
                     "viewer": {
                         "loading": "Opening the document…",
@@ -783,7 +785,10 @@
                         "previous": "Previous sheet",
                         "next": "Next sheet",
                         "addSheet": "Add this sheet",
-                        "removeSheet": "Remove this sheet"
+                        "removeSheet": "Remove this sheet",
+                        "startRange": "Start range",
+                        "endRange": "End range from sheet {{sheet}}",
+                        "rangeHint": "Range open from sheet {{sheet}}. Pick the last sheet here or in the index."
                     },
                     "adjustPages": "Adjust pages",
                     "sourceNotFound": "This source is not in the paper.",
@@ -810,6 +815,7 @@
                         "withPrinted": "{{base}} · printed {{printed}}",
                         "remove": "Remove {{range}}",
                         "budget": "Paper budget",
+                        "resize": "Selection panel width",
                         "statSheets_one": "{{count}} sheet",
                         "statSheets_other": "{{count}} sheets",
                         "statChars": "{{count}} characters",

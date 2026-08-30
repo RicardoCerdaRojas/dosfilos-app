@@ -10,6 +10,8 @@ import {
     type SheetRange,
 } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
+import { PanelGroup } from '@/components/ui/PanelGroup';
+import { PanelDivider } from '@/components/ui/PanelDivider';
 import { useDocumentPdfUrl } from '@/hooks/exegesis/useDocumentPageIndex';
 import { PageRail, sheetsInRanges } from './PageRail';
 import { PdfPageViewer } from './PdfPageViewer';
@@ -67,6 +69,19 @@ export function SourcePagesWorkspace({
     const touched = useRef(false);
     const adopted = useRef(false);
 
+    /**
+     * Hoja desde la que se está tendiendo un rango. Mientras hay ancla, tocar
+     * otra hoja cierra el tramo entre las dos en vez de alternar una sola.
+     */
+    const [anchor, setAnchor] = useState<number | null>(null);
+
+    // Anchos de panel. El índice del libro es lo que más varía de documento a
+    // documento —un comentario con títulos largos pide más que uno sin
+    // encabezados— así que el usuario lo ajusta.
+    const [railWidth, setRailWidth] = useState(280);
+    const [railOpen, setRailOpen] = useState(true);
+    const [cartWidth, setCartWidth] = useState(320);
+
     useEffect(() => {
         if (adopted.current || touched.current) return;
         if (proposalPending || proposedRanges.length === 0) return;
@@ -107,12 +122,36 @@ export function SourcePagesWorkspace({
         rebuild(sheets => { if (sheets.has(sheet)) sheets.delete(sheet); else sheets.add(sheet); });
     }, []);
 
+    /**
+     * Agrega el tramo entre el ancla y esta hoja, ambos inclusive.
+     *
+     * Recorre el ÍNDICE y no los números: un documento puede saltear hojas, y
+     * tender el rango sobre los números incluiría hojas que no existen.
+     */
+    const closeRangeAt = useCallback((sheet: number) => {
+        const from = anchor;
+        setAnchor(null);
+        if (from === null) return;
+        const a = pages.findIndex(p => p.sheet === from);
+        const b = pages.findIndex(p => p.sheet === sheet);
+        if (a < 0 || b < 0) return;
+        const [lo, hi] = a <= b ? [a, b] : [b, a];
+        rebuild(sheets => { for (let i = lo; i <= hi; i++) sheets.add(pages[i]!.sheet); });
+    }, [anchor, pages]);
+
+    /** Un click en el riel: cierra el rango si hay ancla, si no alterna. */
+    const pickSheet = useCallback((sheet: number) => {
+        if (anchor !== null) closeRangeAt(sheet);
+        else toggleSheet(sheet);
+    }, [anchor, closeRangeAt, toggleSheet]);
+
     const removeRange = useCallback((range: SheetRange) => {
         rebuild(sheets => { for (let s = range.start; s <= range.end; s++) sheets.delete(s); });
     }, []);
 
     const acceptProposal = useCallback(() => {
         touched.current = true;
+        setAnchor(null);
         setRanges(prev => normalizeSheetRanges([...prev, ...proposedRanges]));
         if (proposedRanges[0]) setCurrentSheet(proposedRanges[0].start);
     }, [proposedRanges]);
@@ -165,21 +204,38 @@ export function SourcePagesWorkspace({
                 )}
             </div>
 
-            <div className="grid min-h-0 flex-1 overflow-hidden grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_310px]">
-                <div className="hidden min-w-0 min-h-0 overflow-hidden lg:flex">
-                    <PageRail
-                        pages={pages}
-                        printedPageOffset={printedPageOffset}
-                        selected={selectedSheets}
-                        proposed={proposedSheets}
-                        currentSheet={currentSheet}
-                        onGoToSheet={goToSheet}
-                        onToggleSheet={toggleSheet}
+            <PanelGroup className="m-3 min-h-0 flex-1">
+                {railOpen && (
+                    <div
+                        className="hidden min-w-0 shrink-0 lg:flex"
+                        style={{ width: `${railWidth}px` }}
+                    >
+                        <PageRail
+                            pages={pages}
+                            printedPageOffset={printedPageOffset}
+                            selected={selectedSheets}
+                            proposed={proposedSheets}
+                            anchor={anchor}
+                            currentSheet={currentSheet}
+                            onGoToSheet={goToSheet}
+                            onToggleSheet={pickSheet}
+                        />
+                    </div>
+                )}
+                <div className="hidden lg:block">
+                    <PanelDivider
+                        panelSide="left"
+                        isOpen={railOpen}
+                        onToggle={() => setRailOpen(v => !v)}
+                        onResize={railOpen
+                            ? (delta) => setRailWidth(w => Math.min(460, Math.max(200, w + delta)))
+                            : undefined}
+                        title={t('paperSetup.subSteps.corpus.picker.rail.resize')}
                     />
                 </div>
 
-                <div className="flex min-w-0 min-h-0 flex-col overflow-hidden bg-muted/30">
-                    <div className="flex items-center justify-between gap-2 border-b border-border bg-card px-3 py-2">
+                <div className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden bg-muted/30">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-card px-3 py-2">
                         <div className="flex items-center gap-1.5">
                             <Button
                                 type="button" variant="outline" size="icon" className="h-7 w-7"
@@ -204,17 +260,36 @@ export function SourcePagesWorkspace({
                                     : t('paperSetup.subSteps.corpus.picker.viewer.printed', { printed: printedCurrent })}
                             </span>
                         </div>
-                        <Button
-                            type="button"
-                            variant={isCurrentSelected ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => toggleSheet(currentSheet)}
-                        >
-                            {isCurrentSelected
-                                ? t('paperSetup.subSteps.corpus.picker.viewer.removeSheet')
-                                : t('paperSetup.subSteps.corpus.picker.viewer.addSheet')}
-                        </Button>
+                        <div className="flex items-center gap-1.5">
+                            <Button
+                                type="button"
+                                variant={anchor !== null ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => (anchor === null ? setAnchor(currentSheet) : closeRangeAt(currentSheet))}
+                            >
+                                {anchor === null
+                                    ? t('paperSetup.subSteps.corpus.picker.viewer.startRange')
+                                    : t('paperSetup.subSteps.corpus.picker.viewer.endRange', { sheet: anchor })}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant={isCurrentSelected ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => toggleSheet(currentSheet)}
+                            >
+                                {isCurrentSelected
+                                    ? t('paperSetup.subSteps.corpus.picker.viewer.removeSheet')
+                                    : t('paperSetup.subSteps.corpus.picker.viewer.addSheet')}
+                            </Button>
+                        </div>
                     </div>
+
+                    {anchor !== null && (
+                        <p className="shrink-0 border-b border-border bg-primary/10 px-3 py-1.5 text-[11px] text-foreground">
+                            {t('paperSetup.subSteps.corpus.picker.viewer.rangeHint', { sheet: anchor })}
+                        </p>
+                    )}
+
                     <div className="min-h-0 flex-1 overflow-hidden">
                         <PdfPageViewer
                             url={pdf.data?.url ?? null}
@@ -224,7 +299,13 @@ export function SourcePagesWorkspace({
                     </div>
                 </div>
 
-                <div className="flex min-w-0 min-h-0 overflow-hidden">
+                <PanelDivider
+                    panelSide="right"
+                    isOpen
+                    onResize={(delta) => setCartWidth(w => Math.min(460, Math.max(260, w + delta)))}
+                    title={t('paperSetup.subSteps.corpus.picker.cart.resize')}
+                />
+                <div className="flex min-w-0 shrink-0" style={{ width: `${cartWidth}px` }}>
                     <SelectionCart
                         ranges={ranges}
                         pages={pages}
@@ -237,7 +318,7 @@ export function SourcePagesWorkspace({
                         isSaving={isSaving}
                     />
                 </div>
-            </div>
+            </PanelGroup>
         </>
     );
 }

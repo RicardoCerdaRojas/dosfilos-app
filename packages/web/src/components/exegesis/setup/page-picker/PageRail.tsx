@@ -19,6 +19,8 @@ interface Props {
     printedPageOffset: number | null;
     selected: ReadonlySet<number>;
     proposed: ReadonlySet<number>;
+    /** Hoja desde la que se está tendiendo un rango, si hay una. */
+    anchor: number | null;
     currentSheet: number;
     onGoToSheet: (sheet: number) => void;
     onToggleSheet: (sheet: number) => void;
@@ -29,6 +31,7 @@ export function PageRail({
     printedPageOffset,
     selected,
     proposed,
+    anchor,
     currentSheet,
     onGoToSheet,
     onToggleSheet,
@@ -62,6 +65,7 @@ export function PageRail({
                     const isSelected = selected.has(page.sheet);
                     const isProposed = proposed.has(page.sheet);
                     const isCurrent = page.sheet === currentSheet;
+                    const isAnchor = page.sheet === anchor;
                     const printed = printedPageFor(page.sheet, printedPageOffset);
 
                     return (
@@ -70,7 +74,7 @@ export function PageRail({
                             data-sheet={page.sheet}
                             className={`relative flex min-w-0 items-start gap-2 border-b border-border/60 pl-3 pr-2 py-1.5 ${
                                 isSelected ? 'bg-primary/10' : isCurrent ? 'bg-accent' : ''
-                            }`}
+                            } ${isAnchor ? 'ring-1 ring-inset ring-primary' : ''}`}
                         >
                             <span
                                 aria-hidden="true"
@@ -111,9 +115,11 @@ export function PageRail({
                                 onClick={() => onToggleSheet(page.sheet)}
                                 aria-pressed={isSelected}
                                 aria-label={
-                                    isSelected
-                                        ? t('paperSetup.subSteps.corpus.picker.rail.removeSheet', { sheet: page.sheet })
-                                        : t('paperSetup.subSteps.corpus.picker.rail.addSheet', { sheet: page.sheet })
+                                    anchor !== null
+                                        ? t('paperSetup.subSteps.corpus.picker.rail.endRange', { sheet: page.sheet })
+                                        : isSelected
+                                            ? t('paperSetup.subSteps.corpus.picker.rail.removeSheet', { sheet: page.sheet })
+                                            : t('paperSetup.subSteps.corpus.picker.rail.addSheet', { sheet: page.sheet })
                                 }
                                 className={`shrink-0 mt-0.5 h-5 w-5 rounded border text-xs leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                                     isSelected
@@ -121,7 +127,7 @@ export function PageRail({
                                         : 'border-border text-muted-foreground hover:bg-accent'
                                 }`}
                             >
-                                {isSelected ? '−' : '+'}
+                                {anchor !== null ? '⇥' : isSelected ? '−' : '+'}
                             </button>
                         </div>
                     );
