@@ -1647,6 +1647,8 @@
                 "applyHint": "Apply hint",
                 "editManual": "Edit manually",
                 "editAccepted": "Edit accepted content",
+                        "redo": "Redo",
+                        "redoTooltip": "Returns the step to review so it can be generated again. The accepted analysis stays in the history.",
                 "saveEdit": "Save edit",
                 "expand": "Expand",
                 "collapse": "Collapse"

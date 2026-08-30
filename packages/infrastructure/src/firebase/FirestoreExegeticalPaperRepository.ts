@@ -539,6 +539,20 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         return fullVersion;
     }
 
+    /**
+     * Reabre un paso aceptado. Las versiones quedan; solo se suelta cuál era la
+     * aceptada y el estado vuelve a revisión —o a pendiente si nunca hubo
+     * versiones, que es el caso de un paso aceptado a mano sin generar.
+     */
+    async reopenStep(ownerId: string, paperId: string, stepId: string): Promise<ExegeticalStep> {
+        return this.mutateStep(ownerId, paperId, stepId, (step) => {
+            step.accepted = null;
+            step.state = step.versions.length > 0 ? 'awaiting-review' : 'pending';
+            step.updatedAt = new Date();
+            return step;
+        });
+    }
+
     async acceptStepVersion(
         ownerId: string,
         paperId: string,
