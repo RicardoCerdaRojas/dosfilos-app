@@ -1,0 +1,183 @@
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import {
+    chunkRangesForSheets,
+    selectForPrompt,
+    type CorpusChunk,
+    type CuratedCorpusResult,
+    type ICuratedCorpusRetriever,
+    type RetrieveCuratedCorpusInput,
+    type SheetRange,
+} from '@dosfilos/domain';
+import { fetchDocumentPageIndex } from './DocumentPageIndexClient';
+import { CallableDocumentChunkReader } from './CallableDocumentChunkReader';
+
+/**
+ * Arma el material de un paso: lo fijado, más lo que el ranking traiga.
+ *
+ * Dos caminos distintos porque son dos políticas distintas:
+ *
+ *   - **Fijado** — se lee entero, por rango de hojas, con `getDocumentChunks`.
+ *     No se consulta ni se puntúa: el usuario ya decidió que va.
+ *   - **Rankeado** — `retrieveCuratedCorpus` embebe la consulta, usa el índice
+ *     vectorial y descarta lo que cae fuera de las hojas admitidas.
+ *
+ * Los dos se juntan en `selectForPrompt`, que resuelve el presupuesto y el
+ * orden. Esa decisión vive en dominio a propósito: es la regla del producto —
+ * lo fijado manda— y no un detalle de cómo se leen los datos.
+ */
+
+interface RankedChunkPayload {
+    resourceId: string;
+    chunkIndex: number;
+    text: string;
+    sheet: number | null;
+    section: string | null;
+    score: number;
+}
+
+interface RankedResponse {
+    chunks: RankedChunkPayload[];
+    sourcesQueried: number;
+    failedSources: string[];
+    emptySources: string[];
+}
+
+const TIMEOUT_MS = 60_000;
+
+export class CallableCuratedCorpusRetriever implements ICuratedCorpusRetriever {
+    private chunkReader = new CallableDocumentChunkReader();
+
+    async retrieve(input: RetrieveCuratedCorpusInput): Promise<CuratedCorpusResult> {
+        const scopes = input.sources.filter(s => s.sheetRanges.length > 0);
+        if (scopes.length === 0) return empty();
+
+        const [ranked, pinned] = await Promise.all([
+            this.rank(input, scopes),
+            this.readPinned(scopes),
+        ]);
+
+        const selection = selectForPrompt({
+            ranked: ranked.chunks,
+            pinned,
+            budgetChars: input.budgetChars,
+        });
+
+        const byResource: Record<string, CorpusChunk[]> = {};
+        for (const scope of scopes) byResource[scope.resourceId] = [];
+        for (const chunk of selection.chunks) {
+            (byResource[chunk.resourceId] ??= []).push(chunk);
+        }
+
+        console.log('[CuratedCorpus] material del paso', {
+            sources: scopes.length,
+            pinnedChars: selection.pinnedChars,
+            rankedChars: selection.rankedChars,
+            dropped: selection.droppedRanked,
+            budget: input.budgetChars,
+        });
+
+        return {
+            byResource,
+            pinnedChars: selection.pinnedChars,
+            rankedChars: selection.rankedChars,
+            droppedRanked: selection.droppedRanked,
+            pinnedExhaustedBudget: selection.pinnedExhaustedBudget,
+            failedSources: ranked.failed,
+            emptySources: ranked.empty,
+        };
+    }
+
+    /**
+     * El ranking. Un fallo NO tumba el paso: se devuelve vacío y el material se
+     * arma solo con lo fijado, informando qué fuentes quedaron afuera. Un paso
+     * con menos material es peor que uno completo; un paso que no se genera es
+     * peor que los dos.
+     */
+    private async rank(
+        input: RetrieveCuratedCorpusInput,
+        scopes: ReadonlyArray<RetrieveCuratedCorpusInput['sources'][number]>,
+    ): Promise<{ chunks: CorpusChunk[]; failed: string[]; empty: string[] }> {
+        try {
+            const callable = httpsCallable<unknown, RankedResponse>(
+                getFunctions(),
+                'retrieveCuratedCorpus',
+                { timeout: TIMEOUT_MS },
+            );
+            const response = await callable({
+                userId: input.userId,
+                query: input.query,
+                sources: scopes.map(s => ({
+                    resourceId: s.resourceId,
+                    sheetRanges: s.sheetRanges.map(r => ({ start: r.start, end: r.end })),
+                })),
+            });
+            return {
+                chunks: response.data?.chunks ?? [],
+                failed: response.data?.failedSources ?? [],
+                empty: response.data?.emptySources ?? [],
+            };
+        } catch (err) {
+            console.warn('[CuratedCorpus] el ranking no respondió; se sigue con lo fijado', {
+                error: (err as Error).message,
+            });
+            return { chunks: [], failed: scopes.map(s => s.resourceId), empty: [] };
+        }
+    }
+
+    /**
+     * Los tramos fijados, completos.
+     *
+     * Hace falta el índice de hojas para traducir hojas a fragmentos, pero está
+     * cacheado por recurso desde que el usuario abrió el selector, así que en la
+     * práctica no cuesta un viaje extra.
+     */
+    private async readPinned(
+        scopes: ReadonlyArray<RetrieveCuratedCorpusInput['sources'][number]>,
+    ): Promise<CorpusChunk[]> {
+        const withPinned = scopes.filter(s => s.pinnedRanges.length > 0);
+        if (withPinned.length === 0) return [];
+
+        const perSource = await Promise.all(
+            withPinned.map(async scope => {
+                try {
+                    const index = await fetchDocumentPageIndex(scope.resourceId);
+                    const chunkRanges = chunkRangesForSheets(
+                        index.pages,
+                        scope.pinnedRanges as SheetRange[],
+                    );
+                    const chunks = await this.chunkReader.readChunks(scope.resourceId, chunkRanges);
+                    return chunks.map<CorpusChunk>(c => ({
+                        resourceId: scope.resourceId,
+                        chunkIndex: c.chunkIndex,
+                        text: c.text,
+                        sheet: c.page,
+                        section: c.section,
+                        // Lo fijado no compite, así que su puntaje no se usa. Va
+                        // en 1 para que cualquier orden por relevancia lo ponga
+                        // adelante en vez de al final.
+                        score: 1,
+                    }));
+                } catch (err) {
+                    console.warn('[CuratedCorpus] no se pudieron leer los tramos fijados', {
+                        resourceId: scope.resourceId,
+                        error: (err as Error).message,
+                    });
+                    return [];
+                }
+            }),
+        );
+        return perSource.flat();
+    }
+}
+
+function empty(): CuratedCorpusResult {
+    return {
+        byResource: {},
+        pinnedChars: 0,
+        rankedChars: 0,
+        droppedRanked: 0,
+        pinnedExhaustedBudget: false,
+        failedSources: [],
+        emptySources: [],
+    };
+}

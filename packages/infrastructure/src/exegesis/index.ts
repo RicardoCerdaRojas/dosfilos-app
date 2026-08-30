@@ -12,6 +12,7 @@ export { OverloadedError } from './geminiRetry';
 export { RetrieveChunksExcerptExtractor } from './RetrieveChunksExcerptExtractor';
 export { StructuralExcerptExtractor } from './StructuralExcerptExtractor';
 export { CallableDocumentChunkReader } from './CallableDocumentChunkReader';
+export { CallableCuratedCorpusRetriever } from './CallableCuratedCorpusRetriever';
 // Con qué hojas arranca el carrito: índice del comentario primero, coincidencia
 // semántica si el documento no trae estructura.
 export { proposeSheetRanges } from './SheetRangeProposer';

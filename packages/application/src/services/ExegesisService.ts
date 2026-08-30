@@ -29,6 +29,7 @@ import {
     RetrieveChunksExcerptExtractor,
     StructuralExcerptExtractor,
     CallableDocumentChunkReader,
+    CallableCuratedCorpusRetriever,
     RetrieveChunksResourceRanker,
     GeminiStepCorpusPlanner,
     MorphhbOriginalLanguageProvider,
@@ -483,6 +484,9 @@ class ExegesisService {
             contentReader,
             canonicalAnalyzer,
             originalLanguageProvider,
+            // Con esto, las fuentes con receta piden material por versículo
+            // en vez de inlinear su corpus entero en cada paso.
+            new CallableCuratedCorpusRetriever(),
         );
 
         // Academic-paper composer. Reuses the existing
