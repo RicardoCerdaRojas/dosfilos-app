@@ -72,3 +72,9 @@ export * from './expository/SuperMacroSection';
 // step so the final output is never just intro + conclusion.
 export * from './services/renderCanonicalAnalysisAsMarkdown';
 export * from './services/getEffectiveStructuralExpectations';
+
+// Selección estructural de fragmentos: lee la tabla de contenidos que el
+// indexador ya guardó por chunk (`section` / `sectionPath`) y la convierte
+// en un índice por referencia bíblica, para mandarle al modelo la sección
+// del comentario que trata el pasaje en vez de los K chunks más parecidos.
+export * from './outline/documentOutline';
