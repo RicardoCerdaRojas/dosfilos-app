@@ -1,5 +1,5 @@
 import type { PassageReference } from '../../bible/canon/passage-reference';
-import type { ProjectSourceExcerpt } from '../entities/ProjectSource';
+import type { ExcerptSelectionMode, ProjectSourceExcerpt } from '../entities/ProjectSource';
 
 /**
  * Pre-curated retrieval of relevant chunks from indexed library
@@ -81,6 +81,16 @@ export interface ExtractExcerptsResult {
      * extraction used THIS query" and judge whether to refine.
      */
     queryUsed: string;
+    /**
+     * Cómo se resolvió cada recurso. Una misma extracción puede mezclar los
+     * dos caminos: un comentario con encabezados entra por sección y otro
+     * extraído sin estructura cae a semántico, en la misma corrida. La UI y
+     * la fuente persistida necesitan el dato POR RECURSO, no por extracción.
+     *
+     * Opcional para que una implementación que solo hace un camino no tenga
+     * que declararlo.
+     */
+    modeByResource?: Record<string, ExcerptSelectionMode>;
 }
 
 /**

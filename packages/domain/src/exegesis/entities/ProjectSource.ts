@@ -91,6 +91,13 @@ export interface ProjectSource {
     excerpts: ReadonlyArray<ProjectSourceExcerpt>;
 
     /**
+     * Cómo se eligieron los `excerpts`. `null` para fuentes en
+     * `'full-document'` y para las extraídas antes de que existiera la
+     * selección estructural.
+     */
+    excerptSelectionMode: ExcerptSelectionMode | null;
+
+    /**
      * Backref to the originating `library_resources/{id}` doc when the
      * source was created by the library-extraction flow. Lets the UI
      * offer "view original PDF" and lets the use case re-extract
@@ -127,6 +134,22 @@ export interface ProjectSource {
  * downstream code can type-narrow without importing the whole entity.
  */
 export type ProjectSourceMode = 'full-document' | 'extracted-excerpts';
+
+/**
+ * Cómo se eligieron los fragmentos de una fuente en modo
+ * `'extracted-excerpts'`.
+ *
+ *   - `'structural'` — se leyó la tabla de contenidos del documento y se
+ *     tomó la sección que trata el pasaje, corrida y en orden. Exacta.
+ *   - `'semantic'` — se trajeron los fragmentos más cercanos a una consulta
+ *     de embeddings. Aproximada, y la única posible en documentos que se
+ *     extrajeron sin encabezados.
+ *
+ * Se persiste porque son dos niveles de confianza distintos y el usuario
+ * tiene que poder verlos al revisar el corpus, no solo en el momento de
+ * extraer. `null` en fuentes anteriores a la selección estructural.
+ */
+export type ExcerptSelectionMode = 'structural' | 'semantic';
 
 /**
  * One curated chunk extracted from a library resource, ranked by

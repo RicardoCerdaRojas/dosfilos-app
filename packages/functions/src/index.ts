@@ -29,6 +29,10 @@ export { deleteCanvasComponent } from './teaching-suite/deleteCanvasComponent';
 export { getExegesisPapersSummary } from './exegesis/getExegesisPapersSummary';
 export { getSermonsListSummary } from './sermon/getSermonsListSummary';
 export { retrieveChunks } from './library/retrieveChunks';
+// Lectura estructural del índice: tabla de contenidos y texto por tramo.
+// Complementan a `retrieveChunks` — responden "qué parte de este libro
+// trata este pasaje" en vez de "qué se parece a esta consulta".
+export { getDocumentOutline, getDocumentChunks } from './library/documentStructure';
 export { auditIndexing } from './library/auditIndexing';
 export { createCoreLibraryStore } from './library/createCoreLibraryStore';
 export { updateCoreLibraryStore } from './library/updateCoreLibraryStore';

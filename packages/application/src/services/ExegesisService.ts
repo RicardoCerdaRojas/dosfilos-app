@@ -27,6 +27,7 @@ import {
     GeminiCoherenceReviewer,
     GeminiSourceTypeClassifier,
     RetrieveChunksExcerptExtractor,
+    StructuralExcerptExtractor,
     RetrieveChunksResourceRanker,
     GeminiStepCorpusPlanner,
     MorphhbOriginalLanguageProvider,
@@ -361,7 +362,12 @@ class ExegesisService {
                 return libraryService.getResourceIndexStatus(resource) === 'indexed';
             },
         };
-        const excerptExtractor = new RetrieveChunksExcerptExtractor(indexProbe);
+        // El extractor estructural elige la SECCIÓN del comentario que trata
+        // el pasaje leyendo la tabla de contenidos que el indexador ya
+        // guardó; el semántico queda debajo como degradación por recurso,
+        // para los documentos que se extrajeron sin encabezados.
+        const semanticExtractor = new RetrieveChunksExcerptExtractor(indexProbe);
+        const excerptExtractor = new StructuralExcerptExtractor(indexProbe, semanticExtractor);
         this.extractExcerpts = new ExtractExcerptsForPaperUseCase(paperRepository, excerptExtractor);
 
         // v1.7 smart-match: ranks the user's library against a paper

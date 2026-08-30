@@ -10,6 +10,7 @@ export {
 } from './DeterministicStyleFormatter';
 export { OverloadedError } from './geminiRetry';
 export { RetrieveChunksExcerptExtractor } from './RetrieveChunksExcerptExtractor';
+export { StructuralExcerptExtractor } from './StructuralExcerptExtractor';
 export { RetrieveChunksResourceRanker } from './RetrieveChunksResourceRanker';
 export { GeminiStepCorpusPlanner } from './GeminiStepCorpusPlanner';
 export { GeminiCanonicalVerseAnalyzer } from './canonicalAnalyzer/GeminiCanonicalVerseAnalyzer';

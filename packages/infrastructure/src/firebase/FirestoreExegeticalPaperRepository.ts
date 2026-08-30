@@ -296,6 +296,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             displayLabel: source.displayLabel,
             citationKey: source.citationKey,
             order: source.order,
+            excerptSelectionMode: source.excerptSelectionMode ?? null,
             // v1.5 fields. Defaults match the historical 'full-document'
             // behavior so existing callers (CorpusSubStep direct upload)
             // keep working without changes.
@@ -795,6 +796,10 @@ function deserializeSource(raw: any): ProjectSource {
         displayLabel: raw.displayLabel ?? '',
         citationKey: raw.citationKey ?? null,
         order: typeof raw.order === 'number' ? raw.order : 0,
+        // Las fuentes extraídas antes de la selección estructural no
+        // declaran cómo se eligieron sus fragmentos: quedan en null y la UI
+        // no afirma nada sobre ellas.
+        excerptSelectionMode: raw.excerptSelectionMode ?? null,
         // v1.5 fields with retro-compat defaults. Pre-v1.5 docs have
         // none of these — they should keep behaving as 'full-document'
         // sources with no excerpts and no library backref.
