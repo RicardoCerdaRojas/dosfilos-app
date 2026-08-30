@@ -752,6 +752,57 @@
                         "fr": "Available in French"
                     }
                 },
+                "picker": {
+                    "subtitle": "Choose which sheets of this document go into the paper. You can take the passage section and the book's introduction too.",
+                    "loadingIndex": "Reading the document index…",
+                    "indexFailed": "Could not read this document's index. Check that it finished processing and try again.",
+                    "proposal": {
+                        "structural": "We found the section covering this passage in the commentary's own index.",
+                        "semantic": "This document has no reference headings, so the suggestion comes from content matching and is worth reviewing.",
+                        "accept": "Accept suggestion"
+                    },
+                    "rail": {
+                        "withHeadings": "Book index",
+                        "withoutHeadings": "Sheets · no headings",
+                        "sheetCount_one": "{{count}} sheet",
+                        "sheetCount_other": "{{count}} sheets",
+                        "printedShort": "printed {{printed}}",
+                        "addSheet": "Add sheet {{sheet}}",
+                        "removeSheet": "Remove sheet {{sheet}}"
+                    },
+                    "viewer": {
+                        "loading": "Opening the document…",
+                        "loadFailed": "Could not open the document. Try again in a few seconds.",
+                        "pageFailed": "Could not show this sheet. Try another one or reopen the document.",
+                        "sheetLabel": "Sheet {{sheet}} of the document",
+                        "sheet": "sheet {{sheet}}",
+                        "printed": "· printed {{printed}}",
+                        "noPrinted": "· numbering not detected",
+                        "previous": "Previous sheet",
+                        "next": "Next sheet",
+                        "addSheet": "Add this sheet",
+                        "removeSheet": "Remove this sheet"
+                    },
+                    "cart": {
+                        "title": "In the paper",
+                        "rangeCount_one": "{{count}} range",
+                        "rangeCount_other": "{{count}} ranges",
+                        "empty": "Nothing chosen yet. Accept the suggestion, or browse the document and add sheets.",
+                        "sheetOne": "sheet {{sheet}}",
+                        "sheetRange": "sheets {{start}}–{{end}}",
+                        "withPrinted": "{{base}} · printed {{printed}}",
+                        "remove": "Remove {{range}}",
+                        "budget": "Paper budget",
+                        "statSheets_one": "{{count}} sheet",
+                        "statSheets_other": "{{count}} sheets",
+                        "statChars": "{{count}} characters",
+                        "otherSources": "Other sources in this paper take {{count}} characters.",
+                        "overBudget": "Over budget",
+                        "saving": "Saving…",
+                        "confirm_one": "Add {{count}} sheet to the paper",
+                        "confirm_other": "Add {{count}} sheets to the paper"
+                    }
+                },
                 "list": {
                     "title": "Attached sources",
                     "empty": "No sources yet. Tap \"Add source\" above or \"Upload\" on any missing requirement.",

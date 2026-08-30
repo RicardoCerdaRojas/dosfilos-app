@@ -752,6 +752,57 @@
                         "fr": "Disponible en francés"
                     }
                 },
+                "picker": {
+                    "subtitle": "Elegí qué hojas del documento entran a este trabajo. Podés agregar la sección del pasaje y también la introducción del libro.",
+                    "loadingIndex": "Leyendo el índice del documento…",
+                    "indexFailed": "No se pudo leer el índice de este documento. Verificá que esté procesado y probá de nuevo.",
+                    "proposal": {
+                        "structural": "Encontramos la sección que trata este pasaje en el índice del comentario.",
+                        "semantic": "Este documento no trae encabezados por referencia: la sugerencia sale de coincidencia de contenido y conviene revisarla.",
+                        "accept": "Aceptar sugerencia"
+                    },
+                    "rail": {
+                        "withHeadings": "Índice del libro",
+                        "withoutHeadings": "Hojas · sin encabezados",
+                        "sheetCount_one": "{{count}} hoja",
+                        "sheetCount_other": "{{count}} hojas",
+                        "printedShort": "impresa {{printed}}",
+                        "addSheet": "Agregar la hoja {{sheet}}",
+                        "removeSheet": "Quitar la hoja {{sheet}}"
+                    },
+                    "viewer": {
+                        "loading": "Abriendo el documento…",
+                        "loadFailed": "No se pudo abrir el documento. Probá de nuevo en unos segundos.",
+                        "pageFailed": "No se pudo mostrar esta hoja. Probá con otra o volvé a abrir el documento.",
+                        "sheetLabel": "Hoja {{sheet}} del documento",
+                        "sheet": "hoja {{sheet}}",
+                        "printed": "· impresa {{printed}}",
+                        "noPrinted": "· numeración sin detectar",
+                        "previous": "Hoja anterior",
+                        "next": "Hoja siguiente",
+                        "addSheet": "Agregar esta hoja",
+                        "removeSheet": "Quitar esta hoja"
+                    },
+                    "cart": {
+                        "title": "En el trabajo",
+                        "rangeCount_one": "{{count}} tramo",
+                        "rangeCount_other": "{{count}} tramos",
+                        "empty": "Nada elegido todavía. Aceptá la sugerencia, o navegá el documento y agregá hojas.",
+                        "sheetOne": "hoja {{sheet}}",
+                        "sheetRange": "hojas {{start}}–{{end}}",
+                        "withPrinted": "{{base}} · impresa {{printed}}",
+                        "remove": "Quitar {{range}}",
+                        "budget": "Presupuesto del trabajo",
+                        "statSheets_one": "{{count}} hoja",
+                        "statSheets_other": "{{count}} hojas",
+                        "statChars": "{{count}} caracteres",
+                        "otherSources": "Otras fuentes del trabajo ocupan {{count}} caracteres.",
+                        "overBudget": "Se pasa del presupuesto",
+                        "saving": "Guardando…",
+                        "confirm_one": "Agregar {{count}} hoja al trabajo",
+                        "confirm_other": "Agregar {{count}} hojas al trabajo"
+                    }
+                },
                 "list": {
                     "title": "Fuentes adjuntas",
                     "empty": "Aún no agregaste fuentes. Toca \"Agregar fuente\" arriba o \"Subir\" en cualquier requisito faltante.",
