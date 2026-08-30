@@ -115,8 +115,8 @@ export function ExegesisSourcePagesPage() {
     }
 
     return (
-        <div className="flex h-[calc(100vh-4rem)] flex-col">
-            <header className="flex items-start gap-3 border-b border-border px-5 py-3">
+        <div className="flex h-full min-h-0 flex-col overflow-hidden">
+            <header className="flex shrink-0 items-start gap-3 border-b border-border px-5 py-3">
                 <Button
                     variant="ghost" size="icon" className="mt-0.5 h-8 w-8 shrink-0"
                     onClick={back}

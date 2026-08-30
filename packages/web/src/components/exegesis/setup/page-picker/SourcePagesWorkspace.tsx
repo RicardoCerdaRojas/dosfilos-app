@@ -138,7 +138,7 @@ export function SourcePagesWorkspace({
 
     return (
         <>
-            <div className="flex flex-wrap items-center gap-3 border-b border-border bg-info-subtle px-5 py-2.5">
+            <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border bg-info-subtle px-5 py-2.5">
                 {proposalPending ? (
                     <>
                         <Loader2 className="h-3.5 w-3.5 animate-spin text-info-subtle-foreground shrink-0" aria-hidden="true" />
@@ -165,8 +165,8 @@ export function SourcePagesWorkspace({
                 )}
             </div>
 
-            <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_310px]">
-                <div className="hidden min-h-0 lg:flex">
+            <div className="grid min-h-0 flex-1 overflow-hidden grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_310px]">
+                <div className="hidden min-w-0 min-h-0 overflow-hidden lg:flex">
                     <PageRail
                         pages={pages}
                         printedPageOffset={printedPageOffset}
@@ -178,7 +178,7 @@ export function SourcePagesWorkspace({
                     />
                 </div>
 
-                <div className="flex min-h-0 flex-col bg-muted/30">
+                <div className="flex min-w-0 min-h-0 flex-col overflow-hidden bg-muted/30">
                     <div className="flex items-center justify-between gap-2 border-b border-border bg-card px-3 py-2">
                         <div className="flex items-center gap-1.5">
                             <Button
@@ -215,17 +215,16 @@ export function SourcePagesWorkspace({
                                 : t('paperSetup.subSteps.corpus.picker.viewer.addSheet')}
                         </Button>
                     </div>
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="min-h-0 flex-1 overflow-hidden">
                         <PdfPageViewer
                             url={pdf.data?.url ?? null}
                             sheet={currentSheet}
                             selected={isCurrentSelected}
-                            width={560}
                         />
                     </div>
                 </div>
 
-                <div className="flex min-h-0">
+                <div className="flex min-w-0 min-h-0 overflow-hidden">
                     <SelectionCart
                         ranges={ranges}
                         pages={pages}

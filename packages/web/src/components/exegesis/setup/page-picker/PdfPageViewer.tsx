@@ -29,11 +29,14 @@ interface Props {
     sheet: number;
     /** Marca visualmente que la hoja ya está en el carrito. */
     selected: boolean;
-    /** Ancho de render en píxeles CSS. */
-    width?: number;
 }
 
-export function PdfPageViewer({ url, sheet, selected, width = 460 }: Props) {
+/**
+ * Margen alrededor de la hoja dentro del panel, en píxeles.
+ */
+const STAGE_PADDING = 24;
+
+export function PdfPageViewer({ url, sheet, selected }: Props) {
     const { t } = useTranslation('exegesis');
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const docRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null);
@@ -41,8 +44,24 @@ export function PdfPageViewer({ url, sheet, selected, width = 460 }: Props) {
     // dos renders sobre el mismo canvas se pisan y pdf.js tira
     // "Cannot use the same canvas during multiple render() operations".
     const renderRef = useRef<pdfjsLib.RenderTask | null>(null);
+    const stageRef = useRef<HTMLDivElement>(null);
+    const [stage, setStage] = useState({ width: 0, height: 0 });
     const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
     const [errorKind, setErrorKind] = useState<'load' | 'page' | null>(null);
+
+    // La hoja se ajusta al panel para que entre ENTERA. Al recorrer un libro
+    // decidiendo qué sirve, ver media página y tener que scrollear para ver el
+    // resto convierte cada hoja en dos gestos.
+    useEffect(() => {
+        const el = stageRef.current;
+        if (!el) return;
+        const observer = new ResizeObserver(entries => {
+            const box = entries[0]?.contentRect;
+            if (box) setStage({ width: box.width, height: box.height });
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
         if (!url) return;
@@ -78,6 +97,7 @@ export function PdfPageViewer({ url, sheet, selected, width = 460 }: Props) {
         const canvas = canvasRef.current;
         if (status !== 'ready' || !doc || !canvas) return;
         if (sheet < 1 || sheet > doc.numPages) return;
+        if (stage.width <= 0 || stage.height <= 0) return;
 
         let cancelled = false;
         renderRef.current?.cancel();
@@ -86,19 +106,25 @@ export function PdfPageViewer({ url, sheet, selected, width = 460 }: Props) {
             page => {
                 if (cancelled) return;
                 const base = page.getViewport({ scale: 1 });
+                // Entra entera: se toma el menor de los dos ajustes, el de ancho
+                // y el de alto.
+                const fit = Math.min(
+                    (stage.width - STAGE_PADDING * 2) / base.width,
+                    (stage.height - STAGE_PADDING * 2) / base.height,
+                );
+                const cssScale = Math.max(fit, 0.1);
                 // Se dibuja a la densidad real de la pantalla: en un retina, un
                 // canvas a escala 1 se ve borroso justo donde el usuario está
                 // leyendo tipografía chica para decidir.
                 const dpr = Math.min(window.devicePixelRatio || 1, 2);
-                const scale = (width / base.width) * dpr;
-                const viewport = page.getViewport({ scale });
+                const viewport = page.getViewport({ scale: cssScale * dpr });
                 const ctx = canvas.getContext('2d');
                 if (!ctx) return;
 
                 canvas.width = Math.floor(viewport.width);
                 canvas.height = Math.floor(viewport.height);
-                canvas.style.width = `${width}px`;
-                canvas.style.height = `${Math.floor(viewport.height / dpr)}px`;
+                canvas.style.width = `${Math.floor(base.width * cssScale)}px`;
+                canvas.style.height = `${Math.floor(base.height * cssScale)}px`;
 
                 const task = page.render({ canvas, canvasContext: ctx, viewport });
                 renderRef.current = task;
@@ -118,11 +144,11 @@ export function PdfPageViewer({ url, sheet, selected, width = 460 }: Props) {
         );
 
         return () => { cancelled = true; renderRef.current?.cancel(); };
-    }, [sheet, status, width]);
+    }, [sheet, status, stage.width, stage.height]);
 
     if (status === 'error') {
         return (
-            <div className="flex flex-col items-center justify-center gap-2 py-16 px-6 text-center">
+            <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
                 <FileWarning className="h-5 w-5 text-warning" aria-hidden="true" />
                 <p className="text-sm text-muted-foreground max-w-xs">
                     {errorKind === 'load'
@@ -134,7 +160,7 @@ export function PdfPageViewer({ url, sheet, selected, width = 460 }: Props) {
     }
 
     return (
-        <div className="relative flex justify-center py-4">
+        <div ref={stageRef} className="relative flex h-full w-full items-center justify-center overflow-hidden">
             {status !== 'ready' && (
                 <div className="absolute inset-0 flex items-center justify-center gap-2 text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
