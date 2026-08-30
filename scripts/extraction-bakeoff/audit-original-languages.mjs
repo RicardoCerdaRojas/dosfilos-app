@@ -161,15 +161,25 @@ for (const doc of snap.docs) {
         hebrew: s.hebrewConsonants,
         niqqudRatio: s.niqqudRatio,
         greekDiacriticRatio: s.greekDiacriticRatio,
+        orphanCombining: s.orphanCombining,
         expectsHebrew, expectsGreek, typeExpects,
         storageUrl: d.storageUrl ?? null,
-        // Sospechoso: se esperaba escritura original y el índice no tiene NADA.
+        // Ausente: se esperaba escritura original y el índice no tiene NADA.
         suspect: (expectsHebrew || expectsGreek || typeExpects) && s.greekLetters === 0 && s.hebrewConsonants === 0,
+        // Presente pero ROTA. Medido en el Léxico Griego-Español: 1.052 letras
+        // griegas y niqqud 0,835 —números que parecen sanos— con las palabras
+        // hebreas despedazadas, `גָּדַל` partido en `גָּד` y ` ַ ל`. Contar letras no
+        // alcanza: un lema partido no se encuentra en ninguna búsqueda, y el
+        // conteo no lo delata. El umbral va por milla de caracteres para no
+        // castigar a los libros grandes por ser grandes.
+        malformed: (s.greekLetters + s.hebrewConsonants) > 0
+            && (s.orphanCombining / Math.max(1, markdown.length / 1000)) > 0.5,
     });
 }
 
 const suspects = rows.filter(r => r.suspect);
-const healthy = rows.filter(r => !r.suspect && !r.error);
+const malformed = rows.filter(r => r.malformed);
+const healthy = rows.filter(r => !r.suspect && !r.malformed && !r.error);
 
 // ── Informe nivel 1 ────────────────────────────────────────────────────────
 
@@ -177,6 +187,7 @@ console.log('━━━━━━━━━━━━━━━━━━━━━━�
 console.log(`Recursos candidatos a tener lengua original: ${rows.length}   (leídos ${read})`);
 console.log(`  con griego o hebreo en el índice: ${healthy.length}`);
 console.log(`  SIN nada de griego ni hebreo:     ${suspects.length}`);
+console.log(`  CON escritura pero MAL FORMADA:    ${malformed.length}`);
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
 // Por extractor: si el problema se concentra en uno, ese es el culpable.
@@ -210,8 +221,20 @@ if (suspects.length) {
     console.log();
 }
 
+if (malformed.length) {
+    console.log('Mal formados — la escritura está, pero partida en fragmentos');
+    console.log('  Las letras se cuentan y los ratios se ven sanos; las palabras no se');
+    console.log('  pueden buscar porque están rotas. Un lema partido no lo encuentra nadie.');
+    for (const r of malformed.sort((a, b) => b.orphanCombining - a.orphanCombining)) {
+        const porMil = (r.orphanCombining / Math.max(1, r.chars / 1000)).toFixed(1);
+        console.log(`  ${(r.pageCount ?? '?').toString().padStart(4)} págs · ${r.title.slice(0, 50).padEnd(52)} ${String(r.orphanCombining).padStart(5)} marcas sueltas (${porMil}/mil chars)`);
+        console.log(`         ${r.id}`);
+    }
+    console.log();
+}
+
 if (healthy.length) {
-    console.log('Con escritura original en el índice (referencia de que sí se puede)');
+    console.log('Con escritura original bien formada (referencia de que sí se puede)');
     for (const r of healthy.slice(0, 10)) {
         console.log(`  ${r.title.slice(0, 52).padEnd(52)} griego ${String(r.greek).padStart(5)} · hebreo ${String(r.hebrew).padStart(5)} · niqqud ${r.niqqudRatio.toFixed(2)}`);
     }

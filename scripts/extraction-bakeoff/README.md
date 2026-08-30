@@ -88,8 +88,50 @@ Tres consecuencias:
    Como pre-filtro barato, `pdffonts` con `uni: no` marca los sospechosos sin
    llamar a ninguna API.
 
-Falta medir: **un léxico** bajo el banco completo. La clase "escaneado" resultó
-no existir en esta biblioteca.
+### El léxico: la escritura está, pero partida
+
+Segunda clase medida, sobre *Léxico Griego-Español* (1.163 págs), páginas
+580–590. Acá `fast` **sí** recupera griego y hebreo —el editor usó fuentes
+Unicode— así que la pregunta era otra: ¿queda usable?
+
+| Motor | Marcas sueltas | Encabezados | Niqqud |
+|---|---:|---:|---:|
+| pdftotext | 125 | 0 | 0.813 |
+| LlamaParse `fast` ← producción | **232** | **0** | 0.835 |
+| Mistral OCR | **0** | 56 | 0.744 |
+| **Gemini 3.6 Flash** | **0** | **57** | 0.813 |
+
+Lo que `fast` metió al índice:
+
+```
+ר ַבָגּ hi. Sal. 11:5(12:4). לַדָגּ* .,qal .S 1 2:21. ַ ל .,pi גָּד
+```
+
+`גָּדַל` (*gadal*, "ser grande") sale partido en `גָּד` y ` ַ ל`, con la vocal
+flotando suelta. Los conteos se ven sanos —1.052 letras griegas, niqqud
+0,835— y las palabras **no se pueden buscar**. Un lema partido no lo
+encuentra nadie, y ninguna métrica de conteo lo delata.
+
+Los 56-57 encabezados de Mistral y Gemini son las entradas del léxico: con
+ellos el `sectionPath` de cada chunk lleva su lema. `fast` y `pdftotext`
+recuperan cero estructura.
+
+**Presencia no es integridad.** El auditor clasificaba por conteo de letras y
+llamaba "sanos" a los dos léxicos. Ahora también mide marcas huérfanas por
+milla de caracteres, y el daño sube de 15 a **17 de 27** — con la ironía de
+que los dos libros cuya única función es buscar palabras en lengua original
+son justo aquellos donde las palabras están rotas.
+
+### Conclusión
+
+Gemini 3.6 Flash gana las tres clases medidas: comentario con fuentes
+legacy, comentario con fuentes Unicode, y léxico. Es el más barato de los que
+conservan la escritura ($9,98/libro contra $23,91 de premium), el único que
+además recupera estructura de entradas, y el que nunca produjo texto mal
+formado.
+
+Queda pendiente su límite de salida: 45.000 caracteres en 11 páginas, así que
+un libro entero no entra en una llamada y hay que trocear y coser.
 
 ## Setup
 
