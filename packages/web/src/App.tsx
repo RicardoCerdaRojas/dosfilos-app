@@ -105,6 +105,7 @@ const ExegesisPage = lazy(() => import('@/pages/exegesis/ExegesisPage').then(m =
 const ExegesisCreatePage = lazy(() => import('@/pages/exegesis/ExegesisCreatePage').then(m => ({ default: m.ExegesisCreatePage })));
 const ExegesisPaperPage = lazy(() => import('@/pages/exegesis/ExegesisPaperPage').then(m => ({ default: m.ExegesisPaperPage })));
 const ExegesisPaperSetupPage = lazy(() => import('@/pages/exegesis/ExegesisPaperSetupPage').then(m => ({ default: m.ExegesisPaperSetupPage })));
+const ExegesisSourcePagesPage = lazy(() => import('@/pages/exegesis/ExegesisSourcePagesPage').then(m => ({ default: m.ExegesisSourcePagesPage })));
 const ProjectsListPage = lazy(() => import('@/pages/projects/ProjectsListPage').then(m => ({ default: m.ProjectsListPage })));
 
 // Redirect: old /faculty/project/:projectId → /projects/:projectId
@@ -342,6 +343,10 @@ function App() {
               <Route path="new" element={<ExegesisCreatePage />} />
               <Route path=":paperId" element={<ExegesisPaperPage />} />
               <Route path=":paperId/setup" element={<ExegesisPaperSetupPage />} />
+              {/* El selector de hojas es página y no diálogo: recorrer un
+                  libro de 400 páginas pide el viewport entero, botón atrás y
+                  una URL a la que volver. */}
+              <Route path=":paperId/fuentes/:sourceId/paginas" element={<ExegesisSourcePagesPage />} />
             </Route>
 
             {/* Greek Tutor - Start page with sidebar for navigation */}

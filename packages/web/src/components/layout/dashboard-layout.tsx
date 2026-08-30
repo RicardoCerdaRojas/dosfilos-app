@@ -38,7 +38,11 @@ export function DashboardLayout() {
 
   const isBible = location.pathname.includes('/bible');
   const isSermonDetail = location.pathname.startsWith('/dashboard/sermons/') && location.pathname !== '/dashboard/sermons';
-  const isFullScreen = isPlanner || isGenerator || isSermonDetail || isBible;
+  // El selector de hojas maneja su propio alto: tres paneles que scrollean por
+  // separado. Sin esto, el shell agrega su scroll y su padding, y la página
+  // queda más alta que el viewport.
+  const isSourcePages = /\/dashboard\/exegesis\/[^/]+\/fuentes\/[^/]+\/paginas$/.test(location.pathname);
+  const isFullScreen = isPlanner || isGenerator || isSermonDetail || isBible || isSourcePages;
 
   return (
     <SidebarProvider>

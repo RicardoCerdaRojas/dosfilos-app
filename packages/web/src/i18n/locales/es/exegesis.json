@@ -752,6 +752,91 @@
                         "fr": "Disponible en francés"
                     }
                 },
+                "budget": {
+                    "title": "Presupuesto del trabajo",
+                    "stats": "{{sources}} fuentes · {{chars}} caracteres",
+                    "over": "El corpus se pasa del presupuesto: la generación va a fallar. Quitá hojas de alguna fuente.",
+                    "inconsistent_one": "{{labels}} guardó fragmentos que su selección no declara. Volvé a guardar sus páginas para dejarlos parejos.",
+                    "inconsistent_other": "{{count}} fuentes guardaron fragmentos que su selección no declara ({{labels}}). Volvé a guardar sus páginas para dejarlos parejos."
+                },
+                "picker": {
+                    "subtitle": "Elegí qué hojas del documento entran a este trabajo. Podés agregar la sección del pasaje y también la introducción del libro.",
+                    "loadingIndex": "Leyendo el índice del documento…",
+                    "indexFailed": "No se pudo leer el índice de este documento. Verificá que esté procesado y probá de nuevo.",
+                    "proposal": {
+                        "structural": "Encontramos la sección que trata este pasaje en el índice del comentario.",
+                        "semantic": "Este documento no trae encabezados por referencia: la sugerencia sale de coincidencia de contenido y conviene revisarla.",
+                        "accept": "Aceptar sugerencia",
+                        "pending": "Buscando la sección que trata este pasaje…",
+                        "none": "No encontramos una sección para este pasaje. Navegá el documento y elegí las hojas a mano."
+                    },
+                    "rail": {
+                        "withHeadings": "Índice del libro",
+                        "withoutHeadings": "Hojas · sin encabezados",
+                        "shiftHint": "Clic en una hoja y Shift + clic en otra para llevarte todo el tramo, en cualquier orden.",
+                        "sheetCount_one": "{{count}} hoja",
+                        "sheetCount_other": "{{count}} hojas",
+                        "printedShort": "impresa {{printed}}",
+                        "addSheet": "Agregar la hoja {{sheet}}",
+                        "removeSheet": "Quitar la hoja {{sheet}}",
+                        "endRange": "Cerrar el rango en la hoja {{sheet}}",
+                        "resize": "Ancho del índice"
+                    },
+                    "viewer": {
+                        "loading": "Abriendo el documento…",
+                        "loadFailed": "No se pudo abrir el documento. Probá de nuevo en unos segundos.",
+                        "pageFailed": "No se pudo mostrar esta hoja. Probá con otra o volvé a abrir el documento.",
+                        "sheetLabel": "Hoja {{sheet}} del documento",
+                        "sheet": "hoja {{sheet}}",
+                        "printed": "· impresa {{printed}}",
+                        "noPrinted": "· numeración sin detectar",
+                        "previous": "Hoja anterior",
+                        "next": "Hoja siguiente",
+                        "addSheet": "Agregar esta hoja",
+                        "removeSheet": "Quitar esta hoja",
+                        "startRange": "Iniciar rango",
+                        "endRange": "Cerrar rango desde la hoja {{sheet}}",
+                        "rangeHint": "Rango abierto desde la hoja {{sheet}}. Elegí la hoja final acá o en el índice."
+                    },
+                    "adjustPages": "Ajustar páginas",
+                    "sourceNotFound": "No encontramos esta fuente en el trabajo.",
+                    "backToCorpus": "Volver al corpus",
+                    "toast": {
+                        "saved_one": "Guardado: {{count}} fragmento del documento",
+                        "saved_other": "Guardado: {{count}} fragmentos del documento",
+                        "emptySheets_one": "{{count}} hoja elegida no traía texto y quedó afuera",
+                        "emptySheets_other": "{{count}} hojas elegidas no traían texto y quedaron afuera",
+                        "saveFailed": "No se pudo guardar la selección. Probá de nuevo.",
+                            "incomplete": "Se guardaron {{saved}} de {{expected}} fragmentos. Revisá la selección antes de generar.",
+                            "tooLarge": "El corpus del trabajo es demasiado grande para guardarlo. Quitá hojas de esta fuente o de otra.",
+                        "attachedStructural_one": "Agregado: la sección del pasaje, {{count}} hoja",
+                        "attachedStructural_other": "Agregado: la sección del pasaje, {{count}} hojas",
+                        "attachedSemantic_one": "Agregado: {{count}} hoja por coincidencia de contenido. Conviene revisarla.",
+                        "attachedSemantic_other": "Agregado: {{count}} hojas por coincidencia de contenido. Conviene revisarlas.",
+                        "attachedWhole": "Agregado el documento completo: no se encontró la sección del pasaje. Ajustá las páginas a mano."
+                    },
+                    "cart": {
+                        "title": "En el trabajo",
+                        "rangeCount_one": "{{count}} tramo",
+                        "rangeCount_other": "{{count}} tramos",
+                        "empty": "Nada elegido todavía. Aceptá la sugerencia, o navegá el documento y agregá hojas.",
+                        "sheetOne": "hoja {{sheet}}",
+                        "sheetRange": "hojas {{start}}–{{end}}",
+                        "withPrinted": "{{base}} · impresa {{printed}}",
+                        "remove": "Quitar {{range}}",
+                        "budget": "Presupuesto del trabajo",
+                        "resize": "Ancho del panel de selección",
+                        "statSheets_one": "{{count}} hoja",
+                        "statSheets_other": "{{count}} hojas",
+                        "statChars": "{{count}} caracteres",
+                        "otherSources": "Otras fuentes del trabajo ocupan {{count}} caracteres.",
+                        "overBudget": "Se pasa del presupuesto",
+                        "overBudgetHint": "El trabajo se pasa del presupuesto. Podés guardar igual, pero antes de generar hay que bajar hojas de esta fuente o de otra.",
+                        "saving": "Guardando…",
+                        "confirm_one": "Agregar {{count}} hoja al trabajo",
+                        "confirm_other": "Agregar {{count}} hojas al trabajo"
+                    }
+                },
                 "list": {
                     "title": "Fuentes adjuntas",
                     "empty": "Aún no agregaste fuentes. Toca \"Agregar fuente\" arriba o \"Subir\" en cualquier requisito faltante.",
@@ -759,6 +844,12 @@
                     "extractCta": "Extraer de mi biblioteca",
                     "excerptsBadge_one": "{{count}} excerpt",
                     "excerptsBadge_other": "{{count}} excerpts",
+                    "selectionMode": {
+                        "structural": "Sección exacta",
+                        "semantic": "Coincidencia aproximada",
+                        "structuralHint": "Se tomó la sección del documento dedicada a este pasaje, completa y en orden.",
+                        "semanticHint": "El documento no trae encabezados por referencia, así que se trajeron los fragmentos más parecidos al pasaje. Conviene revisarlos antes de generar."
+                    },
                     "remove": "Quitar fuente",
                     "viewOriginal": "Abrir el PDF original en una pestaña nueva",
                     "groupEmpty": "Aún sin fuentes en este rol.",

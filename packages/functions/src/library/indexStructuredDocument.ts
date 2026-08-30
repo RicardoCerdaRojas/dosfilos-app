@@ -4,6 +4,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { chunkStructuredMarkdown } from './markdownChunker';
 import { isStructuredExtractionVersion } from './extractionVersions';
+import { parseFirebaseStorageLocation } from './storageLocation';
 
 interface IndexRequest {
     resourceId: string;
@@ -631,16 +632,3 @@ async function deleteExistingChunks(
     }
 }
 
-function parseFirebaseStorageLocation(
-    url: string,
-    defaultBucket: string
-): { bucket: string; path: string } {
-    if (!url) return { bucket: defaultBucket, path: '' };
-    const gsMatch = url.match(/^gs:\/\/([^/]+)\/(.+)$/);
-    if (gsMatch) return { bucket: gsMatch[1], path: decodeURIComponent(gsMatch[2]) };
-    const fbMatch = url.match(/\/v0\/b\/([^/]+)\/o\/([^?]+)/);
-    if (fbMatch) return { bucket: fbMatch[1], path: decodeURIComponent(fbMatch[2]) };
-    const gcsMatch = url.match(/^https?:\/\/storage\.googleapis\.com\/([^/]+)\/(.+?)(\?|$)/);
-    if (gcsMatch) return { bucket: gcsMatch[1], path: decodeURIComponent(gcsMatch[2]) };
-    return { bucket: defaultBucket, path: '' };
-}

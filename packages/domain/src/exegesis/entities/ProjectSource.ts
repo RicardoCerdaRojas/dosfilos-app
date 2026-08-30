@@ -91,6 +91,20 @@ export interface ProjectSource {
     excerpts: ReadonlyArray<ProjectSourceExcerpt>;
 
     /**
+     * Cómo se eligieron los `excerpts`. `null` para fuentes en
+     * `'full-document'` y para las extraídas antes de que existiera la
+     * selección estructural.
+     */
+    excerptSelectionMode: ExcerptSelectionMode | null;
+
+    /**
+     * La receta con la que se armaron los `excerpts`. `null` en fuentes
+     * anteriores al selector de páginas y en las que están en
+     * `'full-document'`.
+     */
+    excerptRecipe: ExcerptRecipe | null;
+
+    /**
      * Backref to the originating `library_resources/{id}` doc when the
      * source was created by the library-extraction flow. Lets the UI
      * offer "view original PDF" and lets the use case re-extract
@@ -127,6 +141,54 @@ export interface ProjectSource {
  * downstream code can type-narrow without importing the whole entity.
  */
 export type ProjectSourceMode = 'full-document' | 'extracted-excerpts';
+
+/**
+ * Cómo se eligieron los fragmentos de una fuente en modo
+ * `'extracted-excerpts'`.
+ *
+ *   - `'structural'` — se leyó la tabla de contenidos del documento y se
+ *     tomó la sección que trata el pasaje, corrida y en orden. Exacta.
+ *   - `'semantic'` — se trajeron los fragmentos más cercanos a una consulta
+ *     de embeddings. Aproximada, y la única posible en documentos que se
+ *     extrajeron sin encabezados.
+ *
+ * Se persiste porque son dos niveles de confianza distintos y el usuario
+ * tiene que poder verlos al revisar el corpus, no solo en el momento de
+ * extraer. `null` en fuentes anteriores a la selección estructural.
+ */
+export type ExcerptSelectionMode = 'structural' | 'semantic' | 'manual';
+
+/** Tramo de hojas físicas del PDF, ambos extremos inclusive. */
+export interface SheetRange {
+    start: number;
+    end: number;
+}
+
+/**
+ * Qué pidió el usuario, para poder reabrir el selector con su selección
+ * intacta y volver a correrla si cambia el pasaje.
+ *
+ * La receta NO es lo que se le manda al modelo: eso son los `excerpts`, que se
+ * materializan desde acá. Guardar las dos cosas separadas es lo que permite
+ * editar una selección sin volver a empezar, y distinguir lo que propuso el
+ * sistema de lo que agregó el usuario.
+ *
+ * Las hojas son FÍSICAS —la hoja N del PDF, que es lo que indexa
+ * `metadata.page`—, no los números impresos en el libro. Los dos difieren por
+ * las páginas preliminares.
+ */
+export interface ExcerptRecipe {
+    /** Lo que quedó en el carrito. */
+    sheetRanges: ReadonlyArray<SheetRange>;
+    /** Lo que el sistema propuso, haya sido aceptado o no. */
+    proposedRanges: ReadonlyArray<SheetRange>;
+    /**
+     * Huella de (pasaje + encuadre) al momento de elegir. Cuando deja de
+     * coincidir, la selección quedó vieja y la interfaz lo dice en vez de
+     * servir fragmentos de otro pasaje en silencio.
+     */
+    passageFingerprint: string;
+}
 
 /**
  * One curated chunk extracted from a library resource, ranked by

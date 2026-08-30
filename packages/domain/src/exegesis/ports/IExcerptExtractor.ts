@@ -1,5 +1,5 @@
 import type { PassageReference } from '../../bible/canon/passage-reference';
-import type { ProjectSourceExcerpt } from '../entities/ProjectSource';
+import type { ExcerptSelectionMode, ProjectSourceExcerpt } from '../entities/ProjectSource';
 
 /**
  * Pre-curated retrieval of relevant chunks from indexed library
@@ -81,6 +81,16 @@ export interface ExtractExcerptsResult {
      * extraction used THIS query" and judge whether to refine.
      */
     queryUsed: string;
+    /**
+     * Cómo se resolvió cada recurso. Una misma extracción puede mezclar los
+     * dos caminos: un comentario con encabezados entra por sección y otro
+     * extraído sin estructura cae a semántico, en la misma corrida. La UI y
+     * la fuente persistida necesitan el dato POR RECURSO, no por extracción.
+     *
+     * Opcional para que una implementación que solo hace un camino no tenga
+     * que declararlo.
+     */
+    modeByResource?: Record<string, ExcerptSelectionMode>;
 }
 
 /**
@@ -109,4 +119,28 @@ export class ResourcesNotIndexedError extends Error {
  */
 export interface IResourceIndexProbe {
     isReady(resourceId: string): Promise<boolean>;
+}
+
+/**
+ * Lectura directa de fragmentos por índice, sin búsqueda de por medio.
+ *
+ * Existe para el selector de páginas: el usuario ya decidió qué hojas quiere,
+ * y traducirlas a fragmentos es aritmética sobre el índice de hojas, no una
+ * consulta semántica. Meter esto dentro de `IExcerptExtractor` habría obligado
+ * a ese puerto a hablar de índices de fragmento, que es justo el detalle de
+ * implementación que se guarda para sí.
+ */
+export interface IDocumentChunkReader {
+    readChunks(
+        resourceId: string,
+        chunkRanges: ReadonlyArray<{ start: number; end: number }>,
+    ): Promise<ReadonlyArray<DocumentChunk>>;
+}
+
+export interface DocumentChunk {
+    chunkIndex: number;
+    text: string;
+    /** Hoja física del PDF, para armar el ancla de citación. */
+    page: number | null;
+    section: string | null;
 }

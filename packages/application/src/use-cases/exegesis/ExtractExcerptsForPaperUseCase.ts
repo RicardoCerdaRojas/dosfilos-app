@@ -155,6 +155,10 @@ export class ExtractExcerptsForPaperUseCase {
         for (const selection of input.selections) {
             const fresh = extraction.excerptsByResource[selection.libraryResourceId] ?? [];
             const existing = existingByLibraryResource.get(selection.libraryResourceId);
+            // Cómo se eligieron ESTOS fragmentos. Se persiste por fuente
+            // porque una misma extracción mezcla los dos caminos según la
+            // calidad de extracción de cada documento.
+            const selectionMode = extraction.modeByResource?.[selection.libraryResourceId] ?? null;
 
             if (existing) {
                 // Merge or replace based on the caller's intent. With
@@ -182,6 +186,7 @@ export class ExtractExcerptsForPaperUseCase {
                         displayLabel: selection.displayLabel,
                         ...(selection.citationKey !== undefined ? { citationKey: selection.citationKey } : {}),
                         excerpts,
+                        excerptSelectionMode: selectionMode,
                         extractedAt,
                         extractionFingerprint: fingerprint,
                     },
@@ -201,6 +206,10 @@ export class ExtractExcerptsForPaperUseCase {
                         order: paper.sources.length + Object.keys(sourceIdsByLibraryResource).length,
                         mode: 'extracted-excerpts',
                         excerpts: fresh,
+                        excerptSelectionMode: selectionMode,
+                        // Esta ruta no pasa por el selector de páginas: no hay
+                        // receta que guardar.
+                        excerptRecipe: null,
                         sourceLibraryResourceId: selection.libraryResourceId,
                         extractedAt,
                         extractionFingerprint: fingerprint,

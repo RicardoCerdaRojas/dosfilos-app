@@ -53,6 +53,7 @@ import {
 import { useFirebase } from '@/context/firebase-context';
 import { useLibrary } from '@/hooks/library';
 import { useExtractExcerpts } from '@/hooks/exegesis/useExtractExcerpts';
+import { useAttachLibrarySource } from '@/hooks/exegesis/useAttachLibrarySource';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -63,12 +64,16 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { useTranslation } from '@/i18n';
+import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { useAutoClassifyOtherSources } from '@/hooks/exegesis/useAutoClassifyOtherSources';
 import { SourceTypePicker } from './SourceTypePicker';
 import { RubricGapCard } from './RubricGapCard';
 import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
 import { ExtractFromLibraryDialog } from './ExtractFromLibraryDialog';
+import { SourceSelectionModeBadge } from './SourceSelectionModeBadge';
+import { CorpusBudgetMeter } from './CorpusBudgetMeter';
 import { PageBalanceHint } from './PageBalanceHint';
 import { FileDropzone } from '@/components/ui/file-dropzone';
 
@@ -254,6 +259,7 @@ function CorpusSourcesList({
             {/* Header only when there are sources to label. The empty
                 state's hero card is doing the entry-point work and
                 the "(0)" header was just noise on first paint. */}
+            {sorted.length > 0 && <CorpusBudgetMeter paper={paper} />}
             {sorted.length > 0 && (
                 <header className="flex items-center justify-between gap-2">
                     <h3 className="text-sm font-semibold text-foreground">
@@ -958,6 +964,7 @@ function ComparisonChip({
 }
 
 function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectSource }) {
+    const navigate = useNavigate();
     const { t } = useTranslation('exegesis');
     const { updateSource, removeSource } = useExegesisPapers();
     const extractExcerpts = useExtractExcerpts();
@@ -1041,6 +1048,7 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
                                 {t('paperSetup.subSteps.corpus.list.excerptsBadge', { count: source.excerpts.length })}
                             </span>
                         )}
+                        {isExtracted && <SourceSelectionModeBadge mode={source.excerptSelectionMode} />}
                     </p>
                     {source.citationKey && (
                         <p className="text-[11px] text-muted-foreground">
@@ -1048,6 +1056,13 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
                         </p>
                     )}
                 </div>
+                <button
+                    type="button"
+                    onClick={() => navigate(`/dashboard/exegesis/${paper.id}/fuentes/${source.id}/paginas`)}
+                    className="shrink-0 rounded px-1.5 py-1 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                    {t('paperSetup.subSteps.corpus.picker.adjustPages')}
+                </button>
                 {originalUrl && (
                     <a
                         href={originalUrl}
@@ -1334,6 +1349,7 @@ function AddSourceDialog({
     const { t } = useTranslation('exegesis');
     const { user } = useFirebase();
     const { addSource, classifySourceType } = useExegesisPapers();
+    const attachLibrarySource = useAttachLibrarySource();
     // Suggestion from the classifier when the user single-picks a
     // library resource. Surfaces as a chip near the SourceType
     // dropdown — informational, not blocking. Reset every dialog open.
@@ -1435,12 +1451,18 @@ function AddSourceDialog({
     }, [library.resources, attachedCorpusIds, paperTestament]);
 
     const filteredResources = useMemo(() => {
-        const searchLower = librarySearch.trim().toLowerCase();
+        // Se busca por palabras sueltas sobre título + autor: "burt jonas"
+        // encuentra "Comentario Jonás" de David F. Burt aunque el orden no
+        // coincida y falten los acentos. Antes era un único `includes` sensible
+        // a mayúsculas y acentos, así que "jonas" no encontraba "Jonás".
+        const terms = normalizeForSearch(librarySearch).split(/\s+/).filter(Boolean);
         return availableForPicker
             .filter(r => libraryTypeFilter === 'all' || r.type === libraryTypeFilter)
-            .filter(r => searchLower === ''
-                || r.title.toLowerCase().includes(searchLower)
-                || r.author.toLowerCase().includes(searchLower));
+            .filter(r => {
+                if (terms.length === 0) return true;
+                const haystack = normalizeForSearch(`${r.title ?? ''} ${r.author ?? ''}`);
+                return terms.every(term => haystack.includes(term));
+            });
     }, [availableForPicker, libraryTypeFilter, librarySearch]);
 
     // Per-type counts for the chip row. Only types with ≥1 resource
@@ -1582,12 +1604,18 @@ function AddSourceDialog({
                     .filter((r): r is LibraryResource => !!r);
                 for (const r of picked) {
                     const autoCite = r.author ? deriveCitationKeyFromAuthor(r.author) : '';
-                    await addSource.mutateAsync({
+                    // Ya no se adjunta el libro entero: se calcula la sección
+                    // que trata el pasaje y se adjunta esa. El selector queda a
+                    // un click en "Ajustar páginas" para corregirla.
+                    await attachLibrarySource.attach({
                         paperId: paper.id,
-                        corpusId: r.id,
+                        libraryResourceId: r.id,
                         sourceType,
                         displayLabel: r.title || r.id,
                         citationKey: autoCite || undefined,
+                        passage: paper.passage,
+                        assignmentBrief: paper.assignmentBrief,
+                        language: paper.displayLanguage,
                     });
                 }
             } else {
@@ -1595,13 +1623,26 @@ function AddSourceDialog({
                 // path so the user can override what was pre-filled.
                 const onlyId = pickedResourceIds.values().next().value;
                 if (!onlyId) return;
-                await addSource.mutateAsync({
+                const outcome = await attachLibrarySource.attach({
                     paperId: paper.id,
-                    corpusId: onlyId,
+                    libraryResourceId: onlyId,
                     sourceType,
                     displayLabel: displayName.trim(),
                     citationKey: citationKey.trim() || undefined,
+                    passage: paper.passage,
+                    assignmentBrief: paper.assignmentBrief,
+                    language: paper.displayLanguage,
                 });
+                // Se le dice al usuario QUÉ se llevó y con cuánta confianza: una
+                // sección exacta y una coincidencia aproximada piden acciones
+                // distintas de su parte.
+                if (outcome.kind === 'structural') {
+                    toast.success(t('paperSetup.subSteps.corpus.picker.toast.attachedStructural', { count: outcome.sheetCount }));
+                } else if (outcome.kind === 'semantic') {
+                    toast.warning(t('paperSetup.subSteps.corpus.picker.toast.attachedSemantic', { count: outcome.sheetCount }));
+                } else {
+                    toast.warning(t('paperSetup.subSteps.corpus.picker.toast.attachedWhole'));
+                }
             }
             const successKey = isBulkLibrary
                 ? 'paperSetup.subSteps.corpus.toast.bulkAdded'
@@ -1632,7 +1673,7 @@ function AddSourceDialog({
             if (uploading && !next) return;
             onOpenChange(next);
         }}>
-            <DialogContent className="sm:max-w-5xl p-0 gap-0 overflow-hidden max-h-[92vh] flex flex-col">
+            <DialogContent className="sm:max-w-5xl p-0 gap-0 overflow-hidden h-[min(88vh,720px)] flex flex-col">
                 <DialogHeader className="px-6 py-4 border-b border-border">
                     <DialogTitle className="text-base">
                         {t('paperSetup.subSteps.corpus.upload.title')}
@@ -1643,29 +1684,37 @@ function AddSourceDialog({
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-[220px_1fr] min-h-0 overflow-hidden">
-                        {/* Sidebar: mode tabs */}
-                        <aside className="border-b md:border-b-0 md:border-r border-border bg-muted/20 p-3 space-y-2">
-                            <SidebarTab
-                                active={mode === 'upload'}
-                                onClick={() => setMode('upload')}
-                                icon={<Upload className="h-4 w-4" />}
-                                label={t('paperSetup.subSteps.corpus.upload.modeUpload')}
-                                helper="PDF o EPUB"
-                            />
-                            <SidebarTab
-                                active={mode === 'library'}
-                                onClick={() => setMode('library')}
-                                icon={<Library className="h-4 w-4" />}
-                                label={t('paperSetup.subSteps.corpus.upload.modeLibrary')}
-                                helper={availableInLibrary > 0
-                                    ? `${availableInLibrary} disponibles`
-                                    : library.isLoading ? 'Cargando…' : 'Sin recursos'}
-                            />
-                        </aside>
+                    {/* El modo va en pestañas y no en una columna: eran dos
+                        botones ocupando 220 px de ancho completo, con el resto
+                        de la columna vacío. Ese ancho le sirve más a la lista. */}
+                    <div className="flex shrink-0 items-center gap-1 border-b border-border bg-muted/20 px-6 py-2">
+                        <ModeTab
+                            active={mode === 'upload'}
+                            onClick={() => setMode('upload')}
+                            icon={<Upload className="h-3.5 w-3.5" />}
+                            label={t('paperSetup.subSteps.corpus.upload.modeUpload')}
+                        />
+                        <ModeTab
+                            active={mode === 'library'}
+                            onClick={() => setMode('library')}
+                            icon={<Library className="h-3.5 w-3.5" />}
+                            label={t('paperSetup.subSteps.corpus.upload.modeLibrary')}
+                            badge={availableInLibrary > 0 ? String(availableInLibrary) : undefined}
+                        />
+                    </div>
 
+                    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                         {/* Main pane */}
-                        <div className="overflow-y-auto px-6 py-5 space-y-5">
+                        {/* Maestro-detalle: la lista se lleva el alto disponible y los
+                            campos viven al lado, siempre visibles. Un asistente de dos
+                            pasos habría cobrado un click extra justo en el caso común,
+                            donde los valores derivados ya sirven. */}
+                        <div className={cn(
+                            'min-h-0 flex-1 gap-5 px-6 py-5',
+                            mode === 'upload'
+                                ? 'flex flex-col overflow-y-auto'
+                                : 'grid grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,1fr)_320px]',
+                        )}>
                             {mode === 'upload' ? (
                                 <FileDropzone
                                     accept=".pdf,.epub"
@@ -1695,6 +1744,10 @@ function AddSourceDialog({
                                     excludedByTestament={excludedByTestament}
                                 />
                             )}
+
+                            {/* Columna de detalles. Scrollea sola: si el usuario abre
+                                el selector de tipo académico, la lista no se mueve. */}
+                            <div className="flex min-h-0 min-w-0 flex-col gap-5 overflow-y-auto lg:border-l lg:border-border lg:pl-5">
 
                             {/* In bulk-library mode the per-source label
                                 and citation key are auto-derived at submit
@@ -1787,6 +1840,7 @@ function AddSourceDialog({
                                     {t('paperSetup.subSteps.corpus.upload.citationKeyAutoderiveHint')}
                                 </FieldHint>
                             )}
+                            </div>
                         </div>
                     </div>
 
@@ -1861,45 +1915,45 @@ function FieldHint({ children }: { children: React.ReactNode }) {
 
 // ── Sidebar mode tab (vertical card) ───────────────────────────────────
 
-function SidebarTab({
+/**
+ * Pestaña de modo del diálogo: subir un archivo nuevo, o reusar la biblioteca.
+ *
+ * Era una tarjeta a lo ancho de una columna de 220 px. Con dos opciones y una
+ * línea de ayuda cada una, esa columna quedaba casi entera vacía y le robaba
+ * ancho a la lista, que es lo que el usuario mira.
+ */
+function ModeTab({
     active,
     onClick,
     icon,
     label,
-    helper,
+    badge,
 }: {
     active: boolean;
     onClick: () => void;
     icon: React.ReactNode;
     label: string;
-    helper: string;
+    badge?: string;
 }) {
     return (
         <button
             type="button"
             onClick={onClick}
             aria-pressed={active}
-            className={[
-                'w-full text-left rounded-lg border px-3 py-2.5 transition-colors flex items-start gap-2.5',
+            className={cn(
+                'inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[13px] transition-colors',
                 active
-                    ? 'border-primary bg-primary/5 text-foreground shadow-sm'
-                    : 'border-transparent bg-transparent text-muted-foreground hover:bg-accent/40 hover:text-foreground',
-            ].join(' ')}
+                    ? 'border-primary bg-primary/5 font-semibold text-foreground'
+                    : 'border-transparent text-muted-foreground hover:bg-accent/40 hover:text-foreground',
+            )}
         >
-            <span className={[
-                'mt-0.5 shrink-0',
-                active ? 'text-primary' : 'text-muted-foreground',
-            ].join(' ')}>
-                {icon}
-            </span>
-            <span className="flex-1 min-w-0">
-                <span className="block text-[13px] font-semibold leading-tight">
-                    {label}
+            <span className={active ? 'text-primary' : 'text-muted-foreground'}>{icon}</span>
+            {label}
+            {badge && (
+                <span className="rounded-full bg-muted px-1.5 text-[10px] tabular-nums text-muted-foreground">
+                    {badge}
                 </span>
-                <span className="block text-[11px] text-muted-foreground mt-0.5 leading-tight">
-                    {helper}
-                </span>
-            </span>
+            )}
         </button>
     );
 }
@@ -1951,8 +2005,11 @@ function LibraryPicker({
     const totalAvailableForFilter = Array.from(typeCounts.values()).reduce((s, n) => s + n, 0);
 
     return (
-        <div className="space-y-3">
-            <div className="relative">
+        // Columna propia: buscador y filtros arriba, lista abajo llevándose lo
+        // que sobre. Antes la lista estaba capada a 320 px y dejaba aire muerto
+        // dentro de un modal que llega al 92% de la ventana.
+        <div className="flex min-h-0 min-w-0 flex-col gap-3">
+            <div className="relative shrink-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <input
                     type="search"
@@ -1996,7 +2053,7 @@ function LibraryPicker({
                 make). Horizontal scroll on overflow so we don't wrap a
                 wall of chips on narrow viewports. */}
             {orderedTypes.length >= 2 && (
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-0.5 px-0.5">
+                <div className="flex shrink-0 flex-wrap items-center gap-1.5 pb-1 -mx-0.5 px-0.5">
                     <FilterChip
                         active={typeFilter === 'all'}
                         onClick={() => onTypeFilterChange('all')}
@@ -2033,7 +2090,7 @@ function LibraryPicker({
                     </p>
                 </div>
             ) : (
-                <ul className="max-h-[320px] overflow-y-auto rounded-lg border border-border bg-card divide-y divide-border">
+                <ul className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border bg-card divide-y divide-border">
                     {resources.map(r => {
                         const status = libraryService.getResourceIndexStatus(r);
                         const picked = pickedResourceIds.has(r.id);
@@ -2251,4 +2308,19 @@ function ClassificationChip({
             </span>
         </div>
     );
+}
+
+/**
+ * Normaliza texto para buscar: minúsculas y sin acentos.
+ *
+ * `NFD` separa la letra de su tilde y el rango `\u0300-\u036f` borra las
+ * tildes sueltas, así que "Jonás" y "jonas" quedan iguales. Tolera `null`
+ * porque la biblioteca tiene recursos viejos sin autor.
+ */
+function normalizeForSearch(value: string | null | undefined): string {
+    return (value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
 }

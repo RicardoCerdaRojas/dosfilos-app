@@ -3,6 +3,7 @@ import {
     type AnalyzeVerseInput,
     type CanonicalVerseAnalysis,
 } from '@dosfilos/domain';
+import { fitPromptToCap } from '../../llm/promptBudget';
 
 /**
  * Prompt construction for the canonical verse analyzer.
@@ -127,10 +128,24 @@ function buildSystemInstruction(input: AnalyzeVerseInput): string {
     ].filter(Boolean).join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
+/**
+ * El corpus se recorta a lo que quede libre bajo el tope del proxy en vez de a
+ * `SOURCE_BUDGET_CHARS_TOTAL` a secas: ese número estaba POR ENCIMA del tope
+ * del servidor y un paper con cuatro comentarios extraídos completos hacía
+ * fallar toda generación con `prompt excede 200000 caracteres`.
+ */
 function buildUserMessage(input: AnalyzeVerseInput): string {
+    return fitPromptToCap(
+        sourcesBlock => renderUserMessage(input, sourcesBlock),
+        budget => formatSources(input.sources, input.language, budget),
+        SOURCE_BUDGET_CHARS_TOTAL,
+        'GeminiCanonicalVerseAnalyzer',
+    );
+}
+
+function renderUserMessage(input: AnalyzeVerseInput, sourcesBlock: string): string {
     const lang = input.language;
     const verse = formatPassageReference(input.verseRef, lang);
-    const sourcesBlock = formatSources(input.sources, lang);
     const priorAnalysesBlock = formatPriorAnalyses(input.priorAcceptedAnalyses, lang);
     const emphasisBlock = formatStepEmphasis(input.stepEmphasis, lang);
     const hint = input.regenerationHint
@@ -270,14 +285,14 @@ function formatStyleGuide(content: string, lang: 'es' | 'en'): string {
 function formatSources(
     sources: ReadonlyArray<AnalyzeVerseInput['sources'][number]>,
     lang: 'es' | 'en',
+    budgetChars: number,
 ): string {
     if (sources.length === 0) {
         return lang === 'en'
             ? '(No sources configured. Lean on general knowledge but mark every claim as tentative in confidenceFlags.)'
             : '(Sin fuentes configuradas. Apoyate en conocimiento general pero marcá toda afirmación como tentative en confidenceFlags.)';
     }
-    const totalBudget = SOURCE_BUDGET_CHARS_TOTAL;
-    const perSourceBudget = Math.floor(totalBudget / sources.length);
+    const perSourceBudget = Math.floor(budgetChars / sources.length);
 
     // v1.7+: lead the source block with a directive that names the
     // pinned sourceKeys so the model treats them as a contract, not a

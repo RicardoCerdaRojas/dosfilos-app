@@ -20,6 +20,8 @@ function makeSource(id: string, label: string, citationKey: string | null = null
         citationKey,
         order: 0,
         mode: 'full-document',
+    excerptSelectionMode: null,
+    excerptRecipe: null,
         excerpts: [],
         sourceLibraryResourceId: null,
         extractedAt: null,

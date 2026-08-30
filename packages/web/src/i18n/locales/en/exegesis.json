@@ -752,6 +752,91 @@
                         "fr": "Available in French"
                     }
                 },
+                "budget": {
+                    "title": "Paper budget",
+                    "stats": "{{sources}} sources · {{chars}} characters",
+                    "over": "The corpus is over budget: generation will fail. Remove sheets from a source.",
+                    "inconsistent_one": "{{labels}} saved passages its selection does not declare. Save its pages again to line them up.",
+                    "inconsistent_other": "{{count}} sources saved passages their selection does not declare ({{labels}}). Save their pages again to line them up."
+                },
+                "picker": {
+                    "subtitle": "Choose which sheets of this document go into the paper. You can take the passage section and the book's introduction too.",
+                    "loadingIndex": "Reading the document index…",
+                    "indexFailed": "Could not read this document's index. Check that it finished processing and try again.",
+                    "proposal": {
+                        "structural": "We found the section covering this passage in the commentary's own index.",
+                        "semantic": "This document has no reference headings, so the suggestion comes from content matching and is worth reviewing.",
+                        "accept": "Accept suggestion",
+                        "pending": "Looking for the section covering this passage…",
+                        "none": "No section found for this passage. Browse the document and pick the sheets by hand."
+                    },
+                    "rail": {
+                        "withHeadings": "Book index",
+                        "withoutHeadings": "Sheets · no headings",
+                        "shiftHint": "Click one sheet, then Shift-click another to take the whole span, in either order.",
+                        "sheetCount_one": "{{count}} sheet",
+                        "sheetCount_other": "{{count}} sheets",
+                        "printedShort": "printed {{printed}}",
+                        "addSheet": "Add sheet {{sheet}}",
+                        "removeSheet": "Remove sheet {{sheet}}",
+                        "endRange": "End the range at sheet {{sheet}}",
+                        "resize": "Index width"
+                    },
+                    "viewer": {
+                        "loading": "Opening the document…",
+                        "loadFailed": "Could not open the document. Try again in a few seconds.",
+                        "pageFailed": "Could not show this sheet. Try another one or reopen the document.",
+                        "sheetLabel": "Sheet {{sheet}} of the document",
+                        "sheet": "sheet {{sheet}}",
+                        "printed": "· printed {{printed}}",
+                        "noPrinted": "· numbering not detected",
+                        "previous": "Previous sheet",
+                        "next": "Next sheet",
+                        "addSheet": "Add this sheet",
+                        "removeSheet": "Remove this sheet",
+                        "startRange": "Start range",
+                        "endRange": "End range from sheet {{sheet}}",
+                        "rangeHint": "Range open from sheet {{sheet}}. Pick the last sheet here or in the index."
+                    },
+                    "adjustPages": "Adjust pages",
+                    "sourceNotFound": "This source is not in the paper.",
+                    "backToCorpus": "Back to corpus",
+                    "toast": {
+                        "saved_one": "Saved: {{count}} passage from the document",
+                        "saved_other": "Saved: {{count}} passages from the document",
+                        "emptySheets_one": "{{count}} chosen sheet had no text and was left out",
+                        "emptySheets_other": "{{count}} chosen sheets had no text and were left out",
+                        "saveFailed": "Could not save the selection. Try again.",
+                            "incomplete": "Saved {{saved}} of {{expected}} passages. Review the selection before generating.",
+                            "tooLarge": "The paper corpus is too large to save. Remove sheets here or in another source.",
+                        "attachedStructural_one": "Added: the passage section, {{count}} sheet",
+                        "attachedStructural_other": "Added: the passage section, {{count}} sheets",
+                        "attachedSemantic_one": "Added: {{count}} sheet by content match. Worth reviewing.",
+                        "attachedSemantic_other": "Added: {{count}} sheets by content match. Worth reviewing.",
+                        "attachedWhole": "Added the whole document: the passage section was not found. Adjust the pages by hand."
+                    },
+                    "cart": {
+                        "title": "In the paper",
+                        "rangeCount_one": "{{count}} range",
+                        "rangeCount_other": "{{count}} ranges",
+                        "empty": "Nothing chosen yet. Accept the suggestion, or browse the document and add sheets.",
+                        "sheetOne": "sheet {{sheet}}",
+                        "sheetRange": "sheets {{start}}–{{end}}",
+                        "withPrinted": "{{base}} · printed {{printed}}",
+                        "remove": "Remove {{range}}",
+                        "budget": "Paper budget",
+                        "resize": "Selection panel width",
+                        "statSheets_one": "{{count}} sheet",
+                        "statSheets_other": "{{count}} sheets",
+                        "statChars": "{{count}} characters",
+                        "otherSources": "Other sources in this paper take {{count}} characters.",
+                        "overBudget": "Over budget",
+                        "overBudgetHint": "The paper is over budget. You can still save, but before generating you need to drop sheets here or in another source.",
+                        "saving": "Saving…",
+                        "confirm_one": "Add {{count}} sheet to the paper",
+                        "confirm_other": "Add {{count}} sheets to the paper"
+                    }
+                },
                 "list": {
                     "title": "Attached sources",
                     "empty": "No sources yet. Tap \"Add source\" above or \"Upload\" on any missing requirement.",
@@ -759,6 +844,12 @@
                     "extractCta": "Extract from my library",
                     "excerptsBadge_one": "{{count}} excerpt",
                     "excerptsBadge_other": "{{count}} excerpts",
+                    "selectionMode": {
+                        "structural": "Exact section",
+                        "semantic": "Approximate match",
+                        "structuralHint": "The document's section for this passage was taken whole and in order.",
+                        "semanticHint": "This document has no reference headings, so the closest-matching fragments were pulled instead. Worth reviewing before generating."
+                    },
                     "remove": "Remove source",
                     "viewOriginal": "Open the original PDF in a new tab",
                     "groupEmpty": "No sources in this role yet.",
