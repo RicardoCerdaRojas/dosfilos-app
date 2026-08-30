@@ -759,7 +759,9 @@
                     "proposal": {
                         "structural": "Encontramos la sección que trata este pasaje en el índice del comentario.",
                         "semantic": "Este documento no trae encabezados por referencia: la sugerencia sale de coincidencia de contenido y conviene revisarla.",
-                        "accept": "Aceptar sugerencia"
+                        "accept": "Aceptar sugerencia",
+                        "pending": "Buscando la sección que trata este pasaje…",
+                        "none": "No encontramos una sección para este pasaje. Navegá el documento y elegí las hojas a mano."
                     },
                     "rail": {
                         "withHeadings": "Índice del libro",
@@ -784,6 +786,8 @@
                         "removeSheet": "Quitar esta hoja"
                     },
                     "adjustPages": "Ajustar páginas",
+                    "sourceNotFound": "No encontramos esta fuente en el trabajo.",
+                    "backToCorpus": "Volver al corpus",
                     "toast": {
                         "saved_one": "Guardado: {{count}} fragmento del documento",
                         "saved_other": "Guardado: {{count}} fragmentos del documento",

@@ -64,6 +64,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { useTranslation } from '@/i18n';
+import { useNavigate } from 'react-router-dom';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { useAutoClassifyOtherSources } from '@/hooks/exegesis/useAutoClassifyOtherSources';
 import { SourceTypePicker } from './SourceTypePicker';
@@ -71,7 +72,6 @@ import { RubricGapCard } from './RubricGapCard';
 import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
 import { ExtractFromLibraryDialog } from './ExtractFromLibraryDialog';
 import { SourceSelectionModeBadge } from './SourceSelectionModeBadge';
-import { SourcePagesEditor } from './page-picker/SourcePagesEditor';
 import { PageBalanceHint } from './PageBalanceHint';
 import { FileDropzone } from '@/components/ui/file-dropzone';
 
@@ -961,7 +961,7 @@ function ComparisonChip({
 }
 
 function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectSource }) {
-    const [pickerOpen, setPickerOpen] = useState(false);
+    const navigate = useNavigate();
     const { t } = useTranslation('exegesis');
     const { updateSource, removeSource } = useExegesisPapers();
     const extractExcerpts = useExtractExcerpts();
@@ -1055,7 +1055,7 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
                 </div>
                 <button
                     type="button"
-                    onClick={() => setPickerOpen(true)}
+                    onClick={() => navigate(`/dashboard/exegesis/${paper.id}/fuentes/${source.id}/paginas`)}
                     className="shrink-0 rounded px-1.5 py-1 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                     {t('paperSetup.subSteps.corpus.picker.adjustPages')}
@@ -1134,12 +1134,6 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
                     )}
                 </div>
             )}
-            <SourcePagesEditor
-                open={pickerOpen}
-                onOpenChange={setPickerOpen}
-                paper={paper}
-                source={source}
-            />
         </li>
     );
 }

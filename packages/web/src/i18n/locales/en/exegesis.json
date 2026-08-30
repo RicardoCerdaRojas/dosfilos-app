@@ -759,7 +759,9 @@
                     "proposal": {
                         "structural": "We found the section covering this passage in the commentary's own index.",
                         "semantic": "This document has no reference headings, so the suggestion comes from content matching and is worth reviewing.",
-                        "accept": "Accept suggestion"
+                        "accept": "Accept suggestion",
+                        "pending": "Looking for the section covering this passage…",
+                        "none": "No section found for this passage. Browse the document and pick the sheets by hand."
                     },
                     "rail": {
                         "withHeadings": "Book index",
@@ -784,6 +786,8 @@
                         "removeSheet": "Remove this sheet"
                     },
                     "adjustPages": "Adjust pages",
+                    "sourceNotFound": "This source is not in the paper.",
+                    "backToCorpus": "Back to corpus",
                     "toast": {
                         "saved_one": "Saved: {{count}} passage from the document",
                         "saved_other": "Saved: {{count}} passages from the document",
