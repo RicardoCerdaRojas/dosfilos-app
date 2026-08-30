@@ -12,6 +12,10 @@ export { OverloadedError } from './geminiRetry';
 export { RetrieveChunksExcerptExtractor } from './RetrieveChunksExcerptExtractor';
 export { StructuralExcerptExtractor } from './StructuralExcerptExtractor';
 export { CallableDocumentChunkReader } from './CallableDocumentChunkReader';
+// Con qué hojas arranca el carrito: índice del comentario primero, coincidencia
+// semántica si el documento no trae estructura.
+export { proposeSheetRanges } from './SheetRangeProposer';
+export type { ProposalKind, SheetRangeProposal, ProposeSheetRangesInput } from './SheetRangeProposer';
 // Índice de hojas y PDF original, para el selector de páginas.
 export {
     fetchDocumentPageIndex,

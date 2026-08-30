@@ -4,6 +4,7 @@ import {
     countChars,
     countSheets,
     normalizeSheetRanges,
+    sheetsForChunkRanges,
     type PageIndexEntry,
 } from '../documentPageIndex';
 
@@ -91,5 +92,29 @@ describe('countSheets y countChars', () => {
 
     it('no cuenta dos veces una hoja alcanzada por dos rangos', () => {
         expect(countChars(INDEX, [{ start: 70, end: 71 }, { start: 71, end: 71 }])).toBe(2000);
+    });
+});
+
+describe('sheetsForChunkRanges', () => {
+    it('traduce fragmentos de vuelta a hojas', () => {
+        expect(sheetsForChunkRanges(INDEX, [{ start: 13, end: 17 }]))
+            .toEqual([{ start: 69, end: 71 }]);
+    });
+
+    it('parte cuando las hojas no son contiguas', () => {
+        expect(sheetsForChunkRanges(INDEX, [{ start: 10, end: 10 }, { start: 17, end: 17 }]))
+            .toEqual([{ start: 66, end: 66 }, { start: 71, end: 71 }]);
+    });
+
+    it('funde huecos chicos cuando se lo permite', () => {
+        // La propuesta semántica devuelve aciertos dispersos: sin fundir, el
+        // carrito arrancaría con un tramo por hoja.
+        expect(sheetsForChunkRanges(INDEX, [{ start: 10, end: 10 }, { start: 13, end: 13 }], 2))
+            .toEqual([{ start: 66, end: 69 }]);
+    });
+
+    it('no funde huecos mayores a la tolerancia', () => {
+        expect(sheetsForChunkRanges(INDEX, [{ start: 10, end: 10 }, { start: 17, end: 17 }], 2))
+            .toEqual([{ start: 66, end: 66 }, { start: 71, end: 71 }]);
     });
 });

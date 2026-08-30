@@ -4,6 +4,7 @@ import {
     formatPassageReference,
     normalizeSheetRanges,
     type ExcerptRecipe,
+    type ExcerptSelectionMode,
     type IDocumentChunkReader,
     type IExegeticalPaperRepository,
     type PageIndexEntry,
@@ -45,6 +46,13 @@ export interface SelectSourcePagesInput {
     proposedRanges: ReadonlyArray<SheetRange>;
     /** Índice de hojas del documento, ya cargado por la interfaz. */
     pageIndex: ReadonlyArray<PageIndexEntry>;
+    /**
+     * De dónde salió la selección. `'manual'` cuando el usuario la armó o la
+     * corrigió en el selector; el modo de la propuesta cuando se aceptó tal
+     * cual. Distinguirlas es lo que deja mostrar en el corpus cuál fuente pasó
+     * por ojo humano y cuál se aceptó automáticamente.
+     */
+    selectionMode?: ExcerptSelectionMode;
 }
 
 export interface SelectSourcePagesResult {
@@ -95,7 +103,7 @@ export class SelectSourcePagesUseCase {
                 displayLabel: input.displayLabel,
                 ...(input.citationKey !== undefined ? { citationKey: input.citationKey } : {}),
                 excerpts,
-                excerptSelectionMode: 'manual',
+                excerptSelectionMode: input.selectionMode ?? 'manual',
                 excerptRecipe: recipe,
                 extractedAt,
                 extractionFingerprint: recipe.passageFingerprint,
@@ -115,7 +123,7 @@ export class SelectSourcePagesUseCase {
             order: paper.sources.length,
             mode: 'extracted-excerpts',
             excerpts,
-            excerptSelectionMode: 'manual',
+            excerptSelectionMode: input.selectionMode ?? 'manual',
             excerptRecipe: recipe,
             sourceLibraryResourceId: input.libraryResourceId,
             extractedAt,

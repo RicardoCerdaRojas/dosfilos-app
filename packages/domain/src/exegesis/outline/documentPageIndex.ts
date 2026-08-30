@@ -62,6 +62,41 @@ export function chunkRangesForSheets(
 }
 
 /**
+ * El camino inverso: de fragmentos a hojas.
+ *
+ * La selección estructural razona en fragmentos —es lo que el índice del libro
+ * le permite— pero el selector, el carrito y la receta hablan de hojas. Esta es
+ * la traducción que deja enchufar una como propuesta del otro.
+ *
+ * `gapTolerance` funde hojas separadas por huecos chicos. Hace falta sobre todo
+ * para la propuesta semántica, que devuelve aciertos dispersos: sin fundir,
+ * el carrito arrancaría con quince tramos de una hoja cada uno en vez de con
+ * dos o tres bloques legibles.
+ */
+export function sheetsForChunkRanges(
+    pageIndex: ReadonlyArray<PageIndexEntry>,
+    chunkRanges: ReadonlyArray<ChunkRange>,
+    gapTolerance = 0,
+): SheetRange[] {
+    const sheets = new Set<number>();
+    for (const entry of pageIndex) {
+        const hit = entry.chunkIndices.some(index =>
+            chunkRanges.some(range => index >= range.start && index <= range.end),
+        );
+        if (hit) sheets.add(entry.sheet);
+    }
+
+    const sorted = [...sheets].sort((a, b) => a - b);
+    const out: SheetRange[] = [];
+    for (const sheet of sorted) {
+        const last = out[out.length - 1];
+        if (last && sheet - last.end <= gapTolerance + 1) last.end = sheet;
+        else out.push({ start: sheet, end: sheet });
+    }
+    return out;
+}
+
+/**
  * Normaliza el carrito: ordena, funde tramos que se tocan o se superponen, y
  * descarta los invertidos.
  *

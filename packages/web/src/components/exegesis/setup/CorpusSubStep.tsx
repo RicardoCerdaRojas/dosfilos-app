@@ -53,6 +53,7 @@ import {
 import { useFirebase } from '@/context/firebase-context';
 import { useLibrary } from '@/hooks/library';
 import { useExtractExcerpts } from '@/hooks/exegesis/useExtractExcerpts';
+import { useAttachLibrarySource } from '@/hooks/exegesis/useAttachLibrarySource';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -70,6 +71,7 @@ import { RubricGapCard } from './RubricGapCard';
 import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
 import { ExtractFromLibraryDialog } from './ExtractFromLibraryDialog';
 import { SourceSelectionModeBadge } from './SourceSelectionModeBadge';
+import { SourcePagesEditor } from './page-picker/SourcePagesEditor';
 import { PageBalanceHint } from './PageBalanceHint';
 import { FileDropzone } from '@/components/ui/file-dropzone';
 
@@ -959,6 +961,7 @@ function ComparisonChip({
 }
 
 function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectSource }) {
+    const [pickerOpen, setPickerOpen] = useState(false);
     const { t } = useTranslation('exegesis');
     const { updateSource, removeSource } = useExegesisPapers();
     const extractExcerpts = useExtractExcerpts();
@@ -1050,6 +1053,13 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
                         </p>
                     )}
                 </div>
+                <button
+                    type="button"
+                    onClick={() => setPickerOpen(true)}
+                    className="shrink-0 rounded px-1.5 py-1 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                    {t('paperSetup.subSteps.corpus.picker.adjustPages')}
+                </button>
                 {originalUrl && (
                     <a
                         href={originalUrl}
@@ -1124,6 +1134,12 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
                     )}
                 </div>
             )}
+            <SourcePagesEditor
+                open={pickerOpen}
+                onOpenChange={setPickerOpen}
+                paper={paper}
+                source={source}
+            />
         </li>
     );
 }
@@ -1336,6 +1352,7 @@ function AddSourceDialog({
     const { t } = useTranslation('exegesis');
     const { user } = useFirebase();
     const { addSource, classifySourceType } = useExegesisPapers();
+    const attachLibrarySource = useAttachLibrarySource();
     // Suggestion from the classifier when the user single-picks a
     // library resource. Surfaces as a chip near the SourceType
     // dropdown — informational, not blocking. Reset every dialog open.
@@ -1584,12 +1601,18 @@ function AddSourceDialog({
                     .filter((r): r is LibraryResource => !!r);
                 for (const r of picked) {
                     const autoCite = r.author ? deriveCitationKeyFromAuthor(r.author) : '';
-                    await addSource.mutateAsync({
+                    // Ya no se adjunta el libro entero: se calcula la sección
+                    // que trata el pasaje y se adjunta esa. El selector queda a
+                    // un click en "Ajustar páginas" para corregirla.
+                    await attachLibrarySource.attach({
                         paperId: paper.id,
-                        corpusId: r.id,
+                        libraryResourceId: r.id,
                         sourceType,
                         displayLabel: r.title || r.id,
                         citationKey: autoCite || undefined,
+                        passage: paper.passage,
+                        assignmentBrief: paper.assignmentBrief,
+                        language: paper.displayLanguage,
                     });
                 }
             } else {
@@ -1597,13 +1620,26 @@ function AddSourceDialog({
                 // path so the user can override what was pre-filled.
                 const onlyId = pickedResourceIds.values().next().value;
                 if (!onlyId) return;
-                await addSource.mutateAsync({
+                const outcome = await attachLibrarySource.attach({
                     paperId: paper.id,
-                    corpusId: onlyId,
+                    libraryResourceId: onlyId,
                     sourceType,
                     displayLabel: displayName.trim(),
                     citationKey: citationKey.trim() || undefined,
+                    passage: paper.passage,
+                    assignmentBrief: paper.assignmentBrief,
+                    language: paper.displayLanguage,
                 });
+                // Se le dice al usuario QUÉ se llevó y con cuánta confianza: una
+                // sección exacta y una coincidencia aproximada piden acciones
+                // distintas de su parte.
+                if (outcome.kind === 'structural') {
+                    toast.success(t('paperSetup.subSteps.corpus.picker.toast.attachedStructural', { count: outcome.sheetCount }));
+                } else if (outcome.kind === 'semantic') {
+                    toast.warning(t('paperSetup.subSteps.corpus.picker.toast.attachedSemantic', { count: outcome.sheetCount }));
+                } else {
+                    toast.warning(t('paperSetup.subSteps.corpus.picker.toast.attachedWhole'));
+                }
             }
             const successKey = isBulkLibrary
                 ? 'paperSetup.subSteps.corpus.toast.bulkAdded'
