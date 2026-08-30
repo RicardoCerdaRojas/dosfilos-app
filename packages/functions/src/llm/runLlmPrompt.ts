@@ -8,6 +8,7 @@ import { LLM_PRICING } from './llmCost';
 import { consumeRateLimitToken } from '../shared/rateLimit';
 import { readBudgetConfig } from './llmBudget';
 import { MODEL_FAST } from './modelCatalog';
+import { withGeminiRetry } from './geminiRetry';
 
 /**
  * Proxy de LLM para las superficies que hoy llaman al modelo DESDE EL NAVEGADOR
@@ -192,61 +193,6 @@ interface FileSearchTool {
 }
 
 
-/**
- * ¿Vale la pena reintentar este fallo?
- *
- * `fetch failed` es el que motivó esto: un corte de red entre la función y
- * Gemini, sin cuerpo ni código HTTP. Le llegaba al usuario como "Algo falló al
- * generar este paso" después de esperar minutos, y reintentar a mano funcionaba
- * — que es la definición de transitorio.
- *
- * El reintento va acá y no en el cliente a propósito: reenviar desde el
- * navegador significa volver a subir un prompt que puede pesar 200 KB, por un
- * fallo que se resuelve solo en un segundo.
- */
-function isTransientGeminiError(err: unknown): boolean {
-    if (!err) return false;
-    const e = err as { status?: number; code?: number; message?: string; cause?: { code?: string } };
-    if (e.status === 503 || e.status === 429 || e.code === 503 || e.code === 429) return true;
-    const causeCode = e.cause?.code ?? '';
-    if (['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN', 'UND_ERR_SOCKET'].includes(causeCode)) return true;
-    const msg = (e.message ?? '').toLowerCase();
-    return msg.includes('fetch failed')
-        || msg.includes('503') || msg.includes('429')
-        || msg.includes('socket') || msg.includes('econnreset')
-        || msg.includes('high demand') || msg.includes('overload')
-        || msg.includes('timeout') || msg.includes('try again later');
-}
-
-/**
- * Reintenta con retroceso exponencial. Tres intentos: el segundo cubre el corte
- * puntual y el tercero, una ventana de saturación corta. Más que eso haría al
- * usuario esperar por un fallo que ya no es transitorio.
- */
-async function withGeminiRetry<T>(label: string, fn: () => Promise<T>): Promise<T> {
-    const delays = [700, 2100];
-    const started = Date.now();
-    for (let attempt = 0; ; attempt++) {
-        try {
-            const result = await fn();
-            // Sin esta línea no hay forma de saber dónde se va el tiempo de un
-            // paso. La generación con Pro 2.5 y 32k de salida domina todo lo
-            // demás por órdenes de magnitud, pero eso era una sospecha hasta que
-            // quedó medido por feature y por intento.
-            console.log(`[runLlmPrompt] ${label} ok`, {
-                ms: Date.now() - started,
-                attempts: attempt + 1,
-            });
-            return result;
-        } catch (err) {
-            if (attempt >= delays.length || !isTransientGeminiError(err)) throw err;
-            console.warn(`[runLlmPrompt] ${label}: fallo transitorio, reintento ${attempt + 1}`, {
-                error: err instanceof Error ? err.message : String(err),
-            });
-            await new Promise(resolve => setTimeout(resolve, delays[attempt]));
-        }
-    }
-}
 
 export const runLlmPrompt = onCall(
     // 120 s alcanzaban mientras el proxy servía respuestas cortas. El compositor

@@ -1596,6 +1596,7 @@
             "generating": "Generating...",
             "regenerating": "Regenerating…",
             "failedHint": "Something failed while generating this step. Try again.",
+            "abandonedHint": "This generation was interrupted — the tab was closed or the connection dropped — and nothing is running. You can generate it again.",
             "editHint": "Manually edited — citation verification does NOT auto-run.",
             "hintPlaceholder": "e.g. more syntax, more theology, cite Cockerill more",
             "quickHints": {

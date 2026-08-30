@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Wand2,
     Loader2,
@@ -43,6 +43,8 @@ import {
 import { CreditPacksDialog } from '@/pages/library/components/CreditPacksDialog';
 import {
     formatPassageReference,
+    isAbandonedGeneration,
+    ABANDONED_GENERATION_AFTER_MS,
     operationRequiresPreConfirm,
     type ExegesisOperationKey,
     type ExegeticalStep,
@@ -80,6 +82,15 @@ interface StepCardProps {
  * The `state` field is the source of truth — UI never derives state from
  * version count or other heuristics. This keeps the component dumb and
  * the state machine debuggable from inspecting the Firestore doc alone.
+ *
+ * LA ÚNICA EXCEPCIÓN, y va escrita porque contradice el párrafo de arriba: un
+ * `generating` más viejo que `ABANDONED_GENERATION_AFTER_MS` se renderiza como
+ * `failed`. No es una heurística sobre el contenido —eso sigue prohibido— sino
+ * sobre el reloj, y existe porque `generating` lo escribe el navegador y sólo
+ * el navegador lo limpia: si la pestaña muere en el medio, la bandera queda
+ * huérfana y la tarjeta gira para siempre. Pasó en producción, tres horas.
+ * El documento sigue siendo legible por sí solo: dice `generating`, y el
+ * `updatedAt` que está al lado dice desde cuándo.
  */
 export function StepCard({ step, paperId, language, allSteps }: StepCardProps) {
     const { t } = useTranslation('exegesis');
@@ -143,11 +154,31 @@ export function StepCard({ step, paperId, language, allSteps }: StepCardProps) {
 
     const displayLabel = stepDisplayLabel(step, language, t);
 
+    // Un `generating` cruza el umbral de abandono sin que nada cambie en
+    // Firestore, así que no hay re-render que lo delate: sin este reloj la
+    // tarjeta seguiría girando hasta que el usuario recargue a mano. Un solo
+    // temporizador, disparado exactamente al vencer, y sólo mientras genera.
+    const [now, setNow] = useState(() => new Date());
+    const stepUpdatedAtMs = step.updatedAt?.getTime?.();
+    useEffect(() => {
+        if (step.state !== 'generating') return;
+        if (typeof stepUpdatedAtMs !== 'number' || Number.isNaN(stepUpdatedAtMs)) return;
+        const remaining = stepUpdatedAtMs + ABANDONED_GENERATION_AFTER_MS - Date.now();
+        if (remaining <= 0) return;
+        const timer = setTimeout(() => setNow(new Date()), remaining + 1_000);
+        return () => clearTimeout(timer);
+    }, [step.state, stepUpdatedAtMs]);
+
+    // Una generación abandonada se trata EXACTAMENTE como un fallo: mismas
+    // acciones, mismo camino de reintento. Lo único propio es el texto, porque
+    // "algo falló" sería inexacto —no falló nada, el navegador se fue.
+    const abandoned = isAbandonedGeneration(step, now);
+
     const isPending = step.state === 'pending';
-    const isGenerating = step.state === 'generating';
+    const isGenerating = step.state === 'generating' && !abandoned;
     const isReview = step.state === 'awaiting-review';
     const isAccepted = step.state === 'accepted';
-    const isFailed = step.state === 'failed';
+    const isFailed = step.state === 'failed' || abandoned;
 
     // In awaiting-review, the user must see the NEW draft (step.current),
     // not a previously accepted version. After regenerating from an
@@ -689,7 +720,7 @@ export function StepCard({ step, paperId, language, allSteps }: StepCardProps) {
                 {isFailed && !isGenerating && (
                     <div className="inline-flex items-start gap-2 text-sm text-rose-700 dark:text-rose-300">
                         <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                        <span>{t('detail.steps.failedHint')}</span>
+                        <span>{t(abandoned ? 'detail.steps.abandonedHint' : 'detail.steps.failedHint')}</span>
                     </div>
                 )}
 
