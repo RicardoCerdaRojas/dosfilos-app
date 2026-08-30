@@ -48,6 +48,43 @@ describe('parseHeadingReference', () => {
     it('rechaza texto que menciona una referencia sin ser un encabezado de sección', () => {
         expect(parseHeadingReference('ver 1:1-3', 'JON')).toBeNull();
     });
+
+    // Formas medidas en comentarios reales del usuario. Sin ellas, un
+    // comentario de 98 páginas sobre Jonás quedaba con CERO encabezados
+    // utilizables aunque los tuviera en los 278 chunks.
+
+    it('lee la referencia entre paréntesis al final del título', () => {
+        expect(parseHeadingReference('Pues el mar se embravecía más y más (1:11)', 'JON'))
+            .toEqual(ref('Jonah 1:11'));
+    });
+
+    it('lee un paréntesis final aunque el título sea largo', () => {
+        // El tope de longitud descarta líneas de cuerpo promovidas a
+        // encabezado; un "(c:v)" final es señal fuerte por sí sola y estos
+        // títulos son largos porque citan el versículo.
+        const long = '… pero tú sacaste de la fosa mi vida, oh Señor, Dios mío, y te di gracias (2:6)';
+        expect(parseHeadingReference(long, 'JON')).toEqual(ref('Jonah 2:6'));
+    });
+
+    it('lee un rango entre paréntesis que cruza capítulos', () => {
+        expect(parseHeadingReference("IV. Jonah Objects to Nineveh's Survival (4:1-11)", 'JON'))
+            .toEqual(ref('Jonah 4:1-11'));
+    });
+
+    it('lee "prosa + Libro c:v" al final', () => {
+        expect(parseHeadingReference('Escena segunda: el vientre del pez Jonás 1:17-2:10', null))
+            .toEqual(ref('Jonah 1:17-2:10'));
+    });
+
+    it('no confunde el paréntesis final cuando no hay libro en contexto', () => {
+        expect(parseHeadingReference('Pues el mar se embravecía más y más (1:11)', null)).toBeNull();
+    });
+
+    it('sigue rechazando la línea de cuerpo aunque ahora haya más formas', () => {
+        expect(
+            parseHeadingReference('6 [7]. TVJTJ (will be): Waw-relative introduces a', 'MIC'),
+        ).toBeNull();
+    });
 });
 
 describe('resolveOutlineReferences', () => {
@@ -178,6 +215,40 @@ describe('selectChunksForPassage', () => {
 
         expect(selection.chunkCount).toBe(2);
         expect(selection.truncated).toBe(true);
+    });
+
+    it('prefiere el encabezado específico sobre la perícopa envolvente', () => {
+        // Forma real de "The Minor Prophets": el comentario encabeza dos
+        // veces el mismo material, con el título de la perícopa entera y con
+        // el del tramo concreto. Quedarse con el envolvente arrastraba 1:4-16.
+        const nested = resolveOutlineReferences([
+            entry(0, 'I. Jonah Goes His Own Way (1:1-16)', ['Jonah']),
+            entry(1, 'Jonah 1:1-3', ['Jonah']),
+            entry(2, null, ['Jonah']),
+            entry(3, 'Jonah 1:4-6', ['Jonah']),
+            entry(4, 'I. Jonah Goes His Own Way (1:1-16)', ['Jonah']),
+        ]);
+
+        const selection = selectChunksForPassage(nested, ref('Jonah 1:1-3'), {
+            contextChunks: 0,
+        });
+
+        expect(selection.ranges).toEqual([{ start: 1, end: 2 }]);
+    });
+
+    it('usa el envolvente cuando no hay nada más fino', () => {
+        // Comentarios que no bajan del nivel de perícopa: ahí el envolvente
+        // es lo mejor que hay y descartarlo dejaría la fuente sin nada.
+        const coarse = resolveOutlineReferences([
+            entry(0, 'I. Jonah Goes His Own Way (1:1-16)', ['Jonah']),
+            entry(1, null, ['Jonah']),
+        ]);
+
+        const selection = selectChunksForPassage(coarse, ref('Jonah 1:1-3'), {
+            contextChunks: 0,
+        });
+
+        expect(selection.ranges).toEqual([{ start: 0, end: 1 }]);
     });
 
     it('separa tramos no contiguos', () => {

@@ -91,6 +91,15 @@ const MAX_HEADING_CHARS = 80;
  */
 const OPEN_ENDED_VERSE = 1_000;
 
+/** `(1:11)`, `(1:17-2:10)`, `(4:1-11)` al final del encabezado. */
+const TRAILING_PARENTHESIZED_REF = /\((\d+[:.]\d+(?:[-–—](?:\d+[:.])?\d+)?)\)\s*$/;
+
+/** `…prosa… Jonás 1:17-2:10` — prefijo y referencia, al final del encabezado. */
+const TRAILING_BOOK_REF = /^(.*?[A-Za-zÁÉÍÓÚÜÑáéíóúüñ.]\s*)(\d+[:.]\d+(?:[-–—](?:\d+[:.])?\d+)?)\s*$/;
+
+/** El encabezado es SOLO la referencia, sin libro. */
+const BARE_REF = /^\d+[:.]\d+(?:[-–—]\d+(?:[:.]\d+)?)?$/;
+
 /**
  * Le asigna a cada chunk la referencia bíblica que le corresponde.
  *
@@ -159,23 +168,61 @@ export function parseHeadingReference(
     contextBookId: BibleBookId | null,
 ): PassageReference | null {
     const cleaned = heading.trim();
-    if (!cleaned || cleaned.length > MAX_HEADING_CHARS) return null;
+    if (!cleaned) return null;
 
-    const direct = parsePassageReference(cleaned);
-    if (direct.ok) return direct.ref;
+    // 1. La cadena entera ES la referencia. "Micah 4:8", "Jonah 1:1-3".
+    if (cleaned.length <= MAX_HEADING_CHARS) {
+        const direct = parsePassageReference(cleaned);
+        if (direct.ok) return direct.ref;
+    }
 
-    if (!contextBookId) return null;
+    // 2. Referencia entre paréntesis al final. Es la forma que usan los
+    //    comentarios cuyos títulos de sección son la frase comentada:
+    //    "Pues el mar se embravecía más y más (1:11)",
+    //    "IV. Jonah Objects to Nineveh's Survival (4:1-11)".
+    //
+    //    Acá NO se aplica `MAX_HEADING_CHARS`: el paréntesis final es una
+    //    señal fuerte por sí misma, y estos títulos son largos por
+    //    naturaleza (citan el versículo). El tope existía para descartar
+    //    líneas de cuerpo promovidas a encabezado, y esas no terminan en
+    //    "(c:v)".
+    const parenthesized = cleaned.match(TRAILING_PARENTHESIZED_REF);
+    if (parenthesized?.[1] && contextBookId) {
+        const fromContext = withContextBook(parenthesized[1], contextBookId);
+        if (fromContext) return fromContext;
+    }
 
-    // Forma desnuda: el encabezado es SOLO capítulo:versículo. Se exige que
-    // la cadena entera sea eso — "1:1-3" sí, "ver 1:1-3" no, porque en el
-    // segundo caso el encabezado está hablando de otra cosa.
-    if (!/^\d+[:.]\d+(?:[-–—]\d+(?:[:.]\d+)?)?$/.test(cleaned)) return null;
+    // 3. "…prosa… Libro c:v" al final: "Escena segunda: el vientre del pez
+    //    Jonás 1:17-2:10". El nombre del libro son las palabras justo antes
+    //    de los números, así que se prueban los últimos tres tramos y se
+    //    acepta solo si el canon reconoce exactamente uno.
+    const trailing = cleaned.match(TRAILING_BOOK_REF);
+    if (trailing?.[1] && trailing[2]) {
+        const words = trailing[1].trim().split(/\s+/);
+        for (let take = 1; take <= Math.min(3, words.length); take++) {
+            const candidate = words.slice(words.length - take).join(' ');
+            if (findBooksByAlias(candidate).length !== 1) continue;
+            const parsed = parsePassageReference(`${candidate} ${trailing[2]}`);
+            if (parsed.ok) return parsed.ref;
+        }
+    }
 
+    // 4. Referencia desnuda: el encabezado es SOLO capítulo:versículo.
+    //    "1:1-3" sí, "ver 1:1-3" no — en el segundo caso el encabezado está
+    //    hablando de otra cosa.
+    if (contextBookId && BARE_REF.test(cleaned)) {
+        return withContextBook(cleaned, contextBookId);
+    }
+
+    return null;
+}
+
+/** Le presta el libro del contexto a una referencia sin libro. */
+function withContextBook(bareRef: string, contextBookId: BibleBookId): PassageReference | null {
     const book = getBookById(contextBookId);
     if (!book) return null;
-
-    const withBook = parsePassageReference(`${book.nameEn} ${cleaned}`);
-    return withBook.ok ? withBook.ref : null;
+    const parsed = parsePassageReference(`${book.nameEn} ${bareRef}`);
+    return parsed.ok ? parsed.ref : null;
 }
 
 /**
@@ -235,9 +282,23 @@ export function selectChunksForPassage(
     const contextChunks = Math.max(0, options.contextChunks ?? 1);
     const maxChunks = Math.max(1, options.maxChunks ?? 60);
 
-    const hits = resolved
-        .filter(e => e.reference !== null && referencesOverlap(e.reference, passage))
-        .map(e => e.chunkIndex);
+    // Gana la referencia MÁS ESPECÍFICA. Los comentarios encabezan dos
+    // veces el mismo material: el título de la perícopa entera ("I. Jonah
+    // Goes His Own Way (1:1-16)") y el del tramo concreto ("Jonah 1:1-3").
+    // El primero solapa el pasaje con total legitimidad, pero cubre además
+    // 1:4-16 — quedarse con él arrastra el capítulo entero.
+    //
+    // Entonces: si hay encabezados CONTENIDOS en el pasaje, esos mandan y
+    // el envolvente se descarta. El envolvente solo se usa cuando no hay
+    // nada más fino, que es el caso de los comentarios que no bajan del
+    // nivel de perícopa.
+    const contained = resolved.filter(
+        e => e.reference !== null && referenceContains(passage, e.reference),
+    );
+    const overlapping = resolved.filter(
+        e => e.reference !== null && referencesOverlap(e.reference, passage),
+    );
+    const hits = (contained.length > 0 ? contained : overlapping).map(e => e.chunkIndex);
 
     if (hits.length === 0) {
         return { ranges: [], chunkCount: 0, truncated: false };
@@ -288,6 +349,20 @@ export function referencesOverlap(a: PassageReference, b: PassageReference): boo
     const bStart = versePosition(b.chapterStart, b.verseStart ?? 1);
     const bEnd = versePosition(b.chapterEnd, b.verseEnd ?? OPEN_ENDED_VERSE);
     return aStart <= bEnd && bStart <= aEnd;
+}
+
+/**
+ * ¿`outer` cubre por completo a `inner`? Un encabezado contenido en el
+ * pasaje habla exactamente de él; uno que lo desborda habla también de otra
+ * cosa.
+ */
+export function referenceContains(outer: PassageReference, inner: PassageReference): boolean {
+    if (outer.bookId !== inner.bookId) return false;
+    const outerStart = versePosition(outer.chapterStart, outer.verseStart ?? 1);
+    const outerEnd = versePosition(outer.chapterEnd, outer.verseEnd ?? OPEN_ENDED_VERSE);
+    const innerStart = versePosition(inner.chapterStart, inner.verseStart ?? 1);
+    const innerEnd = versePosition(inner.chapterEnd, inner.verseEnd ?? OPEN_ENDED_VERSE);
+    return outerStart <= innerStart && innerEnd <= outerEnd;
 }
 
 /** Posición ordenable de un versículo dentro de un libro. */
