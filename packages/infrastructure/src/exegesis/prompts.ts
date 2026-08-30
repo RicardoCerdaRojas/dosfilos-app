@@ -8,6 +8,7 @@ import {
     type StepEmphasis,
 } from '@dosfilos/domain';
 import { fitPromptToCap } from '../llm/promptBudget';
+import { voiceFor } from './testamentVoice';
 
 /**
  * Prompt templates for exegetical step generation.
@@ -52,6 +53,10 @@ export function buildPrompt(input: ExegesisGenerationInput): BuiltPrompt {
 
 function buildSystemInstruction(input: ExegesisGenerationInput): string {
     const lang = input.language;
+    // Mismo motivo que en el analizador canónico: un pasaje del AT se exegeta
+    // en hebreo, y pedirle "el texto griego" hace que el modelo saque la LXX
+    // de memoria e ignore el texto masorético que se le dio como base.
+    const voice = voiceFor(input.paperPassage.bookId);
     const passage = formatPassageReference(input.paperPassage, lang);
     const styleGuideBlock = formatStyleGuide(input.styleGuideContent, lang);
     const briefBlock = formatAssignmentBrief(input.assignmentBrief, lang);
@@ -59,14 +64,14 @@ function buildSystemInstruction(input: ExegesisGenerationInput): string {
 
     if (lang === 'en') {
         return [
-            `You are an academic assistant in New Testament exegesis, biblical Greek, morphological/syntactic analysis, textual criticism, biblical theology, and academic writing in The Master's Seminary style.`,
+            `You are an academic assistant in ${voice.testamentEn} exegesis, ${voice.expertEn}, morphological/syntactic analysis, textual criticism, biblical theology, and academic writing in The Master's Seminary style.`,
             ``,
             `## Your task`,
             `Produce an integrated translation and exegetical analysis on **${passage}**, working ${stepKindDescription(input.kind, lang)}.`,
             briefBlock,
             ``,
             `## Hermeneutic stance`,
-            `Historical-grammatical-literal. Prioritize: authorial sense, Greek grammar, clause syntax, argumentative flow of the book, immediate literary context, OT intertextuality, biblical theology that emerges from the passage. NO allegorizing. NO doctrinal conclusions not supported by the text.`,
+            `Historical-grammatical-literal. Prioritize: authorial sense, ${voice.languageEn} grammar, clause syntax, argumentative flow of the book, immediate literary context, OT intertextuality, biblical theology that emerges from the passage. NO allegorizing. NO doctrinal conclusions not supported by the text.`,
             ``,
             `## Citation discipline (NON-NEGOTIABLE)`,
             `- Every claim drawn from a source MUST include an inline citation in the format: \`(Author, "Title", p. N)\`. If page is unavailable: \`(Author, "Title")\`.`,
@@ -86,14 +91,14 @@ function buildSystemInstruction(input: ExegesisGenerationInput): string {
     }
 
     return [
-        `Sos un asistente académico experto en exégesis del Nuevo Testamento, griego bíblico, análisis morfológico/sintáctico, crítica textual, teología bíblica y redacción académica en estilo The Master's Seminary.`,
+        `Sos un asistente académico experto en exégesis ${voice.testamentEs}, ${voice.expertEs}, análisis morfológico/sintáctico, crítica textual, teología bíblica y redacción académica en estilo The Master's Seminary.`,
         ``,
         `## Tu tarea`,
         `Producir traducción y análisis exegético integrado sobre **${passage}**, trabajando ${stepKindDescription(input.kind, lang)}.`,
         briefBlock,
         ``,
         `## Postura hermenéutica`,
-        `Histórico-gramatical-literal. Priorizá: sentido autoral, gramática griega, sintaxis de cláusulas, flujo argumentativo del libro, contexto literario inmediato, intertextualidad con el AT, teología bíblica que emerge del pasaje. NO alegorices. NO fuerces conclusiones doctrinales que no estén sustentadas por el texto.`,
+        `Histórico-gramatical-literal. Priorizá: sentido autoral, gramática ${voice.languageAdjEs}, sintaxis de cláusulas, flujo argumentativo del libro, contexto literario inmediato, intertextualidad con el AT, teología bíblica que emerge del pasaje. NO alegorices. NO fuerces conclusiones doctrinales que no estén sustentadas por el texto.`,
         ``,
         `## Disciplina de citación (NO NEGOCIABLE)`,
         `- Toda afirmación derivada de una fuente DEBE incluir cita inline en formato: \`(Autor, "Título", p. N)\`. Si no hay página disponible: \`(Autor, "Título")\`.`,
@@ -131,6 +136,7 @@ function buildUserMessage(input: ExegesisGenerationInput): string {
 
 function renderUserMessage(input: ExegesisGenerationInput, sources: string): string {
     const lang = input.language;
+    const voice = voiceFor(input.paperPassage.bookId);
     const priorBlock = formatPriorSteps(input.priorAcceptedSteps, lang);
     const emphasisBlock = formatStepEmphasis(input.stepEmphasis, lang);
     const hint = input.regenerationHint
@@ -153,7 +159,7 @@ function renderUserMessage(input: ExegesisGenerationInput, sources: string): str
             ? [
                 `**Internal order BEFORE writing**: do the morphological + syntactic + lexical analysis MENTALLY first. The translation you present in section 2 must be the OUTPUT of that analysis, not a guess justified afterwards. The reader sees translation-then-defense (sections 2-5), but you must derive it analysis-first.`,
                 ``,
-                `1. Present the Greek text of ${verse}.`,
+                `1. Present the ${voice.languageEn} text of ${verse}.`,
                 `2. Present your own translation (derived from the mental analysis below).`,
                 `3. Explain the main translation decisions.`,
                 `4. Morphological analysis of relevant forms.`,
@@ -170,7 +176,7 @@ function renderUserMessage(input: ExegesisGenerationInput, sources: string): str
                 `   - Do NOT mention verses more than ONE verse away from ${verse}. The whole-passage range, distant verses inside the pericope, and chains of references like "vv. N-M, v. P, v. Q" are forbidden. Only the immediate neighbor (and only when grammatically required) is allowed.`,
                 `   - Do NOT recap the pericope's overall structure. Verbs like "transitions to", "introduces the section", "marks the inflection point", "develops the theme", "constitutes the climax of", "completes the structure that began in..." signal recap mode and are banned.`,
                 `   - Do NOT describe how this verse fits the paper's full argument — that synthesis is the JOB OF THE PAPER'S CONCLUSION STEP.`,
-                `   - Do NOT restate the translation or re-quote Greek terms already discussed above.`,
+                `   - Do NOT restate the translation or re-quote ${voice.languageEn} terms already discussed above.`,
                 ``,
                 `   Correct mold (when ${verse} stands grammatically alone): "Verse ${verse} establishes that X, given that the grammatical/lexical analysis demonstrates Y."`,
                 `   Correct mold (when ${verse} is grammatically inseparable from its neighbor): "Verse ${verse} establishes X, setting up [or completing] the contrast with the immediately adjacent verse where Y." (Name the neighbor verse only if the grammar demands it.)`,
@@ -178,7 +184,7 @@ function renderUserMessage(input: ExegesisGenerationInput, sources: string): str
             : [
                 `**Orden interno ANTES de escribir**: hacé el análisis morfológico + sintáctico + léxico MENTALMENTE primero. La traducción que presentás en la sección 2 debe ser la SALIDA de ese análisis, no una conjetura justificada después. El lector ve traducción-y-defensa (secciones 2-5), pero vos derivás análisis-primero.`,
                 ``,
-                `1. Presentá el texto griego de ${verse}.`,
+                `1. Presentá el texto ${voice.language} de ${verse}.`,
                 `2. Presentá tu traducción propia (derivada del análisis mental que sigue).`,
                 `3. Explicá las decisiones principales de traducción.`,
                 `4. Análisis morfológico de las formas relevantes.`,
@@ -195,7 +201,7 @@ function renderUserMessage(input: ExegesisGenerationInput, sources: string): str
                 `   - NO menciones versos a más de UN verso de distancia de ${verse}. El rango completo del pasaje, versos distantes dentro de la pericopa y cadenas de referencias tipo "vv. N-M, v. P, v. Q" están prohibidos. Solo el vecino inmediato (y solo cuando la gramática lo exige) está permitido.`,
                 `   - NO recapitules la estructura global de la pericopa. Verbos como "transita a", "introduce la sección", "marca el punto de inflexión", "desarrolla el tema", "constituye el clímax de", "completa la estructura que comenzó en..." señalan modo recap y están vetados.`,
                 `   - NO describas cómo este verso encaja en el argumento del paper completo — esa síntesis es TRABAJO DEL PASO CONCLUSIÓN DEL PAPER.`,
-                `   - NO repitas la traducción ni cites términos griegos ya discutidos arriba.`,
+                `   - NO repitas la traducción ni cites términos en ${voice.language} ya discutidos arriba.`,
                 ``,
                 `   Molde correcto (cuando ${verse} se sostiene gramaticalmente solo): "El verso ${verse} establece que X, dado que el análisis gramatical/léxico demuestra Y."`,
                 `   Molde correcto (cuando ${verse} es gramaticalmente inseparable de su vecino): "El verso ${verse} establece X, preparando [o completando] el contraste con el verso inmediatamente adyacente donde Y." (Nombrá al verso vecino solo si la gramática lo exige.)`,
