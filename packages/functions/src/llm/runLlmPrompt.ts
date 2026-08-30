@@ -225,9 +225,19 @@ function isTransientGeminiError(err: unknown): boolean {
  */
 async function withGeminiRetry<T>(label: string, fn: () => Promise<T>): Promise<T> {
     const delays = [700, 2100];
+    const started = Date.now();
     for (let attempt = 0; ; attempt++) {
         try {
-            return await fn();
+            const result = await fn();
+            // Sin esta línea no hay forma de saber dónde se va el tiempo de un
+            // paso. La generación con Pro 2.5 y 32k de salida domina todo lo
+            // demás por órdenes de magnitud, pero eso era una sospecha hasta que
+            // quedó medido por feature y por intento.
+            console.log(`[runLlmPrompt] ${label} ok`, {
+                ms: Date.now() - started,
+                attempts: attempt + 1,
+            });
+            return result;
         } catch (err) {
             if (attempt >= delays.length || !isTransientGeminiError(err)) throw err;
             console.warn(`[runLlmPrompt] ${label}: fallo transitorio, reintento ${attempt + 1}`, {
