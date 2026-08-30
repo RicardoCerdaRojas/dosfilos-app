@@ -781,7 +781,7 @@ function deserialize(id: string, data: DocumentData): ExegeticalPaper {
             : undefined,
         stepPlan: deserializeStepPlan(data.stepPlan),
         phase: data.phase ?? 'configuring',
-        steps: Array.isArray(data.steps) ? data.steps : [],
+        steps: Array.isArray(data.steps) ? data.steps.map(deserializeStep) : [],
         currentStepId: data.currentStepId ?? null,
         assembledMarkdown: data.assembledMarkdown ?? null,
         archivedAt: data.archivedAt?.toDate?.() ?? data.archivedAt ?? null,
@@ -1011,5 +1011,47 @@ function buildStep(input: {
         versions: [],
         createdAt: input.now,
         updatedAt: input.now,
+    };
+}
+
+/**
+ * Normaliza las fechas de un paso.
+ *
+ * Los pasos se leían CRUDOS —`steps: data.steps`— y por eso `ExegeticalStep`
+ * declaraba `createdAt: Date` mientras en ejecución llegaba un `Timestamp` de
+ * Firestore. Nadie lo notó porque nadie tocaba esas fechas: el primer consumidor
+ * real fue `isAbandonedGeneration`, que llamó `getTime()` —que `Timestamp` no
+ * tiene— y quedó silenciosamente inerte. Es el mismo patrón del `author: string`
+ * que en producción era null: el tipo decía una cosa y el dato decía otra.
+ *
+ * Se preserva el resto del paso con spread en vez de enumerar campos: un
+ * whitelist acá borraría en silencio cualquier campo nuevo, que es exactamente
+ * el fallo que `serializeSource` tuvo que resolver con tipos.
+ */
+function toDateOrNull(value: unknown): Date | null {
+    if (!value) return null;
+    const asTimestamp = value as { toDate?: () => Date };
+    if (typeof asTimestamp.toDate === 'function') return asTimestamp.toDate();
+    return value instanceof Date ? value : new Date(value as string | number);
+}
+
+function deserializeStepVersion(raw: any): ExegeticalStepVersion {
+    return {
+        ...raw,
+        createdAt: toDateOrNull(raw?.createdAt) ?? new Date(),
+        verifications: raw?.verifications
+            ? { ...raw.verifications, lastRunAt: toDateOrNull(raw.verifications.lastRunAt) }
+            : raw?.verifications ?? undefined,
+    };
+}
+
+export function deserializeStep(raw: any): ExegeticalStep {
+    return {
+        ...raw,
+        createdAt: toDateOrNull(raw?.createdAt) ?? new Date(),
+        updatedAt: toDateOrNull(raw?.updatedAt) ?? new Date(),
+        current: raw?.current ? deserializeStepVersion(raw.current) : null,
+        accepted: raw?.accepted ? deserializeStepVersion(raw.accepted) : null,
+        versions: Array.isArray(raw?.versions) ? raw.versions.map(deserializeStepVersion) : [],
     };
 }
