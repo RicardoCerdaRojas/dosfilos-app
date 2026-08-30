@@ -303,14 +303,23 @@ export async function runGemini(pdfPath, {
         );
 
         if (!res.ok) {
-            return { skipped: true, reason: `HTTP ${res.status}: ${(await res.text()).slice(0, 300)}` };
+            // 503 UNAVAILABLE ("high demand") y 429 son transitorios: el
+            // servicio pide que se vuelva a intentar, no que se rinda. Medido:
+            // a concurrencia 4 sobre gemini-3.6-flash, 2 de 4 trozos murieron
+            // con 503. Sin reintento, el fan-out pierde el 50% del libro.
+            const retryable = res.status === 503 || res.status === 429 || res.status >= 500;
+            return { skipped: true, retryable, reason: `HTTP ${res.status}: ${(await res.text()).slice(0, 300)}` };
         }
 
         const body = await res.json();
         const markdown = body.candidates?.[0]?.content?.parts?.map(p => p.text ?? '').join('') ?? '';
         if (!markdown.trim()) {
+            // `finishReason: STOP` con cuerpo vacío es un fallo SILENCIOSO: el
+            // modelo dice haber terminado bien y no devuelve nada. Medido en el
+            // spike de fan-out. Se trata como reintentable porque en producción
+            // sería una página que desaparece del libro sin que nada avise.
             const finish = body.candidates?.[0]?.finishReason ?? 'desconocido';
-            return { skipped: true, reason: `respuesta vacía (finishReason=${finish})` };
+            return { skipped: true, retryable: true, reason: `respuesta vacía (finishReason=${finish})` };
         }
 
         const usage = body.usageMetadata ?? {};

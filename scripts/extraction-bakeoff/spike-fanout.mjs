@@ -131,19 +131,34 @@ async function pool(items, limit, fn) {
     return out;
 }
 
+const MAX_RETRIES = Number(process.env.SPIKE_RETRIES ?? 3);
+
 const wallStart = Date.now();
 const results = await pool(chunks, args.concurrency, async (c, i) => {
     const t0 = Date.now();
-    const r = await runGemini(c.path, {
-        apiKey: process.env.GEMINI_API_KEY,
-        // El desplazamiento es lo que decide si trocear es viable: cada worker
-        // ve sólo su trozo, y sin esto todos numerarían desde 1.
-        pageOffset: c.from,
-    });
+    let r; let attempts = 0;
+    // Reintento con backoff. Sin esto el spike mide la disponibilidad del
+    // servicio en ese minuto, no la viabilidad del diseño: a concurrencia 4,
+    // 2 de 4 trozos murieron con 503 "high demand", que el propio servicio
+    // declara temporal.
+    for (;;) {
+        attempts++;
+        r = await runGemini(c.path, {
+            apiKey: process.env.GEMINI_API_KEY,
+            // El desplazamiento es lo que decide si trocear es viable: cada
+            // worker ve sólo su trozo, y sin esto todos numerarían desde 1.
+            pageOffset: c.from,
+        });
+        if (!r.skipped || !r.retryable || attempts > MAX_RETRIES) break;
+        const waitMs = Math.min(30000, 2000 * 2 ** (attempts - 1));
+        console.log(`  trozo ${String(i + 1).padStart(2)}/${chunks.length} reintento ${attempts}/${MAX_RETRIES} en ${waitMs / 1000}s — ${String(r.reason).slice(0, 60)}`);
+        await new Promise(res => setTimeout(res, waitMs));
+    }
     const elapsed = Date.now() - t0;
     const ok = !r.skipped;
+    c.attempts = attempts;
     console.log(`  trozo ${String(i + 1).padStart(2)}/${chunks.length} págs ${c.from}-${c.to}  `
-        + (ok ? `ok ${(elapsed / 1000).toFixed(0)}s  ${r.markdown.length} chars${r.truncated ? '  ⚠ TRUNCADO' : ''}`
+        + (ok ? `ok ${(elapsed / 1000).toFixed(0)}s  ${r.markdown.length} chars${attempts > 1 ? `  (${attempts} intentos)` : ''}${r.truncated ? '  ⚠ TRUNCADO' : ''}`
               : `FALLÓ — ${r.reason}`));
     return { ...c, ...r, elapsed, ok };
 });
@@ -175,12 +190,19 @@ line(rateLimited.length
 
 // 2 — numeración global
 const pages = [...stitched.matchAll(/<!--\s*page:\s*(\d+)\s*-->/g)].map(m => Number(m[1]));
+// Sólo se evalúan las páginas de los trozos que CORRIERON. Contar como
+// "faltantes" las de un trozo que murió por 503 mezcla dos preguntas
+// distintas: si el servicio respondió y si la numeración cierra. La primera
+// corrida lo hizo y concluyó que la numeración fallaba cuando en realidad el
+// único trozo vivo numeró exactamente su rango global.
 const expected = [];
-for (let p = from; p <= to; p++) expected.push(p);
+for (const c of okChunks) for (let p = c.from; p <= c.to; p++) expected.push(p);
+expected.sort((a, b) => a - b);
 const missing = expected.filter(p => !pages.includes(p));
 const dupes = pages.filter((p, i) => pages.indexOf(p) !== i);
 const ascending = pages.every((p, i) => i === 0 || p > pages[i - 1]);
 line(`\n2. NUMERACIÓN GLOBAL (se pidió desplazamiento por trozo)`);
+line(`   evaluada sólo sobre los ${okChunks.length}/${chunks.length} trozos que corrieron`);
 line(`   emitidas ${pages.length} · esperadas ${expected.length} · rango ${pages[0]}–${pages[pages.length - 1]}`);
 line(`   faltantes ${missing.length ? missing.slice(0, 10).join(', ') : 'ninguna'} · duplicadas ${dupes.length} · ascendente ${ascending ? 'sí' : 'NO'}`);
 line(missing.length === 0 && dupes.length === 0 && ascending
@@ -213,7 +235,13 @@ const report = {
 };
 
 // 3 — bordes: sólo con baseline, porque exige extraer el mismo rango entero
-if (args.baseline) {
+if (args.baseline && failed.length) {
+    line('\n3. BORDES — NO EVALUABLE');
+    line(`   ${failed.length} de ${chunks.length} trozos no corrieron, así que lo cosido está`);
+    line('   incompleto por una razón que no tiene nada que ver con los bordes.');
+    line('   Comparar contra la referencia mediría los trozos que faltan, no las uniones.');
+    line('   Vuelve a correr cuando los cuatro trozos terminen.');
+} else if (args.baseline) {
     line('\n3. BORDES — comparando lo cosido contra una sola pasada del rango entero');
     const wholePath = path.join(tmp, 'whole.pdf');
     await slicePdf(sourcePath, wholePath, from, to);
