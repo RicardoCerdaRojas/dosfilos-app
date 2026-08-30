@@ -205,8 +205,13 @@ export class FirebaseLibraryRepository implements ILibraryRepository {
         const resource = new LibraryResourceEntity(
             id,
             data.userId,
-            data.title,
-            data.author,
+            // El tipo declara `title` y `author` como string no nulable, pero
+            // hay recursos en producción con `author: null` — subidos antes de
+            // que el formulario lo exigiera. Sin esta coerción el null viaja
+            // hasta cualquier consumidor que confíe en el tipo, y el primero
+            // que le haga `.toLowerCase()` revienta.
+            data.title ?? '',
+            data.author ?? '',
             data.type,
             data.storageUrl,
             data.mimeType,

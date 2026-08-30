@@ -1449,12 +1449,18 @@ function AddSourceDialog({
     }, [library.resources, attachedCorpusIds, paperTestament]);
 
     const filteredResources = useMemo(() => {
-        const searchLower = librarySearch.trim().toLowerCase();
+        // Se busca por palabras sueltas sobre título + autor: "burt jonas"
+        // encuentra "Comentario Jonás" de David F. Burt aunque el orden no
+        // coincida y falten los acentos. Antes era un único `includes` sensible
+        // a mayúsculas y acentos, así que "jonas" no encontraba "Jonás".
+        const terms = normalizeForSearch(librarySearch).split(/\s+/).filter(Boolean);
         return availableForPicker
             .filter(r => libraryTypeFilter === 'all' || r.type === libraryTypeFilter)
-            .filter(r => searchLower === ''
-                || r.title.toLowerCase().includes(searchLower)
-                || r.author.toLowerCase().includes(searchLower));
+            .filter(r => {
+                if (terms.length === 0) return true;
+                const haystack = normalizeForSearch(`${r.title ?? ''} ${r.author ?? ''}`);
+                return terms.every(term => haystack.includes(term));
+            });
     }, [availableForPicker, libraryTypeFilter, librarySearch]);
 
     // Per-type counts for the chip row. Only types with ≥1 resource
@@ -2300,4 +2306,19 @@ function ClassificationChip({
             </span>
         </div>
     );
+}
+
+/**
+ * Normaliza texto para buscar: minúsculas y sin acentos.
+ *
+ * `NFD` separa la letra de su tilde y el rango `\u0300-\u036f` borra las
+ * tildes sueltas, así que "Jonás" y "jonas" quedan iguales. Tolera `null`
+ * porque la biblioteca tiene recursos viejos sin autor.
+ */
+function normalizeForSearch(value: string | null | undefined): string {
+    return (value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
 }
