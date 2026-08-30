@@ -75,6 +75,27 @@ export interface SelectSourcePagesResult {
     incomplete: boolean;
 }
 
+/**
+ * Tope de texto guardado en el paper, sumando todas las fuentes.
+ *
+ * Las fuentes viven INLINE en el documento del paper y Firestore corta un
+ * documento en 1 MiB. Pasarse no da un error entendible: da un fallo de
+ * escritura del SDK, con el trabajo entero sin guardar y sin decir por qué.
+ *
+ * El margen es amplio a propósito — el resto del paper (pasos, rúbrica, plan)
+ * también ocupa, y el tope tiene que avisar antes de que la escritura falle, no
+ * después.
+ */
+const MAX_PAPER_TEXT_CHARS = 800_000;
+
+export class PaperCorpusTooLargeError extends Error {
+    constructor(readonly totalChars: number, readonly limit: number) {
+        super(`El corpus del trabajo ocuparía ${totalChars} caracteres y el tope es ${limit}`);
+        this.name = 'PaperCorpusTooLargeError';
+        Object.setPrototypeOf(this, PaperCorpusTooLargeError.prototype);
+    }
+}
+
 export class SelectSourcePagesUseCase {
     constructor(
         private paperRepository: IExegeticalPaperRepository,
@@ -119,6 +140,18 @@ export class SelectSourcePagesUseCase {
         };
 
         const existing = findExistingSource(paper.sources, input.libraryResourceId);
+
+        // Cuánto ocuparía el paper con esta fuente ya reemplazada. Se mide antes
+        // de escribir porque el fallo de Firestore llega sin explicación y deja
+        // el guardado a medias.
+        const othersChars = paper.sources
+            .filter(s => s.id !== existing?.id)
+            .reduce((sum, s) => sum + s.excerpts.reduce((n, e) => n + e.text.length, 0), 0);
+        const selectionChars = excerpts.reduce((n, e) => n + e.text.length, 0);
+        if (othersChars + selectionChars > MAX_PAPER_TEXT_CHARS) {
+            throw new PaperCorpusTooLargeError(othersChars + selectionChars, MAX_PAPER_TEXT_CHARS);
+        }
+
         const extractedAt = new Date();
 
         if (existing) {

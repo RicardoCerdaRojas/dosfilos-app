@@ -808,6 +808,7 @@
                         "emptySheets_other": "{{count}} chosen sheets had no text and were left out",
                         "saveFailed": "Could not save the selection. Try again.",
                             "incomplete": "Saved {{saved}} of {{expected}} passages. Review the selection before generating.",
+                            "tooLarge": "The paper corpus is too large to save. Remove sheets here or in another source.",
                         "attachedStructural_one": "Added: the passage section, {{count}} sheet",
                         "attachedStructural_other": "Added: the passage section, {{count}} sheets",
                         "attachedSemantic_one": "Added: {{count}} sheet by content match. Worth reviewing.",

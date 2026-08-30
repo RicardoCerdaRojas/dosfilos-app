@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useFirebase } from '@/context/firebase-context';
 import { useExegesisPaper } from '@/hooks/exegesis/useExegesisPaper';
 import { useDocumentPageIndex } from '@/hooks/exegesis/useDocumentPageIndex';
+import { PaperCorpusTooLargeError } from '@dosfilos/application';
 import { useSelectSourcePages } from '@/hooks/exegesis/useSelectSourcePages';
 import { SourcePagesWorkspace } from '@/components/exegesis/setup/page-picker/SourcePagesWorkspace';
 
@@ -94,7 +95,9 @@ export function ExegesisSourcePagesPage() {
             back();
         } catch (err) {
             console.error('[ExegesisSourcePagesPage] no se pudo guardar la selección', err);
-            toast.error(t('paperSetup.subSteps.corpus.picker.toast.saveFailed'));
+            toast.error(err instanceof PaperCorpusTooLargeError
+                ? t('paperSetup.subSteps.corpus.picker.toast.tooLarge')
+                : t('paperSetup.subSteps.corpus.picker.toast.saveFailed'));
         }
     };
 

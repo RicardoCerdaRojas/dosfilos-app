@@ -63,6 +63,7 @@ export {
 // Selector de páginas: hojas elegidas a mano → fragmentos, con la receta.
 export {
     SelectSourcePagesUseCase,
+    PaperCorpusTooLargeError,
     type SelectSourcePagesInput,
     type SelectSourcePagesResult,
 } from './SelectSourcePagesUseCase';

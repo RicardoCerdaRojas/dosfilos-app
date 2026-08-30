@@ -808,6 +808,7 @@
                         "emptySheets_other": "{{count}} hojas elegidas no traían texto y quedaron afuera",
                         "saveFailed": "No se pudo guardar la selección. Probá de nuevo.",
                             "incomplete": "Se guardaron {{saved}} de {{expected}} fragmentos. Revisá la selección antes de generar.",
+                            "tooLarge": "El corpus del trabajo es demasiado grande para guardarlo. Quitá hojas de esta fuente o de otra.",
                         "attachedStructural_one": "Agregado: la sección del pasaje, {{count}} hoja",
                         "attachedStructural_other": "Agregado: la sección del pasaje, {{count}} hojas",
                         "attachedSemantic_one": "Agregado: {{count}} hoja por coincidencia de contenido. Conviene revisarla.",
