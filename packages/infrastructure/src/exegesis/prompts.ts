@@ -7,6 +7,7 @@ import {
     type SourceType,
     type StepEmphasis,
 } from '@dosfilos/domain';
+import { fitPromptToCap } from '../llm/promptBudget';
 
 /**
  * Prompt templates for exegetical step generation.
@@ -113,9 +114,23 @@ function buildSystemInstruction(input: ExegesisGenerationInput): string {
 
 // ── User message ────────────────────────────────────────────────────────
 
+/**
+ * El corpus se recorta a lo que quede libre bajo el tope del proxy en vez de a
+ * `SOURCE_BUDGET_CHARS_TOTAL` a secas: ese número estaba POR ENCIMA del tope
+ * del servidor y un paper con comentarios extraídos completos hacía fallar
+ * toda generación con `prompt excede 200000 caracteres`.
+ */
 function buildUserMessage(input: ExegesisGenerationInput): string {
+    return fitPromptToCap(
+        sourcesBlock => renderUserMessage(input, sourcesBlock),
+        budget => formatSources(input.sources, input.language, input.stepEmphasis, budget),
+        SOURCE_BUDGET_CHARS_TOTAL,
+        'GeminiExegesisOrchestrator',
+    );
+}
+
+function renderUserMessage(input: ExegesisGenerationInput, sources: string): string {
     const lang = input.language;
-    const sources = formatSources(input.sources, lang, input.stepEmphasis);
     const priorBlock = formatPriorSteps(input.priorAcceptedSteps, lang);
     const emphasisBlock = formatStepEmphasis(input.stepEmphasis, lang);
     const hint = input.regenerationHint
@@ -297,6 +312,7 @@ function formatSources(
     sources: ExegesisSourceContext[],
     lang: 'es' | 'en',
     emphasis: StepEmphasis | null,
+    budgetChars: number,
 ): string {
     if (sources.length === 0) {
         return lang === 'en'
@@ -310,7 +326,7 @@ function formatSources(
     // types get ~2.5x the room, deemphasized types get ~0.4x. Style-
     // only sources (`style-template-paper`) keep their small slice
     // regardless — the model only needs to absorb their SHAPE.
-    const totalBudget = SOURCE_BUDGET_CHARS_TOTAL;
+    const totalBudget = budgetChars;
     const weights = sources.map(s => effectiveSourceTypeWeight(s.sourceType, emphasis));
     const totalWeight = weights.reduce((sum, w) => sum + w, 0) || 1;
     const budgets = weights.map(w => Math.floor(totalBudget * (w / totalWeight)));
