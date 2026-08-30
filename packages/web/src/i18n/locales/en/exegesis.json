@@ -752,6 +752,13 @@
                         "fr": "Available in French"
                     }
                 },
+                "budget": {
+                    "title": "Paper budget",
+                    "stats": "{{sources}} sources · {{chars}} characters",
+                    "over": "The corpus is over budget: generation will fail. Remove sheets from a source.",
+                    "inconsistent_one": "{{labels}} saved passages its selection does not declare. Save its pages again to line them up.",
+                    "inconsistent_other": "{{count}} sources saved passages their selection does not declare ({{labels}}). Save their pages again to line them up."
+                },
                 "picker": {
                     "subtitle": "Choose which sheets of this document go into the paper. You can take the passage section and the book's introduction too.",
                     "loadingIndex": "Reading the document index…",
@@ -800,6 +807,7 @@
                         "emptySheets_one": "{{count}} chosen sheet had no text and was left out",
                         "emptySheets_other": "{{count}} chosen sheets had no text and were left out",
                         "saveFailed": "Could not save the selection. Try again.",
+                            "incomplete": "Saved {{saved}} of {{expected}} passages. Review the selection before generating.",
                         "attachedStructural_one": "Added: the passage section, {{count}} sheet",
                         "attachedStructural_other": "Added: the passage section, {{count}} sheets",
                         "attachedSemantic_one": "Added: {{count}} sheet by content match. Worth reviewing.",

@@ -80,6 +80,12 @@ export function ExegesisSourcePagesPage() {
             toast.success(
                 t('paperSetup.subSteps.corpus.picker.toast.saved', { count: result.excerptCount }),
             );
+            if (result.incomplete) {
+                toast.warning(t('paperSetup.subSteps.corpus.picker.toast.incomplete', {
+                    saved: result.excerptCount,
+                    expected: result.expectedChunks,
+                }));
+            }
             if (result.emptySheets > 0) {
                 toast.warning(
                     t('paperSetup.subSteps.corpus.picker.toast.emptySheets', { count: result.emptySheets }),

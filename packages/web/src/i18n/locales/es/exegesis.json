@@ -752,6 +752,13 @@
                         "fr": "Disponible en francés"
                     }
                 },
+                "budget": {
+                    "title": "Presupuesto del trabajo",
+                    "stats": "{{sources}} fuentes · {{chars}} caracteres",
+                    "over": "El corpus se pasa del presupuesto: la generación va a fallar. Quitá hojas de alguna fuente.",
+                    "inconsistent_one": "{{labels}} guardó fragmentos que su selección no declara. Volvé a guardar sus páginas para dejarlos parejos.",
+                    "inconsistent_other": "{{count}} fuentes guardaron fragmentos que su selección no declara ({{labels}}). Volvé a guardar sus páginas para dejarlos parejos."
+                },
                 "picker": {
                     "subtitle": "Elegí qué hojas del documento entran a este trabajo. Podés agregar la sección del pasaje y también la introducción del libro.",
                     "loadingIndex": "Leyendo el índice del documento…",
@@ -800,6 +807,7 @@
                         "emptySheets_one": "{{count}} hoja elegida no traía texto y quedó afuera",
                         "emptySheets_other": "{{count}} hojas elegidas no traían texto y quedaron afuera",
                         "saveFailed": "No se pudo guardar la selección. Probá de nuevo.",
+                            "incomplete": "Se guardaron {{saved}} de {{expected}} fragmentos. Revisá la selección antes de generar.",
                         "attachedStructural_one": "Agregado: la sección del pasaje, {{count}} hoja",
                         "attachedStructural_other": "Agregado: la sección del pasaje, {{count}} hojas",
                         "attachedSemantic_one": "Agregado: {{count}} hoja por coincidencia de contenido. Conviene revisarla.",

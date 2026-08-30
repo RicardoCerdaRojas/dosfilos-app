@@ -144,3 +144,42 @@ describe('SelectSourcePagesUseCase', () => {
         expect(reader.readChunks).not.toHaveBeenCalled();
     });
 });
+
+describe('SelectSourcePagesUseCase · consistencia', () => {
+    it('marca incompleto cuando vuelven menos fragmentos de los pedidos', async () => {
+        const { repo } = makeDeps(makePaper());
+        // La selección implica 5 fragmentos (100-104); el lector devuelve 2.
+        const reader = {
+            readChunks: vi.fn().mockResolvedValue([
+                { chunkIndex: 100, text: 'a', page: 60, section: null },
+                { chunkIndex: 101, text: 'b', page: 60, section: null },
+            ]),
+        };
+        const useCase = new SelectSourcePagesUseCase(repo as never, reader as never);
+
+        const result = await useCase.execute({ ...BASE_INPUT, sheetRanges: [{ start: 60, end: 63 }] });
+
+        expect(result.expectedChunks).toBe(5);
+        expect(result.excerptCount).toBe(2);
+        expect(result.incomplete).toBe(true);
+    });
+
+    it('no marca incompleto cuando vuelve todo lo pedido', async () => {
+        const { repo } = makeDeps(makePaper());
+        // Las hojas 60-61 implican los fragmentos 100, 101 y 102: el lector
+        // devuelve exactamente esos tres.
+        const reader = {
+            readChunks: vi.fn().mockResolvedValue([
+                { chunkIndex: 100, text: 'a', page: 60, section: null },
+                { chunkIndex: 101, text: 'b', page: 60, section: null },
+                { chunkIndex: 102, text: 'c', page: 61, section: null },
+            ]),
+        };
+        const useCase = new SelectSourcePagesUseCase(repo as never, reader as never);
+
+        const result = await useCase.execute({ ...BASE_INPUT, sheetRanges: [{ start: 60, end: 61 }] });
+
+        expect(result.expectedChunks).toBe(3);
+        expect(result.incomplete).toBe(false);
+    });
+});

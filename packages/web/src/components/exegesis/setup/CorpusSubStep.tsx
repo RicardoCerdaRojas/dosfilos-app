@@ -73,6 +73,7 @@ import { RubricGapCard } from './RubricGapCard';
 import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
 import { ExtractFromLibraryDialog } from './ExtractFromLibraryDialog';
 import { SourceSelectionModeBadge } from './SourceSelectionModeBadge';
+import { CorpusBudgetMeter } from './CorpusBudgetMeter';
 import { PageBalanceHint } from './PageBalanceHint';
 import { FileDropzone } from '@/components/ui/file-dropzone';
 
@@ -258,6 +259,7 @@ function CorpusSourcesList({
             {/* Header only when there are sources to label. The empty
                 state's hero card is doing the entry-point work and
                 the "(0)" header was just noise on first paint. */}
+            {sorted.length > 0 && <CorpusBudgetMeter paper={paper} />}
             {sorted.length > 0 && (
                 <header className="flex items-center justify-between gap-2">
                     <h3 className="text-sm font-semibold text-foreground">

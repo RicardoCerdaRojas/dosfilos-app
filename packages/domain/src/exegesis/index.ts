@@ -83,3 +83,5 @@ export * from './outline/documentOutline';
 export * from './outline/documentPageIndex';
 // Desfase entre la hoja física y el número que el libro imprime.
 export * from './outline/printedPageOffset';
+// ¿Los fragmentos guardados de una fuente corresponden a su receta?
+export * from './outline/recipeConsistency';

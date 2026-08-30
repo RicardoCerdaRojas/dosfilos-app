@@ -60,6 +60,19 @@ export interface SelectSourcePagesResult {
     excerptCount: number;
     /** Hojas pedidas que no produjeron ni un fragmento. */
     emptySheets: number;
+    /** Fragmentos que la selección implicaba, según el índice de hojas. */
+    expectedChunks: number;
+    /**
+     * `true` cuando volvieron menos fragmentos de los que la selección
+     * implicaba.
+     *
+     * No es paranoia: en producción apareció una fuente cuya receta declaraba
+     * 51 fragmentos y tenía 25 guardados, de hojas que la receta ni nombraba. A
+     * partir de ahí el medidor de presupuesto sumaba una cosa y el prompt
+     * recibía otra, y desde afuera no había forma de notarlo. Guardar en
+     * silencio algo que se contradice es peor que avisar.
+     */
+    incomplete: boolean;
 }
 
 export class SelectSourcePagesUseCase {
@@ -78,9 +91,20 @@ export class SelectSourcePagesUseCase {
         }
 
         const chunkRanges = chunkRangesForSheets(input.pageIndex, sheetRanges);
+        const expectedChunks = chunkRanges.reduce((n, r) => n + (r.end - r.start + 1), 0);
         const chunks = chunkRanges.length > 0
             ? await this.chunkReader.readChunks(input.libraryResourceId, chunkRanges)
             : [];
+
+        const incomplete = chunks.length < expectedChunks;
+        if (incomplete) {
+            console.warn('[SelectSourcePages] volvieron menos fragmentos de los pedidos', {
+                libraryResourceId: input.libraryResourceId,
+                sheetRanges,
+                expectedChunks,
+                receivedChunks: chunks.length,
+            });
+        }
 
         const excerpts = chunks
             .slice()
@@ -112,6 +136,8 @@ export class SelectSourcePagesUseCase {
                 sourceId: existing.id,
                 excerptCount: excerpts.length,
                 emptySheets: countEmptySheets(input.pageIndex, sheetRanges),
+                expectedChunks,
+                incomplete,
             };
         }
 
@@ -134,6 +160,8 @@ export class SelectSourcePagesUseCase {
             sourceId: created.id,
             excerptCount: excerpts.length,
             emptySheets: countEmptySheets(input.pageIndex, sheetRanges),
+            expectedChunks,
+            incomplete,
         };
     }
 }
