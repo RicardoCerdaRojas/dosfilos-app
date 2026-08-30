@@ -861,6 +861,18 @@ function deserializeExcerpt(raw: any): ProjectSourceExcerpt {
 }
 
 /**
+ * Forma escrita de una entidad: una clave por cada campo, sin excepción.
+ *
+ * El tipo existe para que agregar un campo a la entidad y olvidarse de
+ * serializarlo NO compile. Antes esta función devolvía `DocumentData`, que
+ * tiene índice libre, así que omitir un campo pasaba el compilador y el dato se
+ * perdía en silencio al escribir — que es exactamente lo que pasó con
+ * `excerptSelectionMode` y `excerptRecipe`: el badge del corpus nunca persistió
+ * y nadie se enteró hasta mirar el documento en Firestore.
+ */
+type Serialized<T> = { [K in keyof Required<T>]: unknown };
+
+/**
  * Mirror of `deserializeSource` for writes. Firestore rejects `undefined`
  * inside arrays, so this helper guarantees every field is a concrete
  * value (never undefined). Date fields are passed through unchanged —
@@ -868,7 +880,7 @@ function deserializeExcerpt(raw: any): ProjectSourceExcerpt {
  * and `updateSource` (and the global `serialize` indirectly via the
  * sources mapper) so the on-disk shape is always consistent.
  */
-function serializeSource(source: ProjectSource): DocumentData {
+function serializeSource(source: ProjectSource): Serialized<ProjectSource> {
     return {
         id: source.id,
         paperId: source.paperId,
@@ -879,6 +891,14 @@ function serializeSource(source: ProjectSource): DocumentData {
         order: source.order,
         mode: source.mode,
         excerpts: source.excerpts.map(serializeExcerpt),
+        excerptSelectionMode: source.excerptSelectionMode ?? null,
+        excerptRecipe: source.excerptRecipe
+            ? {
+                sheetRanges: source.excerptRecipe.sheetRanges.map(r => ({ start: r.start, end: r.end })),
+                proposedRanges: source.excerptRecipe.proposedRanges.map(r => ({ start: r.start, end: r.end })),
+                passageFingerprint: source.excerptRecipe.passageFingerprint,
+            }
+            : null,
         sourceLibraryResourceId: source.sourceLibraryResourceId ?? null,
         extractedAt: source.extractedAt ?? null,
         extractionFingerprint: source.extractionFingerprint ?? null,
@@ -886,7 +906,7 @@ function serializeSource(source: ProjectSource): DocumentData {
     };
 }
 
-function serializeExcerpt(excerpt: ProjectSourceExcerpt): DocumentData {
+function serializeExcerpt(excerpt: ProjectSourceExcerpt): Serialized<ProjectSourceExcerpt> {
     return {
         text: excerpt.text,
         sourceLocation: excerpt.sourceLocation,
