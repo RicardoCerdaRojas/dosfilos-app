@@ -253,7 +253,18 @@ export async function runMistralOcr(pdfPath, { apiKey, model = 'mistral-ocr-late
  * transcribe will sometimes renumber or merge pages — the page-integrity
  * metric is what catches that, and it is the reason that metric exists.
  */
-export async function runGemini(pdfPath, { apiKey, model = process.env.BAKEOFF_GEMINI_MODEL || 'gemini-3.6-flash' }) {
+export async function runGemini(pdfPath, {
+    apiKey,
+    model = process.env.BAKEOFF_GEMINI_MODEL || 'gemini-3.6-flash',
+    // Número de la primera página del recorte DENTRO del documento completo.
+    // En un fan-out cada worker ve sólo su trozo y numeraría desde 1, así que
+    // al coser todas las páginas se llamarían igual. Decirle el desplazamiento
+    // es lo que hace que los números sean globales — y si obedece, es lo que
+    // hace viable trocear. Medido antes: sin esto, Gemini numeró 615-625
+    // leyendo los números IMPRESOS del libro, que es otra convención más y no
+    // sirve en un libro sin foliar.
+    pageOffset = null,
+} = {}) {
     if (!apiKey) return { skipped: true, reason: 'falta GEMINI_API_KEY' };
     const started = Date.now();
 
@@ -270,8 +281,15 @@ export async function runGemini(pdfPath, { apiKey, model = process.env.BAKEOFF_G
                             {
                                 text: `Transcribe este PDF a Markdown, íntegro y sin resumir.\n\n`
                                     + `REGLAS ESTRICTAS:\n`
-                                    + `1. Antes de cada página emite exactamente: <!-- page: N -->\n`
-                                    + `   donde N es el número de página impreso del PDF, empezando en 1.\n`
+                                    + (pageOffset
+                                        ? `1. Antes de cada página emite exactamente: <!-- page: N -->\n`
+                                          + `   Este archivo es un FRAGMENTO de un documento mayor: su primera\n`
+                                          + `   página es la número ${pageOffset} del documento completo. Numera\n`
+                                          + `   desde ${pageOffset} en adelante, consecutivamente, IGNORANDO\n`
+                                          + `   cualquier número impreso en la página.\n`
+                                        : `1. Antes de cada página emite exactamente: <!-- page: N -->\n`
+                                          + `   donde N es la posición de la página en este archivo, empezando en 1.\n`
+                                          + `   IGNORA cualquier número impreso en la página.\n`)
                                     + `2. ${PARSING_INSTRUCTION}\n`
                                     + `3. No agregues comentarios, encabezados ni notas propias.\n`
                                     + `4. Si una página está en blanco, emite igualmente su marcador.`,
