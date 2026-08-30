@@ -22,6 +22,23 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
     import.meta.url,
 ).toString();
 
+/**
+ * Recursos que pdf.js pide por URL mientras renderiza. Los copia a `public/`
+ * el script `copy-pdfjs-assets.mjs` antes de `dev` y de `build`.
+ *
+ * Faltando, no hay error: la hoja sale EN BLANCO. Medido contra la biblioteca
+ * real — la mitad de los comentarios son escaneos que guardan cada página como
+ * imagen JPEG 2000 con máscara JBIG2, y pdf.js decodifica las dos con
+ * WebAssembly que busca acá. Y los cmaps y las fuentes estándar son lo que
+ * hace que el griego y el hebreo salgan como letras y no como cajas vacías.
+ */
+const PDFJS_ASSETS = {
+    wasmUrl: '/pdfjs/wasm/',
+    cMapUrl: '/pdfjs/cmaps/',
+    cMapPacked: true,
+    standardFontDataUrl: '/pdfjs/standard_fonts/',
+} as const;
+
 interface Props {
     /** URL firmada del PDF. `null` mientras se está pidiendo. */
     url: string | null;
@@ -69,7 +86,12 @@ export function PdfPageViewer({ url, sheet, selected }: Props) {
         setStatus('loading');
         setErrorKind(null);
 
-        const task = pdfjsLib.getDocument({ url, disableAutoFetch: true, disableStream: false });
+        const task = pdfjsLib.getDocument({
+            url,
+            disableAutoFetch: true,
+            disableStream: false,
+            ...PDFJS_ASSETS,
+        });
         task.promise.then(
             doc => {
                 if (cancelled) { void doc.destroy(); return; }
