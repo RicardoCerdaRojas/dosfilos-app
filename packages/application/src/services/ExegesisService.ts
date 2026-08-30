@@ -85,6 +85,7 @@ import {
     RemoveProjectSourceUseCase,
     ExtractExcerptsForPaperUseCase,
     SelectSourcePagesUseCase,
+    ReopenStepUseCase,
     RankLibraryResourcesForPaperUseCase,
     ProposeStepCorpusAllocationsUseCase,
     UpdateStepCorpusAllocationUseCase,
@@ -172,6 +173,7 @@ class ExegesisService {
     public removeSource: RemoveProjectSourceUseCase;
     public extractExcerpts: ExtractExcerptsForPaperUseCase;
     public selectSourcePages: SelectSourcePagesUseCase;
+    public reopenStep: ReopenStepUseCase;
     public rankLibraryForPaper: RankLibraryResourcesForPaperUseCase;
     public proposeStepCorpusAllocations: ProposeStepCorpusAllocationsUseCase;
     public updateStepCorpusAllocation: UpdateStepCorpusAllocationUseCase;
@@ -415,6 +417,7 @@ class ExegesisService {
             new CallableCuratedCorpusRetriever(),
         );
         this.acceptStep = new AcceptStepUseCase(paperRepository);
+        this.reopenStep = new ReopenStepUseCase(paperRepository);
         this.saveStepEdit = new SaveStepEditUseCase(paperRepository);
 
         // Citation verifier — defaults to the LLM-based adapter so

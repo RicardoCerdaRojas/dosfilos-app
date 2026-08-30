@@ -1647,6 +1647,8 @@
                 "applyHint": "Aplicar hint",
                 "editManual": "Editar a mano",
                 "editAccepted": "Editar contenido aceptado",
+                        "redo": "Rehacer",
+                        "redoTooltip": "Vuelve el paso a revisión para generarlo de nuevo. El análisis aceptado queda en el historial.",
                 "saveEdit": "Guardar edición",
                 "expand": "Expandir",
                 "collapse": "Colapsar"

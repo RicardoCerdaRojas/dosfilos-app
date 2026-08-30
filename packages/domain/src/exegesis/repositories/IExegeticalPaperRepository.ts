@@ -164,6 +164,16 @@ export interface IExegeticalPaperRepository {
     ): Promise<ExegeticalStep>;
 
     /**
+     * Reabre un paso aceptado para volver a trabajarlo.
+     *
+     * NO borra las versiones: el análisis aceptado queda en el historial y el
+     * paso vuelve a revisión. Borrarlo convertiría "rehacer" en una decisión
+     * irreversible tomada con un click, y lo que el usuario quiere al rehacer
+     * es comparar, no destruir.
+     */
+    reopenStep(ownerId: string, paperId: string, stepId: string): Promise<ExegeticalStep>;
+
+    /**
      * Records a manual edit by the user. Internally creates a version
      * with `origin: 'edited'`, parented to whatever was previously
      * accepted, and sets that as the new `accepted`. Does not change

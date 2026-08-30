@@ -60,6 +60,8 @@ export {
     type ExtractExcerptsForPaperOutput,
     type ExtractExcerptsSelection,
 } from './ExtractExcerptsForPaperUseCase';
+// Reabrir un paso aceptado para rehacerlo, sin perder el historial.
+export { ReopenStepUseCase } from './ReopenStepUseCase';
 // Selector de páginas: hojas elegidas a mano → fragmentos, con la receta.
 export {
     SelectSourcePagesUseCase,

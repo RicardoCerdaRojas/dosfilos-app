@@ -4,6 +4,7 @@ import {
     type CanonicalVerseAnalysis,
 } from '@dosfilos/domain';
 import { fitPromptToCap } from '../../llm/promptBudget';
+import { voiceFor } from '../testamentVoice';
 
 /**
  * Prompt construction for the canonical verse analyzer.
@@ -29,6 +30,7 @@ const SOURCE_BUDGET_CHARS_TOTAL = 220_000;
 const STYLE_GUIDE_BUDGET_CHARS = 20_000;
 const PRIOR_ANALYSES_BUDGET_CHARS = 40_000;
 
+
 export function buildAnalyzerPrompt(input: AnalyzeVerseInput): BuiltAnalyzerPrompt {
     return {
         systemInstruction: buildSystemInstruction(input),
@@ -38,6 +40,7 @@ export function buildAnalyzerPrompt(input: AnalyzeVerseInput): BuiltAnalyzerProm
 
 function buildSystemInstruction(input: AnalyzeVerseInput): string {
     const lang = input.language;
+    const voice = voiceFor(input.verseRef.bookId);
     const verse = formatPassageReference(input.verseRef, lang);
     const passage = formatPassageReference(input.paperPassage, lang);
     const briefBlock = formatAssignmentBrief(input.assignmentBrief, lang);
@@ -47,7 +50,7 @@ function buildSystemInstruction(input: AnalyzeVerseInput): string {
 
     if (lang === 'en') {
         return [
-            `You are an expert exegete in New Testament biblical Greek, trained in the historical-grammatical-literal method as taught at evangelical seminaries (TMS, DTS, Westminster, Southern). Your task is to produce a CANONICAL STRUCTURED ANALYSIS of one verse, populating every field of the response schema with rigorous, source-grounded content.`,
+            `You are an expert exegete in ${voice.expertEn}, trained in the historical-grammatical-literal method as taught at evangelical seminaries (TMS, DTS, Westminster, Southern). Your task is to produce a CANONICAL STRUCTURED ANALYSIS of one verse, populating every field of the response schema with rigorous, source-grounded content.`,
             ``,
             `## Verse and paper`,
             `Verse: **${verse}**`,
@@ -57,10 +60,10 @@ function buildSystemInstruction(input: AnalyzeVerseInput): string {
             ``,
             `## Methodological foundation`,
             `Apply the historical-grammatical-literal method documented in the platform's METODOLOGIA.md. Anchor your analysis in canonical authorities:`,
-            `- Greek grammar/syntax: Wallace, BDF, Robertson`,
-            `- Lexicon: BDAG, LSJ, Louw-Nida, TDNT, NIDNTTE`,
+            `- ${voice.grammarsEn}`,
+            `- ${voice.lexiconsEn}`,
             `- Discourse: Levinsohn, Runge`,
-            `- Textual criticism: Metzger, Comfort & Barrett, NA28 apparatus`,
+            `- ${voice.apparatusEn}`,
             `- Background: deSilva, Keener, ABD`,
             `- OT intertextuality: Beale & Carson, Hays`,
             ``,
@@ -88,7 +91,7 @@ function buildSystemInstruction(input: AnalyzeVerseInput): string {
     }
 
     return [
-        `Sos un exégeta experto en griego del Nuevo Testamento, formado en el método histórico-gramatical-literal según se enseña en seminarios evangélicos rigurosos (TMS, DTS, Westminster, Southern). Tu tarea es producir un ANÁLISIS CANÓNICO ESTRUCTURADO de un solo versículo, poblando cada campo del response schema con contenido riguroso anclado en fuentes.`,
+        `Sos un exégeta experto en ${voice.expertEs}, formado en el método histórico-gramatical-literal según se enseña en seminarios evangélicos rigurosos (TMS, DTS, Westminster, Southern). Tu tarea es producir un ANÁLISIS CANÓNICO ESTRUCTURADO de un solo versículo, poblando cada campo del response schema con contenido riguroso anclado en fuentes.`,
         ``,
         `## Versículo y paper`,
         `Versículo: **${verse}**`,
@@ -98,10 +101,10 @@ function buildSystemInstruction(input: AnalyzeVerseInput): string {
         ``,
         `## Fundamento metodológico`,
         `Aplicá el método histórico-gramatical-literal documentado en METODOLOGIA.md de la plataforma. Anclá tu análisis en autoridades canónicas:`,
-        `- Gramática/sintaxis griega: Wallace, BDF, Robertson`,
-        `- Léxico: BDAG, LSJ, Louw-Nida, TDNT, NIDNTTE`,
+        `- ${voice.grammarsEs}`,
+        `- ${voice.lexiconsEs}`,
         `- Discurso: Levinsohn, Runge`,
-        `- Crítica textual: Metzger, Comfort & Barrett, aparato NA28`,
+        `- ${voice.apparatusEs}`,
         `- Trasfondo: deSilva, Keener, ABD`,
         `- Intertextualidad AT: Beale & Carson, Hays`,
         ``,
@@ -145,6 +148,7 @@ function buildUserMessage(input: AnalyzeVerseInput): string {
 
 function renderUserMessage(input: AnalyzeVerseInput, sourcesBlock: string): string {
     const lang = input.language;
+    const voice = voiceFor(input.verseRef.bookId);
     const verse = formatPassageReference(input.verseRef, lang);
     const priorAnalysesBlock = formatPriorAnalyses(input.priorAcceptedAnalyses, lang);
     const emphasisBlock = formatStepEmphasis(input.stepEmphasis, lang);
@@ -160,11 +164,11 @@ function renderUserMessage(input: AnalyzeVerseInput, sourcesBlock: string): stri
             ``,
             `## Field-by-field methodological reminders`,
             ``,
-            `**textualCriticism** — ALWAYS populate. When no significant variants exist in the apparatus, set "note" to confirm review explicitly (e.g., "No significant variants in the NA28 apparatus for this verse.") and leave "variants" empty. When variants exist, document witnesses (𝔓⁴⁶, ℵ, A, B, C, D as appropriate), the adopted reading, and rationale grounded in textual-critical canons.`,
+            `**textualCriticism** — ALWAYS populate. When no significant variants exist in the apparatus, set "note" to confirm review explicitly (e.g., "No significant variants in the apparatus for this verse.") and leave "variants" empty. When variants exist, document witnesses (${voice.witnessesEn}), the adopted reading, and rationale grounded in textual-critical canons.`,
             ``,
             `**syntacticAnalysis.mainVerb** — Identify the main verb of the sentence containing this verse. Set to null when the verse is part of a longer sentence whose main verb lives elsewhere (participial chains, μέν…δέ pairs, periodic sentences); when null, populate "mainVerbNote" to explain.`,
             ``,
-            `**syntacticAnalysis.keyConstructions** — Each participle, relative clause, prepositional phrase, genitive construction. Each entry: text + morphology (in natural language: "aorist active participle, masculine singular nominative") + syntactic function (Wallace's categories) + interpretive significance.`,
+            `**syntacticAnalysis.keyConstructions** — Each participle, relative clause, prepositional phrase, genitive construction. Each entry: text + morphology (in natural language: "${voice.morphologyEn}") + syntactic function (Wallace's categories) + interpretive significance.`,
             ``,
             `**syntacticAnalysis.discourseParticles** — δέ, γάρ, οὖν, μέν, καί, ἀλλά, ὅτι and others when their argumentative function is notable. Use Levinsohn / Runge categories.`,
             ``,
@@ -206,11 +210,11 @@ function renderUserMessage(input: AnalyzeVerseInput, sourcesBlock: string): stri
         ``,
         `## Recordatorios metodológicos por campo`,
         ``,
-        `**textualCriticism** — SIEMPRE poblar. Cuando no hay variantes significativas en el aparato, poné "note" confirmando la revisión explícitamente (ej. "Sin variantes significativas en el aparato NA28 para este verso.") y dejá "variants" vacío. Cuando hay variantes, documentá testigos (𝔓⁴⁶, ℵ, A, B, C, D según corresponda), la lectura adoptada y la justificación anclada en cánones de crítica textual.`,
+        `**textualCriticism** — SIEMPRE poblar. Cuando no hay variantes significativas en el aparato, poné "note" confirmando la revisión explícitamente (ej. "Sin variantes significativas en el aparato para este verso.") y dejá "variants" vacío. Cuando hay variantes, documentá testigos (${voice.witnessesEs}), la lectura adoptada y la justificación anclada en cánones de crítica textual.`,
         ``,
         `**syntacticAnalysis.mainVerb** — Identificá el verbo principal de la oración que contiene este verso. Poné null cuando el verso es parte de una oración cuyo verbo principal vive en otro lado (cadenas participiales, pares μέν…δέ, oraciones periódicas); cuando es null, poblá "mainVerbNote" para explicar.`,
         ``,
-        `**syntacticAnalysis.keyConstructions** — Cada participio, cláusula relativa, frase preposicional, construcción de genitivo. Cada entrada: text + morphology (en lenguaje natural: "participio aoristo activo, nominativo masculino singular") + syntacticFunction (categorías de Wallace) + interpretiveSignificance.`,
+        `**syntacticAnalysis.keyConstructions** — Cada participio, cláusula relativa, frase preposicional, construcción de genitivo. Cada entrada: text + morphology (en lenguaje natural: "${voice.morphologyEs}") + syntacticFunction (categorías de Wallace) + interpretiveSignificance.`,
         ``,
         `**syntacticAnalysis.discourseParticles** — δέ, γάρ, οὖν, μέν, καί, ἀλλά, ὅτι y otras cuando su función argumentativa es notable. Usá categorías de Levinsohn / Runge.`,
         ``,

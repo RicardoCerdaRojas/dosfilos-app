@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
+import { useReopenStep } from '@/hooks/exegesis/useReopenStep';
 import { CanonicalAnalysisStudyView } from '@/components/exegesis/canonical/CanonicalAnalysisStudyView';
 import { CitationVerificationDialog } from '@/components/exegesis/CitationVerificationDialog';
 import { ExegesisOutOfCreditsDialog } from '@/components/exegesis/ExegesisOutOfCreditsDialog';
@@ -126,6 +127,7 @@ export function StepCard({ step, paperId, language, allSteps }: StepCardProps) {
     // Lazy-init so the initial value reflects the step's state on
     // first mount; later state changes don't re-derive (the user's
     // explicit toggle takes precedence).
+    const reopenStep = useReopenStep();
     const [collapsed, setCollapsed] = useState(() => step.state === 'accepted');
     const isExpanded = !collapsed || editing;
     const collapsible = step.state === 'accepted' || step.state === 'awaiting-review';
@@ -907,6 +909,16 @@ export function StepCard({ step, paperId, language, allSteps }: StepCardProps) {
                     >
                         <Pencil className="h-3 w-3" />
                         {t('detail.steps.action.editAccepted')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => reopenStep.mutate({ paperId, stepId: step.id })}
+                        disabled={reopenStep.isPending || anyPipelinePending}
+                        title={t('detail.steps.action.redoTooltip')}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300 disabled:opacity-50"
+                    >
+                        <RotateCcw className="h-3 w-3" />
+                        {t('detail.steps.action.redo')}
                     </button>
                     <button
                         type="button"
