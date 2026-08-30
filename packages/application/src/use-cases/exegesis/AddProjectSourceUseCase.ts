@@ -52,6 +52,7 @@ export class AddProjectSourceUseCase {
             // Sin selección de fragmentos: esta ruta adjunta el documento
             // entero o los excerpts que ya vinieron dados.
             excerptSelectionMode: null,
+            excerptRecipe: null,
             // v1.5 fields. Default to the historical 'full-document' mode
             // so existing callers (CorpusSubStep direct upload) keep
             // working unchanged. The library-extraction flow (commit 3+)

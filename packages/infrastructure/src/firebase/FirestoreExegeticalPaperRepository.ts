@@ -26,6 +26,7 @@ import type {
     IExegeticalPaperRepository,
     PaperRubric,
     ProjectSource,
+    SheetRange,
     ProjectSourceExcerpt,
     SourceType,
     StepSourcePlan,
@@ -297,6 +298,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             citationKey: source.citationKey,
             order: source.order,
             excerptSelectionMode: source.excerptSelectionMode ?? null,
+            excerptRecipe: source.excerptRecipe ?? null,
             // v1.5 fields. Defaults match the historical 'full-document'
             // behavior so existing callers (CorpusSubStep direct upload)
             // keep working without changes.
@@ -334,7 +336,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         ownerId: string,
         paperId: string,
         sourceId: string,
-        patch: Partial<Pick<ProjectSource, 'sourceType' | 'displayLabel' | 'citationKey' | 'order' | 'excerpts' | 'extractedAt' | 'extractionFingerprint'>>
+        patch: Partial<Pick<ProjectSource, 'sourceType' | 'displayLabel' | 'citationKey' | 'order' | 'excerpts' | 'excerptSelectionMode' | 'excerptRecipe' | 'extractedAt' | 'extractionFingerprint'>>
     ): Promise<ProjectSource> {
         const ref = this.docRef(paperId);
         let updated: ProjectSource | null = null;
@@ -784,6 +786,31 @@ function deserialize(id: string, data: DocumentData): ExegeticalPaper {
  * saved by any subsequent mutation), the legacy field will disappear
  * and this shim becomes a no-op. Keep it indefinitely as a safety net.
  */
+/**
+ * Lee la receta del selector de páginas desde Firestore.
+ *
+ * Defensivo a propósito: los rangos vienen de un documento que puede haber
+ * sido escrito por una versión anterior o quedar a medio migrar, y una receta
+ * malformada no debe tumbar la lectura del paper entero — se descarta y la
+ * fuente queda como si nunca se hubiera armado con el selector.
+ */
+function deserializeRecipe(raw: any): ProjectSource['excerptRecipe'] {
+    if (!raw || typeof raw !== 'object') return null;
+    const ranges = (value: unknown): SheetRange[] =>
+        Array.isArray(value)
+            ? value
+                .filter((r: any) => r && Number.isFinite(r.start) && Number.isFinite(r.end))
+                .map((r: any) => ({ start: Number(r.start), end: Number(r.end) }))
+            : [];
+    const sheetRanges = ranges(raw.sheetRanges);
+    if (sheetRanges.length === 0) return null;
+    return {
+        sheetRanges,
+        proposedRanges: ranges(raw.proposedRanges),
+        passageFingerprint: typeof raw.passageFingerprint === 'string' ? raw.passageFingerprint : '',
+    };
+}
+
 function deserializeSource(raw: any): ProjectSource {
     const sourceType: SourceType = raw.sourceType
         ? raw.sourceType
@@ -800,6 +827,8 @@ function deserializeSource(raw: any): ProjectSource {
         // declaran cómo se eligieron sus fragmentos: quedan en null y la UI
         // no afirma nada sobre ellas.
         excerptSelectionMode: raw.excerptSelectionMode ?? null,
+        // La receta solo existe en fuentes armadas con el selector de páginas.
+        excerptRecipe: deserializeRecipe(raw.excerptRecipe),
         // v1.5 fields with retro-compat defaults. Pre-v1.5 docs have
         // none of these — they should keep behaving as 'full-document'
         // sources with no excerpts and no library backref.

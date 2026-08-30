@@ -1,0 +1,95 @@
+import { describe, expect, it } from 'vitest';
+import {
+    chunkRangesForSheets,
+    countChars,
+    countSheets,
+    normalizeSheetRanges,
+    type PageIndexEntry,
+} from '../documentPageIndex';
+
+function page(sheet: number, chunkIndices: number[], charCount = 1000): PageIndexEntry {
+    return { sheet, chunkIndices, section: null, firstLine: '', charCount };
+}
+
+const INDEX: PageIndexEntry[] = [
+    page(66, [10, 11]),
+    page(67, [12]),
+    // La hoja 68 no emitió fragmentos: página en blanco o ilegible.
+    page(69, [13, 14, 15]),
+    page(70, [16]),
+    page(71, [17]),
+];
+
+describe('chunkRangesForSheets', () => {
+    it('traduce un rango de hojas a rangos contiguos de fragmentos', () => {
+        expect(chunkRangesForSheets(INDEX, [{ start: 69, end: 71 }]))
+            .toEqual([{ start: 13, end: 17 }]);
+    });
+
+    it('ignora hojas que el índice no tiene', () => {
+        // La 68 no existe; el resultado no la inventa ni se rompe.
+        expect(chunkRangesForSheets(INDEX, [{ start: 67, end: 69 }]))
+            .toEqual([{ start: 12, end: 15 }]);
+    });
+
+    it('parte el resultado cuando los fragmentos no son contiguos', () => {
+        expect(chunkRangesForSheets(INDEX, [{ start: 66, end: 66 }, { start: 70, end: 71 }]))
+            .toEqual([{ start: 10, end: 11 }, { start: 16, end: 17 }]);
+    });
+
+    it('no duplica fragmentos cuando los rangos se superponen', () => {
+        expect(chunkRangesForSheets(INDEX, [{ start: 69, end: 70 }, { start: 70, end: 71 }]))
+            .toEqual([{ start: 13, end: 17 }]);
+    });
+
+    it('tolera un rango dado al revés', () => {
+        expect(chunkRangesForSheets(INDEX, [{ start: 71, end: 69 }]))
+            .toEqual([{ start: 13, end: 17 }]);
+    });
+
+    it('devuelve vacío sin rangos', () => {
+        expect(chunkRangesForSheets(INDEX, [])).toEqual([]);
+    });
+});
+
+describe('normalizeSheetRanges', () => {
+    it('ordena tramos armados en cualquier orden', () => {
+        // El usuario acepta la propuesta y después agrega la introducción,
+        // que está antes.
+        expect(normalizeSheetRanges([{ start: 68, end: 71 }, { start: 60, end: 67 }]))
+            .toEqual([{ start: 60, end: 71 }]);
+    });
+
+    it('funde tramos superpuestos', () => {
+        expect(normalizeSheetRanges([{ start: 10, end: 20 }, { start: 15, end: 25 }]))
+            .toEqual([{ start: 10, end: 25 }]);
+    });
+
+    it('deja separados los tramos con hueco real', () => {
+        expect(normalizeSheetRanges([{ start: 10, end: 12 }, { start: 20, end: 22 }]))
+            .toEqual([{ start: 10, end: 12 }, { start: 20, end: 22 }]);
+    });
+
+    it('endereza un tramo invertido', () => {
+        expect(normalizeSheetRanges([{ start: 30, end: 20 }])).toEqual([{ start: 20, end: 30 }]);
+    });
+
+    it('descarta hojas por debajo de la primera', () => {
+        expect(normalizeSheetRanges([{ start: 0, end: 5 }])).toEqual([]);
+    });
+});
+
+describe('countSheets y countChars', () => {
+    it('cuenta las hojas de un carrito', () => {
+        expect(countSheets([{ start: 60, end: 67 }, { start: 70, end: 71 }])).toBe(10);
+    });
+
+    it('suma solo el texto de las hojas que existen', () => {
+        // 67, 69, 70 y 71 existen; la 68 no.
+        expect(countChars(INDEX, [{ start: 67, end: 71 }])).toBe(4000);
+    });
+
+    it('no cuenta dos veces una hoja alcanzada por dos rangos', () => {
+        expect(countChars(INDEX, [{ start: 70, end: 71 }, { start: 71, end: 71 }])).toBe(2000);
+    });
+});

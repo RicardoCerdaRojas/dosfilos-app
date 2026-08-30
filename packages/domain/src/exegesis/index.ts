@@ -78,3 +78,8 @@ export * from './services/getEffectiveStructuralExpectations';
 // en un índice por referencia bíblica, para mandarle al modelo la sección
 // del comentario que trata el pasaje en vez de los K chunks más parecidos.
 export * from './outline/documentOutline';
+// Índice de hojas del documento: qué hay en cada hoja física del PDF, y la
+// traducción de «las hojas 68 a 71» a los fragmentos que van al prompt.
+export * from './outline/documentPageIndex';
+// Desfase entre la hoja física y el número que el libro imprime.
+export * from './outline/printedPageOffset';

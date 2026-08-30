@@ -115,7 +115,7 @@ export interface IExegeticalPaperRepository {
         ownerId: string,
         paperId: string,
         sourceId: string,
-        patch: Partial<Pick<ProjectSource, 'sourceType' | 'displayLabel' | 'citationKey' | 'order' | 'excerpts' | 'excerptSelectionMode' | 'extractedAt' | 'extractionFingerprint'>>
+        patch: Partial<Pick<ProjectSource, 'sourceType' | 'displayLabel' | 'citationKey' | 'order' | 'excerpts' | 'excerptSelectionMode' | 'excerptRecipe' | 'extractedAt' | 'extractionFingerprint'>>
     ): Promise<ProjectSource>;
 
     removeSource(ownerId: string, paperId: string, sourceId: string): Promise<void>;

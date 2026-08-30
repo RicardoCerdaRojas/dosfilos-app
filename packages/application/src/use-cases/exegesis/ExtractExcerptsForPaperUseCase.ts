@@ -207,6 +207,9 @@ export class ExtractExcerptsForPaperUseCase {
                         mode: 'extracted-excerpts',
                         excerpts: fresh,
                         excerptSelectionMode: selectionMode,
+                        // Esta ruta no pasa por el selector de páginas: no hay
+                        // receta que guardar.
+                        excerptRecipe: null,
                         sourceLibraryResourceId: selection.libraryResourceId,
                         extractedAt,
                         extractionFingerprint: fingerprint,
