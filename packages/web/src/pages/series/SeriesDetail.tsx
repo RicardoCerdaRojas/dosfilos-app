@@ -13,6 +13,7 @@ import {
     MoreHorizontal,
     NotebookPen,
     Pencil,
+    Library,
     Sparkles,
     Trash2,
 } from 'lucide-react';
@@ -492,6 +493,7 @@ function SermonRow({
     onOpenDraft,
     t,
 }: SermonRowProps) {
+    const navigate = useNavigate();
     const passageLabel = item.passage
         || (planned?.syntacticUnit ? formatUnitPassage(planned.syntacticUnit) : '');
 
@@ -676,6 +678,14 @@ function SermonRow({
                             <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground">
                                 {t('detail.table.actionsLabel')}
                             </DropdownMenuLabel>
+                            {planned?.paperId && (
+                                <DropdownMenuItem
+                                    onClick={() => navigate(`/dashboard/exegesis/${planned.paperId}/setup?tab=corpus`)}
+                                >
+                                    <Library className="h-3.5 w-3.5 mr-2" />
+                                    {t('detail.table.paperCorpus')}
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={onEdit}>
                                 <Pencil className="h-3.5 w-3.5 mr-2" />
                                 {t('detail.table.editFull')}

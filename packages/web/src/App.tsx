@@ -105,6 +105,7 @@ const ExegesisPage = lazy(() => import('@/pages/exegesis/ExegesisPage').then(m =
 const ExegesisCreatePage = lazy(() => import('@/pages/exegesis/ExegesisCreatePage').then(m => ({ default: m.ExegesisCreatePage })));
 const ExegesisPaperPage = lazy(() => import('@/pages/exegesis/ExegesisPaperPage').then(m => ({ default: m.ExegesisPaperPage })));
 const ExegesisPaperSetupPage = lazy(() => import('@/pages/exegesis/ExegesisPaperSetupPage').then(m => ({ default: m.ExegesisPaperSetupPage })));
+const SeriesExegesisConfigPage = lazy(() => import('@/pages/series/SeriesExegesisConfigPage').then(m => ({ default: m.SeriesExegesisConfigPage })));
 const ExegesisSourcePagesPage = lazy(() => import('@/pages/exegesis/ExegesisSourcePagesPage').then(m => ({ default: m.ExegesisSourcePagesPage })));
 const ProjectsListPage = lazy(() => import('@/pages/projects/ProjectsListPage').then(m => ({ default: m.ProjectsListPage })));
 
@@ -299,6 +300,9 @@ function App() {
               <Route path="pericope" element={<ExpositoryAssistantPage />} />
               <Route path=":id" element={<SeriesDetail />} />
               <Route path=":id/edit" element={<SeriesForm />} />
+              {/* Configuración exegética: tres ajustes más un catálogo
+                  navegable no entran en un diálogo. */}
+              <Route path=":seriesId/exegesis" element={<SeriesExegesisConfigPage />} />
             </Route>
             <Route path="planner" element={<PlannerWizard />} />
             <Route path="library" element={<LibraryManager />} />

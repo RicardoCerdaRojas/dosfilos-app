@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     BookOpenCheck,
     Check,
@@ -15,14 +16,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useTranslation } from '@/i18n';
 import { cn } from '@/lib/utils';
@@ -68,9 +61,10 @@ interface ExegesisDefaultsCardProps {
  * section of the edit modal, surfacing the existing PR #93 catalog
  * keyed to the series' primary book.
  */
-export function ExegesisDefaultsCard({ seriesId, ownerId, defaults, book, language, onChanged }: ExegesisDefaultsCardProps) {
+export function ExegesisDefaultsCard({ seriesId, ownerId, defaults }: ExegesisDefaultsCardProps) {
     const { t } = useTranslation('series');
-    const [editing, setEditing] = useState(false);
+    const navigate = useNavigate();
+    const [editing] = useState(true); // precarga los nombres del resumen
     const [rubrics, setRubrics] = useState<UserRubric[] | null>(null);
     const [styleGuides, setStyleGuides] = useState<UserStyleGuide[] | null>(null);
 
@@ -124,7 +118,7 @@ export function ExegesisDefaultsCard({ seriesId, ownerId, defaults, book, langua
                         </p>
                     </div>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => setEditing(true)} className="shrink-0">
+                <Button size="sm" variant="outline" onClick={() => navigate(`/dashboard/plans/${seriesId}/exegesis`)} className="shrink-0">
                     <Pencil className="h-3.5 w-3.5 mr-1.5" />
                     {t('detail.exegesisDefaults.edit')}
                 </Button>
@@ -146,22 +140,6 @@ export function ExegesisDefaultsCard({ seriesId, ownerId, defaults, book, langua
                     value={t('detail.exegesisDefaults.sourcesCount', { count: sourceCount }) as string}
                 />
             </div>
-            <ExegesisDefaultsModal
-                open={editing}
-                onOpenChange={setEditing}
-                seriesId={seriesId}
-                ownerId={ownerId}
-                initial={defaults}
-                rubrics={rubrics ?? []}
-                styleGuides={styleGuides ?? []}
-                isLoadingOptions={rubrics === null || styleGuides === null}
-                book={book}
-                language={language}
-                onSaved={() => {
-                    setEditing(false);
-                    onChanged();
-                }}
-            />
         </section>
     );
 }
@@ -178,9 +156,9 @@ function SummaryItem({ icon, label, value }: { icon: React.ReactNode; label: str
     );
 }
 
-interface ExegesisDefaultsModalProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
+interface ExegesisDefaultsFormProps {
+    /** Vuelve a la serie: lo llama Cancelar y el guardado exitoso. */
+    onDone: () => void;
     seriesId: string;
     ownerId: string;
     initial: SeriesExegesisDefaults | undefined;
@@ -192,9 +170,8 @@ interface ExegesisDefaultsModalProps {
     onSaved: () => void;
 }
 
-function ExegesisDefaultsModal({
-    open,
-    onOpenChange,
+export function ExegesisDefaultsForm({
+    onDone,
     seriesId,
     ownerId,
     initial,
@@ -204,7 +181,7 @@ function ExegesisDefaultsModal({
     book,
     language,
     onSaved,
-}: ExegesisDefaultsModalProps) {
+}: ExegesisDefaultsFormProps) {
     const { t } = useTranslation('series');
     const [rubricId, setRubricId] = useState<string | null | undefined>(initial?.rubricTemplateId);
     const [styleGuideId, setStyleGuideId] = useState<string | null | undefined>(initial?.styleGuideId);
@@ -227,7 +204,7 @@ function ExegesisDefaultsModal({
     // uploads.
     const [libraryResources, setLibraryResources] = useState<LibraryResource[] | null>(null);
     useEffect(() => {
-        if (!open || !ownerId) return;
+        if (!ownerId) return;
         let cancelled = false;
         libraryService
             .getUserResources(ownerId)
@@ -235,15 +212,15 @@ function ExegesisDefaultsModal({
                 if (!cancelled) setLibraryResources(resources);
             })
             .catch((err) => {
-                console.error('[ExegesisDefaultsModal] library load failed', err);
+                console.error('[ExegesisDefaultsForm] library load failed', err);
             });
         return () => {
             cancelled = true;
         };
-    }, [open, ownerId]);
+    }, [ownerId]);
 
     useEffect(() => {
-        if (!open) return;
+
         setRubricId(initial?.rubricTemplateId);
         setStyleGuideId(initial?.styleGuideId);
         setSourceRefs(initial?.sourceRefs ?? []);
@@ -261,7 +238,7 @@ function ExegesisDefaultsModal({
             toast.success(t('detail.exegesisDefaults.savedToast') as string);
             onSaved();
         } catch (err: any) {
-            console.error('[ExegesisDefaultsModal] save failed', err);
+            console.error('[ExegesisDefaultsForm] save failed', err);
             toast.error(err?.message ?? (t('detail.exegesisDefaults.saveFailed') as string));
         } finally {
             setSaving(false);
@@ -269,17 +246,23 @@ function ExegesisDefaultsModal({
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
+        <div className="mx-auto w-full max-w-3xl px-5 py-6">
+            <div>
+                <header className="mb-5">
+                    <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
                         <BookOpenCheck className="h-4 w-4" />
                         {t('detail.exegesisDefaults.modalTitle')}
-                    </DialogTitle>
-                    <DialogDescription>
+                    </h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
                         {t('detail.exegesisDefaults.modalDescription')}
-                    </DialogDescription>
-                </DialogHeader>
+                    </p>
+                    {/* El alcance va en el encabezado y no en letra chica: el
+                        malentendido que motivó esto fue entrar acá buscando las
+                        fuentes de un trabajo YA creado, que viven en el paper. */}
+                    <p className="mt-3 rounded-md border border-info/30 bg-info-subtle px-3 py-2 text-[13px] text-info-subtle-foreground">
+                        {t('detail.exegesisDefaults.scopeNotice')}
+                    </p>
+                </header>
 
                 <div className="space-y-5 pt-2">
                     {/* Rubric */}
@@ -404,17 +387,17 @@ function ExegesisDefaultsModal({
                     )}
                 </div>
 
-                <DialogFooter>
-                    <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
+                <div className="mt-6 flex items-center justify-end gap-2 border-t border-border pt-4">
+                    <Button variant="ghost" onClick={() => onDone()} disabled={saving}>
                         {t('detail.exegesisDefaults.cancel')}
                     </Button>
                     <Button onClick={handleSave} disabled={saving || isLoadingOptions}>
                         {saving && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
                         {t('detail.exegesisDefaults.save')}
                     </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                </div>
+            </div>
+        </div>
     );
 }
 
