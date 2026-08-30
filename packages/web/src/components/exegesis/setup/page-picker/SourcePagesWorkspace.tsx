@@ -222,7 +222,10 @@ export function SourcePagesWorkspace({
                         />
                     </div>
                 )}
-                <div className="hidden lg:block">
+                {/* `flex` y no `block`: el divisor centra su chevron con `top-1/2`
+                    relativo a sí mismo, y un envoltorio que no estire lo deja con
+                    altura cero — el chevron termina pegado al borde de arriba. */}
+                <div className="hidden lg:flex">
                     <PanelDivider
                         panelSide="left"
                         isOpen={railOpen}
