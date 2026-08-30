@@ -60,6 +60,12 @@ export {
     type ExtractExcerptsForPaperOutput,
     type ExtractExcerptsSelection,
 } from './ExtractExcerptsForPaperUseCase';
+// Selector de páginas: hojas elegidas a mano → fragmentos, con la receta.
+export {
+    SelectSourcePagesUseCase,
+    type SelectSourcePagesInput,
+    type SelectSourcePagesResult,
+} from './SelectSourcePagesUseCase';
 export {
     ProposeStepCorpusAllocationsUseCase,
     type ProposeStepCorpusAllocationsInput,

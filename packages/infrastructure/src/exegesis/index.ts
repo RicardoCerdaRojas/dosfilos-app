@@ -11,6 +11,7 @@ export {
 export { OverloadedError } from './geminiRetry';
 export { RetrieveChunksExcerptExtractor } from './RetrieveChunksExcerptExtractor';
 export { StructuralExcerptExtractor } from './StructuralExcerptExtractor';
+export { CallableDocumentChunkReader } from './CallableDocumentChunkReader';
 // Índice de hojas y PDF original, para el selector de páginas.
 export {
     fetchDocumentPageIndex,

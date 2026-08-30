@@ -28,6 +28,7 @@ import {
     GeminiSourceTypeClassifier,
     RetrieveChunksExcerptExtractor,
     StructuralExcerptExtractor,
+    CallableDocumentChunkReader,
     RetrieveChunksResourceRanker,
     GeminiStepCorpusPlanner,
     MorphhbOriginalLanguageProvider,
@@ -81,6 +82,7 @@ import {
     UpdateProjectSourceUseCase,
     RemoveProjectSourceUseCase,
     ExtractExcerptsForPaperUseCase,
+    SelectSourcePagesUseCase,
     RankLibraryResourcesForPaperUseCase,
     ProposeStepCorpusAllocationsUseCase,
     UpdateStepCorpusAllocationUseCase,
@@ -167,6 +169,7 @@ class ExegesisService {
     public updateSource: UpdateProjectSourceUseCase;
     public removeSource: RemoveProjectSourceUseCase;
     public extractExcerpts: ExtractExcerptsForPaperUseCase;
+    public selectSourcePages: SelectSourcePagesUseCase;
     public rankLibraryForPaper: RankLibraryResourcesForPaperUseCase;
     public proposeStepCorpusAllocations: ProposeStepCorpusAllocationsUseCase;
     public updateStepCorpusAllocation: UpdateStepCorpusAllocationUseCase;
@@ -369,6 +372,13 @@ class ExegesisService {
         const semanticExtractor = new RetrieveChunksExcerptExtractor(indexProbe);
         const excerptExtractor = new StructuralExcerptExtractor(indexProbe, semanticExtractor);
         this.extractExcerpts = new ExtractExcerptsForPaperUseCase(paperRepository, excerptExtractor);
+
+        // Selector de páginas: el usuario elige hojas sobre el PDF y acá se
+        // traducen a los fragmentos que van al prompt.
+        this.selectSourcePages = new SelectSourcePagesUseCase(
+            paperRepository,
+            new CallableDocumentChunkReader(),
+        );
 
         // v1.7 smart-match: ranks the user's library against a paper
         // before they pick what to extract from. Same retrieveChunks

@@ -120,3 +120,27 @@ export class ResourcesNotIndexedError extends Error {
 export interface IResourceIndexProbe {
     isReady(resourceId: string): Promise<boolean>;
 }
+
+/**
+ * Lectura directa de fragmentos por índice, sin búsqueda de por medio.
+ *
+ * Existe para el selector de páginas: el usuario ya decidió qué hojas quiere,
+ * y traducirlas a fragmentos es aritmética sobre el índice de hojas, no una
+ * consulta semántica. Meter esto dentro de `IExcerptExtractor` habría obligado
+ * a ese puerto a hablar de índices de fragmento, que es justo el detalle de
+ * implementación que se guarda para sí.
+ */
+export interface IDocumentChunkReader {
+    readChunks(
+        resourceId: string,
+        chunkRanges: ReadonlyArray<{ start: number; end: number }>,
+    ): Promise<ReadonlyArray<DocumentChunk>>;
+}
+
+export interface DocumentChunk {
+    chunkIndex: number;
+    text: string;
+    /** Hoja física del PDF, para armar el ancla de citación. */
+    page: number | null;
+    section: string | null;
+}
