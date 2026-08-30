@@ -65,6 +65,7 @@ import {
 } from '@/components/ui/dialog';
 import { useTranslation } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { useAutoClassifyOtherSources } from '@/hooks/exegesis/useAutoClassifyOtherSources';
 import { SourceTypePicker } from './SourceTypePicker';
@@ -1697,7 +1698,16 @@ function AddSourceDialog({
                         </aside>
 
                         {/* Main pane */}
-                        <div className="overflow-y-auto px-6 py-5 space-y-5">
+                        {/* Maestro-detalle: la lista se lleva el alto disponible y los
+                            campos viven al lado, siempre visibles. Un asistente de dos
+                            pasos habría cobrado un click extra justo en el caso común,
+                            donde los valores derivados ya sirven. */}
+                        <div className={cn(
+                            'min-h-0 flex-1 gap-5 px-6 py-5',
+                            mode === 'upload'
+                                ? 'flex flex-col overflow-y-auto'
+                                : 'grid grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,1fr)_320px]',
+                        )}>
                             {mode === 'upload' ? (
                                 <FileDropzone
                                     accept=".pdf,.epub"
@@ -1727,6 +1737,10 @@ function AddSourceDialog({
                                     excludedByTestament={excludedByTestament}
                                 />
                             )}
+
+                            {/* Columna de detalles. Scrollea sola: si el usuario abre
+                                el selector de tipo académico, la lista no se mueve. */}
+                            <div className="flex min-h-0 min-w-0 flex-col gap-5 overflow-y-auto lg:border-l lg:border-border lg:pl-5">
 
                             {/* In bulk-library mode the per-source label
                                 and citation key are auto-derived at submit
@@ -1819,6 +1833,7 @@ function AddSourceDialog({
                                     {t('paperSetup.subSteps.corpus.upload.citationKeyAutoderiveHint')}
                                 </FieldHint>
                             )}
+                            </div>
                         </div>
                     </div>
 
@@ -1983,8 +1998,11 @@ function LibraryPicker({
     const totalAvailableForFilter = Array.from(typeCounts.values()).reduce((s, n) => s + n, 0);
 
     return (
-        <div className="space-y-3">
-            <div className="relative">
+        // Columna propia: buscador y filtros arriba, lista abajo llevándose lo
+        // que sobre. Antes la lista estaba capada a 320 px y dejaba aire muerto
+        // dentro de un modal que llega al 92% de la ventana.
+        <div className="flex min-h-0 min-w-0 flex-col gap-3">
+            <div className="relative shrink-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <input
                     type="search"
@@ -2028,7 +2046,7 @@ function LibraryPicker({
                 make). Horizontal scroll on overflow so we don't wrap a
                 wall of chips on narrow viewports. */}
             {orderedTypes.length >= 2 && (
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-0.5 px-0.5">
+                <div className="flex shrink-0 flex-wrap items-center gap-1.5 pb-1 -mx-0.5 px-0.5">
                     <FilterChip
                         active={typeFilter === 'all'}
                         onClick={() => onTypeFilterChange('all')}
@@ -2065,7 +2083,7 @@ function LibraryPicker({
                     </p>
                 </div>
             ) : (
-                <ul className="max-h-[320px] overflow-y-auto rounded-lg border border-border bg-card divide-y divide-border">
+                <ul className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border bg-card divide-y divide-border">
                     {resources.map(r => {
                         const status = libraryService.getResourceIndexStatus(r);
                         const picked = pickedResourceIds.has(r.id);
