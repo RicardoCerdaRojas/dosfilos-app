@@ -22,8 +22,8 @@ interface Props {
     /** Hoja desde la que se está tendiendo un rango, si hay una. */
     anchor: number | null;
     currentSheet: number;
-    onGoToSheet: (sheet: number) => void;
-    onToggleSheet: (sheet: number) => void;
+    onGoToSheet: (sheet: number, extend: boolean) => void;
+    onToggleSheet: (sheet: number, extend: boolean) => void;
 }
 
 export function PageRail({
@@ -59,6 +59,11 @@ export function PageRail({
                     {t('paperSetup.subSteps.corpus.picker.rail.sheetCount', { count: pages.length })}
                 </span>
             </div>
+            <div className="shrink-0 border-b border-border/60 px-3 py-1">
+                <span className="text-[10px] text-muted-foreground">
+                    {t('paperSetup.subSteps.corpus.picker.rail.shiftHint')}
+                </span>
+            </div>
 
             <div ref={listRef} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
                 {pages.map(page => {
@@ -88,7 +93,7 @@ export function PageRail({
                             />
                             <button
                                 type="button"
-                                onClick={() => onGoToSheet(page.sheet)}
+                                onClick={(e) => onGoToSheet(page.sheet, e.shiftKey)}
                                 className="flex-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
                                 aria-current={isCurrent ? 'true' : undefined}
                             >
@@ -112,7 +117,7 @@ export function PageRail({
                             </button>
                             <button
                                 type="button"
-                                onClick={() => onToggleSheet(page.sheet)}
+                                onClick={(e) => onToggleSheet(page.sheet, e.shiftKey)}
                                 aria-pressed={isSelected}
                                 aria-label={
                                     anchor !== null

@@ -766,6 +766,7 @@
                     "rail": {
                         "withHeadings": "Book index",
                         "withoutHeadings": "Sheets · no headings",
+                        "shiftHint": "Shift-click to take the whole span from the last sheet you touched.",
                         "sheetCount_one": "{{count}} sheet",
                         "sheetCount_other": "{{count}} sheets",
                         "printedShort": "printed {{printed}}",

@@ -75,6 +75,13 @@ export function SourcePagesWorkspace({
      */
     const [anchor, setAnchor] = useState<number | null>(null);
 
+    /**
+     * Última hoja que el usuario tocó. Es el otro extremo del rango cuando
+     * elige con Shift, la convención de cualquier lista: tocar una, y con Shift
+     * tocar otra para llevarse todo lo que hay en medio.
+     */
+    const lastPicked = useRef<number | null>(null);
+
     // Anchos de panel. El índice del libro es lo que más varía de documento a
     // documento —un comentario con títulos largos pide más que uno sin
     // encabezados— así que el usuario lo ajusta.
@@ -128,22 +135,39 @@ export function SourcePagesWorkspace({
      * Recorre el ÍNDICE y no los números: un documento puede saltear hojas, y
      * tender el rango sobre los números incluiría hojas que no existen.
      */
+    /** Agrega el tramo entre dos hojas, ambas inclusive. */
+    const addSpan = useCallback((from: number, to: number) => {
+        const a = pages.findIndex(p => p.sheet === from);
+        const b = pages.findIndex(p => p.sheet === to);
+        if (a < 0 || b < 0) return;
+        const [lo, hi] = a <= b ? [a, b] : [b, a];
+        rebuild(sheets => { for (let i = lo; i <= hi; i++) sheets.add(pages[i]!.sheet); });
+        lastPicked.current = to;
+    }, [pages]);
+
     const closeRangeAt = useCallback((sheet: number) => {
         const from = anchor;
         setAnchor(null);
         if (from === null) return;
-        const a = pages.findIndex(p => p.sheet === from);
-        const b = pages.findIndex(p => p.sheet === sheet);
-        if (a < 0 || b < 0) return;
-        const [lo, hi] = a <= b ? [a, b] : [b, a];
-        rebuild(sheets => { for (let i = lo; i <= hi; i++) sheets.add(pages[i]!.sheet); });
-    }, [anchor, pages]);
+        addSpan(from, sheet);
+    }, [anchor, addSpan]);
 
-    /** Un click en el riel: cierra el rango si hay ancla, si no alterna. */
-    const pickSheet = useCallback((sheet: number) => {
-        if (anchor !== null) closeRangeAt(sheet);
-        else toggleSheet(sheet);
-    }, [anchor, closeRangeAt, toggleSheet]);
+    /**
+     * Un toque en el riel. Tres caminos hacia lo mismo, porque el usuario llega
+     * por donde le resulta natural:
+     *   - con un rango abierto por el botón, lo cierra acá;
+     *   - con Shift, tiende el rango desde la última hoja que tocó;
+     *   - solo, alterna esta hoja.
+     */
+    const pickSheet = useCallback((sheet: number, extend = false) => {
+        if (anchor !== null) { closeRangeAt(sheet); return; }
+        if (extend && lastPicked.current !== null && lastPicked.current !== sheet) {
+            addSpan(lastPicked.current, sheet);
+            return;
+        }
+        toggleSheet(sheet);
+        lastPicked.current = sheet;
+    }, [anchor, closeRangeAt, addSpan, toggleSheet]);
 
     const removeRange = useCallback((range: SheetRange) => {
         rebuild(sheets => { for (let s = range.start; s <= range.end; s++) sheets.delete(s); });
@@ -167,10 +191,13 @@ export function SourcePagesWorkspace({
         });
     }, [pages]);
 
-    const goToSheet = useCallback((sheet: number) => {
+    const goToSheet = useCallback((sheet: number, extend = false) => {
         touched.current = true;
         setCurrentSheet(sheet);
-    }, []);
+        // Shift sobre la fila entera también tiende el rango: pedirle al usuario
+        // que acierte el botón chico de la derecha sería un requisito inventado.
+        if (extend) pickSheet(sheet, true);
+    }, [pickSheet]);
 
     const printedCurrent = printedPageFor(currentSheet, printedPageOffset);
     const isCurrentSelected = selectedSheets.has(currentSheet);
@@ -278,7 +305,7 @@ export function SourcePagesWorkspace({
                                 type="button"
                                 variant={isCurrentSelected ? 'default' : 'outline'}
                                 size="sm"
-                                onClick={() => toggleSheet(currentSheet)}
+                                onClick={(e) => pickSheet(currentSheet, e.shiftKey)}
                             >
                                 {isCurrentSelected
                                     ? t('paperSetup.subSteps.corpus.picker.viewer.removeSheet')
