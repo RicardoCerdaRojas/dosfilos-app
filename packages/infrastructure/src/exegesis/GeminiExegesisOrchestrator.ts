@@ -5,6 +5,7 @@ import type {
 } from '@dosfilos/domain';
 import { buildPrompt } from './prompts';
 import { runLlmPromptWithUsage } from '../llm/callableLlm';
+import { LONG_COMPOSITION_TIMEOUT_MS } from './composerTimeouts';
 
 /**
  * Gemini implementation of `IExegesisOrchestrator`.
@@ -72,6 +73,14 @@ export class GeminiExegesisOrchestrator implements IExegesisOrchestrator {
             maxOutputTokens: 8192,
             temperature: 0.5,
             topP: 0.9,
+        }, {
+            // El default del SDK son 70 s y este paso mide 38 s en producción:
+            // un margen de menos de 2x sobre la latencia típica. Cuando lo
+            // cruza, el navegador abandona con el modelo todavía generando —
+            // y el servidor, que tiene 540 s, termina el paso y lo cobra sin
+            // que nadie recoja el resultado. Se alinean los dos techos para
+            // que corte el servidor, que es el único que sabe decir por qué.
+            timeoutMs: LONG_COMPOSITION_TIMEOUT_MS,
         });
 
         return {

@@ -190,3 +190,41 @@ export const EMPTY_VERIFICATION_SUMMARY: VerificationSummary = {
     },
     totalCitations: 0,
 };
+
+/**
+ * Cuánto puede durar `generating` antes de considerarse abandonado.
+ *
+ * `generating` lo escribe el NAVEGADOR antes de llamar al modelo, y el
+ * rollback a `failed` también. Si la pestaña se cierra, navega, recarga o
+ * pierde la red en el medio, el `catch` que limpia nunca corre y la bandera
+ * queda huérfana: la tarjeta gira para siempre, sobrevive al reload y no hay
+ * forma de reintentar desde la UI. Pasó en producción — un paso quedó en
+ * `generating` tres horas con su contenido ya generado al lado.
+ *
+ * El umbral es el techo del servidor (`timeoutSeconds: 540`) más un minuto. Por
+ * debajo de eso una generación lenta sigue siendo legítima y no hay que
+ * ofrecerle al usuario un reintento que duplicaría el trabajo en curso; por
+ * encima, el servidor ya cortó y no queda nadie generando.
+ */
+export const ABANDONED_GENERATION_AFTER_MS = 600_000;
+
+/**
+ * ¿Esta generación quedó huérfana?
+ *
+ * NO cambia el estado —`state` sigue siendo la fuente de verdad y el documento
+ * sigue siendo legible por sí solo, que es la invariante de `StepCard`. Sólo
+ * responde si vale la pena ofrecer el reintento, que es una pregunta sobre el
+ * reloj y no sobre la máquina de estados.
+ */
+export function isAbandonedGeneration(
+    step: Pick<ExegeticalStep, 'state' | 'updatedAt'>,
+    now: Date = new Date(),
+): boolean {
+    if (step.state !== 'generating') return false;
+    const updatedAt = step.updatedAt?.getTime?.();
+    // Un `updatedAt` ausente o corrupto no puede probar abandono. Ante la duda
+    // se deja girar: ofrecer un reintento sobre una generación viva es peor
+    // —cobra dos veces— que dejar una tarjeta girando de más.
+    if (typeof updatedAt !== 'number' || Number.isNaN(updatedAt)) return false;
+    return now.getTime() - updatedAt > ABANDONED_GENERATION_AFTER_MS;
+}

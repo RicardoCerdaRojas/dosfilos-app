@@ -1596,6 +1596,7 @@
             "generating": "Generando...",
             "regenerating": "Regenerando…",
             "failedHint": "Algo falló al generar este paso. Prueba de nuevo.",
+            "abandonedHint": "Esta generación quedó interrumpida —se cerró la pestaña o se perdió la conexión— y no hay nada en curso. Puedes generarla de nuevo.",
             "editHint": "Editado a mano — la verificación de citas no corre automáticamente.",
             "hintPlaceholder": "Ej. más sintaxis, más teología, cita más a Cockerill",
             "quickHints": {
