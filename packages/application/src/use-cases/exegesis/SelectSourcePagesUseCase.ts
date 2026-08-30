@@ -1,5 +1,6 @@
 import {
     chunkRangesForSheets,
+    clipRangesTo,
     computeExtractionFingerprint,
     formatPassageReference,
     normalizeSheetRanges,
@@ -44,6 +45,8 @@ export interface SelectSourcePagesInput {
     sheetRanges: ReadonlyArray<SheetRange>;
     /** Lo que el sistema había propuesto, aceptado o no. */
     proposedRanges: ReadonlyArray<SheetRange>;
+    /** Tramos que entran a todos los pasos sin competir en el ranking. */
+    pinnedRanges?: ReadonlyArray<SheetRange>;
     /** Índice de hojas del documento, ya cargado por la interfaz. */
     pageIndex: ReadonlyArray<PageIndexEntry>;
     /**
@@ -127,15 +130,25 @@ export class SelectSourcePagesUseCase {
             });
         }
 
-        const excerpts = chunks
-            .slice()
-            .sort((a, b) => a.chunkIndex - b.chunkIndex)
-            .map(toExcerpt);
+        // El texto NO se guarda en el paper. Con doce fuentes son ~514 KB
+        // contra un tope de documento de 1 MiB, y ese texto ya no alimenta el
+        // prompt: cada paso pide lo suyo al corpus. Lo que se guarda es la
+        // receta, que son cientos de bytes.
+        //
+        // Se leen igual para poder informar cuántos fragmentos implica la
+        // selección —es lo que alimenta el medidor y la guardia de
+        // consistencia— pero se descartan al escribir.
+        const excerpts: ProjectSourceExcerpt[] = [];
+        const materializedChunks = chunks.length;
 
         const passageRef = formatPassageReference(paper.passage, paper.displayLanguage);
         const recipe: ExcerptRecipe = {
             sheetRanges,
             proposedRanges: normalizeSheetRanges(input.proposedRanges),
+            // Lo fijado se recorta a lo elegido: marcar una hoja y después
+            // quitarla del carrito dejaría al medidor contando material que la
+            // fuente ya no declara.
+            pinnedRanges: clipRangesTo(input.pinnedRanges ?? [], sheetRanges),
             passageFingerprint: computeExtractionFingerprint(passageRef, paper.assignmentBrief),
         };
 
@@ -147,7 +160,7 @@ export class SelectSourcePagesUseCase {
         const othersChars = paper.sources
             .filter(s => s.id !== existing?.id)
             .reduce((sum, s) => sum + s.excerpts.reduce((n, e) => n + e.text.length, 0), 0);
-        const selectionChars = excerpts.reduce((n, e) => n + e.text.length, 0);
+        const selectionChars = 0;
         if (othersChars + selectionChars > MAX_PAPER_TEXT_CHARS) {
             throw new PaperCorpusTooLargeError(othersChars + selectionChars, MAX_PAPER_TEXT_CHARS);
         }
@@ -167,7 +180,7 @@ export class SelectSourcePagesUseCase {
             });
             return {
                 sourceId: existing.id,
-                excerptCount: excerpts.length,
+                excerptCount: materializedChunks,
                 emptySheets: countEmptySheets(input.pageIndex, sheetRanges),
                 expectedChunks,
                 incomplete,
@@ -191,7 +204,7 @@ export class SelectSourcePagesUseCase {
 
         return {
             sourceId: created.id,
-            excerptCount: excerpts.length,
+            excerptCount: materializedChunks,
             emptySheets: countEmptySheets(input.pageIndex, sheetRanges),
             expectedChunks,
             incomplete,
@@ -216,30 +229,6 @@ function findExistingSource(
     ) ?? null;
 }
 
-/**
- * El ancla de citación sigue la convención del resto del corpus (`p. N, § S`)
- * para que el prompt y la interfaz no tengan que distinguir de dónde salió cada
- * fragmento.
- *
- * `relevanceScore` va en 1: el usuario eligió estas hojas a mano, no hay
- * puntaje de cercanía que reportar, y dejarlo en 0 haría que la interfaz
- * ordenara al final justo lo que se eligió con más intención.
- */
-function toExcerpt(chunk: { text: string; page: number | null; section: string | null }): ProjectSourceExcerpt {
-    const { page, section } = chunk;
-    let sourceLocation = '';
-    if (page && section) sourceLocation = `p. ${page}, § ${section}`;
-    else if (page) sourceLocation = `p. ${page}`;
-    else if (section) sourceLocation = `§ ${section}`;
-
-    return {
-        text: chunk.text,
-        sourceLocation,
-        relevanceScore: 1,
-        userEdited: false,
-        editedAt: null,
-    };
-}
 
 /**
  * Hojas elegidas que no aportan texto. Un documento puede saltear números

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Loader2, Sparkles } from 'lucide-react';
 import {
+    clipRangesTo,
     countChars,
     countSheets,
     normalizeSheetRanges,
@@ -40,8 +41,10 @@ interface Props {
     proposalPending: boolean;
     /** Selección guardada, cuando la fuente ya pasó por el selector. */
     initialRanges: ReadonlyArray<SheetRange>;
+    /** Tramos ya marcados como «siempre incluir». */
+    initialPinned: ReadonlyArray<SheetRange>;
     otherSourcesChars: number;
-    onConfirm: (ranges: ReadonlyArray<SheetRange>) => Promise<void>;
+    onConfirm: (ranges: ReadonlyArray<SheetRange>, pinned: ReadonlyArray<SheetRange>) => Promise<void>;
     isSaving: boolean;
 }
 
@@ -53,6 +56,7 @@ export function SourcePagesWorkspace({
     proposalKind,
     proposalPending,
     initialRanges,
+    initialPinned,
     otherSourcesChars,
     onConfirm,
     isSaving,
@@ -85,6 +89,7 @@ export function SourcePagesWorkspace({
     // Anchos de panel. El índice del libro es lo que más varía de documento a
     // documento —un comentario con títulos largos pide más que uno sin
     // encabezados— así que el usuario lo ajusta.
+    const [pinned, setPinned] = useState<SheetRange[]>(() => normalizeSheetRanges(initialPinned));
     const [railWidth, setRailWidth] = useState(280);
     const [railOpen, setRailOpen] = useState(true);
     const [cartWidth, setCartWidth] = useState(320);
@@ -112,6 +117,10 @@ export function SourcePagesWorkspace({
     const selectedSheets = useMemo(() => sheetsInRanges(ranges), [ranges]);
     const proposedSheets = useMemo(() => sheetsInRanges(proposedRanges), [proposedRanges]);
     const selectedChars = useMemo(() => countChars(pages, ranges), [pages, ranges]);
+    // Lo fijado se recorta a lo elegido: quitar una hoja marcada no puede dejar
+    // el medidor contando material que la fuente ya no declara.
+    const effectivePinned = useMemo(() => clipRangesTo(pinned, ranges), [pinned, ranges]);
+    const pinnedChars = useMemo(() => countChars(pages, effectivePinned), [pages, effectivePinned]);
     const sheetCount = useMemo(() => countSheets(ranges), [ranges]);
 
     const rebuild = (mutate: (sheets: Set<number>) => void) => {
@@ -171,6 +180,15 @@ export function SourcePagesWorkspace({
 
     const removeRange = useCallback((range: SheetRange) => {
         rebuild(sheets => { for (let s = range.start; s <= range.end; s++) sheets.delete(s); });
+    }, []);
+
+    const togglePinned = useCallback((range: SheetRange) => {
+        setPinned(prev => {
+            const already = prev.some(p => p.start === range.start && p.end === range.end);
+            return already
+                ? prev.filter(p => !(p.start === range.start && p.end === range.end))
+                : normalizeSheetRanges([...prev, range]);
+        });
     }, []);
 
     const acceptProposal = useCallback(() => {
@@ -360,7 +378,10 @@ export function SourcePagesWorkspace({
                         selectedChars={selectedChars}
                         sheetCount={sheetCount}
                         onRemoveRange={removeRange}
-                        onConfirm={() => onConfirm(ranges)}
+                        pinnedRanges={effectivePinned}
+                        onTogglePinned={togglePinned}
+                        pinnedChars={pinnedChars}
+                        onConfirm={() => onConfirm(ranges, effectivePinned)}
                         isSaving={isSaving}
                     />
                 </div>

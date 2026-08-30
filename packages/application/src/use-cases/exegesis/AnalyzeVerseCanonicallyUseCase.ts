@@ -6,6 +6,8 @@ import type {
     ExegeticalStepVersion,
     ExegesisSourceContext,
     ICanonicalVerseAnalyzer,
+    ICuratedCorpusRetriever,
+    CuratedCorpusResult,
     IExegeticalPaperRepository,
     IOriginalLanguageBibleProvider,
     IResourceContentReader,
@@ -16,6 +18,7 @@ import type {
 import {
     EMPTY_VERIFICATION_SUMMARY,
     computeRubricCompliance,
+    formatPassageReference,
 } from '@dosfilos/domain';
 import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
@@ -59,6 +62,13 @@ export class AnalyzeVerseCanonicallyUseCase {
         // OT via WLC) and threads it into the analyzer prompt so the
         // model isn't guessing the base text from training memory.
         private originalLanguageProvider?: IOriginalLanguageBibleProvider,
+        /**
+         * Cuando está cableado, las fuentes con receta dejan de inlinear su
+         * corpus entero y piden solo el material que habla de ESTE versículo.
+         * Sin él, el caso de uso se comporta como antes — que es lo que hace
+         * falta para los papers viejos, cuyas fuentes no tienen receta.
+         */
+        private corpusRetriever?: ICuratedCorpusRetriever,
     ) { }
 
     async execute(input: AnalyzeVerseCanonicallyUseCaseInput): Promise<ExegeticalStepVersion> {
@@ -92,7 +102,7 @@ export class AnalyzeVerseCanonicallyUseCase {
 
         try {
             const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
-            const sources = await this.loadSourceContexts(paper, step.id);
+            const sources = await this.loadSourceContexts(paper, step.id, step.verseRef!);
             const priorAcceptedAnalyses = collectPriorAcceptedAnalyses(paper, step);
             const stepEmphasis = paper.stepPlan.defaults.verse ?? null;
 
@@ -183,6 +193,48 @@ export class AnalyzeVerseCanonicallyUseCase {
      * the provider doesn't support the book, or the fetch fails — the
      * analyzer falls back to whatever it knows from training.
      */
+    /**
+     * Le pide al corpus el material de este versículo.
+     *
+     * Solo participan las fuentes con receta: son las que declaran qué hojas
+     * admitió el trabajo, y sin ese recorte la consulta traería páginas que el
+     * usuario dejó afuera.
+     *
+     * Un fallo devuelve `null` y el caso de uso cae al camino anterior. Un paso
+     * con el corpus viejo es peor que uno con el material justo; un paso que no
+     * se genera es peor que los dos.
+     */
+    private async retrieveCurated(
+        paper: ExegeticalPaper,
+        verseRef: PassageReference,
+    ): Promise<CuratedCorpusResult | null> {
+        if (!this.corpusRetriever) return null;
+        const scopes = paper.sources
+            .filter(s => (s.excerptRecipe?.sheetRanges.length ?? 0) > 0)
+            .map(s => ({
+                resourceId: s.sourceLibraryResourceId ?? s.corpusId,
+                sheetRanges: s.excerptRecipe!.sheetRanges,
+                pinnedRanges: s.excerptRecipe!.pinnedRanges,
+            }));
+        if (scopes.length === 0) return null;
+
+        const label = formatPassageReference(verseRef, paper.displayLanguage);
+        const brief = paper.assignmentBrief?.trim().slice(0, 500) ?? '';
+        try {
+            return await this.corpusRetriever.retrieve({
+                userId: paper.ownerId,
+                query: brief ? `${label} — ${brief}` : label,
+                sources: scopes,
+                budgetChars: CORPUS_BUDGET_CHARS,
+            });
+        } catch (err) {
+            console.warn('[AnalyzeVerseCanonically] el corpus no respondió; se usa lo guardado', {
+                error: (err as Error).message,
+            });
+            return null;
+        }
+    }
+
     private async loadOriginalLanguageText(verseRef: PassageReference): Promise<string | null> {
         if (!this.originalLanguageProvider) return null;
         const provider = this.originalLanguageProvider;
@@ -211,10 +263,21 @@ export class AnalyzeVerseCanonicallyUseCase {
         return (await this.contentReader.getTextContent(guide.corpusId)) ?? '';
     }
 
+    /**
+     * El material que este paso le manda al modelo.
+     *
+     * Dos regímenes conviviendo a propósito. Las fuentes con receta consultan
+     * el corpus y traen lo que habla del versículo; las que no la tienen —papers
+     * anteriores al selector— siguen inlineando lo que siempre inlinearon.
+     * Migrar por uso y no por lote es lo que deja publicar esto sin tocar
+     * trabajos a medio hacer.
+     */
     private async loadSourceContexts(
         paper: ExegeticalPaper,
         stepId: string,
+        verseRef: PassageReference,
     ): Promise<ExegesisSourceContext[]> {
+        const curated = await this.retrieveCurated(paper, verseRef);
         // Mirrors GenerateStepUseCase.loadSourceContexts: pin-aware,
         // primary-first ordering, and async content fetch via the
         // injected `IResourceContentReader` for full-document sources.
@@ -227,6 +290,25 @@ export class AnalyzeVerseCanonicallyUseCase {
         const contexts: ExegesisSourceContext[] = [];
         for (const source of sorted) {
             const priority: 'primary' | 'secondary' = pinnedIds.has(source.id) ? 'primary' : 'secondary';
+            const retrieved = curated?.byResource[source.sourceLibraryResourceId ?? source.corpusId];
+            if (retrieved) {
+                // Mismos separadores con ancla que el camino anterior: el
+                // prompt y el verificador de citas no tienen por qué notar de
+                // dónde salió el fragmento.
+                const textContent = retrieved
+                    .map(c => `--- ${anchorFor(c)} ---\n${c.text}`)
+                    .join('\n\n');
+                contexts.push({
+                    corpusId: source.corpusId,
+                    sourceType: source.sourceType,
+                    displayLabel: source.displayLabel,
+                    citationKey: source.citationKey,
+                    textContent,
+                    excerptAnchors: retrieved.map(anchorFor),
+                    priority,
+                });
+                continue;
+            }
             if (source.mode === 'extracted-excerpts') {
                 const textContent = source.excerpts
                     .map(e => `--- ${e.sourceLocation} ---\n${e.text}`)
@@ -339,4 +421,23 @@ export interface AnalyzeVerseCanonicallyUseCaseInput {
     stepId: string;
     /** Optional hint when the user re-triggers analysis. */
     regenerationHint?: string | null;
+}
+
+/**
+ * Cuánto del prompt puede ocupar el corpus de un paso.
+ *
+ * Es un presupuesto para el CORPUS, no para el prompt: las instrucciones
+ * metodológicas, la guía de estilo, el texto base y los análisis previos
+ * ocupan el resto, y `fitPromptToCap` recorta después si algo se desmadra.
+ * Dejar la mitad del tope para el corpus da margen para todo lo demás sin que
+ * el recorte final tenga que morder material que el paso sí necesitaba.
+ */
+const CORPUS_BUDGET_CHARS = 100_000;
+
+/** Ancla de citación de un fragmento, en la convención del resto del corpus. */
+function anchorFor(chunk: { sheet: number | null; section: string | null }): string {
+    if (chunk.sheet && chunk.section) return `p. ${chunk.sheet}, § ${chunk.section}`;
+    if (chunk.sheet) return `p. ${chunk.sheet}`;
+    if (chunk.section) return `§ ${chunk.section}`;
+    return '';
 }

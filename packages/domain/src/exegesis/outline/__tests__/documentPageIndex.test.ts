@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
     chunkRangesForSheets,
+    clipRangesTo,
     countChars,
     countSheets,
     normalizeSheetRanges,
@@ -116,5 +117,31 @@ describe('sheetsForChunkRanges', () => {
     it('no funde huecos mayores a la tolerancia', () => {
         expect(sheetsForChunkRanges(INDEX, [{ start: 10, end: 10 }, { start: 17, end: 17 }], 2))
             .toEqual([{ start: 66, end: 66 }, { start: 71, end: 71 }]);
+    });
+});
+
+describe('clipRangesTo', () => {
+    it('recorta lo fijado a lo elegido', () => {
+        expect(clipRangesTo([{ start: 60, end: 90 }], [{ start: 68, end: 72 }]))
+            .toEqual([{ start: 68, end: 72 }]);
+    });
+
+    it('descarta lo fijado que quedó fuera del carrito', () => {
+        // El usuario fijó la introducción y después quitó esas hojas.
+        expect(clipRangesTo([{ start: 10, end: 20 }], [{ start: 68, end: 72 }])).toEqual([]);
+    });
+
+    it('conserva lo que se solapa parcialmente', () => {
+        expect(clipRangesTo([{ start: 65, end: 70 }], [{ start: 68, end: 80 }]))
+            .toEqual([{ start: 68, end: 70 }]);
+    });
+
+    it('funde el resultado cuando dos recortes quedan contiguos', () => {
+        expect(clipRangesTo([{ start: 1, end: 100 }], [{ start: 10, end: 20 }, { start: 21, end: 30 }]))
+            .toEqual([{ start: 10, end: 30 }]);
+    });
+
+    it('devuelve vacío sin tramos fijados', () => {
+        expect(clipRangesTo([], [{ start: 1, end: 9 }])).toEqual([]);
     });
 });

@@ -150,3 +150,26 @@ export function countChars(
     }
     return total;
 }
+
+/**
+ * Recorta unos tramos para que no salgan de otros.
+ *
+ * Lo fijado tiene que ser un subconjunto de lo elegido: marcar como
+ * «siempre incluir» una hoja que después se quita del carrito dejaría al
+ * prompt pidiendo material que la fuente ya no declara, y el filtro por receta
+ * lo descartaría igual — pero el medidor lo seguiría contando.
+ */
+export function clipRangesTo(
+    inner: ReadonlyArray<SheetRange>,
+    outer: ReadonlyArray<SheetRange>,
+): SheetRange[] {
+    const out: SheetRange[] = [];
+    for (const a of inner) {
+        for (const b of outer) {
+            const start = Math.max(a.start, b.start);
+            const end = Math.min(a.end, b.end);
+            if (start <= end) out.push({ start, end });
+        }
+    }
+    return normalizeSheetRanges(out);
+}

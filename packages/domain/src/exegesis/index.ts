@@ -85,3 +85,8 @@ export * from './outline/documentPageIndex';
 export * from './outline/printedPageOffset';
 // ¿Los fragmentos guardados de una fuente corresponden a su receta?
 export * from './outline/recipeConsistency';
+
+// Corpus consultable: qué parte del corpus curado entra al prompt de un paso.
+export * from './corpus/selectCorpusChunks';
+// Puerto que le pide al corpus curado el material de un paso.
+export * from './ports/ICuratedCorpusRetriever';

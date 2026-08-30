@@ -183,6 +183,18 @@ export interface ExcerptRecipe {
     /** Lo que el sistema propuso, haya sido aceptado o no. */
     proposedRanges: ReadonlyArray<SheetRange>;
     /**
+     * Tramos que entran a TODOS los pasos, sin competir en el ranking.
+     *
+     * Existe por un caso que la recuperación por cercanía no puede resolver: la
+     * introducción al libro no menciona el versículo que se está estudiando, así
+     * que pierde contra cualquier párrafo que sí lo mencione — y sin embargo el
+     * usuario la eligió a propósito. Marcarla la vuelve obligatoria.
+     *
+     * Consume presupuesto en cada paso, así que el medidor lo muestra aparte:
+     * fijar de más deja sin lugar a lo que el versículo sí necesita.
+     */
+    pinnedRanges: ReadonlyArray<SheetRange>;
+    /**
      * Huella de (pasaje + encuadre) al momento de elegir. Cuando deja de
      * coincidir, la selección quedó vieja y la interfaz lo dice en vez de
      * servir fragmentos de otro pasaje en silencio.

@@ -61,17 +61,20 @@ describe('SelectSourcePagesUseCase', () => {
         expect(result.excerptCount).toBe(2);
     });
 
-    it('guarda los fragmentos en orden de documento, no en el que llegaron', async () => {
+    it('NO guarda el texto en el paper, solo la receta', async () => {
+        // El texto de doce fuentes son ~514 KB contra un tope de documento de
+        // 1 MiB, y ya no alimenta el prompt: cada paso pide lo suyo al corpus.
         const { repo, reader } = makeDeps(makePaper());
         const useCase = new SelectSourcePagesUseCase(repo as never, reader as never);
 
-        await useCase.execute({ ...BASE_INPUT, sheetRanges: [{ start: 60, end: 63 }] });
+        const result = await useCase.execute({ ...BASE_INPUT, sheetRanges: [{ start: 60, end: 63 }] });
 
-        const excerpts = repo.addSource.mock.calls[0]![2].excerpts;
-        expect(excerpts.map((e: { text: string }) => e.text)).toEqual([
-            'Introducción al libro.',
-            'Comentario a 1:1.',
-        ]);
+        const created = repo.addSource.mock.calls[0]![2];
+        expect(created.excerpts).toEqual([]);
+        expect(created.excerptRecipe.sheetRanges).toEqual([{ start: 60, end: 63 }]);
+        // Igual informa cuántos fragmentos implica la selección: es lo que
+        // alimenta el medidor y la guardia de consistencia.
+        expect(result.excerptCount).toBe(2);
     });
 
     it('persiste la receta con lo elegido y lo propuesto', async () => {
@@ -87,14 +90,13 @@ describe('SelectSourcePagesUseCase', () => {
         expect(created.excerptRecipe.passageFingerprint).toBeTruthy();
     });
 
-    it('arma el ancla de citación con hoja y sección', async () => {
+    it('registra que la selección se armó a mano', async () => {
         const { repo, reader } = makeDeps(makePaper());
         const useCase = new SelectSourcePagesUseCase(repo as never, reader as never);
 
         await useCase.execute({ ...BASE_INPUT, sheetRanges: [{ start: 60, end: 63 }] });
 
-        const excerpts = repo.addSource.mock.calls[0]![2].excerpts;
-        expect(excerpts[0].sourceLocation).toBe('p. 60, § Introduction');
+        expect(repo.addSource.mock.calls[0]![2].excerptSelectionMode).toBe('manual');
     });
 
     it('reusa la fuente cuando el documento ya estaba adjunto por el backref', async () => {

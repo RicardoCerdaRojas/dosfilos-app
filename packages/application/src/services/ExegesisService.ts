@@ -29,6 +29,8 @@ import {
     RetrieveChunksExcerptExtractor,
     StructuralExcerptExtractor,
     CallableDocumentChunkReader,
+    CallableCuratedCorpusRetriever,
+    CallableCuratedCorpusReader,
     RetrieveChunksResourceRanker,
     GeminiStepCorpusPlanner,
     MorphhbOriginalLanguageProvider,
@@ -410,6 +412,7 @@ class ExegesisService {
             orchestrator,
             styleFormatter,
             extractFootnoteAnchorsFromFormattedMarkdown,
+            new CallableCuratedCorpusRetriever(),
         );
         this.acceptStep = new AcceptStepUseCase(paperRepository);
         this.saveStepEdit = new SaveStepEditUseCase(paperRepository);
@@ -442,6 +445,9 @@ class ExegesisService {
             paperRepository,
             contentReader,
             citationVerifier,
+            // Evidencia con página para las fuentes con receta: sin esto la
+            // detección de página equivocada se apaga en silencio.
+            new CallableCuratedCorpusReader(),
         );
 
         // Coherence reviewer — single Gemini call over the entire
@@ -483,6 +489,9 @@ class ExegesisService {
             contentReader,
             canonicalAnalyzer,
             originalLanguageProvider,
+            // Con esto, las fuentes con receta piden material por versículo
+            // en vez de inlinear su corpus entero en cada paso.
+            new CallableCuratedCorpusRetriever(),
         );
 
         // Academic-paper composer. Reuses the existing

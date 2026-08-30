@@ -64,7 +64,7 @@ export function ExegesisSourcePagesPage() {
 
     const back = () => navigate(`/dashboard/exegesis/${paperId}/setup?tab=corpus`);
 
-    const handleConfirm = async (ranges: ReadonlyArray<SheetRange>) => {
+    const handleConfirm = async (ranges: ReadonlyArray<SheetRange>, pinnedRanges: ReadonlyArray<SheetRange>) => {
         if (!paper || !source || !resourceId || !index.data) return;
         try {
             const result = await selectPages.mutateAsync({
@@ -74,6 +74,7 @@ export function ExegesisSourcePagesPage() {
                 sourceType: source.sourceType,
                 citationKey: source.citationKey,
                 sheetRanges: ranges,
+                pinnedRanges,
                 proposedRanges: proposal?.ranges ?? [],
                 pageIndex: index.data.pages,
                 selectionMode: 'manual',
@@ -151,6 +152,7 @@ export function ExegesisSourcePagesPage() {
                 proposalKind={proposal?.kind ?? 'none'}
                 proposalPending={proposal === null}
                 initialRanges={normalizeSheetRanges(source.excerptRecipe?.sheetRanges ?? [])}
+                initialPinned={normalizeSheetRanges(source.excerptRecipe?.pinnedRanges ?? [])}
                 otherSourcesChars={otherSourcesChars}
                 onConfirm={handleConfirm}
                 isSaving={selectPages.isPending}
