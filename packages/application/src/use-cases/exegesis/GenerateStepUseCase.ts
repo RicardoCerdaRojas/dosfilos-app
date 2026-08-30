@@ -8,6 +8,8 @@ import type {
     FormatterSourceMetadata,
     GenerateStepInput,
     IExegesisOrchestrator,
+    ICuratedCorpusRetriever,
+    CuratedCorpusResult,
     IExegeticalPaperRepository,
     IResourceContentReader,
     IStyleFormatter,
@@ -69,6 +71,12 @@ export class GenerateStepUseCase {
         // citation discipline DETERMINISTIC.
         private styleFormatter?: IStyleFormatter,
         private extractFootnoteAnchors?: FootnoteAnchorExtractor,
+        /**
+         * Cuando está cableado, las fuentes con receta piden el material que
+         * habla del paso en vez de inlinear su corpus entero. Sin él, el caso de
+         * uso se comporta como antes.
+         */
+        private corpusRetriever?: ICuratedCorpusRetriever,
     ) { }
 
     async execute(input: GenerateStepInput): Promise<ExegeticalStepVersion> {
@@ -98,7 +106,7 @@ export class GenerateStepUseCase {
 
         try {
             const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
-            const sources = await this.loadSourceContexts(paper, step.id);
+            const sources = await this.loadSourceContexts(paper, step.id, step);
             const priorAcceptedSteps = collectPriorAccepted(paper, step);
 
             // Resolve the per-kind emphasis the student configured (or
@@ -192,9 +200,49 @@ export class GenerateStepUseCase {
         return (await this.contentReader.getTextContent(guide.corpusId)) ?? '';
     }
 
+    /**
+     * Consulta el corpus para este paso.
+     *
+     * La consulta es distinta según el paso: un verso pregunta por su
+     * referencia; la conclusión y la introducción, por el pasaje entero del
+     * trabajo — porque sintetizan sobre todo él, no sobre un versículo.
+     */
+    private async retrieveCurated(
+        paper: ExegeticalPaper,
+        step: ExegeticalStep,
+    ): Promise<CuratedCorpusResult | null> {
+        if (!this.corpusRetriever) return null;
+        const scopes = paper.sources
+            .filter(s => (s.excerptRecipe?.sheetRanges.length ?? 0) > 0)
+            .map(s => ({
+                resourceId: s.sourceLibraryResourceId ?? s.corpusId,
+                sheetRanges: s.excerptRecipe!.sheetRanges,
+                pinnedRanges: s.excerptRecipe!.pinnedRanges,
+            }));
+        if (scopes.length === 0) return null;
+
+        const target = step.verseRef ?? paper.passage;
+        const label = formatPassageReference(target, paper.displayLanguage);
+        const brief = paper.assignmentBrief?.trim().slice(0, 500) ?? '';
+        try {
+            return await this.corpusRetriever.retrieve({
+                userId: paper.ownerId,
+                query: brief ? `${label} — ${brief}` : label,
+                sources: scopes,
+                budgetChars: STEP_CORPUS_BUDGET_CHARS,
+            });
+        } catch (err) {
+            console.warn('[GenerateStep] el corpus no respondió; se usa lo guardado', {
+                error: (err as Error).message,
+            });
+            return null;
+        }
+    }
+
     private async loadSourceContexts(
         paper: ExegeticalPaper,
         stepId: string,
+        step: ExegeticalStep,
     ): Promise<ExegesisSourceContext[]> {
         // v1.7 corpus-usage planning: read the per-step pinned
         // sources from `paper.stepPlan.perStep[stepId].pinnedSources`.
@@ -207,11 +255,27 @@ export class GenerateStepUseCase {
             paper.stepPlan.perStep[stepId]?.pinnedSources ?? [],
         );
 
+        const curated = await this.retrieveCurated(paper, step);
         const sorted = [...paper.sources].sort((a, b) => a.order - b.order);
         const contexts: ExegesisSourceContext[] = [];
         for (const source of sorted) {
             const priority: 'primary' | 'secondary' =
                 pinnedIds.has(source.id) ? 'primary' : 'secondary';
+            const retrieved = curated?.byResource[source.sourceLibraryResourceId ?? source.corpusId];
+            if (retrieved) {
+                // Mismos separadores con ancla que el camino anterior: el
+                // prompt no tiene por qué notar de dónde salió el fragmento.
+                contexts.push({
+                    corpusId: source.corpusId,
+                    sourceType: source.sourceType,
+                    displayLabel: source.displayLabel,
+                    citationKey: source.citationKey,
+                    textContent: retrieved.map(c => `--- ${chunkAnchor(c)} ---\n${c.text}`).join('\n\n'),
+                    excerptAnchors: retrieved.map(chunkAnchor),
+                    priority,
+                });
+                continue;
+            }
             if (source.mode === 'extracted-excerpts') {
                 // v1.5: source carries pre-curated chunks (the user
                 // reviewed them in the extraction step). Concatenate
@@ -500,4 +564,19 @@ function deriveCitationKey(displayLabel: string): string {
     const surnameMatch = trimmed.match(/\b[A-Z][a-z]{2,}\b/);
     if (surnameMatch) return surnameMatch[0];
     return trimmed.split(/\s+/)[0] ?? trimmed;
+}
+
+/**
+ * Cuánto del prompt puede ocupar el corpus de un paso. Mismo criterio que el
+ * analizador canónico: la mitad del tope, para que las instrucciones, la guía
+ * de estilo y los pasos previos tengan lugar.
+ */
+const STEP_CORPUS_BUDGET_CHARS = 100_000;
+
+/** Ancla de citación, en la convención del resto del corpus. */
+function chunkAnchor(chunk: { sheet: number | null; section: string | null }): string {
+    if (chunk.sheet && chunk.section) return `p. ${chunk.sheet}, § ${chunk.section}`;
+    if (chunk.sheet) return `p. ${chunk.sheet}`;
+    if (chunk.section) return `§ ${chunk.section}`;
+    return '';
 }

@@ -412,6 +412,7 @@ class ExegesisService {
             orchestrator,
             styleFormatter,
             extractFootnoteAnchorsFromFormattedMarkdown,
+            new CallableCuratedCorpusRetriever(),
         );
         this.acceptStep = new AcceptStepUseCase(paperRepository);
         this.saveStepEdit = new SaveStepEditUseCase(paperRepository);
