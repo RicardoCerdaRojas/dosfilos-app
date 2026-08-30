@@ -187,16 +187,32 @@ export function SourcePagesWorkspace({
         setCurrentSheet(prev => {
             const i = pages.findIndex(p => p.sheet === prev);
             if (i < 0) return pages[0]?.sheet ?? prev;
-            return pages[Math.min(Math.max(i + delta, 0), pages.length - 1)]?.sheet ?? prev;
+            const next = pages[Math.min(Math.max(i + delta, 0), pages.length - 1)]?.sheet ?? prev;
+            // Navegar también ancla: el usuario puede llegar al inicio del tramo
+            // con las flechas y cerrar con Shift desde el índice.
+            lastPicked.current = next;
+            return next;
         });
     }, [pages]);
 
+    /**
+     * Un toque en la fila del índice.
+     *
+     * Sin Shift: lleva el visor a esa hoja y DEJA EL ANCLAJE ahí. Que un clic
+     * simple ancle es lo que hace funcionar la convención de cualquier lista —
+     * tocar una fila, ir al final, Shift + clic para llevarse todo lo del
+     * medio. Sin anclar, el Shift posterior no tiene desde dónde tender y
+     * termina alternando una sola hoja, que fue justo lo que pasaba.
+     *
+     * Con Shift: cierra el tramo desde la hoja anclada. Da igual el orden —
+     * `addSpan` ordena por posición en el índice, así que se puede empezar por
+     * la mayor y terminar en la menor.
+     */
     const goToSheet = useCallback((sheet: number, extend = false) => {
         touched.current = true;
         setCurrentSheet(sheet);
-        // Shift sobre la fila entera también tiende el rango: pedirle al usuario
-        // que acierte el botón chico de la derecha sería un requisito inventado.
-        if (extend) pickSheet(sheet, true);
+        if (extend) { pickSheet(sheet, true); return; }
+        lastPicked.current = sheet;
     }, [pickSheet]);
 
     const printedCurrent = printedPageFor(currentSheet, printedPageOffset);

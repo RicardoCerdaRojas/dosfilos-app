@@ -766,7 +766,7 @@
                     "rail": {
                         "withHeadings": "Índice del libro",
                         "withoutHeadings": "Hojas · sin encabezados",
-                        "shiftHint": "Shift + clic para llevarte todo el tramo desde la última hoja que tocaste.",
+                        "shiftHint": "Clic en una hoja y Shift + clic en otra para llevarte todo el tramo, en cualquier orden.",
                         "sheetCount_one": "{{count}} hoja",
                         "sheetCount_other": "{{count}} hojas",
                         "printedShort": "impresa {{printed}}",
