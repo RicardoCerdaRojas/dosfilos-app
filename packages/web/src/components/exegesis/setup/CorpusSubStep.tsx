@@ -1665,7 +1665,7 @@ function AddSourceDialog({
             if (uploading && !next) return;
             onOpenChange(next);
         }}>
-            <DialogContent className="sm:max-w-5xl p-0 gap-0 overflow-hidden max-h-[92vh] flex flex-col">
+            <DialogContent className="sm:max-w-5xl p-0 gap-0 overflow-hidden h-[min(88vh,720px)] flex flex-col">
                 <DialogHeader className="px-6 py-4 border-b border-border">
                     <DialogTitle className="text-base">
                         {t('paperSetup.subSteps.corpus.upload.title')}
@@ -1676,27 +1676,26 @@ function AddSourceDialog({
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-[220px_1fr] min-h-0 overflow-hidden">
-                        {/* Sidebar: mode tabs */}
-                        <aside className="border-b md:border-b-0 md:border-r border-border bg-muted/20 p-3 space-y-2">
-                            <SidebarTab
-                                active={mode === 'upload'}
-                                onClick={() => setMode('upload')}
-                                icon={<Upload className="h-4 w-4" />}
-                                label={t('paperSetup.subSteps.corpus.upload.modeUpload')}
-                                helper="PDF o EPUB"
-                            />
-                            <SidebarTab
-                                active={mode === 'library'}
-                                onClick={() => setMode('library')}
-                                icon={<Library className="h-4 w-4" />}
-                                label={t('paperSetup.subSteps.corpus.upload.modeLibrary')}
-                                helper={availableInLibrary > 0
-                                    ? `${availableInLibrary} disponibles`
-                                    : library.isLoading ? 'Cargando…' : 'Sin recursos'}
-                            />
-                        </aside>
+                    {/* El modo va en pestañas y no en una columna: eran dos
+                        botones ocupando 220 px de ancho completo, con el resto
+                        de la columna vacío. Ese ancho le sirve más a la lista. */}
+                    <div className="flex shrink-0 items-center gap-1 border-b border-border bg-muted/20 px-6 py-2">
+                        <ModeTab
+                            active={mode === 'upload'}
+                            onClick={() => setMode('upload')}
+                            icon={<Upload className="h-3.5 w-3.5" />}
+                            label={t('paperSetup.subSteps.corpus.upload.modeUpload')}
+                        />
+                        <ModeTab
+                            active={mode === 'library'}
+                            onClick={() => setMode('library')}
+                            icon={<Library className="h-3.5 w-3.5" />}
+                            label={t('paperSetup.subSteps.corpus.upload.modeLibrary')}
+                            badge={availableInLibrary > 0 ? String(availableInLibrary) : undefined}
+                        />
+                    </div>
 
+                    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                         {/* Main pane */}
                         {/* Maestro-detalle: la lista se lleva el alto disponible y los
                             campos viven al lado, siempre visibles. Un asistente de dos
@@ -1908,45 +1907,45 @@ function FieldHint({ children }: { children: React.ReactNode }) {
 
 // ── Sidebar mode tab (vertical card) ───────────────────────────────────
 
-function SidebarTab({
+/**
+ * Pestaña de modo del diálogo: subir un archivo nuevo, o reusar la biblioteca.
+ *
+ * Era una tarjeta a lo ancho de una columna de 220 px. Con dos opciones y una
+ * línea de ayuda cada una, esa columna quedaba casi entera vacía y le robaba
+ * ancho a la lista, que es lo que el usuario mira.
+ */
+function ModeTab({
     active,
     onClick,
     icon,
     label,
-    helper,
+    badge,
 }: {
     active: boolean;
     onClick: () => void;
     icon: React.ReactNode;
     label: string;
-    helper: string;
+    badge?: string;
 }) {
     return (
         <button
             type="button"
             onClick={onClick}
             aria-pressed={active}
-            className={[
-                'w-full text-left rounded-lg border px-3 py-2.5 transition-colors flex items-start gap-2.5',
+            className={cn(
+                'inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[13px] transition-colors',
                 active
-                    ? 'border-primary bg-primary/5 text-foreground shadow-sm'
-                    : 'border-transparent bg-transparent text-muted-foreground hover:bg-accent/40 hover:text-foreground',
-            ].join(' ')}
+                    ? 'border-primary bg-primary/5 font-semibold text-foreground'
+                    : 'border-transparent text-muted-foreground hover:bg-accent/40 hover:text-foreground',
+            )}
         >
-            <span className={[
-                'mt-0.5 shrink-0',
-                active ? 'text-primary' : 'text-muted-foreground',
-            ].join(' ')}>
-                {icon}
-            </span>
-            <span className="flex-1 min-w-0">
-                <span className="block text-[13px] font-semibold leading-tight">
-                    {label}
+            <span className={active ? 'text-primary' : 'text-muted-foreground'}>{icon}</span>
+            {label}
+            {badge && (
+                <span className="rounded-full bg-muted px-1.5 text-[10px] tabular-nums text-muted-foreground">
+                    {badge}
                 </span>
-                <span className="block text-[11px] text-muted-foreground mt-0.5 leading-tight">
-                    {helper}
-                </span>
-            </span>
+            )}
         </button>
     );
 }
