@@ -123,7 +123,10 @@ export function PagePickerDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-6xl p-0 gap-0 overflow-hidden">
+            {/* `sm:max-w-*` y no `max-w-*`: la base del diálogo trae `sm:max-w-lg` y
+                tailwind-merge conserva las dos si el override no lleva el mismo
+                prefijo — el diálogo queda en 510 px y los tres paneles se pisan. */}
+            <DialogContent className="sm:max-w-6xl p-0 gap-0 overflow-hidden">
                 <DialogHeader className="px-5 py-3 border-b border-border">
                     <DialogTitle className="text-base">{resourceTitle}</DialogTitle>
                     <DialogDescription>
