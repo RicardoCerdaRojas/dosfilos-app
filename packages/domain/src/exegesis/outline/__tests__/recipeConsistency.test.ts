@@ -10,7 +10,7 @@ function source(locations: string[], sheetRanges: SheetRange[] | null) {
     return {
         excerpts: locations.map(excerpt),
         excerptRecipe: sheetRanges
-            ? { sheetRanges, proposedRanges: [], passageFingerprint: 'v1|x|' }
+            ? { sheetRanges, proposedRanges: [], pinnedRanges: [], passageFingerprint: 'v1|x|' }
             : null,
     };
 }

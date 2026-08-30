@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
+import { Pin, PinOff, X } from 'lucide-react';
 import { printedPageFor, type PageIndexEntry, type SheetRange } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
 
@@ -25,6 +25,11 @@ interface Props {
     selectedChars: number;
     sheetCount: number;
     onRemoveRange: (range: SheetRange) => void;
+    /** Tramos marcados como «siempre incluir». */
+    pinnedRanges: ReadonlyArray<SheetRange>;
+    onTogglePinned: (range: SheetRange) => void;
+    /** Caracteres que ocupan los tramos fijados. */
+    pinnedChars: number;
     onConfirm: () => void;
     isSaving: boolean;
 }
@@ -37,6 +42,9 @@ export function SelectionCart({
     selectedChars,
     sheetCount,
     onRemoveRange,
+    pinnedRanges,
+    onTogglePinned,
+    pinnedChars,
     onConfirm,
     isSaving,
 }: Props) {
@@ -45,6 +53,10 @@ export function SelectionCart({
     const totalChars = selectedChars + otherSourcesChars;
     const percent = Math.round((totalChars / BUDGET_CHARS) * 100);
     const overBudget = totalChars > BUDGET_CHARS;
+
+    /** Un tramo está fijado cuando coincide exactamente con uno marcado. */
+    const isPinned = (range: SheetRange): boolean =>
+        pinnedRanges.some(p => p.start === range.start && p.end === range.end);
 
     const labelFor = (range: SheetRange): string => {
         const first = pages.find(p => p.sheet >= range.start && p.sheet <= range.end && !!p.section);
@@ -99,6 +111,24 @@ export function SelectionCart({
                             </span>
                             <button
                                 type="button"
+                                onClick={() => onTogglePinned(range)}
+                                aria-pressed={isPinned(range)}
+                                title={t('paperSetup.subSteps.corpus.picker.cart.pinHint')}
+                                aria-label={isPinned(range)
+                                    ? t('paperSetup.subSteps.corpus.picker.cart.unpin', { range: rangeLabel(range) })
+                                    : t('paperSetup.subSteps.corpus.picker.cart.pin', { range: rangeLabel(range) })}
+                                className={`shrink-0 rounded p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                                    isPinned(range)
+                                        ? 'text-info-subtle-foreground bg-info-subtle'
+                                        : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                                }`}
+                            >
+                                {isPinned(range)
+                                    ? <Pin className="h-3.5 w-3.5" aria-hidden="true" />
+                                    : <PinOff className="h-3.5 w-3.5" aria-hidden="true" />}
+                            </button>
+                            <button
+                                type="button"
                                 onClick={() => onRemoveRange(range)}
                                 aria-label={t('paperSetup.subSteps.corpus.picker.cart.remove', { range: rangeLabel(range) })}
                                 className="shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -135,6 +165,12 @@ export function SelectionCart({
                     <span>{t('paperSetup.subSteps.corpus.picker.cart.statSheets', { count: sheetCount })}</span>
                     <span>{t('paperSetup.subSteps.corpus.picker.cart.statChars', { count: selectedChars })}</span>
                 </div>
+
+                {pinnedChars > 0 && (
+                    <p className="text-[11px] text-info-subtle-foreground">
+                        {t('paperSetup.subSteps.corpus.picker.cart.pinnedChars', { count: pinnedChars })}
+                    </p>
+                )}
 
                 {otherSourcesChars > 0 && (
                     <p className="text-[11px] text-muted-foreground">

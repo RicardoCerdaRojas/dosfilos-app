@@ -807,6 +807,9 @@ function deserializeRecipe(raw: any): ProjectSource['excerptRecipe'] {
     return {
         sheetRanges,
         proposedRanges: ranges(raw.proposedRanges),
+        // Las recetas anteriores a los tramos fijados no traen el campo: sin
+        // fijados, todo compite en el ranking, que es el comportamiento previo.
+        pinnedRanges: ranges(raw.pinnedRanges),
         passageFingerprint: typeof raw.passageFingerprint === 'string' ? raw.passageFingerprint : '',
     };
 }
@@ -896,6 +899,7 @@ function serializeSource(source: ProjectSource): Serialized<ProjectSource> {
             ? {
                 sheetRanges: source.excerptRecipe.sheetRanges.map(r => ({ start: r.start, end: r.end })),
                 proposedRanges: source.excerptRecipe.proposedRanges.map(r => ({ start: r.start, end: r.end })),
+                pinnedRanges: source.excerptRecipe.pinnedRanges.map(r => ({ start: r.start, end: r.end })),
                 passageFingerprint: source.excerptRecipe.passageFingerprint,
             }
             : null,

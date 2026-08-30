@@ -1,5 +1,6 @@
 import {
     chunkRangesForSheets,
+    clipRangesTo,
     computeExtractionFingerprint,
     formatPassageReference,
     normalizeSheetRanges,
@@ -44,6 +45,8 @@ export interface SelectSourcePagesInput {
     sheetRanges: ReadonlyArray<SheetRange>;
     /** Lo que el sistema había propuesto, aceptado o no. */
     proposedRanges: ReadonlyArray<SheetRange>;
+    /** Tramos que entran a todos los pasos sin competir en el ranking. */
+    pinnedRanges?: ReadonlyArray<SheetRange>;
     /** Índice de hojas del documento, ya cargado por la interfaz. */
     pageIndex: ReadonlyArray<PageIndexEntry>;
     /**
@@ -136,6 +139,10 @@ export class SelectSourcePagesUseCase {
         const recipe: ExcerptRecipe = {
             sheetRanges,
             proposedRanges: normalizeSheetRanges(input.proposedRanges),
+            // Lo fijado se recorta a lo elegido: marcar una hoja y después
+            // quitarla del carrito dejaría al medidor contando material que la
+            // fuente ya no declara.
+            pinnedRanges: clipRangesTo(input.pinnedRanges ?? [], sheetRanges),
             passageFingerprint: computeExtractionFingerprint(passageRef, paper.assignmentBrief),
         };
 
