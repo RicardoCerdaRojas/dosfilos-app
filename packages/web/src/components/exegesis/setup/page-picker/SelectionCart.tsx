@@ -142,17 +142,27 @@ export function SelectionCart({
                     </p>
                 )}
 
+                {overBudget && (
+                    <p className="text-[11px] text-destructive">
+                        {t('paperSetup.subSteps.corpus.picker.cart.overBudgetHint')}
+                    </p>
+                )}
+
+                {/* Guardar NO se bloquea por presupuesto. La única forma de
+                    bajarlo es guardar una selección más chica, así que
+                    bloquearlo dejaba al usuario encerrado: no podía arreglar lo
+                    que el aviso le pedía arreglar. Y si las otras fuentes ya se
+                    pasan solas, esta fuente no se podría guardar nunca. */}
                 <Button
                     type="button"
                     className="w-full"
-                    disabled={sheetCount === 0 || overBudget || isSaving}
+                    variant={overBudget ? 'outline' : 'default'}
+                    disabled={sheetCount === 0 || isSaving}
                     onClick={onConfirm}
                 >
-                    {overBudget
-                        ? t('paperSetup.subSteps.corpus.picker.cart.overBudget')
-                        : isSaving
-                            ? t('paperSetup.subSteps.corpus.picker.cart.saving')
-                            : t('paperSetup.subSteps.corpus.picker.cart.confirm', { count: sheetCount })}
+                    {isSaving
+                        ? t('paperSetup.subSteps.corpus.picker.cart.saving')
+                        : t('paperSetup.subSteps.corpus.picker.cart.confirm', { count: sheetCount })}
                 </Button>
             </div>
         </div>

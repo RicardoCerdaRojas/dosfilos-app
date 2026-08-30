@@ -830,6 +830,7 @@
                         "statChars": "{{count}} characters",
                         "otherSources": "Other sources in this paper take {{count}} characters.",
                         "overBudget": "Over budget",
+                        "overBudgetHint": "The paper is over budget. You can still save, but before generating you need to drop sheets here or in another source.",
                         "saving": "Saving…",
                         "confirm_one": "Add {{count}} sheet to the paper",
                         "confirm_other": "Add {{count}} sheets to the paper"

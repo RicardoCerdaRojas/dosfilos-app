@@ -830,6 +830,7 @@
                         "statChars": "{{count}} caracteres",
                         "otherSources": "Otras fuentes del trabajo ocupan {{count}} caracteres.",
                         "overBudget": "Se pasa del presupuesto",
+                        "overBudgetHint": "El trabajo se pasa del presupuesto. Podés guardar igual, pero antes de generar hay que bajar hojas de esta fuente o de otra.",
                         "saving": "Guardando…",
                         "confirm_one": "Agregar {{count}} hoja al trabajo",
                         "confirm_other": "Agregar {{count}} hojas al trabajo"
