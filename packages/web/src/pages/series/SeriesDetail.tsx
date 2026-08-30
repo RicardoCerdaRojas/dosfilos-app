@@ -48,6 +48,7 @@ import { toast } from 'sonner';
 import { exegesisService, seriesService } from '@dosfilos/application';
 import {
     findBooksByAlias,
+    parsePassageReference,
     type ExegeticalPaperPhase,
     type PlannedSermon,
     type SermonSeriesEntity,
@@ -186,7 +187,7 @@ export function SeriesDetail() {
         if (!user?.uid || !series) return;
         setCreatingPaperFor(planned.id);
         try {
-            const passage = syntacticUnitToPassage(planned.syntacticUnit);
+            const passage = plannedPassage(planned);
             if (!passage) {
                 throw new Error(t('pericope.panel.toast.bookUnresolved') as string);
             }
@@ -888,6 +889,30 @@ function NextStepHint({
         return <>{t('detail.table.nextStep.markPreached')}</>;
     }
     return <>{t('detail.table.nextStep.startDraft')}</>;
+}
+
+/**
+ * El pasaje con el que se crea el paper de una perícopa.
+ *
+ * Manda `planned.passage` —la referencia de la perícopa, que es lo que el plan
+ * muestra y lo que el predicador va a predicar— y NO el `syntacticUnit`, que es
+ * una sub-unidad más chica producida por el asistente expositivo.
+ *
+ * Usar la sub-unidad venía recortando todos los papers de la serie. Medido en
+ * la serie de Jonás: la perícopa 1:4-16 abría un paper de 1:1-3; la 2:1-11, uno
+ * de 2:1; la 3:1-10, uno de 3:1-4; la 4:5-11, uno de 4:5-8. Solo coincidía la
+ * 4:1-4, por casualidad. El predicador abría el trabajo de la semana y se
+ * encontraba con los versículos de otra.
+ *
+ * El `syntacticUnit` queda de reserva: hay perícopas viejas sin `passage`
+ * guardado, y para esas sigue siendo lo mejor que hay.
+ */
+function plannedPassage(planned: PlannedSermon & { syntacticUnit: SyntacticUnit }) {
+    if (planned.passage) {
+        const parsed = parsePassageReference(planned.passage);
+        if (parsed.ok) return parsed.ref;
+    }
+    return syntacticUnitToPassage(planned.syntacticUnit);
 }
 
 function syntacticUnitToPassage(unit: SyntacticUnit) {
