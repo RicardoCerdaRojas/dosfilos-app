@@ -69,6 +69,7 @@ import { SourceTypePicker } from './SourceTypePicker';
 import { RubricGapCard } from './RubricGapCard';
 import { RubricRigorIndicator } from '@/components/exegesis/rubric/RubricRigorIndicator';
 import { ExtractFromLibraryDialog } from './ExtractFromLibraryDialog';
+import { SourceSelectionModeBadge } from './SourceSelectionModeBadge';
 import { PageBalanceHint } from './PageBalanceHint';
 import { FileDropzone } from '@/components/ui/file-dropzone';
 
@@ -1041,6 +1042,7 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
                                 {t('paperSetup.subSteps.corpus.list.excerptsBadge', { count: source.excerpts.length })}
                             </span>
                         )}
+                        {isExtracted && <SourceSelectionModeBadge mode={source.excerptSelectionMode} />}
                     </p>
                     {source.citationKey && (
                         <p className="text-[11px] text-muted-foreground">

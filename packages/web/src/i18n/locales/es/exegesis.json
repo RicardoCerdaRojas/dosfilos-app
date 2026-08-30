@@ -759,6 +759,12 @@
                     "extractCta": "Extraer de mi biblioteca",
                     "excerptsBadge_one": "{{count}} excerpt",
                     "excerptsBadge_other": "{{count}} excerpts",
+                    "selectionMode": {
+                        "structural": "Sección exacta",
+                        "semantic": "Coincidencia aproximada",
+                        "structuralHint": "Se tomó la sección del documento dedicada a este pasaje, completa y en orden.",
+                        "semanticHint": "El documento no trae encabezados por referencia, así que se trajeron los fragmentos más parecidos al pasaje. Conviene revisarlos antes de generar."
+                    },
                     "remove": "Quitar fuente",
                     "viewOriginal": "Abrir el PDF original en una pestaña nueva",
                     "groupEmpty": "Aún sin fuentes en este rol.",

@@ -759,6 +759,12 @@
                     "extractCta": "Extract from my library",
                     "excerptsBadge_one": "{{count}} excerpt",
                     "excerptsBadge_other": "{{count}} excerpts",
+                    "selectionMode": {
+                        "structural": "Exact section",
+                        "semantic": "Approximate match",
+                        "structuralHint": "The document's section for this passage was taken whole and in order.",
+                        "semanticHint": "This document has no reference headings, so the closest-matching fragments were pulled instead. Worth reviewing before generating."
+                    },
                     "remove": "Remove source",
                     "viewOriginal": "Open the original PDF in a new tab",
                     "groupEmpty": "No sources in this role yet.",
