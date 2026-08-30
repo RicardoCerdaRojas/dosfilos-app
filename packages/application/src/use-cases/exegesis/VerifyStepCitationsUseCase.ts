@@ -4,6 +4,7 @@ import type {
     ExegeticalStep,
     ExegeticalStepVersion,
     ICitationVerifier,
+    ICuratedCorpusReader,
     IExegeticalPaperRepository,
     IResourceContentReader,
     ProjectSource,
@@ -60,6 +61,14 @@ export class VerifyStepCitationsUseCase {
         private paperRepository: IExegeticalPaperRepository,
         private contentReader: IResourceContentReader,
         private verifier: ICitationVerifier,
+        /**
+         * Cuando está cableado, las fuentes con receta aportan como evidencia
+         * las hojas que el trabajo admitió, con su página. Sin él la
+         * verificación sigue siendo correcta —el texto completo entra como
+         * respaldo— pero deja de detectar que una cita apunta a la página
+         * equivocada, que es justo lo que este verificador aporta de más.
+         */
+        private corpusReader?: ICuratedCorpusReader,
     ) { }
 
     async execute(input: VerifyStepCitationsInput): Promise<VerifyStepCitationsOutput> {
@@ -123,7 +132,55 @@ export class VerifyStepCitationsUseCase {
         return out;
     }
 
+    /**
+     * Evidencia de una fuente con receta: las hojas admitidas, con su página,
+     * más el texto completo como respaldo sin pista.
+     *
+     * Devuelve `null` cuando la fuente no tiene receta o no hay lector
+     * cableado, para que el llamador siga por el camino anterior. Un fallo de
+     * lectura también devuelve `null`: verificar con evidencia vieja es mejor
+     * que no verificar.
+     */
+    private async readAdmitted(source: ProjectSource): Promise<VerifierSourceChunk[] | null> {
+        const ranges = source.excerptRecipe?.sheetRanges;
+        if (!this.corpusReader || !ranges || ranges.length === 0) return null;
+        const resourceId = source.sourceLibraryResourceId ?? source.corpusId;
+
+        try {
+            const chunks = await this.corpusReader.readAdmitted({ resourceId, sheetRanges: ranges });
+            if (chunks.length === 0) return null;
+
+            const out = chunks
+                .filter(c => c.text.trim().length > 0)
+                .map<VerifierSourceChunk>(c => ({
+                    text: c.text,
+                    pageHint: c.sheet ? `p. ${c.sheet}` : null,
+                }));
+
+            // Mismo respaldo que el camino anterior: una cita a material fuera
+            // de lo curado no debe volver como "no encontrada" solo porque el
+            // usuario no eligió esa página para escribir.
+            const fullText = await this.contentReader.getTextContent(resourceId);
+            if (fullText && fullText.trim().length > 0) {
+                out.push({ text: fullText, pageHint: null });
+            }
+            return out;
+        } catch (err) {
+            console.warn('[VerifyStepCitations] no se pudo leer lo admitido; se usa lo guardado', {
+                resourceId,
+                error: (err as Error).message,
+            });
+            return null;
+        }
+    }
+
     private async buildChunks(source: ProjectSource): Promise<VerifierSourceChunk[]> {
+        // Fuentes con receta: la evidencia con página son las hojas admitidas,
+        // no los `excerpts` —que a partir del corpus consultable ya no son lo
+        // que el paso recibió, y en algún momento dejan de guardarse.
+        const admitted = await this.readAdmitted(source);
+        if (admitted) return admitted;
+
         if (source.mode === 'extracted-excerpts') {
             const excerptChunks = source.excerpts
                 .map<VerifierSourceChunk>(excerpt => ({

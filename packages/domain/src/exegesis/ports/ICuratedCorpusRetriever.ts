@@ -67,3 +67,20 @@ export interface CuratedCorpusResult {
     /** Fuentes consultadas que no aportaron nada para este versículo. */
     emptySources: ReadonlyArray<string>;
 }
+
+/**
+ * Lee, completo y sin rankear, el material que una fuente admite.
+ *
+ * Lo usa el verificador de citas. Necesita evidencia CON pista de página para
+ * detectar que una cita apunta a la página equivocada, y esa evidencia
+ * desaparece cuando la fuente deja de guardar sus `excerpts`: sin este puerto
+ * la verificación seguiría siendo correcta —hay un respaldo con el texto
+ * completo— pero perdería la detección de página en silencio, que es la clase
+ * de degradación más difícil de notar.
+ */
+export interface ICuratedCorpusReader {
+    readAdmitted(input: {
+        resourceId: string;
+        sheetRanges: ReadonlyArray<SheetRange>;
+    }): Promise<ReadonlyArray<CorpusChunk>>;
+}

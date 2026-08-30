@@ -30,6 +30,7 @@ import {
     StructuralExcerptExtractor,
     CallableDocumentChunkReader,
     CallableCuratedCorpusRetriever,
+    CallableCuratedCorpusReader,
     RetrieveChunksResourceRanker,
     GeminiStepCorpusPlanner,
     MorphhbOriginalLanguageProvider,
@@ -443,6 +444,9 @@ class ExegesisService {
             paperRepository,
             contentReader,
             citationVerifier,
+            // Evidencia con página para las fuentes con receta: sin esto la
+            // detección de página equivocada se apaga en silencio.
+            new CallableCuratedCorpusReader(),
         );
 
         // Coherence reviewer — single Gemini call over the entire
