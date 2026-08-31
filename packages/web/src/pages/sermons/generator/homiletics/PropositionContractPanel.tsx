@@ -137,11 +137,21 @@ export function PropositionContractPanel({ homiletics, genre, sermonPassage, onA
      * mantiene — que es exactamente cómo la referencia acabó apuntando a un
      * bosquejo que él ya había reemplazado.
      */
-    const deducido = (i: number, title: string) =>
+    /**
+     * `srcIndex` y NO la posición: leer `mainPoints[i]` daba el punto original
+     * equivocado apenas el pastor borraba uno del medio —la lista local se
+     * corre, la original no— que es exactamente la corrupción silenciosa contra
+     * la que existe `srcIndex`. Se veía sólo en el marcador del pasaje, así que
+     * nadie lo notaba.
+     */
+    const deducido = (srcIndex: number | null, title: string) =>
         pointPassageRef({
             title,
             sermonPassage,
-            scriptureReferences: homiletics.outline?.mainPoints?.[i]?.scriptureReferences,
+            scriptureReferences:
+                srcIndex !== null
+                    ? homiletics.outline?.mainPoints?.[srcIndex]?.scriptureReferences
+                    : undefined,
         });
 
     return (
@@ -220,7 +230,7 @@ export function PropositionContractPanel({ homiletics, genre, sermonPassage, onA
                                 value={p.passageRef}
                                 onChange={(e) => setPassageRef(i, e.target.value)}
                                 placeholder={
-                                    deducido(i, p.title)
+                                    deducido(p.srcIndex, p.title)
                                     ?? t('homiletics.contract.passageRefPlaceholder')
                                 }
                                 aria-label={t('homiletics.contract.passageRefLabel', { n: i + 1 })}

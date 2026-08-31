@@ -58,7 +58,17 @@ export function applyPropositionContract(
         // y su borrado no tendría efecto.
         const base = src ? { ...src } : { title: p.title, description: '', scriptureReferences: [] };
         if (!ref) delete (base as { passageRef?: string }).passageRef;
-        return { ...base, title: p.title, ...app, ...passage };
+        // La descripción la escribió el agente para el título y el pasaje que
+        // el punto tenía. Si el pastor cambió cualquiera de los dos, sigue
+        // describiendo el punto anterior: se marca para que la pantalla pueda
+        // decirlo. No se borra —perdería trabajo por corregir una coma— ni se
+        // regenera sola. Ver `descriptionStale` en la entidad.
+        const changed = src !== undefined
+            && (src.title !== p.title || (src.passageRef ?? '') !== ref);
+        const stale = changed && (base.description ?? '').trim() !== ''
+            ? { descriptionStale: true }
+            : {};
+        return { ...base, title: p.title, ...app, ...passage, ...stale };
     });
     return {
         ...homiletics,

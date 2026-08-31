@@ -262,6 +262,24 @@ export interface SermonOutline {
             emphasis?: string;
             exegeticalNotes?: string[];
         };
+        /**
+         * La descripción ya no corresponde al punto que el pastor definió.
+         *
+         * La redacta el agente para un título y un pasaje dados. Cuando el
+         * pastor cambia cualquiera de los dos, el texto sigue describiendo el
+         * punto ANTERIOR — y nada en pantalla lo delata. Caso real: un punto
+         * quedó en "Jonás 1:16" con una descripción que narraba el versículo
+         * 13, y el pastor la leyó como si el sistema le hubiera pegado la
+         * descripción del punto vecino.
+         *
+         * Se MARCA, no se borra ni se regenera sola: borrarla perdería trabajo
+         * por corregir una coma del título, y regenerarla gastaría tokens en
+         * cada tecleo y pisaría los ajustes hechos a mano. El pastor decide.
+         *
+         * La marca la pone `applyPropositionContract` y la levanta cualquier
+         * reescritura de `description`.
+         */
+        descriptionStale?: boolean;
     }[];
 }
 
