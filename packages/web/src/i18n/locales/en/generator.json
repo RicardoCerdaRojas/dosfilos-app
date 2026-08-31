@@ -285,6 +285,7 @@
     "directive": {
       "noPoints": "No outline points yet.",
       "intro": "What you write here is yours: the assistant never rewrites it, and the draft treats it as an instruction.",
+      "staleDescription": "This description was written for this point's previous passage. Ask the assistant to rewrite it if it no longer fits.",
       "emphasisLabel": "Emphasis — the angle of this point",
       "emphasisPlaceholder": "e.g. God speaks, but his word is not without purpose: he speaks to direct his people.",
       "notesLabel": "Must appear in the exposition",

@@ -162,7 +162,7 @@ function buildHomileticsStub(
         homileticalApproach: mapToneToApproach(tone),
         homileticalProposition: transformerOutput.title,
         contemporaryApplication: [],
-        outline: extractOutlineFromMarkdown(transformerOutput.content, transformerOutput.bibleReferences),
+        outline: extractOutlineFromMarkdown(transformerOutput.content),
     };
 }
 
@@ -192,14 +192,11 @@ function mapToneToApproach(tone: PaperToSermonTone): HomileticalAnalysis['homile
  * list. Each heading becomes a main point; description is the first
  * paragraph under it (truncated for the outline preview).
  *
- * Scripture references are inherited from the transformer's
- * `bibleReferences` list — the paper-to-sermon prompt enforces
- * scripture-only citations so the references are reliable.
+ * Los puntos nacen SIN referencias de apoyo. El paper no tiene señal por
+ * punto: su prosa cita narrativamente, así que no hay nada que repartir. Ver
+ * el comentario en `scriptureReferences`.
  */
-function extractOutlineFromMarkdown(
-    markdown: string,
-    bibleReferences: string[],
-): SermonOutline {
+function extractOutlineFromMarkdown(markdown: string): SermonOutline {
     const sections = splitOnLevel2Headings(markdown);
     // Skip introduction (first chunk before any heading) + conclusion
     // (last section if its heading contains "conclusión"/"conclusion").
@@ -208,7 +205,20 @@ function extractOutlineFromMarkdown(
         mainPoints: bodySections.map(s => ({
             title: s.heading,
             description: truncate(s.body, 280),
-            scriptureReferences: bibleReferences,
+            // VACÍO A PROPÓSITO. Acá viajaba `bibleReferences`, la lista del
+            // DOCUMENTO, idéntica en todos los puntos: ocho chips iguales por
+            // tarjeta que la UI presenta como referencias DE ESE punto. No era
+            // un mapeo defectuoso — el paper no tiene señal por punto que
+            // mapear. Su prosa cita narrativamente ("el versículo 13", ADR-031),
+            // así que no hay referencias formales que repartir, y medido sobre
+            // el caso real ninguna de las ocho aparece en el cuerpo de ninguna
+            // sección.
+            //
+            // Ningún chip es mejor que ocho que afirman algo falso. La lista del
+            // documento sigue viva en el sermón, que es su nivel verdadero. Los
+            // bosquejos que genera el modelo sí traen 2-3 propias por punto y no
+            // pasan por acá.
+            scriptureReferences: [],
         })),
     };
 }

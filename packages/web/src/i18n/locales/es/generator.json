@@ -285,6 +285,7 @@
     "directive": {
       "noPoints": "Todavía no hay puntos en el bosquejo.",
       "intro": "Lo que escribas aquí es tuyo: el asistente no lo reescribe, y el borrador lo respeta como instrucción.",
+      "staleDescription": "Esta descripción se escribió para el pasaje anterior de este punto. Pídele al asistente que la reescriba si ya no corresponde.",
       "emphasisLabel": "Énfasis — el ángulo de este punto",
       "emphasisPlaceholder": "Ej.: Dios habla, pero su palabra no es sin propósito: habla para dirigir a su pueblo. Contra la idea de que Dios existe pero no se comunica conmigo.",
       "notesLabel": "Debe aparecer en la exposición",

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Save, Trash2 } from 'lucide-react';
+import { AlertTriangle, Plus, Save, Trash2 } from 'lucide-react';
 import { BibleLinkedText } from '@/components/bible/BibleLinkedText';
 import { normalizePastorDirective, type HomileticalAnalysis, type PastorDirective } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
@@ -112,6 +112,16 @@ export function OutlineDirectivePanel({ homiletics, onApply }: Props) {
                                 text={point.description}
                                 className="mt-1 block text-xs text-muted-foreground"
                             />
+                        )}
+                        {/* La descripción quedó describiendo el punto anterior.
+                            Se avisa y se deja leer: borrarla perdería trabajo y
+                            regenerarla sola gastaría tokens y pisaría lo que el
+                            pastor ajustó a mano. Él decide, por chat. */}
+                        {point.descriptionStale && (
+                            <p className="mt-1.5 flex items-start gap-1.5 text-[11px] text-warning">
+                                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                                <span>{t('homiletics.directive.staleDescription')}</span>
+                            </p>
                         )}
                         {point.scriptureReferences && point.scriptureReferences.length > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-1.5">

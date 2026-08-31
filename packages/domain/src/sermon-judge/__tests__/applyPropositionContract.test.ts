@@ -88,3 +88,88 @@ describe('applyPropositionContract', () => {
         expect(out.outline!.mainPoints).toHaveLength(1);
     });
 });
+
+/**
+ * La descripción la escribe el agente para un título y un pasaje dados. Cuando
+ * el pastor cambia cualquiera de los dos, sigue describiendo el punto anterior.
+ *
+ * El caso real (2026-08-30): un punto quedó en "Jonás 1:16" con una descripción
+ * que narraba el versículo 13, y el pastor la leyó como si el sistema le hubiera
+ * pegado la descripción del punto vecino. No estaba mal mapeada — estaba vieja,
+ * y nada en pantalla lo decía.
+ */
+describe('applyPropositionContract — descripción desactualizada', () => {
+    it('cambiar el PASAJE de un punto marca su descripción', () => {
+        const out = applyPropositionContract(base, {
+            proposition: base.homileticalProposition!,
+            points: [
+                { title: 'I. Uno', srcIndex: 0, passageRef: 'Jonás 1:16' },
+                p('II. Dos', 1),
+                p('III. Tres', 2),
+            ],
+        });
+        expect(out.outline!.mainPoints[0]!.descriptionStale).toBe(true);
+        // Se marca, NO se borra: el texto sigue disponible para leer y editar.
+        expect(out.outline!.mainPoints[0]!.description).toBe('desc uno');
+    });
+
+    it('cambiar el TÍTULO también la marca', () => {
+        const out = applyPropositionContract(base, {
+            proposition: base.homileticalProposition!,
+            points: [p('I. Otro título', 0), p('II. Dos', 1), p('III. Tres', 2)],
+        });
+        expect(out.outline!.mainPoints[0]!.descriptionStale).toBe(true);
+    });
+
+    it('NO marca los puntos que el pastor no tocó', () => {
+        const out = applyPropositionContract(base, {
+            proposition: base.homileticalProposition!,
+            points: [p('I. Otro título', 0), p('II. Dos', 1), p('III. Tres', 2)],
+        });
+        expect(out.outline!.mainPoints[1]!.descriptionStale).toBeUndefined();
+        expect(out.outline!.mainPoints[2]!.descriptionStale).toBeUndefined();
+    });
+
+    it('editar sólo la aplicación no marca nada — no toca lo que la descripción describe', () => {
+        const out = applyPropositionContract(base, {
+            proposition: base.homileticalProposition!,
+            points: [
+                { title: 'I. Uno', srcIndex: 0, application: 'una aplicación nueva' },
+                p('II. Dos', 1),
+                p('III. Tres', 2),
+            ],
+        });
+        expect(out.outline!.mainPoints[0]!.descriptionStale).toBeUndefined();
+    });
+
+    it('un punto NUEVO no nace marcado: no tiene descripción que envejecer', () => {
+        const out = applyPropositionContract(base, {
+            proposition: base.homileticalProposition!,
+            points: [p('I. Uno', 0), p('II. Dos', 1), p('III. Tres', 2), p('IV. Nuevo', null)],
+        });
+        expect(out.outline!.mainPoints[3]!.descriptionStale).toBeUndefined();
+        expect(out.outline!.mainPoints[3]!.description).toBe('');
+    });
+
+    it('un punto SIN descripción no se marca aunque cambie de pasaje', () => {
+        const sinDesc = {
+            outline: { mainPoints: [{ title: 'I. Uno', description: '', scriptureReferences: [] }] },
+        } as unknown as HomileticalAnalysis;
+        const out = applyPropositionContract(sinDesc, {
+            proposition: 'x',
+            points: [{ title: 'I. Uno', srcIndex: 0, passageRef: 'Jonás 1:16' }],
+        });
+        expect(out.outline!.mainPoints[0]!.descriptionStale).toBeUndefined();
+    });
+
+    it('BORRAR EL PUNTO DEL MEDIO no marca a los que sólo se corrieron de lugar', () => {
+        // El punto que queda tercero era el tercero: su contenido sigue siendo
+        // suyo. Marcarlo por haber cambiado de posición sería una falsa alarma.
+        const out = applyPropositionContract(base, {
+            proposition: base.homileticalProposition!,
+            points: [p('I. Uno', 0), p('III. Tres', 2)],
+        });
+        expect(out.outline!.mainPoints[1]!.description).toBe('desc tres');
+        expect(out.outline!.mainPoints[1]!.descriptionStale).toBeUndefined();
+    });
+});
