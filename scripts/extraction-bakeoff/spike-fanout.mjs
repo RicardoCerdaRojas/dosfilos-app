@@ -282,9 +282,23 @@ if (args.baseline && failed.length) {
         line(`   griego  cosido ${a.greekLetters} vs referencia ${b.greekLetters}  (${pct(a.greekLetters, b.greekLetters)})`);
         line(`   hebreo  cosido ${a.hebrewConsonants} vs referencia ${b.hebrewConsonants}  (${pct(a.hebrewConsonants, b.hebrewConsonants)})`);
         const ratio = stitched.length / Math.max(1, base.markdown.length);
-        line(ratio >= 0.97
-            ? '   ✓ coser no pierde contenido apreciable en los bordes'
-            : `   ⚠ el cosido tiene ${Math.round((1 - ratio) * 100)}% menos texto — revisar los bordes`);
+        if (base.truncated) {
+            // La referencia se cortó, así que no es referencia de nada. El
+            // cosido salió con MÁS texto que ella y el chequeo de proporción
+            // lo leyó como "los bordes están bien" — cuando lo que muestra es
+            // que una sola pasada NO alcanza para este rango. Ese sí es un
+            // resultado, pero es otro.
+            line('   ✗ BORDES NO VALIDADOS: la referencia salió TRUNCADA.');
+            line(`     El cosido tiene ${Math.round(ratio * 100)}% de ella, o sea MÁS — comparar contra`);
+            line('     una referencia incompleta no dice nada sobre las uniones.');
+            line('     Sí demuestra otra cosa: una sola pasada no alcanza para este rango,');
+            line('     que es exactamente la razón de existir del fan-out.');
+            line('     Para validar bordes: baja --pages a un rango que quepa de una pasada.');
+        } else {
+            line(ratio >= 0.97
+                ? '   ✓ coser no pierde contenido apreciable en los bordes'
+                : `   ⚠ el cosido tiene ${Math.round((1 - ratio) * 100)}% menos texto — revisar los bordes`);
+        }
         report.boundaries = {
             baselineChars: base.markdown.length, stitchedChars: stitched.length,
             baselineTruncated: !!base.truncated,
