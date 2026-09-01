@@ -47,7 +47,9 @@
     "mobile:ios": "npm run ios --workspace=packages/mobile",
     "mobile:web": "npm run web --workspace=packages/mobile",
     "test:root": "vitest run",
-    "postinstall": "node scripts/dedupe-nested-react.js && node scripts/dedupe-nested-firebase.js"
+    "postinstall": "node scripts/dedupe-nested-react.js && node scripts/dedupe-nested-firebase.js",
+    "bakeoff": "node scripts/extraction-bakeoff/run.mjs",
+    "bakeoff:test": "vitest run scripts/extraction-bakeoff"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",

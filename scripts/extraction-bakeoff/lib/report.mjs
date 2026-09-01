@@ -1,0 +1,314 @@
+/**
+ * Report rendering.
+ *
+ * Two artefacts on purpose, because they answer different questions:
+ *
+ *   informe.md   — the numbers. Ranks engines, states thresholds, and is
+ *                  diffable, so a second run months later can be compared
+ *                  against this one.
+ *
+ *   comparar.html — the same Greek and Hebrew passage from every engine,
+ *                  side by side, at a font size where a missing breathing is
+ *                  actually visible. No metric replaces this for a product
+ *                  whose promise is citation fidelity: the numbers narrow
+ *                  the field, a human confirms the winner.
+ */
+
+import { scriptDensityByPage } from './metrics.mjs';
+
+const PAGE_SPLIT = /<!--\s*page:\s*(\d+)\s*-->/g;
+
+// ── Markdown ───────────────────────────────────────────────────────────────
+
+export function renderMarkdown(run) {
+    const { doc, results, generatedAt } = run;
+    const lines = [];
+
+    lines.push(`# Banco de pruebas de extracción — ${doc.title}`);
+    lines.push('');
+    lines.push(`Generado: ${generatedAt}`);
+    lines.push('');
+    lines.push(`- **Documento**: ${doc.title}`);
+    if (doc.resourceId) lines.push(`- **Recurso**: \`${doc.resourceId}\``);
+    lines.push(`- **Páginas evaluadas**: ${doc.slicePages} (páginas ${doc.originalRange[0]}–${doc.originalRange[1]} de ${doc.originalTotal})`);
+    lines.push(`- **Se espera griego**: ${doc.expectGreek ? 'sí' : 'no'} · **hebreo**: ${doc.expectHebrew ? 'sí' : 'no'}`);
+    lines.push(`- **El PDF trae texto embebido**: ${doc.hasEmbeddedText ? 'sí' : 'NO (escaneado)'}`);
+    lines.push('');
+
+    if (!doc.hasEmbeddedText) {
+        lines.push('> El PDF no trae texto embebido, así que `pdftotext` no da referencia y la');
+        lines.push('> métrica de novedad no significa nada acá: en un escaneado el motor honesto');
+        lines.push('> es el ÚNICO con texto y por eso puntúa 100% novedoso. Este es justo el caso');
+        lines.push('> que el tier Premium promete resolver.');
+        lines.push('');
+    }
+
+    const ran = results.filter(r => !r.skipped);
+    const skipped = results.filter(r => r.skipped);
+
+    // ── Verdicts first: this is what the reader came for.
+    lines.push('## Veredicto');
+    lines.push('');
+    lines.push('| Motor | Estado | Motivo |');
+    lines.push('|---|---|---|');
+    for (const r of ran) {
+        const notes = r.verdict.notes.length ? r.verdict.notes.join('; ') : '—';
+        lines.push(`| ${r.label} | **${r.verdict.status}** | ${notes} |`);
+    }
+    for (const r of skipped) {
+        lines.push(`| ${r.label} | NO EJECUTADO | ${r.reason} |`);
+    }
+    lines.push('');
+    lines.push('`INSPECCIONAR` no es aprobado: significa que pasó los filtros mecánicos y ahora');
+    lines.push('un humano tiene que mirar `comparar.html`. Para un producto que promete citas');
+    lines.push('verificables, esa mirada es obligatoria antes de adoptar cualquier motor.');
+    lines.push('');
+
+    // ── Script fidelity: the premium tier's reason to exist.
+    lines.push('## Fidelidad de escritura');
+    lines.push('');
+    lines.push('| Motor | Letras griegas | Ratio diacrítico | Consonantes hebreas | Ratio niqqud | Cantilación | � | Marcas huérfanas |');
+    lines.push('|---|---:|---:|---:|---:|---:|---:|---:|');
+    for (const r of ran) {
+        const s = r.metrics.script;
+        lines.push(
+            `| ${r.label} | ${s.greekLetters} | ${fmt(s.greekDiacriticRatio)} | ${s.hebrewConsonants} `
+            + `| ${fmt(s.niqqudRatio)} | ${s.cantillation} | ${s.replacementChars} | ${s.orphanCombining} |`,
+        );
+    }
+    lines.push('');
+    lines.push('**Cómo leer el ratio diacrítico.** Es la métrica que decide el tier Premium.');
+    lines.push('Griego politónico corrido (NA28/SBLGNT) cae entre 0,35 y 0,60. Un ratio cerca de');
+    lines.push('cero CON muchas letras griegas es la firma de un motor que reconoció las letras y');
+    lines.push('tiró los espíritus y acentos a la basura. Ese texto es inservible para exégesis y');
+    lines.push('un word-error-rate no lo detecta, porque todas las letras siguen ahí.');
+    lines.push('');
+    lines.push('Lo mismo para el hebreo: puntuado (BHS) va de 0,6 a 1,0 en niqqud. Cero significa');
+    lines.push('texto consonantal — legible para un hebraísta, inútil para un pastor.');
+    lines.push('');
+
+    // ── Page integrity: the citation anchor.
+    lines.push('## Integridad de páginas');
+    lines.push('');
+    lines.push('| Motor | Páginas emitidas | Esperadas | Faltantes | Duplicadas | Ascendentes | Vacías |');
+    lines.push('|---|---:|---:|---|---|---|---|');
+    for (const r of ran) {
+        const p = r.metrics.page;
+        lines.push(
+            `| ${r.label} | ${p.uniquePages} | ${p.expectedPages ?? '—'} `
+            + `| ${p.missingPages.length ? p.missingPages.slice(0, 6).join(', ') : '—'} `
+            + `| ${p.duplicated ? 'SÍ' : 'no'} | ${p.ascending ? 'sí' : 'NO'} `
+            + `| ${p.emptyPages.length ? p.emptyPages.join(', ') : '—'} |`,
+        );
+    }
+    lines.push('');
+    lines.push('Una página que el motor nunca emitió es contenido que desaparece del índice en');
+    lines.push('silencio. Un marcador duplicado o fuera de orden rompe el ancla de la cita para');
+    lines.push('todo lo que viene después — y una cita que apunta a la página equivocada es peor');
+    lines.push('que no tener cita, porque parece verificable.');
+    lines.push('');
+
+    // ── Structure.
+    lines.push('## Estructura recuperada');
+    lines.push('');
+    lines.push('| Motor | Encabezados | Tablas | Filas de tabla | Saltos de nivel | Caracteres |');
+    lines.push('|---|---:|---:|---:|---:|---:|');
+    for (const r of ran) {
+        const s = r.metrics.structure;
+        lines.push(`| ${r.label} | ${s.headings} | ${s.tables} | ${s.tableRows} | ${s.headingLevelJumps} | ${r.metrics.chars} |`);
+    }
+    lines.push('');
+    lines.push('Las tablas importan más de lo que parece acá: una entrada de léxico y un aparato');
+    lines.push('crítico suelen SER tablas, y un motor que las aplana en prosa destruye la');
+    lines.push('alineación entre lema y glosa sin perder un solo carácter.');
+    lines.push('');
+
+    // ── Novelty, gated.
+    if (doc.hasEmbeddedText) {
+        lines.push('## Texto que ningún otro motor produjo');
+        lines.push('');
+        lines.push('| Motor | Ratio de novedad |');
+        lines.push('|---|---:|');
+        for (const r of ran) lines.push(`| ${r.label} | ${fmt(r.metrics.novelty.novelRatio)} |`);
+        lines.push('');
+        lines.push('Este PDF trae texto embebido, así que todos los motores leyeron la misma fuente');
+        lines.push('y deberían coincidir. Un motor con novedad alta acá está aportando material que');
+        lines.push('los demás no vieron. Podría ser mejor reconstrucción de layout — o podría ser el');
+        lines.push('modelo "corrigiendo" el texto. Revisa las muestras en `novedad.txt` antes de');
+        lines.push('celebrar: un OCR por LLM que mejora la redacción del autor es inaceptable acá.');
+        lines.push('');
+    }
+
+    // ── Page drift vs the reference.
+    const withDrift = ran.filter(r => r.metrics.drift);
+    if (withDrift.length) {
+        lines.push('## Corrimiento de página contra la referencia');
+        lines.push('');
+        lines.push('| Motor | Páginas comparadas | Coincidencia | Desacuerdos |');
+        lines.push('|---|---:|---:|---|');
+        for (const r of withDrift) {
+            const d = r.metrics.drift;
+            const worst = d.disagreements.slice(0, 5).map(x => x.page).join(', ') || '—';
+            lines.push(`| ${r.label} | ${d.comparedPages} | ${fmt(d.agreementRatio)} | ${worst} |`);
+        }
+        lines.push('');
+        lines.push('Compara en qué páginas cada motor encontró griego o hebreo. Si un motor pone el');
+        lines.push('aparato griego en la página 40 y la referencia en la 41, uno de los dos corrió la');
+        lines.push('numeración — y ese error produce citas plausibles que apuntan al lugar equivocado.');
+        lines.push('');
+    }
+
+    // ── Cost and latency.
+    lines.push('## Costo y latencia');
+    lines.push('');
+    lines.push('| Motor | Unidades | Unidad | Segundos |');
+    lines.push('|---|---:|---|---:|');
+    for (const r of ran) {
+        lines.push(`| ${r.label} | ${r.costUnits ?? '—'} | ${r.costNote} | ${(r.elapsedMs / 1000).toFixed(1)} |`);
+    }
+    lines.push('');
+    lines.push('Las unidades NO son comparables entre sí: LlamaParse cobra créditos, Mistral cobra');
+    lines.push('páginas y Gemini cobra tokens. Para comparar dinero, multiplica cada una por tu');
+    lines.push('tarifa vigente — y verifícala hoy, que los precios de estos servicios se mueven.');
+    lines.push('');
+
+    lines.push('---');
+    lines.push('');
+    lines.push('## Qué hacer con esto');
+    lines.push('');
+    lines.push('1. Abre `comparar.html` y mira el mismo pasaje griego en cada motor. Busca espíritus');
+    lines.push('   (ἁ/ἀ), acentos y iota suscrita. Un motor puede ganar en números y perder acá.');
+    lines.push('2. Repite con un documento de cada clase: escaneado, aparato crítico, léxico. Un');
+    lines.push('   motor que gana en texto embebido puede hundirse en un escaneado.');
+    lines.push('3. Recién entonces decide, y decide por clase de documento: nada obliga a usar el');
+    lines.push('   mismo motor para todo.');
+    lines.push('');
+
+    return lines.join('\n');
+}
+
+function fmt(n) {
+    if (n === null || n === undefined) return '—';
+    return Number(n).toFixed(3);
+}
+
+// ── HTML side-by-side ──────────────────────────────────────────────────────
+
+/**
+ * Picks the pages with the densest Greek and Hebrew across all engines and
+ * renders every engine's version of those pages next to each other.
+ *
+ * Uses a large serif face with generous line height because the whole point
+ * is to see a breathing mark. At 13px in a monospace grid the difference
+ * between ἁ and ἀ is invisible, which would defeat the exercise.
+ */
+export function renderHtml(run, { probes = [], topPages = 3 } = {}) {
+    const { doc, results } = run;
+    const ran = results.filter(r => !r.skipped);
+
+    const interesting = pickScriptDensePages(ran, topPages);
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    const sections = [];
+
+    for (const page of interesting) {
+        sections.push(`<h2>Página ${page} <span class="sub">(del recorte; original ${doc.originalRange[0] + page - 1})</span></h2>`);
+        sections.push('<div class="grid">');
+        for (const r of ran) {
+            const body = pageBody(r.markdown, page);
+            const s = r.metrics.script;
+            sections.push(`
+                <section>
+                  <header>
+                    <strong>${esc(r.label)}</strong>
+                    <span class="badge ${r.verdict.status === 'NO APTO' ? 'bad' : 'ok'}">${esc(r.verdict.status)}</span>
+                    <span class="sub">diacrítico ${fmt(s.greekDiacriticRatio)} · niqqud ${fmt(s.niqqudRatio)}</span>
+                  </header>
+                  <pre>${esc(body || '(sin contenido para esta página)')}</pre>
+                </section>`);
+        }
+        sections.push('</div>');
+    }
+
+    for (const probe of probes) {
+        sections.push(`<h2>Sonda: <code>${esc(probe)}</code></h2>`);
+        sections.push('<div class="grid">');
+        for (const r of ran) {
+            const hit = findContext(r.markdown, probe);
+            sections.push(`
+                <section>
+                  <header><strong>${esc(r.label)}</strong></header>
+                  <pre>${hit ? esc(hit) : '<span class="miss">NO ENCONTRADO</span>'}</pre>
+                </section>`);
+        }
+        sections.push('</div>');
+    }
+
+    return `<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<title>Comparación de extractores — ${esc(doc.title)}</title>
+<style>
+  :root { color-scheme: light dark; --bg:#fff; --fg:#111; --mut:#666; --line:#ddd; --card:#fafafa; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#15171a; --fg:#e8e8e8; --mut:#9aa0a6; --line:#2c3034; --card:#1b1e22; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0; padding:28px 32px;
+         font:15px/1.6 -apple-system, system-ui, sans-serif; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  h2 { font-size:17px; margin:34px 0 12px; border-top:1px solid var(--line); padding-top:18px; }
+  .sub { color:var(--mut); font-weight:400; font-size:13px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(380px,1fr)); gap:16px; }
+  section { border:1px solid var(--line); border-radius:10px; background:var(--card); overflow:hidden; }
+  header { padding:10px 14px; border-bottom:1px solid var(--line);
+           display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
+  .badge { font-size:11px; padding:2px 8px; border-radius:99px; letter-spacing:.04em; }
+  .badge.ok  { background:#1a7f371f; color:#1a7f37; }
+  .badge.bad { background:#cf222e1f; color:#cf222e; }
+  .miss { color:#cf222e; }
+  /* Serif, grande y con aire: acá se tiene que VER un espíritu áspero. */
+  pre { margin:0; padding:14px; white-space:pre-wrap; word-break:break-word;
+        font-family:"New Athena Unicode","SBL BibLit","SBL Greek","Cardo","Gentium Plus",
+                    "Times New Roman", serif;
+        font-size:17px; line-height:1.85; max-height:520px; overflow:auto; }
+</style></head>
+<body>
+<h1>Comparación de extractores</h1>
+<p class="sub">${esc(doc.title)} · páginas ${doc.originalRange[0]}–${doc.originalRange[1]} de ${doc.originalTotal}</p>
+<p>Mira los <strong>espíritus</strong> (ἁ vs ἀ), los acentos y la iota suscrita en griego;
+   el <strong>niqqud</strong> y los acentos de cantilación en hebreo. Un motor puede ganar
+   en las métricas y perder acá — y esta es la lectura que decide.</p>
+${sections.join('\n')}
+</body></html>`;
+}
+
+/** Pages where the engines collectively saw the most Greek + Hebrew. */
+function pickScriptDensePages(ran, topN) {
+    const totals = new Map();
+    for (const r of ran) {
+        for (const [page, d] of Object.entries(scriptDensityByPage(r.markdown))) {
+            const p = Number(page);
+            totals.set(p, (totals.get(p) ?? 0) + d.greek + d.hebrew);
+        }
+    }
+    const sorted = [...totals.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    if (sorted.length === 0) {
+        // No Greek or Hebrew anywhere — still show the first pages so the run
+        // is not silently empty.
+        return [1, 2, 3].slice(0, topN);
+    }
+    return sorted.slice(0, topN).map(([p]) => p).sort((a, b) => a - b);
+}
+
+function pageBody(markdown, page) {
+    const parts = markdown.split(PAGE_SPLIT);
+    for (let i = 1; i < parts.length; i += 2) {
+        if (Number(parts[i]) === page) return (parts[i + 1] ?? '').trim();
+    }
+    return '';
+}
+
+function findContext(markdown, needle, radius = 260) {
+    const idx = markdown.normalize('NFC').indexOf(needle.normalize('NFC'));
+    if (idx === -1) return null;
+    return markdown.slice(Math.max(0, idx - radius), idx + needle.length + radius);
+}

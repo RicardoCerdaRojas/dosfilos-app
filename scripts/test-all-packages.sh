@@ -32,9 +32,19 @@ for p in "${PAQUETES[@]}"; do
     FALLARON+=("$p")
 done
 
+# Los tests del banco de pruebas de extracción viven fuera de `packages/`, así
+# que el bucle de arriba no los ve. Se corren igual: son lo que sostiene la
+# confianza en las métricas de fidelidad de griego y hebreo, y una métrica que
+# se pudre en silencio es peor que no tenerla, porque igual se decide con ella.
+# Corren desde la raíz sin config propia (no necesitan jsdom).
+printf '\n\033[1m── extraction-bakeoff ─────────────────────────────\033[0m\n'
+if ! npx vitest run scripts/extraction-bakeoff; then
+    FALLARON+=("extraction-bakeoff")
+fi
+
 printf '\n\033[1mResumen\033[0m\n'
 if [ ${#FALLARON[@]} -eq 0 ]; then
-    printf '  \033[32m✓\033[0m %d paquetes en verde.\n' "${#PAQUETES[@]}"
+    printf '  \033[32m✓\033[0m %d paquetes + banco de extracción en verde.\n' "${#PAQUETES[@]}"
     exit 0
 fi
 
