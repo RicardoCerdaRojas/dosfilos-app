@@ -39,7 +39,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 
-import { runGemini } from './lib/engines.mjs';
+import { runGemini, countEmittedPages } from './lib/engines.mjs';
 import { fetchResourcePdf, pdfPageCount, slicePdf } from './lib/pdf.mjs';
 import { scriptFidelity, pageIntegrity } from './lib/metrics.mjs';
 
@@ -149,6 +149,17 @@ const results = await pool(chunks, args.concurrency, async (c, i) => {
             // worker ve sólo su trozo, y sin esto todos numerarían desde 1.
             pageOffset: c.from,
         });
+        // VERIFICACIÓN DE COBERTURA. Un trozo que devuelve menos páginas de
+        // las pedidas es un trozo FALLIDO, aunque el proveedor lo dé por
+        // exitoso. Sin esto el fan-out cose libros con agujeros y nada avisa.
+        if (!r.skipped) {
+            const want = c.to - c.from + 1;
+            const got = countEmittedPages(r.markdown);
+            if (got < want) {
+                r = { skipped: true, retryable: true, shortOutput: { want, got },
+                      reason: `cobertura incompleta: pidió ${want} páginas, devolvió ${got} (el proveedor la dio por exitosa)` };
+            }
+        }
         if (!r.skipped || !r.retryable || attempts > MAX_RETRIES) break;
         const waitMs = Math.min(30000, 2000 * 2 ** (attempts - 1));
         console.log(`  trozo ${String(i + 1).padStart(2)}/${chunks.length} reintento ${attempts}/${MAX_RETRIES} en ${waitMs / 1000}s — ${String(r.reason).slice(0, 60)}`);
@@ -205,9 +216,20 @@ line(`\n2. NUMERACIÓN GLOBAL (se pidió desplazamiento por trozo)`);
 line(`   evaluada sólo sobre los ${okChunks.length}/${chunks.length} trozos que corrieron`);
 line(`   emitidas ${pages.length} · esperadas ${expected.length} · rango ${pages[0]}–${pages[pages.length - 1]}`);
 line(`   faltantes ${missing.length ? missing.slice(0, 10).join(', ') : 'ninguna'} · duplicadas ${dupes.length} · ascendente ${ascending ? 'sí' : 'NO'}`);
-line(missing.length === 0 && dupes.length === 0 && ascending
-    ? '   ✓ los trozos numeraron en el sistema global: coser preserva la cita'
-    : '   ✗ la numeración NO cierra — sin esto las citas apuntan mal');
+// Numeración correcta y cobertura completa son fallas DISTINTAS. Un trozo
+// puede numerar impecable y aun así devolver menos páginas: emitió 170-173
+// —desplazamiento global perfecto— cuando se le habían dado 170-209.
+// Reportarlo como "numeración rota" manda a arreglar el prompt cuando lo que
+// falla es la cobertura.
+const numberingSound = dupes.length === 0 && ascending
+    && pages.every(p => p >= from && p <= to);
+line(numberingSound
+    ? '   ✓ numeración correcta: sistema global, sin duplicar ni desordenar'
+    : '   ✗ NUMERACIÓN rota — las citas apuntarían mal');
+if (missing.length) {
+    line(`   ⚠ COBERTURA: faltan ${missing.length} páginas de trozos dados por exitosos.`);
+    line('     Falla distinta de la numeración: el contenido no llegó.');
+}
 
 // 4 — tope de salida
 const truncated = okChunks.filter(r => r.truncated);

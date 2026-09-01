@@ -342,8 +342,29 @@ export async function runGemini(pdfPath, {
             truncated: body.candidates?.[0]?.finishReason === 'MAX_TOKENS',
         };
     } catch (err) {
-        return { skipped: true, reason: `excepción: ${err.message}` };
+        // Los fallos de red (`fetch failed`, ECONNRESET, timeouts) son
+        // transitorios igual que un 503, pero salían sin marcar y por eso no
+        // se reintentaban: en el spike un trozo murió así y se dio por perdido
+        // al primer intento.
+        return { skipped: true, retryable: true, reason: `excepción: ${err.message}` };
     }
+}
+
+/**
+ * Cuántas páginas emitió realmente una salida.
+ *
+ * Existe porque el modelo MIENTE sobre haber terminado. Medido: se le dieron
+ * 40 páginas, devolvió 4 completas —4.419 chars cada una, no cortadas—, gastó
+ * 8.884 tokens de un tope de 65.536, y reportó `finishReason: STOP`. Ni
+ * truncamiento declarado, ni error, ni tope alcanzado. Simplemente dejó de
+ * escribir en la página 4 y dijo que había terminado. El mismo tamaño de
+ * trozo, en otra corrida, devolvió las 40 completas: no es determinista.
+ *
+ * Ninguna señal del proveedor delata esto. La única defensa es contar las
+ * páginas pedidas contra las devueltas.
+ */
+export function countEmittedPages(markdown) {
+    return new Set([...markdown.matchAll(/<!--\s*page:\s*(\d+)\s*-->/g)].map(m => m[1])).size;
 }
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
