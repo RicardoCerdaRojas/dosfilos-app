@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# Compliance check for the dosfilos-app codebase.
+# Compliance check for the dosfilosPreach codebase.
 #
 # Runs a battery of grep-based checks aligned with `.agent/rules/compliance_gate.md`:
 #   1. No Firebase SDK imports in `.tsx` files (must go through services).

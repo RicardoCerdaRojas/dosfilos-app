@@ -37,7 +37,7 @@ sequenceDiagram
 
 ### Domain Layer
 
-#### [MODIFY] [LibraryResource.ts](file:///Users/ricardocerda/dev/dosfilos-app/packages/domain/src/entities/LibraryResource.ts)
+#### [MODIFY] [LibraryResource.ts](../../packages/domain/src/entities/LibraryResource.ts)
 Agregar campos para tracking de indexación:
 - `indexingStatus`: 'idle' | 'queued' | 'processing' | 'completed' | 'error'
 - `indexingProgress`: number (0-100)
@@ -51,7 +51,7 @@ Agregar campos para tracking de indexación:
 
 ### Cloud Functions
 
-#### [NEW] [indexDocument.ts](file:///Users/ricardocerda/dev/dosfilos-app/packages/functions/src/library/indexDocument.ts)
+#### [NEW] `indexDocument.ts` — nombre planeado; aterrizó como [indexStructuredDocument.ts](../../packages/functions/src/library/indexStructuredDocument.ts) + [autoIndexOnExtractionReady.ts](../../packages/functions/src/library/autoIndexOnExtractionReady.ts)
 Cloud Function que:
 1. Se dispara con `onDocumentUpdate` cuando `indexingStatus` cambia a 'queued'
 2. Lee el documento de Firestore
@@ -67,7 +67,7 @@ Cloud Function que:
 
 ### Application Layer
 
-#### [MODIFY] [LibraryService.ts](file:///Users/ricardocerda/dev/dosfilos-app/packages/application/src/services/LibraryService.ts)
+#### [MODIFY] [LibraryService.ts](../../packages/application/src/services/LibraryService.ts)
 - Cambiar `indexResource()` para solo actualizar Firestore con `indexingStatus='queued'`
 - Ya no hace el processing en el cliente
 
@@ -75,7 +75,7 @@ Cloud Function que:
 
 ### Web Layer
 
-#### [MODIFY] [LibraryManager.tsx](file:///Users/ricardocerda/dev/dosfilos-app/packages/web/src/pages/library/LibraryManager.tsx)
+#### [MODIFY] [LibraryManager.tsx](../../packages/web/src/pages/library/LibraryManager.tsx)
 - Usar `onSnapshot` para escuchar cambios en tiempo real
 - Mostrar barra de progreso por cada recurso
 - Mostrar estado: "En cola", "Procesando 45%", "Completado", "Error"

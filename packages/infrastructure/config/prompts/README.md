@@ -276,7 +276,7 @@ console.log('Loaded guidelines:', guidelines.substring(0, 100));
 
 **Mantenedor principal:** Ricardo Cerda  
 **Email:** ricardocerda@gmail.com  
-**Repositorio:** RicardoCerdaRojas/dosfilos-app
+**Repositorio:** RicardoCerdaRojas/dosfilosPreach
 
 Para preguntas o sugerencias, crear un issue en GitHub con tag `[prompts]`.
 

@@ -26,9 +26,9 @@ Abre el archivo `.env.local` y pega las credenciales con este formato:
 ```env
 # Firebase Configuration
 VITE_FIREBASE_API_KEY=AIzaSy...
-VITE_FIREBASE_AUTH_DOMAIN=dosfilos-app.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=dosfilos-app
-VITE_FIREBASE_STORAGE_BUCKET=dosfilos-app.appspot.com
+VITE_FIREBASE_AUTH_DOMAIN=dosfilosapp.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=dosfilosapp
+VITE_FIREBASE_STORAGE_BUCKET=dosfilosapp.firebasestorage.app
 VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
 VITE_FIREBASE_APP_ID=1:123456789:web:abc123
 
@@ -95,7 +95,7 @@ npm run dev
 ## Estructura de Archivos Creados
 
 ```
-dosfilos-app/
+dosfilosPreach/
 ├── packages/
 │   ├── domain/
 │   │   └── src/

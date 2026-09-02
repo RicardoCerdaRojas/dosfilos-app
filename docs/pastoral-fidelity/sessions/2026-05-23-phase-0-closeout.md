@@ -4,7 +4,7 @@
 **Branch**: `feat/pastoral-fidelity-phase-0`
 **Commit**: `132a3db1` — 97 archivos, 9917 insertions
 **Remote**: pushed a `origin/feat/pastoral-fidelity-phase-0`
-**PR URL**: https://github.com/RicardoCerdaRojas/dosfilos-app/pull/new/feat/pastoral-fidelity-phase-0
+**PR URL**: https://github.com/RicardoCerdaRojas/dosfilosPreach/pull/new/feat/pastoral-fidelity-phase-0
 
 ## Bloque 1 — Verificación
 
