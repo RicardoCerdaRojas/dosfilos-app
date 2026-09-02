@@ -101,3 +101,9 @@ bakeoff-out/
 
 # Tarifas reales de facturación — no van al repo
 scripts/extraction-bakeoff/rates.json
+
+# Activos de pdf.js copiados por `predev`/`prebuild`
+# (packages/web/scripts/copy-pdfjs-assets.mjs). Son GENERADOS: 198 archivos,
+# incluido JS minificado que eslint intenta analizar y produce ~1.000 errores.
+# Sin esta regla, cualquier `git add -A` después de correr la app los versiona.
+packages/web/public/pdfjs/

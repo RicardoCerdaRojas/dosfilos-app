@@ -253,7 +253,18 @@ export async function runMistralOcr(pdfPath, { apiKey, model = 'mistral-ocr-late
  * transcribe will sometimes renumber or merge pages — the page-integrity
  * metric is what catches that, and it is the reason that metric exists.
  */
-export async function runGemini(pdfPath, { apiKey, model = process.env.BAKEOFF_GEMINI_MODEL || 'gemini-3.6-flash' }) {
+export async function runGemini(pdfPath, {
+    apiKey,
+    model = process.env.BAKEOFF_GEMINI_MODEL || 'gemini-3.6-flash',
+    // Número de la primera página del recorte DENTRO del documento completo.
+    // En un fan-out cada worker ve sólo su trozo y numeraría desde 1, así que
+    // al coser todas las páginas se llamarían igual. Decirle el desplazamiento
+    // es lo que hace que los números sean globales — y si obedece, es lo que
+    // hace viable trocear. Medido antes: sin esto, Gemini numeró 615-625
+    // leyendo los números IMPRESOS del libro, que es otra convención más y no
+    // sirve en un libro sin foliar.
+    pageOffset = null,
+} = {}) {
     if (!apiKey) return { skipped: true, reason: 'falta GEMINI_API_KEY' };
     const started = Date.now();
 
@@ -270,8 +281,15 @@ export async function runGemini(pdfPath, { apiKey, model = process.env.BAKEOFF_G
                             {
                                 text: `Transcribe este PDF a Markdown, íntegro y sin resumir.\n\n`
                                     + `REGLAS ESTRICTAS:\n`
-                                    + `1. Antes de cada página emite exactamente: <!-- page: N -->\n`
-                                    + `   donde N es el número de página impreso del PDF, empezando en 1.\n`
+                                    + (pageOffset
+                                        ? `1. Antes de cada página emite exactamente: <!-- page: N -->\n`
+                                          + `   Este archivo es un FRAGMENTO de un documento mayor: su primera\n`
+                                          + `   página es la número ${pageOffset} del documento completo. Numera\n`
+                                          + `   desde ${pageOffset} en adelante, consecutivamente, IGNORANDO\n`
+                                          + `   cualquier número impreso en la página.\n`
+                                        : `1. Antes de cada página emite exactamente: <!-- page: N -->\n`
+                                          + `   donde N es la posición de la página en este archivo, empezando en 1.\n`
+                                          + `   IGNORA cualquier número impreso en la página.\n`)
                                     + `2. ${PARSING_INSTRUCTION}\n`
                                     + `3. No agregues comentarios, encabezados ni notas propias.\n`
                                     + `4. Si una página está en blanco, emite igualmente su marcador.`,
@@ -285,14 +303,23 @@ export async function runGemini(pdfPath, { apiKey, model = process.env.BAKEOFF_G
         );
 
         if (!res.ok) {
-            return { skipped: true, reason: `HTTP ${res.status}: ${(await res.text()).slice(0, 300)}` };
+            // 503 UNAVAILABLE ("high demand") y 429 son transitorios: el
+            // servicio pide que se vuelva a intentar, no que se rinda. Medido:
+            // a concurrencia 4 sobre gemini-3.6-flash, 2 de 4 trozos murieron
+            // con 503. Sin reintento, el fan-out pierde el 50% del libro.
+            const retryable = res.status === 503 || res.status === 429 || res.status >= 500;
+            return { skipped: true, retryable, reason: `HTTP ${res.status}: ${(await res.text()).slice(0, 300)}` };
         }
 
         const body = await res.json();
         const markdown = body.candidates?.[0]?.content?.parts?.map(p => p.text ?? '').join('') ?? '';
         if (!markdown.trim()) {
+            // `finishReason: STOP` con cuerpo vacío es un fallo SILENCIOSO: el
+            // modelo dice haber terminado bien y no devuelve nada. Medido en el
+            // spike de fan-out. Se trata como reintentable porque en producción
+            // sería una página que desaparece del libro sin que nada avise.
             const finish = body.candidates?.[0]?.finishReason ?? 'desconocido';
-            return { skipped: true, reason: `respuesta vacía (finishReason=${finish})` };
+            return { skipped: true, retryable: true, reason: `respuesta vacía (finishReason=${finish})` };
         }
 
         const usage = body.usageMetadata ?? {};
@@ -315,8 +342,29 @@ export async function runGemini(pdfPath, { apiKey, model = process.env.BAKEOFF_G
             truncated: body.candidates?.[0]?.finishReason === 'MAX_TOKENS',
         };
     } catch (err) {
-        return { skipped: true, reason: `excepción: ${err.message}` };
+        // Los fallos de red (`fetch failed`, ECONNRESET, timeouts) son
+        // transitorios igual que un 503, pero salían sin marcar y por eso no
+        // se reintentaban: en el spike un trozo murió así y se dio por perdido
+        // al primer intento.
+        return { skipped: true, retryable: true, reason: `excepción: ${err.message}` };
     }
+}
+
+/**
+ * Cuántas páginas emitió realmente una salida.
+ *
+ * Existe porque el modelo MIENTE sobre haber terminado. Medido: se le dieron
+ * 40 páginas, devolvió 4 completas —4.419 chars cada una, no cortadas—, gastó
+ * 8.884 tokens de un tope de 65.536, y reportó `finishReason: STOP`. Ni
+ * truncamiento declarado, ni error, ni tope alcanzado. Simplemente dejó de
+ * escribir en la página 4 y dijo que había terminado. El mismo tamaño de
+ * trozo, en otra corrida, devolvió las 40 completas: no es determinista.
+ *
+ * Ninguna señal del proveedor delata esto. La única defensa es contar las
+ * páginas pedidas contra las devueltas.
+ */
+export function countEmittedPages(markdown) {
+    return new Set([...markdown.matchAll(/<!--\s*page:\s*(\d+)\s*-->/g)].map(m => m[1])).size;
 }
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));

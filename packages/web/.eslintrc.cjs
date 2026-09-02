@@ -6,7 +6,11 @@ module.exports = {
         'plugin:@typescript-eslint/recommended',
         'plugin:react-hooks/recommended',
     ],
-    ignorePatterns: ['dist', '.eslintrc.cjs'],
+    // `public/pdfjs` son activos GENERADOS: los copia `predev`/`prebuild` desde
+    // pdfjs-dist (ver scripts/copy-pdfjs-assets.mjs). Son 198 archivos con JS
+    // minificado, y sin esta regla cualquiera que corra la app y después
+    // `npm run lint` se encuentra ~1.000 errores en código que no escribió.
+    ignorePatterns: ['dist', '.eslintrc.cjs', 'public/pdfjs'],
     parser: '@typescript-eslint/parser',
     plugins: ['react-refresh'],
     rules: {
