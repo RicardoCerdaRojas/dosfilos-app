@@ -98,3 +98,6 @@ packages/mobile/android/
 
 # Salidas del banco de pruebas de extracción (contienen texto de libros con derechos)
 bakeoff-out/
+
+# Tarifas reales de facturación — no van al repo
+scripts/extraction-bakeoff/rates.json

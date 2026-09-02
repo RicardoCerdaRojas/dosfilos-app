@@ -164,10 +164,12 @@ describe('verdict', () => {
     const okPage = { missingPages: [], duplicated: false, ascending: true, emptyPages: [] };
 
     it('reprueba griego sin diacríticos aunque las letras estén', () => {
-        const m = { script: scriptFidelity(JOHN_1_1_STRIPPED), page: okPage };
+        // Repetido para superar las 100 letras: con menos, el ratio es ruidoso
+        // y el veredicto sólo advierte en vez de reprobar.
+        const m = { script: scriptFidelity(JOHN_1_1_STRIPPED.repeat(4)), page: okPage };
         const v = verdict(m, { expectGreek: true, expectHebrew: false });
         expect(v.status).toBe('NO APTO');
-        expect(v.notes.join(' ')).toMatch(/sin diacríticos/);
+        expect(v.notes.join(' ')).toMatch(/inservible para exégesis/);
     });
 
     it('reprueba hebreo sin puntuación vocálica', () => {
@@ -184,6 +186,60 @@ describe('verdict', () => {
         };
         const v = verdict(m, { expectGreek: true, expectHebrew: false });
         expect(v.status).toBe('NO APTO');
+    });
+
+    it('detecta fabricación por desacuerdo con el consenso, no por el ratio', () => {
+        // Caso real de LlamaParse balanced: 3354 letras griegas donde otros tres
+        // motores coincidieron en ~33, con ratio 0,225 — por ENCIMA de cualquier
+        // umbral absoluto razonable. El texto era griego moderno inventado.
+        const fabricado = 'τί ναί μάτι ζωή φῶς ἤδη πού σέ τά ό ή '.repeat(20);
+        const m = {
+            script: scriptFidelity(fabricado),
+            page: okPage,
+            consensus: { greekMedian: 33, hebrewMedian: 529 },
+        };
+        // Ratio sano: un umbral absoluto lo dejaría pasar. Sólo el desacuerdo
+        // con el consenso lo delata.
+        expect(m.script.greekDiacriticRatio).toBeGreaterThan(0.15);
+        const v = verdict(m, { expectGreek: false, expectHebrew: false });
+        expect(v.status).toBe('NO APTO');
+        expect(v.notes.join(' ')).toMatch(/FABRICADO/);
+    });
+
+    it('no marca como fabricación al motor que coincide con el consenso', () => {
+        const m = {
+            script: scriptFidelity(JOHN_1_1_POLYTONIC),
+            page: okPage,
+            consensus: { greekMedian: 50, hebrewMedian: 0 },
+        };
+        const v = verdict(m, { expectGreek: false, expectHebrew: false });
+        expect(v.status).toBe('INSPECCIONAR');
+    });
+
+    it('no reprueba por ratio bajo cuando la muestra es pequeña', () => {
+        // 32 letras griegas: unas pocas citas, no griego corrido. El ratio ahí
+        // se mueve por una sola palabra.
+        const m = {
+            script: scriptFidelity('Ακουσατε λαοι λογους βησεται τις'),
+            page: okPage,
+            consensus: { greekMedian: 33, hebrewMedian: 0 },
+        };
+        const v = verdict(m, { expectGreek: true, expectHebrew: false });
+        expect(v.status).toBe('INSPECCIONAR');
+        expect(v.notes.join(' ')).toMatch(/MUESTRA PEQUEÑA/);
+    });
+
+    it('reporta numeración desplazada como tal, no como páginas perdidas', () => {
+        // Gemini emitió 615-625 para un recorte de 11 páginas, porque el libro
+        // es un segundo volumen que arranca en la 495.
+        const doc = Array.from({ length: 11 }, (_, i) =>
+            `<!-- page: ${615 + i} -->\nContenido suficientemente largo de esta página.`).join('\n');
+        const page = pageIntegrity(doc, 11);
+        expect(page.offsetNumbering).toEqual({ first: 615, last: 625, offset: 614 });
+
+        const v = verdict({ script: scriptFidelity(''), page }, { expectGreek: false, expectHebrew: false });
+        expect(v.status).toBe('INSPECCIONAR');
+        expect(v.notes.join(' ')).toMatch(/páginas impresas del libro/);
     });
 
     it('deja pasar a inspección lo que cumple griego y hebreo', () => {

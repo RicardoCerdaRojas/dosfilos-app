@@ -14,6 +14,125 @@ que es justo el modo que **se salta el OCR y la reconstrucción de layout**.
 Eso puede estar bien o puede estar costando calidad. La discusión no se cierra
 leyendo listas de precios: se cierra midiendo sobre nuestros propios libros.
 
+## Hallazgos medidos (2026-08-29)
+
+Primera evaluación completa, sobre *The Minor Prophets* (McComiskey), páginas
+132–142. Todo lo de esta tabla está medido, no estimado.
+
+| Motor | USD / libro 425p | Niqqud | Espíritus griegos | Veredicto |
+|---|---:|---:|---|---|
+| LlamaParse `fast` ← producción | ~0 | **0** | **0** | no recupera **nada** |
+| LlamaParse `balanced` | — | 0.192 | **fabricado** | traduce al griego moderno |
+| LlamaParse `premium` | **$23.91** | 0.815 | ✓ | calidad sí, costo no |
+| Mistral OCR | **$1.70** | 0.735 | **✗** | pierde el espíritu inicial |
+| **Gemini 3.6 Flash** | **$9.98** | **0.825** | ✓ | mejor relación medida |
+
+**`fast` no recupera lengua original cuando no está en la capa de texto.** La
+auditoría de la biblioteca dio 15 de 27 libros indexados sin una sola letra
+griega ni hebrea — incluida una gramática griega de 711 páginas. Pero los 27
+salieron del mismo extractor y 12 sí la traen (uno con 681.644 letras griegas):
+la variable es el PDF, no el motor. Eso apunta a escalar a OCR sólo cuando la
+capa de texto no trae lo que el libro declara, no a cambiar el motor para todo.
+
+**`balanced` fabrica escritura sagrada.** Devolvió 4.564 letras griegas donde
+otros tres motores coincidieron en ~27: transliteró bibliografía inglesa y
+alemana («Micah» → «Μιχαίας», «alttestamentlichen» → «αλττεσταντlichen») y
+tradujo prosa al griego moderno. Nunca debe entrar a la cascada.
+
+**`premium` no cabe en el cupo.** Medido aislando el modo y leyendo el panel:
+495 créditos por 11 páginas = **45 créditos/página**. Un libro de 425 páginas
+son 19.125 créditos contra un cupo mensual de 10.000 — el 191%. No es que
+salgan pocos libros al mes: no cabe ninguno. Además tarda 5-8 s/página, que
+sobre un libro entero desborda el timeout de 540 s de la función de extracción.
+
+**La API de LlamaParse reporta 0 créditos en plan Free**, en `job_credits_usage`
+y en `credits_used`, mientras el panel sí acumula. Todo costo de LlamaParse se
+mide leyendo el panel antes y después de una corrida `--fresh`.
+
+**La salida de Gemini incluye tokens de pensamiento**, y son más de la mitad:
+6.017 de entrada + 13.330 candidatos contra 39.253 totales. Cobrar sólo los
+candidatos subestimaba el costo 2,4 veces.
+
+### La causa: fuentes griegas sin mapa Unicode, no PDFs escaneados
+
+La hipótesis de trabajo era "escaneados". Se comprobó y es FALSA: de los 15
+sospechosos, **cero** son escaneados. Todos tienen capa de texto sana, entre
+1.800 y 5.700 caracteres por página.
+
+El griego no falta — **está mal codificado**. Mismo pasaje, mismo PDF:
+
+| | |
+|---|---|
+| Gemini (lee los glifos renderizados) | `Ἀκούσατε, λαοί, λόγους` · `כֻּלָּם` |
+| Capa de texto (lee los códigos) | `’AKOwarE, Xaoi, ^oyoix;` · `0^0` |
+
+`pdffonts` lo explica: las fuentes del cuerpo son subconjuntos TrueType con
+encoding `WinAnsi` y **`uni: no`** — sin `ToUnicode`. Es una fuente griega
+antigua donde los glifos son griegos y los códigos son latinos. Cualquier
+extractor de capa de texto reporta fielmente los códigos, o sea la basura.
+
+**Y esa basura está en el índice de producción.** `'AKOwarE, Xaoi, ^oyoix;`
+aparece literal en el `structured.md` que generó los 1.185 chunks. El índice
+no sólo carece de griego: contiene ruido latino donde el griego debería estar,
+que ensucia los embeddings y puede aparecer en una cita.
+
+Tres consecuencias:
+
+1. **La re-extracción es obligatoria, no opcional.** No es que falte contenido;
+   hay contenido incorrecto.
+2. **"¿Es escaneado?" no sirve como criterio.** Estos PDFs tienen capa de texto
+   perfecta. Sólo el análisis por escritura lo detecta.
+3. **El disparador de escalada queda confirmado**: "la escritura esperada no
+   aparece en la capa de texto", que es exactamente lo que mide
+   `scriptFidelity` — el griego sale como latín, así que `greekLetters` da 0.
+   Como pre-filtro barato, `pdffonts` con `uni: no` marca los sospechosos sin
+   llamar a ninguna API.
+
+### El léxico: la escritura está, pero partida
+
+Segunda clase medida, sobre *Léxico Griego-Español* (1.163 págs), páginas
+580–590. Acá `fast` **sí** recupera griego y hebreo —el editor usó fuentes
+Unicode— así que la pregunta era otra: ¿queda usable?
+
+| Motor | Marcas sueltas | Encabezados | Niqqud |
+|---|---:|---:|---:|
+| pdftotext | 125 | 0 | 0.813 |
+| LlamaParse `fast` ← producción | **232** | **0** | 0.835 |
+| Mistral OCR | **0** | 56 | 0.744 |
+| **Gemini 3.6 Flash** | **0** | **57** | 0.813 |
+
+Lo que `fast` metió al índice:
+
+```
+ר ַבָגּ hi. Sal. 11:5(12:4). לַדָגּ* .,qal .S 1 2:21. ַ ל .,pi גָּד
+```
+
+`גָּדַל` (*gadal*, "ser grande") sale partido en `גָּד` y ` ַ ל`, con la vocal
+flotando suelta. Los conteos se ven sanos —1.052 letras griegas, niqqud
+0,835— y las palabras **no se pueden buscar**. Un lema partido no lo
+encuentra nadie, y ninguna métrica de conteo lo delata.
+
+Los 56-57 encabezados de Mistral y Gemini son las entradas del léxico: con
+ellos el `sectionPath` de cada chunk lleva su lema. `fast` y `pdftotext`
+recuperan cero estructura.
+
+**Presencia no es integridad.** El auditor clasificaba por conteo de letras y
+llamaba "sanos" a los dos léxicos. Ahora también mide marcas huérfanas por
+milla de caracteres, y el daño sube de 15 a **17 de 27** — con la ironía de
+que los dos libros cuya única función es buscar palabras en lengua original
+son justo aquellos donde las palabras están rotas.
+
+### Conclusión
+
+Gemini 3.6 Flash gana las tres clases medidas: comentario con fuentes
+legacy, comentario con fuentes Unicode, y léxico. Es el más barato de los que
+conservan la escritura ($9,98/libro contra $23,91 de premium), el único que
+además recupera estructura de entradas, y el que nunca produjo texto mal
+formado.
+
+Queda pendiente su límite de salida: 45.000 caracteres en 11 páginas, así que
+un libro entero no entra en una llamada y hay que trocear y coser.
+
 ## Setup
 
 ```bash

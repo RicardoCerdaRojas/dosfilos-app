@@ -46,6 +46,24 @@ export function renderMarkdown(run) {
     const ran = results.filter(r => !r.skipped);
     const skipped = results.filter(r => r.skipped);
 
+    if (doc.detected) {
+        lines.push(`- **Escritura detectada**: griego ${doc.detected.greek} letras · hebreo ${doc.detected.hebrew} consonantes`);
+        lines.push('');
+    }
+
+    if (doc.flagWarnings?.length) {
+        lines.push('> ### ⚠️ Leer antes que el veredicto');
+        lines.push('>');
+        for (const w of doc.flagWarnings) lines.push(`> - ${w}`);
+        lines.push('');
+    }
+
+    if (ran.length < 3) {
+        lines.push(`> Sólo corrieron ${ran.length} motor(es). Esto todavía no es una comparación:`);
+        lines.push('> falta el resto para poder decir cuál conviene. Revisa las claves de API.');
+        lines.push('');
+    }
+
     // ── Verdicts first: this is what the reader came for.
     lines.push('## Veredicto');
     lines.push('');
@@ -124,7 +142,7 @@ export function renderMarkdown(run) {
     lines.push('');
 
     // ── Novelty, gated.
-    if (doc.hasEmbeddedText) {
+    if (doc.noveltyUsable) {
         lines.push('## Texto que ningún otro motor produjo');
         lines.push('');
         lines.push('| Motor | Ratio de novedad |');
@@ -139,6 +157,15 @@ export function renderMarkdown(run) {
         lines.push('');
     }
 
+    if (!doc.noveltyUsable && doc.hasEmbeddedText && doc.enginesRan < 3) {
+        lines.push('## Texto que ningún otro motor produjo');
+        lines.push('');
+        lines.push(`Omitida: con ${doc.enginesRan} motor(es) esta métrica degenera en una diferencia`);
+        lines.push('por pares — ambos salen con el mismo número alto y no distingue quién inventó');
+        lines.push('texto de quién se comió texto. Necesita tres o más para decir algo.');
+        lines.push('');
+    }
+
     // ── Page drift vs the reference.
     const withDrift = ran.filter(r => r.metrics.drift);
     if (withDrift.length) {
@@ -148,6 +175,10 @@ export function renderMarkdown(run) {
         lines.push('|---|---:|---:|---|');
         for (const r of withDrift) {
             const d = r.metrics.drift;
+            if (d.inapplicable) {
+                lines.push(`| ${r.label} | — | no aplica | ${d.inapplicable} |`);
+                continue;
+            }
             const worst = d.disagreements.slice(0, 5).map(x => x.page).join(', ') || '—';
             lines.push(`| ${r.label} | ${d.comparedPages} | ${fmt(d.agreementRatio)} | ${worst} |`);
         }
@@ -161,15 +192,100 @@ export function renderMarkdown(run) {
     // ── Cost and latency.
     lines.push('## Costo y latencia');
     lines.push('');
-    lines.push('| Motor | Unidades | Unidad | Segundos |');
-    lines.push('|---|---:|---|---:|');
+    if (!run.rates?.present) {
+        lines.push(`> Sin \`rates.json\` (esperado en \`${run.rates?.path ?? 'scripts/extraction-bakeoff/'}\`).`);
+        lines.push('> Se reportan las unidades facturables; el dinero queda NO CALCULABLE.');
+        lines.push('> Copia `rates.example.json` y llénalo con las tarifas de TU factura.');
+        lines.push('');
+    }
+    if (!doc.fresh) {
+        lines.push('> Corrida SIN `--fresh`: si un recorte ya se había medido, LlamaParse puede');
+        lines.push('> devolverlo desde caché y facturar 0. La columna "caché" lo indica cuando la');
+        lines.push('> API lo reporta.');
+        lines.push('');
+    }
+    lines.push('| Motor | Unidades facturables | Caché | USD medido | USD por libro | Segundos |');
+    lines.push('|---|---|---|---|---|---:|');
     for (const r of ran) {
-        lines.push(`| ${r.label} | ${r.costUnits ?? '—'} | ${r.costNote} | ${(r.elapsedMs / 1000).toFixed(1)} |`);
+        const b = r.billing ?? {};
+        const units = r.costUnits === null || r.costUnits === undefined
+            ? '—'
+            : `${r.costUnits} ${r.costUnit ?? ''}`.trim();
+        const cache = b.cacheHit === true ? 'SÍ' : b.cacheHit === false ? 'no' : '?';
+        const usd = r.cost?.usd == null ? '**NO CALCULABLE**' : `$${r.cost.usd.toFixed(4)}`;
+        const perBook = r.costPerBook?.usd == null ? '—' : `$${r.costPerBook.usd.toFixed(2)}`;
+        lines.push(`| ${r.label} | ${units} | ${cache} | ${usd} | ${perBook} | ${(r.elapsedMs / 1000).toFixed(1)} |`);
     }
     lines.push('');
-    lines.push('Las unidades NO son comparables entre sí: LlamaParse cobra créditos, Mistral cobra');
-    lines.push('páginas y Gemini cobra tokens. Para comparar dinero, multiplica cada una por tu');
-    lines.push('tarifa vigente — y verifícala hoy, que los precios de estos servicios se mueven.');
+    const caveats = ran.filter(r => r.cost?.caveat);
+    if (caveats.length) {
+        lines.push('**Advertencias de costo**');
+        lines.push('');
+        for (const r of caveats) lines.push(`- **${r.label}**: ${r.cost.caveat}`);
+        lines.push('');
+    }
+    if (run.rates?.present) {
+        lines.push('### Tarifas usadas y de dónde salen');
+        lines.push('');
+        lines.push('| Tarifa | Valor | Procedencia |');
+        lines.push('|---|---:|---|');
+        for (const p of run.rates.provenance ?? []) {
+            lines.push(`| ${p.label} | ${p.value ?? '—'} | ${p.source} |`);
+        }
+        lines.push('');
+        lines.push('Un precio sin origen declarado no se distingue de uno recordado a medias.');
+        lines.push('Contrasta esta tabla con tu factura antes de citar cualquier cifra de abajo.');
+        lines.push('');
+    }
+    // En un plan con cupo mensual, la pregunta que decide no es cuánto cuesta
+    // sino cuántos libros caben. Medido: plan Free = 10.000 créditos/mes, y un
+    // solo comentario de 425 páginas puede llevarse una fracción enorme.
+    const cupo = run.rates?.values?.llamaparse?.creditosPorMes;
+    // Sólo con créditos > 0. Medido: en plan Free la API devuelve 0 tanto en
+    // `job_credits_usage` como en `credits_used`, así que el delta da 0 y la
+    // sección concluía "∞ libros por mes" — un número seguro de sí mismo y
+    // completamente vacío, que es justo lo que este banco existe para evitar.
+    const lp = ran.filter(r => r.id?.startsWith('llamaparse') && r.billing?.creditsDelta > 0);
+    const lpSinDato = ran.filter(r => r.id?.startsWith('llamaparse') && !(r.billing?.creditsDelta > 0));
+    if (cupo && lpSinDato.length && !lp.length) {
+        lines.push('### Cupo mensual de créditos');
+        lines.push('');
+        lines.push('**No medible con esta corrida.** La API de LlamaParse devolvió 0 tanto en');
+        lines.push('`job_credits_usage` como en `credits_used`, sin marcar caché. En plan Free');
+        lines.push('parece no desglosar consumo por trabajo.');
+        lines.push('');
+        lines.push('Sí reporta páginas facturadas, así que el consumo se puede reconstruir con');
+        lines.push('los multiplicadores de crédito por página de cada modo (`creditosPorPagina`');
+        lines.push('en `rates.json`, desde la documentación de LlamaParse).');
+        lines.push('');
+        lines.push('Alternativa empírica, más fiable que cualquier tabla: anota los créditos');
+        lines.push('disponibles en el panel ANTES y DESPUÉS de una corrida `--fresh`. La');
+        lines.push('diferencia es lo que costó, sin intermediarios.');
+        lines.push('');
+    }
+    if (cupo && lp.length) {
+        lines.push('### Cupo mensual de créditos');
+        lines.push('');
+        lines.push(`Plan de ${cupo.toLocaleString()} créditos/mes. Extrapolado a un libro de ${doc.bookPages ?? '?'} páginas:`);
+        lines.push('');
+        lines.push('| Motor | Créditos / recorte | Créditos / libro | Libros por mes |');
+        lines.push('|---|---:|---:|---:|');
+        for (const r of lp) {
+            const perPage = r.billing.creditsDelta / doc.slicePages;
+            const perBook = Math.round(perPage * (doc.bookPages ?? 0));
+            const books = perBook > 0 ? Math.floor(cupo / perBook) : '∞';
+            lines.push(`| ${r.label} | ${r.billing.creditsDelta} | ${perBook.toLocaleString()} | **${books}** |`);
+        }
+        lines.push('');
+        lines.push('Si «libros por mes» sale bajo, el motor no es viable en producción por más');
+        lines.push('barato que se vea en dólares: el cupo se agota y las subidas siguientes fallan.');
+        lines.push('');
+    }
+
+    lines.push(`«USD por libro» extrapola linealmente del recorte (${doc.slicePages} págs) al libro`);
+    lines.push(`completo (${doc.bookPages ?? '?'} págs). Es el número sobre el que se decide, y el más`);
+    lines.push('fácil de citar sin sus supuestos: vale para cobro por página, y hay que desconfiar');
+    lines.push('de él en cualquier motor con costo fijo por trabajo.');
     lines.push('');
 
     lines.push('---');
