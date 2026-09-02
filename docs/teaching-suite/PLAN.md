@@ -1,4 +1,4 @@
-# Plan de implementación — Módulo «Suite de Enseñanza» en dosfilos-app
+# Plan de implementación — Módulo «Suite de Enseñanza» en dosfilosPreach
 
 > Guía de implementación. Porta el skill Python `suite-ensenanza-biblica`
 > (en `docs/suite_diseno_v5_fuente/`) a un módulo nativo del SaaS
@@ -37,12 +37,12 @@ Pregunta de oro ante cualquier duda: *«¿esto es contenido (→ plan) o runtime
 
 ---
 
-## 2. Arquitectura destino (dónde vive cada pieza en dosfilos-app)
+## 2. Arquitectura destino (dónde vive cada pieza en dosfilosPreach)
 
-dosfilos-app ya es clean-arch con paquetes `domain / application /
+dosfilosPreach ya es clean-arch con paquetes `domain / application /
 infrastructure / functions / web / mobile`. El módulo nuevo se reparte así:
 
-| Pieza del skill | Lugar en dosfilos-app | Naturaleza |
+| Pieza del skill | Lugar en dosfilosPreach | Naturaleza |
 |---|---|---|
 | `references/contrato-plan.md` | Tipos TS `TeachingPlan` en `packages/domain/src/teaching-suite/` | esquema + zod |
 | `scripts/renderizadores.py` (15 renderers) | `packages/domain/src/teaching-suite/render/` (funciones puras `tipo → HTML`) | puro, testeable |

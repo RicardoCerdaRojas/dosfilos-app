@@ -227,7 +227,7 @@ private async renewGeminiFile(resource: LibraryResourceEntity): Promise<string |
 **Arquitectura**:
 
 ```
-dosfilos-app/
+dosfilosPreach/
 ├── packages/
 │   └── core-library/          # 🎯 NUEVO
 │       ├── docs/

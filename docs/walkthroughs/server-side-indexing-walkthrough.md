@@ -30,14 +30,14 @@ sequenceDiagram
 ## Files Changed
 
 ### Domain Layer
-#### [LibraryResource.ts](file:///Users/ricardocerda/dev/dosfilos-app/packages/domain/src/entities/LibraryResource.ts)
+#### [LibraryResource.ts](../../packages/domain/src/entities/LibraryResource.ts)
 - Added `IndexingStatus` type: `'idle' | 'queued' | 'processing' | 'completed' | 'error'`
 - Added indexing fields: `indexingStatus`, `indexingProgress`, `indexingError`, `indexingStartedAt`, `indexingCompletedAt`, `chunksProcessed`, `totalChunks`
 
 ---
 
 ### Cloud Functions
-#### [NEW] [indexDocument.ts](file:///Users/ricardocerda/dev/dosfilos-app/packages/functions/src/library/indexDocument.ts)
+#### [NEW] `indexDocument.ts` — nombre planeado; aterrizó como [indexStructuredDocument.ts](../../packages/functions/src/library/indexStructuredDocument.ts) + [autoIndexOnExtractionReady.ts](../../packages/functions/src/library/autoIndexOnExtractionReady.ts)
 - Triggers on Firestore document update when `indexingStatus` changes to `'queued'`
 - Chunks text server-side
 - Generates embeddings with Gemini in batches
@@ -47,20 +47,20 @@ sequenceDiagram
 ---
 
 ### Infrastructure
-#### [FirebaseLibraryRepository.ts](file:///Users/ricardocerda/dev/dosfilos-app/packages/infrastructure/src/firebase/FirebaseLibraryRepository.ts)
+#### [FirebaseLibraryRepository.ts](../../packages/infrastructure/src/firebase/FirebaseLibraryRepository.ts)
 - Added `update()` method
 - Updated conversion methods to handle indexing fields
 
 ---
 
 ### Application
-#### [LibraryService.ts](file:///Users/ricardocerda/dev/dosfilos-app/packages/application/src/services/LibraryService.ts)
+#### [LibraryService.ts](../../packages/application/src/services/LibraryService.ts)
 - `indexResource()` now only sets `indexingStatus = 'queued'` instead of processing client-side
 
 ---
 
 ### Web UI
-#### [LibraryManager.tsx](file:///Users/ricardocerda/dev/dosfilos-app/packages/web/src/pages/library/LibraryManager.tsx)
+#### [LibraryManager.tsx](../../packages/web/src/pages/library/LibraryManager.tsx)
 - Uses Firestore `onSnapshot` for real-time resource updates
 - Shows server-side indexing status: "En cola", "45%", "Indexado", "Error"
 - Progress bar updates in real-time as server processes

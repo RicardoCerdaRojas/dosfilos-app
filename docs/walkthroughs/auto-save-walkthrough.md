@@ -28,10 +28,10 @@ export interface Sermon {
 ```
 
 **Files Modified**:
-- [Sermon.ts](file:///Users/ricardocerda/dev/dosfilos-app/packages/domain/src/entities/Sermon.ts)
-- [SermonEntity](file:///Users/ricardocerda/dev/dosfilos-app/packages/domain/src/entities/Sermon.ts) - Updated constructor and methods
-- [FirebaseSermonRepository.ts](file:///Users/ricardocerda/dev/dosfilos-app/packages/infrastructure/src/firebase/FirebaseSermonRepository.ts) - Added serialization
-- [firestore.rules](file:///Users/ricardocerda/dev/dosfilos-app/firestore.rules) - Allowed empty content for drafts
+- [Sermon.ts](../../packages/domain/src/entities/Sermon.ts)
+- [SermonEntity](../../packages/domain/src/entities/Sermon.ts) - Updated constructor and methods
+- [FirebaseSermonRepository.ts](../../packages/infrastructure/src/firebase/FirebaseSermonRepository.ts) - Added serialization
+- [firestore.rules](../../firestore.rules) - Allowed empty content for drafts
 
 ---
 
@@ -62,11 +62,11 @@ useEffect(() => {
 ```
 
 **Files Created**:
-- [useAutoSave.ts](file:///Users/ricardocerda/dev/dosfilos-app/packages/web/src/hooks/useAutoSave.ts)
+- [useAutoSave.ts](../../packages/web/src/hooks/useAutoSave.ts)
 
 **Files Modified**:
-- [WizardContext.tsx](file:///Users/ricardocerda/dev/dosfilos-app/packages/web/src/pages/sermons/generator/WizardContext.tsx)
-- [SermonService.ts](file:///Users/ricardocerda/dev/dosfilos-app/packages/application/src/services/SermonService.ts) - Added `createDraft`, `updateWizardProgress`, `getInProgressSermon`
+- [WizardContext.tsx](../../packages/web/src/pages/sermons/generator/WizardContext.tsx)
+- [SermonService.ts](../../packages/application/src/services/SermonService.ts) - Added `createDraft`, `updateWizardProgress`, `getInProgressSermon`
 
 **Benefits**:
 - ✅ No continuous saving (only on changes)
@@ -87,10 +87,10 @@ Created a seamless resume experience:
 3. **Restore state**: Load all saved data (passage, exegesis, homiletics, draft, step)
 
 **Files Created**:
-- [SermonInProgress.tsx](file:///Users/ricardocerda/dev/dosfilos-app/packages/web/src/pages/sermons/generator/SermonInProgress.tsx)
+- [SermonInProgress.tsx](../../packages/web/src/pages/sermons/generator/SermonInProgress.tsx)
 
 **Files Modified**:
-- [SermonWizard.tsx](file:///Users/ricardocerda/dev/dosfilos-app/packages/web/src/pages/sermons/generator/SermonWizard.tsx)
+- [SermonWizard.tsx](../../packages/web/src/pages/sermons/generator/SermonWizard.tsx)
 
 **User Experience**:
 ```
@@ -112,7 +112,7 @@ User clicks "Descartar" → Deletes draft and starts fresh
 Created a subtle save status indicator in the wizard header:
 
 **Files Created**:
-- [SaveStatus.tsx](file:///Users/ricardocerda/dev/dosfilos-app/packages/web/src/pages/sermons/generator/SaveStatus.tsx)
+- [SaveStatus.tsx](../../packages/web/src/pages/sermons/generator/SaveStatus.tsx)
 
 **Features**:
 - Shows "Guardando..." with pulsing dot while saving

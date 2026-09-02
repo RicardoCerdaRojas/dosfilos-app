@@ -53,7 +53,7 @@ yarn test:watch      # Ejecuta tests en modo watch
 ## 📁 Estructura del Proyecto
 
 ```
-dosfilos-app/
+dosfilosPreach/
 ├── packages/
 │   ├── domain/              # Capa de Dominio
 │   │   ├── entities/        # Entidades del negocio

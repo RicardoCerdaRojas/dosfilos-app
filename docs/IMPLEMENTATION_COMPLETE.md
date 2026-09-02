@@ -184,8 +184,9 @@ Se ha implementado exitosamente un flujo de dos fases para la generación de enf
 ### Test Manual Básico
 
 1. **Iniciar la aplicación:**
+   Desde la raíz del repo:
+
    ```bash
-   cd /Users/ricardocerda/dev/dosfilos-app
    npm run dev
    ```
 

@@ -66,7 +66,7 @@ En `docs/pastoral-fidelity/README.md`:
 
 #### 2.3 — Memoria roadmap
 
-En `~/.claude/projects/-Users-ricardocerda-dev-dosfilos-app/memory/feature_pastoral_fidelity_roadmap.md`:
+En `~/.claude/projects/-Users-ricardocerda-dev-dosfilosPreach/memory/feature_pastoral_fidelity_roadmap.md`:
 
 - [ ] Agregar ADRs nuevos a la lista de aceptados
 - [ ] Actualizar estado de la fase
