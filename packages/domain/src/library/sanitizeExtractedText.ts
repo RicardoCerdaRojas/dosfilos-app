@@ -36,6 +36,18 @@
  *   overrides sí lo habilitan, y esos se van.
  * - **Los marcadores de página** `<!-- page: N -->` y la estructura Markdown.
  *   Son el contrato con el chunker; tocarlos rompería la cita verificable.
+ * - **Las elisiones.** `ἀλλ᾽`, `μεθ᾿`, `δ᾽`: ahí el signo NO es un espíritu,
+ *   es un apóstrofo. Ver `normalizeGreekBreathings` para cómo se distinguen.
+ *
+ * ## Y una cosa que sí compone: los espíritus partidos
+ *
+ * El OCR de un libro escaneado emite a menudo el espíritu como carácter
+ * SUELTO delante de la vocal —`᾿Ι` en vez de `Ἰ`— y esas son dos cadenas
+ * distintas para cualquier búsqueda. Medido sobre los dos comentarios de
+ * Santiago que entran a la biblioteca: en Metzger, **289 de 368** iotas
+ * mayúsculas con espíritu están partidas (el 78%), así que buscar `Ἰησοῦ`
+ * no encuentra la mayoría de las menciones de Jesús. Ver
+ * `normalizeGreekBreathings`.
  *
  * ## Espejo en `packages/functions`
  *
@@ -86,11 +98,126 @@ export interface SanitizationReport {
     byCategory: Partial<Record<SanitizedCategory, number>>;
     /** `true` si se normalizó algún fin de línea CRLF/CR. */
     normalizedLineEndings: boolean;
+    /** Espíritus griegos sueltos que se volvieron a pegar a su vocal. */
+    greekBreathingsComposed: number;
 }
 
 export interface SanitizedText {
     text: string;
     report: SanitizationReport;
+}
+
+/**
+ * Signos de respiración/acento en su forma SUELTA (spacing) y las marcas
+ * combinantes equivalentes. `[codePoint suelto, combinantes...]`.
+ *
+ * Ojo con lo que NO está acá: `U+1FBD` (KORONIS). Es el mismo dibujo, pero
+ * su uso real en estos textos es el apóstrofo de elisión —`ἀλλ᾽`, `δ᾽`— y
+ * componerlo destruiría la palabra. Se deja fuera a propósito; la regla de
+ * contexto de `normalizeGreekBreathings` es la segunda defensa.
+ *
+ * ⚠️ Espejada en `packages/functions/src/library/sanitizeExtractedText.ts`.
+ */
+export const GREEK_SPACING_BREATHINGS: ReadonlyArray<readonly [number, readonly number[]]> = [
+    [0x1fbf, [0x0313]],          // PSILI (espíritu suave)
+    [0x1ffe, [0x0314]],          // DASIA (espíritu áspero)
+    [0x1fcd, [0x0313, 0x0300]],  // PSILI + VARIA
+    [0x1fce, [0x0313, 0x0301]],  // PSILI + OXIA
+    [0x1fcf, [0x0313, 0x0342]],  // PSILI + PERISPOMENI
+    [0x1fdd, [0x0314, 0x0300]],  // DASIA + VARIA
+    [0x1fde, [0x0314, 0x0301]],  // DASIA + OXIA
+    [0x1fdf, [0x0314, 0x0342]],  // DASIA + PERISPOMENI
+];
+
+/**
+ * Vocales y rho: lo único a lo que un espíritu puede pertenecer.
+ *
+ * Se prueba contra la BASE del carácter (NFD, primer code point) para que
+ * `ά` cuente como alfa y `Ἰ` como iota. Probar la forma compuesta obligaría a
+ * enumerar las decenas de precompuestas del bloque politónico, y ese bloque
+ * además contiene los propios signos sueltos, que no son vocales.
+ */
+const GREEK_VOWEL_OR_RHO = /^[αεηιουωρΑΕΗΙΟΥΩΡ]/u;
+
+/**
+ * Signos de respiración/acento en su forma suelta. Viven DENTRO del bloque
+ * griego extendido pero no son letras, y esa diferencia decide: `᾽᾿Αρμαγεδῶ`
+ * —dos signos seguidos, cosa que el OCR produce— sólo se compone si el
+ * primero no cuenta como letra.
+ */
+const GREEK_SPACING_MARKS = /[\u1fbd\u1fbf-\u1fc1\u1fcd-\u1fcf\u1fdd-\u1fdf\u1fed-\u1fef\u1ffd\u1ffe]/u;
+
+/** Rango griego completo, marcas incluidas. Filtrar con `isGreekLetter`. */
+const GREEK_RANGE = /[\u0370-\u03ff\u1f00-\u1fff]/u;
+
+/** Letra griega de verdad: del rango griego, pero no uno de sus signos sueltos. */
+function isGreekLetter(char: string): boolean {
+    return GREEK_RANGE.test(char) && !GREEK_SPACING_MARKS.test(char);
+}
+
+/** Marcas combinantes, que hay que sacar para mirar la letra de abajo. */
+const COMBINING_MARKS = /[\u0300-\u036f\u0342\u0345]/gu;
+
+/**
+ * Vuelve a pegar los espíritus que el OCR dejó sueltos delante de la vocal.
+ *
+ * `᾿Ιησοῦ` (dos caracteres: espíritu suelto + iota) pasa a ser `Ἰησοῦ` (uno).
+ * Son cadenas distintas para cualquier búsqueda y para cualquier embedding,
+ * y el pastor que escribe `Ἰησοῦ` en el buscador no encuentra la página que
+ * la contiene.
+ *
+ * ## La regla de contexto, que es lo delicado
+ *
+ * Se compone SÓLO cuando el signo abre palabra —el carácter anterior no es
+ * una letra griega— y lo sigue una vocal o rho. Las dos condiciones juntas
+ * son las que separan el espíritu de la elisión:
+ *
+ * | Caso | Anterior | Siguiente | Qué se hace |
+ * |---|---|---|---|
+ * | `᾿Ιησοῦ` (espíritu) | espacio | `Ι` | se compone |
+ * | `ἀλλ᾽ αὐτὸς` (elisión) | `λ` | espacio | se deja |
+ * | `ἀφ᾽ὑμῶν` (elisión sin espacio) | `φ` | `ὑ` | **se deja** — por el anterior |
+ * | `᾿ aary` (ruido de OCR) | espacio | espacio | se deja |
+ *
+ * La tercera fila es la que obliga a mirar el carácter ANTERIOR: un espíritu
+ * nunca sigue a una letra griega, pero una elisión siempre lo hace. Medido
+ * sobre los dos comentarios reales: la regla compone 569 espíritus partidos
+ * y no toca ninguna de las 537 elisiones.
+ */
+export function normalizeGreekBreathings(input: string): { text: string; composed: number } {
+    const spacing = new Map<number, readonly number[]>(
+        GREEK_SPACING_BREATHINGS.map(([cp, combining]) => [cp, combining])
+    );
+
+    const chars = [...input];
+    const out: string[] = [];
+    let composed = 0;
+
+    for (let i = 0; i < chars.length; i++) {
+        const char = chars[i]!;
+        const combining = spacing.get(char.codePointAt(0)!);
+        const next = chars[i + 1];
+
+        if (combining && next && GREEK_VOWEL_OR_RHO.test(next.normalize('NFD'))) {
+            // El anterior es el que distingue espíritu de elisión: se mira la
+            // salida, no la entrada, porque un signo ya compuesto en esta misma
+            // pasada dejó una letra griega ahí. Se le quitan las combinantes
+            // para llegar a la letra de abajo.
+            const prev = out.length > 0 ? out[out.length - 1]! : '';
+            const prevBase = prev.replace(COMBINING_MARKS, '').slice(-1);
+            const openWord = prevBase === '' || !isGreekLetter(prevBase);
+            if (openWord) {
+                out.push(next + combining.map((cp) => String.fromCodePoint(cp)).join(''));
+                composed++;
+                i++; // la vocal ya se consumió
+                continue;
+            }
+        }
+        out.push(char);
+    }
+
+    // NFC pega la marca combinante a su base: `Ι` + U+0313 → `Ἰ`.
+    return { text: out.join('').normalize('NFC'), composed };
 }
 
 function categoryOf(codePoint: number): SanitizedCategory | null {
@@ -110,7 +237,10 @@ function categoryOf(codePoint: number): SanitizedCategory | null {
  */
 export function sanitizeExtractedText(input: string): SanitizedText {
     if (!input) {
-        return { text: input ?? '', report: { removed: 0, byCategory: {}, normalizedLineEndings: false } };
+        return {
+            text: input ?? '',
+            report: { removed: 0, byCategory: {}, normalizedLineEndings: false, greekBreathingsComposed: 0 },
+        };
     }
 
     // Fines de línea primero: CRLF y CR sueltos pasan a \n. Se hace antes del
@@ -135,7 +265,20 @@ export function sanitizeExtractedText(input: string): SanitizedText {
         out += char;
     }
 
-    return { text: out, report: { removed, byCategory, normalizedLineEndings } };
+    // Los espíritus se componen DESPUÉS de remover: un invisible entre el
+    // signo y su vocal —que es exactamente lo que el saneo acaba de sacar—
+    // rompería la regla de adyacencia y dejaría el espíritu suelto.
+    const greek = normalizeGreekBreathings(out);
+
+    return {
+        text: greek.text,
+        report: {
+            removed,
+            byCategory,
+            normalizedLineEndings,
+            greekBreathingsComposed: greek.composed,
+        },
+    };
 }
 
 /** Azúcar para los llamadores que no necesitan el reporte. */
@@ -143,12 +286,18 @@ export function sanitizeExtractedTextOnly(input: string): string {
     return sanitizeExtractedText(input).text;
 }
 
-/** Resumen de una línea para logs, o `null` si no había nada que sanear. */
+/** Resumen de una línea para logs, o `null` si no hubo nada que hacer. */
 export function describeSanitization(report: SanitizationReport): string | null {
-    if (report.removed === 0) return null;
-    const detail = Object.entries(report.byCategory)
-        .sort((a, b) => b[1] - a[1])
-        .map(([category, count]) => `${category}=${count}`)
-        .join(' ');
-    return `${report.removed} caracteres invisibles removidos (${detail})`;
+    const partes: string[] = [];
+    if (report.removed > 0) {
+        const detail = Object.entries(report.byCategory)
+            .sort((a, b) => b[1] - a[1])
+            .map(([category, count]) => `${category}=${count}`)
+            .join(' ');
+        partes.push(`${report.removed} caracteres invisibles removidos (${detail})`);
+    }
+    if (report.greekBreathingsComposed > 0) {
+        partes.push(`${report.greekBreathingsComposed} espíritus griegos recompuestos`);
+    }
+    return partes.length > 0 ? partes.join('; ') : null;
 }

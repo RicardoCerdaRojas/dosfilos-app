@@ -22,7 +22,7 @@ export interface ResourceAudit {
      * ("se revisó y estaba limpio"). Esa diferencia es justo la que hay que
      * poder ver para saber qué recursos falta reindexar.
      */
-    sanitization?: { removed: number; byCategory: Record<string, number> };
+    sanitization?: { removed: number; byCategory: Record<string, number>; greekBreathingsComposed: number };
 }
 
 export interface StoreAudit {
@@ -144,6 +144,7 @@ export const auditIndexing = onCall<Record<string, never>>(
                     ? {
                         removed: r.sanitization.removed ?? 0,
                         byCategory: r.sanitization.byCategory ?? {},
+                        greekBreathingsComposed: r.sanitization.greekBreathingsComposed ?? 0,
                     }
                     : undefined,
             });

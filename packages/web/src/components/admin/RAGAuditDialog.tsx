@@ -36,7 +36,7 @@ interface ResourceAudit {
     indexedChunkCount?: number;
     actualChunkCount: number;
     /** Ausente = indexado antes de que existiera el saneo. Ver `SaneoCell`. */
-    sanitization?: { removed: number; byCategory: Record<string, number> };
+    sanitization?: { removed: number; byCategory: Record<string, number>; greekBreathingsComposed?: number };
     pageCount?: number;
 }
 
@@ -527,7 +527,7 @@ function MetricTile({
  * sucio — eso la lectura no lo arregla, sólo lo arregla reindexar. "Limpio"
  * significa que se revisó y no había nada, que es una afirmación distinta.
  */
-function SaneoCell({ sanitization }: { sanitization?: { removed: number; byCategory: Record<string, number> } }) {
+function SaneoCell({ sanitization }: { sanitization?: { removed: number; byCategory: Record<string, number>; greekBreathingsComposed?: number } }) {
     const { t } = useTranslation('admin');
     if (!sanitization) {
         return (
@@ -540,7 +540,8 @@ function SaneoCell({ sanitization }: { sanitization?: { removed: number; byCateg
             </Badge>
         );
     }
-    if (sanitization.removed === 0) {
+    const espiritus = sanitization.greekBreathingsComposed ?? 0;
+    if (sanitization.removed === 0 && espiritus === 0) {
         return (
             <span className="text-xs text-muted-foreground" title={t('ragAudit.sanitization.cleanHint')}>
                 {t('ragAudit.sanitization.clean')}
@@ -552,8 +553,17 @@ function SaneoCell({ sanitization }: { sanitization?: { removed: number; byCateg
         .map(([categoria, cuenta]) => `${categoria}=${cuenta}`)
         .join(' · ');
     return (
-        <span className="text-xs tabular-nums text-success-subtle-foreground" title={detalle}>
-            −{sanitization.removed.toLocaleString()}
+        <span className="text-xs tabular-nums space-x-1">
+            {sanitization.removed > 0 && (
+                <span className="text-success-subtle-foreground" title={detalle}>
+                    −{sanitization.removed.toLocaleString()}
+                </span>
+            )}
+            {espiritus > 0 && (
+                <span className="text-muted-foreground" title={t('ragAudit.sanitization.breathingsHint')}>
+                    {t('ragAudit.sanitization.breathings', { count: espiritus })}
+                </span>
+            )}
         </span>
     );
 }

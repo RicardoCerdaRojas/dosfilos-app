@@ -684,7 +684,9 @@
       "missing": "sin dato",
       "missingHint": "Indexado antes del saneo: su índice puede tener invisibles y sus embeddings se calcularon sobre el texto sucio. Reindexar para limpiarlo.",
       "clean": "limpio",
-      "cleanHint": "Se revisó al indexar y no había nada que remover."
+      "cleanHint": "Se revisó al indexar y no había nada que remover.",
+      "breathings": "{{count}} espíritus ✎",
+      "breathingsHint": "Espíritus griegos que el OCR había dejado sueltos delante de la vocal y se volvieron a componer, para que la palabra sea buscable."
     }
   }
 }

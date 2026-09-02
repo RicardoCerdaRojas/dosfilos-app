@@ -260,6 +260,7 @@ export const indexStructuredDocument = onCall<IndexRequest>(
                 sanitization: {
                     removed: sanitizationReport.removed,
                     byCategory: sanitizationReport.byCategory,
+                    greekBreathingsComposed: sanitizationReport.greekBreathingsComposed,
                     at: now,
                 },
                 updatedAt: now,
@@ -454,6 +455,7 @@ export async function indexResourceChunks(
             sanitization: {
                 removed: sanitizationReport.removed,
                 byCategory: sanitizationReport.byCategory,
+                greekBreathingsComposed: sanitizationReport.greekBreathingsComposed,
                 at: now,
             },
             updatedAt: now,

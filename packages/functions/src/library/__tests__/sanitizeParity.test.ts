@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { SANITIZER_RANGES, sanitizeExtractedText } from '../sanitizeExtractedText';
+import {
+    GREEK_SPACING_BREATHINGS,
+    SANITIZER_RANGES,
+    normalizeGreekBreathings,
+    sanitizeExtractedText,
+} from '../sanitizeExtractedText';
 
 /**
  * El saneador está duplicado en `domain` y en `functions`, porque `functions`
@@ -22,13 +27,26 @@ const DOMAIN_SANITIZER_TS = join(
 
 type Range = readonly [number, number, string];
 
+function domainSource(): string {
+    return readFileSync(DOMAIN_SANITIZER_TS, 'utf8');
+}
+
 function readDomainRanges(): Range[] {
-    const source = readFileSync(DOMAIN_SANITIZER_TS, 'utf8');
-    const block = /export const SANITIZER_RANGES[^=]*=\s*\[([\s\S]*?)\n\];/.exec(source);
+    const block = /export const SANITIZER_RANGES[^=]*=\s*\[([\s\S]*?)\n\];/.exec(domainSource());
     if (!block) throw new Error(`No se pudo leer SANITIZER_RANGES en ${DOMAIN_SANITIZER_TS}`);
     return [...block[1].matchAll(/\[\s*(0x[0-9a-f]+),\s*(0x[0-9a-f]+),\s*'([a-zA-Z]+)'\s*\]/g)].map(
         (m) => [parseInt(m[1]!, 16), parseInt(m[2]!, 16), m[3]!] as Range
     );
+}
+
+/** `[espíritu suelto, [combinantes]]` tal como lo declara el dominio. */
+function readDomainBreathings(): Array<[number, number[]]> {
+    const block = /export const GREEK_SPACING_BREATHINGS[^=]*=\s*\[([\s\S]*?)\n\];/.exec(domainSource());
+    if (!block) throw new Error(`No se pudo leer GREEK_SPACING_BREATHINGS en ${DOMAIN_SANITIZER_TS}`);
+    return [...block[1].matchAll(/\[(0x[0-9a-f]+),\s*\[([^\]]+)\]\]/g)].map((m) => [
+        parseInt(m[1]!, 16),
+        m[2]!.split(',').map((v) => parseInt(v.trim(), 16)),
+    ]);
 }
 
 describe('saneador: paridad entre domain y functions', () => {
@@ -57,5 +75,30 @@ describe('saneador: paridad entre domain y functions', () => {
     it('conserva griego y hebreo en la copia de functions', () => {
         const sagrado = 'Ἀκούσατε, λαοί · בְּרֵאשִׁ֖ית בָּרָ֣א';
         expect(sanitizeExtractedText(sagrado).text).toBe(sagrado);
+    });
+});
+
+describe('espíritus griegos: paridad entre domain y functions', () => {
+    it('el parseo encuentra la tabla de espíritus en el fuente del dominio', () => {
+        expect(readDomainBreathings().length).toBeGreaterThan(3);
+    });
+
+    it('las dos tablas de espíritus son idénticas', () => {
+        const domain = readDomainBreathings();
+        const local = GREEK_SPACING_BREATHINGS.map(([cp, marks]) => [cp, [...marks]]);
+        expect(local).toEqual(domain);
+    });
+
+    it('U+1FBD (KORONIS) NO está en la tabla: ahí es apóstrofo de elisión', () => {
+        // Si alguien lo agrega "por completitud", `ἀλλ᾽` se convierte en otra
+        // palabra. La ausencia es la decisión, así que se afirma.
+        const codePoints = GREEK_SPACING_BREATHINGS.map(([cp]) => cp);
+        expect(codePoints).not.toContain(0x1fbd);
+        expect(readDomainBreathings().map(([cp]) => cp)).not.toContain(0x1fbd);
+    });
+
+    it('la copia de functions compone igual que el dominio', () => {
+        expect(normalizeGreekBreathings('᾿Ιησοῦ').text).toBe('Ἰησοῦ');
+        expect(normalizeGreekBreathings('ἀλλ᾽ αὐτὸς').composed).toBe(0);
     });
 });
