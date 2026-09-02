@@ -16,6 +16,13 @@ export interface ResourceAudit {
     indexedChunkCount?: number;     // Reported by indexer (in library_resources)
     actualChunkCount: number;       // Live count from document_chunks
     pageCount?: number;
+    /**
+     * Qué se saneó la última vez que se indexó. AUSENTE significa "indexado
+     * antes de que existiera el saneo", que no es lo mismo que `removed: 0`
+     * ("se revisó y estaba limpio"). Esa diferencia es justo la que hay que
+     * poder ver para saber qué recursos falta reindexar.
+     */
+    sanitization?: { removed: number; byCategory: Record<string, number> };
 }
 
 export interface StoreAudit {
@@ -34,7 +41,7 @@ export interface AuditIssue {
     resourceId: string;
     title: string;
     severity: 'error' | 'warning';
-    category: 'no-llamaparse' | 'missing-chunks' | 'inconsistent-count' | 'no-stores' | 'empty-text';
+    category: 'no-llamaparse' | 'missing-chunks' | 'inconsistent-count' | 'no-stores' | 'empty-text' | 'unsanitized-index';
     message: string;
 }
 
@@ -133,6 +140,12 @@ export const auditIndexing = onCall<Record<string, never>>(
                 indexedChunkCount: r.indexedChunkCount,
                 actualChunkCount,
                 pageCount: r.pageCount,
+                sanitization: r.sanitization
+                    ? {
+                        removed: r.sanitization.removed ?? 0,
+                        byCategory: r.sanitization.byCategory ?? {},
+                    }
+                    : undefined,
             });
         }
 
@@ -185,6 +198,19 @@ export const auditIndexing = onCall<Record<string, never>>(
                     message: 'Extraído con LlamaParse pero 0 chunks indexados',
                 });
                 continue;
+            }
+            // Indexado antes de que el saneo existiera. La recuperación sanea
+            // en lectura, así que no hay riesgo inmediato — pero el índice en
+            // reposo sigue sucio, y los embeddings se calcularon sobre el texto
+            // sucio, que es lo que la lectura NO puede arreglar.
+            if (r.indexingStatus === 'ready' && r.sanitization === undefined) {
+                issues.push({
+                    resourceId: r.id,
+                    title: r.title,
+                    severity: 'warning',
+                    category: 'unsanitized-index',
+                    message: 'Indexado antes del saneo — reindexar para limpiar invisibles del índice',
+                });
             }
             if (r.indexedChunkCount !== undefined && Math.abs(r.actualChunkCount - r.indexedChunkCount) > 2) {
                 issues.push({

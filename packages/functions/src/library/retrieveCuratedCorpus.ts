@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { embedQuery } from './retrieveChunks';
+import { sanitizeExtractedTextOnly } from './sanitizeExtractedText';
 
 /**
  * Ranking dentro del corpus curado de un trabajo.
@@ -153,7 +154,7 @@ export const retrieveCuratedCorpus = onCall<RetrieveRequest>(
                         .map(d => ({
                             resourceId,
                             chunkIndex: typeof d.chunkIndex === 'number' ? d.chunkIndex : 0,
-                            text: typeof d.text === 'string' ? d.text : '',
+                            text: sanitizeExtractedTextOnly(typeof d.text === 'string' ? d.text : ''),
                             sheet: typeof d.metadata?.page === 'number' ? d.metadata.page : null,
                             section: typeof d.metadata?.section === 'string' ? d.metadata.section : null,
                             // `COSINE` devuelve DISTANCIA: 0 es idéntico. Se
