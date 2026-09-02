@@ -5,6 +5,7 @@ import { appCheckCallableOptions } from '../config/appCheckOptions';
 import { chunkStructuredMarkdown } from './markdownChunker';
 import { isStructuredExtractionVersion } from './extractionVersions';
 import { parseFirebaseStorageLocation } from './storageLocation';
+import { describeSanitization, sanitizeExtractedText } from './sanitizeExtractedText';
 
 interface IndexRequest {
     resourceId: string;
@@ -117,6 +118,17 @@ export const indexStructuredDocument = onCall<IndexRequest>(
         let markdown = mdBuffer.toString('utf-8');
         console.log(`[IndexStructured] ${title}: downloaded ${markdown.length} chars of structured markdown`);
 
+        // Saneamiento — segunda línea. El extractor ya limpia antes de guardar,
+        // pero este `structured.md` puede ser de ANTES de esa regla, o venir de
+        // una re-extracción manual. Sanear acá es lo único que garantiza que
+        // ningún invisible entre al índice, que es el destino que importa: de
+        // ahí sale el contexto que ve el modelo y el texto que se cita.
+        const mdSan = sanitizeExtractedText(markdown);
+        markdown = mdSan.text;
+        let sanitizationReport = mdSan.report;
+        const mdSanSummary = describeSanitization(mdSan.report);
+        if (mdSanSummary) console.log(`🧼 [IndexStructured] ${title}: ${mdSanSummary}`);
+
         // 2. Chunk semantically
         let chunks = chunkStructuredMarkdown(markdown, {
             maxChars: 2000,
@@ -130,7 +142,13 @@ export const indexStructuredDocument = onCall<IndexRequest>(
         if (chunks.length < 3 && data.textContent && data.textContent.length > 1000) {
             console.log(`[IndexStructured] ${title}: falling back to textContent (${data.textContent.length} chars)`);
             // Convert [PAGE N] markers to <!-- page: N --> so chunker recognizes them
-            markdown = (data.textContent as string).replace(/\[PAGE\s+(\d+)\]/gi, '<!-- page: $1 -->');
+            const fallbackSan = sanitizeExtractedText(
+                (data.textContent as string).replace(/\[PAGE\s+(\d+)\]/gi, '<!-- page: $1 -->')
+            );
+            markdown = fallbackSan.text;
+            sanitizationReport = fallbackSan.report;
+            const fallbackSanSummary = describeSanitization(fallbackSan.report);
+            if (fallbackSanSummary) console.log(`🧼 [IndexStructured] ${title} (fallback): ${fallbackSanSummary}`);
             chunks = chunkStructuredMarkdown(markdown, {
                 maxChars: 2000,
                 minChars: 200,
@@ -235,6 +253,16 @@ export const indexStructuredDocument = onCall<IndexRequest>(
             // that fails, gets fixed, then fails again would stay silent
             // forever — the alert stamps once and never un-stamps.
             indexFailureAlertedAt: null,
+                // Qué se saneó en ESTA corrida. Se guarda aunque sea cero: un
+                // recurso reindexado tras la regla de saneo tiene que poder
+                // decir "se revisó y no había nada", que no es lo mismo que
+                // "nunca se revisó" (campo ausente).
+                sanitization: {
+                    removed: sanitizationReport.removed,
+                    byCategory: sanitizationReport.byCategory,
+                    greekBreathingsComposed: sanitizationReport.greekBreathingsComposed,
+                    at: now,
+                },
                 updatedAt: now,
             });
 
@@ -313,9 +341,21 @@ export async function indexResourceChunks(
     const [mdBuffer] = await storage.bucket(bucketName).file(mdPath).download();
     let markdown = mdBuffer.toString('utf-8');
 
+    // Mismo saneamiento que la callable: este es el camino del trigger
+    // automático, y es el que corre para casi todos los libros.
+    const mdSan = sanitizeExtractedText(markdown);
+    markdown = mdSan.text;
+    let sanitizationReport = mdSan.report;
+    const mdSanSummary = describeSanitization(mdSan.report);
+    if (mdSanSummary) console.log(`🧼 [IndexResource] ${title}: ${mdSanSummary}`);
+
     let chunks = chunkStructuredMarkdown(markdown, { maxChars: 2000, minChars: 200, overlapChars: 150 });
     if (chunks.length < 3 && data.textContent && data.textContent.length > 1000) {
-        markdown = (data.textContent as string).replace(/\[PAGE\s+(\d+)\]/gi, '<!-- page: $1 -->');
+        const fallbackSan = sanitizeExtractedText(
+            (data.textContent as string).replace(/\[PAGE\s+(\d+)\]/gi, '<!-- page: $1 -->')
+        );
+        markdown = fallbackSan.text;
+        sanitizationReport = fallbackSan.report;
         chunks = chunkStructuredMarkdown(markdown, { maxChars: 2000, minChars: 200, overlapChars: 150 });
     }
     // Drop empty / whitespace-only chunks — Gemini's batchEmbedContents
@@ -412,6 +452,12 @@ export async function indexResourceChunks(
             // that fails, gets fixed, then fails again would stay silent
             // forever — the alert stamps once and never un-stamps.
             indexFailureAlertedAt: null,
+            sanitization: {
+                removed: sanitizationReport.removed,
+                byCategory: sanitizationReport.byCategory,
+                greekBreathingsComposed: sanitizationReport.greekBreathingsComposed,
+                at: now,
+            },
             updatedAt: now,
         });
 

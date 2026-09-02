@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldPath } from 'firebase-admin/firestore';
 import { appCheckCallableOptions } from '../config/appCheckOptions';
+import { sanitizeExtractedText } from './sanitizeExtractedText';
 
 interface RetrieveRequest {
     query: string;
@@ -220,6 +221,12 @@ export const retrieveChunks = onCall<RetrieveRequest>(
             // 5. Map to payload
             const chunks: RetrievedChunkPayload[] = [];
             const droppedByMinSim: Record<string, number> = {};
+            // El índice tiene chunks escritos ANTES de que existiera el
+            // saneamiento, y re-indexar 81 recursos no es instantáneo. Sanear
+            // en la salida cubre a esos desde hoy: es el último punto por el
+            // que el texto pasa antes de entrar al prompt del modelo y a la
+            // cita que lee el pastor. Sobre un chunk ya limpio no cuesta nada.
+            let sanitizedOnRead = 0;
             for (const doc of snapshot.docs) {
                 const data = doc.data();
                 const distance = (data._distance as number) ?? 0;
@@ -232,13 +239,15 @@ export const retrieveChunks = onCall<RetrieveRequest>(
                 }
 
                 const sectionPath = (data.metadata?.sectionPath as string[]) ?? [];
+                const sanitized = sanitizeExtractedText(data.text ?? '');
+                if (sanitized.report.removed > 0) sanitizedOnRead += sanitized.report.removed;
                 chunks.push({
                     id: doc.id,
                     resourceId: data.resourceId,
                     resourceTitle: data.resourceTitle ?? 'Documento sin título',
                     resourceAuthor: data.resourceAuthor ?? 'Autor desconocido',
                     chunkIndex: data.chunkIndex ?? 0,
-                    text: data.text ?? '',
+                    text: sanitized.text,
                     metadata: {
                         page: data.metadata?.page,
                         section: data.metadata?.section,
@@ -257,6 +266,10 @@ export const retrieveChunks = onCall<RetrieveRequest>(
             // Sort the combined list by similarity so downstream consumers see them in the
             // same descending-score order as the single-shot path.
             chunks.sort((a, b) => b.score - a.score);
+
+            if (sanitizedOnRead > 0) {
+                console.log(`🧼 [RetrieveChunks] ${sanitizedOnRead} caracteres invisibles removidos en lectura — hay chunks indexados antes del saneo; conviene reindexar esos recursos.`);
+            }
 
             if (Object.keys(droppedByMinSim).length > 0) {
                 console.log(`[RetrieveChunks] minSim=${minSimilarity} dropped: ${JSON.stringify(droppedByMinSim)}`);

@@ -4,6 +4,7 @@ import { appCheckCallableOptions } from '../config/appCheckOptions';
 import type { ILlmClient } from '../llm/LlmClient';
 import { GeminiLlmClient } from '../llm/GeminiLlmClient';
 import { embedQuery } from '../library/retrieveChunks';
+import { sanitizeExtractedTextOnly } from '../library/sanitizeExtractedText';
 
 /**
  * Pastoral Fidelity — Phase 4 PR 1 (ADR-033) — contra-scan retrieval +
@@ -134,7 +135,7 @@ async function retrieveScope(
             resourceTitle: data.resourceTitle ?? 'Documento sin título',
             resourceAuthor: data.resourceAuthor ?? 'Autor desconocido',
             page: data.metadata?.page,
-            text: data.text ?? '',
+            text: sanitizeExtractedTextOnly(data.text ?? ''),
             score: Math.max(0, 1 - distance / EMBEDDING_DIM_DISTANCE_MAX),
             fromPersonalLibrary,
         };

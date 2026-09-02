@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,8 @@ interface ResourceAudit {
     indexingStatus?: string;
     indexedChunkCount?: number;
     actualChunkCount: number;
+    /** Ausente = indexado antes de que existiera el saneo. Ver `SaneoCell`. */
+    sanitization?: { removed: number; byCategory: Record<string, number>; greekBreathingsComposed?: number };
     pageCount?: number;
 }
 
@@ -195,6 +198,7 @@ export function RAGAuditDialog({ open, onOpenChange, availableStores }: Props) {
 // ── Audit View ─────────────────────────────────────────────────────────────
 
 function AuditView({ audit, loading, onRun }: { audit: AuditResponse | null; loading: boolean; onRun: () => void }) {
+    const { t: tAdmin } = useTranslation('admin');
     if (!audit && !loading) {
         return (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -320,6 +324,7 @@ function AuditView({ audit, loading, onRun }: { audit: AuditResponse | null; loa
                                 <th className="text-left px-3 py-2 font-medium">Autor</th>
                                 <th className="text-right px-3 py-2 font-medium">Págs</th>
                                 <th className="text-right px-3 py-2 font-medium">Chunks</th>
+                                <th className="text-left px-3 py-2 font-medium">{tAdmin('ragAudit.sanitization.column')}</th>
                                 <th className="text-left px-3 py-2 font-medium">Stores</th>
                             </tr>
                         </thead>
@@ -335,6 +340,9 @@ function AuditView({ audit, loading, onRun }: { audit: AuditResponse | null; loa
                                         r.actualChunkCount > 0 && "text-emerald-600"
                                     )}>
                                         {r.actualChunkCount}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        <SaneoCell sanitization={r.sanitization} />
                                     </td>
                                     <td className="px-3 py-2">
                                         <div className="flex flex-wrap gap-1">
@@ -507,6 +515,56 @@ function MetricTile({
                 </div>
             </div>
         </div>
+    );
+}
+
+/**
+ * Estado de saneo de un documento indexado.
+ *
+ * Los tres estados NO son dos. "Sin dato" (campo ausente) significa que el
+ * documento se indexó antes de que el saneo existiera: su índice puede
+ * contener invisibles y, peor, sus embeddings se calcularon sobre el texto
+ * sucio — eso la lectura no lo arregla, sólo lo arregla reindexar. "Limpio"
+ * significa que se revisó y no había nada, que es una afirmación distinta.
+ */
+function SaneoCell({ sanitization }: { sanitization?: { removed: number; byCategory: Record<string, number>; greekBreathingsComposed?: number } }) {
+    const { t } = useTranslation('admin');
+    if (!sanitization) {
+        return (
+            <Badge
+                variant="outline"
+                className="text-[10px] px-1 py-0 h-4 font-normal text-warning-subtle-foreground border-warning"
+                title={t('ragAudit.sanitization.missingHint')}
+            >
+                {t('ragAudit.sanitization.missing')}
+            </Badge>
+        );
+    }
+    const espiritus = sanitization.greekBreathingsComposed ?? 0;
+    if (sanitization.removed === 0 && espiritus === 0) {
+        return (
+            <span className="text-xs text-muted-foreground" title={t('ragAudit.sanitization.cleanHint')}>
+                {t('ragAudit.sanitization.clean')}
+            </span>
+        );
+    }
+    const detalle = Object.entries(sanitization.byCategory)
+        .sort((a, b) => b[1] - a[1])
+        .map(([categoria, cuenta]) => `${categoria}=${cuenta}`)
+        .join(' · ');
+    return (
+        <span className="text-xs tabular-nums space-x-1">
+            {sanitization.removed > 0 && (
+                <span className="text-success-subtle-foreground" title={detalle}>
+                    −{sanitization.removed.toLocaleString()}
+                </span>
+            )}
+            {espiritus > 0 && (
+                <span className="text-muted-foreground" title={t('ragAudit.sanitization.breathingsHint')}>
+                    {t('ragAudit.sanitization.breathings', { count: espiritus })}
+                </span>
+            )}
+        </span>
     );
 }
 

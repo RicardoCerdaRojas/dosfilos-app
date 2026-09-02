@@ -8,6 +8,7 @@ import { LlamaParseClient, pagesToMarkedText, pagesToMarkdown } from './llamaPar
 import { recordLlamaParseUsage, selectAllLlamaParseAccounts, type SelectedLlamaParseAccount } from './llamaParseAccountSelector';
 import { consumePagesAdmin, type ProcessingMode } from './processingBalance';
 import { extractWithGemini } from './geminiExtraction';
+import { describeSanitization, sanitizeExtractedText } from './sanitizeExtractedText';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
 
@@ -456,6 +457,24 @@ export const extractPdfWithGemini = onObjectFinalized(
 
             const usedGemini = extractionVersion === '4.0-gemini-standard' || extractionVersion === '2.0-gemini';
             const usedLlamaParse = extractionVersion === '3.0-llamaparse';
+
+            // Saneamiento en el borde de escritura: lo que sale de un PDF de
+            // tercero no es texto confiable. Se limpia ACÁ, antes de truncar y
+            // antes de guardar, para que ni Firestore ni el `structured.md` de
+            // Storage lleguen a contener invisibles — el indexador vuelve a
+            // sanear como segunda línea, pero el archivo en reposo ya queda
+            // limpio y auditable.
+            const textSan = sanitizeExtractedText(extractedText);
+            extractedText = textSan.text;
+            const textSanSummary = describeSanitization(textSan.report);
+            if (textSanSummary) console.log(`🧼 [Extract] textContent: ${textSanSummary}`);
+
+            if (structuredMarkdown) {
+                const mdSan = sanitizeExtractedText(structuredMarkdown);
+                structuredMarkdown = mdSan.text;
+                const mdSanSummary = describeSanitization(mdSan.report);
+                if (mdSanSummary) console.log(`🧼 [Extract] structured.md: ${mdSanSummary}`);
+            }
 
             console.log(`📝 [Extract] Extracted ${extractedText.length} characters / ${Buffer.byteLength(extractedText, 'utf8')} bytes from ${pageCount} pages`);
 

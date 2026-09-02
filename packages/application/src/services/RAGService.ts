@@ -4,7 +4,9 @@ import {
     ICacheService,
     DocumentChunkEntity,
     ChunkSearchResult,
-    LibraryResourceEntity
+    LibraryResourceEntity,
+    describeSanitization,
+    sanitizeExtractedText
 } from '@dosfilos/domain';
 
 /**
@@ -85,11 +87,18 @@ export class RAGService {
         }
 
         // Get text content
-        const text = resource.textContent;
-        if (!text || text.trim().length === 0) {
+        const rawText = resource.textContent;
+        if (!rawText || rawText.trim().length === 0) {
             console.log(`Resource ${resource.id} has no text content`);
             return 0;
         }
+
+        // Saneamiento. Este camino legacy sólo atiende recursos pre-contrato,
+        // pero su salida entra al MISMO índice que lee el modelo, así que el
+        // texto tiene que llegar igual de limpio que por la ruta de la nube.
+        const { text, report } = sanitizeExtractedText(rawText);
+        const sanSummary = describeSanitization(report);
+        if (sanSummary) console.log(`🧼 [RAG] ${resource.id}: ${sanSummary}`);
 
         // Chunk the text
         reportProgress(5, 'Dividiendo texto en fragmentos...');

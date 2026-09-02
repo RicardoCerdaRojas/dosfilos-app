@@ -677,5 +677,16 @@
     "card": {
       "unknownDate": "Unknown date"
     }
+  },
+  "ragAudit": {
+    "sanitization": {
+      "column": "Sanitized",
+      "missing": "no data",
+      "missingHint": "Indexed before sanitization existed: its index may hold invisible characters and its embeddings were computed over the dirty text. Reindex to clean it.",
+      "clean": "clean",
+      "cleanHint": "Checked at index time; nothing to remove.",
+      "breathings": "{{count}} breathings ✎",
+      "breathingsHint": "Greek breathing marks the OCR left detached before the vowel, recomposed so the word is searchable."
+    }
   }
 }
