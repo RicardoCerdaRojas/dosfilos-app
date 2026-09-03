@@ -50,9 +50,60 @@ import { useTranslation } from '@/i18n';
  */
 interface CanonicalAnalysisStudyViewProps {
     analysis: CanonicalVerseAnalysis;
+    /**
+     * Abrir el documento original en la página de una cita. Sin él las
+     * citas se muestran como texto, que es como venían.
+     */
+    onOpenCitation?: (citation: {
+        sourceKey: string;
+        page: number;
+        verbatimQuote?: string | null;
+    }) => void;
 }
 
-export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyViewProps) {
+/**
+ * Clave y página de una cita, pulsable cuando hay a dónde ir.
+ *
+ * Comprobar una cita costaba cinco pasos y un cambio de contexto, así que
+ * nadie los daba: por eso una atribución invertida sobrevivió meses en un
+ * paper. Esto lo vuelve un clic.
+ */
+function CitationChip({
+    sourceKey,
+    page,
+    verbatimQuote,
+    onOpen,
+}: {
+    sourceKey: string;
+    page: number;
+    verbatimQuote?: string | null;
+    onOpen?: (citation: { sourceKey: string; page: number; verbatimQuote?: string | null }) => void;
+}) {
+    const { t } = useTranslation('exegesis');
+    const label = `${sourceKey} p. ${page}`;
+    if (!onOpen) {
+        return (
+            <>
+                <span className="text-xs font-semibold text-foreground">{sourceKey}</span>
+                <span className="text-[11px] text-muted-foreground">p. {page}</span>
+            </>
+        );
+    }
+    return (
+        <button
+            type="button"
+            onClick={() => onOpen({ sourceKey, page, verbatimQuote })}
+            title={t('citationViewer.openSource')}
+            className="inline-flex items-baseline gap-1 rounded px-1 -mx-1 hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        >
+            <span className="text-xs font-semibold text-foreground underline decoration-dotted underline-offset-2">{sourceKey}</span>
+            <span className="text-[11px] text-muted-foreground">p. {page}</span>
+            <span className="sr-only">{t('citationViewer.openSource', { label })}</span>
+        </button>
+    );
+}
+
+export function CanonicalAnalysisStudyView({ analysis, onOpenCitation }: CanonicalAnalysisStudyViewProps) {
     const { t, i18n } = useTranslation('exegesis');
     const lang = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
     const refLabel = formatPassageReference(analysis.reference, lang);
@@ -245,8 +296,12 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                             <li key={idx} className="rounded-md border border-border bg-card p-3 space-y-1">
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <RoleBadge role={c.role} />
-                                    <span className="text-xs font-semibold text-foreground">{c.sourceKey}</span>
-                                    <span className="text-[11px] text-muted-foreground">p. {c.page}</span>
+                                    <CitationChip
+                                        sourceKey={c.sourceKey}
+                                        page={c.page}
+                                        verbatimQuote={c.verbatimQuote}
+                                        onOpen={onOpenCitation}
+                                    />
                                 </div>
                                 <p className="text-xs text-foreground/85 leading-relaxed">{c.position}</p>
                                 {c.verbatimQuote && (
@@ -297,8 +352,13 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                                         <ul className="space-y-0.5">
                                             {cx.commentatorPositions.map((p, pidx) => (
                                                 <li key={pidx} className="text-[11px] text-foreground/85">
-                                                    <span className="font-semibold">{p.sourceKey}</span>{' '}
-                                                    <span className="text-muted-foreground">p. {p.page}</span>{' → '}
+                                                    <CitationChip
+                                                        sourceKey={p.sourceKey}
+                                                        page={p.page}
+                                                        verbatimQuote={p.verbatimQuote}
+                                                        onOpen={onOpenCitation}
+                                                    />
+                                                    {' → '}
                                                     <span>opt {p.supports}: {p.summary}</span>
                                                 </li>
                                             ))}

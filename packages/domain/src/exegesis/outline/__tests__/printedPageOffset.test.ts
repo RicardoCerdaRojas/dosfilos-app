@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     detectPrintedPageOffset,
     printedPageFor,
+    sheetForPrintedPage,
     type PageTextSample,
 } from '../printedPageOffset';
 
@@ -105,5 +106,38 @@ describe('printedPageFor', () => {
 
     it('devuelve null en las preliminares, donde el libro no numera en árabe', () => {
         expect(printedPageFor(1, -4)).toBeNull();
+    });
+});
+
+describe('sheetForPrintedPage', () => {
+    it('deshace el desfase medido', () => {
+        // El caso real: en `Obadiah, Jonah and Micah` el desfase es −2, así
+        // que la página impresa 75 vive en la hoja 77.
+        expect(sheetForPrintedPage(75, -2)).toBe(77);
+        expect(printedPageFor(77, -2)).toBe(75);
+    });
+
+    it('es la inversa de printedPageFor en todo el rango útil', () => {
+        for (const offset of [-12, -2, 0, 3, 12]) {
+            for (let sheet = 1; sheet <= 200; sheet++) {
+                const printed = printedPageFor(sheet, offset);
+                if (printed === null) continue;
+                expect(sheetForPrintedPage(printed, offset)).toBe(sheet);
+            }
+        }
+    });
+
+    it('devuelve null sin desfase medido', () => {
+        // Sin desfase la única lectura honesta es tratar el número como
+        // hoja y rotularlo así, no inventar una conversión.
+        expect(sheetForPrintedPage(60, null)).toBeNull();
+    });
+
+    it('devuelve null cuando la cuenta cae antes de la primera hoja', () => {
+        expect(sheetForPrintedPage(1, 5)).toBeNull();
+    });
+
+    it('rechaza entradas no finitas', () => {
+        expect(sheetForPrintedPage(Number.NaN, -2)).toBeNull();
     });
 });

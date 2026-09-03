@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Loader2, FileWarning } from 'lucide-react';
+import { findQuoteInPageText } from '@dosfilos/domain';
 
 /**
  * Una hoja del PDF, dibujada en canvas.
@@ -46,6 +47,27 @@ interface Props {
     sheet: number;
     /** Marca visualmente que la hoja ya está en el carrito. */
     selected: boolean;
+    /**
+     * Frase a señalar dentro de la hoja. Cuando viene, el visor lee la
+     * capa de texto y pinta bandas sobre los fragmentos que la componen.
+     */
+    highlightQuote?: string | null;
+    /**
+     * Si la frase se localizó o no. La interfaz lo necesita para poder
+     * decir «abrí la página pero no encontré la cita» en vez de dejar al
+     * lector buscando una marca que nunca va a aparecer — en una
+     * biblioteca con medio catálogo escaneado, no encontrarla es un
+     * resultado corriente y hay que nombrarlo.
+     */
+    onHighlightResolved?: (found: boolean) => void;
+}
+
+/** Banda a pintar sobre el canvas, en píxeles CSS relativos a la hoja. */
+interface HighlightBox {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
 }
 
 /**
@@ -53,7 +75,42 @@ interface Props {
  */
 const STAGE_PADDING = 24;
 
-export function PdfPageViewer({ url, sheet, selected }: Props) {
+/** Lo que necesitamos de un fragmento de la capa de texto de pdf.js. */
+interface TextItemLike {
+    str: string;
+    width: number;
+    height: number;
+    transform: number[];
+    hasEOL?: boolean;
+}
+
+/**
+ * Rectángulo de un fragmento en píxeles CSS de la hoja dibujada.
+ *
+ * La matriz de pdf.js sitúa el fragmento por su LÍNEA BASE, así que la
+ * altura se descuenta hacia arriba: usar la coordenada cruda pintaría la
+ * banda bajo el texto en vez de sobre él.
+ */
+function boxFor(item: TextItemLike, viewport: pdfjsLib.PageViewport): HighlightBox | null {
+    const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+    const fontHeight = Math.hypot(tx[2] ?? 0, tx[3] ?? 0);
+    const width = item.width * viewport.scale;
+    if (!Number.isFinite(width) || width <= 0 || fontHeight <= 0) return null;
+    return {
+        left: tx[4] ?? 0,
+        top: (tx[5] ?? 0) - fontHeight,
+        width,
+        height: fontHeight,
+    };
+}
+
+export function PdfPageViewer({
+    url,
+    sheet,
+    selected,
+    highlightQuote = null,
+    onHighlightResolved,
+}: Props) {
     const { t } = useTranslation('exegesis');
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const docRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null);
@@ -65,6 +122,8 @@ export function PdfPageViewer({ url, sheet, selected }: Props) {
     const [stage, setStage] = useState({ width: 0, height: 0 });
     const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
     const [errorKind, setErrorKind] = useState<'load' | 'page' | null>(null);
+    const [highlights, setHighlights] = useState<HighlightBox[]>([]);
+    const [canvasBox, setCanvasBox] = useState({ width: 0, height: 0 });
 
     // La hoja se ajusta al panel para que entre ENTERA. Al recorrer un libro
     // decidiendo qué sirve, ver media página y tener que scrollear para ver el
@@ -145,8 +204,15 @@ export function PdfPageViewer({ url, sheet, selected }: Props) {
 
                 canvas.width = Math.floor(viewport.width);
                 canvas.height = Math.floor(viewport.height);
-                canvas.style.width = `${Math.floor(base.width * cssScale)}px`;
-                canvas.style.height = `${Math.floor(base.height * cssScale)}px`;
+                const cssWidth = Math.floor(base.width * cssScale);
+                const cssHeight = Math.floor(base.height * cssScale);
+                canvas.style.width = `${cssWidth}px`;
+                canvas.style.height = `${cssHeight}px`;
+                setCanvasBox({ width: cssWidth, height: cssHeight });
+
+                // La capa de texto se lee aparte del dibujo: el canvas
+                // pinta píxeles y no sabe dónde quedó cada palabra.
+                void locateQuote(page, page.getViewport({ scale: cssScale }));
 
                 const task = page.render({ canvas, canvasContext: ctx, viewport });
                 renderRef.current = task;
@@ -165,8 +231,69 @@ export function PdfPageViewer({ url, sheet, selected }: Props) {
             },
         );
 
+        /**
+         * Busca la frase en la capa de texto y calcula sus bandas.
+         *
+         * pdf.js entrega la hoja como fragmentos sueltos con su propia
+         * matriz de posición, así que se concatenan para poder buscar
+         * sobre el texto corrido —que es como está escrita la cita— y
+         * luego se traduce el rango encontrado de vuelta a los fragmentos
+         * que lo contienen.
+         */
+        async function locateQuote(
+            page: pdfjsLib.PDFPageProxy,
+            cssViewport: pdfjsLib.PageViewport,
+        ) {
+            if (!highlightQuote?.trim()) {
+                setHighlights([]);
+                return;
+            }
+            try {
+                const content = await page.getTextContent();
+                if (cancelled) return;
+
+                // Texto corrido + dónde empieza cada fragmento dentro de él.
+                let pageText = '';
+                const spans: Array<{ start: number; end: number; item: TextItemLike }> = [];
+                for (const raw of content.items) {
+                    const item = raw as TextItemLike;
+                    if (typeof item.str !== 'string') continue;
+                    const start = pageText.length;
+                    pageText += item.str;
+                    spans.push({ start, end: pageText.length, item });
+                    // pdf.js marca el fin de renglón aparte del texto; sin
+                    // este espacio, la última palabra de una línea y la
+                    // primera de la siguiente quedarían pegadas.
+                    if (item.hasEOL) pageText += '\n';
+                }
+
+                const match = findQuoteInPageText(highlightQuote, pageText);
+                if (cancelled) return;
+                if (!match) {
+                    setHighlights([]);
+                    onHighlightResolved?.(false);
+                    return;
+                }
+
+                const boxes: HighlightBox[] = [];
+                for (const span of spans) {
+                    if (span.end <= match.start || span.start >= match.end) continue;
+                    const box = boxFor(span.item, cssViewport);
+                    if (box) boxes.push(box);
+                }
+                setHighlights(boxes);
+                onHighlightResolved?.(boxes.length > 0);
+            } catch (err) {
+                if (cancelled) return;
+                console.warn('[PdfPageViewer] no se pudo leer la capa de texto', err);
+                setHighlights([]);
+                onHighlightResolved?.(false);
+            }
+        }
+
         return () => { cancelled = true; renderRef.current?.cancel(); };
-    }, [sheet, status, stage.width, stage.height]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sheet, status, stage.width, stage.height, highlightQuote]);
 
     if (status === 'error') {
         return (
@@ -189,13 +316,31 @@ export function PdfPageViewer({ url, sheet, selected }: Props) {
                     <span className="text-sm">{t('paperSetup.subSteps.corpus.picker.viewer.loading')}</span>
                 </div>
             )}
-            <canvas
-                ref={canvasRef}
-                aria-label={t('paperSetup.subSteps.corpus.picker.viewer.sheetLabel', { sheet })}
-                className={`rounded-sm bg-card shadow-md transition-opacity ${
-                    status === 'ready' ? 'opacity-100' : 'opacity-0'
-                } ${selected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
-            />
+            <div className="relative" style={{ width: canvasBox.width || undefined }}>
+                <canvas
+                    ref={canvasRef}
+                    aria-label={t('paperSetup.subSteps.corpus.picker.viewer.sheetLabel', { sheet })}
+                    className={`rounded-sm bg-card shadow-md transition-opacity ${
+                        status === 'ready' ? 'opacity-100' : 'opacity-0'
+                    } ${selected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
+                />
+                {/* Bandas sobre el texto, no debajo: el canvas ya está
+                    pintado y esta capa solo lo señala. `mix-blend-multiply`
+                    deja leer las letras a través del color. */}
+                {status === 'ready' && highlights.map((box, i) => (
+                    <div
+                        key={i}
+                        aria-hidden="true"
+                        className="pointer-events-none absolute rounded-[2px] bg-warning/40 mix-blend-multiply"
+                        style={{
+                            left: box.left,
+                            top: box.top,
+                            width: box.width,
+                            height: box.height,
+                        }}
+                    />
+                ))}
+            </div>
         </div>
     );
 }
