@@ -13,12 +13,14 @@ import type {
     IResourceContentReader,
     IUserStyleGuideRepository,
     PassageReference,
+    ProjectSource,
     SourceCitation,
 } from '@dosfilos/domain';
 import {
     EMPTY_VERIFICATION_SUMMARY,
     computeRubricCompliance,
     formatPassageReference,
+    verifyAttributedQuotes,
 } from '@dosfilos/domain';
 import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
@@ -102,7 +104,12 @@ export class AnalyzeVerseCanonicallyUseCase {
 
         try {
             const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
-            const sources = await this.loadSourceContexts(paper, step.id, step.verseRef!);
+            // Loaded BEFORE the sources: the verse's own words are what
+            // make the corpus query find anything in a lexicon.
+            const originalLanguageText = await this.loadOriginalLanguageText(step.verseRef);
+            const sources = await this.loadSourceContexts(
+                paper, step.id, step.verseRef!, originalLanguageText,
+            );
             const priorAcceptedAnalyses = collectPriorAcceptedAnalyses(paper, step);
             const stepEmphasis = paper.stepPlan.defaults.verse ?? null;
 
@@ -116,8 +123,6 @@ export class AnalyzeVerseCanonicallyUseCase {
                     have: r.have,
                 }))
                 : [];
-
-            const originalLanguageText = await this.loadOriginalLanguageText(step.verseRef);
 
             const analyzerInput: AnalyzeVerseInput = {
                 paperPassage: paper.passage,
@@ -136,17 +141,61 @@ export class AnalyzeVerseCanonicallyUseCase {
             reservation.markLlmContacted();
             const result = await this.analyzer.analyzeVerse(analyzerInput);
 
-            // Sanitize hallucinated source keys against the actual
-            // configured corpus. Any unmatched key gets dropped from
-            // its containing reference; entries whose only source
-            // references were dropped get filtered out wholesale to
-            // avoid leaving broken citations downstream.
+            // Sanitize hallucinated source keys. The valid set is the
+            // sources that CONTRIBUTED TEXT to this step, not every
+            // source configured on the paper.
+            //
+            // The difference is the whole guard. A source whose corpus
+            // returned nothing used to enter the prompt with an empty
+            // body and a live citation key, and any claim invented
+            // against it passed this filter untouched — the key was
+            // configured, so it was "valid". That is how a real paper
+            // ended up attributing a position to a theological
+            // dictionary it had not read one line of, on a page number
+            // taken from the selection recipe. Presence in the
+            // configuration is not evidence the model saw the source.
             const validKeys = new Set(
-                paper.sources
+                sources
                     .map(s => s.citationKey)
                     .filter((k): k is string => Boolean(k && k.trim())),
             );
-            const sanitizedAnalysis = sanitizeSourceReferences(result.analysis, validKeys);
+            // Sources whose chunks arrived with a page anchor. Citing
+            // one of these with page 0 means the model dropped a page
+            // number it was given.
+            const anchoredKeys = new Set(
+                sources
+                    .filter(s => s.citationKey && (s.excerptAnchors?.some(a => a.trim()) ?? false))
+                    .map(s => s.citationKey!),
+            );
+            const sanitizedAnalysis = sanitizeSourceReferences(result.analysis, validKeys, anchoredKeys);
+
+            // Second guard, on a different question. The first asks
+            // "is this key one we gave you?"; this one asks "is this
+            // quote in the text we gave you?". A model can satisfy the
+            // first while inventing the sentence it rests on.
+            const verified = verifyAttributedQuotes(
+                sanitizedAnalysis,
+                new Map(
+                    sources
+                        .filter(s => s.citationKey)
+                        .map(s => [s.citationKey!, stripAnchorSeparators(s.textContent)]),
+                ),
+            );
+            if (verified.dropped.length > 0) {
+                // Flat text, not an object: a console prints an object
+                // collapsed, and a collapsed log is a log nobody reads.
+                // Telling a fabricated quote from a matcher that is too
+                // strict needs the quote in front of you, copyable.
+                const verseLabel = formatPassageReference(step.verseRef, paper.displayLanguage);
+                for (const d of verified.dropped) {
+                    console.warn(
+                        `[AnalyzeVerseCanonically] ${verseLabel} — cita textual retirada: `
+                        + `${d.sourceKey} p.${d.page} (${d.surface}) — no está en el texto de la fuente. `
+                        + `La atribución se conserva.\n`
+                        + `  CITA: ${d.quote.slice(0, 300)}`,
+                    );
+                }
+            }
 
             const parentVersionId = step.current?.id ?? null;
             return await this.paperRepository.appendStepVersion(
@@ -167,7 +216,7 @@ export class AnalyzeVerseCanonicallyUseCase {
                     regenerationHint: input.regenerationHint ?? null,
                     tokensUsed: result.tokensUsed,
                     verifications: { ...EMPTY_VERIFICATION_SUMMARY },
-                    canonicalAnalysis: sanitizedAnalysis,
+                    canonicalAnalysis: verified.analysis,
                 },
             );
         } catch (err) {
@@ -207,6 +256,7 @@ export class AnalyzeVerseCanonicallyUseCase {
     private async retrieveCurated(
         paper: ExegeticalPaper,
         verseRef: PassageReference,
+        originalLanguageText: string | null,
     ): Promise<CuratedCorpusResult | null> {
         if (!this.corpusRetriever) return null;
         const scopes = paper.sources
@@ -220,10 +270,22 @@ export class AnalyzeVerseCanonicallyUseCase {
 
         const label = formatPassageReference(verseRef, paper.displayLanguage);
         const brief = paper.assignmentBrief?.trim().slice(0, 500) ?? '';
+        // The verse's own words lead the query.
+        //
+        // Without them the query was the reference plus the assignment
+        // brief — no Greek at all — and a lexicon does not index by
+        // Bible reference, it indexes by word. Santiago 1:1 only ever
+        // worked by accident: the dictionary page for δοῦλος happens to
+        // print "cf. Stg. 1:1", so the reference matched the page. For
+        // 1:2 nothing matched, and the retriever returned the previous
+        // verse's pages while every aggregate counter said it had
+        // answered.
+        const greek = originalLanguageText?.trim() ?? '';
+        const query = [label, greek, brief].filter(Boolean).join(' — ');
         try {
             return await this.corpusRetriever.retrieve({
                 userId: paper.ownerId,
-                query: brief ? `${label} — ${brief}` : label,
+                query,
                 sources: scopes,
                 budgetChars: CORPUS_BUDGET_CHARS,
             });
@@ -276,8 +338,9 @@ export class AnalyzeVerseCanonicallyUseCase {
         paper: ExegeticalPaper,
         stepId: string,
         verseRef: PassageReference,
+        originalLanguageText: string | null,
     ): Promise<ExegesisSourceContext[]> {
-        const curated = await this.retrieveCurated(paper, verseRef);
+        const curated = await this.retrieveCurated(paper, verseRef, originalLanguageText);
         // Mirrors GenerateStepUseCase.loadSourceContexts: pin-aware,
         // primary-first ordering, and async content fetch via the
         // injected `IResourceContentReader` for full-document sources.
@@ -288,6 +351,7 @@ export class AnalyzeVerseCanonicallyUseCase {
         const sorted = [...paper.sources].sort((a, b) => a.order - b.order);
 
         const contexts: ExegesisSourceContext[] = [];
+        const silent: ProjectSource[] = [];
         for (const source of sorted) {
             const priority: 'primary' | 'secondary' = pinnedIds.has(source.id) ? 'primary' : 'secondary';
             const retrieved = curated?.byResource[source.sourceLibraryResourceId ?? source.corpusId];
@@ -310,10 +374,21 @@ export class AnalyzeVerseCanonicallyUseCase {
                 continue;
             }
             if (source.mode === 'extracted-excerpts') {
+                // Reaching here means the corpus returned nothing for
+                // this source: either the retriever failed, or it had
+                // no chunk for this verse within the budget. The
+                // stored `excerpts` are empty by design (the recipe is
+                // persisted, not the text — see SelectSourcePagesUseCase),
+                // so this path yields an empty body for any paper built
+                // with the page selector.
                 const textContent = source.excerpts
                     .map(e => `--- ${e.sourceLocation} ---\n${e.text}`)
                     .join('\n\n');
                 const excerptAnchors = source.excerpts.map(e => e.sourceLocation);
+                if (!textContent.trim()) {
+                    silent.push(source);
+                    continue;
+                }
                 contexts.push({
                     corpusId: source.corpusId,
                     sourceType: source.sourceType,
@@ -327,15 +402,31 @@ export class AnalyzeVerseCanonicallyUseCase {
                 // 'full-document' (or legacy without `mode`): pull the
                 // full extracted text via the content reader.
                 const text = await this.contentReader.getTextContent(source.corpusId);
+                if (!text?.trim()) {
+                    silent.push(source);
+                    continue;
+                }
                 contexts.push({
                     corpusId: source.corpusId,
                     sourceType: source.sourceType,
                     displayLabel: source.displayLabel,
                     citationKey: source.citationKey,
-                    textContent: text ?? '',
+                    textContent: text,
                     priority,
                 });
             }
+        }
+
+        // A source that contributed no text is not offered to the
+        // model at all. Listing it with an empty body is an invitation
+        // to cite from memory: the key looks available, the shelf is
+        // bare, and nothing downstream can tell the difference.
+        if (silent.length > 0) {
+            console.warn(
+                `[AnalyzeVerseCanonically] ${formatPassageReference(verseRef, paper.displayLanguage)} — `
+                + `fuentes sin texto, fuera del prompt y de las citas válidas: `
+                + silent.map(s => s.citationKey ?? s.displayLabel).join(', '),
+            );
         }
 
         // Primary first — same convention as GenerateStepUseCase so
@@ -357,12 +448,38 @@ export class AnalyzeVerseCanonicallyUseCase {
  *
  * Pure: returns a new analysis; never mutates the input.
  */
+/**
+ * Quita los rótulos `--- p. 57 ---` que separan los fragmentos dentro
+ * del texto de una fuente.
+ *
+ * Sirven para que el modelo sepa de qué página salió cada trozo, pero
+ * en la verificación son ruido puesto por nosotros en medio de la
+ * prosa: dos fragmentos contiguos de la misma página quedan partidos
+ * por un rótulo, y una cita que cruza ese límite —que en el documento
+ * original es texto corrido— no coincide con nada. Pasó con dos citas
+ * verdaderas de dos comentarios distintos.
+ */
+function stripAnchorSeparators(text: string): string {
+    return text.replace(/^---.*---$/gm, ' ');
+}
+
 function sanitizeSourceReferences(
     analysis: CanonicalVerseAnalysis,
     validKeys: Set<string>,
+    /**
+     * Keys whose retrieved chunks arrived with page anchors. For these,
+     * `page: 0` is not "the work has no pagination" (the schema's
+     * intended meaning) — it is the model declining to say where it
+     * read something it was handed with the page attached. "Kittel,
+     * p. 0" survives every other check and cannot be looked up, which
+     * makes it worse than no citation: it reads as verified.
+     */
+    anchoredKeys: Set<string> = new Set(),
 ): CanonicalVerseAnalysis {
     const cleanCitations = (citations: ReadonlyArray<SourceCitation>): SourceCitation[] =>
-        citations.filter(c => validKeys.has(c.sourceKey));
+        citations.filter(c =>
+            validKeys.has(c.sourceKey)
+            && !(c.page <= 0 && anchoredKeys.has(c.sourceKey)));
 
     return {
         ...analysis,
@@ -385,13 +502,17 @@ function sanitizeSourceReferences(
         // Drop commentator engagements whose sourceKey doesn't match
         // a configured source — those would render as unverifiable
         // citations downstream.
-        commentatorEngagement: analysis.commentatorEngagement.filter(ce => validKeys.has(ce.sourceKey)),
+        commentatorEngagement: analysis.commentatorEngagement.filter(ce =>
+            validKeys.has(ce.sourceKey)
+            && !(ce.page <= 0 && anchoredKeys.has(ce.sourceKey))),
         // Translation cruxes can keep entries even if some commentator
         // positions reference invalid keys (we just drop those
         // positions). The crux itself remains usable.
         translationCruxes: analysis.translationCruxes.map(tc => ({
             ...tc,
-            commentatorPositions: tc.commentatorPositions.filter(cp => validKeys.has(cp.sourceKey)),
+            commentatorPositions: tc.commentatorPositions.filter(cp =>
+                validKeys.has(cp.sourceKey)
+                && !(cp.page <= 0 && anchoredKeys.has(cp.sourceKey))),
         })),
         footnoteExtensions: analysis.footnoteExtensions.map(fe => ({
             ...fe,

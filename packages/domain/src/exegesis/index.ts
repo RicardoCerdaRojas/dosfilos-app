@@ -71,6 +71,9 @@ export * from './expository/SuperMacroSection';
 // whose academic-prose composer hasn't run yet. Used by the assembly
 // step so the final output is never just intro + conclusion.
 export * from './services/renderCanonicalAnalysisAsMarkdown';
+export * from './services/serializeAnalysis';
+export * from './services/buildPaperStudyContext';
+export * from './services/verifyAttributedQuotes';
 export * from './services/getEffectiveStructuralExpectations';
 
 // Selección estructural de fragmentos: lee la tabla de contenidos que el

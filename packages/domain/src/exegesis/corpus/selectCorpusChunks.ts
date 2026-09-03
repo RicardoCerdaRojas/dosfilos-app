@@ -47,6 +47,20 @@ export interface SelectForPromptInput {
     pinned: ReadonlyArray<CorpusChunk>;
     /** Caracteres disponibles para el corpus en este paso. */
     budgetChars: number;
+    /**
+     * Parte del presupuesto que se reparte con piso por fuente antes de
+     * abrir la competencia libre. Por defecto la mitad.
+     *
+     * Sin esto la selección es un ranking global, y un comentario extenso
+     * se queda con todo: medido en un paso real, dos comentarios tomaron
+     * el 87% del presupuesto y el léxico y el diccionario teológico
+     * entraron con 743 y 0 caracteres. El alumno había configurado ocho
+     * fuentes de tipos distintos a propósito —la rúbrica los exige— y el
+     * paso recibía dos. Un léxico no compite en cercanía contra un
+     * comentario: el comentario glosa el versículo entero y el léxico
+     * habla de una palabra.
+     */
+    perSourceFloorFraction?: number;
 }
 
 export interface PromptSelection {
@@ -90,8 +104,33 @@ export function selectForPrompt(input: SelectForPromptInput): PromptSelection {
     const pinnedChars = used;
     const pinnedExhaustedBudget = pinnedChars >= budget && input.ranked.length > 0;
 
-    // 2. Lo rankeado, de mayor a menor cercanía, mientras quepa.
     const byScore = [...input.ranked].sort((a, b) => b.score - a.score);
+
+    // 2. El piso por fuente. Cada fuente toma sus mejores fragmentos
+    //    hasta su cuota, sin competir contra las demás. Una fuente con
+    //    poco material relevante toma lo poco que tenga y libera el
+    //    resto; el piso es un techo de reserva, no una cuota a llenar.
+    const sourceIds = new Set(byScore.map(c => c.resourceId));
+    const floorFraction = clampFraction(input.perSourceFloorFraction ?? DEFAULT_FLOOR_FRACTION);
+    const floorPerSource = sourceIds.size > 0
+        ? Math.floor((budget - pinnedChars) * floorFraction / sourceIds.size)
+        : 0;
+    const usedBySource = new Map<string, number>();
+    if (floorPerSource > 0) {
+        for (const chunk of byScore) {
+            const key = chunkKey(chunk);
+            if (seen.has(key)) continue;
+            const spent = usedBySource.get(chunk.resourceId) ?? 0;
+            if (spent + chunk.text.length > floorPerSource) continue;
+            if (used + chunk.text.length > budget) continue;
+            seen.add(key);
+            taken.push(chunk);
+            used += chunk.text.length;
+            usedBySource.set(chunk.resourceId, spent + chunk.text.length);
+        }
+    }
+
+    // 3. Competencia libre por lo que sobre, de mayor a menor cercanía.
     let dropped = 0;
     for (const chunk of byScore) {
         const key = chunkKey(chunk);
@@ -110,6 +149,13 @@ export function selectForPrompt(input: SelectForPromptInput): PromptSelection {
         droppedRanked: dropped,
         pinnedExhaustedBudget,
     };
+}
+
+const DEFAULT_FLOOR_FRACTION = 0.5;
+
+function clampFraction(value: number): number {
+    if (!Number.isFinite(value)) return DEFAULT_FLOOR_FRACTION;
+    return Math.min(1, Math.max(0, value));
 }
 
 function chunkKey(chunk: CorpusChunk): string {

@@ -1,5 +1,6 @@
 import {
     formatPassageReference,
+    serializeAnalysis,
     type ComposeIntroductionInput,
     type ComposeIntroductionOutput,
     type ComposerSourceMetadata,
@@ -9,7 +10,6 @@ import {
 import { withGeminiRetry } from '../geminiRetry';
 import { runLlmPromptWithUsage } from '../../llm/callableLlm';
 import { formatPaperRubric, formatStrategy } from '../composer/composerPrompts';
-import { serializeAnalysis } from '../composer/serializeAnalysis';
 
 /**
  * Gemini implementation of `IIntroductionComposer`.

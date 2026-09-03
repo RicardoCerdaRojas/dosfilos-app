@@ -308,11 +308,12 @@ export const CANONICAL_VERSE_ANALYSIS_SCHEMA = {
                     verbatimQuote: {
                         type: 'string',
                         description:
-                            'Cita verbatim cuando la formulación exacta del comentarista captura algo que la paráfrasis perdería. ' +
-                            'Vacío cuando paráfrasis basta.',
+                            'OBLIGATORIA. La oración textual de la fuente que respalda "position", copiada EXACTA ' +
+                            'del texto provisto de esa fuente. Si no podés localizarla en el texto provisto, ' +
+                            'NO incluyas esta entrada.',
                     },
                 },
-                required: ['sourceKey', 'page', 'role', 'position'],
+                required: ['sourceKey', 'page', 'role', 'position', 'verbatimQuote'],
             },
         },
         translationCruxes: {
@@ -355,8 +356,15 @@ export const CANONICAL_VERSE_ANALYSIS_SCHEMA = {
                                     type: 'integer',
                                     description: 'Índice (0-based) en "options" indicando qué opción apoya el comentarista.',
                                 },
+                                verbatimQuote: {
+                                    type: 'string',
+                                    description:
+                                        'OBLIGATORIA. La oración textual de la fuente en la que se apoya "summary", ' +
+                                        'copiada EXACTA del texto de esa fuente provisto en el mensaje del usuario. ' +
+                                        'Si no podés localizar la oración en el texto provisto, NO incluyas esta posición.',
+                                },
                             },
-                            required: ['sourceKey', 'page', 'summary', 'supports'],
+                            required: ['sourceKey', 'page', 'summary', 'supports', 'verbatimQuote'],
                         },
                     },
                     commitment: {

@@ -536,6 +536,22 @@ export interface TranslationCrux {
         summary: string;
         /** Index into `options` indicating which option this commentator supports. */
         supports: number;
+        /**
+         * The source's own words behind `summary`, copied exactly from
+         * the text the analyzer was given.
+         *
+         * A crux enlists an author as a witness FOR one option, which
+         * is the strongest claim the analysis makes about anyone else's
+         * work — and it was the one attribution with nowhere to show
+         * its evidence. `verifyAttributedQuotes` checks this against
+         * the text that actually reached the model, so a summary can no
+         * longer put a position in an author's mouth unchallenged.
+         *
+         * Optional for backward compatibility: analyses produced before
+         * this field existed have no quote, and are left alone rather
+         * than retroactively invalidated.
+         */
+        verbatimQuote?: string;
     }>;
     /** The translation committed to in this paper, with rationale. */
     commitment: {

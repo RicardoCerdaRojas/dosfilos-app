@@ -57,7 +57,7 @@ export class SseMultiAgentService implements IAIGeneratorService {
             : message;
 
         const body = {
-            systemInstruction: buildSystemInstruction(agent, lengthPreference, language),
+            systemInstruction: buildSystemInstruction(agent, lengthPreference, language, !!attachments?.length),
             history: history.map((h) => ({ role: h.role, text: h.content })),
             message: finalMessage,
             model: this.modelName,

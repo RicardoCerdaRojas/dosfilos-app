@@ -1,8 +1,8 @@
 import {
     formatPassageReference,
+    serializeAnalysis,
     type ComposeVerseInput,
 } from '@dosfilos/domain';
-import { serializeAnalysis } from '../composer/serializeAnalysis';
 
 const ES_INSTRUCTION = `Eres un redactor académico de exégesis bíblica nivel TMS/Turabian. Recibes el análisis canónico estructurado de UN versículo y produces 1-3 párrafos de prosa académica continua sobre ese versículo SOLAMENTE.
 

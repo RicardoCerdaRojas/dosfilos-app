@@ -68,13 +68,23 @@ export class CallableCuratedCorpusRetriever implements ICuratedCorpusRetriever {
             (byResource[chunk.resourceId] ??= []).push(chunk);
         }
 
-        console.log('[CuratedCorpus] material del paso', {
-            sources: scopes.length,
-            pinnedChars: selection.pinnedChars,
-            rankedChars: selection.rankedChars,
-            dropped: selection.droppedRanked,
-            budget: input.budgetChars,
-        });
+        // Flat, and PER SOURCE. The aggregate totals said the corpus
+        // had answered while individual sources came back empty, which
+        // is the difference between "retrieval works" and "retrieval
+        // works for the source you happen to be asking about".
+        const perSource = scopes
+            .map(sc => {
+                const chunks = byResource[sc.resourceId] ?? [];
+                const chars = chunks.reduce((n, c) => n + c.text.length, 0);
+                const sheets = chunks.map(c => c.sheet ?? '?').join('/');
+                return `${sc.resourceId.slice(0, 8)}: ${chunks.length} frag, ${chars} chars, hojas ${sheets || '—'}`;
+            })
+            .join(' | ');
+        console.log(
+            `[CuratedCorpus] material del paso — fuentes=${scopes.length} `
+            + `pinnedChars=${selection.pinnedChars} rankedChars=${selection.rankedChars} `
+            + `descartados=${selection.droppedRanked} presupuesto=${input.budgetChars}\n  ${perSource}`,
+        );
 
         return {
             byResource,

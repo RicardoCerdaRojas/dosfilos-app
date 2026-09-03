@@ -1,12 +1,13 @@
+import { fitPromptToCap } from '../../llm/promptBudget';
 import {
     formatPassageReference,
+    serializeAnalysis,
     type ComposeAcademicPaperInput,
     type ComposerSourceMetadata,
     type ExegeticalStrategy,
     type PaperRubric,
     type StyleGuideManifest,
 } from '@dosfilos/domain';
-import { serializeAnalysis } from './serializeAnalysis';
 
 /**
  * Prompt construction for the academic paper composer.
@@ -130,7 +131,27 @@ function buildSystemInstruction(input: ComposeAcademicPaperInput): string {
     ].filter(Boolean).join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
+/**
+ * El mensaje del compositor, ajustado al tope del proxy.
+ *
+ * Lo que se recorta es el CONTENIDO de las fuentes fijadas, nunca los
+ * briefings: los análisis son el trabajo que el alumno ya aceptó y son
+ * irreemplazables, mientras que el texto de la fuente está para anclar
+ * una cita y admite menos. El analizador ya se ajustaba así; este
+ * compositor se había quedado con topes fijos que ignoraban el límite.
+ */
 function buildUserMessage(input: ComposeAcademicPaperInput): string {
+    return fitPromptToCap(
+        sourcesBlock => renderUserMessage(input, sourcesBlock),
+        budget => formatSourceRegistry(input.sources, input.language, budget),
+        PREFERRED_PINNED_CONTENT_BUDGET,
+        'GeminiAcademicComposer',
+    );
+}
+
+const PREFERRED_PINNED_CONTENT_BUDGET = 80_000;
+
+function renderUserMessage(input: ComposeAcademicPaperInput, sourcesBlock: string): string {
     const lang = input.language;
     const passage = formatPassageReference(input.paperPassage, lang);
 
@@ -144,7 +165,6 @@ function buildUserMessage(input: ComposeAcademicPaperInput): string {
     const sourcesHeading = lang === 'en'
         ? '### Source registry (use ONLY these citation keys)'
         : '### Registro de fuentes (usá SOLO estas claves de cita)';
-    const sourcesBlock = formatSourceRegistry(input.sources, lang);
     const pinnedBlock = formatPinnedContract(input.pinnedSourceKeys, lang);
 
     const titleLine = input.paperTitle && input.paperTitle.trim()
@@ -414,12 +434,24 @@ function formatStyleGuide(
 function formatSourceRegistry(
     sources: ReadonlyArray<ComposerSourceMetadata>,
     lang: 'es' | 'en',
+    /**
+     * Caracteres disponibles para el CONTENIDO de las fuentes fijadas,
+     * repartidos entre ellas. Sin esto cada una traía hasta 80.000 por su
+     * cuenta: con dos fijadas el mensaje pasaba el tope del servidor y el
+     * paper no se podía componer —"prompt excede 200000 caracteres"— sin
+     * que ningún tope individual pareciera excesivo.
+     */
+    pinnedContentBudget = 80_000,
 ): string {
     if (sources.length === 0) {
         return lang === 'en'
             ? '(No sources registered. Cite only what the analyses cite — but they should also be empty.)'
             : '(No hay fuentes registradas. Citá solamente lo que los análisis citen — aunque ellos también deberían estar vacíos.)';
     }
+    const pinnedCount = sources.filter(s => s.isPinned && s.textContent?.trim()).length;
+    const perPinned = pinnedCount > 0
+        ? Math.max(0, Math.floor(pinnedContentBudget / pinnedCount))
+        : 0;
     const blocks: string[] = [];
     for (const s of sources) {
         const parts: string[] = [`- **${s.citationKey}**${s.isPinned ? (lang === 'en' ? ' ⭐ PINNED' : ' ⭐ ASIGNADA') : ''}: ${s.author}, *${s.title}*`];
@@ -432,9 +464,8 @@ function formatSourceRegistry(
         if (pub.length > 0) parts.push(`(${pub.join(': ')})`);
         blocks.push(parts.join(' '));
         if (s.isPinned && s.textContent && s.textContent.trim()) {
-            // 80k char cap per pinned source — see GeminiConclusionComposer.
-            const truncated = s.textContent.length > 80000
-                ? s.textContent.slice(0, 80000) + '\n[…content truncated…]'
+            const truncated = s.textContent.length > perPinned
+                ? s.textContent.slice(0, perPinned) + '\n[…content truncated…]'
                 : s.textContent;
             const heading = lang === 'en'
                 ? `\n  _Source content for grounding the pinned citation. Find the passage most relevant to ${s.citationKey}'s commentary on this paper's pericope and paraphrase or quote from there:_\n`

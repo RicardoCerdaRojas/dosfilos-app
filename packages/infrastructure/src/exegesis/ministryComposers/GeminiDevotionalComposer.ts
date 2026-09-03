@@ -1,12 +1,12 @@
 import {
     formatPassageReference,
+    serializeAnalysis,
     type ComposeDevotionalInput,
     type ComposeDevotionalOutput,
     type IDevotionalComposer,
 } from '@dosfilos/domain';
 import { withGeminiRetry } from '../geminiRetry';
 import { runLlmPromptWithUsage } from '../../llm/callableLlm';
-import { serializeAnalysis } from '../composer/serializeAnalysis';
 import {
     commonGuardrails,
     formatAssignmentBrief,
