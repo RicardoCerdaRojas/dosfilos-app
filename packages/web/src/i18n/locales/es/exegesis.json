@@ -1773,5 +1773,14 @@
                 "overloaded": "Nuestro motor de análisis está saturado. Intenta en un minuto."
             }
         }
+    },
+    "citationViewer": {
+        "pageWithSheet": "Página impresa {{printed}} · hoja {{sheet}} del archivo",
+        "sheetOnly": "Hoja {{sheet}} del archivo · el desfase de página impresa no se pudo medir en este documento",
+        "loading": "Abriendo el documento…",
+        "sourceNotConfigured": "«{{key}}» no está entre las fuentes citables de este trabajo, así que no hay documento que abrir.",
+        "noQuoteRecorded": "El análisis registró la página pero no guardó una cita textual. Te dejamos en la página para que la leas.",
+        "quoteNotFound": "No se pudo localizar la frase en el texto de esta página. Suele pasar con documentos escaneados: te dejamos en la página, la cita está sin señalar.",
+        "openSource": "Ver en el documento original"
     }
 }

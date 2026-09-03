@@ -48,11 +48,64 @@ import { useTranslation } from '@/i18n';
  * caller decides where to mount it (verse card body, dialog, dedicated
  * "study" tab).
  */
+/** Abrir el documento original en la página de una cita. */
+type OpenCitation = (citation: {
+    sourceKey: string;
+    page: number;
+    verbatimQuote?: string | null;
+}) => void;
+
 interface CanonicalAnalysisStudyViewProps {
     analysis: CanonicalVerseAnalysis;
+    /**
+     * Sin él las citas se muestran como texto, que es como venían.
+     */
+    onOpenCitation?: OpenCitation;
 }
 
-export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyViewProps) {
+/**
+ * Clave y página de una cita, pulsable cuando hay a dónde ir.
+ *
+ * Comprobar una cita costaba cinco pasos y un cambio de contexto, así que
+ * nadie los daba: por eso una atribución invertida sobrevivió meses en un
+ * paper. Esto lo vuelve un clic.
+ */
+function CitationChip({
+    sourceKey,
+    page,
+    verbatimQuote,
+    onOpen,
+}: {
+    sourceKey: string;
+    page: number;
+    verbatimQuote?: string | null;
+    onOpen?: OpenCitation;
+}) {
+    const { t } = useTranslation('exegesis');
+    const label = `${sourceKey} p. ${page}`;
+    if (!onOpen) {
+        return (
+            <>
+                <span className="text-xs font-semibold text-foreground">{sourceKey}</span>
+                <span className="text-[11px] text-muted-foreground">p. {page}</span>
+            </>
+        );
+    }
+    return (
+        <button
+            type="button"
+            onClick={() => onOpen({ sourceKey, page, verbatimQuote })}
+            title={t('citationViewer.openSource')}
+            className="inline-flex items-baseline gap-1 rounded px-1 -mx-1 hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        >
+            <span className="text-xs font-semibold text-foreground underline decoration-dotted underline-offset-2">{sourceKey}</span>
+            <span className="text-[11px] text-muted-foreground">p. {page}</span>
+            <span className="sr-only">{t('citationViewer.openSource', { label })}</span>
+        </button>
+    );
+}
+
+export function CanonicalAnalysisStudyView({ analysis, onOpenCitation }: CanonicalAnalysisStudyViewProps) {
     const { t, i18n } = useTranslation('exegesis');
     const lang = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
     const refLabel = formatPassageReference(analysis.reference, lang);
@@ -131,7 +184,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                                         <p className="text-xs text-muted-foreground italic">—</p>
                                     )}
                                     {la.generalSemanticRange.sources.length > 0 && (
-                                        <SourceList citations={la.generalSemanticRange.sources} />
+                                        <SourceList onOpenCitation={onOpenCitation} citations={la.generalSemanticRange.sources} />
                                     )}
                                 </div>
                                 <div>
@@ -140,7 +193,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                                     </p>
                                     <p className="text-xs text-foreground/85 leading-relaxed">{la.verseSpecificLoading}</p>
                                     {la.loadingSources.length > 0 && (
-                                        <SourceList citations={la.loadingSources} />
+                                        <SourceList onOpenCitation={onOpenCitation} citations={la.loadingSources} />
                                     )}
                                 </div>
                             </li>
@@ -195,7 +248,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                             <li key={idx} className="rounded-md border border-border bg-card p-3">
                                 <p className="text-xs font-semibold text-foreground">{h.aspect}</p>
                                 <p className="text-xs text-foreground/85 leading-relaxed mt-1">{h.relevance}</p>
-                                {h.sources.length > 0 && <SourceList citations={h.sources} />}
+                                {h.sources.length > 0 && <SourceList onOpenCitation={onOpenCitation} citations={h.sources} />}
                             </li>
                         ))}
                     </ul>
@@ -222,7 +275,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                                     )}
                                 </div>
                                 <p className="text-xs text-foreground/85 leading-relaxed mt-1">{l.interpretiveBearing}</p>
-                                {l.sources.length > 0 && <SourceList citations={l.sources} />}
+                                {l.sources.length > 0 && <SourceList onOpenCitation={onOpenCitation} citations={l.sources} />}
                             </li>
                         ))}
                     </ul>
@@ -245,8 +298,12 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                             <li key={idx} className="rounded-md border border-border bg-card p-3 space-y-1">
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <RoleBadge role={c.role} />
-                                    <span className="text-xs font-semibold text-foreground">{c.sourceKey}</span>
-                                    <span className="text-[11px] text-muted-foreground">p. {c.page}</span>
+                                    <CitationChip
+                                        sourceKey={c.sourceKey}
+                                        page={c.page}
+                                        verbatimQuote={c.verbatimQuote}
+                                        onOpen={onOpenCitation}
+                                    />
                                 </div>
                                 <p className="text-xs text-foreground/85 leading-relaxed">{c.position}</p>
                                 {c.verbatimQuote && (
@@ -297,8 +354,13 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                                         <ul className="space-y-0.5">
                                             {cx.commentatorPositions.map((p, pidx) => (
                                                 <li key={pidx} className="text-[11px] text-foreground/85">
-                                                    <span className="font-semibold">{p.sourceKey}</span>{' '}
-                                                    <span className="text-muted-foreground">p. {p.page}</span>{' → '}
+                                                    <CitationChip
+                                                        sourceKey={p.sourceKey}
+                                                        page={p.page}
+                                                        verbatimQuote={p.verbatimQuote}
+                                                        onOpen={onOpenCitation}
+                                                    />
+                                                    {' → '}
                                                     <span>opt {p.supports}: {p.summary}</span>
                                                 </li>
                                             ))}
@@ -386,7 +448,7 @@ export function CanonicalAnalysisStudyView({ analysis }: CanonicalAnalysisStudyV
                             <li key={idx} className="text-xs space-y-1">
                                 <p className="text-foreground italic">"{fn.anchorPhrase}"</p>
                                 <p className="text-foreground/85 pl-3 border-l border-border">{fn.text}</p>
-                                {fn.sources.length > 0 && <SourceList citations={fn.sources} />}
+                                {fn.sources.length > 0 && <SourceList onOpenCitation={onOpenCitation} citations={fn.sources} />}
                             </li>
                         ))}
                     </ul>
@@ -578,14 +640,40 @@ function ConfidenceBadge({ level }: { level: 'high' | 'medium' | 'tentative' }) 
     );
 }
 
-function SourceList({ citations }: { citations: ReadonlyArray<SourceCitation> }) {
+/**
+ * Las fuentes que respaldan un dato: rango léxico, carga en el verso,
+ * trasfondo histórico, intertextualidad y notas al pie.
+ *
+ * Estas citas son `SourceCitation`, que no tiene campo de cita textual —
+ * el visor abre la página y lo dice, en vez de prometer una frase que
+ * nunca se guardó.
+ */
+function SourceList({
+    citations,
+    onOpenCitation,
+}: {
+    citations: ReadonlyArray<SourceCitation>;
+    onOpenCitation?: OpenCitation;
+}) {
+    const { t } = useTranslation('exegesis');
     if (citations.length === 0) return null;
     return (
         <p className="text-[10.5px] text-muted-foreground italic mt-1">
             {citations.map((c, i) => (
                 <span key={i}>
                     {i > 0 && '; '}
-                    {c.sourceKey} p. {c.page}
+                    {onOpenCitation ? (
+                        <button
+                            type="button"
+                            onClick={() => onOpenCitation({ sourceKey: c.sourceKey, page: c.page })}
+                            title={t('citationViewer.openSource')}
+                            className="rounded px-0.5 -mx-0.5 underline decoration-dotted underline-offset-2 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                            {c.sourceKey} p. {c.page}
+                        </button>
+                    ) : (
+                        <>{c.sourceKey} p. {c.page}</>
+                    )}
                     {c.locator ? ` (${c.locator})` : ''}
                 </span>
             ))}

@@ -156,3 +156,24 @@ export function printedPageFor(sheet: number, offset: number | null): number | n
     const printed = sheet + offset;
     return printed >= 1 ? printed : null;
 }
+
+/**
+ * Hoja física que lleva impreso un número dado. La inversa de
+ * `printedPageFor`.
+ *
+ * Una cita académica habla siempre en páginas impresas —«Adamson, 60» es
+ * lo que el lector busca en el libro— y el visor navega por hoja física.
+ * Sin esta conversión, abrir una cita lleva al lector dos páginas más
+ * allá, y una herramienta de verificación que manda a la página
+ * equivocada es peor que no tenerla.
+ *
+ * `null` cuando no hay desfase medido: entonces la única lectura honesta
+ * es tratar el número como hoja y rotularlo como tal, en vez de fingir
+ * una conversión que no se puede hacer.
+ */
+export function sheetForPrintedPage(printed: number, offset: number | null): number | null {
+    if (offset === null) return null;
+    if (!Number.isFinite(printed)) return null;
+    const sheet = printed - offset;
+    return sheet >= 1 ? sheet : null;
+}

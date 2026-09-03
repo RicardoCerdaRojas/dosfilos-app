@@ -27,6 +27,7 @@ import { useTranslation } from '@/i18n';
 import { useExegesisPapers } from '@/hooks/exegesis/useExegesisPapers';
 import { useReopenStep } from '@/hooks/exegesis/useReopenStep';
 import { CanonicalAnalysisStudyView } from '@/components/exegesis/canonical/CanonicalAnalysisStudyView';
+import { CitationSourceModal, type CitationTarget } from '@/components/exegesis/citation/CitationSourceModal';
 import { CitationVerificationDialog } from '@/components/exegesis/CitationVerificationDialog';
 import { ExegesisOutOfCreditsDialog } from '@/components/exegesis/ExegesisOutOfCreditsDialog';
 import { ExegesisPreConfirmDialog } from '@/components/exegesis/ExegesisPreConfirmDialog';
@@ -158,6 +159,9 @@ export function StepCard({ step, paperId, language, allSteps }: StepCardProps) {
     // Firestore, así que no hay re-render que lo delate: sin este reloj la
     // tarjeta seguiría girando hasta que el usuario recargue a mano. Un solo
     // temporizador, disparado exactamente al vencer, y sólo mientras genera.
+    // Cita abierta en el visor del documento original. `null` = cerrado.
+    const [openCitation, setOpenCitation] = useState<CitationTarget | null>(null);
+
     const [now, setNow] = useState(() => new Date());
     const stepUpdatedAtMs = step.updatedAt?.getTime?.();
     useEffect(() => {
@@ -772,7 +776,7 @@ export function StepCard({ step, paperId, language, allSteps }: StepCardProps) {
                             </div>
                         )}
                         {supportsStudyView && viewMode === 'study' ? (
-                            <CanonicalAnalysisStudyView analysis={canonicalAnalysis!} />
+                            <CanonicalAnalysisStudyView analysis={canonicalAnalysis!} onOpenCitation={setOpenCitation} />
                         ) : previewMarkdown ? (
                             <div className="prose prose-base dark:prose-invert max-w-none leading-relaxed">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -784,7 +788,7 @@ export function StepCard({ step, paperId, language, allSteps }: StepCardProps) {
                             // composer hasn't run on this version. Default
                             // straight to study view so the user sees the
                             // structured payload that came back.
-                            canonicalAnalysis && <CanonicalAnalysisStudyView analysis={canonicalAnalysis} />
+                            canonicalAnalysis && <CanonicalAnalysisStudyView analysis={canonicalAnalysis} onOpenCitation={setOpenCitation} />
                         )}
                     </div>
                 )}
@@ -1128,6 +1132,12 @@ export function StepCard({ step, paperId, language, allSteps }: StepCardProps) {
                     language={language}
                 />
             )}
+            <CitationSourceModal
+                open={!!openCitation}
+                onOpenChange={(open) => { if (!open) setOpenCitation(null); }}
+                paperId={paperId}
+                citation={openCitation}
+            />
         </article>
     );
 }
