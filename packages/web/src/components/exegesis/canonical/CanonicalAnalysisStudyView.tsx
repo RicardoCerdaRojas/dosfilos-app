@@ -48,17 +48,19 @@ import { useTranslation } from '@/i18n';
  * caller decides where to mount it (verse card body, dialog, dedicated
  * "study" tab).
  */
+/** Abrir el documento original en la página de una cita. */
+type OpenCitation = (citation: {
+    sourceKey: string;
+    page: number;
+    verbatimQuote?: string | null;
+}) => void;
+
 interface CanonicalAnalysisStudyViewProps {
     analysis: CanonicalVerseAnalysis;
     /**
-     * Abrir el documento original en la página de una cita. Sin él las
-     * citas se muestran como texto, que es como venían.
+     * Sin él las citas se muestran como texto, que es como venían.
      */
-    onOpenCitation?: (citation: {
-        sourceKey: string;
-        page: number;
-        verbatimQuote?: string | null;
-    }) => void;
+    onOpenCitation?: OpenCitation;
 }
 
 /**
@@ -77,7 +79,7 @@ function CitationChip({
     sourceKey: string;
     page: number;
     verbatimQuote?: string | null;
-    onOpen?: (citation: { sourceKey: string; page: number; verbatimQuote?: string | null }) => void;
+    onOpen?: OpenCitation;
 }) {
     const { t } = useTranslation('exegesis');
     const label = `${sourceKey} p. ${page}`;
@@ -182,7 +184,7 @@ export function CanonicalAnalysisStudyView({ analysis, onOpenCitation }: Canonic
                                         <p className="text-xs text-muted-foreground italic">—</p>
                                     )}
                                     {la.generalSemanticRange.sources.length > 0 && (
-                                        <SourceList citations={la.generalSemanticRange.sources} />
+                                        <SourceList onOpenCitation={onOpenCitation} citations={la.generalSemanticRange.sources} />
                                     )}
                                 </div>
                                 <div>
@@ -191,7 +193,7 @@ export function CanonicalAnalysisStudyView({ analysis, onOpenCitation }: Canonic
                                     </p>
                                     <p className="text-xs text-foreground/85 leading-relaxed">{la.verseSpecificLoading}</p>
                                     {la.loadingSources.length > 0 && (
-                                        <SourceList citations={la.loadingSources} />
+                                        <SourceList onOpenCitation={onOpenCitation} citations={la.loadingSources} />
                                     )}
                                 </div>
                             </li>
@@ -246,7 +248,7 @@ export function CanonicalAnalysisStudyView({ analysis, onOpenCitation }: Canonic
                             <li key={idx} className="rounded-md border border-border bg-card p-3">
                                 <p className="text-xs font-semibold text-foreground">{h.aspect}</p>
                                 <p className="text-xs text-foreground/85 leading-relaxed mt-1">{h.relevance}</p>
-                                {h.sources.length > 0 && <SourceList citations={h.sources} />}
+                                {h.sources.length > 0 && <SourceList onOpenCitation={onOpenCitation} citations={h.sources} />}
                             </li>
                         ))}
                     </ul>
@@ -273,7 +275,7 @@ export function CanonicalAnalysisStudyView({ analysis, onOpenCitation }: Canonic
                                     )}
                                 </div>
                                 <p className="text-xs text-foreground/85 leading-relaxed mt-1">{l.interpretiveBearing}</p>
-                                {l.sources.length > 0 && <SourceList citations={l.sources} />}
+                                {l.sources.length > 0 && <SourceList onOpenCitation={onOpenCitation} citations={l.sources} />}
                             </li>
                         ))}
                     </ul>
@@ -446,7 +448,7 @@ export function CanonicalAnalysisStudyView({ analysis, onOpenCitation }: Canonic
                             <li key={idx} className="text-xs space-y-1">
                                 <p className="text-foreground italic">"{fn.anchorPhrase}"</p>
                                 <p className="text-foreground/85 pl-3 border-l border-border">{fn.text}</p>
-                                {fn.sources.length > 0 && <SourceList citations={fn.sources} />}
+                                {fn.sources.length > 0 && <SourceList onOpenCitation={onOpenCitation} citations={fn.sources} />}
                             </li>
                         ))}
                     </ul>
@@ -638,14 +640,40 @@ function ConfidenceBadge({ level }: { level: 'high' | 'medium' | 'tentative' }) 
     );
 }
 
-function SourceList({ citations }: { citations: ReadonlyArray<SourceCitation> }) {
+/**
+ * Las fuentes que respaldan un dato: rango léxico, carga en el verso,
+ * trasfondo histórico, intertextualidad y notas al pie.
+ *
+ * Estas citas son `SourceCitation`, que no tiene campo de cita textual —
+ * el visor abre la página y lo dice, en vez de prometer una frase que
+ * nunca se guardó.
+ */
+function SourceList({
+    citations,
+    onOpenCitation,
+}: {
+    citations: ReadonlyArray<SourceCitation>;
+    onOpenCitation?: OpenCitation;
+}) {
+    const { t } = useTranslation('exegesis');
     if (citations.length === 0) return null;
     return (
         <p className="text-[10.5px] text-muted-foreground italic mt-1">
             {citations.map((c, i) => (
                 <span key={i}>
                     {i > 0 && '; '}
-                    {c.sourceKey} p. {c.page}
+                    {onOpenCitation ? (
+                        <button
+                            type="button"
+                            onClick={() => onOpenCitation({ sourceKey: c.sourceKey, page: c.page })}
+                            title={t('citationViewer.openSource')}
+                            className="rounded px-0.5 -mx-0.5 underline decoration-dotted underline-offset-2 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                            {c.sourceKey} p. {c.page}
+                        </button>
+                    ) : (
+                        <>{c.sourceKey} p. {c.page}</>
+                    )}
                     {c.locator ? ` (${c.locator})` : ''}
                 </span>
             ))}
