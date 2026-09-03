@@ -21,6 +21,8 @@ import { useFacultyAgents } from '@/hooks/faculty/useFacultyAgents';
 import { useFacultyChat } from '@/hooks/faculty/useFacultyChat';
 import { FacultyChatMessages } from '@/components/faculty/FacultyChatMessages';
 import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
+import { useAutoscrollChat } from '@/pages/faculty/hooks/useAutoscrollChat';
+import { prepareAttachmentForSend } from '@/pages/faculty/utils/prepareAttachmentForSend';
 
 /**
  * Slide-in chat panel scoped to a single `ExegeticalPaper`.
@@ -45,10 +47,6 @@ import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
  * silences.
  *
  * v1 trade-offs (intentional):
- *   - File attachments are NOT supported here. The `prepareAttachment
- *     ForSend` helper lives inline in the full Faculty page. Power
- *     users who need attachments can still go to the full page —
- *     this drawer is for ad-hoc text questions while editing.
  *   - Length preference defaults to 'auto'; the input's own selector
  *     changes it.
  *   - Message delete is disabled in the drawer (no destructive
@@ -212,6 +210,7 @@ function DrawerChatBody({
         if (!chat.isLoadingSession && chat.session === null) onSessionMissing();
     }, [chat.isLoadingSession, chat.session, onSessionMissing]);
     const [input, setInput] = useState('');
+    const [attachment, setAttachment] = useState<File | null>(null);
     // Length preference starts at 'auto' and the input's own selector
     // changes it.
     //
@@ -228,21 +227,56 @@ function DrawerChatBody({
     const messages = chat.session?.messages ?? [];
     const hasMessages = messages.length > 0;
 
+    // Sticky-bottom, same hook the full Faculty page uses. Without it a
+    // fresh answer lands below the fold: the student sends a question
+    // and watches an unchanged screen.
+    const { messagesEndRef, chatScrollRef, scrollToBottom } = useAutoscrollChat([
+        messages.length,
+        chat.streamingMessage,
+        chat.isOrchestrating,
+    ]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const text = input.trim();
-        if (!text) return;
+        const staged = attachment;
+        // An image alone is a valid question — the model is multimodal
+        // and "¿qué dice esta página?" can live entirely in the picture.
+        if (!text && !staged) return;
         setInput('');
+        setAttachment(null);
+        // Forced: the student just sent something and expects to see it,
+        // wherever they had scrolled.
+        scrollToBottom(true);
+
+        let prepared: Awaited<ReturnType<typeof prepareAttachmentForSend>> | null = null;
+        if (staged) {
+            try {
+                prepared = await prepareAttachmentForSend(staged);
+            } catch (err) {
+                console.error('[exegesis] drawer attachment encoding failed:', err);
+                toast.error(t('detail.askFaculty.errors.attachmentFailed'));
+                setInput(text);
+                setAttachment(staged);
+                return;
+            }
+        }
+
         try {
             await chat.sendOrchestratedMessage({
                 message: text,
                 lengthPreference,
+                ...(prepared ? {
+                    attachments: [prepared.inline],
+                    attachmentsMeta: [prepared.meta],
+                } : {}),
             });
         } catch (err) {
             console.error('[exegesis] drawer send failed:', err);
             toast.error(t('detail.askFaculty.errors.sendFailed'));
-            // Restore input so the user doesn't lose what they typed.
+            // Restore what the student had staged so nothing is lost.
             setInput(text);
+            if (staged) setAttachment(staged);
         }
     };
 
@@ -258,7 +292,13 @@ function DrawerChatBody({
 
     return (
         <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex-1 overflow-y-auto px-4 py-3">
+            {/* `space-y-6` matches the full Faculty page. Without it the
+                bubbles stack flush against each other and a long thread
+                reads as one wall of text — `FacultyChatMessages` returns
+                a fragment and leaves the rhythm to whoever mounts it.
+                `pb-24` keeps the last answer clear of the composer, which
+                floats over the bottom of this same column. */}
+            <div ref={chatScrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-6 scroll-smooth pb-24">
                 <FacultyChatMessages
                     messages={messages}
                     isNewSession={!hasMessages}
@@ -271,6 +311,7 @@ function DrawerChatBody({
                     onRequestDeleteMessage={() => { /* delete disabled in drawer */ }}
                     onCopyMessage={handleCopy}
                 />
+                <div ref={messagesEndRef} />
             </div>
             <div className="border-t border-border bg-background">
                 <FacultyChatInput
@@ -282,8 +323,8 @@ function DrawerChatBody({
                     isHidden={false}
                     onInputChange={setInput}
                     onSubmit={handleSubmit}
-                    attachment={null}
-                    onAttach={() => { /* attachments disabled in drawer */ }}
+                    attachment={attachment}
+                    onAttach={setAttachment}
                     lengthPreference={lengthPreference}
                     onSetLengthPreference={setLengthPreference}
                 />

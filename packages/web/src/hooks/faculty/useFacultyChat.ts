@@ -77,11 +77,69 @@ export function useFacultyChat(sessionId: string) {
     });
 
     /**
+     * The session cache key this send is writing to.
+     *
+     * The override covers the new-session-creation race: the mutation
+     * started while the page still had `sessionId=''`, but the service
+     * call wrote against the freshly created session. Without it the
+     * optimistic write lands on the wrong key and the chat looks empty
+     * until the background refetch arrives.
+     */
+    const cacheKeyFor = (targetSessionId?: string) => (targetSessionId
+        ? ['faculty', 'sessions', user?.uid, targetSessionId]
+        : sessionQueryKey);
+
+    /**
+     * Puts the user's message on screen the moment they send it.
+     *
+     * It used to appear only when the whole exchange was committed —
+     * after the model had finished. For the seconds in between, the
+     * question was nowhere: the thread showed the previous messages and
+     * a spinner, so it read as if the send had failed or the question
+     * had been swallowed. A message the user just typed should never
+     * take a round-trip to become visible.
+     */
+    const commitOptimisticUserMessage = (
+        userText: string,
+        attachmentsMeta?: MessageAttachmentMeta[],
+        targetSessionId?: string,
+    ): string => {
+        const id = `optimistic-user-${Date.now()}`;
+        queryClient.setQueryData<AIChatSession | null>(cacheKeyFor(targetSessionId), (prev) => {
+            if (!prev) return prev;
+            const userMsg: AIChatMessage = {
+                id,
+                role: 'user',
+                content: userText,
+                timestamp: new Date(),
+                ...(attachmentsMeta && attachmentsMeta.length > 0 && { attachments: attachmentsMeta }),
+            };
+            return { ...prev, messages: [...prev.messages, userMsg] };
+        });
+        return id;
+    };
+
+    /**
+     * Drops the optimistic user message when the send never reached the
+     * model, so a failed turn doesn't leave a question sitting in the
+     * thread as though it had been asked.
+     */
+    const rollbackOptimisticUserMessage = (id: string, targetSessionId?: string) => {
+        queryClient.setQueryData<AIChatSession | null>(cacheKeyFor(targetSessionId), (prev) => (
+            prev ? { ...prev, messages: prev.messages.filter(m => m.id !== id) } : prev
+        ));
+    };
+
+    /**
      * Pushes the user message + the just-finished model response into the
      * session query cache so the persisted-message list shows the new exchange
      * the instant the streaming bubble disappears. Without this, there's a
      * visible gap where neither the streaming bubble nor the persisted message
      * is on screen — feels like the response disappears and reloads.
+     *
+     * `optimisticUserMessageId` names the bubble already on screen from
+     * `commitOptimisticUserMessage`; it is replaced rather than appended,
+     * or the question would show up twice.
      *
      * The IDs we mint here are placeholders. The background `invalidateQueries`
      * call refetches the canonical session from Firestore, which replaces these
@@ -96,16 +154,9 @@ export function useFacultyChat(sessionId: string) {
         modeWasAuto: boolean,
         attachmentsMeta?: MessageAttachmentMeta[],
         targetSessionId?: string,
+        optimisticUserMessageId?: string,
     ) => {
-        // Override path covers the new-session-creation race: the mutation
-        // was started while the page still had `sessionId=''`, but the
-        // service call wrote against the freshly created session. Without
-        // this, the optimistic write goes to the wrong cache key and the
-        // user sees an empty chat until the background refetch lands.
-        const targetKey = targetSessionId
-            ? ['faculty', 'sessions', user?.uid, targetSessionId]
-            : sessionQueryKey;
-        queryClient.setQueryData<AIChatSession | null>(targetKey, (prev) => {
+        queryClient.setQueryData<AIChatSession | null>(cacheKeyFor(targetSessionId), (prev) => {
             if (!prev) return prev;
             const now = new Date();
             const userMsg: AIChatMessage = {
@@ -123,7 +174,10 @@ export function useFacultyChat(sessionId: string) {
                 ...(sources.length > 0 && { sources }),
                 ...(modeUsed && { modeUsed, modeWasAuto }),
             };
-            return { ...prev, messages: [...prev.messages, userMsg, modelMsg], updatedAt: now };
+            const withoutOptimistic = optimisticUserMessageId
+                ? prev.messages.filter(m => m.id !== optimisticUserMessageId)
+                : prev.messages;
+            return { ...prev, messages: [...withoutOptimistic, userMsg, modelMsg], updatedAt: now };
         });
     };
 
@@ -140,6 +194,8 @@ export function useFacultyChat(sessionId: string) {
 
             setIsStreaming(true);
             setStreamingMessage('');
+
+            const optimisticUserId = commitOptimisticUserMessage(message);
 
             // Captured during streaming so the optimistic commit can include
             // them — otherwise the bibliography panel would pop in only after
@@ -164,8 +220,14 @@ export function useFacultyChat(sessionId: string) {
                 const effectiveMode: ConcreteResponseMode | undefined = lengthPreference === 'auto'
                     ? 'detailed'
                     : (lengthPreference as ConcreteResponseMode | undefined);
-                commitOptimisticExchange(message, response, capturedSources, effectiveMode, lengthPreference === 'auto');
+                commitOptimisticExchange(
+                    message, response, capturedSources, effectiveMode,
+                    lengthPreference === 'auto', undefined, undefined, optimisticUserId,
+                );
                 return response;
+            } catch (err) {
+                rollbackOptimisticUserMessage(optimisticUserId);
+                throw err;
             } finally {
                 setIsStreaming(false);
                 setStreamingMessage('');
@@ -231,6 +293,11 @@ export function useFacultyChat(sessionId: string) {
             setActiveAgents([]);
             setLastInferredMode(null);
 
+            // On screen before the model is even called.
+            const optimisticUserId = commitOptimisticUserMessage(
+                message, attachmentsMeta, sessionIdOverride,
+            );
+
             let capturedSources: SourceReference[] = [];
             let capturedMode: ConcreteResponseMode | undefined;
             let capturedWasAuto = false;
@@ -266,11 +333,15 @@ export function useFacultyChat(sessionId: string) {
                     capturedWasAuto,
                     attachmentsMeta,
                     sessionIdOverride,
+                    optimisticUserId,
                 );
                 // Increment the monthly query counter server-side. Fire-and-forget
                 // so it doesn't delay the response rendering.
                 void quotaService.incrementQuery();
                 return response;
+            } catch (err) {
+                rollbackOptimisticUserMessage(optimisticUserId, sessionIdOverride);
+                throw err;
             } finally {
                 setIsStreaming(false);
                 setStreamingMessage('');

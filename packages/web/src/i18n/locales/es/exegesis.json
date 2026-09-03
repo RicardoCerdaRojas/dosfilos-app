@@ -1729,7 +1729,8 @@
             "analysisPending": "Este trabajo todavía no tiene análisis aceptado, así que la conversación solo conoce el encuadre.",
             "errors": {
                 "createFailed": "No se pudo abrir la conversación con la Facultad. Intenta de nuevo.",
-                "sendFailed": "No se pudo enviar tu mensaje. Intenta de nuevo."
+                "sendFailed": "No se pudo enviar tu mensaje. Intenta de nuevo.",
+                "attachmentFailed": "No se pudo preparar la imagen. Prueba con una más liviana."
             }
         },
         "export": {
