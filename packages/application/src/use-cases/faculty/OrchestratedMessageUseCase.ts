@@ -9,7 +9,7 @@ import {
     ResponseMode,
     ConcreteResponseMode,
     DEFAULT_LANGUAGE,
-    formatPassageReference,
+    buildPaperStudyContext,
     resolveLocalized,
 } from '@dosfilos/domain';
 import type {
@@ -26,6 +26,13 @@ import { CoreLibraryRAGService, RetrievedChunk, getRetrievalConfigForMode } from
 
 // Phase 2 RAG retrieval — shared instance
 const ragService = new CoreLibraryRAGService();
+
+/** Separator between the paper's analysis and the retrieved library. */
+function sectionBreak(language: SupportedLanguage): string {
+    return language === 'en'
+        ? '--- Retrieved from the library (secondary to the analysis above) ---'
+        : '--- Recuperado de la biblioteca (secundario respecto al análisis de arriba) ---';
+}
 
 function chunksToSourcesP2(chunks: RetrievedChunk[]): SourceReference[] {
     const byDoc = new Map<string, { title: string; author: string; pages: Set<number>; sections: Set<string>; snippet: string; publiclyCitable: boolean }>();
@@ -70,8 +77,14 @@ function cleanCitations(text: string, agentNames: string[] = []): string {
     let out = text;
     // 0) Strip leaked RAG context headers (ES + EN)
     out = out.replace(/\[(?:Fuente|Source)\s+\d+:[^\]]*\]\s*/g, '');
-    // 0.b) Strip the retrieved-context preamble if the model echoes it literally
-    out = out.replace(/^\s*(?:CONTEXTO RECUPERADO|RETRIEVED CONTEXT)\s*:?\s*\n+/i, '');
+    // 0.b) Strip the retrieved-context preamble if the model echoes it
+    //      literally. The pattern used to require the header alone on
+    //      its line; the real prompt continues on the same line —
+    //      "CONTEXTO RECUPERADO (usa esto como material primario…" —
+    //      so nothing matched and a whole corpus dump reached the
+    //      student as an answer. Anything from that header to the end
+    //      of its line goes.
+    out = out.replace(/^\s*(?:CONTEXTO RECUPERADO|RETRIEVED CONTEXT)\b.*(?:\r?\n)+/i, '');
     // 1) "Basado en <chunk-id-like-token>[, pág N][, citado por X]"
     out = out.replace(/\(Basado en [a-z0-9]{8,}[^)]*\)\.?/g, '');
     out = out.replace(/Basado en [a-z0-9]{8,},\s*pág\.?\s*\d+[^.]*\./gi, '');
@@ -266,15 +279,20 @@ export class OrchestratedMessageUseCase {
         // ── Paper / series / pericope context enrichment ──────────────────────
         // Sessions launched from an exegetical paper, a series detail,
         // or a specific pericope carry refs in `session.context`. We
-        // hydrate them and prepend a compact block to the user message
-        // so the model knows the surface the question is anchored on.
+        // hydrate them and prepend a block to the user message so the
+        // model knows the surface the question is anchored on.
         //
-        // Why prepend (not inline the assembled paper): a paper can be
-        // 8-15k chars; the question may not need it. The compact block
-        // (passage + brief + phase + pericope justification) is enough
-        // to ground responses; deeper material rides RAG when the
-        // model actually queries the corpus.
+        // For a paper the block carries the accepted analysis itself,
+        // not just the paper's name. The earlier reasoning here — that
+        // the deep material could ride RAG — did not hold: RAG searches
+        // the student's LIBRARY, and the paper's own conclusions are in
+        // no corpus. Left out, they reached the tutor through nothing at
+        // all. `buildPaperStudyContext` bounds what that costs.
         const contextBlock = await this.buildSessionContextBlock(userId, session.context, language);
+        // Prepended here so retrieval also searches on it; when RAG
+        // returns anything the block MOVES to the front of the primary
+        // material below, and this copy is dropped so it is not sent
+        // twice.
         if (contextBlock) {
             enrichedMessage = `${contextBlock}\n\n${enrichedMessage}`;
         }
@@ -372,8 +390,24 @@ export class OrchestratedMessageUseCase {
                     : [];
                 const combined = [...coreChunks, ...personalChunks];
                 if (combined.length > 0) {
+                    // The paper's own accepted analysis leads the primary
+                    // material, ahead of anything retrieved.
+                    //
+                    // Order decides what the model treats as authoritative:
+                    // the transport labels this slot "CONTEXTO RECUPERADO
+                    // (usa esto como MATERIAL PRIMARIO)" and the system
+                    // prompt repeats it, while the user message — where the
+                    // block used to sit alone — reads as the question.
+                    // Asked for the exact wording behind an attribution, the
+                    // model went to the library's OCR and rebuilt the
+                    // sentence letter by letter, with the clean quote
+                    // already recorded a few thousand characters below in
+                    // the part it had been told was secondary.
+                    const retrieved = CoreLibraryRAGService.formatContextForPrompt(combined, language, { revealProtected: revealProtectedCitations });
                     retrievedContextByAgent.set(a.id, {
-                        context: CoreLibraryRAGService.formatContextForPrompt(combined, language, { revealProtected: revealProtectedCitations }),
+                        context: contextBlock
+                            ? `${contextBlock}\n\n${sectionBreak(language)}\n\n${retrieved}`
+                            : retrieved,
                         chunks: combined,
                     });
                 }
@@ -392,6 +426,13 @@ export class OrchestratedMessageUseCase {
             }
         } catch (err: any) {
             console.warn('[OrchestratedMessage] Phase 2 RAG retrieval failed:', err?.message ?? err);
+        }
+
+        // The block now leads the primary material for every agent that
+        // got one, so its copy inside the question is redundant — and at
+        // ~50k characters, sending it twice is not a rounding error.
+        if (contextBlock && retrievedContextByAgent.size === finalAgents.length) {
+            enrichedMessage = enrichedMessage.slice(contextBlock.length + 2);
         }
 
         if (decision.strategy === 'fanout' && finalAgents.length > 1) {
@@ -694,14 +735,18 @@ Responde solo con el título, sin comillas.`;
     }
 
     /**
-     * Builds the compact context block prepended to the user message
-     * when the session was launched from a paper / series / pericope.
-     * Returns null when there's no context (or all refs failed to
-     * hydrate) so the caller can skip prepending entirely.
+     * Builds the context block prepended to the user message when the
+     * session was launched from a paper / series / pericope. Returns
+     * null when there's no context (or all refs failed to hydrate) so
+     * the caller can skip prepending entirely.
      *
-     * Refs hydrate in parallel; missing repositories or unresolvable
-     * ids are silently dropped so the chat keeps working with a
-     * weaker prompt instead of throwing.
+     * A paper contributes its identity, its citable sources and the
+     * verse analyses the student accepted (see
+     * `buildPaperStudyContext`). A series contributes its title and the
+     * anchored pericope's syntactic justification.
+     *
+     * Missing repositories or unresolvable ids are silently dropped so
+     * the chat keeps working with a weaker prompt instead of throwing.
      */
     private async buildSessionContextBlock(
         userId: string,
@@ -724,18 +769,16 @@ Responde solo con el título, sin comillas.`;
                     .getPaper(userId, context.paperId)
                     .catch(() => null);
                 if (paper) {
-                    const passage = formatPassageReference(paper.passage, isSpanish ? 'es' : 'en');
-                    if (isSpanish) {
-                        lines.push(`Paper exegético en curso: "${paper.title ?? passage}" (${passage}, fase: ${paper.phase}).`);
-                        if (paper.assignmentBrief) {
-                            lines.push(`Encuadre del paper: ${paper.assignmentBrief}`);
-                        }
-                    } else {
-                        lines.push(`Active exegetical paper: "${paper.title ?? passage}" (${passage}, phase: ${paper.phase}).`);
-                        if (paper.assignmentBrief) {
-                            lines.push(`Paper framing: ${paper.assignmentBrief}`);
-                        }
-                    }
+                    // The paper's own analysis rides along — not just its
+                    // name. `getPaper` is one document read and the steps
+                    // come embedded, so the accepted `canonicalAnalysis`
+                    // is already in hand; leaving it out was what made the
+                    // tutor unable to explain the very decisions the
+                    // student had open on screen.
+                    const study = buildPaperStudyContext(paper, {
+                        language: isSpanish ? 'es' : 'en',
+                    });
+                    if (study.text) lines.push(study.text);
                 }
             } catch (err) {
                 console.warn('[Orchestrator] paper hydration failed:', err);

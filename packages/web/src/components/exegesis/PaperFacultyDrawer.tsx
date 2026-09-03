@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
+    buildPaperStudyContext,
     formatPassageReference,
     type ExegeticalPaper,
     type ResponseMode,
@@ -32,17 +33,24 @@ import { FacultyChatInput } from '@/components/faculty/FacultyChatInput';
  * Session strategy: one persistent thread per paper. On open we
  * search the user's session list for `context.paperId === paper.id`
  * and reuse the most recent match; otherwise we create a fresh
- * session with `context: { paperId }` so the orchestrator can
- * hydrate paper context (passage, rubric, sources) into every
- * system prompt.
+ * session with `context: { paperId }`. The orchestrator hydrates that
+ * id server-side into the paper's identity, its citable sources and
+ * the verse analyses the student accepted, so the tutor can be asked
+ * why a translation was chosen and answer from the paper's own
+ * reasoning rather than guessing.
+ *
+ * The header states which verses made it into that context. The
+ * hydration is bounded (see `buildPaperStudyContext`), and a student
+ * who cannot see what the tutor was given has no way to read its
+ * silences.
  *
  * v1 trade-offs (intentional):
  *   - File attachments are NOT supported here. The `prepareAttachment
  *     ForSend` helper lives inline in the full Faculty page. Power
  *     users who need attachments can still go to the full page —
  *     this drawer is for ad-hoc text questions while editing.
- *   - Length-preference is fixed to 'auto'; no UI to override. Keep
- *     the chrome minimal.
+ *   - Length preference defaults to 'auto'; the input's own selector
+ *     changes it.
  *   - Message delete is disabled in the drawer (no destructive
  *     actions in a quick side panel).
  */
@@ -60,21 +68,38 @@ export function PaperFacultyDrawer({ open, onOpenChange, paper }: PaperFacultyDr
     const { sessions, createSession } = useFacultySessions();
     const { data: agents = [] } = useFacultyAgents();
 
+    // Same pure builder the orchestrator runs server-side, so the
+    // header reports the context the tutor actually receives instead
+    // of a second guess at it that could drift.
+    const study = useMemo(
+        () => buildPaperStudyContext(paper, { language: activeLanguage }),
+        [paper, activeLanguage],
+    );
+
     // Resolved sessionId for THIS open cycle. Resets on close so a
     // re-open picks the freshest session (e.g. user opened the full
     // Faculty page in another tab and started a different thread).
     const [resolvedSessionId, setResolvedSessionId] = useState<string | null>(null);
     const [creatingSession, setCreatingSession] = useState(false);
+    // Sessions the list still offers but that no longer exist. Deleting
+    // a conversation elsewhere leaves its id in this cached list, the
+    // drawer reuses it, the transcript loads as null, and every send
+    // fails with "Session not found" — a dead panel with no way out
+    // from the paper. Remembering the dead ids lets the resolver skip
+    // them and open a fresh thread instead.
+    const [missingSessionIds, setMissingSessionIds] = useState<string[]>([]);
 
     // Most-recent session linked to this paper. Memoized to avoid
     // rerunning the filter+sort on every render.
     const existingSessionForPaper = useMemo(() => {
-        const matches = sessions.filter(s => s.context?.paperId === paper.id);
+        const matches = sessions.filter(
+            s => s.context?.paperId === paper.id && !missingSessionIds.includes(s.id),
+        );
         if (matches.length === 0) return null;
         return matches.slice().sort(
             (a, b) => (b.updatedAt?.getTime?.() ?? 0) - (a.updatedAt?.getTime?.() ?? 0),
         )[0];
-    }, [sessions, paper.id]);
+    }, [sessions, paper.id, missingSessionIds]);
 
     // Resolve sessionId when the drawer opens. Uses the existing
     // session when one is found; creates one with `context: { paperId }`
@@ -133,10 +158,29 @@ export function PaperFacultyDrawer({ open, onOpenChange, paper }: PaperFacultyDr
                             <span className="text-muted-foreground"> · {passageDisplay}</span>
                         )}
                     </SheetDescription>
+                    <p className="text-[11px] text-muted-foreground pt-0.5">
+                        {study.includedVerses.length === 0
+                            ? t('detail.askFaculty.analysisPending')
+                            : study.omittedVerses.length > 0
+                                ? t('detail.askFaculty.analysisPartial', {
+                                    verses: study.includedVerses.join(', '),
+                                    omitted: study.omittedVerses.join(', '),
+                                })
+                                : t('detail.askFaculty.analysisLoaded', {
+                                    verses: study.includedVerses.join(', '),
+                                })}
+                    </p>
                 </SheetHeader>
 
                 {resolvedSessionId ? (
-                    <DrawerChatBody sessionId={resolvedSessionId} />
+                    <DrawerChatBody
+                        sessionId={resolvedSessionId}
+                        onSessionMissing={() => {
+                            setMissingSessionIds(prev =>
+                                prev.includes(resolvedSessionId) ? prev : [...prev, resolvedSessionId]);
+                            setResolvedSessionId(null);
+                        }}
+                    />
                 ) : (
                     <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -150,13 +194,36 @@ export function PaperFacultyDrawer({ open, onOpenChange, paper }: PaperFacultyDr
 
 // ── Body (only mounted once a session id is resolved) ──────────────
 
-function DrawerChatBody({ sessionId }: { sessionId: string }) {
+function DrawerChatBody({
+    sessionId,
+    onSessionMissing,
+}: {
+    sessionId: string;
+    /** The transcript came back empty — this session is gone. */
+    onSessionMissing: () => void;
+}) {
     const { t } = useTranslation('exegesis');
     const chat = useFacultyChat(sessionId);
+
+    // A resolved id whose transcript loads as null is a session that no
+    // longer exists. Tell the parent so it opens a new one rather than
+    // leaving the student typing into a thread that cannot receive.
+    useEffect(() => {
+        if (!chat.isLoadingSession && chat.session === null) onSessionMissing();
+    }, [chat.isLoadingSession, chat.session, onSessionMissing]);
     const [input, setInput] = useState('');
-    // Length-preference is fixed in the drawer. The full Faculty page
-    // is the surface where the user picks "concise" vs. "detailed".
-    const lengthPreference: ResponseMode = 'auto';
+    // Length preference starts at 'auto' and the input's own selector
+    // changes it.
+    //
+    // It used to be a fixed const with no setter, from when
+    // `FacultyChatInput` had no mode selector. The input later grew
+    // one and made both props required; the drawer kept passing
+    // neither, so the selector rendered with `value === undefined`,
+    // looked up its icon on a missing entry, and threw — taking the
+    // whole panel down the moment it opened. The compiler had been
+    // reporting it the whole time, inside a baseline of known errors
+    // that nobody reads line by line.
+    const [lengthPreference, setLengthPreference] = useState<ResponseMode>('auto');
 
     const messages = chat.session?.messages ?? [];
     const hasMessages = messages.length > 0;
@@ -217,6 +284,8 @@ function DrawerChatBody({ sessionId }: { sessionId: string }) {
                     onSubmit={handleSubmit}
                     attachment={null}
                     onAttach={() => { /* attachments disabled in drawer */ }}
+                    lengthPreference={lengthPreference}
+                    onSetLengthPreference={setLengthPreference}
                 />
             </div>
         </div>

@@ -807,8 +807,8 @@
                         "emptySheets_one": "{{count}} chosen sheet had no text and was left out",
                         "emptySheets_other": "{{count}} chosen sheets had no text and were left out",
                         "saveFailed": "Could not save the selection. Try again.",
-                            "incomplete": "Saved {{saved}} of {{expected}} passages. Review the selection before generating.",
-                            "tooLarge": "The paper corpus is too large to save. Remove sheets here or in another source.",
+                        "incomplete": "Saved {{saved}} of {{expected}} passages. Review the selection before generating.",
+                        "tooLarge": "The paper corpus is too large to save. Remove sheets here or in another source.",
                         "attachedStructural_one": "Added: the passage section, {{count}} sheet",
                         "attachedStructural_other": "Added: the passage section, {{count}} sheets",
                         "attachedSemantic_one": "Added: {{count}} sheet by content match. Worth reviewing.",
@@ -1648,8 +1648,8 @@
                 "applyHint": "Apply hint",
                 "editManual": "Edit manually",
                 "editAccepted": "Edit accepted content",
-                        "redo": "Redo",
-                        "redoTooltip": "Returns the step to review so it can be generated again. The accepted analysis stays in the history.",
+                "redo": "Redo",
+                "redoTooltip": "Returns the step to review so it can be generated again. The accepted analysis stays in the history.",
                 "saveEdit": "Save edit",
                 "expand": "Expand",
                 "collapse": "Collapse"
@@ -1724,6 +1724,9 @@
             "agentName": "Assistant",
             "preparing": "Preparing the conversation...",
             "copied": "Copied to clipboard",
+            "analysisLoaded": "Analysis loaded: {{verses}}",
+            "analysisPartial": "Analysis loaded: {{verses}}. Outside the context: {{omitted}}.",
+            "analysisPending": "This paper has no accepted analysis yet, so the conversation only knows the framing.",
             "errors": {
                 "createFailed": "Could not open the Faculty conversation. Try again.",
                 "sendFailed": "Could not send your message. Try again."

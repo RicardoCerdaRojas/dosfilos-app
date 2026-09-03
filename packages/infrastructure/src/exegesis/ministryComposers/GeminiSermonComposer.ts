@@ -1,5 +1,6 @@
 import {
     formatPassageReference,
+    serializeAnalysis,
     type ComposeSermonInput,
     type ComposeSermonOutput,
     type ISermonComposer,
@@ -7,7 +8,6 @@ import {
 import { withGeminiRetry } from '../geminiRetry';
 import { runLlmPromptWithUsage } from '../../llm/callableLlm';
 import { LONG_COMPOSITION_TIMEOUT_MS } from '../composerTimeouts';
-import { serializeAnalysis } from '../composer/serializeAnalysis';
 import {
     commonGuardrails,
     formatAssignmentBrief,

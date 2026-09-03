@@ -807,8 +807,8 @@
                         "emptySheets_one": "{{count}} hoja elegida no traía texto y quedó afuera",
                         "emptySheets_other": "{{count}} hojas elegidas no traían texto y quedaron afuera",
                         "saveFailed": "No se pudo guardar la selección. Probá de nuevo.",
-                            "incomplete": "Se guardaron {{saved}} de {{expected}} fragmentos. Revisá la selección antes de generar.",
-                            "tooLarge": "El corpus del trabajo es demasiado grande para guardarlo. Quitá hojas de esta fuente o de otra.",
+                        "incomplete": "Se guardaron {{saved}} de {{expected}} fragmentos. Revisá la selección antes de generar.",
+                        "tooLarge": "El corpus del trabajo es demasiado grande para guardarlo. Quitá hojas de esta fuente o de otra.",
                         "attachedStructural_one": "Agregado: la sección del pasaje, {{count}} hoja",
                         "attachedStructural_other": "Agregado: la sección del pasaje, {{count}} hojas",
                         "attachedSemantic_one": "Agregado: {{count}} hoja por coincidencia de contenido. Conviene revisarla.",
@@ -1648,8 +1648,8 @@
                 "applyHint": "Aplicar hint",
                 "editManual": "Editar a mano",
                 "editAccepted": "Editar contenido aceptado",
-                        "redo": "Rehacer",
-                        "redoTooltip": "Vuelve el paso a revisión para generarlo de nuevo. El análisis aceptado queda en el historial.",
+                "redo": "Rehacer",
+                "redoTooltip": "Vuelve el paso a revisión para generarlo de nuevo. El análisis aceptado queda en el historial.",
                 "saveEdit": "Guardar edición",
                 "expand": "Expandir",
                 "collapse": "Colapsar"
@@ -1724,6 +1724,9 @@
             "agentName": "Asistente",
             "preparing": "Preparando la conversación...",
             "copied": "Copiado al portapapeles",
+            "analysisLoaded": "Análisis cargado: {{verses}}",
+            "analysisPartial": "Análisis cargado: {{verses}}. Fuera de contexto: {{omitted}}.",
+            "analysisPending": "Este trabajo todavía no tiene análisis aceptado, así que la conversación solo conoce el encuadre.",
             "errors": {
                 "createFailed": "No se pudo abrir la conversación con la Facultad. Intenta de nuevo.",
                 "sendFailed": "No se pudo enviar tu mensaje. Intenta de nuevo."

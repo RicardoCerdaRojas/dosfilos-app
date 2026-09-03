@@ -1,7 +1,5 @@
-import {
-    formatPassageReference,
-    type CanonicalVerseAnalysis,
-} from '@dosfilos/domain';
+import { formatPassageReference } from '../../bible/canon/passage-reference';
+import type { CanonicalVerseAnalysis } from '../entities/CanonicalVerseAnalysis';
 
 /**
  * Serializes a `CanonicalVerseAnalysis` into a compact "briefing"
@@ -172,7 +170,12 @@ export function serializeAnalysis(
                 .join('; ');
             lines.push(`    options: ${opts}`);
             const positions = cx.commentatorPositions
-                .map(p => `${p.sourceKey} p.${p.page} → opt ${p.supports}: ${p.summary}`)
+                .map(p => {
+                    const verbatim = p.verbatimQuote?.trim()
+                        ? ` [verbatim: "${p.verbatimQuote.trim()}"]`
+                        : '';
+                    return `${p.sourceKey} p.${p.page} → opt ${p.supports}: ${p.summary}${verbatim}`;
+                })
                 .join(' | ');
             if (positions) lines.push(`    positions: ${positions}`);
             lines.push(`    commitment: "${cx.commitment.chosen}". Rationale: ${cx.commitment.rationale}`);
