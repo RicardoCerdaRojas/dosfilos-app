@@ -1729,7 +1729,8 @@
             "analysisPending": "This paper has no accepted analysis yet, so the conversation only knows the framing.",
             "errors": {
                 "createFailed": "Could not open the Faculty conversation. Try again.",
-                "sendFailed": "Could not send your message. Try again."
+                "sendFailed": "Could not send your message. Try again.",
+                "attachmentFailed": "Could not prepare the image. Try a smaller one."
             }
         },
         "export": {
