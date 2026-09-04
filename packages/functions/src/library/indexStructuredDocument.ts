@@ -6,6 +6,7 @@ import { chunkStructuredMarkdown } from './markdownChunker';
 import { isStructuredExtractionVersion } from './extractionVersions';
 import { parseFirebaseStorageLocation } from './storageLocation';
 import { describeSanitization, sanitizeExtractedText } from './sanitizeExtractedText';
+import { assessIndexCoverage, describeIndexCoverage } from './indexCoverage';
 
 interface IndexRequest {
     resourceId: string;
@@ -140,6 +141,7 @@ export const indexStructuredDocument = onCall<IndexRequest>(
         // Fallback: if structured.md is too thin (e.g. old upload with empty p.md),
         // use the textContent stored in Firestore, which has [PAGE N] markers.
         if (chunks.length < 3 && data.textContent && data.textContent.length > 1000) {
+            assertFallbackIsWholeBook(data, title);
             console.log(`[IndexStructured] ${title}: falling back to textContent (${data.textContent.length} chars)`);
             // Convert [PAGE N] markers to <!-- page: N --> so chunker recognizes them
             const fallbackSan = sanitizeExtractedText(
@@ -241,8 +243,17 @@ export const indexStructuredDocument = onCall<IndexRequest>(
                 }
             }
 
+            // Cobertura: dos números que ya estaban en el documento y
+            // que nadie comparaba. Un índice que llega a la página 433
+            // de 711 tenía la misma tarjeta verde que uno completo.
+            const coverage = assessIndexCoverage(survivors.map(s => s.chunk.page), data.pageCount);
+            const coverageWarning = describeIndexCoverage(coverage);
+            if (coverageWarning) console.warn(`⚠️ [IndexStructured] ${title}: ${coverageWarning}`);
+
             // Mark the resource as indexed
             await resourceRef.update({
+                indexCoverage: coverage,
+                indexingWarning: coverageWarning,
                 indexingStatus: 'ready',
                 indexerVersion: INDEXER_VERSION,
                 indexedChunkCount: survivors.length,
@@ -351,6 +362,7 @@ export async function indexResourceChunks(
 
     let chunks = chunkStructuredMarkdown(markdown, { maxChars: 2000, minChars: 200, overlapChars: 150 });
     if (chunks.length < 3 && data.textContent && data.textContent.length > 1000) {
+        assertFallbackIsWholeBook(data, title);
         const fallbackSan = sanitizeExtractedText(
             (data.textContent as string).replace(/\[PAGE\s+(\d+)\]/gi, '<!-- page: $1 -->')
         );
@@ -441,7 +453,13 @@ export async function indexResourceChunks(
             console.log(`[Index ${resourceId}] Wrote ${writtenChunks}/${survivors.length} chunks (${Math.round((Date.now() - writeStart) / 1000)}s elapsed)`);
         }
 
+        const coverage = assessIndexCoverage(survivors.map(s => s.chunk.page), data.pageCount);
+        const coverageWarning = describeIndexCoverage(coverage);
+        if (coverageWarning) console.warn(`⚠️ [Index ${resourceId}] ${coverageWarning}`);
+
         await resourceRef.update({
+            indexCoverage: coverage,
+            indexingWarning: coverageWarning,
             indexingStatus: 'ready',
             indexerVersion: INDEXER_VERSION,
             indexedChunkCount: survivors.length,
@@ -480,6 +498,26 @@ export async function indexResourceChunks(
         });
         throw err;
     }
+}
+
+/**
+ * El `textContent` de Firestore no es fuente de verdad.
+ *
+ * Es una COPIA topada a 800.000 bytes para vistas rápidas: cuando el
+ * libro no cabe, el corte cae donde caiga. Indexar desde ahí produce
+ * chunks con páginas reales y calidad normal —el fallback funciona— y
+ * por eso la tarjeta quedaba verde con medio libro adentro.
+ *
+ * Si el `structured.md` vino vacío y la única alternativa es una copia
+ * truncada, corresponde fallar y decirlo, no indexar un pedazo.
+ */
+function assertFallbackIsWholeBook(data: FirebaseFirestore.DocumentData, title: string): void {
+    if (data.wasTruncated !== true) return;
+    throw new Error(
+        `${title}: el structured.md no trajo texto y la copia de respaldo está truncada `
+        + `(${data.pageCount ?? '?'} páginas declaradas). Indexar desde ahí dejaría el libro a medias. `
+        + 'Reprocesa el documento con Premium.',
+    );
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────

@@ -112,6 +112,7 @@
     "verifying": "Verifying",
     "indexing": "Indexing…",
     "ready": "Ready",
+    "readyPartial": "Ready (partial)",
     "notReady": "To process"
   },
   "stepper": {
