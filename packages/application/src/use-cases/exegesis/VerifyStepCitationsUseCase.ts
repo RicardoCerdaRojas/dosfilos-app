@@ -99,7 +99,10 @@ export class VerifyStepCitationsUseCase {
                 userId: ownerId,
             });
 
-            const summary = buildSummary(citations);
+            const summary = buildSummary(
+                citations,
+                countSourcesNamedWithoutCitation(target.markdown, sources, citations),
+            );
             await this.paperRepository.setStepVersionVerifications(
                 ownerId,
                 paperId,
@@ -226,7 +229,48 @@ function pickVersion(
     return step.accepted ?? step.current;
 }
 
-function buildSummary(citations: VerifiedCitation[]): VerificationSummary {
+/**
+ * Fuentes que el texto nombra y que ninguna cita detectada atribuye.
+ *
+ * Nace del paper que pasó verificado con CERO citas detectadas: el
+ * verificador leía sólo su propio formato, no encontró nada, y no
+ * encontrar nada se veía igual que no tener nada que buscar. Con este
+ * número la interfaz puede decir «se nombran tres fuentes y ninguna
+ * está citada de forma verificable», que es una duda, no un visto.
+ *
+ * La búsqueda es por clave de cita con límites de palabra: nombrar a
+ * Adamson en prosa cuenta, y «Adamsoniano» no.
+ */
+function countSourcesNamedWithoutCitation(
+    markdown: string,
+    sources: ReadonlyArray<VerifierSource>,
+    citations: ReadonlyArray<VerifiedCitation>,
+): number {
+    const attributed = new Set(
+        citations
+            .map(c => c.author.trim().toLowerCase())
+            .filter(Boolean),
+    );
+    let count = 0;
+    for (const source of sources) {
+        const key = source.citationKey?.trim();
+        if (!key) continue;
+        if (attributed.has(key.toLowerCase())) continue;
+        const named = new RegExp(`(^|[^\\p{L}])${escapeRegExp(key)}([^\\p{L}]|$)`, 'iu')
+            .test(markdown);
+        if (named) count++;
+    }
+    return count;
+}
+
+function escapeRegExp(text: string): string {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildSummary(
+    citations: VerifiedCitation[],
+    sourcesNamedWithoutCitation: number,
+): VerificationSummary {
     const counts: Record<CitationStatus, number> = {
         verified: 0,
         'page-mismatch': 0,
@@ -246,5 +290,6 @@ function buildSummary(citations: VerifiedCitation[]): VerificationSummary {
             manualPending: counts['manual-pending'],
         },
         totalCitations: citations.length,
+        sourcesNamedWithoutCitation,
     };
 }

@@ -13,7 +13,7 @@ import type {
     StyleGuideManifest,
     IPrintedPageOffsetReader,
 } from '@dosfilos/domain';
-import { isCitableSourceType } from '@dosfilos/domain';
+import { enforceAnalysisCoverage, isCitableSourceType } from '@dosfilos/domain';
 import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 /**
@@ -224,6 +224,30 @@ export class ComposeAcademicPaperUseCase {
                     console.warn('[exegesis] academic retry failed:', retryErr);
                 }
             }
+
+            // ── Lo estructurado se publica, lo decida el modelo o no ────
+            // El compositor escribe la prosa; acá se comprueba verso
+            // por verso que la prosa diga lo que el análisis afirmó, y
+            // el verso que salió incompleto se publica con el render
+            // determinista. Medido sobre Santiago 1:1-5: dieciocho
+            // campos producidos y aceptados, tres publicados, quince
+            // descartados sin que el paper lo declarara.
+            const enforced = enforceAnalysisCoverage({
+                markdown: raw.markdown,
+                verseAnalyses,
+                language: paper.displayLanguage,
+                pageLabel,
+                citableKeys: composerSources.map(s => s.citationKey).filter(Boolean),
+            });
+            if (enforced.coverage.renderedVerses.length > 0) {
+                console.warn('[exegesis] el compositor descartó análisis; se publica el render determinista', {
+                    paperId: paper.id,
+                    versos: enforced.coverage.renderedVerses,
+                    itemsRecuperados: enforced.coverage.recoveredItemLabels.length,
+                    troceoFallido: enforced.coverage.sectioningFailed,
+                });
+            }
+            raw = { ...raw, markdown: enforced.markdown, coverage: enforced.coverage };
 
             // ── Apply the deterministic post-formatter when possible ─────
             let finalOutput: ComposeAcademicPaperOutput;

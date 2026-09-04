@@ -1384,6 +1384,16 @@
             "formatterApplied": "Style guide applied (step 1: instructions to the assistant, step 2: automatic reformat).",
             "formatterSkipped": "You haven't extracted the style guide into structured rules yet. Only step 1 (instructions to the assistant) was applied. Go to the \"Style guide\" tab and extract the guide to activate step 2.",
             "formatterError": "Error during the automatic reformat. The assistant's composition is still valid.",
+            "coverage": {
+                "complete_one": "The paper publishes the analysis's single finding.",
+                "complete_other": "The paper publishes all {{count}} findings from the analysis.",
+                "recovered_one": "One finding never reached the prose and was published from the analysis's own text.",
+                "recovered_other": "{{count}} findings never reached the prose and were published from the analysis's own text.",
+                "versesLabel": "Verses rebuilt: {{verses}}",
+                "itemsLabel": "Recovered: {{items}}",
+                "more": "and {{count}} more",
+                "sectioningFailed": "The prose did not label its verses as required, so the missing material was appended at the end of the document instead of in place. Check where each part landed before submitting."
+            },
             "savedToast": "Composition saved on the paper.",
             "persistWarning": "Composition succeeded but could not be saved to the paper. Copy or download the markdown before closing.",
             "saveToPaper": "Save to paper",
@@ -1457,7 +1467,9 @@
             "dialog": {
                 "title": "Citation verification",
                 "description": "Each inline citation was checked against the paper's sources. Yellow or red items need a closer look.",
-                "empty": "No citations detected in this step. If you expected some, make sure they follow the (Author, \"Title\", p. N) pattern.",
+                "empty": "No citations detected in this step. Recognized forms: (Author, \"Title\", p. N), (Author, p. N), and Author (p. N).",
+                "namedWithoutCitation_one": "The text names one corpus source without citing it in a verifiable format. That is not a pass: it is a citation nobody could check.",
+                "namedWithoutCitation_other": "The text names {{count}} corpus sources without citing them in a verifiable format. That is not a pass: they are citations nobody could check.",
                 "running": "Checking citations against sources…",
                 "rerun": "Re-verify",
                 "close": "Close",

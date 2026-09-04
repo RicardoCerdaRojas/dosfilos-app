@@ -176,6 +176,19 @@ export interface VerificationSummary {
     };
     /** Total citations parsed from the markdown — independent of verification. */
     totalCitations: number;
+    /**
+     * Fuentes del corpus que el texto NOMBRA sin citarlas en un
+     * formato que el verificador sepa leer.
+     *
+     * Un paper sin citas detectadas pasaba como verificado: verde por
+     * vacío. Pero «no hay nada que verificar» y «no supe leer lo que
+     * hay» son cosas distintas, y sólo la primera es una buena
+     * noticia. Este contador separa las dos.
+     *
+     * Opcional: los resúmenes guardados antes de que existiera el
+     * campo no lo traen, y ausente significa «no se midió», no cero.
+     */
+    sourcesNamedWithoutCitation?: number;
 }
 
 export const EMPTY_VERIFICATION_SUMMARY: VerificationSummary = {
@@ -189,6 +202,7 @@ export const EMPTY_VERIFICATION_SUMMARY: VerificationSummary = {
         manualPending: 0,
     },
     totalCitations: 0,
+    sourcesNamedWithoutCitation: 0,
 };
 
 /**

@@ -16,6 +16,11 @@ interface CitationVerificationDialogProps {
     onOpenChange: (open: boolean) => void;
     /** Per-citation results from the most recent verifier run. Empty until first run. */
     citations: VerifiedCitation[];
+    /**
+     * Fuentes que el texto nombra sin citarlas en un formato legible
+     * para el verificador. Cero cuando no aplica o no se midió.
+     */
+    sourcesNamedWithoutCitation?: number;
     isVerifying: boolean;
     onReverify: () => void;
 }
@@ -30,6 +35,7 @@ export function CitationVerificationDialog({
     open,
     onOpenChange,
     citations,
+    sourcesNamedWithoutCitation = 0,
     isVerifying,
     onReverify,
 }: CitationVerificationDialogProps) {
@@ -54,6 +60,12 @@ export function CitationVerificationDialog({
                     <CountChip kind="not-found" count={counts['not-found']} />
                     <CountChip kind="manual-pending" count={counts['manual-pending']} />
                 </div>
+
+                {sourcesNamedWithoutCitation > 0 && (
+                    <p className="rounded-md border border-warning/30 bg-warning-subtle/40 px-3 py-2 text-[11px] text-warning-subtle-foreground">
+                        ⚠ {t('canonical.verify.dialog.namedWithoutCitation', { count: sourcesNamedWithoutCitation })}
+                    </p>
+                )}
 
                 <div className="flex-1 overflow-y-auto -mx-6 px-6 space-y-2">
                     {citations.length === 0 && !isVerifying && (

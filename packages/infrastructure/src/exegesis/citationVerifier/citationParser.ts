@@ -1,44 +1,131 @@
 import type { ParsedCitation } from '@dosfilos/domain';
 
 /**
- * Inline-citation regex. Matches the format the orchestrator + style
- * formatter emit: `(Author, "Title", p. N)` with optional pages and
- * tolerant whitespace. Title MUST be quoted — paraphrased claims that
- * lack quotes are matched too via the surrounding-sentence fallback in
- * `extractEvidence`. The same shape is used in
- * `DeterministicStyleFormatter` so post-format markdown is also
- * matchable here.
+ * Reconocimiento de citas inline.
+ *
+ * Tres formas, porque el sistema emite tres. La forma canónica es
+ * `(Autor, "Título", p. N)` —la que el prompt pide y la que escribe
+ * `DeterministicStyleFormatter`—, pero un paper real de Santiago
+ * 1:1-5 salió con `Adamson (p. 53)` de punta a punta y el verificador
+ * no reconoció ninguna: cero citas detectadas, cero dudas reportadas,
+ * verde por vacío. Y había algo que atrapar — una cita corrida por una
+ * página y un ejemplo griego que no estaba en el libro citado.
+ *
+ * Un verificador que sólo lee su propio formato no verifica: certifica
+ * su formato.
+ *
+ * El precio de admitir las formas sin comillas es algún falso
+ * positivo —«Santiago (p. 3)» parece una cita y no lo es—. Se paga a
+ * conciencia: una fila «no se encontró la fuente» es visible y el
+ * usuario la descarta en un segundo; el silencio de antes no era
+ * visible para nadie.
  */
-const CITATION_REGEX =
+
+/** `(Autor, "Título", p. N)` — la forma canónica, con título entre comillas. */
+const QUOTED_CITATION =
     /\(\s*([^,()]+?)\s*,\s*"([^"]+)"(?:\s*,\s*(?:pp?\.\s*)?([\d–\-—,\s]+))?\s*\)/g;
+
+/** `(Autor, p. N)` y `(Autor, N)` — sin título. */
+const UNQUOTED_CITATION =
+    /\(\s*([^,()"]{2,60}?)\s*,\s*(?:pp?\.\s*)?(\d[\d–\-—,\s]*?)\s*\)/g;
+
+/**
+ * `Adamson (p. 53)` — el autor queda fuera del paréntesis. Se exige
+ * inicial mayúscula en el nombre para no confundir un paréntesis
+ * numérico cualquiera con una cita.
+ *
+ * Se toma UNA sola palabra, la pegada al paréntesis. Admitir dos
+ * arrastraba la mayúscula de comienzo de oración —«Primero Adamson
+ * (p. 53)» daba el autor «Primero Adamson»— y las claves de cita de
+ * este producto son apellidos de una palabra.
+ */
+const AUTHOR_BEFORE_PAGE =
+    /(\p{Lu}[\p{L}.'’-]+)\s*\(\s*(?:pp?\.\s*)?(\d[\d–\-—,\s]*?)\s*\)/gu;
+
+interface RawMatch {
+    raw: string;
+    author: string;
+    title: string;
+    pages: string | null;
+    offset: number;
+    end: number;
+}
+
+function collect(
+    markdown: string,
+    regex: RegExp,
+    read: (m: RegExpExecArray) => { author: string; title: string; pages: string | null },
+): RawMatch[] {
+    const out: RawMatch[] = [];
+    // Los patrones son de módulo y llevan `g`: sin este reset una
+    // llamada seguiría donde terminó la anterior.
+    regex.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(markdown)) !== null) {
+        const { author, title, pages } = read(match);
+        out.push({
+            raw: match[0]!,
+            author: author.trim(),
+            title: title.trim(),
+            pages: pages ? pages.trim() : null,
+            offset: match.index,
+            end: match.index + match[0]!.length,
+        });
+    }
+    return out;
+}
 
 /**
  * Parses every inline citation in `markdown` plus its surrounding
  * "claim text" — the closest preceding `"..."` block, or the
  * containing sentence as fallback. Pure function.
+ *
+ * Cuando dos formas se solapan sobre el mismo texto gana la más rica:
+ * `(Adamson, "The Epistle of James", p. 53)` se lee entera, y no como
+ * un `(Autor, N)` recortado adentro.
  */
 export function parseCitations(markdown: string): ParsedCitation[] {
-    const citations: ParsedCitation[] = [];
-    let match: RegExpExecArray | null;
-    // Reset lastIndex defensively — regex is module-scoped with the `g`
-    // flag, so recursive calls would otherwise pick up where the last
-    // one left off.
-    CITATION_REGEX.lastIndex = 0;
-    while ((match = CITATION_REGEX.exec(markdown)) !== null) {
-        const [raw, authorRaw, titleRaw, pagesRaw] = match;
-        const offset = match.index;
-        const evidence = extractEvidence(markdown, offset);
-        citations.push({
-            raw,
-            author: (authorRaw ?? '').trim(),
-            title: (titleRaw ?? '').trim(),
-            pages: pagesRaw ? pagesRaw.trim() : null,
-            offset,
-            evidence: evidence.text,
-            evidenceIsQuoted: evidence.fromQuote,
-        });
+    const matches = [
+        ...collect(markdown, QUOTED_CITATION, m => ({
+            author: m[1] ?? '',
+            title: m[2] ?? '',
+            pages: m[3] ?? null,
+        })),
+        ...collect(markdown, UNQUOTED_CITATION, m => ({
+            author: m[1] ?? '',
+            title: '',
+            pages: m[2] ?? null,
+        })),
+        ...collect(markdown, AUTHOR_BEFORE_PAGE, m => ({
+            author: m[1] ?? '',
+            title: '',
+            pages: m[2] ?? null,
+        })),
+    ]
+        // Más rica primero (con título), y a igualdad la más larga:
+        // así la que sobrevive al solapamiento es la que más dice.
+        .sort((a, b) => (b.title ? 1 : 0) - (a.title ? 1 : 0) || (b.end - b.offset) - (a.end - a.offset));
+
+    const accepted: RawMatch[] = [];
+    for (const candidate of matches) {
+        const overlaps = accepted.some(a => candidate.offset < a.end && a.offset < candidate.end);
+        if (!overlaps) accepted.push(candidate);
     }
-    return citations;
+
+    return accepted
+        .sort((a, b) => a.offset - b.offset)
+        .map(m => {
+            const evidence = extractEvidence(markdown, m.offset);
+            return {
+                raw: m.raw,
+                author: m.author,
+                title: m.title,
+                pages: m.pages,
+                offset: m.offset,
+                evidence: evidence.text,
+                evidenceIsQuoted: evidence.fromQuote,
+            };
+        });
 }
 
 /**

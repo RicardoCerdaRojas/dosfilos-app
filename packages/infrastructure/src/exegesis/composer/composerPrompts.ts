@@ -1,7 +1,9 @@
 import { fitPromptToCap } from '../../llm/promptBudget';
 import {
+    buildVerseCoverageContract,
     formatPassageReference,
     serializeAnalysis,
+    verseSectionKey,
     type ComposeAcademicPaperInput,
     type ComposerSourceMetadata,
     type ExegeticalStrategy,
@@ -73,6 +75,10 @@ function buildSystemInstruction(input: ComposeAcademicPaperInput): string {
             `- Greek terms in French quotes «...» with translation in parentheses on first occurrence.`,
             `- Sober academic tone. No devotional language.`,
             ``,
+            `## Nothing analyzed may be dropped (NON-NEGOTIABLE)`,
+            `- Every briefing section — textual criticism, syntax, discourse particles, lexis, historical context, OT links, commentator positions, translation cruxes with their options and commitment, footnote extensions, verse thesis — MUST reach the paper. Weave them into the prose; do not summarize the verse by picking the three findings you liked best.`,
+            `- What you leave out does not disappear: a deterministic pass measures each verse against its analysis and, where prose is missing content, REPLACES your entire verse section with a mechanical render of the structured data. Your prose survives only where it published everything.`,
+            ``,
             `## Hallucination guardrail (NON-NEGOTIABLE)`,
             `- ONLY cite sources whose citation keys appear in the verse analyses' commentator engagement / lexical sources / footnote sources / historical context / OT-link sources. NEVER invent sources, page numbers, or quotes.`,
             `- ONLY commit to translation choices documented in each verse's "Translation cruxes". The closing synthesis paragraph restates THESE commitments — do not invent new ones.`,
@@ -83,6 +89,7 @@ function buildSystemInstruction(input: ComposeAcademicPaperInput): string {
             `  # Title (the paper title or the formatted passage)`,
             `  ## Introduction (1-2 paragraphs presenting the passage's significance and the paper's thesis derived from the verse analyses' theses)`,
             `  ## Translation and exegetical analysis (verse-by-verse, prose, in canonical order; closing synthesis per verse)`,
+            `    Each verse opens with its own heading \`### {verse reference}\`, spelled EXACTLY as the briefing's \`== Verse X ==\` label. The heading is a contract, not decoration: the pipeline reads it to check, verse by verse, that the analysis reached the page.`,
             `  ## Conclusion (1-2 paragraphs synthesizing the body's findings; no new arguments)`,
             `  [^N]: footnote bodies (anchored at \`[^N]\` markers in the prose)`,
             `  ## Bibliography (Turabian/SBL format per style guide; full entries for every cited source)`,
@@ -113,6 +120,10 @@ function buildSystemInstruction(input: ComposeAcademicPaperInput): string {
         `- Términos griegos entre comillas francesas «...» con traducción entre paréntesis en su primera ocurrencia.`,
         `- Tono académico sobrio. Sin lenguaje devocional.`,
         ``,
+        `## Nada de lo analizado se descarta (NO NEGOCIABLE)`,
+        `- Cada sección del briefing —crítica textual, sintaxis, partículas de discurso, léxico, contexto histórico, enlaces al AT, posiciones de comentaristas, cruces de traducción con sus opciones y su compromiso, extensiones de nota al pie, tesis del verso— TIENE que llegar al paper. Se integran en la prosa; el verso no se resume quedándose con los tres hallazgos que mejor suenan.`,
+        `- Lo que dejes afuera no desaparece: un paso determinista mide cada verso contra su análisis y, donde la prosa no dice lo que el análisis afirmó, REEMPLAZA tu sección entera de ese verso por un render mecánico de los datos estructurados. Tu prosa sobrevive sólo donde publicó todo.`,
+        ``,
         `## Salvaguarda contra alucinación (NO NEGOCIABLE)`,
         `- SOLO citá fuentes cuyas claves aparezcan en los análisis estructurados de los versos (commentator engagement / lexical sources / footnote sources / historical context / OT-link sources). NUNCA inventes fuentes, páginas o citas verbatim.`,
         `- SOLO comprometete con las traducciones documentadas en "Translation cruxes" de cada verso. El párrafo de cierre restablece ESOS compromisos — no inventes nuevos.`,
@@ -123,6 +134,7 @@ function buildSystemInstruction(input: ComposeAcademicPaperInput): string {
         `  # Título (el título del paper o el pasaje formateado)`,
         `  ## Introducción (1-2 párrafos presentando la significancia del pasaje y la tesis del paper derivada de las tesis de los versos)`,
         `  ## Traducción y análisis exegético (verso por verso, prosa, en orden canónico; párrafo de síntesis por verso)`,
+        `    Cada verso abre con su propio encabezado \`### {referencia del verso}\`, escrito EXACTAMENTE como el rótulo \`== Verse X ==\` del briefing. El encabezado es un contrato, no decoración: la tubería lo lee para comprobar, verso por verso, que el análisis llegó a la página.`,
         `  ## Conclusión (1-2 párrafos sintetizando los hallazgos del cuerpo; sin argumentos nuevos)`,
         `  [^N]: cuerpos de notas al pie (anclados en los marcadores \`[^N]\` de la prosa)`,
         `  ## Bibliografía (formato Turabian/SBL según la guía de estilo; entradas completas para cada fuente citada)`,
@@ -166,6 +178,8 @@ function renderUserMessage(input: ComposeAcademicPaperInput, sourcesBlock: strin
         .map(a => serializeAnalysis(a, lang, { pageLabel: input.pageLabel, citableKeys }))
         .join('\n\n');
 
+    const coverageContract = formatCoverageContract(input.verseAnalyses, lang);
+
     const sourcesHeading = lang === 'en'
         ? '### Source registry (use ONLY these citation keys)'
         : '### Registro de fuentes (usá SOLO estas claves de cita)';
@@ -185,6 +199,7 @@ function renderUserMessage(input: ComposeAcademicPaperInput, sourcesBlock: strin
             ``,
             briefings,
             ``,
+            coverageContract,
             sourcesHeading,
             ``,
             sourcesBlock,
@@ -202,12 +217,40 @@ function renderUserMessage(input: ComposeAcademicPaperInput, sourcesBlock: strin
         ``,
         briefings,
         ``,
+        coverageContract,
         sourcesHeading,
         ``,
         sourcesBlock,
         ``,
         `Ahora producí el documento markdown completo. Seguí la estructura y reglas del system instruction sin excepción.`,
     ].filter(Boolean).join('\n');
+}
+
+/**
+ * La materia que cada verso tiene que publicar, rotulada.
+ *
+ * Es la misma lista que después mide `enforceAnalysisCoverage`: el
+ * compositor ve por adelantado con qué se lo va a medir, en vez de
+ * enterarse cuando su sección ya fue reemplazada.
+ */
+function formatCoverageContract(
+    analyses: ComposeAcademicPaperInput['verseAnalyses'],
+    lang: 'es' | 'en',
+): string {
+    const blocks = analyses.map(analysis => {
+        const items = buildVerseCoverageContract(analysis, lang);
+        if (items.length === 0) return '';
+        return [
+            `#### ${verseSectionKey(analysis, lang)}`,
+            ...items.map(i => `- ${i.label}`),
+        ].join('\n');
+    }).filter(Boolean);
+    if (blocks.length === 0) return '';
+
+    const heading = lang === 'en'
+        ? '### Required material per verse (every point must appear in that verse\'s prose)'
+        : '### Materia obligatoria por verso (cada punto tiene que aparecer en la prosa de su verso)';
+    return [heading, '', ...blocks, ''].join('\n');
 }
 
 /**
