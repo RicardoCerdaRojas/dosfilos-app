@@ -9,6 +9,13 @@ import { recordLlamaParseUsage, selectAllLlamaParseAccounts, type SelectedLlamaP
 import { consumePagesAdmin, type ProcessingMode } from './processingBalance';
 import { extractWithGemini } from './geminiExtraction';
 import { describeSanitization, sanitizeExtractedText } from './sanitizeExtractedText';
+import {
+    EXTRACTION_TIMEOUT_SECONDS,
+    pollBudgetForAccount,
+} from './extractionBudget';
+import { armExtractionDeadlineGuard, type DeadlineGuard } from './extractionDeadlineGuard';
+import { isMarkerOnlyMarkdown } from './indexCoverage';
+import { truncateUtf8 } from './truncateUtf8';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
 
@@ -38,13 +45,15 @@ const getApiKey = (): string => {
 async function extractWithLlamaParse(
     tempFilePath: string,
     resourceId: string,
-    apiKey: string
+    apiKey: string,
+    maxPollSeconds: number,
 ): Promise<{ text: string; markdown: string; pageCount: number; creditsUsed: number }> {
     const buffer = fs.readFileSync(tempFilePath);
     const client = new LlamaParseClient(apiKey);
 
     const result = await client.parseDocument(buffer, `${resourceId}.pdf`, {
         mode: 'fast',
+        maxPollSeconds,
         language: 'es',  // Most of the corpus is Spanish; Greek/Hebrew inline survives
         parsingInstruction: 'Preserva con precisión los caracteres griegos (α-ω) y hebreos (א-ת). Mantén la estructura de capítulos, secciones, tablas y notas al pie. No traduzcas términos teológicos ni citas bíblicas.',
     });
@@ -64,35 +73,20 @@ async function extractWithLlamaParse(
 
     const text = pagesToMarkedText(result.pages);
     const markdown = pagesToMarkdown(result.pages);
-    return { text, markdown, pageCount: result.pages.length, creditsUsed };
-}
 
-/**
- * Truncate a UTF-8 string to at most `maxBytes` BYTES, never cutting
- * in the middle of a multi-byte character. Iterates code points and
- * accumulates byte length until the next character would exceed the
- * cap, then stops.
- *
- * Why we can't just do `string.substring(0, maxBytes)`: substring
- * counts characters, not bytes. For UTF-8:
- *   - ASCII (a-z): 1 byte/char
- *   - Latin extended (á, ñ): 2 bytes/char
- *   - Greek/Hebrew (α, ת): 2 bytes/char
- *   - CJK / emoji: 3-4 bytes/char
- * A 900,000-char Greek text is ~1.8 MB — way over Firestore's 1 MiB
- * doc limit. This helper guarantees the output fits in `maxBytes`.
- */
-function truncateUtf8(text: string, maxBytes: number): string {
-    if (Buffer.byteLength(text, 'utf8') <= maxBytes) return text;
-    let bytes = 0;
-    let result = '';
-    for (const char of text) {  // for-of iterates code points, not UTF-16 units
-        const charBytes = Buffer.byteLength(char, 'utf8');
-        if (bytes + charBytes > maxBytes) break;
-        bytes += charBytes;
-        result += char;
+    // Un resultado con los rótulos de todas las páginas y sin texto
+    // entre ellos NO es una extracción exitosa: es una vacía que pesa
+    // algo. Pasaba por buena porque el archivo existía —así se indexó
+    // Wallace hasta la página 433 de 711—. Se trata como fallo de esta
+    // cuenta para que la cascada degrade a Gemini, que es exactamente
+    // lo que corresponde cuando el motor primario no trajo texto.
+    if (isMarkerOnlyMarkdown(markdown)) {
+        throw new Error(
+            `LlamaParse devolvió ${result.pages.length} página(s) rotuladas sin texto: extracción vacía`,
+        );
     }
-    return result;
+
+    return { text, markdown, pageCount: result.pages.length, creditsUsed };
 }
 
 /**
@@ -209,6 +203,12 @@ export const extractPdfWithGemini = onObjectFinalized(
         const storage = getStorage();
         const filePath = event.data.name;
         const contentType = event.data.contentType;
+        // Reloj de la invocación. Lo leen el presupuesto de espera por
+        // cuenta y los registros: sin él, «cuánto queda» es una
+        // suposición.
+        const invocationStartedAt = Date.now();
+        const elapsedSeconds = () => (Date.now() - invocationStartedAt) / 1000;
+        let deadlineGuard: DeadlineGuard | null = null;
 
         console.log(`📄 [Extract] Processing file: ${filePath}`);
 
@@ -266,6 +266,21 @@ export const extractPdfWithGemini = onObjectFinalized(
                 updatedAt: new Date(),
             });
             console.log(`🔄 [Extract] Set status to 'processing' for resource ${resourceId}`);
+
+            // A partir de acá la invocación puede morir de vieja, y a esa
+            // muerte no se le pone `catch`. El guardia deja el motivo
+            // escrito mientras todavía hay proceso para escribirlo; si la
+            // extracción termina bien después, su escritura lo pisa.
+            deadlineGuard = armExtractionDeadlineGuard(async () => {
+                console.error(`⏱️ [Extract] Tiempo agotado para ${resourceId}; se marca 'failed' antes de que la plataforma corte`);
+                await resourceRef.update({
+                    textExtractionStatus: 'failed',
+                    extractionError: `La extracción superó el tiempo máximo de ${EXTRACTION_TIMEOUT_SECONDS} s. Reintenta con Premium, que dispone de más tiempo.`,
+                    extractionFailureReason: 'timeout',
+                    extractionAttemptedAt: new Date(),
+                    updatedAt: new Date(),
+                });
+            });
 
             // Download PDF to temp file
             const bucket = storage.bucket(event.data.bucket);
@@ -348,10 +363,26 @@ export const extractPdfWithGemini = onObjectFinalized(
             //   2. Gemini 2.5 Flash (fallback) — reliable text extraction.
             //   3. pdf-parse (last resort) — local, free, basic.
             if (canUseLlamaParse) {
-                for (const account of llamaAccounts) {
-                    console.log(`🦙 [Extract] Trying LlamaParse account ${account.accountId} (${account.availableCredits} credits available)`);
+                for (const [index, account] of llamaAccounts.entries()) {
+                    // El presupuesto se calcula acá, contra lo que la
+                    // invocación ya gastó, y no como constante: la
+                    // descarga del PDF y la lectura previa de páginas ya
+                    // consumieron tiempo, y el fallback de Gemini
+                    // necesita quedar alcanzable.
+                    const pollSeconds = pollBudgetForAccount({
+                        elapsedSeconds: elapsedSeconds(),
+                        accountsRemaining: llamaAccounts.length - index,
+                    });
+                    if (pollSeconds === 0) {
+                        console.warn(
+                            `⏱️ [Extract] Sin tiempo para la cuenta ${account.accountId} (${Math.round(elapsedSeconds())}s gastados de ${EXTRACTION_TIMEOUT_SECONDS}s); se baja al fallback con aire`,
+                        );
+                        llamaErrors.push({ account: account.accountId, error: 'sin presupuesto de tiempo restante' });
+                        break;
+                    }
+                    console.log(`🦙 [Extract] Trying LlamaParse account ${account.accountId} (${account.availableCredits} credits available, ${pollSeconds}s de espera)`);
                     try {
-                        const result = await extractWithLlamaParse(tempFilePath, resourceId, account.apiKey);
+                        const result = await extractWithLlamaParse(tempFilePath, resourceId, account.apiKey, pollSeconds);
                         extractedText = result.text;
                         pageCount = result.pageCount;
                         structuredMarkdown = result.markdown;
@@ -643,6 +674,7 @@ export const extractPdfWithGemini = onObjectFinalized(
                 await resourceRef.update({
                     textExtractionStatus: 'failed',
                     extractionError: error instanceof Error ? error.message : 'Unknown error',
+                    extractionFailureReason: 'error',
                     extractionAttemptedAt: new Date(),
                     updatedAt: new Date()
                 });
@@ -652,6 +684,8 @@ export const extractPdfWithGemini = onObjectFinalized(
             }
 
             throw error;
+        } finally {
+            deadlineGuard?.disarm();
         }
     }
 );

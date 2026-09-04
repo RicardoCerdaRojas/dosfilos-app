@@ -8,6 +8,8 @@ import * as path from 'path';
 import { LlamaParseClient, pagesToMarkedText, pagesToMarkdown } from './llamaParseClient';
 import { consumePagesAdmin, readBalance } from './processingBalance';
 import { recordLlamaParseUsage, selectLlamaParseAccount } from './llamaParseAccountSelector';
+import { isMarkerOnlyMarkdown } from './indexCoverage';
+import { truncateUtf8 } from './truncateUtf8';
 
 const ADMIN_EMAIL = 'rdocerda@gmail.com';
 
@@ -153,13 +155,27 @@ export const reprocessWithLlamaParse = onCall<ReprocessRequest>(
             const extractedText = pagesToMarkedText(result.pages);
             const structuredMarkdown = pagesToMarkdown(result.pages);
 
-            // Firestore 1MB limit — truncate textContent if needed
+            // Rótulos de página sin texto entre ellos es una extracción
+            // vacía. Guardarla como buena es lo que dejó a Wallace
+            // indexado hasta la página 433 de 711.
+            if (isMarkerOnlyMarkdown(structuredMarkdown)) {
+                throw new HttpsError(
+                    'internal',
+                    `LlamaParse devolvió ${result.pages.length} página(s) rotuladas sin texto: extracción vacía. Reintenta más tarde.`,
+                );
+            }
+
+            // Firestore topa el documento en 1 MiB. Se trunca por BYTES:
+            // `substring` cuenta caracteres, y 900.000 caracteres de
+            // griego pesan ~1,8 MB — la escritura entera se rechazaba.
+            // El trigger de extracción ya lo había corregido; este
+            // camino había quedado con el corte viejo.
             const MAX_BYTES = 900_000;
             const textBytes = Buffer.byteLength(extractedText, 'utf8');
             let finalText = extractedText;
             let wasTruncated = false;
             if (textBytes > MAX_BYTES) {
-                finalText = extractedText.substring(0, MAX_BYTES);
+                finalText = truncateUtf8(extractedText, MAX_BYTES);
                 wasTruncated = true;
             }
 

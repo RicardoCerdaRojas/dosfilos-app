@@ -162,6 +162,35 @@ export interface LibraryResource {
      */
     indexingError?: string | null;
     /**
+     * Aviso en lengua llana cuando el índice quedó por debajo del libro.
+     *
+     * Lo escribe el indexador comparando la última página indexada
+     * contra `pageCount`. Un índice que llega a la 433 de 711 mostraba
+     * la misma tarjeta verde que uno completo, y lo que quedaba fuera
+     * no aparecía en las búsquedas ni se podía citar. `null` significa
+     * que se midió y cubre; ausente, que no se midió.
+     */
+    indexingWarning?: string | null;
+    /**
+     * Qué tanto del documento entró al índice. Escrito por el
+     * indexador junto a `indexingWarning`. `null` cuando no hay contra
+     * qué comparar (el documento no declara `pageCount`).
+     */
+    indexCoverage?: {
+        firstIndexedPage: number;
+        lastIndexedPage: number;
+        pageCount: number;
+        ratio: number;
+        complete: boolean;
+    } | null;
+    /**
+     * Por qué falló la extracción, en categorías que el producto puede
+     * tratar distinto: `timeout` (la invocación se quedó sin tiempo),
+     * `stalled` (se interrumpió y no dejó resultado, lo detecta el
+     * barrido) o `error` (el código vio el fallo y lo escribió).
+     */
+    extractionFailureReason?: 'timeout' | 'stalled' | 'error';
+    /**
      * Mode the user explicitly requested at upload time:
      *   - 'standard' → skip LlamaParse, use Gemini → pdf-parse fallback.
      *     Debits standard pages from the user's balance.
@@ -381,6 +410,9 @@ export class LibraryResourceEntity implements LibraryResource {
     public extractionError?: string;
     public indexingStatus?: IndexingStatus;
     public indexingError?: string | null;
+    public indexingWarning?: string | null;
+    public indexCoverage?: LibraryResource['indexCoverage'];
+    public extractionFailureReason?: 'timeout' | 'stalled' | 'error';
     public indexerVersion?: string;
     public characterCount?: number;
     public processingStartedAt?: Date;

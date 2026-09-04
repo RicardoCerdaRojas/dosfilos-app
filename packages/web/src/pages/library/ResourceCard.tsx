@@ -17,8 +17,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ExtractionStepper } from './components/ExtractionStepper';
+import {
+    resolveResourceStatusPill,
+    resolveResourceStatusTooltip,
+    type IndexStatus,
+} from './resourceStatusPill';
 
-type IndexStatus = 'unknown' | 'indexed' | 'not-indexed' | 'checking';
 type ViewMode = 'grid' | 'list';
 
 interface ResourceCardProps {
@@ -166,28 +170,7 @@ export function ResourceCard({
     const pageCount = resource.pageCount || resource.metadata?.pageCount;
     const isProcessing = resource.textExtractionStatus === 'processing' || resource.textExtractionStatus === 'pending';
 
-    // ── Status pill: a single source of truth combining extraction + indexing.
-    // User-facing wording avoids the technical "indexar" verb in favour of a
-    // simple ready/pending model. The underlying action is the same vector
-    // chunking pipeline, but the user just needs to know whether the resource
-    // is ready to be searched / cited from a project.
-    const statusPill = (() => {
-        switch (resource.textExtractionStatus) {
-            case 'pending':
-                return { tone: 'bg-muted text-muted-foreground', icon: Loader2, iconClass: '', text: t('status.pending') };
-            case 'processing':
-                return { tone: 'bg-info-subtle text-info-subtle-foreground', icon: Loader2, iconClass: 'animate-spin', text: t('status.processing') };
-            case 'failed':
-                return { tone: 'bg-destructive/10 text-destructive', icon: AlertCircle, iconClass: '', text: t('status.failed') };
-            case 'ready':
-            default:
-                if (indexStatus === 'checking') return { tone: 'bg-muted text-muted-foreground', icon: Loader2, iconClass: 'animate-spin', text: t('status.verifying') };
-                if (indexStatus === 'indexing') return { tone: 'bg-info-subtle text-info-subtle-foreground', icon: Loader2, iconClass: 'animate-spin', text: t('status.indexing') };
-                if (indexStatus === 'indexed') return { tone: 'bg-success-subtle text-success-subtle-foreground', icon: CheckCircle2, iconClass: '', text: t('status.ready') };
-                if (indexStatus === 'not-indexed') return { tone: 'bg-warning-subtle text-warning-subtle-foreground', icon: AlertCircle, iconClass: '', text: t('status.notReady') };
-                return null;
-        }
-    })();
+    const statusPill = resolveResourceStatusPill(resource, indexStatus);
 
     const StatusIcon = statusPill?.icon;
 
@@ -197,7 +180,14 @@ export function ResourceCard({
     // BOTH the inline action button and the engine-badge tooltip below
     // can use the same value.
     const extractionWarning = resource.extractionWarning;
-    const canRetryPremium = !!extractionWarning && !!onRetryPremium && resource.textExtractionStatus === 'ready';
+    // Reintentar también desde el fallo. Una extracción que se quedó
+    // sin tiempo en el trigger —540 s de tope— cabe en el callable de
+    // reproceso, que tiene 900 s; sin este botón la única salida era
+    // borrar el libro y volver a subirlo.
+    const canRetryPremium = !!onRetryPremium && (
+        (!!extractionWarning && resource.textExtractionStatus === 'ready')
+        || resource.textExtractionStatus === 'failed'
+    );
 
     // Cancel is available WHILE the resource is in an active processing
     // state — gives the user an out before the cascade finishes (and
@@ -330,27 +320,14 @@ export function ResourceCard({
     ) : null;
 
     // ── Status / metadata badges shared between layouts
-    // Surface the concrete failure reason via tooltip:
-    //   - extractionError when textExtractionStatus === 'failed'
-    //   - indexingError when extraction succeeded but indexer failed
-    //     (resource sits in "Por procesar" — without this the user has
-    //     no signal beyond the badge and has to guess what's wrong)
-    // Both are written by the cloud functions and persist on the
-    // resource doc so the UI can read them on demand.
-    const failureMessage = resource.extractionError;
-    const indexingErrorMessage = resource.indexingError;
-    const statusTooltip = (() => {
-        if (resource.textExtractionStatus === 'failed' && failureMessage) return failureMessage;
-        if (indexStatus === 'not-indexed' && indexingErrorMessage) return `Indexación: ${indexingErrorMessage}`;
-        return undefined;
-    })();
+    const statusTooltip = resolveResourceStatusTooltip(resource, indexStatus);
     const statusBadge = statusPill && StatusIcon ? (
         <span
             className={cn('inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium', statusPill.tone)}
             title={statusTooltip}
         >
             <StatusIcon className={cn('h-3 w-3', statusPill.iconClass)} />
-            {statusPill.text}
+            {t(statusPill.textKey)}
         </span>
     ) : null;
 
