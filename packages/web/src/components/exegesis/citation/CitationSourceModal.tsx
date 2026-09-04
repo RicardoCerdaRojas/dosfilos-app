@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Loader2, SearchX } from 'lucide-react';
+import { BookOpen, Loader2, Search, SearchX, ZoomIn, ZoomOut } from 'lucide-react';
 import {
     isCitableSourceType,
     printedPageFor,
-    sheetForPrintedPage,
 } from '@dosfilos/domain';
 import {
     Dialog,
@@ -26,17 +25,24 @@ import { PdfPageViewer } from '@/components/exegesis/setup/page-picker/PdfPageVi
  * un diccionario teológico sobrevivió meses en un paper: era verificable
  * en teoría y nadie la verificaba.
  *
- * La conversión de página importa más de lo que parece. Una cita habla en
- * páginas IMPRESAS («Adamson, 60») y el visor navega por HOJA FÍSICA del
- * archivo; en un comentario medido, las dos se llevan dos páginas de
- * diferencia. Cuando no hay desfase detectado el modal lo dice y trata el
- * número como hoja, en vez de convertir a ciegas: una herramienta de
- * verificación que manda a la página equivocada es peor que no tenerla.
+ * El número de una cita es la HOJA FÍSICA, no la página impresa. Viene de
+ * `anchorFor`, que rotula `p. ${chunk.sheet}` sobre el número de hoja del
+ * fragmento recuperado. Así que el visor abre esa hoja directamente y
+ * NO convierte — convertir movería la cita de sitio.
+ *
+ * Lo que sí muestra, cuando el documento lo permite, es la página que ese
+ * pliego lleva impresa. Es lo único que deja al lector cruzar entre lo que
+ * ve en pantalla y lo que dice el libro: en el comentario de Adamson la
+ * hoja 57 lleva impreso el 53, y sin decirlo el lector cree estar en una
+ * página que no es.
  */
 export interface CitationTarget {
     /** Clave de cita tal como aparece en el análisis, p. ej. "Adamson". */
     sourceKey: string;
-    /** Página impresa que declara la cita. */
+    /**
+     * Número que declara la cita. Es la HOJA del archivo: el análisis lo
+     * toma del ancla del fragmento, que rotula la hoja como «p.».
+     */
     page: number;
     /** Frase textual registrada, cuando el análisis guardó una. */
     verbatimQuote?: string | null;
@@ -57,6 +63,9 @@ export function CitationSourceModal({
 }: CitationSourceModalProps) {
     const { t } = useTranslation('exegesis');
     const [quoteFound, setQuoteFound] = useState<boolean | null>(null);
+    const [zoom, setZoom] = useState<number>(1);
+    const [search, setSearch] = useState('');
+    const [matches, setMatches] = useState(0);
     // Ya está en caché: la página del trabajo la pidió al montarse, así
     // que resolverla acá no agrega lecturas y evita arrastrar el paper
     // por props hasta cada tarjeta.
@@ -74,17 +83,20 @@ export function CitationSourceModal({
     const pdf = useDocumentPdfUrl(open ? resourceId : null);
 
     const offset = index.data?.printedPageOffset ?? null;
-    // Sin desfase medido el número de la cita se toma como hoja. Es una
-    // suposición, y por eso el encabezado la declara en vez de callarla.
-    const sheet = citation
-        ? (sheetForPrintedPage(citation.page, offset) ?? citation.page)
-        : 1;
+    const sheet = citation?.page ?? 1;
+    // Sólo informativo: qué número lleva impreso esa hoja, para que el
+    // lector pueda buscarla en el libro de papel.
     const printed = printedPageFor(sheet, offset);
 
     // Cada cita nueva vuelve a empezar: sin esto el modal heredaría el
     // veredicto de la anterior y diría «no la encontré» sobre una frase
     // que todavía no buscó.
-    useEffect(() => { setQuoteFound(null); }, [citation?.sourceKey, citation?.page, citation?.verbatimQuote]);
+    useEffect(() => {
+        setQuoteFound(null);
+        setZoom(1);
+        setSearch('');
+        setMatches(0);
+    }, [citation?.sourceKey, citation?.page, citation?.verbatimQuote]);
 
     const hasQuote = !!citation?.verbatimQuote?.trim();
 
@@ -109,6 +121,54 @@ export function CitationSourceModal({
                     />
                 </DialogHeader>
 
+                {!!source && (
+                    <div className="flex items-center gap-3 px-6 py-2 border-b border-border bg-card/60">
+                        <div className="relative flex-1 max-w-sm">
+                            <Search className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                            <input
+                                type="search"
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder={t('citationViewer.searchPlaceholder')}
+                                aria-label={t('citationViewer.searchPlaceholder')}
+                                className="w-full rounded-md border border-border bg-background pl-7 pr-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            />
+                        </div>
+                        {search.trim() && (
+                            <span className="text-[11px] text-muted-foreground shrink-0">
+                                {matches > 0
+                                    ? t('citationViewer.searchMatches', { count: matches })
+                                    : t('citationViewer.searchNoMatches')}
+                            </span>
+                        )}
+                        <div className="ml-auto flex items-center gap-1 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setZoom(z => Math.max(1, Math.round((z - 0.25) * 100) / 100))}
+                                disabled={zoom <= 1}
+                                title={t('citationViewer.zoomOut')}
+                                aria-label={t('citationViewer.zoomOut')}
+                                className="rounded-md border border-border p-1 text-muted-foreground hover:bg-accent disabled:opacity-40"
+                            >
+                                <ZoomOut className="h-3.5 w-3.5" />
+                            </button>
+                            <span className="text-[11px] tabular-nums text-muted-foreground w-10 text-center">
+                                {Math.round(zoom * 100)}%
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setZoom(z => Math.min(4, Math.round((z + 0.25) * 100) / 100))}
+                                disabled={zoom >= 4}
+                                title={t('citationViewer.zoomIn')}
+                                aria-label={t('citationViewer.zoomIn')}
+                                className="rounded-md border border-border p-1 text-muted-foreground hover:bg-accent disabled:opacity-40"
+                            >
+                                <ZoomIn className="h-3.5 w-3.5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex-1 min-h-0 bg-muted/30">
                     {!source ? (
                         <Centered icon={<SearchX className="h-5 w-5 text-warning" />}>
@@ -125,6 +185,9 @@ export function CitationSourceModal({
                             selected={false}
                             highlightQuote={citation?.verbatimQuote ?? null}
                             onHighlightResolved={setQuoteFound}
+                            zoom={zoom === 1 ? 'fit' : zoom}
+                            searchTerm={search.trim() || null}
+                            onSearchMatches={setMatches}
                         />
                     )}
                 </div>

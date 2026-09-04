@@ -1775,12 +1775,18 @@
         }
     },
     "citationViewer": {
-        "pageWithSheet": "Printed page {{printed}} · sheet {{sheet}} of the file",
-        "sheetOnly": "Sheet {{sheet}} of the file · the printed-page offset could not be measured for this document",
+        "pageWithSheet": "Sheet {{sheet}} of the file · printed page {{printed}}",
+        "sheetOnly": "Sheet {{sheet}} of the file",
         "loading": "Opening the document…",
         "sourceNotConfigured": "\"{{key}}\" is not among this paper's citable sources, so there is no document to open.",
         "noQuoteRecorded": "The analysis recorded the page but stored no quote. We've taken you to the page so you can read it.",
         "quoteNotFound": "The sentence could not be located in this page's text. That is common with scanned documents: you are on the page, the quote is unmarked.",
-        "openSource": "View in the original document"
+        "openSource": "View in the original document",
+        "searchPlaceholder": "Search this sheet…",
+        "searchMatches_one": "{{count}} match",
+        "searchMatches_other": "{{count}} matches",
+        "searchNoMatches": "no matches on this sheet",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out"
     }
 }
