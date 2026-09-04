@@ -196,4 +196,44 @@ export interface ComposeAcademicPaperOutput {
      * composition is still returned).
      */
     formatterStatus: 'applied' | 'skipped' | 'error';
+
+    /**
+     * Qué tanto del análisis llegó a publicarse.
+     *
+     * El compositor es un modelo y decide qué decir: sobre un trabajo
+     * real de Santiago 1:1-5 publicaba tres de los dieciocho campos y
+     * no declaraba los quince restantes. El caso de uso mide verso por
+     * verso y publica con el render determinista el que salió
+     * incompleto; esto es lo que hizo, para que la interfaz pueda
+     * decirlo en vez de que el estudiante entregue sin saberlo.
+     *
+     * Ausente cuando no se pudo medir (un paper sin análisis
+     * estructurado detrás).
+     */
+    coverage?: CompositionCoverage;
+}
+
+export interface CompositionCoverage {
+    /** Ítems del análisis que el paper tenía que publicar. */
+    totalItems: number;
+    /** Los que la prosa del modelo publicó por su cuenta. */
+    composedItems: number;
+    /**
+     * Versos que salieron incompletos y se publicaron con el render
+     * determinista del análisis, rotulados con su referencia.
+     */
+    renderedVerses: string[];
+    /**
+     * Rótulos de lo que el modelo había descartado. Es la lista que la
+     * interfaz muestra: sirve para revisar el análisis, no sólo para
+     * contar.
+     */
+    recoveredItemLabels: string[];
+    /**
+     * `true` cuando el paper compuesto no se pudo trocear por verso
+     * —faltaban los encabezados del contrato— y se publicó el cuerpo
+     * determinista entero. Sin esto, un fallo del troceo se vería como
+     * una composición perfecta.
+     */
+    sectioningFailed: boolean;
 }

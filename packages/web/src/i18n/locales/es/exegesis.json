@@ -1384,6 +1384,16 @@
             "formatterApplied": "Guía de estilo aplicada (paso 1: instrucciones al asistente, paso 2: reformateo automático).",
             "formatterSkipped": "Aún no extrajiste la guía de estilo en formato estructurado. Solo se aplicó el paso 1 (instrucciones al asistente). Ve a la pestaña \"Guía de estilo\" y extrae la guía para activar el paso 2.",
             "formatterError": "Hubo un error al reformatear automáticamente. La composición del asistente sigue siendo válida.",
+            "coverage": {
+                "complete_one": "El paper publica el único hallazgo del análisis.",
+                "complete_other": "El paper publica los {{count}} hallazgos del análisis.",
+                "recovered_one": "Un hallazgo del análisis no llegó a la redacción y se publicó con el texto del propio análisis.",
+                "recovered_other": "{{count}} hallazgos del análisis no llegaron a la redacción y se publicaron con el texto del propio análisis.",
+                "versesLabel": "Versos rehechos: {{verses}}",
+                "itemsLabel": "Recuperado: {{items}}",
+                "more": "y {{count}} más",
+                "sectioningFailed": "La redacción no rotuló los versos como corresponde, así que lo faltante se agregó al final del documento en lugar de en su lugar. Conviene revisar dónde queda cada cosa antes de entregar."
+            },
             "savedToast": "Composición guardada en el paper.",
             "persistWarning": "La composición se generó pero no se pudo guardar en el paper. Copiá o descargá el markdown antes de cerrar.",
             "saveToPaper": "Guardar al paper",
@@ -1457,7 +1467,9 @@
             "dialog": {
                 "title": "Verificación de citas",
                 "description": "Cada cita inline se contrastó contra las fuentes del paper. Las marcadas en amarillo o rojo necesitan revisión.",
-                "empty": "No se detectaron citas en este paso. Si esperabas ver alguna, asegúrate de usar el formato (Autor, \"Título\", p. N).",
+                "empty": "No se detectaron citas en este paso. Se reconocen (Autor, \"Título\", p. N), (Autor, p. N) y Autor (p. N).",
+                "namedWithoutCitation_one": "El texto nombra una fuente del corpus sin citarla en un formato verificable. No es un visto: es una cita que nadie pudo comprobar.",
+                "namedWithoutCitation_other": "El texto nombra {{count}} fuentes del corpus sin citarlas en un formato verificable. No es un visto: son citas que nadie pudo comprobar.",
                 "running": "Comparando citas con las fuentes…",
                 "rerun": "Volver a verificar",
                 "close": "Cerrar",

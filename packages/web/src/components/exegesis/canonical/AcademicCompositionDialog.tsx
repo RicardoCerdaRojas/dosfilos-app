@@ -375,6 +375,7 @@ function SuccessView({
     return (
         <div className="flex-1 overflow-hidden flex flex-col gap-3">
             <FormatterStatusBanner status={result.formatterStatus} />
+            <CoverageBanner coverage={result.coverage} />
 
             <div className="flex items-center justify-between gap-2">
                 <div className="inline-flex rounded-md border border-border bg-card p-0.5 text-[11px]">
@@ -465,6 +466,51 @@ function SuccessView({
                         model: result.modelId,
                     })}
                 </p>
+            )}
+        </div>
+    );
+}
+
+/**
+ * Cuánto del análisis llegó al paper.
+ *
+ * El daño que este aviso hace visible es el que nadie notaba: el
+ * documento salía bien escrito y con catorce campos del análisis
+ * afuera. Ahora esos campos se publican igual, y esto dice cuáles
+ * fueron y en qué versos, que es lo que hay que revisar antes de
+ * entregar.
+ */
+function CoverageBanner({ coverage }: { coverage: ComposeAcademicPaperOutput['coverage'] }) {
+    const { t } = useTranslation('exegesis');
+    if (!coverage || coverage.totalItems === 0) return null;
+
+    const recovered = coverage.recoveredItemLabels;
+    if (recovered.length === 0) {
+        return (
+            <div className="rounded-md border border-success/30 bg-success-subtle/40 px-3 py-2 text-[11px] text-success-subtle-foreground">
+                ✓ {t('canonical.compose.coverage.complete', { count: coverage.totalItems })}
+            </div>
+        );
+    }
+
+    const SHOWN = 8;
+    const shown = recovered.slice(0, SHOWN);
+    const rest = recovered.length - shown.length;
+    const items = rest > 0
+        ? `${shown.join(' · ')} · ${t('canonical.compose.coverage.more', { count: rest })}`
+        : shown.join(' · ');
+
+    return (
+        <div className="rounded-md border border-warning/30 bg-warning-subtle/40 px-3 py-2 text-[11px] text-warning-subtle-foreground space-y-1">
+            <p>⚠ {t('canonical.compose.coverage.recovered', { count: recovered.length })}</p>
+            {coverage.renderedVerses.length > 0 && (
+                <p className="opacity-90">
+                    {t('canonical.compose.coverage.versesLabel', { verses: coverage.renderedVerses.join(', ') })}
+                </p>
+            )}
+            <p className="opacity-90">{t('canonical.compose.coverage.itemsLabel', { items })}</p>
+            {coverage.sectioningFailed && (
+                <p className="opacity-90">{t('canonical.compose.coverage.sectioningFailed')}</p>
             )}
         </div>
     );
