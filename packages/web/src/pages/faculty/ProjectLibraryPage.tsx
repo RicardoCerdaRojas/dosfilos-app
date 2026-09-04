@@ -96,7 +96,13 @@ export function ProjectLibraryPage() {
 
     const handleDelete = async (extraction: Extraction) => {
         if (!await confirm({ body: t('extractionsList.confirmDelete') })) return;
-        deleteExtraction.mutate(extraction.id);
+        // La fila desaparece al confirmar (borrado optimista en el hook).
+        // Si el servidor rechaza, vuelve a su lugar y hay que decirlo:
+        // una fila que reaparece sin explicación se lee como un fallo de
+        // la pantalla, no del borrado.
+        deleteExtraction.mutate(extraction.id, {
+            onError: () => toast.error(t('extractionsList.toast.deleteError')),
+        });
         if (selectedId === extraction.id) setSelectedId(null);
     };
 

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { facultyService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import type { Extraction } from '@dosfilos/domain';
+import { removeFromCachedLists, restoreCaches } from '@/hooks/optimisticListCache';
 
 const queryKeys = {
     bySession: (uid: string | undefined, sessionId: string | undefined) =>
@@ -254,12 +255,40 @@ export function useExtractionMutations() {
         onSettled: invalidateAll,
     });
 
+    /**
+     * El borrado saca la fila al confirmar, no cuando el servidor
+     * contesta.
+     *
+     * Sus dos hermanas —anclar y desanclar a un proyecto— ya lo hacían;
+     * el borrado se había quedado con `onSuccess: invalidateAll`, así
+     * que la fila seguía ahí durante el viaje de ida y vuelta más el
+     * refetch. Medido: el diálogo se cerraba, no pasaba nada visible
+     * durante alrededor de un segundo, y recién entonces el recurso
+     * desaparecía. Un segundo de silencio después de confirmar un
+     * borrado se lee como «no me hizo caso», y la reacción natural es
+     * volver a pulsar.
+     *
+     * Se prefiere el borrado optimista al indicador de carga: la acción
+     * casi siempre funciona, y verla ocurrir es mejor señal que ver una
+     * ruedita. Cuando falla, la fila vuelve y la pantalla lo dice —el
+     * `onError` de cada llamador—.
+     */
     const deleteExtraction = useMutation({
         mutationFn: async (extractionId: string) => {
             if (!user?.uid) throw new Error('User not authenticated');
             await facultyService.deleteExtraction.execute(user.uid, extractionId);
         },
-        onSuccess: invalidateAll,
+        onMutate: (extractionId: string) => ({
+            snapshots: removeFromCachedLists<Extraction>(
+                queryClient,
+                ['faculty', 'extractions'],
+                e => e.id === extractionId,
+            ),
+        }),
+        onError: (_err, _vars, context) => {
+            if (context?.snapshots) restoreCaches(queryClient, context.snapshots);
+        },
+        onSettled: invalidateAll,
     });
 
     return { updateMarkdown, rename, addToProject, removeFromProject, deleteExtraction };

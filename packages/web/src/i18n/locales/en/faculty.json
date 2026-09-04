@@ -139,6 +139,12 @@
         "projectsAndSessions": "Projects and Sessions",
         "contentExtraction": "Resources"
     },
+    "railErrors": {
+        "sessionDelete": "The session could not be deleted. It is still in your list.",
+        "sessionRename": "The session could not be renamed. Its previous title is back.",
+        "sessionAssign": "The session could not be moved. It is back where it was.",
+        "projectDelete": "The project could not be deleted. It is still in your list."
+    },
     "sidebar": {
         "mySessions": "My Sessions",
         "newConversation": "New conversation",
@@ -342,6 +348,7 @@
         "toast": {
             "pinned": "Pinned to project",
             "unpinned": "Unpinned from project",
+            "deleteError": "The resource could not be deleted. It's still in your library.",
             "noProject": "This session has no project. Assign the session to a project first.",
             "noProjectsAvailable": "You haven't created any projects yet."
         }

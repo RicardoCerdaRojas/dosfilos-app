@@ -139,6 +139,12 @@
         "projectsAndSessions": "Proyectos y Sesiones",
         "contentExtraction": "Recursos"
     },
+    "railErrors": {
+        "sessionDelete": "No se pudo eliminar la sesión. Sigue en tu lista.",
+        "sessionRename": "No se pudo renombrar la sesión. Volvió a su título anterior.",
+        "sessionAssign": "No se pudo mover la sesión de proyecto. Volvió a donde estaba.",
+        "projectDelete": "No se pudo eliminar el proyecto. Sigue en tu lista."
+    },
     "sidebar": {
         "mySessions": "Mis Sesiones",
         "newConversation": "Nueva conversación",
@@ -342,6 +348,7 @@
         "toast": {
             "pinned": "Anclado al proyecto",
             "unpinned": "Desanclado del proyecto",
+            "deleteError": "No se pudo eliminar el recurso. Sigue en tu biblioteca.",
             "noProject": "Esta sesión no tiene proyecto. Primero asigna la sesión a un proyecto.",
             "noProjectsAvailable": "Aún no has creado proyectos. Crea uno desde la barra lateral."
         }

@@ -5,8 +5,21 @@ import { track } from '@/lib/analytics/track';
 import { type Extraction } from '@dosfilos/domain';
 import { useConfirm } from '@/hooks/useConfirm';
 
+/**
+ * Lo mínimo que este hook necesita de una mutación de React Query.
+ *
+ * Se declara estructuralmente —y no con `UseMutationResult`— para que
+ * las pruebas puedan pasar un doble de dos líneas. Las opciones por
+ * llamada están acá porque el borrado las usa: es optimista, así que
+ * el `onError` es lo único que le queda al usuario cuando la fila
+ * vuelve a aparecer.
+ */
+interface ExtractionMutationOptions {
+    onError?: (error: unknown) => void;
+}
+
 interface ExtractionMutation<TVars> {
-    mutate: (vars: TVars) => void;
+    mutate: (vars: TVars, options?: ExtractionMutationOptions) => void;
 }
 
 interface UseExtractionListHandlersParams {
@@ -71,7 +84,11 @@ export function useExtractionListHandlers(params: UseExtractionListHandlersParam
 
     const handleDeleteExtraction = async (extraction: Extraction) => {
         if (!await confirm({ body: t('extractionsList.confirmDelete') })) return;
-        deleteExtraction.mutate(extraction.id);
+        // Ver el comentario equivalente en las páginas de recursos: el
+        // borrado es optimista, así que el error tiene que hablar.
+        deleteExtraction.mutate(extraction.id, {
+            onError: () => toast.error(t('extractionsList.toast.deleteError')),
+        });
         track('faculty_artifact_deleted', {
             type: extraction.type,
             ageHours: Math.round((Date.now() - extraction.createdAt.getTime()) / 3_600_000),

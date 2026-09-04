@@ -36,6 +36,7 @@ import { useDocumentEditor } from './hooks/useDocumentEditor';
 import { useSendMessage } from './hooks/useSendMessage';
 import { useDeleteMessage } from './hooks/useDeleteMessage';
 import { useResponseModePref } from './hooks/useResponseModePref';
+import { toast } from 'sonner';
 
 export function FacultyChatPage() {
     const { t } = useTranslation('faculty');
@@ -287,7 +288,13 @@ export function FacultyChatPage() {
 
     const handleRename = (id: string, newTitle: string) => {
         if (!newTitle.trim()) { setRenameConfirmId(null); return; }
-        renameSession.mutate({ sessionId: id, title: newTitle.trim() });
+        // El título cambia en el riel al soltar el editor (escritura
+        // optimista). Si el servidor rechaza, vuelve el anterior y hay
+        // que decirlo: un título que se revierte solo parece un fallo
+        // del editor.
+        renameSession.mutate({ sessionId: id, title: newTitle.trim() }, {
+            onError: () => toast.error(t('railErrors.sessionRename')),
+        });
         setRenameConfirmId(null);
     };
 
@@ -366,9 +373,13 @@ export function FacultyChatPage() {
                     onRenameSession={(id) => setRenameConfirmId(id)}
                     onSaveRename={handleRename}
                     onCancelRename={() => setRenameConfirmId(null)}
-                    onAssignToProject={(sid, pid) => assignToProject.mutate({ sessionId: sid, projectId: pid })}
+                    onAssignToProject={(sid, pid) => assignToProject.mutate({ sessionId: sid, projectId: pid }, {
+                        onError: () => toast.error(t('railErrors.sessionAssign')),
+                    })}
                     onEditProject={(project) => setProjectDialog({ mode: 'edit', project })}
-                    onDeleteProject={(pid) => deleteProjectMutation.mutate(pid)}
+                    onDeleteProject={(pid) => deleteProjectMutation.mutate(pid, {
+                        onError: () => toast.error(t('railErrors.projectDelete')),
+                    })}
                 />
 
                 {/*
@@ -669,7 +680,9 @@ export function FacultyChatPage() {
                 onCloseDeleteSession={() => setDeleteConfirmId(null)}
                 onConfirmDeleteSession={() => {
                     if (deleteConfirmId) {
-                        deleteSessionMutation.mutate(deleteConfirmId);
+                        deleteSessionMutation.mutate(deleteConfirmId, {
+                            onError: () => toast.error(t('railErrors.sessionDelete')),
+                        });
                         setDeleteConfirmId(null);
                     }
                 }}
