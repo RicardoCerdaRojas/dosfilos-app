@@ -52,6 +52,7 @@ import {
     GetExegeticalPaperUseCase,
     ArchiveExegeticalPaperUseCase,
     UpdatePaperBriefUseCase,
+    SaveAssembledPaperUseCase,
     UpdateStepPlanUseCase,
     UpdateRubricUseCase,
     ResetRubricUseCase,
@@ -132,6 +133,7 @@ class ExegesisService {
     public getPaper: GetExegeticalPaperUseCase;
     public archivePaper: ArchiveExegeticalPaperUseCase;
     public updatePaperBrief: UpdatePaperBriefUseCase;
+    public saveAssembledPaper: SaveAssembledPaperUseCase;
     public updateStepPlan: UpdateStepPlanUseCase;
     public updateRubric: UpdateRubricUseCase;
     public resetRubric: ResetRubricUseCase;
@@ -291,6 +293,8 @@ class ExegesisService {
         this.getPaper = new GetExegeticalPaperUseCase(paperRepository);
         this.archivePaper = new ArchiveExegeticalPaperUseCase(paperRepository);
         this.updatePaperBrief = new UpdatePaperBriefUseCase(paperRepository);
+        // Guardar NO compone: la composición ya está hecha y revisada.
+        this.saveAssembledPaper = new SaveAssembledPaperUseCase(paperRepository);
         this.updateStepPlan = new UpdateStepPlanUseCase(paperRepository);
         this.updateRubric = new UpdateRubricUseCase(paperRepository);
         this.resetRubric = new ResetRubricUseCase(paperRepository);

@@ -336,6 +336,28 @@ export function useExegesisPapers() {
         },
     });
 
+    /**
+     * Guarda una composición ya hecha como ensamble del trabajo.
+     *
+     * Separado de `composeAcademicPaper` porque guardar no debe componer:
+     * el botón «Guardar al paper» volvía a llamar al compositor, así que
+     * un paper costaba dos llamadas de Gemini Pro y lo archivado no era
+     * lo que el usuario había revisado.
+     */
+    const saveAssembledPaper = useMutation({
+        mutationFn: async ({ paperId, markdown }: { paperId: string; markdown: string }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.saveAssembledPaper.execute({
+                ownerId: user.uid,
+                paperId,
+                markdown,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
     // Section composers (Phase 5). Granular path that lets the user
     // compose conclusion and introduction independently. Both append
     // a new step version that the user reviews + accepts the same
@@ -586,6 +608,7 @@ export function useExegesisPapers() {
         generateSermonFromPaper,
         analyzeVerseCanonically,
         composeAcademicPaper,
+        saveAssembledPaper,
         composeConclusionFromAnalyses,
         composeIntroductionFromAnalyses,
         composeVerseAcademicProse,
