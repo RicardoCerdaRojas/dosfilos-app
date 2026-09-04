@@ -19,6 +19,15 @@ export interface PageIndexEntry {
     section: string | null;
     /** Primer renglón con contenido, para ubicarse cuando no hay encabezado. */
     firstLine: string;
+    /**
+     * Final del texto de la hoja. Ahí está el folio en los libros que
+     * numeran al pie, que en tipografía académica son mayoría.
+     *
+     * Opcional porque un índice cacheado de antes de existir este campo
+     * sigue siendo válido: sin cola, la detección del desfase se
+     * conforma con el encabezado, que es como funcionaba.
+     */
+    lastLine?: string;
     /** Caracteres de texto en la hoja. Alimenta el medidor de presupuesto. */
     charCount: number;
 }
