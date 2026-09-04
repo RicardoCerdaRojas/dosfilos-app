@@ -4,6 +4,7 @@ export { ListExegesisPaperSummariesUseCase } from './ListExegesisPaperSummariesU
 export { GetExegeticalPaperUseCase } from './GetExegeticalPaperUseCase';
 export { ArchiveExegeticalPaperUseCase } from './ArchiveExegeticalPaperUseCase';
 export { UpdatePaperBriefUseCase } from './UpdatePaperBriefUseCase';
+export { SaveAssembledPaperUseCase } from './SaveAssembledPaperUseCase';
 export { UpdateStepPlanUseCase } from './UpdateStepPlanUseCase';
 export { UpdateRubricUseCase } from './UpdateRubricUseCase';
 export { ResetRubricUseCase } from './ResetRubricUseCase';

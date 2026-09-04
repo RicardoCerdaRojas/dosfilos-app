@@ -57,7 +57,7 @@ export function AcademicCompositionDialog({
     savedAssembledMarkdown,
 }: AcademicCompositionDialogProps) {
     const { t } = useTranslation('exegesis');
-    const { composeAcademicPaper, saveExegesisArtifact } = useExegesisPapers();
+    const { composeAcademicPaper, saveAssembledPaper, saveExegesisArtifact } = useExegesisPapers();
     const [result, setResult] = useState<ComposeAcademicPaperOutput | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [view, setView] = useState<'rendered' | 'raw'>('rendered');
@@ -91,7 +91,16 @@ export function AcademicCompositionDialog({
 
     const handleSaveToPaper = async () => {
         if (!result) return;
-        await handleCompose(true);
+        // Guarda EXACTAMENTE lo que el usuario está viendo. Antes esto
+        // recomponía con `persist: true`: dos llamadas de Gemini Pro por
+        // un paper, y lo archivado no era el texto aprobado.
+        try {
+            await saveAssembledPaper.mutateAsync({ paperId, markdown: result.markdown });
+            toast.success(t('canonical.compose.savedToast'));
+        } catch (err) {
+            console.error('[exegesis] saveAssembledPaper failed:', err);
+            toast.error(t('canonical.compose.persistWarning'));
+        }
     };
 
     const handleSaveToResources = async () => {
