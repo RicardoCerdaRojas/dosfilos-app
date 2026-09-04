@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { facultyService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import type { Extraction } from '@dosfilos/domain';
-import { removeExtractionFromCaches, restoreCaches } from './facultyExtractionCache';
+import { removeFromCachedLists, restoreCaches } from '@/hooks/optimisticListCache';
 
 const queryKeys = {
     bySession: (uid: string | undefined, sessionId: string | undefined) =>
@@ -279,7 +279,11 @@ export function useExtractionMutations() {
             await facultyService.deleteExtraction.execute(user.uid, extractionId);
         },
         onMutate: (extractionId: string) => ({
-            snapshots: removeExtractionFromCaches(queryClient, extractionId),
+            snapshots: removeFromCachedLists<Extraction>(
+                queryClient,
+                ['faculty', 'extractions'],
+                e => e.id === extractionId,
+            ),
         }),
         onError: (_err, _vars, context) => {
             if (context?.snapshots) restoreCaches(queryClient, context.snapshots);

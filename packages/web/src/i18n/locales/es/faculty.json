@@ -139,6 +139,12 @@
         "projectsAndSessions": "Proyectos y Sesiones",
         "contentExtraction": "Recursos"
     },
+    "railErrors": {
+        "sessionDelete": "No se pudo eliminar la sesión. Sigue en tu lista.",
+        "sessionRename": "No se pudo renombrar la sesión. Volvió a su título anterior.",
+        "sessionAssign": "No se pudo mover la sesión de proyecto. Volvió a donde estaba.",
+        "projectDelete": "No se pudo eliminar el proyecto. Sigue en tu lista."
+    },
     "sidebar": {
         "mySessions": "Mis Sesiones",
         "newConversation": "Nueva conversación",

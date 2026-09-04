@@ -2,8 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { facultyService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { ProjectColor, DEFAULT_LANGUAGE } from '@dosfilos/domain';
-import type { SupportedLanguage } from '@dosfilos/domain';
+import type { AIChatSession, AIProject, SupportedLanguage } from '@dosfilos/domain';
 import { useTranslation } from 'react-i18next';
+import {
+    removeFromCachedLists,
+    restoreCaches,
+    updateInCachedLists,
+} from '@/hooks/optimisticListCache';
 
 function resolveActiveLanguage(raw: string | undefined): SupportedLanguage {
     if (!raw) return DEFAULT_LANGUAGE;
@@ -39,22 +44,52 @@ export function useFacultyProjects() {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['faculty', 'projects', user?.uid] }),
     });
 
+    const projectsKey = ['faculty', 'projects', user?.uid] as const;
+    const sessionsKey = ['faculty', 'sessions', user?.uid] as const;
+
     const deleteProject = useMutation({
         mutationFn: async (projectId: string) => {
             if (!user?.uid) throw new Error('User not authenticated');
             return facultyService.deleteProject.execute(user.uid, projectId);
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['faculty', 'projects', user?.uid] });
-            queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user?.uid] });
+        onMutate: (projectId: string) => ({
+            snapshots: removeFromCachedLists<AIProject>(
+                queryClient,
+                projectsKey,
+                project => project.id === projectId,
+            ),
+        }),
+        onError: (_err, _vars, context) => {
+            if (context?.snapshots) restoreCaches(queryClient, context.snapshots);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: projectsKey });
+            queryClient.invalidateQueries({ queryKey: sessionsKey });
         },
     });
 
+    // Archivar y mandar a la papelera son banderas con fecha, y las
+    // pestañas filtran por ellas: escribirlas por adelantado hace que la
+    // tarjeta cambie de pestaña en el mismo gesto. Sin esto la tarjeta
+    // se quedaba donde estaba hasta que volvía el servidor, y el aviso
+    // de éxito llegaba antes que el movimiento — dos señales
+    // contradictorias sobre la misma acción.
     const archiveProject = useMutation({
         mutationFn: async ({ projectId, archived }: { projectId: string; archived: boolean }) => {
             return facultyService.setProjectArchived.execute(projectId, archived);
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['faculty', 'projects', user?.uid] }),
+        onMutate: ({ projectId, archived }) => ({
+            snapshots: updateInCachedLists<AIProject>(
+                queryClient,
+                projectsKey,
+                project => project.id === projectId,
+                project => ({ ...project, archivedAt: archived ? new Date() : undefined }),
+            ),
+        }),
+        onError: (_err, _vars, context) => {
+            if (context?.snapshots) restoreCaches(queryClient, context.snapshots);
+        },
+        onSettled: () => queryClient.invalidateQueries({ queryKey: projectsKey }),
     });
 
     /**
@@ -65,7 +100,18 @@ export function useFacultyProjects() {
         mutationFn: async ({ projectId, deleted }: { projectId: string; deleted: boolean }) => {
             return facultyService.setProjectDeleted.execute(projectId, deleted);
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['faculty', 'projects', user?.uid] }),
+        onMutate: ({ projectId, deleted }) => ({
+            snapshots: updateInCachedLists<AIProject>(
+                queryClient,
+                projectsKey,
+                project => project.id === projectId,
+                project => ({ ...project, deletedAt: deleted ? new Date() : undefined }),
+            ),
+        }),
+        onError: (_err, _vars, context) => {
+            if (context?.snapshots) restoreCaches(queryClient, context.snapshots);
+        },
+        onSettled: () => queryClient.invalidateQueries({ queryKey: projectsKey }),
     });
 
     const assignToProject = useMutation({
@@ -73,7 +119,20 @@ export function useFacultyProjects() {
             if (!user?.uid) throw new Error('User not authenticated');
             return facultyService.updateSessionProject.execute(user.uid, sessionId, projectId);
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user?.uid] }),
+        // La sesión salta de grupo en el riel al elegir el proyecto: es
+        // el único acuse que tiene esa acción, que no muestra aviso.
+        onMutate: ({ sessionId, projectId }) => ({
+            snapshots: updateInCachedLists<AIChatSession>(
+                queryClient,
+                sessionsKey,
+                session => session.id === sessionId,
+                session => ({ ...session, projectId: projectId ?? undefined }),
+            ),
+        }),
+        onError: (_err, _vars, context) => {
+            if (context?.snapshots) restoreCaches(queryClient, context.snapshots);
+        },
+        onSettled: () => queryClient.invalidateQueries({ queryKey: sessionsKey }),
     });
 
     const generateContext = useMutation({

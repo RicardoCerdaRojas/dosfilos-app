@@ -2,6 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { facultyService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import type { ProjectOutput, ProjectOutputKind, SourceReference } from '@dosfilos/domain';
+import {
+    removeFromCachedLists,
+    restoreCaches,
+} from '@/hooks/optimisticListCache';
 
 /**
  * Hook for the project workspace — outputs (notes / drafts / outlines / sermons)
@@ -66,7 +70,21 @@ export function useProjectWorkspace(projectId: string | undefined) {
             if (!user?.uid || !projectId) throw new Error('No project or user');
             return facultyService.deleteOutput.execute(user.uid, projectId, outputId);
         },
-        onSuccess: () => {
+        // El diálogo se queda abierto mientras el servidor contesta, con
+        // el botón inerte: se lee como pantalla trabada. Sacando la fila
+        // acá, cerrar el diálogo y ver desaparecer el elemento ocurren
+        // en el mismo gesto.
+        onMutate: (outputId: string) => ({
+            snapshots: removeFromCachedLists<{ id: string }>(
+                queryClient,
+                outputsKey,
+                output => output.id === outputId,
+            ),
+        }),
+        onError: (_err, _vars, context) => {
+            if (context?.snapshots) restoreCaches(queryClient, context.snapshots);
+        },
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: outputsKey });
         },
     });

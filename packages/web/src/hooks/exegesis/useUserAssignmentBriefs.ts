@@ -2,6 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { exegesisService } from '@dosfilos/application';
 import type { UserAssignmentBrief } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
+import {
+    removeFromCachedLists,
+    restoreCaches,
+} from '@/hooks/optimisticListCache';
 
 /**
  * React Query hook for the user's assignment-brief template library.
@@ -46,7 +50,19 @@ export function useUserAssignmentBriefs() {
             if (!user?.uid) throw new Error('User not authenticated');
             return exegesisService.deleteUserAssignmentBrief.execute({ ownerId: user.uid, briefId });
         },
-        onSuccess: () => {
+        // Igual que los otros borrados: la plantilla se va al confirmar,
+        // no cuando vuelve el servidor.
+        onMutate: (briefId: string) => ({
+            snapshots: removeFromCachedLists<{ id: string }>(
+                queryClient,
+                ['exegesis', 'userAssignmentBriefs', user?.uid],
+                brief => brief.id === briefId,
+            ),
+        }),
+        onError: (_err, _vars, context) => {
+            if (context?.snapshots) restoreCaches(queryClient, context.snapshots);
+        },
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['exegesis', 'userAssignmentBriefs', user?.uid] });
         },
     });

@@ -2,7 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { facultyService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
 import { useTranslation } from 'react-i18next';
-import type { AIChatSessionContext, SupportedLanguage } from '@dosfilos/domain';
+import type { AIChatSession, AIChatSessionContext, SupportedLanguage } from '@dosfilos/domain';
+import {
+    removeFromCachedLists,
+    restoreCaches,
+    updateInCachedLists,
+} from '@/hooks/optimisticListCache';
 import { track } from '@/lib/analytics/track';
 
 
@@ -59,14 +64,29 @@ export function useFacultySessions() {
         }
     });
 
+    const sessionsKey = ['faculty', 'sessions', user?.uid] as const;
+
     const deleteSession = useMutation({
         mutationFn: async (sessionId: string) => {
             if (!user?.uid) throw new Error('User not authenticated');
             return await facultyService.deleteSession.execute(user.uid, sessionId);
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user?.uid] });
-        }
+        // La sesión sale del riel al confirmar. Antes el diálogo se
+        // cerraba y la fila seguía ahí hasta que volvía el servidor: un
+        // segundo de silencio que se lee como «no me hizo caso».
+        onMutate: (sessionId: string) => ({
+            snapshots: removeFromCachedLists<AIChatSession>(
+                queryClient,
+                sessionsKey,
+                session => session.id === sessionId,
+            ),
+        }),
+        onError: (_err, _vars, context) => {
+            if (context?.snapshots) restoreCaches(queryClient, context.snapshots);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: sessionsKey });
+        },
     });
 
     const renameSession = useMutation({
@@ -74,9 +94,22 @@ export function useFacultySessions() {
             if (!user?.uid) throw new Error('User not authenticated');
             return await facultyService.renameSession.execute(user.uid, sessionId, title);
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['faculty', 'sessions', user?.uid] });
-        }
+        // El título nuevo se ve al soltar el editor en línea, no cuando
+        // el servidor confirma: quien acaba de escribirlo espera verlo.
+        onMutate: ({ sessionId, title }) => ({
+            snapshots: updateInCachedLists<AIChatSession>(
+                queryClient,
+                sessionsKey,
+                session => session.id === sessionId,
+                session => ({ ...session, title }),
+            ),
+        }),
+        onError: (_err, _vars, context) => {
+            if (context?.snapshots) restoreCaches(queryClient, context.snapshots);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: sessionsKey });
+        },
     });
 
     return {
