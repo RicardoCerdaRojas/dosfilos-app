@@ -25,6 +25,7 @@ export {
     invalidateDocumentCaches,
 } from './DocumentPageIndexClient';
 export type { DocumentPageIndex, DocumentPdfHandle } from './DocumentPageIndexClient';
+export { DocumentPrintedPageOffsetReader } from './DocumentPrintedPageOffsetReader';
 export { RetrieveChunksResourceRanker } from './RetrieveChunksResourceRanker';
 export { GeminiStepCorpusPlanner } from './GeminiStepCorpusPlanner';
 export { GeminiCanonicalVerseAnalyzer } from './canonicalAnalyzer/GeminiCanonicalVerseAnalyzer';

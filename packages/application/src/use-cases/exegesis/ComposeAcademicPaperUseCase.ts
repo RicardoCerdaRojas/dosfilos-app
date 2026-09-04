@@ -11,6 +11,7 @@ import type {
     IStyleFormatter,
     IUserStyleGuideRepository,
     StyleGuideManifest,
+    IPrintedPageOffsetReader,
 } from '@dosfilos/domain';
 import { isCitableSourceType } from '@dosfilos/domain';
 import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
@@ -62,7 +63,48 @@ export class ComposeAcademicPaperUseCase {
         // the deterministic post-format step is skipped and the
         // composer's raw output is returned.
         private styleFormatter?: IStyleFormatter,
+        /**
+         * Traduce hoja del archivo a página impresa. Opcional: sin él el
+         * paper cita hojas rotuladas «p.», que es como venía.
+         */
+        private printedPageOffsets?: IPrintedPageOffsetReader,
     ) { }
+
+    /**
+     * Rotulador de páginas para este trabajo.
+     *
+     * Un solo índice por fuente, y se resuelven en paralelo: son
+     * consultas cacheadas por recurso, así que el coste real es el de la
+     * primera composición.
+     */
+    private async buildPageLabeler(
+        paper: ExegeticalPaper,
+    ): Promise<((sourceKey: string, sheet: number) => string) | undefined> {
+        const reader = this.printedPageOffsets;
+        if (!reader) return undefined;
+
+        const citable = paper.sources.filter(s => s.citationKey && isCitableSourceType(s.sourceType));
+        const entries = await Promise.all(citable.map(async source => {
+            const resourceId = source.sourceLibraryResourceId ?? source.corpusId;
+            try {
+                return [source.citationKey!, await reader.offsetFor(resourceId)] as const;
+            } catch (err) {
+                // Un índice que no responde no puede tumbar la
+                // composición: sin desfase se cita la hoja, que es lo
+                // que el análisis ya tenía.
+                console.warn('[ComposeAcademicPaper] no se pudo leer el desfase de', resourceId, err);
+                return [source.citationKey!, null] as const;
+            }
+        }));
+        const offsets = new Map(entries);
+
+        return (sourceKey: string, sheet: number) => {
+            const offset = offsets.get(sourceKey);
+            if (offset === null || offset === undefined) return `hoja ${sheet}`;
+            const printed = sheet + offset;
+            return printed >= 1 ? `p. ${printed}` : `hoja ${sheet}`;
+        };
+    }
 
     async execute(input: ComposeAcademicPaperUseCaseInput): Promise<ComposeAcademicPaperOutput> {
         if (!input.ownerId || !input.paperId) {
@@ -130,12 +172,22 @@ export class ComposeAcademicPaperUseCase {
             // ── Build citable sources for the deterministic formatter ───
             const citableSources = buildFormatterSources(paper);
 
+            // ── Traducir hoja del archivo a página impresa ───────────────
+            // El análisis guarda el número de HOJA; el profesor lee el
+            // libro de papel. Medido sobre esta biblioteca: dos obras
+            // coinciden, tres se desvían (−2, −4 y −40) y tres no lo
+            // declaran. Donde no se puede medir se rotula «hoja» y se
+            // dice: convertir a ciegas mandaría a la página equivocada
+            // con la confianza de un dato verificado.
+            const pageLabel = await this.buildPageLabeler(paper);
+
             const composerInput: ComposeAcademicPaperInput = {
                 paperPassage: paper.passage,
                 paperTitle: paper.title ?? null,
                 language: paper.displayLanguage,
                 assignmentBrief: paper.assignmentBrief,
                 verseAnalyses,
+                pageLabel,
                 styleGuideContent,
                 styleGuideManifest: manifest,
                 sources: composerSources,
