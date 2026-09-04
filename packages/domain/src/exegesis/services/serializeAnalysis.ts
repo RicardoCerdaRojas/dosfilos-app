@@ -64,10 +64,26 @@ import type { CanonicalVerseAnalysis } from '../entities/CanonicalVerseAnalysis'
  *
  *   Theological hooks: {locus1}, {locus2}, ...
  */
+/**
+ * Cómo rotular el número de una fuente citada.
+ *
+ * El número que guarda el análisis es la HOJA del archivo. Para el
+ * briefing del tutor eso sirve tal cual; para el paper que lee un
+ * profesor hay que convertirlo a página impresa cuando se conoce el
+ * desfase, y decir «hoja» cuando no. Sin este gancho, el compositor
+ * tendría que reescribir cadenas ya formateadas.
+ */
+export interface SerializeAnalysisOptions {
+    /** Por defecto `p. {hoja}`, que es lo que el análisis guarda. */
+    pageLabel?: (sourceKey: string, sheet: number) => string;
+}
+
 export function serializeAnalysis(
     analysis: CanonicalVerseAnalysis,
     language: 'es' | 'en',
+    options: SerializeAnalysisOptions = {},
 ): string {
+    const page = options.pageLabel ?? ((_key: string, sheet: number) => `p. ${sheet}`);
     const ref = formatPassageReference(analysis.reference, language);
     const lines: string[] = [];
     lines.push(`== Verse ${ref} ==`);
@@ -105,10 +121,10 @@ export function serializeAnalysis(
         for (const la of analysis.lexicalAnalyses) {
             const generalRange = la.generalSemanticRange.glosses.join(' / ');
             const generalSrcs = la.generalSemanticRange.sources
-                .map(s => `${s.sourceKey} p.${s.page}`)
+                .map(s => `${s.sourceKey} ${page(s.sourceKey, s.page)}`)
                 .join('; ');
             const loadingSrcs = la.loadingSources
-                .map(s => `${s.sourceKey} p.${s.page}`)
+                .map(s => `${s.sourceKey} ${page(s.sourceKey, s.page)}`)
                 .join('; ');
             lines.push(`- ${la.term} (${la.lemma}, "${la.gloss}"):`);
             lines.push(`  general range = [${generalRange}]${generalSrcs ? ` (sources: ${generalSrcs})` : ''}`);
@@ -133,7 +149,7 @@ export function serializeAnalysis(
         lines.push('');
         lines.push('Historical context:');
         for (const h of analysis.historicalContext) {
-            const srcs = h.sources.map(s => `${s.sourceKey} p.${s.page}`).join('; ');
+            const srcs = h.sources.map(s => `${s.sourceKey} ${page(s.sourceKey, s.page)}`).join('; ');
             lines.push(`- ${h.aspect}: ${h.relevance}${srcs ? ` (sources: ${srcs})` : ''}`);
         }
     }
@@ -144,7 +160,7 @@ export function serializeAnalysis(
         lines.push('OT links:');
         for (const l of analysis.oldTestamentLinks) {
             const formula = l.citationFormula ? ` (formula: ${l.citationFormula})` : '';
-            const srcs = l.sources.map(s => `${s.sourceKey} p.${s.page}`).join('; ');
+            const srcs = l.sources.map(s => `${s.sourceKey} ${page(s.sourceKey, s.page)}`).join('; ');
             lines.push(`- [${l.type}] ${l.sourcePassage}${formula}: ${l.interpretiveBearing}${srcs ? ` (sources: ${srcs})` : ''}`);
         }
     }
@@ -155,7 +171,7 @@ export function serializeAnalysis(
         lines.push('Commentator positions:');
         for (const c of analysis.commentatorEngagement) {
             const verbatim = c.verbatimQuote ? ` [verbatim: "${c.verbatimQuote}"]` : '';
-            lines.push(`- [${c.role}] ${c.sourceKey} (p. ${c.page}): ${c.position}${verbatim}`);
+            lines.push(`- [${c.role}] ${c.sourceKey} (${page(c.sourceKey, c.page)}): ${c.position}${verbatim}`);
         }
     }
 
@@ -174,7 +190,7 @@ export function serializeAnalysis(
                     const verbatim = p.verbatimQuote?.trim()
                         ? ` [verbatim: "${p.verbatimQuote.trim()}"]`
                         : '';
-                    return `${p.sourceKey} p.${p.page} → opt ${p.supports}: ${p.summary}${verbatim}`;
+                    return `${p.sourceKey} ${page(p.sourceKey, p.page)} → opt ${p.supports}: ${p.summary}${verbatim}`;
                 })
                 .join(' | ');
             if (positions) lines.push(`    positions: ${positions}`);
@@ -191,7 +207,7 @@ export function serializeAnalysis(
         lines.push('');
         lines.push('Footnote extensions:');
         for (const fn of analysis.footnoteExtensions) {
-            const srcs = fn.sources.map(s => `${s.sourceKey} p.${s.page}`).join('; ');
+            const srcs = fn.sources.map(s => `${s.sourceKey} ${page(s.sourceKey, s.page)}`).join('; ');
             lines.push(`- anchor: "${fn.anchorPhrase}"`);
             lines.push(`  text: ${fn.text}${srcs ? ` (sources: ${srcs})` : ''}`);
         }

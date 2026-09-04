@@ -159,7 +159,7 @@ function renderUserMessage(input: ComposeAcademicPaperInput, sourcesBlock: strin
         ? '### Verse analysis briefings (the structured data you compose from)'
         : '### Briefings de análisis verso por verso (los datos estructurados desde los que componés)';
     const briefings = input.verseAnalyses
-        .map(a => serializeAnalysis(a, lang))
+        .map(a => serializeAnalysis(a, lang, { pageLabel: input.pageLabel }))
         .join('\n\n');
 
     const sourcesHeading = lang === 'en'

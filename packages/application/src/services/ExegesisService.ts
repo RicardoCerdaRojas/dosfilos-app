@@ -37,6 +37,7 @@ import {
     SBLGNTBibleProvider,
     TestamentDispatcherOriginalLanguageProvider,
     extractFootnoteAnchorsFromFormattedMarkdown,
+    DocumentPrintedPageOffsetReader,
 } from '@dosfilos/infrastructure';
 import type {
     IResourceContentReader,
@@ -509,6 +510,9 @@ class ExegesisService {
             contentReader,
             academicComposer,
             styleFormatter,
+            // El paper cita la página impresa donde se pudo medir el
+            // desfase, y la hoja —dicha como hoja— donde no.
+            new DocumentPrintedPageOffsetReader(),
         );
 
         // Section-level composers. Same style-guide enforcement as

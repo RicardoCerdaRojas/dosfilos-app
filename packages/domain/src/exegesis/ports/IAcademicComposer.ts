@@ -65,6 +65,17 @@ export interface ComposeAcademicPaperInput {
      * weaves these into the body of the paper.
      */
     verseAnalyses: ReadonlyArray<CanonicalVerseAnalysis>;
+    /**
+     * Cómo rotular el número de cada fuente citada.
+     *
+     * El análisis guarda la HOJA del archivo; el paper lo lee alguien con
+     * el libro de papel delante. Cuando el desfase de ese documento se
+     * pudo medir, esto devuelve la página impresa; cuando no, devuelve
+     * «hoja N» para que el lector sepa qué número está viendo.
+     *
+     * Omitido: se cita la hoja rotulada «p.», que es como venía.
+     */
+    pageLabel?: (sourceKey: string, sheet: number) => string;
 
     /**
      * Style guide content (TMS or equivalent) verbatim. Embedded in
