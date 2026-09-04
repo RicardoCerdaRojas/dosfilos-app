@@ -14,6 +14,7 @@ import { Sparkles, Search, MessageSquareQuote, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Extraction } from '@dosfilos/domain';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useMarkdownAutosave } from './hooks/useMarkdownAutosave';
 
 /**
  * Cross-session library page at /dashboard/faculty/library. Lists every
@@ -69,18 +70,18 @@ export function FacultyLibraryPage() {
         setDraftFor(selectedId);
     }, [selectedId, fullSelected, draftFor]);
 
-    // Debounced autosave: save 1.5s after the user stops typing. Baseline is
-    // the fetched full doc, not the trimmed list entry (which has no body).
-    useEffect(() => {
-        if (!selectedId || draftFor !== selectedId) return;
-        const original = fullSelected?.id === selectedId ? fullSelected.markdown : undefined;
-        if (original === undefined || original === draftMarkdown) return;
-        const handle = setTimeout(() => {
-            updateMarkdown.mutate({ extractionId: selectedId, markdown: draftMarkdown });
-        }, 1500);
-        return () => clearTimeout(handle);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [draftMarkdown, selectedId, draftFor, fullSelected]);
+    // Autoguardado con acuse: el estado viaja a la barra del editor, y
+    // guardar al cerrar es tarea del hook. La comparación es contra el
+    // documento cargado, no contra la entrada recortada de la lista,
+    // que no trae cuerpo.
+    const autosave = useMarkdownAutosave({
+        documentId: selectedId,
+        draft: draftMarkdown,
+        original: fullSelected?.id === selectedId ? fullSelected.markdown : undefined,
+        enabled: draftFor === selectedId,
+        save: (extractionId, markdown) =>
+            updateMarkdown.mutateAsync({ extractionId, markdown }),
+    });
 
     const filtered = useMemo(() => {
         const afterFilters = filterExtractions(extractions, typeFilter, timeFilter);
@@ -252,6 +253,8 @@ export function FacultyLibraryPage() {
                                 return '';
                             }}
                             isProcessing={false}
+                            saveStatus={autosave.status}
+                            onRetrySave={autosave.retry}
                             isZenMode={false}
                         />
                     ) : selected ? (

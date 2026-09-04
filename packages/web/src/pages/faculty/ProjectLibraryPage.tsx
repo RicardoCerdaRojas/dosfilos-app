@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import type { Extraction } from '@dosfilos/domain';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useMarkdownAutosave } from './hooks/useMarkdownAutosave';
 
 /**
  * Per-project library page at /dashboard/faculty/projects/:projectId/library.
@@ -69,16 +70,16 @@ export function ProjectLibraryPage() {
         setDraftFor(selectedId);
     }, [selectedId, extractions, draftFor]);
 
-    useEffect(() => {
-        if (!selectedId || draftFor !== selectedId) return;
-        const original = extractions.find(e => e.id === selectedId)?.markdown;
-        if (original === draftMarkdown) return;
-        const handle = setTimeout(() => {
-            updateMarkdown.mutate({ extractionId: selectedId, markdown: draftMarkdown });
-        }, 1500);
-        return () => clearTimeout(handle);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [draftMarkdown, selectedId, draftFor]);
+    // Autoguardado con acuse: el estado viaja a la barra del editor, y
+    // guardar al cerrar es tarea del hook.
+    const autosave = useMarkdownAutosave({
+        documentId: selectedId,
+        draft: draftMarkdown,
+        original: extractions.find(e => e.id === selectedId)?.markdown,
+        enabled: draftFor === selectedId,
+        save: (extractionId, markdown) =>
+            updateMarkdown.mutateAsync({ extractionId, markdown }),
+    });
 
     const handleRename = (extraction: Extraction, newTitle: string) => {
         rename.mutate({ extractionId: extraction.id, title: newTitle });
@@ -186,6 +187,8 @@ export function ProjectLibraryPage() {
                                 return '';
                             }}
                             isProcessing={false}
+                            saveStatus={autosave.status}
+                            onRetrySave={autosave.retry}
                             isZenMode={false}
                         />
                     ) : (

@@ -429,6 +429,10 @@
         "copy": "Copy message"
     },
     "editor": {
+        "saving": "Saving…",
+        "saved": "Saved",
+        "saveFailed": "Not saved",
+        "retrySave": "Retry",
         "title": "Co-authoring Editor",
         "processing": "Processing...",
         "actions": {

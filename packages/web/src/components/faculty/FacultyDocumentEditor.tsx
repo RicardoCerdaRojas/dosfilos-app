@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { RichSermonEditor } from '../ui/RichSermonEditor';
 import { MDXEditorMethods } from '@mdxeditor/editor';
-import { Wand2, Sparkles, Quote, BookOpen, GraduationCap, Heart, Loader2, Minimize2, Maximize2, List, Check, X, Send, Eye, Pencil, Copy, FileCode } from 'lucide-react';
+import { Wand2, Sparkles, Quote, BookOpen, GraduationCap, Heart, Loader2, Minimize2, Maximize2, List, Check, X, Send, Eye, Pencil, Copy, FileCode, AlertCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -24,6 +24,13 @@ interface FacultyDocumentEditorProps {
     onChange: (markdown: string) => void;
     onMicroAction: (actionType: MicroActionType, selectedText: string, context: string, customPrompt?: string) => Promise<string>;
     isProcessing?: boolean;
+    /**
+     * Estado del autoguardado, para que el usuario sepa si su trabajo
+     * está a salvo. Omitido en las superficies que no autoguardan.
+     */
+    saveStatus?: 'idle' | 'saving' | 'saved' | 'error';
+    /** Reintento del guardado que falló. */
+    onRetrySave?: () => void;
     isZenMode?: boolean;
     onToggleZenMode?: () => void;
     /** Document title shown in the toolbar. Pass null to hide. */
@@ -32,7 +39,7 @@ interface FacultyDocumentEditorProps {
     onClose?: () => void;
 }
 
-export function FacultyDocumentEditor({ markdown, onChange, onMicroAction, isProcessing, isZenMode, onToggleZenMode, title, onClose }: FacultyDocumentEditorProps) {
+export function FacultyDocumentEditor({ markdown, onChange, onMicroAction, isProcessing, saveStatus, onRetrySave, isZenMode, onToggleZenMode, title, onClose }: FacultyDocumentEditorProps) {
     const { t } = useTranslation(['faculty', 'common']);
     const editorRef = useRef<MDXEditorMethods>(null);
     const [selection, setSelection] = useState<{ text: string; rect: DOMRect | null }>({ text: '', rect: null });
@@ -267,6 +274,40 @@ export function FacultyDocumentEditor({ markdown, onChange, onMicroAction, isPro
                         <div className="flex items-center gap-2 text-sm text-primary mr-2">
                             <Loader2 className="w-4 h-4 animate-spin" />
                             {t('editor.processing', 'Procesando...')}
+                        </div>
+                    )}
+
+                    {/*
+                     * Estado del autoguardado. Va acá y no en un aviso
+                     * flotante porque un fallo tiene que QUEDARSE: el
+                     * aviso que se va solo es exactamente lo que dejaba
+                     * al usuario sin saber que su texto no se guardó.
+                     */}
+                    {!isProcessing && saveStatus === 'saving' && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mr-2">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            {t('editor.saving')}
+                        </div>
+                    )}
+                    {!isProcessing && saveStatus === 'saved' && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mr-2">
+                            <Check className="w-3 h-3" />
+                            {t('editor.saved')}
+                        </div>
+                    )}
+                    {!isProcessing && saveStatus === 'error' && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-destructive mr-2">
+                            <AlertCircle className="w-3 h-3 shrink-0" />
+                            <span>{t('editor.saveFailed')}</span>
+                            {onRetrySave && (
+                                <button
+                                    type="button"
+                                    onClick={onRetrySave}
+                                    className="underline underline-offset-2 hover:no-underline"
+                                >
+                                    {t('editor.retrySave')}
+                                </button>
+                            )}
                         </div>
                     )}
 
