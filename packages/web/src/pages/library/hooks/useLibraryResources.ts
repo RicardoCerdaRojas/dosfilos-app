@@ -2,6 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { libraryService, categoryService } from '@dosfilos/application';
 import { LibraryCategory, LibraryResourceEntity, STRUCTURED_EXTRACTION_VERSIONS } from '@dosfilos/domain';
 import { useLibrary } from '@/hooks/library';
+import {
+    autoIndexGraceRemainingMs,
+    isWithinAutoIndexGrace,
+} from './autoIndexGrace';
 
 /** Index check status for a resource — derived from the vector store, not the
  *  resource document itself (a resource may say `indexingStatus: 'ready'` but
@@ -13,7 +17,9 @@ import { useLibrary } from '@/hooks/library';
  *  - `indexing`    — auto-indexer is actively running (Firestore field
  *                    `indexingStatus: 'processing'` OR auto-indexable
  *                    extractor finished but trigger hasn't recorded a state
- *                    yet — optimistic, since the trigger fires in <1s)
+ *                    yet — optimista, y con fecha de vencimiento: pasada
+ *                    la gracia sin confirmación del servidor, el recurso
+ *                    cae a `not-indexed` y recupera su botón)
  *  - `not-indexed` — extraction is done but indexer didn't / can't run
  *                    (failed, or legacy extractor not in AUTO_INDEXED_VERSIONS)
  *                    — needs manual "Procesar" action.
@@ -163,18 +169,26 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
                 setIndexStatus(prev => ({ ...prev, [r.id]: 'not-indexed' }));
                 continue;
             }
-            // No `indexingStatus` set yet. If the extractor's output IS
-            // auto-indexable AND extraction just finished, optimistically
-            // call it "indexing" — the auto-indexer trigger fires in <1s
-            // after the extraction write, so the brief gap shouldn't
-            // surface as "needs manual action".
+            // No `indexingStatus` set yet. Si la extracción produjo algo
+            // auto-indexable y acaba de terminar, se supone que el
+            // disparador ya corre — dispara en menos de un segundo tras
+            // la escritura, y ese hueco no debería verse como «hace falta
+            // que hagas algo».
+            //
+            // Pero el optimismo CADUCA. Cuando la suposición es falsa no
+            // hay salida: el estado `indexing` no ofrece el botón
+            // «Procesar», que sólo aparece con `not-indexed`. Pasada la
+            // gracia sin confirmación del servidor, el recurso cae a
+            // `not-indexed` y recupera su botón: un progreso que no puede
+            // fallar tampoco puede terminar.
             if (
                 !r.indexingStatus
                 && r.textExtractionStatus === 'ready'
                 && r.extractionVersion
                 && AUTO_INDEXED_VERSIONS.has(r.extractionVersion)
             ) {
-                setIndexStatus(prev => ({ ...prev, [r.id]: 'indexing' }));
+                const suponerQueCorre = isWithinAutoIndexGrace(r, new Date());
+                setIndexStatus(prev => ({ ...prev, [r.id]: suponerQueCorre ? 'indexing' : 'not-indexed' }));
                 continue;
             }
             // Legacy / pre-cloud-function resources: fall back to the
@@ -194,6 +208,34 @@ export function useLibraryResources(userId: string | null | undefined): UseLibra
     useEffect(() => {
         if (loading) return;
         checkAllIndexStatus(resources);
+    }, [resources, loading, checkAllIndexStatus]);
+
+    // La gracia vence sola, sin que llegue un snapshot nuevo.
+    //
+    // Cuando el disparador nunca corrió no hay escritura en Firestore y
+    // por lo tanto no hay evento que despierte al listener: sin este
+    // temporizador la tarjeta seguiría girando hasta que el usuario
+    // recargara la página, que es exactamente lo que se observó. Se
+    // reprograma para el recurso al que le queda menos.
+    useEffect(() => {
+        if (loading) return;
+        const ahora = new Date();
+        const pendientes = resources
+            .filter(r =>
+                !r.indexingStatus
+                && r.textExtractionStatus === 'ready'
+                && r.extractionVersion
+                && AUTO_INDEXED_VERSIONS.has(r.extractionVersion),
+            )
+            .map(r => autoIndexGraceRemainingMs(r, ahora))
+            .filter(ms => ms > 0);
+        if (pendientes.length === 0) return;
+
+        const timer = setTimeout(
+            () => { checkAllIndexStatus(resources); },
+            Math.min(...pendientes) + 1000,
+        );
+        return () => clearTimeout(timer);
     }, [resources, loading, checkAllIndexStatus]);
 
     const indexedCount = Object.values(indexStatus).filter(s => s === 'indexed').length;

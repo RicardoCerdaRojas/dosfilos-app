@@ -3,6 +3,7 @@ import { type NavigateFunction } from 'react-router-dom';
 import { toast } from 'sonner';
 import { track } from '@/lib/analytics/track';
 import { type Extraction } from '@dosfilos/domain';
+import { useConfirm } from '@/hooks/useConfirm';
 
 interface ExtractionMutation<TVars> {
     mutate: (vars: TVars) => void;
@@ -46,6 +47,7 @@ export function useExtractionListHandlers(params: UseExtractionListHandlersParam
         deleteExtraction,
     } = params;
     const { t } = useTranslation('faculty');
+    const { confirm, confirmDialog } = useConfirm();
 
     const handleRenameExtraction = (extraction: Extraction, newTitle: string) => {
         renameExtraction.mutate({ extractionId: extraction.id, title: newTitle });
@@ -67,8 +69,8 @@ export function useExtractionListHandlers(params: UseExtractionListHandlersParam
         toast.success(t('extractionsList.toast.unpinned'));
     };
 
-    const handleDeleteExtraction = (extraction: Extraction) => {
-        if (!window.confirm(t('extractionsList.confirmDelete'))) return;
+    const handleDeleteExtraction = async (extraction: Extraction) => {
+        if (!await confirm({ body: t('extractionsList.confirmDelete') })) return;
         deleteExtraction.mutate(extraction.id);
         track('faculty_artifact_deleted', {
             type: extraction.type,
@@ -97,5 +99,12 @@ export function useExtractionListHandlers(params: UseExtractionListHandlersParam
         handleRemoveExtractionFromProject,
         handleDeleteExtraction,
         handleJumpToOrigin,
+        /**
+         * El diálogo de confirmación del borrado. Quien monte este hook
+         * tiene que renderizarlo: sin eso la pregunta no aparece y el
+         * borrado nunca se confirma —a diferencia del `window.confirm`
+         * de antes, que se dibujaba solo—.
+         */
+        confirmDialog,
     };
 }

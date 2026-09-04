@@ -9,6 +9,9 @@
     "confirm": "Confirm",
     "save": "Save"
   },
+  "confirmations": {
+    "title": "Confirm this action"
+  },
   "loading": "Loading...",
   "error": "Error",
   "success": "Success",

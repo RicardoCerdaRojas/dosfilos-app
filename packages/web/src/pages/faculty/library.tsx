@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, Search, MessageSquareQuote, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Extraction } from '@dosfilos/domain';
+import { useConfirm } from '@/hooks/useConfirm';
 
 /**
  * Cross-session library page at /dashboard/faculty/library. Lists every
@@ -23,6 +24,7 @@ import type { Extraction } from '@dosfilos/domain';
  */
 export function FacultyLibraryPage() {
     const { t } = useTranslation('faculty');
+    const { confirm, confirmDialog } = useConfirm();
     const navigate = useNavigate();
     const { extractions, isLoading } = useUserExtractions();
     const { projects } = useFacultyProjects();
@@ -112,8 +114,8 @@ export function FacultyLibraryPage() {
         toast.success(t('extractionsList.toast.unpinned'));
     };
 
-    const handleDelete = (extraction: Extraction) => {
-        if (!window.confirm(t('extractionsList.confirmDelete'))) return;
+    const handleDelete = async (extraction: Extraction) => {
+        if (!await confirm({ body: t('extractionsList.confirmDelete') })) return;
         deleteExtraction.mutate(extraction.id);
         if (selectedId === extraction.id) setSelectedId(null);
     };
@@ -268,6 +270,8 @@ export function FacultyLibraryPage() {
                 extraction={wpDialogExtraction}
                 onClose={() => setWpDialogExtraction(null)}
             />
+
+            {confirmDialog}
         </div>
     );
 }

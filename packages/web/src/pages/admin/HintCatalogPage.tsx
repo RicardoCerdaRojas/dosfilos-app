@@ -19,6 +19,7 @@ import { Plus, Edit, Trash2, ShieldAlert, AlertCircle, Info, Lightbulb } from 'l
 import { useAdminHints } from '@/hooks/admin/useAdminHints';
 import { HintConditionKey, DetectivePhase, HINT_ALL_PHASES } from '@dosfilos/domain';
 import type { HintDefinition, HintSeverity } from '@dosfilos/domain';
+import { useConfirm } from '@/hooks/useConfirm';
 
 const severities: { value: HintSeverity; label: string; icon: React.ReactNode }[] = [
   { value: 'info', label: 'Info', icon: <Info className="h-4 w-4 text-amber-500" /> },
@@ -30,6 +31,7 @@ const conditionsList = Object.values(HintConditionKey);
 
 export default function HintCatalogPage() {
   const { hints, isLoading, createHint, updateHint, deleteHint, toggleHint } = useAdminHints();
+  const { confirm, confirmDialog } = useConfirm();
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingHint, setEditingHint] = useState<Partial<HintDefinition> | null>(null);
 
@@ -86,7 +88,7 @@ export default function HintCatalogPage() {
       alert('Las pistas locales no pueden ser eliminadas directamente, solo deshabilitadas o sobrescritas.');
       return;
     }
-    if (confirm('¿Eliminar esta pista?')) {
+    if (await confirm({ body: '¿Eliminar esta pista?' })) {
       await deleteHint(hint.id);
     }
   };
@@ -297,6 +299,8 @@ export default function HintCatalogPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {confirmDialog}
     </div>
   );
 }

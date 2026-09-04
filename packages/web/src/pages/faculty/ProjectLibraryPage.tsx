@@ -12,6 +12,7 @@ import { FolderOpen, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import type { Extraction } from '@dosfilos/domain';
+import { useConfirm } from '@/hooks/useConfirm';
 
 /**
  * Per-project library page at /dashboard/faculty/projects/:projectId/library.
@@ -24,6 +25,7 @@ export function ProjectLibraryPage() {
     const { projectId } = useParams<{ projectId: string }>();
     const navigate = useNavigate();
     const { t } = useTranslation('faculty');
+    const { confirm, confirmDialog } = useConfirm();
     const { extractions, isLoading } = useProjectExtractions(projectId);
     const { projects } = useFacultyProjects();
     const { updateMarkdown, rename, addToProject, removeFromProject, deleteExtraction } = useExtractionMutations();
@@ -92,8 +94,8 @@ export function ProjectLibraryPage() {
         toast.success(t('extractionsList.toast.unpinned'));
     };
 
-    const handleDelete = (extraction: Extraction) => {
-        if (!window.confirm(t('extractionsList.confirmDelete'))) return;
+    const handleDelete = async (extraction: Extraction) => {
+        if (!await confirm({ body: t('extractionsList.confirmDelete') })) return;
         deleteExtraction.mutate(extraction.id);
         if (selectedId === extraction.id) setSelectedId(null);
     };
@@ -197,6 +199,8 @@ export function ProjectLibraryPage() {
                 extraction={wpDialogExtraction}
                 onClose={() => setWpDialogExtraction(null)}
             />
+
+            {confirmDialog}
         </div>
     );
 }

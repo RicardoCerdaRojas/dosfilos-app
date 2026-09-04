@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useTeachingClases } from '@/features/teaching-suite/useTeachingClases';
 import { ClasesPanel } from '@/features/teaching-suite/hub/ClasesPanel';
 import { RecursosPanel } from '@/features/teaching-suite/hub/RecursosPanel';
+import { useConfirm } from '@/hooks/useConfirm';
 
 /**
  * Suite de Enseñanza — hub del docente. Adopta el shell del sistema (contenedor
@@ -28,6 +29,7 @@ export function TeachingSuitePage(): JSX.Element {
     eliminarMarca,
     eliminarLamina,
   } = useTeachingClases();
+  const { confirm, confirmDialog } = useConfirm();
 
   const go = (ruta: string) => navigate(`/dashboard/teaching-suite${ruta}`);
 
@@ -108,13 +110,17 @@ export function TeachingSuitePage(): JSX.Element {
           onEditarMarca={(id) => go(`/marca/${id}`)}
           onCrearMarca={() => go('/marca')}
           onEliminarMarca={(b) => {
-            if (window.confirm(`¿Eliminar la marca «${b.nombre}»?`)) void eliminarMarca(b.id);
+            void confirm({ body: `¿Eliminar la marca «${b.nombre}»?` })
+              .then(ok => { if (ok) void eliminarMarca(b.id); });
           }}
           onEliminarLamina={(c) => {
-            if (window.confirm(`¿Eliminar la lámina guardada «${c.nombre}»?`)) void eliminarLamina(c.id);
+            void confirm({ body: `¿Eliminar la lámina guardada «${c.nombre}»?` })
+              .then(ok => { if (ok) void eliminarLamina(c.id); });
           }}
         />
       </div>
+
+      {confirmDialog}
     </div>
   );
 }

@@ -448,6 +448,8 @@ export function LibraryManager() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {processing.confirmDialog}
         </>
     );
 }

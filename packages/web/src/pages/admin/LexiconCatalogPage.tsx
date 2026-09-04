@@ -31,6 +31,7 @@ import { LexiconCardView } from './lexicon/LexiconCardView';
 import { LexiconTableView } from './lexicon/LexiconTableView';
 import { LexiconChainsView } from './lexicon/LexiconChainsView';
 import { LexiconEntryEditor, type LexiconEntryPayload } from './lexicon/LexiconEntryEditor';
+import { useConfirm } from '@/hooks/useConfirm';
 
 // ── View mode type ─────────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ function blankEntry(): Partial<LexicalEntry> {
 
 export default function LexiconCatalogPage() {
   const { t } = useTranslation('hebrewTutor');
+  const { confirm, confirmDialog } = useConfirm();
   const { entries, isLoading, createEntry, updateEntry, deleteEntry, toggleEntry } =
     useAdminLexicon();
 
@@ -94,7 +96,7 @@ export default function LexiconCatalogPage() {
   };
 
   const handleDelete = async (entry: LexicalEntry) => {
-    if (confirm(t('lexiconAdmin.deleteConfirm'))) {
+    if (await confirm({ body: t('lexiconAdmin.deleteConfirm') })) {
       await deleteEntry(entry.id);
     }
   };
@@ -239,6 +241,8 @@ export default function LexiconCatalogPage() {
         onSave={handleSave}
         onClose={() => setEditorOpen(false)}
       />
+
+      {confirmDialog}
     </div>
   );
 }
