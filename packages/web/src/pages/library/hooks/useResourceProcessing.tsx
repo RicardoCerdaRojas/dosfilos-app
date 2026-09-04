@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
 import { LibraryProgressState } from '../components/LibraryProgress';
 import { IndexStatus } from './useLibraryResources';
+import { useConfirm } from '@/hooks/useConfirm';
 
 interface UseResourceProcessingOptions {
     /**
@@ -31,7 +32,7 @@ interface UseResourceProcessingResult {
     processAll: (resources: LibraryResourceEntity[], indexStatus: Record<string, IndexStatus>) => Promise<void>;
     /**
      * Rebuild the index for resources whose indexing FAILED. Forces a
-     * clean rebuild and skips the `confirm()` dialog that guards
+     * clean rebuild and skips the confirmation dialog that guards
      * `reprocessResource`: there is no healthy index to destroy here,
      * and making the user confirm their way out of our own failure is
      * friction on top of a bug. Costs the user nothing — the retry
@@ -39,6 +40,13 @@ interface UseResourceProcessingResult {
      * rather than re-extracting the PDF.
      */
     retryFailedIndexing: (resources: LibraryResourceEntity[]) => Promise<void>;
+    /**
+     * El diálogo que confirma el reproceso. Quien monte este hook tiene
+     * que renderizarlo: sin eso la pregunta no aparece y el reproceso
+     * nunca ocurre —a diferencia del `confirm()` nativo, que se dibujaba
+     * solo—.
+     */
+    confirmDialog: React.ReactNode;
 }
 
 /**
@@ -47,12 +55,13 @@ interface UseResourceProcessingResult {
  *
  * Side effects beyond the hook:
  * - Toast notifications via sonner
- * - Browser `confirm()` dialog for reprocess (acceptable: it's a destructive
- *   admin-style action; a custom modal would be UX overkill)
+ * - Diálogo de confirmación para el reproceso, devuelto en
+ *   `confirmDialog` para que la página lo monte
  * - Mutates `indexStatus` via the injected setter
  */
 export function useResourceProcessing({ setIndexStatus }: UseResourceProcessingOptions): UseResourceProcessingResult {
     const { t } = useTranslation('library');
+    const { confirm, confirmDialog } = useConfirm();
     const [processingResourceId, setProcessingResourceId] = useState<string | null>(null);
     const [bulkProcessing, setBulkProcessing] = useState(false);
     const [bulkProgress, setBulkProgress] = useState<LibraryProgressState | null>(null);
@@ -81,7 +90,7 @@ export function useResourceProcessing({ setIndexStatus }: UseResourceProcessingO
 
     const reprocessResource = useCallback(async (resource: LibraryResourceEntity) => {
         // Reprocess is destructive (deletes existing chunks). Confirm before run.
-        if (!confirm(t('toast.reprocessConfirm', { title: resource.title }))) {
+        if (!await confirm({ body: t('toast.reprocessConfirm', { title: resource.title }) })) {
             return;
         }
         setProcessingResourceId(resource.id);
@@ -99,7 +108,7 @@ export function useResourceProcessing({ setIndexStatus }: UseResourceProcessingO
         } finally {
             setProcessingResourceId(null);
         }
-    }, [t, setIndexStatus]);
+    }, [t, setIndexStatus, confirm]);
 
     const processAll = useCallback(async (
         resources: LibraryResourceEntity[],
@@ -223,5 +232,6 @@ export function useResourceProcessing({ setIndexStatus }: UseResourceProcessingO
         reprocessResource,
         processAll,
         retryFailedIndexing,
+        confirmDialog,
     };
 }

@@ -583,8 +583,15 @@ function RoleCoverageCard({
         // target" copy was easy to misread when the actual gap was
         // a single source on one role — the user mistook the chip
         // for "close enough" instead of seeing it as a real miss.
+        // `count` va además de `gap`: la clave tiene formas `_one`/`_other`
+        // e i18next necesita `count` para elegir una. Sin él no resuelve y
+        // la pantalla imprime la clave cruda —
+        // «paperSetup.subSteps.corpus.roleCoverage.partialDeficitItem»— a
+        // la vista del usuario. El chip «Falta 1», cien líneas más abajo
+        // en este mismo archivo, siempre lo pasó; esta llamada no.
         const parts = deficits.map(d => t('paperSetup.subSteps.corpus.roleCoverage.partialDeficitItem', {
             role: t(`paperSetup.subSteps.corpus.roleCoverage.role.${d.role}`).toLowerCase(),
+            count: d.gap,
             gap: d.gap,
         }));
         const list = parts.join(t('paperSetup.subSteps.corpus.roleCoverage.partialDeficitJoiner'));

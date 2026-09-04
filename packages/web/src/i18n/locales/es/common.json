@@ -9,6 +9,9 @@
     "confirm": "Confirmar",
     "save": "Guardar"
   },
+  "confirmations": {
+    "title": "Confirma la acción"
+  },
   "loading": "Cargando...",
   "error": "Error",
   "success": "Éxito",

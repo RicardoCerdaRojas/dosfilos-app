@@ -27,6 +27,7 @@ import { useIngestCoreLibrary } from '@/hooks/admin/useIngestCoreLibrary';
 import { useTagDoctrineLevels } from '@/hooks/admin/useTagDoctrineLevels';
 import { useUpdateSectionDoctrineLevel } from '@/hooks/admin/useUpdateSectionDoctrineLevel';
 import type { Confession, ConfessionSection, DoctrineLevel } from '@dosfilos/domain';
+import { useConfirm } from '@/hooks/useConfirm';
 
 const DOCTRINE_LEVEL_TONE: Record<string, string> = {
     core: 'bg-destructive/15 text-destructive border-destructive/30',
@@ -225,6 +226,7 @@ function ConfessionDetailView({ confession, onBack }: DetailProps) {
     const { t } = useTranslation('admin');
     const { sections, loading, refresh } = useConfessionSections(confession?.id ?? null);
     const { tag, isLoading: tagging } = useTagDoctrineLevels();
+    const { confirm, confirmDialog } = useConfirm();
 
     if (!confession) {
         return (
@@ -246,7 +248,7 @@ function ConfessionDetailView({ confession, onBack }: DetailProps) {
     };
 
     const handleTagForce = async () => {
-        if (!window.confirm(t('confessions.tagForceConfirm'))) return;
+        if (!await confirm({ body: t('confessions.tagForceConfirm') })) return;
         const ok = await tag({ confessionIds: [confession.id], force: true });
         if (ok) refresh();
     };
@@ -321,6 +323,8 @@ function ConfessionDetailView({ confession, onBack }: DetailProps) {
                     ))}
                 </div>
             )}
+
+            {confirmDialog}
         </div>
     );
 }

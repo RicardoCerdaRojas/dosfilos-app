@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
 import { leadsService, type ContactLead, type LeadStatus } from '@dosfilos/application';
 import { LeadCard } from './leads/LeadCard';
+import { useConfirm } from '@/hooks/useConfirm';
 
 const ADMIN_EMAIL = 'rdocerda@gmail.com';
 
@@ -23,6 +24,7 @@ export function AdminLeads() {
     const { user } = useFirebase();
     const navigate = useNavigate();
     const { t } = useTranslation('admin');
+    const { confirm, confirmDialog } = useConfirm();
     const [leads, setLeads] = useState<ContactLead[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -65,7 +67,7 @@ export function AdminLeads() {
     };
 
     const handleDelete = async (leadId: string) => {
-        if (!confirm(t('leads.actions.deleteConfirm'))) return;
+        if (!await confirm({ body: t('leads.actions.deleteConfirm') })) return;
 
         try {
             await leadsService.deleteLead(leadId);
@@ -193,6 +195,8 @@ export function AdminLeads() {
                     </div>
                 )}
             </div>
+
+            {confirmDialog}
         </div>
     );
 }

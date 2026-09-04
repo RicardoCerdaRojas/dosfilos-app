@@ -319,6 +319,7 @@ export function FacultyChatPage() {
         handleRemoveExtractionFromProject,
         handleDeleteExtraction,
         handleJumpToOrigin,
+        confirmDialog: extractionConfirmDialog,
     } = useExtractionListHandlers({
         documentExtractionId,
         effectiveSessionId,
@@ -676,6 +677,8 @@ export function FacultyChatPage() {
                 onCloseDeleteMessage={cancelDeleteMessage}
                 onConfirmDeleteMessage={handleConfirmDeleteMessage}
             />
+
+            {extractionConfirmDialog}
         </div>
     );
 }

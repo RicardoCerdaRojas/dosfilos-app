@@ -17,6 +17,7 @@ import { Globe, Loader2, CheckCircle2, AlertCircle, Trash2, Activity, Mail, Rss 
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useTranslation } from '@/i18n';
+import { useConfirm } from '@/hooks/useConfirm';
 
 /**
  * Settings panel for 3rd-party integrations. v1 ships WordPress; the page is
@@ -36,6 +37,7 @@ import { useTranslation } from '@/i18n';
 export function IntegrationsSettings() {
     const { user } = useFirebase();
     const { t } = useTranslation('settings');
+    const { confirm, confirmDialog } = useConfirm();
     const [config, setConfig] = useState<WordpressIntegration | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -127,7 +129,7 @@ export function IntegrationsSettings() {
 
     const handleDisconnect = async () => {
         if (!user?.uid) return;
-        if (!window.confirm(t('integrations.wordpress.disconnectConfirm'))) return;
+        if (!await confirm({ body: t('integrations.wordpress.disconnectConfirm') })) return;
         try {
             await userIntegrationsService.deleteWordpress(user.uid);
             setConfig(null);
@@ -300,6 +302,8 @@ export function IntegrationsSettings() {
                     description={t('integrations.comingSoon.substack')}
                 />
             </div>
+
+            {confirmDialog}
         </div>
     );
 }
