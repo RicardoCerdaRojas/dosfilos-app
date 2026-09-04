@@ -6,7 +6,7 @@ import {
     buildVerseCoverageContract,
     findUncoveredItems,
     verseSectionKey,
-    type CoverageItem,
+    type AnalysisCoverageItem,
 } from './verseAnalysisCoverage';
 
 /**
@@ -62,7 +62,7 @@ export function enforceAnalysisCoverage(
     if (totalItems === 0) return { markdown, coverage: empty };
 
     // ── Camino normal: se pudo trocear por verso ───────────────────
-    const uncoveredByKey = new Map<string, CoverageItem[]>();
+    const uncoveredByKey = new Map<string, AnalysisCoverageItem[]>();
     const rewritten = replaceVerseSectionBodies(
         markdown,
         verses.map(v => v.key),

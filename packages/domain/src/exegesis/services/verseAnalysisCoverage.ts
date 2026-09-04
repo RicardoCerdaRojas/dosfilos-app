@@ -24,7 +24,7 @@ import type { CanonicalVerseAnalysis } from '../entities/CanonicalVerseAnalysis'
  * que encontrarlo no prueba que la discusión de esa partícula o de
  * esa crux se haya publicado — probaría sólo que el verso está citado.
  */
-export type CoverageItemKind =
+export type AnalysisCoverageItemKind =
     | 'translation'
     | 'argumentative-role'
     | 'textual-criticism'
@@ -39,10 +39,10 @@ export type CoverageItemKind =
     | 'footnote'
     | 'thesis';
 
-export interface CoverageItem {
+export interface AnalysisCoverageItem {
     /** Estable dentro de un verso: `{verseKey}:{kind}:{n}`. */
     id: string;
-    kind: CoverageItemKind;
+    kind: AnalysisCoverageItemKind;
     /** Rótulo corto para decirle al usuario qué quedó afuera. */
     label: string;
     /**
@@ -91,10 +91,10 @@ export function verseSectionKey(
 export function buildVerseCoverageContract(
     analysis: CanonicalVerseAnalysis,
     language: 'es' | 'en',
-): CoverageItem[] {
+): AnalysisCoverageItem[] {
     const key = verseSectionKey(analysis, language);
-    const items: CoverageItem[] = [];
-    const push = (kind: CoverageItemKind, n: number, label: string, phrase: string | undefined | null) => {
+    const items: AnalysisCoverageItem[] = [];
+    const push = (kind: AnalysisCoverageItemKind, n: number, label: string, phrase: string | undefined | null) => {
         const text = (phrase ?? '').trim();
         if (!text) return;
         items.push({ id: `${key}:${kind}:${n}`, kind, label, phrase: text });
@@ -162,13 +162,13 @@ export function buildVerseCoverageContract(
  */
 export function findUncoveredItems(
     prose: string,
-    items: readonly CoverageItem[],
-): CoverageItem[] {
+    items: readonly AnalysisCoverageItem[],
+): AnalysisCoverageItem[] {
     const proseTokens = new Set(contentTokens(prose));
     return items.filter(item => !isCovered(item, proseTokens));
 }
 
-function isCovered(item: CoverageItem, proseTokens: ReadonlySet<string>): boolean {
+function isCovered(item: AnalysisCoverageItem, proseTokens: ReadonlySet<string>): boolean {
     const tokens = new Set(contentTokens(item.phrase));
     if (tokens.size < MIN_MEASURABLE_TOKENS) return true;
     let hits = 0;
