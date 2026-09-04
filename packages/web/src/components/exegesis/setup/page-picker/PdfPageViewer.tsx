@@ -60,6 +60,16 @@ interface Props {
      * resultado corriente y hay que nombrarlo.
      */
     onHighlightResolved?: (found: boolean) => void;
+    /**
+     * Ampliación. `'fit'` encaja la hoja entera —lo que hace falta al
+     * recorrer un libro decidiendo qué sirve— y un número la amplía sobre
+     * ese ajuste, que es lo que hace falta al leer una nota al pie.
+     */
+    zoom?: number | 'fit';
+    /** Palabra a buscar en la hoja, además de la cita. */
+    searchTerm?: string | null;
+    /** Cuántas veces aparece el término buscado en esta hoja. */
+    onSearchMatches?: (count: number) => void;
 }
 
 /** Banda a pintar sobre el canvas, en píxeles CSS relativos a la hoja. */
@@ -110,6 +120,9 @@ export function PdfPageViewer({
     selected,
     highlightQuote = null,
     onHighlightResolved,
+    zoom = 'fit',
+    searchTerm = null,
+    onSearchMatches,
 }: Props) {
     const { t } = useTranslation('exegesis');
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -123,6 +136,7 @@ export function PdfPageViewer({
     const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
     const [errorKind, setErrorKind] = useState<'load' | 'page' | null>(null);
     const [highlights, setHighlights] = useState<HighlightBox[]>([]);
+    const [searchBoxes, setSearchBoxes] = useState<HighlightBox[]>([]);
     const [canvasBox, setCanvasBox] = useState({ width: 0, height: 0 });
 
     // La hoja se ajusta al panel para que entre ENTERA. Al recorrer un libro
@@ -193,7 +207,9 @@ export function PdfPageViewer({
                     (stage.width - STAGE_PADDING * 2) / base.width,
                     (stage.height - STAGE_PADDING * 2) / base.height,
                 );
-                const cssScale = Math.max(fit, 0.1);
+                // Ampliar multiplica el ajuste, no lo reemplaza: así el
+                // 100% significa «la hoja entera» en cualquier pantalla.
+                const cssScale = Math.max(fit, 0.1) * (zoom === 'fit' ? 1 : zoom);
                 // Se dibuja a la densidad real de la pantalla: en un retina, un
                 // canvas a escala 1 se ve borroso justo donde el usuario está
                 // leyendo tipografía chica para decidir.
@@ -212,7 +228,7 @@ export function PdfPageViewer({
 
                 // La capa de texto se lee aparte del dibujo: el canvas
                 // pinta píxeles y no sabe dónde quedó cada palabra.
-                void locateQuote(page, page.getViewport({ scale: cssScale }));
+                void paintBands(page, page.getViewport({ scale: cssScale }));
 
                 const task = page.render({ canvas, canvasContext: ctx, viewport });
                 renderRef.current = task;
@@ -240,12 +256,15 @@ export function PdfPageViewer({
          * luego se traduce el rango encontrado de vuelta a los fragmentos
          * que lo contienen.
          */
-        async function locateQuote(
+        async function paintBands(
             page: pdfjsLib.PDFPageProxy,
             cssViewport: pdfjsLib.PageViewport,
         ) {
-            if (!highlightQuote?.trim()) {
+            const wantsQuote = !!highlightQuote?.trim();
+            const wantsSearch = !!searchTerm?.trim();
+            if (!wantsQuote && !wantsSearch) {
                 setHighlights([]);
+                setSearchBoxes([]);
                 return;
             }
             try {
@@ -267,33 +286,60 @@ export function PdfPageViewer({
                     if (item.hasEOL) pageText += '\n';
                 }
 
-                const match = findQuoteInPageText(highlightQuote, pageText);
-                if (cancelled) return;
-                if (!match) {
+                /** Bandas de un rango de caracteres del texto corrido. */
+                const bandsFor = (from: number, to: number): HighlightBox[] => {
+                    const out: HighlightBox[] = [];
+                    for (const span of spans) {
+                        if (span.end <= from || span.start >= to) continue;
+                        const box = boxFor(span.item, cssViewport);
+                        if (box) out.push(box);
+                    }
+                    return out;
+                };
+
+                if (wantsQuote) {
+                    const match = findQuoteInPageText(highlightQuote!, pageText);
+                    const boxes = match ? bandsFor(match.start, match.end) : [];
+                    setHighlights(boxes);
+                    onHighlightResolved?.(boxes.length > 0);
+                } else {
                     setHighlights([]);
-                    onHighlightResolved?.(false);
-                    return;
                 }
 
-                const boxes: HighlightBox[] = [];
-                for (const span of spans) {
-                    if (span.end <= match.start || span.start >= match.end) continue;
-                    const box = boxFor(span.item, cssViewport);
-                    if (box) boxes.push(box);
+                if (wantsSearch) {
+                    // Busca TODAS las apariciones, no la primera: el lector
+                    // que busca una palabra quiere ver si la página la usa
+                    // una vez o cinco.
+                    const boxes: HighlightBox[] = [];
+                    let count = 0;
+                    let from = 0;
+                    while (from < pageText.length) {
+                        const hit = findQuoteInPageText(searchTerm!, pageText.slice(from));
+                        if (!hit) break;
+                        boxes.push(...bandsFor(from + hit.start, from + hit.end));
+                        count += 1;
+                        from += hit.end;
+                        if (count > 200) break;
+                    }
+                    setSearchBoxes(boxes);
+                    onSearchMatches?.(count);
+                } else {
+                    setSearchBoxes([]);
+                    onSearchMatches?.(0);
                 }
-                setHighlights(boxes);
-                onHighlightResolved?.(boxes.length > 0);
             } catch (err) {
                 if (cancelled) return;
                 console.warn('[PdfPageViewer] no se pudo leer la capa de texto', err);
                 setHighlights([]);
+                setSearchBoxes([]);
                 onHighlightResolved?.(false);
+                onSearchMatches?.(0);
             }
         }
 
         return () => { cancelled = true; renderRef.current?.cancel(); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sheet, status, stage.width, stage.height, highlightQuote]);
+    }, [sheet, status, stage.width, stage.height, highlightQuote, zoom, searchTerm]);
 
     if (status === 'error') {
         return (
@@ -308,8 +354,14 @@ export function PdfPageViewer({
         );
     }
 
+    const zoomed = zoom !== 'fit' && zoom > 1;
     return (
-        <div ref={stageRef} className="relative flex h-full w-full items-center justify-center overflow-hidden">
+        <div
+            ref={stageRef}
+            className={`relative flex h-full w-full justify-center ${
+                zoomed ? 'items-start overflow-auto p-6' : 'items-center overflow-hidden'
+            }`}
+        >
             {status !== 'ready' && (
                 <div className="absolute inset-0 flex items-center justify-center gap-2 text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -327,6 +379,14 @@ export function PdfPageViewer({
                 {/* Bandas sobre el texto, no debajo: el canvas ya está
                     pintado y esta capa solo lo señala. `mix-blend-multiply`
                     deja leer las letras a través del color. */}
+                {status === 'ready' && searchBoxes.map((box, i) => (
+                    <div
+                        key={`s-${i}`}
+                        aria-hidden="true"
+                        className="pointer-events-none absolute rounded-[2px] bg-info/40 mix-blend-multiply"
+                        style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
+                    />
+                ))}
                 {status === 'ready' && highlights.map((box, i) => (
                     <div
                         key={i}
