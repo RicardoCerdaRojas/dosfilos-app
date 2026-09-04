@@ -429,6 +429,10 @@
         "copy": "Copiar mensaje"
     },
     "editor": {
+        "saving": "Guardando…",
+        "saved": "Guardado",
+        "saveFailed": "No se guardó",
+        "retrySave": "Reintentar",
         "title": "Editor de Co-autoría",
         "processing": "Procesando...",
         "actions": {
