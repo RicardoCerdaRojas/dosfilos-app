@@ -158,8 +158,12 @@ function renderUserMessage(input: ComposeAcademicPaperInput, sourcesBlock: strin
     const briefingsHeading = lang === 'en'
         ? '### Verse analysis briefings (the structured data you compose from)'
         : '### Briefings de análisis verso por verso (los datos estructurados desde los que componés)';
+    // Las claves van junto al rótulo: sin ellas sólo se reetiquetan las
+    // referencias estructuradas, y las menciones de página que el
+    // análisis escribió en su prosa viajan con el número de hoja.
+    const citableKeys = input.sources.map(s => s.citationKey).filter(Boolean);
     const briefings = input.verseAnalyses
-        .map(a => serializeAnalysis(a, lang, { pageLabel: input.pageLabel }))
+        .map(a => serializeAnalysis(a, lang, { pageLabel: input.pageLabel, citableKeys }))
         .join('\n\n');
 
     const sourcesHeading = lang === 'en'

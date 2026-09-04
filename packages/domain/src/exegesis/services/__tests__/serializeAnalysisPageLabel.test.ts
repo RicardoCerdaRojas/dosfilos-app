@@ -48,6 +48,55 @@ describe('serializeAnalysis — rótulo de página', () => {
         expect(out).not.toContain('Wallace (p. 53)');
     });
 
+    it('también reetiqueta la página que el análisis escribió en su prosa', () => {
+        // El caso real: la cita estructurada salía convertida y la
+        // mención en prosa del mismo párrafo se quedaba con la hoja, así
+        // que la misma página aparecía con dos números.
+        const conProsa = {
+            ...analysis(),
+            verseThesis: 'Metzger (p. 719) documenta la variante.',
+        };
+
+        const out = serializeAnalysis(conProsa, 'es', {
+            pageLabel: label,
+            citableKeys: ['Metzger', 'Wallace'],
+        });
+
+        expect(out).toContain('Metzger (p. 679) documenta la variante.');
+        expect(out).not.toContain('p. 719');
+    });
+
+    it('deja la prosa intacta si no se le pasan las claves citables', () => {
+        const conProsa = { ...analysis(), verseThesis: 'Metzger (p. 719) documenta la variante.' };
+
+        expect(serializeAnalysis(conProsa, 'es', { pageLabel: label }))
+            .toContain('Metzger (p. 719) documenta la variante.');
+    });
+
+    it('no toca la cita textual, que es transcripción literal', () => {
+        // Reescribir un número dentro de comillas convertiría una copia
+        // fiel en una cita que la fuente no dice.
+        const conVerbatim = {
+            ...buildEmptyCanonicalVerseAnalysis(VERSE),
+            commentatorEngagement: [
+                {
+                    sourceKey: 'Metzger' as const,
+                    page: 719,
+                    role: 'technical' as const,
+                    position: 'Sobre δοκίμιον.',
+                    verbatimQuote: 'as noted above in p. 719 of this volume',
+                },
+            ],
+        };
+
+        const out = serializeAnalysis(conVerbatim, 'es', {
+            pageLabel: label,
+            citableKeys: ['Metzger'],
+        });
+
+        expect(out).toContain('[verbatim: "as noted above in p. 719 of this volume"]');
+    });
+
     it('se queda en la hoja si la conversión cayera antes de la primera página', () => {
         const early = {
             ...buildEmptyCanonicalVerseAnalysis(VERSE),

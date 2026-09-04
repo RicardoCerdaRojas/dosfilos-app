@@ -1,4 +1,5 @@
 import { formatPassageReference } from '../../bible/canon/passage-reference';
+import { relabelProsePages } from './relabelProsePages';
 import type { CanonicalVerseAnalysis } from '../entities/CanonicalVerseAnalysis';
 
 /**
@@ -76,6 +77,16 @@ import type { CanonicalVerseAnalysis } from '../entities/CanonicalVerseAnalysis'
 export interface SerializeAnalysisOptions {
     /** Por defecto `p. {hoja}`, que es lo que el análisis guarda. */
     pageLabel?: (sourceKey: string, sheet: number) => string;
+    /**
+     * Claves citables del paper.
+     *
+     * Sirven para reetiquetar también las menciones de página que el
+     * análisis dejó escritas dentro de su PROSA («Adamson (p. 59) lo
+     * conecta con…»), que de otro modo viajan con el número de hoja
+     * mientras la cita formal del mismo párrafo lleva el impreso. Ver
+     * `relabelProsePages`. Sin esto sólo se reetiqueta lo estructurado.
+     */
+    citableKeys?: readonly string[];
 }
 
 export function serializeAnalysis(
@@ -84,6 +95,12 @@ export function serializeAnalysis(
     options: SerializeAnalysisOptions = {},
 ): string {
     const page = options.pageLabel ?? ((_key: string, sheet: number) => `p. ${sheet}`);
+    // La prosa sólo se toca cuando hay con qué: sin rótulo propio ni
+    // claves, reescribirla sería cambiar números por los mismos números.
+    const citableKeys = options.citableKeys ?? [];
+    const prose = options.pageLabel && citableKeys.length > 0
+        ? (text: string) => relabelProsePages(text, citableKeys, page)
+        : (text: string) => text;
     const ref = formatPassageReference(analysis.reference, language);
     const lines: string[] = [];
     lines.push(`== Verse ${ref} ==`);
@@ -98,19 +115,19 @@ export function serializeAnalysis(
         lines.push('Syntax:');
         if (analysis.syntacticAnalysis.mainVerb) {
             const mv = analysis.syntacticAnalysis.mainVerb;
-            lines.push(`- [main verb] ${mv.text} (${mv.morphology}, fn=${mv.syntacticFunction}): ${mv.interpretiveSignificance}`);
+            lines.push(`- [main verb] ${mv.text} (${mv.morphology}, fn=${mv.syntacticFunction}): ${prose(mv.interpretiveSignificance)}`);
         } else if (analysis.syntacticAnalysis.mainVerbNote) {
-            lines.push(`- [main verb] (none in this verse) — ${analysis.syntacticAnalysis.mainVerbNote}`);
+            lines.push(`- [main verb] (none in this verse) — ${prose(analysis.syntacticAnalysis.mainVerbNote)}`);
         }
         for (const kc of analysis.syntacticAnalysis.keyConstructions) {
-            lines.push(`- ${kc.text} (${kc.morphology}, fn=${kc.syntacticFunction}): ${kc.interpretiveSignificance}`);
+            lines.push(`- ${kc.text} (${kc.morphology}, fn=${kc.syntacticFunction}): ${prose(kc.interpretiveSignificance)}`);
         }
     }
     if (analysis.syntacticAnalysis.discourseParticles.length > 0) {
         lines.push('');
         lines.push('Discourse particles:');
         for (const p of analysis.syntacticAnalysis.discourseParticles) {
-            lines.push(`- ${p.particle} (${p.function}): ${p.note}`);
+            lines.push(`- ${p.particle} (${p.function}): ${prose(p.note)}`);
         }
     }
 
@@ -128,20 +145,20 @@ export function serializeAnalysis(
                 .join('; ');
             lines.push(`- ${la.term} (${la.lemma}, "${la.gloss}"):`);
             lines.push(`  general range = [${generalRange}]${generalSrcs ? ` (sources: ${generalSrcs})` : ''}`);
-            lines.push(`  verse loading: ${la.verseSpecificLoading}${loadingSrcs ? ` (sources: ${loadingSrcs})` : ''}`);
+            lines.push(`  verse loading: ${prose(la.verseSpecificLoading)}${loadingSrcs ? ` (sources: ${loadingSrcs})` : ''}`);
         }
     }
 
     // ── Textual criticism ──────────────────────────────────────────
     lines.push('');
     lines.push('Textual criticism:');
-    lines.push(`  ${analysis.textualCriticism.note}`);
+    lines.push(`  ${prose(analysis.textualCriticism.note)}`);
     for (const v of analysis.textualCriticism.variants) {
         lines.push(`- variant: ${v.lemma} → adopted "${v.adoptedReading}"`);
         for (const r of v.readings) {
             lines.push(`    reading "${r.text}" (witnesses: ${r.witnesses.join(', ')})`);
         }
-        lines.push(`    rationale: ${v.rationale}${v.apparatusReference ? ` [${v.apparatusReference}]` : ''}`);
+        lines.push(`    rationale: ${prose(v.rationale)}${v.apparatusReference ? ` [${v.apparatusReference}]` : ''}`);
     }
 
     // ── Historical context ─────────────────────────────────────────
@@ -150,7 +167,7 @@ export function serializeAnalysis(
         lines.push('Historical context:');
         for (const h of analysis.historicalContext) {
             const srcs = h.sources.map(s => `${s.sourceKey} ${page(s.sourceKey, s.page)}`).join('; ');
-            lines.push(`- ${h.aspect}: ${h.relevance}${srcs ? ` (sources: ${srcs})` : ''}`);
+            lines.push(`- ${h.aspect}: ${prose(h.relevance)}${srcs ? ` (sources: ${srcs})` : ''}`);
         }
     }
 
@@ -161,7 +178,7 @@ export function serializeAnalysis(
         for (const l of analysis.oldTestamentLinks) {
             const formula = l.citationFormula ? ` (formula: ${l.citationFormula})` : '';
             const srcs = l.sources.map(s => `${s.sourceKey} ${page(s.sourceKey, s.page)}`).join('; ');
-            lines.push(`- [${l.type}] ${l.sourcePassage}${formula}: ${l.interpretiveBearing}${srcs ? ` (sources: ${srcs})` : ''}`);
+            lines.push(`- [${l.type}] ${l.sourcePassage}${formula}: ${prose(l.interpretiveBearing)}${srcs ? ` (sources: ${srcs})` : ''}`);
         }
     }
 
@@ -171,7 +188,7 @@ export function serializeAnalysis(
         lines.push('Commentator positions:');
         for (const c of analysis.commentatorEngagement) {
             const verbatim = c.verbatimQuote ? ` [verbatim: "${c.verbatimQuote}"]` : '';
-            lines.push(`- [${c.role}] ${c.sourceKey} (${page(c.sourceKey, c.page)}): ${c.position}${verbatim}`);
+            lines.push(`- [${c.role}] ${c.sourceKey} (${page(c.sourceKey, c.page)}): ${prose(c.position)}${verbatim}`);
         }
     }
 
@@ -180,7 +197,7 @@ export function serializeAnalysis(
         lines.push('');
         lines.push('Translation cruxes:');
         for (const cx of analysis.translationCruxes) {
-            lines.push(`- "${cx.phrase}": ${cx.description}`);
+            lines.push(`- "${cx.phrase}": ${prose(cx.description)}`);
             const opts = cx.options
                 .map((o, i) => `${i}=${JSON.stringify(o.translation)} (${o.characterization})`)
                 .join('; ');
@@ -190,17 +207,17 @@ export function serializeAnalysis(
                     const verbatim = p.verbatimQuote?.trim()
                         ? ` [verbatim: "${p.verbatimQuote.trim()}"]`
                         : '';
-                    return `${p.sourceKey} ${page(p.sourceKey, p.page)} → opt ${p.supports}: ${p.summary}${verbatim}`;
+                    return `${p.sourceKey} ${page(p.sourceKey, p.page)} → opt ${p.supports}: ${prose(p.summary)}${verbatim}`;
                 })
                 .join(' | ');
             if (positions) lines.push(`    positions: ${positions}`);
-            lines.push(`    commitment: "${cx.commitment.chosen}". Rationale: ${cx.commitment.rationale}`);
+            lines.push(`    commitment: "${cx.commitment.chosen}". Rationale: ${prose(cx.commitment.rationale)}`);
         }
     }
 
     // ── Verse thesis ───────────────────────────────────────────────
     lines.push('');
-    lines.push(`Verse thesis: ${analysis.verseThesis}`);
+    lines.push(`Verse thesis: ${prose(analysis.verseThesis)}`);
 
     // ── Footnote extensions ────────────────────────────────────────
     if (analysis.footnoteExtensions.length > 0) {
@@ -209,7 +226,7 @@ export function serializeAnalysis(
         for (const fn of analysis.footnoteExtensions) {
             const srcs = fn.sources.map(s => `${s.sourceKey} ${page(s.sourceKey, s.page)}`).join('; ');
             lines.push(`- anchor: "${fn.anchorPhrase}"`);
-            lines.push(`  text: ${fn.text}${srcs ? ` (sources: ${srcs})` : ''}`);
+            lines.push(`  text: ${prose(fn.text)}${srcs ? ` (sources: ${srcs})` : ''}`);
         }
     }
 
@@ -219,7 +236,7 @@ export function serializeAnalysis(
         lines.push('Confidence flags:');
         for (const f of analysis.confidenceFlags) {
             const hedges = f.preferredHedges.join(', ');
-            lines.push(`- [${f.level}] ${f.claim}${hedges ? ` → preferred hedges: ${hedges}` : ''}`);
+            lines.push(`- [${f.level}] ${prose(f.claim)}${hedges ? ` → preferred hedges: ${hedges}` : ''}`);
         }
     }
 
