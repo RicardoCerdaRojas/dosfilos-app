@@ -342,6 +342,7 @@
         "toast": {
             "pinned": "Pinned to project",
             "unpinned": "Unpinned from project",
+            "deleteError": "The resource could not be deleted. It's still in your library.",
             "noProject": "This session has no project. Assign the session to a project first.",
             "noProjectsAvailable": "You haven't created any projects yet."
         }

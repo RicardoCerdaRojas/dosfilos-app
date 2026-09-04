@@ -342,6 +342,7 @@
         "toast": {
             "pinned": "Anclado al proyecto",
             "unpinned": "Desanclado del proyecto",
+            "deleteError": "No se pudo eliminar el recurso. Sigue en tu biblioteca.",
             "noProject": "Esta sesión no tiene proyecto. Primero asigna la sesión a un proyecto.",
             "noProjectsAvailable": "Aún no has creado proyectos. Crea uno desde la barra lateral."
         }
