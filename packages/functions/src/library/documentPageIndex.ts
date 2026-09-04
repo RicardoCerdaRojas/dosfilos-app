@@ -36,6 +36,15 @@ const DEFAULT_BUCKET = 'dosfilosapp.firebasestorage.app';
 const HEAD_CHARS = 180;
 
 /**
+ * Cuánta cola de la hoja se devuelve, para el folio de los libros que
+ * numeran al pie.
+ *
+ * Corta a propósito: sólo hace falta el número y lo poco que lo rodea. A
+ * 400 hojas son ~24 KB, contra los ~72 KB que ya cuesta el encabezado.
+ */
+const TAIL_CHARS = 60;
+
+/**
  * Vida de la URL firmada del PDF. Corta a propósito: alcanza para abrir el
  * documento y trabajar un rato, y no deja circulando un enlace de lectura a la
  * biblioteca de alguien.
@@ -56,6 +65,17 @@ interface PageIndexEntryPayload {
     chunkIndices: number[];
     section: string | null;
     firstLine: string;
+    /**
+     * Final del texto de la hoja, donde vive el folio cuando el libro
+     * numera al pie.
+     *
+     * El desfase entre hoja y página impresa se deducía sólo de
+     * `firstLine`, así que sólo se detectaba en libros que numeran arriba.
+     * En tipografía académica la mayoría numera abajo: en el comentario de
+     * Adamson la hoja 54 lleva impreso el 50 y el detector no veía nada,
+     * de modo que el lector abría una página creyendo que era otra.
+     */
+    lastLine: string;
     charCount: number;
 }
 
@@ -82,6 +102,13 @@ function canRead(data: FirebaseFirestore.DocumentData, uid: string): boolean {
 function headOf(text: unknown): string {
     if (typeof text !== 'string') return '';
     return text.replace(/\s+/g, ' ').trim().slice(0, HEAD_CHARS);
+}
+
+/** Cola de la hoja: el folio al pie y poco más. */
+function tailOf(text: unknown): string {
+    if (typeof text !== 'string') return '';
+    const flat = text.replace(/\s+/g, ' ').trim();
+    return flat.slice(Math.max(0, flat.length - TAIL_CHARS));
 }
 
 /**
@@ -129,7 +156,14 @@ export const getDocumentPageIndex = onCall<PageIndexRequest>(
 
             let entry = bySheet.get(sheet);
             if (!entry) {
-                entry = { sheet, chunkIndices: [], section, firstLine: headOf(text), charCount: 0 };
+                entry = {
+                    sheet,
+                    chunkIndices: [],
+                    section,
+                    firstLine: headOf(text),
+                    lastLine: tailOf(text),
+                    charCount: 0,
+                };
                 bySheet.set(sheet, entry);
             }
             entry.chunkIndices.push(chunkIndex);
@@ -138,6 +172,10 @@ export const getDocumentPageIndex = onCall<PageIndexRequest>(
             // en el siguiente; se toma el primero que exista.
             if (!entry.section && section) entry.section = section;
             if (!entry.firstLine) entry.firstLine = headOf(text);
+            // La cola se reemplaza con cada fragmento: el folio está al final
+            // de la hoja, así que gana el ÚLTIMO que llegue, no el primero.
+            const tail = tailOf(text);
+            if (tail) entry.lastLine = tail;
         }
 
         const pages = Array.from(bySheet.values()).sort((a, b) => a.sheet - b.sheet);

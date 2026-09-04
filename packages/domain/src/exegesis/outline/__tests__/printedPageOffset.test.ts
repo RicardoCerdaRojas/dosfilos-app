@@ -141,3 +141,43 @@ describe('sheetForPrintedPage', () => {
         expect(sheetForPrintedPage(Number.NaN, -2)).toBeNull();
     });
 });
+
+describe('detectPrintedPageOffset — folio al pie', () => {
+    /**
+     * La forma real de Adamson: encabezado corrido con el título arriba y
+     * el número de página abajo. La hoja 54 lleva impreso el 50.
+     */
+    function adamsonSheet(sheet: number): PageTextSample {
+        return {
+            page: sheet,
+            text: `THE EPISTLE OF JAMES alive with the ancient, restricted privileges `
+                + `of those Jews under the Covenant, and, we submit. ${sheet - 4}`,
+        };
+    }
+
+    it('lo detecta cuando la cola de la hoja viaja en la muestra', () => {
+        const samples = Array.from({ length: 12 }, (_, i) => adamsonSheet(50 + i));
+
+        expect(detectPrintedPageOffset(samples).offset).toBe(-4);
+    });
+
+    it('no lo detecta si sólo llega el encabezado', () => {
+        // Es lo que pasaba: el cliente pasaba únicamente `firstLine`, así
+        // que en un libro que numera al pie el folio no llegaba nunca.
+        const samples = Array.from({ length: 12 }, (_, i) => ({
+            page: 50 + i,
+            text: 'THE EPISTLE OF JAMES alive with the ancient, restricted privileges',
+        }));
+
+        expect(detectPrintedPageOffset(samples).offset).toBeNull();
+    });
+
+    it('sigue detectando el folio arriba', () => {
+        const samples = Array.from({ length: 12 }, (_, i) => ({
+            page: 77 + i,
+            text: `${75 + i} INTRODUCTION hastening hard to its predestined climax`,
+        }));
+
+        expect(detectPrintedPageOffset(samples).offset).toBe(-2);
+    });
+});

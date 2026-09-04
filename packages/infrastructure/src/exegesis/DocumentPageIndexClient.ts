@@ -63,10 +63,16 @@ export async function fetchDocumentPageIndex(resourceId: string): Promise<Docume
         const response = await callable({ resourceId });
         const pages = response.data?.pages ?? [];
 
-        // El folio impreso vive en el arranque de la hoja, que es justo lo que
-        // el servidor devuelve como vista previa.
+        // El folio vive arriba en unos libros y al pie en otros, así que se
+        // le da al detector el arranque Y el final de cada hoja. Pasarle
+        // sólo el arranque —como se hacía— dejaba sin desfase a todo libro
+        // que numere abajo, y el lector abría una página creyendo que era
+        // otra: en el comentario de Adamson la hoja 54 lleva impreso el 50.
         const detection = detectPrintedPageOffset(
-            pages.map(p => ({ page: p.sheet, text: p.firstLine })),
+            pages.map(p => ({
+                page: p.sheet,
+                text: p.lastLine ? `${p.firstLine} ${p.lastLine}` : p.firstLine,
+            })),
         );
 
         console.log('[DocumentPageIndex] índice cargado', {
