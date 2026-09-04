@@ -1,89 +1,87 @@
-import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { getFunctions } from 'firebase-admin/functions';
 import { indexResourceChunks } from './indexStructuredDocument';
-import { isStructuredExtractionVersion } from './extractionVersions';
+import { shouldAutoIndex } from './shouldAutoIndex';
 
 /**
- * Firestore trigger: when a library_resource's extraction completes with LlamaParse,
- * automatically build its Phase 2 RAG index (chunks + embeddings).
+ * Disparador de Firestore: cuando la extracción de un recurso queda
+ * lista, se arma solo su índice RAG (chunks + embeddings).
  *
- * Fires when:
- *   - `textExtractionStatus` transitions to 'ready' (from anything else)
- *   - `extractionVersion` is '3.0-llamaparse'
- *   - `structuredContentUrl` is set
- *   - `indexerVersion` is not already the current version (avoids loops on re-trigger)
+ * Es `onDocumentWritten` y no `onDocumentUpdated` a propósito. El
+ * anterior exigía una TRANSICIÓN de `textExtractionStatus` a `ready`:
+ * la subida normal la produce, pero un documento que NACE en `ready`
+ * no produce ninguna — y ese es el caso de la biblioteca clonada de la
+ * cuenta embajador, cuyos libros nunca se indexaron. La condición vive
+ * ahora en `shouldAutoIndex`, con pruebas.
  *
- * This replaces the need for users to click "Indexar" manually after upload.
- * Admin can still re-index via the callable `indexStructuredDocument` (with force=true)
- * for reindexing after prompt/embedding changes.
+ * El trabajo NO corre acá. Los disparadores de Firestore tienen 540 s
+ * de tope duro y un libro grande no cabe —Wallace produce 959 chunks—,
+ * así que el disparador decide y encola, y `indexResourceTask` indexa
+ * con 900 s y reintentos. Lo que sí cabe en 540 s es tomar la decisión.
  */
-export const autoIndexOnExtractionReady = onDocumentUpdated(
+export const autoIndexOnExtractionReady = onDocumentWritten(
     {
         document: 'library_resources/{resourceId}',
         region: 'us-central1',
+        // Este disparador ya no hace el trabajo pesado: decide, encola y
+        // sale. La memoria alta y los 540 s quedan por el camino de
+        // respaldo de abajo, que sí indexa en línea cuando la cola no
+        // está disponible.
         memory: '2GiB',
-        // Firestore triggers are capped at 540s by the platform. Very large documents
-        // (>500 chunks) may exceed this window due to embedding rate limits. When that
-        // happens the function errors out but leaves indexingStatus='failed'; the user
-        // can retry manually via the callable `indexStructuredDocument` (which supports
-        // up to 900s for long-running reindexes).
         timeoutSeconds: 540,
         secrets: ['GEMINI_API_KEY'],
     },
     async (event) => {
-        const before = event.data?.before.data();
-        const after = event.data?.after.data();
-        if (!before || !after) return;
-
         const resourceId = event.params.resourceId;
+        const decision = shouldAutoIndex(
+            event.data?.before.data(),
+            event.data?.after.data(),
+        );
 
-        // Trigger conditions — all must be true
-        const wasNotReady = before.textExtractionStatus !== 'ready';
-        const isNowReady = after.textExtractionStatus === 'ready';
-        // All three extraction paths (LlamaParse premium, Gemini standard,
-        // pdf-parse last-resort fallback) emit the same `<!-- page: N -->`
-        // markdown contract that the indexer needs. The pdf-parse output
-        // synthesizes page markers from form-feed boundaries (or equal-
-        // segment splitting when those aren't available) so the user
-        // gets indexed content even when both premium engines fail.
-        // Membership is centralised in `extractionVersions.ts` — see
-        // that file when adding a new extractor.
-        const isStructuredExtraction = isStructuredExtractionVersion(after.extractionVersion);
-        const hasStructuredContent = !!after.structuredContentUrl;
-        const INDEXER_VERSION_CURRENT = '2.0-structured';
-        const needsIndex = after.indexerVersion !== INDEXER_VERSION_CURRENT;
-
-        if (!(wasNotReady && isNowReady)) return;
-        if (!isStructuredExtraction) {
-            console.log(`[AutoIndex] ${resourceId}: extraction version ${after.extractionVersion} not supported for auto-index; skipping`);
+        if (!decision.index) {
+            // Sólo se registran los motivos que dicen algo. «No está
+            // lista» y «ya estaba lista» ocurren en cada tecleo sobre el
+            // documento y llenarían el log de ruido.
+            if (decision.reason !== 'not-ready' && decision.reason !== 'already-was-ready' && decision.reason !== 'deleted') {
+                console.log(`[AutoIndex] ${resourceId}: omitido (${decision.reason})`);
+            }
             return;
         }
-        if (!hasStructuredContent) {
-            console.log(`[AutoIndex] ${resourceId}: no structuredContentUrl; skipping`);
+
+        try {
+            await getFunctions()
+                .taskQueue('locations/us-central1/functions/indexResourceTask')
+                .enqueue({ resourceId }, { dispatchDeadlineSeconds: 900 });
+            console.log(`[AutoIndex] ${resourceId}: encolado para indexar`);
             return;
-        }
-        if (!needsIndex) {
-            console.log(`[AutoIndex] ${resourceId}: already indexed at ${INDEXER_VERSION_CURRENT}; skipping`);
-            return;
+        } catch (err: any) {
+            // La cola es la que quita el techo de 540 s, pero no puede
+            // ser un punto único de fallo: si no se pudo encolar, se
+            // indexa acá mismo. Un libro chico entra sin problema y uno
+            // grande queda como estaba antes de este cambio — nunca
+            // peor. Y se dice, porque un encolado que falla en silencio
+            // volvería a dejar libros sin indexar sin que nadie lo note.
+            console.error(`[AutoIndex] ${resourceId}: no se pudo encolar (${err?.message ?? err}); se indexa en línea`);
         }
 
         const geminiKey = process.env.GEMINI_API_KEY;
         if (!geminiKey) {
-            console.error(`[AutoIndex] ${resourceId}: GEMINI_API_KEY not configured; cannot index`);
+            console.error(`[AutoIndex] ${resourceId}: falta GEMINI_API_KEY; no se puede indexar`);
             return;
         }
 
-        console.log(`[AutoIndex] ${resourceId}: extraction ready — starting automatic Phase 2 indexing`);
         try {
             const result = await indexResourceChunks(resourceId, { force: false, geminiKey });
             if ('skipped' in result && result.skipped) {
-                console.log(`[AutoIndex] ${resourceId}: skipped (${result.reason})`);
+                console.log(`[AutoIndex] ${resourceId}: omitido (${result.reason})`);
             } else if ('chunkCount' in result) {
-                console.log(`[AutoIndex] ✅ ${resourceId}: indexed ${result.chunkCount} chunks`);
+                console.log(`[AutoIndex] ✅ ${resourceId}: ${result.chunkCount} chunks indexados en línea`);
             }
         } catch (err: any) {
-            // Errors are already logged + persisted as `indexingStatus: 'failed'` by
-            // indexResourceChunks. We log again here for trigger-level observability.
+            // El indexador ya dejó escrito `indexingStatus: 'failed'` con
+            // su motivo. Acá se registra de nuevo para poder verlo desde
+            // el disparador.
             console.error(`[AutoIndex] ❌ ${resourceId}: ${err?.message ?? err}`);
         }
-    }
+    },
 );
