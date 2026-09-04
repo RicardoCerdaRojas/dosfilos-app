@@ -12,6 +12,7 @@ export { resetLlamaParseCounters } from './library/resetLlamaParseCounters';
 export { alertLlamaParseUsage } from './library/alertLlamaParseUsage';
 export { indexStructuredDocument } from './library/indexStructuredDocument';
 export { autoIndexOnExtractionReady } from './library/autoIndexOnExtractionReady';
+export { indexResourceTask } from './library/indexResourceTask';
 export { alertFailedIndexing } from './library/alertFailedIndexing';
 export { sweepStalledExtractions } from './library/sweepStalledExtractions';
 export { incrementUsage } from './usage/incrementUsage';
