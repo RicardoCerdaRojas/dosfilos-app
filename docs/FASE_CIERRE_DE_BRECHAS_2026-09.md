@@ -99,6 +99,13 @@ veces.
 **Pendiente heredado:** el BHQ de los Doce Profetas tiene cero letras hebreas en
 el índice. El AT sigue sin aparato usable.
 
+**El NA28 born-digital entró después** (1.006 págs, índice completo, griego
+buscable) y quedó marcado como uso personal —`All rights reserved /
+permission required` + `approved_metadata_only`—: su aparato pierde dos siglas
+al convertirse en texto (`ℵ`→`a`, `𝔓`→`P`) y no se redistribuye. La reparación
+de esas siglas tiene requerimiento propio en
+`docs/APARATO_REPARACION_DE_SIGLAS.md`.
+
 Lo que sigue no es desarrollo: es limpieza sobre datos reales.
 
 | Qué | Efecto |
