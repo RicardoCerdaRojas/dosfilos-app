@@ -16,6 +16,7 @@ import {
 import { armExtractionDeadlineGuard, type DeadlineGuard } from './extractionDeadlineGuard';
 import { isMarkerOnlyMarkdown } from './indexCoverage';
 import { truncateUtf8 } from './truncateUtf8';
+import { describeLayoutRepair, repairExtractedLayout } from './repairExtractedLayout';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse');
 
@@ -92,15 +93,26 @@ async function extractWithLlamaParse(
 /**
  * Clean up text extracted by pdf-parse
  * Fixes common issues like words stuck together
+ *
+ * La separación de mayúscula pegada sólo entendía alfabeto latino, así
+ * que el griego y el hebreo salían intactos en su daño: el número de
+ * versículo pegado a la palabra y la palabra partida por el guion de
+ * fin de línea. Eso lo repara `repairExtractedLayout`, que corre ANTES
+ * de colapsar los espacios —necesita ver el salto de línea para
+ * reconocer el corte—.
  */
-function cleanPdfText(text: string): string {
-    return text
-        // Add space between lowercase and uppercase (camelCase words)
-        .replace(/([a-záéíóúñ])([A-ZÁÉÍÓÚÑ])/g, '$1 $2')
-        // Fix common OCR issues
-        .replace(/\s+/g, ' ')  // Multiple spaces to single
-        .replace(/\n{3,}/g, '\n\n')  // Multiple newlines to double
-        .trim();
+function cleanPdfText(text: string): { text: string; repair: ReturnType<typeof repairExtractedLayout>['report'] } {
+    const repaired = repairExtractedLayout(text);
+    return {
+        text: repaired.text
+            // Add space between lowercase and uppercase (camelCase words)
+            .replace(/([a-záéíóúñ])([A-ZÁÉÍÓÚÑ])/g, '$1 $2')
+            // Fix common OCR issues
+            .replace(/\s+/g, ' ')  // Multiple spaces to single
+            .replace(/\n{3,}/g, '\n\n')  // Multiple newlines to double
+            .trim(),
+        repair: repaired.report,
+    };
 }
 
 /**
@@ -140,7 +152,18 @@ async function extractWithPdfParse(buffer: Buffer): Promise<{
 
     // Clean each page independently (preserves the per-page structure so
     // line-end / multi-space normalization doesn't bleed across pages).
-    const cleanedPages = pageTexts.map(t => cleanPdfText(t));
+    const cleaned = pageTexts.map(t => cleanPdfText(t));
+    const cleanedPages = cleaned.map(c => c.text);
+    const repair = cleaned.reduce(
+        (acc, c) => ({
+            hyphenJoins: acc.hyphenJoins + c.repair.hyphenJoins,
+            digitSplits: acc.digitSplits + c.repair.digitSplits,
+        }),
+        { hyphenJoins: 0, digitSplits: 0 },
+    );
+    const resumen = describeLayoutRepair(repair);
+    if (resumen) console.log(`🔧 [Extract] maquetación reparada: ${resumen}`);
+
     const text = cleanedPages.map((p, i) => `[PAGE ${i + 1}]\n${p}`).join('\n\n');
     const markdown = cleanedPages
         .map((p, i) => `<!-- page: ${i + 1} -->\n${p}`)

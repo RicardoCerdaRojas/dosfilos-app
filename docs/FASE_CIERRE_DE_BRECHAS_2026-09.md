@@ -20,7 +20,7 @@ porque el código exista: se cierra cuando alguien lo vio funcionar.
 |---|---|---|
 | 1 | Autosave del editor de recursos, sin acuse | pendiente |
 | 2 | El auto-indexador no dispara en creación | pendiente |
-| 3 | Higiene de datos de la biblioteca | 🔄 tandas 1 y 2 hechas · falta NTG 28 |
+| 3 | Higiene de datos de la biblioteca | ✅ cerrada (NTG 28 sustituido por un born-digital) |
 | 4 | Informe previo al subir un PDF | pendiente · pide diseño |
 | 5 | Fork de la guía de estilo por trabajo | pendiente |
 | 6 | El binding `allUsers` del auto-indexador | pendiente · decisión del fundador |
@@ -82,7 +82,22 @@ copia.
   libro entero—. Costo real: cero páginas, porque Gemini agotó tokens en los
   tres y pdf-parse, que es gratis, entregó el texto completo.
 
-**Pendiente:** el NTG 28 (§ aparte, abajo).
+**El NTG 28 se quitó y se sustituyó.** Era un escaneo puro —cero fuentes, 2.040
+caracteres extraíbles en 1.020 páginas— cuyo griego venía de OCR sin acentos ni
+espacios. Gemini se niega a transcribirlo (`finishReason=RECITATION`) y
+LlamaParse `premium` costaría 45.900 créditos contra un cupo de 10.000. En su
+lugar entró un NA28 born-digital: 1.006 páginas, índice completo, ratio de
+diacríticos 0,198 y los signos críticos preservados. Costo cero.
+
+**El aparato crítico queda en Metzger**, con `exegeticalType: 'critical-apparatus'`
+(rol técnico): nombra los testigos en prosa sin ambigüedad. El NA28 nuevo sirve
+para el TEXTO, no para el aparato — su capa de texto rinde `ℵ` como `a` (que en
+el aparato es un latino antiguo) y `𝔓` como `P`. No se corrige automáticamente:
+una regla que acierte casi siempre fabrica testimonio falso el resto de las
+veces.
+
+**Pendiente heredado:** el BHQ de los Doce Profetas tiene cero letras hebreas en
+el índice. El AT sigue sin aparato usable.
 
 Lo que sigue no es desarrollo: es limpieza sobre datos reales.
 
