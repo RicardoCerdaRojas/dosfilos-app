@@ -20,7 +20,7 @@ porque el código exista: se cierra cuando alguien lo vio funcionar.
 |---|---|---|
 | 1 | Autosave del editor de recursos, sin acuse | pendiente |
 | 2 | El auto-indexador no dispara en creación | pendiente |
-| 3 | Higiene de datos de la biblioteca | pendiente |
+| 3 | Higiene de datos de la biblioteca | 🔄 tandas 1 y 2 hechas · falta NTG 28 |
 | 4 | Informe previo al subir un PDF | pendiente · pide diseño |
 | 5 | Fork de la guía de estilo por trabajo | pendiente |
 | 6 | El binding `allUsers` del auto-indexador | pendiente · decisión del fundador |
@@ -65,7 +65,26 @@ recupera su botón «Procesar». Falta que no haga falta pulsarlo.
 
 ## 3 · Higiene de datos de la biblioteca
 
-No es desarrollo: es limpieza sobre datos reales.
+**Corrección al barrido:** los duplicados que reportaba (Kittel ×2, NTG 28 ×2,
+Barrick ×3, Gelston ×2) se habían medido sobre la colección entera, con las
+DOS bibliotecas juntas. Veintidós títulos existen en la cuenta del fundador y
+en la del embajador, y eso no es un duplicado: es que cada usuario tiene su
+copia.
+
+**Hecho (2026-09-05):**
+- 5 copias reales borradas —detectadas por páginas + caracteres, no por
+  título, que es por lo que dos se llamaban distinto— y 3.373 chunks huérfanos
+  con ellas. El proyecto «Teología II - Cristología» quedó apuntando a las
+  copias completas antes del borrado.
+- Cobertura medida chunk a chunk en los 49 libros de más de 50 páginas: 43
+  estaban completos, 6 no. Tres eran duplicados; los otros tres se
+  re-extrajeron y quedaron al 100% —MacArthur pasó de la página 64 de 1.011 al
+  libro entero—. Costo real: cero páginas, porque Gemini agotó tokens en los
+  tres y pdf-parse, que es gratis, entregó el texto completo.
+
+**Pendiente:** el NTG 28 (§ aparte, abajo).
+
+Lo que sigue no es desarrollo: es limpieza sobre datos reales.
 
 | Qué | Efecto |
 |---|---|

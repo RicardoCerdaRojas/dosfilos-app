@@ -3,7 +3,8 @@ import { LibraryCategory, ResourceType } from '@dosfilos/domain';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LayoutGrid, List, Search } from 'lucide-react';
+import { BookMarked, LayoutGrid, List, Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export type ViewMode = 'grid' | 'list';
 
@@ -16,12 +17,15 @@ interface LibraryFiltersProps {
     categoryFilter: ResourceType | 'all';
     /** Active view mode (grid or list). */
     viewMode: ViewMode;
+    /** Cuando está activo, sólo se listan los recursos sin libros bíblicos. */
+    onlyWithoutBooks: boolean;
     /** Search input change handler. */
     onSearchChange: (query: string) => void;
     /** Category filter change handler. */
     onCategoryChange: (filter: ResourceType | 'all') => void;
     /** View mode change handler. */
     onViewModeChange: (mode: ViewMode) => void;
+    onOnlyWithoutBooksChange: (only: boolean) => void;
 }
 
 /**
@@ -33,9 +37,11 @@ export function LibraryFilters({
     searchQuery,
     categoryFilter,
     viewMode,
+    onlyWithoutBooks,
     onSearchChange,
     onCategoryChange,
     onViewModeChange,
+    onOnlyWithoutBooksChange,
 }: LibraryFiltersProps) {
     const { t } = useTranslation('library');
 
@@ -61,6 +67,24 @@ export function LibraryFilters({
                     ))}
                 </SelectContent>
             </Select>
+            {/*
+              * Sin este filtro no había forma de ver qué recursos
+              * quedaron sin libros asignados: el detector automático
+              * deja siempre un resto —homilética, consejería— que hay
+              * que completar a mano, y encontrarlo obligaba a abrir uno
+              * por uno.
+              */}
+            <Button
+                variant={onlyWithoutBooks ? 'secondary' : 'outline'}
+                size="sm"
+                aria-pressed={onlyWithoutBooks}
+                onClick={() => onOnlyWithoutBooksChange(!onlyWithoutBooks)}
+                className={cn('h-9 gap-1.5', onlyWithoutBooks && 'border-primary/40')}
+                title={t('filters.onlyWithoutBooksTitle')}
+            >
+                <BookMarked className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t('filters.onlyWithoutBooks')}</span>
+            </Button>
             <div className="flex gap-0.5 border border-border/60 rounded-lg p-0.5 sm:ml-auto">
                 <Button
                     variant={viewMode === 'grid' ? 'secondary' : 'ghost'}

@@ -70,6 +70,8 @@
   },
   "filters": {
     "searchPlaceholder": "Buscar título o autor",
+    "onlyWithoutBooks": "Sin libros",
+    "onlyWithoutBooksTitle": "Mostrar sólo los recursos a los que falta asignar libros bíblicos",
     "allCategories": "Todas las categorías",
     "viewGridTitle": "Vista en cuadrícula",
     "viewListTitle": "Vista en lista"
