@@ -1,15 +1,47 @@
 /**
- * Cleanup script for orphaned document chunks
- * Run with: npx ts-node scripts/cleanup-orphan-chunks.ts
+ * Borra los chunks cuyo recurso ya no existe.
+ *
+ * Un chunk huérfano NO es basura inerte: el recuperador filtra por
+ * usuario y por store, no comprueba que el libro exista, así que un
+ * recurso borrado sigue apareciendo en las búsquedas y en las citas.
+ * Por eso esto se corre después de borrar recursos, no «alguna vez».
+ *
+ * Uso:
+ *   npx ts-node --skipProject scripts/cleanup-orphan-chunks.ts --dry-run
+ *   npx ts-node --skipProject scripts/cleanup-orphan-chunks.ts
+ *
+ * `--skipProject` es obligatorio: el `tsconfig.json` de la raíz extiende
+ * `expo/tsconfig.base`, y `expo` no está en el `node_modules` de la raíz
+ * porque el paquete mobile va con nohoist. Sin la bandera, ts-node
+ * muere con «File 'expo/tsconfig.base' not found» antes de ejecutar una
+ * sola línea.
+ *
+ * Credenciales, en este orden:
+ *   1. `firebase-service-account.json` en la raíz, si existe.
+ *   2. Credenciales por defecto de la aplicación (ADC), o sea
+ *      `gcloud auth application-default login`.
+ * La segunda evita tener que descargar y guardar una llave en disco.
  */
-import { initializeApp, cert } from 'firebase-admin/app';
+import { initializeApp, cert, applicationDefault } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// Initialize Firebase Admin
-const serviceAccount = require('../firebase-service-account.json');
+const DRY_RUN = process.argv.includes('--dry-run');
+
+function credencial() {
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const serviceAccount = require('../firebase-service-account.json');
+        console.log('🔑 Usando firebase-service-account.json');
+        return cert(serviceAccount);
+    } catch {
+        console.log('🔑 Sin llave en disco; usando credenciales por defecto (ADC)');
+        return applicationDefault();
+    }
+}
 
 initializeApp({
-    credential: cert(serviceAccount)
+    credential: credencial(),
+    projectId: process.env.GOOGLE_CLOUD_PROJECT ?? 'dosfilosapp',
 });
 
 const db = getFirestore();
@@ -20,8 +52,11 @@ const RESOURCES_COLLECTION = 'library_resources';
 async function findOrphanedChunks(): Promise<string[]> {
     console.log('🔍 Finding orphaned chunks...\n');
 
-    // Get all unique resourceIds from chunks
-    const chunksSnapshot = await db.collection(CHUNKS_COLLECTION).get();
+    // Sólo el campo `resourceId`. Sin la proyección, esto arrastra los
+    // 55.000 chunks CON su vector de embeddings —cientos de megabytes—
+    // para juntar setenta y pico de ids. La consulta tardaba minutos y
+    // parecía colgada.
+    const chunksSnapshot = await db.collection(CHUNKS_COLLECTION).select('resourceId').get();
     const chunkResourceIds = new Set<string>();
 
     chunksSnapshot.docs.forEach(doc => {
@@ -53,6 +88,11 @@ async function findOrphanedChunks(): Promise<string[]> {
 async function deleteOrphanedChunks(resourceIds: string[]): Promise<void> {
     if (resourceIds.length === 0) {
         console.log('\n✅ No orphaned chunks to delete!');
+        return;
+    }
+
+    if (DRY_RUN) {
+        console.log(`\n🔎 SIMULACIÓN: no se borra nada. ${resourceIds.length} recurso(s) huérfano(s) arriba.`);
         return;
     }
 
