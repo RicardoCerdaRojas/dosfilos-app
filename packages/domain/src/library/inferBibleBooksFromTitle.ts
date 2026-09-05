@@ -35,13 +35,19 @@ export function inferBibleBooksFromTitle(title: string): {
 } {
     const normalized = normalizeAlias(title);
     if (!normalized) return { books: [], inferredScope: null };
+    // Los guiones, comas y paréntesis se pegan a la palabra y rompen
+    // toda comparación: «Jude-2 Peter, Volume 50 (WBC)» daba los tokens
+    // `jude-2` y `peter,`, que no son nada. `normalizeAlias` no los toca
+    // porque también normaliza los alias del canon, donde el guion sí
+    // distingue. Se aplana acá, para comparar.
+    const flat = flattenPunctuation(normalized);
 
     // 1. Reference-work shortcuts. Hand-curated map of known scholarly
     //    works whose titles don't list specific books but whose scope
     //    is well-known. Matched as substrings against the normalized
     //    title (so "BDAG (3rd ed.)" still hits).
     for (const entry of REFERENCE_WORKS) {
-        if (entry.match.some(needle => normalized.includes(needle))) {
+        if (entry.match.some(needle => normalized.includes(needle) || flat.includes(flattenPunctuation(needle)))) {
             return { books: [], inferredScope: entry.scope };
         }
     }
@@ -50,13 +56,13 @@ export function inferBibleBooksFromTitle(title: string): {
     //    single-book matching because "Letters of John" should NOT
     //    resolve to just JHN by accident.
     for (const phrase of MULTI_BOOK_PHRASES) {
-        if (phrase.match.some(needle => normalized.includes(needle))) {
+        if (phrase.match.some(needle => normalized.includes(needle) || flat.includes(flattenPunctuation(needle)))) {
             return { books: phrase.books, inferredScope: 'book' };
         }
     }
 
     // 3. Token-by-token book-name detection.
-    const books = extractBooksFromTokens(normalized);
+    const books = extractBooksFromTokens(flat);
     if (books.length === 0) {
         return { books: [], inferredScope: null };
     }
@@ -64,6 +70,18 @@ export function inferBibleBooksFromTitle(title: string): {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
+
+/**
+ * Deja sólo letras, números y espacios simples.
+ *
+ * Sin esto, un título con puntuación no se puede leer por palabras: el
+ * catálogo real tenía «Jude-2 Peter, Volume 50 (Word Biblical
+ * Commentary)» sin ningún libro detectado, porque los tokens eran
+ * `jude-2` y `peter,`.
+ */
+function flattenPunctuation(text: string): string {
+    return text.replace(/[^\p{L}\p{N}]+/gu, ' ').replace(/\s+/g, ' ').trim();
+}
 
 /**
  * Walk the tokens of the title and accumulate canonical book ids. Handles:
@@ -209,10 +227,25 @@ const REFERENCE_WORKS: ReferenceWorkEntry[] = [
     { match: ['tlot', 'theological lexicon of the old testament'], scope: 'whole-testament' },
     { match: ['nidotte', 'new international dictionary of old testament theology'], scope: 'whole-testament' },
     { match: ['rahlfs', 'göttingen septuaginta', 'gottingen septuaginta', 'septuaginta', 'septuagint', 'lxx '], scope: 'whole-testament' },
+    // ── Obras de referencia en español ──────────────────────────────────
+    // La lista nació en inglés, y una biblioteca real en español dejaba
+    // fuera de todo paper su gramática griega, su léxico hebreo y su
+    // diccionario teológico: sin ámbito, el diálogo de corpus los trata
+    // como obras «de un libro» sin libro y los filtra siempre.
+    { match: ['gramatica griega', 'griego para pastores', 'lexico griego'], scope: 'whole-testament' },
+    { match: ['diccionario teologico del nt', 'diccionario teologico del nuevo testamento'], scope: 'whole-testament' },
+    { match: ['gramatica hebrea', 'gramatica hebreo', 'gramatica para hebreo', 'hebreo biblico'], scope: 'whole-testament' },
+    { match: ['lexicon hebreo', 'lexico hebreo', 'lexicon hebreo arameo'], scope: 'whole-testament' },
+    { match: ['introduccion al nuevo testamento', 'introduction to the new testament'], scope: 'whole-testament' },
+    // Metzger acompaña al aparato del UBS: la entrada existente cubría
+    // UBS5 y UBS6, y la edición que hay en la biblioteca es la del UBS4.
+    { match: ['textual commentary on the greek new testament', 'ubs4', 'ubs 4'], scope: 'whole-testament' },
+
     // ── Whole-canon dictionaries / theologies ───────────────────────────
     { match: ['anchor bible dictionary', 'abd'], scope: 'whole-bible' },
     { match: ['ivp dictionary', 'dictionary of the old testament', 'dictionary of the new testament'], scope: 'whole-bible' },
-    { match: ['systematic theology'], scope: 'whole-bible' },
+    { match: ['systematic theology', 'teologia sistematica', 'teologia basica', 'doctrina biblica'], scope: 'whole-bible' },
+    { match: ['hermeneutica', 'interpretacion biblica', 'biblical hermeneutics'], scope: 'whole-bible' },
     { match: ['biblia de estudio', 'study bible'], scope: 'whole-bible' },
 ];
 

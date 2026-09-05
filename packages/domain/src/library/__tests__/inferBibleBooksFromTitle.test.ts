@@ -253,3 +253,46 @@ describe('inferBibleBooksFromTitle', () => {
         });
     });
 });
+
+describe('títulos con puntuación', () => {
+    it('lee «Jude-2 Peter, Volume 50 (WBC)» — el guion pegado rompía todo', () => {
+        // Los tokens eran `jude-2` y `peter,`, que no son nada. Este
+        // título estuvo en la biblioteca real sin ningún libro asignado.
+        const r = inferBibleBooksFromTitle('Jude-2 Peter, Volume 50 (Word Biblical Commentary)');
+        expect(r.books).toEqual(['JUD', '2PE']);
+        expect(r.inferredScope).toBe('book');
+    });
+
+    it('los paréntesis no esconden el libro', () => {
+        expect(inferBibleBooksFromTitle('Hebrews (WBC 47A)').books).toEqual(['HEB']);
+    });
+});
+
+describe('obras de referencia en español', () => {
+    it.each([
+        ['Gramática Griega', 'whole-testament'],
+        ['Grauman - Griego para pastores Gramática 1-12', 'whole-testament'],
+        ['Léxico Griego-Español', 'whole-testament'],
+        ['Lexicón Hebreo-Arameo-Español', 'whole-testament'],
+        ['Barrick & Busenitz - Gramática para Hebreo Bíblico', 'whole-testament'],
+        ['Diccionario Teologico del NT', 'whole-testament'],
+        ['A Textual Commentary on the Greek New Testament (UBS4)', 'whole-testament'],
+        ['Hodge - Teología Sistemática Tomo I', 'whole-bible'],
+        ['Ryrie - Teología Básica', 'whole-bible'],
+        ['Grudem - Doctrina Biblica', 'whole-bible'],
+        ['Terry - La Hermenéutica', 'whole-bible'],
+    ])('%s → %s', (titulo, esperado) => {
+        const r = inferBibleBooksFromTitle(titulo);
+        expect(r.inferredScope).toBe(esperado);
+        expect(r.books).toEqual([]);
+    });
+
+    it('lo que NO es obra de referencia bíblica sigue sin ámbito', () => {
+        // Homilética, consejería y matrimonio no hablan de un pasaje:
+        // quedan fuera del corpus de un paper, que es lo correcto.
+        for (const t of ['MacArthur - La Predicación', 'Manual Del Consejero Cristiano',
+                         'Preparando el matrimonio en el camino de Dios', 'Guía de estilo TMS 2024–2025']) {
+            expect(inferBibleBooksFromTitle(t).inferredScope).toBeNull();
+        }
+    });
+});

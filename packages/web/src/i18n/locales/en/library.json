@@ -70,6 +70,8 @@
   },
   "filters": {
     "searchPlaceholder": "Search title or author",
+    "onlyWithoutBooks": "No books",
+    "onlyWithoutBooksTitle": "Show only resources still missing their Bible books",
     "allCategories": "All categories",
     "viewGridTitle": "Grid view",
     "viewListTitle": "List view"

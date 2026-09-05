@@ -143,6 +143,7 @@ export function LibraryManager() {
     const [searchParams] = useSearchParams();
     const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') ?? '');
     const [categoryFilter, setCategoryFilter] = useState<ResourceType | 'all'>('all');
+    const [onlyWithoutBooks, setOnlyWithoutBooks] = useState(false);
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [consentModalOpen, setConsentModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
@@ -176,7 +177,7 @@ export function LibraryManager() {
         loading: data.loading,
     });
 
-    // ── Filtered view derived from search + category ────────────────────────
+    // ── Filtered view derived from search + category + metadata ─────────────
     const filteredResources = useMemo(() => {
         const query = searchQuery.toLowerCase();
         return data.resources.filter(resource => {
@@ -184,9 +185,17 @@ export function LibraryManager() {
                 || resource.title.toLowerCase().includes(query)
                 || resource.author.toLowerCase().includes(query);
             const matchesCategory = categoryFilter === 'all' || resource.type === categoryFilter;
-            return matchesSearch && matchesCategory;
+            // «Sin libros» significa sin libros Y sin un ámbito que
+            // explique la ausencia: una gramática marcada «todo el
+            // testamento» no tiene libros a propósito y no es un
+            // pendiente. Las fuentes del sistema tampoco se editan.
+            const scope = resource.scope ?? 'book';
+            const necesitaLibros = !resource.isSystemSource
+                && (scope === 'book' || scope === 'pericope')
+                && (resource.coversBibleBooks?.length ?? 0) === 0;
+            return matchesSearch && matchesCategory && (!onlyWithoutBooks || necesitaLibros);
         });
-    }, [data.resources, searchQuery, categoryFilter]);
+    }, [data.resources, searchQuery, categoryFilter, onlyWithoutBooks]);
 
     // ── Modal open helpers — declarative wrappers for prop drilling ─────────
     const openEdit = (resource: LibraryResourceEntity) => {
@@ -291,9 +300,11 @@ export function LibraryManager() {
                     searchQuery={searchQuery}
                     categoryFilter={categoryFilter}
                     viewMode={viewMode}
+                    onlyWithoutBooks={onlyWithoutBooks}
                     onSearchChange={setSearchQuery}
                     onCategoryChange={setCategoryFilter}
                     onViewModeChange={setViewMode}
+                    onOnlyWithoutBooksChange={setOnlyWithoutBooks}
                 />
 
                 {/* v1.7.1 — bulk backfill of smart-match metadata for
