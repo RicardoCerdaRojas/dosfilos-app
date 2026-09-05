@@ -53,6 +53,19 @@ describe('shouldAutoIndex', () => {
             .toEqual({ index: false, reason: 'already-indexed' });
     });
 
+    it('reindexa lo ya indexado cuando la extracción volvió a correr', () => {
+        // `needsReindex` lo escribe la extracción al producir texto
+        // nuevo. Sin mirarlo, re-extraer un libro mal indexado lo dejaba
+        // con el índice viejo puesto.
+        expect(shouldAutoIndex(undefined, { ...listo, indexerVersion: INDEXER_VERSION_CURRENT, needsReindex: true }))
+            .toEqual({ index: true });
+    });
+
+    it('no reindexa en bucle: al terminar, el indexador baja needsReindex', () => {
+        expect(shouldAutoIndex(undefined, { ...listo, indexerVersion: INDEXER_VERSION_CURRENT, needsReindex: false }))
+            .toEqual({ index: false, reason: 'already-indexed' });
+    });
+
     it('sí reindexa lo indexado con una versión vieja del indexador', () => {
         expect(shouldAutoIndex(undefined, { ...listo, indexerVersion: '1.0-viejo' }))
             .toEqual({ index: true });
