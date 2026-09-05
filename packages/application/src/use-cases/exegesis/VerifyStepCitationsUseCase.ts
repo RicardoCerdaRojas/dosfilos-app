@@ -13,7 +13,7 @@ import type {
     VerifierSource,
     VerifierSourceChunk,
 } from '@dosfilos/domain';
-import { isCitableSourceType } from '@dosfilos/domain';
+import { findUnsupportedWitnessClaims, isCitableSourceType } from '@dosfilos/domain';
 import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
 
 export interface VerifyStepCitationsInput {
@@ -99,9 +99,22 @@ export class VerifyStepCitationsUseCase {
                 userId: ownerId,
             });
 
+            // Las afirmaciones sobre manuscritos se cuentan aparte de las
+            // citas: no fallan por estar mal atribuidas, sino por no
+            // estar atribuidas en absoluto.
+            const witnessClaims = findUnsupportedWitnessClaims(target.markdown, citations);
+            if (witnessClaims.length > 0) {
+                console.warn('[exegesis] afirmaciones sobre manuscritos sin cita', {
+                    stepId,
+                    total: witnessClaims.length,
+                    ejemplo: witnessClaims[0]?.sentence.slice(0, 120),
+                });
+            }
+
             const summary = buildSummary(
                 citations,
                 countSourcesNamedWithoutCitation(target.markdown, sources, citations),
+                witnessClaims.length,
             );
             await this.paperRepository.setStepVersionVerifications(
                 ownerId,
@@ -270,6 +283,7 @@ function escapeRegExp(text: string): string {
 function buildSummary(
     citations: VerifiedCitation[],
     sourcesNamedWithoutCitation: number,
+    witnessClaimsWithoutCitation: number,
 ): VerificationSummary {
     const counts: Record<CitationStatus, number> = {
         verified: 0,
@@ -291,5 +305,6 @@ function buildSummary(
         },
         totalCitations: citations.length,
         sourcesNamedWithoutCitation,
+        witnessClaimsWithoutCitation,
     };
 }

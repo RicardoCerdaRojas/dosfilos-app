@@ -21,6 +21,11 @@ interface CitationVerificationDialogProps {
      * para el verificador. Cero cuando no aplica o no se midió.
      */
     sourcesNamedWithoutCitation?: number;
+    /**
+     * Afirmaciones sobre manuscritos que ninguna cita respalda. Cero
+     * cuando no aplica o no se midió.
+     */
+    witnessClaimsWithoutCitation?: number;
     isVerifying: boolean;
     onReverify: () => void;
 }
@@ -36,6 +41,7 @@ export function CitationVerificationDialog({
     onOpenChange,
     citations,
     sourcesNamedWithoutCitation = 0,
+    witnessClaimsWithoutCitation = 0,
     isVerifying,
     onReverify,
 }: CitationVerificationDialogProps) {
@@ -60,6 +66,12 @@ export function CitationVerificationDialog({
                     <CountChip kind="not-found" count={counts['not-found']} />
                     <CountChip kind="manual-pending" count={counts['manual-pending']} />
                 </div>
+
+                {witnessClaimsWithoutCitation > 0 && (
+                    <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-[11px] text-destructive">
+                        ⚠ {t('canonical.verify.dialog.witnessClaims', { count: witnessClaimsWithoutCitation })}
+                    </p>
+                )}
 
                 {sourcesNamedWithoutCitation > 0 && (
                     <p className="rounded-md border border-warning/30 bg-warning-subtle/40 px-3 py-2 text-[11px] text-warning-subtle-foreground">

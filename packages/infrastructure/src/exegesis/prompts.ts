@@ -444,6 +444,7 @@ function sourceTypeWeight(type: SourceType): number {
         case 'theological-dictionary': return 3;
         case 'grammar-syntax': return 3;
         case 'critical-apparatus': return 3;
+        case 'textual-commentary': return 3;
         case 'commentary-expository': return 2;
         case 'historical-background': return 2;
         case 'theological-monograph': return 2;
@@ -519,6 +520,7 @@ function englishTypeLabel(type: SourceType): string {
     switch (type) {
         case 'biblical-text-edition': return 'Biblical text edition';
         case 'critical-apparatus': return 'Critical apparatus';
+        case 'textual-commentary': return 'Commentary on the apparatus';
         case 'lexicon-technical': return 'Technical lexicon';
         case 'theological-dictionary': return 'Theological dictionary';
         case 'grammar-syntax': return 'Grammar / syntax';
@@ -537,6 +539,7 @@ function spanishTypeLabel(type: SourceType): string {
     switch (type) {
         case 'biblical-text-edition': return 'Edición del texto bíblico';
         case 'critical-apparatus': return 'Aparato crítico';
+        case 'textual-commentary': return 'Comentario del aparato';
         case 'lexicon-technical': return 'Léxico técnico';
         case 'theological-dictionary': return 'Diccionario teológico';
         case 'grammar-syntax': return 'Gramática / sintaxis';
@@ -605,6 +608,7 @@ function prettyTypeName(t: SourceType, lang: 'es' | 'en'): string {
         const en: Record<SourceType, string> = {
             'biblical-text-edition': 'Biblical text edition',
             'critical-apparatus': 'Critical apparatus',
+            'textual-commentary': 'Commentary on the apparatus',
             'lexicon-technical': 'Technical lexicon',
             'theological-dictionary': 'Theological dictionary',
             'grammar-syntax': 'Grammar / syntax',
@@ -626,6 +630,7 @@ const CORPUS_GAP_WARNINGS_ES: Record<SourceType | '__default__', string> = {
     '__default__': 'Atenuá afirmaciones que dependerían de este tipo de fuente; marcalas como tentativas o de conocimiento general.',
     'biblical-text-edition': 'NO hagas afirmaciones específicas sobre el texto crítico (NA28/BHS/Rahlfs) — citá solo desde la traducción disponible y marcá explícitamente que es traducción.',
     'critical-apparatus': 'NO hagas afirmaciones sobre variantes textuales, manuscritos específicos (𝔓⁷², ℵ, A, B, etc.), ni decisiones de crítica textual sin marcarlas como tentativas que requieren consulta del aparato crítico.',
+    'textual-commentary': 'NO afirmes qué testigos respaldan una lectura ni por qué se adoptó, sin marcarlo como tentativo: eso requiere un comentario del aparato (Metzger), y su cobertura es selectiva.',
     'lexicon-technical': 'NO hagas afirmaciones específicas sobre matices semánticos de términos griegos/hebreos sin marcarlas como generales que requieren consulta de un léxico técnico (BDAG, HALOT, LSJ).',
     'theological-dictionary': 'NO hagas afirmaciones sobre la trayectoria canónica de un término o el desarrollo de un campo semántico sin marcarlas como tentativas que requieren consulta de un diccionario teológico (TDNT, NIDNTTE, EDNT).',
     'grammar-syntax': 'NO hagas afirmaciones técnicas sobre sintaxis (categorías de genitivo, aspecto verbal, construcciones específicas) sin marcarlas como necesitando verificación con una gramática de referencia (BDF, Wallace, Robertson).',
@@ -643,6 +648,7 @@ const CORPUS_GAP_WARNINGS_EN: Record<SourceType | '__default__', string> = {
     '__default__': 'Soften any claims that would rest on this source type; mark them as tentative or as general knowledge.',
     'biblical-text-edition': 'Do NOT make specific claims about the critical text (NA28/BHS/Rahlfs) — cite only from the available translation and mark it explicitly as a translation.',
     'critical-apparatus': 'Do NOT make claims about textual variants, specific manuscripts (𝔓⁷², ℵ, A, B, etc.), or textual-critical decisions without marking them as tentative and requiring critical-apparatus consultation.',
+    'textual-commentary': 'Do NOT state which witnesses support a reading, or why it was adopted, without marking it as tentative: that requires a commentary on the apparatus (Metzger), whose coverage is selective.',
     'lexicon-technical': 'Do NOT make specific claims about semantic nuances of Greek/Hebrew terms without marking them as general and requiring consultation of a technical lexicon (BDAG, HALOT, LSJ).',
     'theological-dictionary': 'Do NOT make claims about a term\'s canonical trajectory or semantic-field development without marking them as tentative and requiring a theological dictionary (TDNT, NIDNTTE, EDNT).',
     'grammar-syntax': 'Do NOT make technical syntactic claims (genitive categories, verbal aspect, specific constructions) without marking them as needing verification against a reference grammar (BDF, Wallace, Robertson).',

@@ -33,6 +33,14 @@ export type SourceType =
     // ── Primary text & textual criticism ────────────────────────────
     | 'biblical-text-edition'      // NA28, BHS, Rahlfs LXX
     | 'critical-apparatus'         // When citing apparatus specifically
+    // El comentario DEL aparato, que no es el aparato: Metzger toma una
+    // selección de variantes y explica por qué el comité eligió cada
+    // lectura. Existe como tipo propio porque etiquetarlo
+    // `critical-apparatus` afirma una cobertura que no tiene —el aparato
+    // es exhaustivo, esto es selectivo— y etiquetarlo
+    // `commentary-critical` lo mandaría al rol de contraste, a competir
+    // con los comentarios, cuando su trabajo es técnico.
+    | 'textual-commentary'         // Metzger, A Textual Commentary on the Greek NT
 
     // ── Lexical / linguistic ────────────────────────────────────────
     | 'lexicon-technical'          // BDAG, HALOT, LSJ — full technical entries
@@ -127,6 +135,15 @@ export const SOURCE_TYPE_CATALOG: Readonly<Record<SourceType, SourceTypeMetadata
         labelI18nKey: 'exegesis.sourceTypes.critical-apparatus.label',
         descriptionI18nKey: 'exegesis.sourceTypes.critical-apparatus.description',
         examplesI18nKey: 'exegesis.sourceTypes.critical-apparatus.examples',
+        rigorTier: 3,
+        defaultCitationDiscipline: 'cite-when-relevant',
+        typicalUsage: ['verse'],
+    },
+    'textual-commentary': {
+        type: 'textual-commentary',
+        labelI18nKey: 'exegesis.sourceTypes.textual-commentary.label',
+        descriptionI18nKey: 'exegesis.sourceTypes.textual-commentary.description',
+        examplesI18nKey: 'exegesis.sourceTypes.textual-commentary.examples',
         rigorTier: 3,
         defaultCitationDiscipline: 'cite-when-relevant',
         typicalUsage: ['verse'],

@@ -189,6 +189,19 @@ export interface VerificationSummary {
      * campo no lo traen, y ausente significa «no se midió», no cero.
      */
     sourcesNamedWithoutCitation?: number;
+    /**
+     * Afirmaciones sobre evidencia manuscrita —códices, papiros,
+     * testigos— que ninguna cita de la misma oración respalda.
+     *
+     * El corpus de crítica textual suele ser parcial: el comentario del
+     * aparato sólo discute las variantes que su comité juzgó
+     * importantes. Donde calla, la tentación es rellenar de memoria, y
+     * una lista de testigos inventada tiene forma de erudición. Este
+     * contador la saca del silencio.
+     *
+     * Opcional: ausente significa «no se midió», no cero.
+     */
+    witnessClaimsWithoutCitation?: number;
 }
 
 export const EMPTY_VERIFICATION_SUMMARY: VerificationSummary = {
@@ -203,6 +216,7 @@ export const EMPTY_VERIFICATION_SUMMARY: VerificationSummary = {
     },
     totalCitations: 0,
     sourcesNamedWithoutCitation: 0,
+    witnessClaimsWithoutCitation: 0,
 };
 
 /**
