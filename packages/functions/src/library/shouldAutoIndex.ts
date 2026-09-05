@@ -29,6 +29,13 @@ export interface ResourceSnapshotForIndexing {
     extractionVersion?: string;
     structuredContentUrl?: string;
     indexerVersion?: string;
+    /**
+     * Lo escribe la extracción en `true` cada vez que produce texto
+     * nuevo, y el indexador lo baja a `false` al terminar. Es la forma
+     * que tiene el pipeline de decir «el índice que hay ya no
+     * corresponde al contenido».
+     */
+    needsReindex?: boolean;
 }
 
 export type AutoIndexDecision =
@@ -65,9 +72,15 @@ export function shouldAutoIndex(
         return { index: false, reason: 'no-structured-content' };
     }
     // Ya indexado con el indexador vigente: reindexar sería trabajo y
-    // gasto por nada. El reproceso manual pasa por el callable con
-    // `force`.
-    if (after.indexerVersion === INDEXER_VERSION_CURRENT) {
+    // gasto por nada.
+    //
+    // Salvo que la extracción haya corrido de nuevo. `needsReindex`
+    // existe justo para eso, y no se estaba mirando: al re-extraer un
+    // libro, la versión del indexador seguía siendo la vigente, así que
+    // el disparador lo daba por indexado y el índice viejo —el del
+    // texto anterior— se quedaba puesto. Un libro re-extraído por estar
+    // mal indexado terminaba igual de mal indexado, sin decirlo.
+    if (after.indexerVersion === INDEXER_VERSION_CURRENT && after.needsReindex !== true) {
         return { index: false, reason: 'already-indexed' };
     }
     return { index: true };
