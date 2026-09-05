@@ -15,6 +15,7 @@ export * from './entities/StepSourcePlan';
 export * from './entities/sourceRoleMapping';
 export * from './entities/corpusUsagePlan';
 export * from './entities/StyleGuideManifest';
+export * from './entities/StyleGuideSnapshot';
 export * from './entities/UserRubric';
 export * from './entities/UserStyleGuide';
 export * from './entities/UserAssignmentBrief';

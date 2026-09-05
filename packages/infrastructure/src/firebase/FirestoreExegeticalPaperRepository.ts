@@ -770,6 +770,18 @@ function deserialize(id: string, data: DocumentData): ExegeticalPaper {
         title: data.title,
         assignmentBrief: data.assignmentBrief ?? null,
         styleGuideId: data.styleGuideId ?? null,
+        // La copia de la guía. `capturedAt` viaja como Timestamp y hay
+        // que devolverlo a Date: la interfaz lo muestra como fecha.
+        // Ausente en los papers anteriores a la copia — ahí se resuelve
+        // contra la guía viva.
+        styleGuideSnapshot: data.styleGuideSnapshot
+            ? {
+                ...data.styleGuideSnapshot,
+                capturedAt: data.styleGuideSnapshot.capturedAt?.toDate?.()
+                    ?? data.styleGuideSnapshot.capturedAt
+                    ?? new Date(),
+            }
+            : null,
         sources: Array.isArray(data.sources) ? data.sources.map(deserializeSource) : [],
         rubric: data.rubric ? deserializeRubric(data.rubric) : null,
         // Phase 2B paper-level field. Legacy papers don't carry it

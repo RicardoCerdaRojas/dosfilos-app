@@ -717,6 +717,15 @@
                 },
                 "extractionNotes": {
                     "title": "Extractor notes"
+                },
+                "picker": {
+                    "label": "Style guide for this paper",
+                    "none": "No style guide",
+                    "saved": "Guide attached to this paper",
+                    "failed": "The guide could not be attached. Try again.",
+                    "usingCopy": "This paper uses the copy taken on {{date}}. Editing the guide later does not affect it.",
+                    "guideChanged": "The guide changed since it was attached. This paper keeps its copy; you can pull the current version if you want.",
+                    "refresh": "Update to the current version"
                 }
             },
             "corpus": {

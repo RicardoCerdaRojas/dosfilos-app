@@ -10,6 +10,7 @@ import type {
     IUserStyleGuideRepository,
     IVerseAcademicComposer,
     StyleGuideManifest,
+    StyleGuideSnapshot,
 } from '@dosfilos/domain';
 import { isCitableSourceType } from '@dosfilos/domain';
 import { ExegesisCreditReservation } from '../../services/ExegesisCreditReservation';
@@ -93,7 +94,7 @@ export class ComposeVerseAcademicProseUseCase {
 
         try {
             const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
-            const manifest = await this.loadStyleManifest(input.ownerId, paper.styleGuideId);
+            const manifest = await this.loadStyleManifest(input.ownerId, paper);
 
             const composerInput: ComposeVerseInput = {
                 verseAnalysis: target.canonicalAnalysis,
@@ -158,12 +159,22 @@ export class ComposeVerseAcademicProseUseCase {
         return (await this.contentReader.getTextContent(guide.corpusId)) ?? '';
     }
 
+    /**
+     * Las reglas de estilo de ESTE trabajo.
+     *
+     * Manda la copia que el trabajo se llevó al adjuntar la guía. Sólo
+     * se mira la guía viva cuando no hay copia —papers anteriores a
+     * esta regla—, que es como venían funcionando. Un trabajo entregado
+     * no puede cambiar de reglas porque alguien editó la plantilla
+     * después.
+     */
     private async loadStyleManifest(
         ownerId: string,
-        styleGuideId: string | null,
+        paper: { styleGuideId: string | null; styleGuideSnapshot?: StyleGuideSnapshot | null },
     ): Promise<StyleGuideManifest | null> {
-        if (!styleGuideId) return null;
-        const guide = await this.styleGuideRepository.getGuide(ownerId, styleGuideId);
+        if (paper.styleGuideSnapshot) return paper.styleGuideSnapshot.manifest;
+        if (!paper.styleGuideId) return null;
+        const guide = await this.styleGuideRepository.getGuide(ownerId, paper.styleGuideId);
         return guide?.manifest ?? null;
     }
 }

@@ -11,6 +11,7 @@ import type {
     IStyleFormatter,
     IUserStyleGuideRepository,
     StyleGuideManifest,
+    StyleGuideSnapshot,
     IPrintedPageOffsetReader,
 } from '@dosfilos/domain';
 import { enforceAnalysisCoverage, isCitableSourceType } from '@dosfilos/domain';
@@ -131,7 +132,7 @@ export class ComposeAcademicPaperUseCase {
         try {
             // ── Resolve style guide (content + manifest) ─────────────────
             const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
-            const manifest = await this.loadStyleManifest(input.ownerId, paper.styleGuideId);
+            const manifest = await this.loadStyleManifest(input.ownerId, paper);
 
             if (!paper.styleGuideId) {
                 console.warn(
@@ -322,12 +323,22 @@ export class ComposeAcademicPaperUseCase {
         return (await this.contentReader.getTextContent(guide.corpusId)) ?? '';
     }
 
+    /**
+     * Las reglas de estilo de ESTE trabajo.
+     *
+     * Manda la copia que el trabajo se llevó al adjuntar la guía. Sólo
+     * se mira la guía viva cuando no hay copia —papers anteriores a
+     * esta regla—, que es como venían funcionando. Un trabajo entregado
+     * no puede cambiar de reglas porque alguien editó la plantilla
+     * después.
+     */
     private async loadStyleManifest(
         ownerId: string,
-        styleGuideId: string | null,
+        paper: { styleGuideId: string | null; styleGuideSnapshot?: StyleGuideSnapshot | null },
     ): Promise<StyleGuideManifest | null> {
-        if (!styleGuideId) return null;
-        const guide = await this.styleGuideRepository.getGuide(ownerId, styleGuideId);
+        if (paper.styleGuideSnapshot) return paper.styleGuideSnapshot.manifest;
+        if (!paper.styleGuideId) return null;
+        const guide = await this.styleGuideRepository.getGuide(ownerId, paper.styleGuideId);
         return guide?.manifest ?? null;
     }
 }

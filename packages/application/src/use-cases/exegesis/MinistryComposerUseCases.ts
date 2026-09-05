@@ -220,9 +220,15 @@ async function loadContext(
     if (paper.styleGuideId) {
         const guide = await styleGuideRepository.getGuide(ownerId, paper.styleGuideId);
         if (guide) {
+            // El TEXTO se sigue leyendo de la guía viva: no se copia al
+            // trabajo por tamaño. Las REGLAS vienen de la copia cuando
+            // existe, que es lo que impide que editar la plantilla
+            // cambie un trabajo ya entregado.
             styleGuideContent = (await contentReader.getTextContent(guide.corpusId)) ?? '';
-            manifest = guide.manifest ?? null;
         }
+        manifest = paper.styleGuideSnapshot
+            ? paper.styleGuideSnapshot.manifest
+            : guide?.manifest ?? null;
     }
 
     const composerSources = paper.sources
