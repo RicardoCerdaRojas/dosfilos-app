@@ -98,7 +98,13 @@ export const indexStructuredDocument = onCall<IndexRequest>(
         if (!data.structuredContentUrl) {
             throw new HttpsError('failed-precondition', `Resource ${resourceId} has no structuredContentUrl`);
         }
-        if (!force && data.indexerVersion === INDEXER_VERSION) {
+        // `needsReindex` pesa tanto como `force`: lo escribe la
+        // extracción al producir texto nuevo, y significa que el índice
+        // que hay ya no corresponde al contenido. Sin mirarlo, un libro
+        // re-extraído se quedaba con el índice viejo — y el disparador,
+        // que sí lo mira desde #546, encolaba un trabajo que esta guarda
+        // rechazaba. Las dos capas tienen que leer el mismo campo.
+        if (!force && data.needsReindex !== true && data.indexerVersion === INDEXER_VERSION) {
             console.log(`[IndexStructured] ${resourceId} already indexed with ${INDEXER_VERSION}. Skipping.`);
             return { success: true, skipped: true, reason: 'already-indexed' };
         }
@@ -335,7 +341,9 @@ export async function indexResourceChunks(
     if (!data.structuredContentUrl) {
         return { success: true, skipped: true, reason: 'no-structured-content' };
     }
-    if (!force && data.indexerVersion === INDEXER_VERSION) {
+    // Ver el comentario equivalente en la callable: `needsReindex`
+    // manda sobre «ya indexado».
+    if (!force && data.needsReindex !== true && data.indexerVersion === INDEXER_VERSION) {
         return { success: true, skipped: true, reason: 'already-indexed' };
     }
 
