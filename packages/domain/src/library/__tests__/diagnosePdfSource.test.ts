@@ -3,12 +3,12 @@ import { diagnosePdfSource, sampleWindow, type PdfEvidence } from '../diagnosePd
 
 /** Los seis libros reales medidos el 2026-09-05, como evidencia. */
 const LIBROS: Record<string, PdfEvidence> = {
-    metzger: { pages: 812, fontCount: 1, fontsWithoutUnicodeMap: 0, sampleFromPage: 406, sampleToPage: 435, sampleChars: 53825, greekLetters: 4690, hebrewLetters: 0, diacritics: 1226, garbledTokenRatio: 0.040 },
-    na28: { pages: 1006, fontCount: 290, fontsWithoutUnicodeMap: 0, sampleFromPage: 503, sampleToPage: 532, sampleChars: 76887, greekLetters: 36976, hebrewLetters: 0, diacritics: 7940, garbledTokenRatio: 0.041 },
-    mayor: { pages: 540, fontCount: 1, fontsWithoutUnicodeMap: 0, sampleFromPage: 270, sampleToPage: 299, sampleChars: 69487, greekLetters: 9272, hebrewLetters: 0, diacritics: 2103, garbledTokenRatio: 0.038 },
-    interlinealHebreo: { pages: 2013, fontCount: 2143, fontsWithoutUnicodeMap: 2143, sampleFromPage: 1006, sampleToPage: 1035, sampleChars: 155890, greekLetters: 0, hebrewLetters: 0, diacritics: 0, garbledTokenRatio: 0.151 },
-    na28Escaneado: { pages: 1020, fontCount: 0, fontsWithoutUnicodeMap: 0, sampleFromPage: 510, sampleToPage: 539, sampleChars: 60, greekLetters: 0, hebrewLetters: 0, diacritics: 0, garbledTokenRatio: 0 },
-    homiletica: { pages: 409, fontCount: 5, fontsWithoutUnicodeMap: 0, sampleFromPage: 204, sampleToPage: 233, sampleChars: 48000, greekLetters: 0, hebrewLetters: 0, diacritics: 0, garbledTokenRatio: 0.045 },
+    metzger: { pages: 812, fontCount: 1, sampleFromPage: 406, sampleToPage: 435, sampleChars: 53825, greekLetters: 4690, hebrewLetters: 0, diacritics: 1226, garbledTokenRatio: 0.040 },
+    na28: { pages: 1006, fontCount: 290, sampleFromPage: 503, sampleToPage: 532, sampleChars: 76887, greekLetters: 36976, hebrewLetters: 0, diacritics: 7940, garbledTokenRatio: 0.041 },
+    mayor: { pages: 540, fontCount: 1, sampleFromPage: 270, sampleToPage: 299, sampleChars: 69487, greekLetters: 9272, hebrewLetters: 0, diacritics: 2103, garbledTokenRatio: 0.038 },
+    interlinealHebreo: { pages: 2013, fontCount: 2143, sampleFromPage: 1006, sampleToPage: 1035, sampleChars: 155890, greekLetters: 0, hebrewLetters: 0, diacritics: 0, garbledTokenRatio: 0.151 },
+    na28Escaneado: { pages: 1020, fontCount: 0, sampleFromPage: 510, sampleToPage: 539, sampleChars: 60, greekLetters: 0, hebrewLetters: 0, diacritics: 0, garbledTokenRatio: 0 },
+    homiletica: { pages: 409, fontCount: 5, sampleFromPage: 204, sampleToPage: 233, sampleChars: 48000, greekLetters: 0, hebrewLetters: 0, diacritics: 0, garbledTokenRatio: 0.045 },
 };
 
 describe('diagnosePdfSource — sobre los libros reales', () => {

@@ -33,8 +33,6 @@ export interface PdfEvidence {
     pages: number;
     /** Fuentes declaradas por el PDF. Cero significa escaneo. */
     fontCount: number;
-    /** Fuentes sin mapa a Unicode: sus códigos no significan nada. */
-    fontsWithoutUnicodeMap: number;
     /** Rango muestreado, para que el informe diga de dónde salió el número. */
     sampleFromPage: number;
     sampleToPage: number;

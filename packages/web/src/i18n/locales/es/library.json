@@ -338,5 +338,30 @@
     "retryIndexingError_other": "No se pudieron indexar {{count}} recursos. Vuelve a intentarlo en unos minutos."
   },
   "citedResourceMissing": "La fuente que citaste ya no está en tu biblioteca. Puede que la hayas eliminado después de preparar ese sermón.",
-  "citedResourceDismiss": "Entendido"
+  "citedResourceDismiss": "Entendido",
+  "preflight": {
+    "reading": "Revisando el archivo…",
+    "measured": "Medido en tu equipo sobre {{pages}} páginas, sin subir nada.",
+    "measuredDetail": "Muestra: páginas {{from}} a {{to}} · {{chars}} caracteres de texto encontrados.",
+    "apto": {
+      "title": "El archivo se ve bien",
+      "body": "Tiene el texto adentro, así que Preach va a poder buscar y citar dentro de este libro, incluidas las palabras en griego o hebreo con sus acentos."
+    },
+    "sin-capa-de-texto": {
+      "title": "Este archivo son fotos de las páginas, no texto",
+      "body": "Se ve bien al leerlo, pero por dentro no hay letras: hay imágenes. Preach no podrá buscar nada dentro de él ni citarlo. Si tienes otra versión del mismo libro, conviene probar con esa. Puedes subirlo igual, pero es probable que quede sin poder usarse."
+    },
+    "escritura-ausente": {
+      "title": "El texto de este archivo está dañado",
+      "body": "Al abrirlo se lee bien, pero las letras que guarda por dentro no son las que muestra en pantalla. Lo que entre a Preach va a ser ilegible, y no se podrá buscar ni citar. Busca otra versión de este libro antes de subirlo."
+    },
+    "escritura-sin-diacriticos": {
+      "title": "El griego o el hebreo vienen sin sus acentos",
+      "body": "El libro sirve para leerlo, pero al buscar una palabra en griego o hebreo con sus acentos no la vas a encontrar, porque este archivo los perdió. Súbelo si te sirve para leer; para estudiar la lengua original conviene otra versión."
+    },
+    "sin-escritura-original": {
+      "title": "No encontramos griego ni hebreo dentro",
+      "body": "Si es un libro que no los usa, está perfecto así. Si es una gramática, un texto crítico o un comentario técnico que sí debería traerlos, entonces este archivo los perdió y entrarían ilegibles."
+    }
+  }
 }

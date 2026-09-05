@@ -69,11 +69,9 @@ function reunirEvidencia(archivo: string): PdfEvidence {
     const info = correr('pdfinfo', [archivo]);
     const pages = Number(info.match(/^Pages:\s+(\d+)/m)?.[1] ?? 0);
 
-    // `pdffonts` imprime dos líneas de cabecera. La última columna útil
-    // (`uni`) dice si la fuente trae mapa a Unicode: sin él, los códigos
-    // extraídos no significan lo que la página dibuja.
+    // `pdffonts` imprime dos líneas de cabecera. Cero fuentes es la
+    // firma de un escaneo: páginas que son imágenes.
     const fuentes = correr('pdffonts', [archivo]).split('\n').slice(2).filter(l => l.trim());
-    const fontsWithoutUnicodeMap = fuentes.filter(l => / no\s+\S*\s*$/.test(l) || /\bno\b(?!.*\byes\b)/.test(l.slice(-12))).length;
 
     const { from, to } = sampleWindow(pages || 30);
     const texto = correr('pdftotext', ['-f', String(from), '-l', String(to), archivo, '-']);
@@ -83,7 +81,6 @@ function reunirEvidencia(archivo: string): PdfEvidence {
     return {
         pages,
         fontCount: fuentes.length,
-        fontsWithoutUnicodeMap,
         sampleFromPage: from,
         sampleToPage: to,
         sampleChars: texto.length,
