@@ -12,6 +12,7 @@ import type {
     IStyleFormatter,
     IUserStyleGuideRepository,
     StyleGuideManifest,
+    StyleGuideSnapshot,
 } from '@dosfilos/domain';
 import {
     EMPTY_VERIFICATION_SUMMARY,
@@ -84,7 +85,7 @@ export class ComposeIntroductionFromAnalysesUseCase {
 
         try {
             const styleGuideContent = await this.loadStyleGuideContent(input.ownerId, paper.styleGuideId);
-            const manifest = await this.loadStyleManifest(input.ownerId, paper.styleGuideId);
+            const manifest = await this.loadStyleManifest(input.ownerId, paper);
 
             // Plan-pinned sources for the introduction step. Composer
             // treats them as a contract.
@@ -183,7 +184,17 @@ export class ComposeIntroductionFromAnalysesUseCase {
         return (await this.contentReader.getTextContent(guide.corpusId)) ?? '';
     }
 
-    private async loadStyleManifest(ownerId: string, styleGuideId: string | null): Promise<StyleGuideManifest | null> {
+    /**
+     * Las reglas de estilo de ESTE trabajo: manda la copia que se llevó
+     * al adjuntar la guía. Sólo se mira la guía viva cuando no hay
+     * copia —papers anteriores a esta regla—.
+     */
+    private async loadStyleManifest(
+        ownerId: string,
+        paper: { styleGuideId: string | null; styleGuideSnapshot?: StyleGuideSnapshot | null },
+    ): Promise<StyleGuideManifest | null> {
+        if (paper.styleGuideSnapshot) return paper.styleGuideSnapshot.manifest;
+        const styleGuideId = paper.styleGuideId;
         if (!styleGuideId) return null;
         const guide = await this.styleGuideRepository.getGuide(ownerId, styleGuideId);
         return guide?.manifest ?? null;

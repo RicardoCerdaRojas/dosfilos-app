@@ -76,6 +76,25 @@ export function useExegesisPapers() {
         },
     });
 
+    /**
+     * Adjunta una guía de estilo al trabajo, COPIÁNDOLA. Volver a
+     * llamarlo con la misma guía es «actualizar a la versión actual»:
+     * la copia sólo cambia cuando el usuario lo pide.
+     */
+    const setPaperStyleGuide = useMutation({
+        mutationFn: async ({ paperId, styleGuideId }: { paperId: string; styleGuideId: string | null }) => {
+            if (!user?.uid) throw new Error('User not authenticated');
+            return exegesisService.setPaperStyleGuide.execute({
+                ownerId: user.uid,
+                paperId,
+                styleGuideId,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['exegesis', 'papers', user?.uid] });
+        },
+    });
+
     const updatePaperBrief = useMutation({
         mutationFn: async ({ paperId, assignmentBrief }: { paperId: string; assignmentBrief: string | null }) => {
             if (!user?.uid) throw new Error('User not authenticated');
@@ -588,6 +607,7 @@ export function useExegesisPapers() {
         createPaper,
         archivePaper,
         updatePaperBrief,
+        setPaperStyleGuide,
         updateStepPlan,
         updateRubric,
         resetRubric,

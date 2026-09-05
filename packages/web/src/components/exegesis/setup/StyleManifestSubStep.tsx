@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTranslation } from '@/i18n';
 import { useUserStyleGuides } from '@/hooks/exegesis/useUserStyleGuides';
+import { PaperStyleGuidePicker } from './PaperStyleGuidePicker';
 
 /**
  * Style guide manifest viewer + extractor trigger.
@@ -71,6 +72,10 @@ export function StyleManifestSubStep({ paper }: StyleManifestSubStepProps) {
                     </p>
                 </div>
             </header>
+
+            {/* Elegir la guía de ESTE trabajo. Adjuntarla la copia: a
+                partir de ahí, editar la plantilla no alcanza al paper. */}
+            <PaperStyleGuidePicker paper={paper} guides={guides} />
 
             {!guide && <NoGuideState />}
             {guide && !guide.manifest && <NoManifestState guide={guide} paper={paper} />}

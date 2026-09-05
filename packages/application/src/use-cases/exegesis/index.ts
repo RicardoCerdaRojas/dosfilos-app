@@ -181,3 +181,4 @@ export {
     type PreachableCallInput,
     type FidelityCallInput,
 } from './expository/RunExpositoryPassesUseCase';
+export * from './SetPaperStyleGuideUseCase';

@@ -717,6 +717,15 @@
                 },
                 "extractionNotes": {
                     "title": "Notas del extractor"
+                },
+                "picker": {
+                    "label": "Guía de estilo de este trabajo",
+                    "none": "Sin guía de estilo",
+                    "saved": "Guía adjuntada a este trabajo",
+                    "failed": "No se pudo adjuntar la guía. Intenta de nuevo.",
+                    "usingCopy": "Este trabajo usa la copia que se tomó el {{date}}. Editar la guía después no lo afecta.",
+                    "guideChanged": "La guía cambió desde que se adjuntó. Este trabajo sigue con su copia; puedes traer la versión actual si quieres.",
+                    "refresh": "Actualizar a la versión actual"
                 }
             },
             "corpus": {

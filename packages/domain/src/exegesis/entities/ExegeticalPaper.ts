@@ -3,6 +3,7 @@ import type { ProjectSource } from './ProjectSource';
 import type { ExegeticalStep } from './ExegeticalStep';
 import type { PaperRubric, StructuralExpectation } from './PaperRubric';
 import type { StepSourcePlan } from './StepSourcePlan';
+import type { StyleGuideSnapshot } from './StyleGuideSnapshot';
 
 /**
  * Top-level entity for a single exegetical paper.
@@ -99,6 +100,28 @@ export interface ExegeticalPaper {
      * 'in-progress' must enforce non-null before any generation runs — the
      * orchestrator needs an actual guide to inject into prompts.
      */
+    /**
+     * Copia de la guía de estilo TAL COMO ESTABA al adjuntarla.
+     *
+     * La rúbrica y el encuadre se copian al trabajo; la guía sólo se
+     * referenciaba por id, así que editarla alcanzaba a todos los
+     * papers que la apuntaran —incluidos los ya entregados—. Un trabajo
+     * entregado no puede cambiar de reglas porque alguien corrigió su
+     * plantilla tres meses después.
+     *
+     * Se copia el MANIFIESTO, que es lo que gobierna la composición y el
+     * formateador determinista, y la identidad de la guía para poder
+     * decir de cuál salió. NO se copia el texto crudo: son cientos de
+     * kilobytes por guía y el documento del paper ya carga los análisis
+     * canónicos de cada verso. El texto se sigue leyendo por
+     * `styleGuideId`, así que volver a subir el archivo de la guía sí
+     * alcanza a los papers viejos — queda dicho, no escondido.
+     *
+     * Ausente en los papers anteriores a esta copia: ahí se resuelve
+     * contra la guía viva, que es como venía.
+     */
+    styleGuideSnapshot?: StyleGuideSnapshot | null;
+
     styleGuideId: string | null;
 
     /**

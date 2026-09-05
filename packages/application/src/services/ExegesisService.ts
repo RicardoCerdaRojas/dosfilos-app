@@ -51,6 +51,7 @@ import {
     ListExegesisPaperSummariesUseCase,
     GetExegeticalPaperUseCase,
     ArchiveExegeticalPaperUseCase,
+    SetPaperStyleGuideUseCase,
     UpdatePaperBriefUseCase,
     SaveAssembledPaperUseCase,
     UpdateStepPlanUseCase,
@@ -133,6 +134,12 @@ class ExegesisService {
     public getPaper: GetExegeticalPaperUseCase;
     public archivePaper: ArchiveExegeticalPaperUseCase;
     public updatePaperBrief: UpdatePaperBriefUseCase;
+    /**
+     * Adjunta una guía de estilo al trabajo COPIÁNDOLA. Volver a
+     * llamarlo es lo que significa «actualizar a la versión actual»:
+     * un acto deliberado, nunca automático.
+     */
+    public setPaperStyleGuide: SetPaperStyleGuideUseCase;
     public saveAssembledPaper: SaveAssembledPaperUseCase;
     public updateStepPlan: UpdateStepPlanUseCase;
     public updateRubric: UpdateRubricUseCase;
@@ -293,6 +300,7 @@ class ExegesisService {
         this.getPaper = new GetExegeticalPaperUseCase(paperRepository);
         this.archivePaper = new ArchiveExegeticalPaperUseCase(paperRepository);
         this.updatePaperBrief = new UpdatePaperBriefUseCase(paperRepository);
+        this.setPaperStyleGuide = new SetPaperStyleGuideUseCase(paperRepository, styleGuideRepository);
         // Guardar NO compone: la composición ya está hecha y revisada.
         this.saveAssembledPaper = new SaveAssembledPaperUseCase(paperRepository);
         this.updateStepPlan = new UpdateStepPlanUseCase(paperRepository);

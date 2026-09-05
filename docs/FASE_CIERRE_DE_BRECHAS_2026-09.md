@@ -18,12 +18,12 @@ porque el código exista: se cierra cuando alguien lo vio funcionar.
 
 | # | Pendiente | Estado |
 |---|---|---|
-| 1 | Autosave del editor de recursos, sin acuse | pendiente |
-| 2 | El auto-indexador no dispara en creación | pendiente |
+| 1 | Autosave del editor de recursos, sin acuse | ✅ desplegado (#543) |
+| 2 | El auto-indexador no dispara en creación | ✅ desplegado (#544, #546, #547) |
 | 3 | Higiene de datos de la biblioteca | ✅ cerrada (NTG 28 sustituido por un born-digital) |
 | 4 | Informe previo al subir un PDF | ✅ hecho (terminal + aviso en la app) |
-| 5 | Fork de la guía de estilo por trabajo | pendiente |
-| 6 | El binding `allUsers` del auto-indexador | pendiente · decisión del fundador |
+| 5 | Fork de la guía de estilo por trabajo | ✅ hecho |
+| 6 | El binding `allUsers` del auto-indexador | ✅ quitado y verificado en producción |
 | 7 | Telemetría de extracción | pendiente · pide diseño |
 | 8 | `completeRegistration` sin rate-limit propio | pendiente |
 
@@ -165,6 +165,13 @@ con una cuenta de servicio, no un navegador. El binding `allUsers` →
 
 Valor de usuario: cero. Costo: un comando. Está en la lista porque es gratis,
 no porque compita con lo de arriba.
+
+**Hecho (2026-09-05).** Antes de quitarlo se comprobó que sus tres hermanos
+—`extractpdfwithgemini`, `indexresourcetask`, `generarplanjob`— corren con CERO
+bindings y funcionan: la invocación viene del `roles/run.invoker` que la cuenta
+de servicio tiene a nivel de proyecto. Quitado el binding, se forzó un
+reindexado real y el disparador encoló e indexó igual. `check-functions-invokers`
+queda en verde por primera vez.
 
 ## 7 · Telemetría de extracción
 
