@@ -18,8 +18,8 @@ porque el código exista: se cierra cuando alguien lo vio funcionar.
 
 | # | Pendiente | Estado |
 |---|---|---|
-| 1 | Autosave del editor de recursos, sin acuse | pendiente |
-| 2 | El auto-indexador no dispara en creación | pendiente |
+| 1 | Autosave del editor de recursos, sin acuse | ✅ desplegado (#543) |
+| 2 | El auto-indexador no dispara en creación | ✅ desplegado (#544, #546, #547) |
 | 3 | Higiene de datos de la biblioteca | ✅ cerrada (NTG 28 sustituido por un born-digital) |
 | 4 | Informe previo al subir un PDF | ✅ hecho (terminal + aviso en la app) |
 | 5 | Fork de la guía de estilo por trabajo | ✅ hecho |
