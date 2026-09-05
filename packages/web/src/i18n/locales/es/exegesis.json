@@ -261,6 +261,11 @@
             "description": "Variantes textuales del manuscrito utilizadas cuando el texto recibido es disputado.",
             "examples": "Aparato de NA28, BHS, ECM"
         },
+        "textual-commentary": {
+            "label": "Comentario del aparato",
+            "description": "Explica por qué se adoptó cada lectura y qué testigos la respaldan, en prosa. Selectivo: no cubre toda variante.",
+            "examples": "Metzger, A Textual Commentary on the Greek New Testament"
+        },
         "lexicon-technical": {
             "label": "Léxico técnico",
             "description": "Léxicos académicos con entradas completas, glosas y semántica.",
@@ -1468,6 +1473,8 @@
                 "title": "Verificación de citas",
                 "description": "Cada cita inline se contrastó contra las fuentes del paper. Las marcadas en amarillo o rojo necesitan revisión.",
                 "empty": "No se detectaron citas en este paso. Se reconocen (Autor, \"Título\", p. N), (Autor, p. N) y Autor (p. N).",
+                "witnessClaims_one": "Una afirmación sobre manuscritos —códices, papiros, testigos— no tiene cita que la respalde. Compruébala contra tus fuentes antes de entregar: una lista de testigos inventada tiene forma de erudición.",
+                "witnessClaims_other": "{{count}} afirmaciones sobre manuscritos —códices, papiros, testigos— no tienen cita que las respalde. Compruébalas contra tus fuentes antes de entregar: una lista de testigos inventada tiene forma de erudición.",
                 "namedWithoutCitation_one": "El texto nombra una fuente del corpus sin citarla en un formato verificable. No es un visto: es una cita que nadie pudo comprobar.",
                 "namedWithoutCitation_other": "El texto nombra {{count}} fuentes del corpus sin citarlas en un formato verificable. No es un visto: son citas que nadie pudo comprobar.",
                 "running": "Comparando citas con las fuentes…",

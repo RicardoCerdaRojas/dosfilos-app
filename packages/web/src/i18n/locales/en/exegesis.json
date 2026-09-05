@@ -261,6 +261,11 @@
             "description": "Manuscript variants used when the received text is disputed.",
             "examples": "NA28 apparatus, BHS, ECM"
         },
+        "textual-commentary": {
+            "label": "Commentary on the apparatus",
+            "description": "Explains in prose why each reading was adopted and which witnesses back it. Selective: it does not cover every variant.",
+            "examples": "Metzger, A Textual Commentary on the Greek New Testament"
+        },
         "lexicon-technical": {
             "label": "Technical lexicon",
             "description": "Academic lexicons with full entries, glosses, and semantics.",
@@ -1468,6 +1473,8 @@
                 "title": "Citation verification",
                 "description": "Each inline citation was checked against the paper's sources. Yellow or red items need a closer look.",
                 "empty": "No citations detected in this step. Recognized forms: (Author, \"Title\", p. N), (Author, p. N), and Author (p. N).",
+                "witnessClaims_one": "One claim about manuscripts — codices, papyri, witnesses — has no citation backing it. Check it against your sources before submitting: a fabricated witness list looks exactly like scholarship.",
+                "witnessClaims_other": "{{count}} claims about manuscripts — codices, papyri, witnesses — have no citation backing them. Check them against your sources before submitting: a fabricated witness list looks exactly like scholarship.",
                 "namedWithoutCitation_one": "The text names one corpus source without citing it in a verifiable format. That is not a pass: it is a citation nobody could check.",
                 "namedWithoutCitation_other": "The text names {{count}} corpus sources without citing them in a verifiable format. That is not a pass: they are citations nobody could check.",
                 "running": "Checking citations against sources…",

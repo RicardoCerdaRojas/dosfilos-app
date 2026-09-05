@@ -36,6 +36,7 @@ export const SUGGESTED_ROLE_BY_SOURCE_TYPE: Readonly<Record<SourceType, SourceRo
     'lexicon-technical': 'technical',
     'grammar-syntax': 'technical',
     'critical-apparatus': 'technical',
+    'textual-commentary': 'technical',
     'primary-source-ancient': 'technical',
     'biblical-text-edition': 'technical',
 

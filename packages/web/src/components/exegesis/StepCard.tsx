@@ -1096,6 +1096,7 @@ export function StepCard({ step, paperId, language, allSteps }: StepCardProps) {
                 onOpenChange={setVerifyDialogOpen}
                 citations={verifiedCitations}
                 sourcesNamedWithoutCitation={displayVerificationSummary?.sourcesNamedWithoutCitation ?? 0}
+                witnessClaimsWithoutCitation={displayVerificationSummary?.witnessClaimsWithoutCitation ?? 0}
                 isVerifying={verifyStepCitations.isPending}
                 onReverify={handleVerifyCitations}
             />

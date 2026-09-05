@@ -78,6 +78,7 @@ export * from './services/composedVerseSections';
 export * from './services/enforceAnalysisCoverage';
 export * from './services/buildPaperStudyContext';
 export * from './services/verifyAttributedQuotes';
+export * from './services/findUnsupportedWitnessClaims';
 export * from './services/getEffectiveStructuralExpectations';
 
 // Selección estructural de fragmentos: lee la tabla de contenidos que el
