@@ -338,5 +338,30 @@
     "retryIndexingError_other": "Couldn't index {{count}} resources. Try again in a few minutes."
   },
   "citedResourceMissing": "The source you cited is no longer in your library. You may have deleted it after preparing that sermon.",
-  "citedResourceDismiss": "Got it"
+  "citedResourceDismiss": "Got it",
+  "preflight": {
+    "reading": "Checking the file…",
+    "measured": "Measured on your device across {{pages}} pages, without uploading anything.",
+    "measuredDetail": "Sample: pages {{from}} to {{to}} · {{chars}} characters of text found.",
+    "apto": {
+      "title": "The file looks good",
+      "body": "It carries its text inside, so Preach will be able to search and cite within this book — including Greek or Hebrew words with their accents."
+    },
+    "sin-capa-de-texto": {
+      "title": "This file is photos of the pages, not text",
+      "body": "It reads fine, but inside there are no letters — only images. Preach won't be able to search inside it or cite from it. If you have another version of the same book, try that one. You can upload it anyway, but it will likely end up unusable."
+    },
+    "escritura-ausente": {
+      "title": "This file's text is damaged",
+      "body": "It reads fine on screen, but the letters stored inside are not the ones it displays. Whatever reaches Preach will be gibberish, impossible to search or cite. Look for another version of this book before uploading."
+    },
+    "escritura-sin-diacriticos": {
+      "title": "The Greek or Hebrew comes without its accents",
+      "body": "The book is fine to read, but searching for a Greek or Hebrew word with its accents won't find it, because this file lost them. Upload it if reading is enough; for original-language study another version is better."
+    },
+    "sin-escritura-original": {
+      "title": "We found no Greek or Hebrew inside",
+      "body": "If this book doesn't use them, it's perfectly fine. If it's a grammar, a critical text or a technical commentary that should carry them, then this file lost them and they would arrive unreadable."
+    }
+  }
 }

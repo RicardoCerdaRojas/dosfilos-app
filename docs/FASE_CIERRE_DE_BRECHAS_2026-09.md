@@ -21,7 +21,7 @@ porque el código exista: se cierra cuando alguien lo vio funcionar.
 | 1 | Autosave del editor de recursos, sin acuse | pendiente |
 | 2 | El auto-indexador no dispara en creación | pendiente |
 | 3 | Higiene de datos de la biblioteca | ✅ cerrada (NTG 28 sustituido por un born-digital) |
-| 4 | Informe previo al subir un PDF | pendiente · pide diseño |
+| 4 | Informe previo al subir un PDF | ✅ hecho (terminal + aviso en la app) |
 | 5 | Fork de la guía de estilo por trabajo | pendiente |
 | 6 | El binding `allUsers` del auto-indexador | pendiente · decisión del fundador |
 | 7 | Telemetría de extracción | pendiente · pide diseño |
@@ -134,6 +134,20 @@ la familia de falla: `GlyphLessFont` es capa OCR de Tesseract; encoding
 **Límite honesto que el copy debe respetar:** predice la fidelidad del
 CONTENIDO, no la fiabilidad del SERVICIO. No habría anticipado el
 `failed: unknown` de LlamaParse.
+
+**Hecho (2026-09-05).** `diagnosePdfSource` vive en el dominio, probado contra
+seis libros reales, y lo usan las dos superficies: `npm run diagnosticar` desde
+la terminal y un aviso en el formulario de subida que lee el PDF **en el
+navegador**, sin subir nada.
+
+Dos decisiones del fundador quedaron fijadas: **sólo advierte, nunca bloquea**
+—hay libros que el diagnóstico no puede juzgar y quien decide es quien conoce
+el libro—, y **el copy no usa jerga**: «este archivo son fotos de las páginas,
+no texto», no «carece de capa de texto».
+
+Y una tercera, aprendida equivocándose: **se muestrea el MEDIO del libro**. La
+primera versión miraba 40 páginas y aprobó un interlineal hebreo de 2.013
+cuya portada es inglés y cuyo hebreo entero son códigos latinos.
 
 ## 5 · Fork de la guía de estilo por trabajo
 

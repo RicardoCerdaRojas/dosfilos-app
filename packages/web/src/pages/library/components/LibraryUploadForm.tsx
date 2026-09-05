@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { FileDropzone } from '@/components/ui/file-dropzone';
 import { AlertTriangle, BookOpen, Loader2, Plus, Sparkles, Upload, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PdfPreflightNotice } from './PdfPreflightNotice';
+import { usePdfPreflight } from '../hooks/usePdfPreflight';
 
 export type ExtractionMode = 'standard' | 'premium';
 
@@ -103,6 +105,9 @@ export function LibraryUploadForm({
     onSubmit,
 }: LibraryUploadFormProps) {
     const { t, i18n } = useTranslation('library');
+    // Lee el PDF elegido en el navegador y advierte si no va a servir.
+    // No bloquea: el botón de subir sigue disponible pase lo que pase.
+    const preflight = usePdfPreflight(file);
     const showTierCallout = file !== null && (!tierAvailability.premium || !tierAvailability.standard);
 
     return (
@@ -149,6 +154,8 @@ export function LibraryUploadForm({
             <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 <div className="space-y-1.5 lg:col-span-1">
                     <Label htmlFor="file" className="text-[12.5px]">{t('upload.fileLabel')}</Label>
+                    {/* Diagnóstico local del PDF: advierte antes de subir,
+                        sin bloquear. Ver `usePdfPreflight`. */}
                     <FileDropzone
                         id="file"
                         accept=".pdf,.epub"
@@ -168,6 +175,7 @@ export function LibraryUploadForm({
                             </AlertDescription>
                         </Alert>
                     )}
+                    <PdfPreflightNotice state={preflight} />
                 </div>
                 <div className="space-y-1.5 lg:col-span-1">
                     <Label htmlFor="title" className="text-[12.5px]">{t('upload.titleLabel')}</Label>

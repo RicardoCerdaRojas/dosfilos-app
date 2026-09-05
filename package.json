@@ -49,6 +49,7 @@
     "test:root": "vitest run",
     "postinstall": "node scripts/dedupe-nested-react.js && node scripts/dedupe-nested-firebase.js",
     "bakeoff": "node scripts/extraction-bakeoff/run.mjs",
+    "diagnosticar": "node --experimental-strip-types --no-warnings scripts/diagnosticar-pdf.ts",
     "bakeoff:test": "vitest run scripts/extraction-bakeoff"
   },
   "devDependencies": {
