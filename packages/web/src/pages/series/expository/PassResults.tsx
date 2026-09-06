@@ -1,5 +1,5 @@
-import { type BookPanorama, type ExegeticalUnit, type MacroSection } from '@dosfilos/domain';
-import { formatRange } from './passState';
+import { type BookPanorama, type ExegeticalUnit, type MacroSection, type BibleBookId } from '@dosfilos/domain';
+import { formatRangeForReader } from './passState';
 
 export function PanoramaResult({ panorama, t }: { panorama: BookPanorama; t: (key: string) => string }) {
     return (
@@ -59,10 +59,12 @@ export function ResultRow({
 
 export function MacroResult({
     sections,
+    bookId,
     bookDisplay,
     t,
 }: {
     sections: ReadonlyArray<MacroSection>;
+    bookId: BibleBookId;
     bookDisplay: string;
     /** `t` con sus parámetros de interpolación: la firma anterior declaraba
      *  un solo argumento y varias llamadas pasan dos, así que mentía. */
@@ -80,7 +82,7 @@ export function MacroResult({
                             {s.title}
                         </span>
                         <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                            {bookDisplay} {formatRange(s)}
+                            {bookDisplay} {formatRangeForReader(bookId, s)}
                         </span>
                         <span className="text-[10px] uppercase tracking-wide font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded">
                             {t(`expository.results.macro.function.${s.functionInBook}`)}
@@ -98,6 +100,7 @@ export function MacroResult({
 export function MicroResult({
     units,
     macros,
+    bookId,
     bookDisplay,
     strictMode,
     unitsConfirmedHavePapers,
@@ -106,6 +109,7 @@ export function MicroResult({
 }: {
     units: ReadonlyArray<ExegeticalUnit>;
     macros: ReadonlyArray<MacroSection>;
+    bookId: BibleBookId;
     bookDisplay: string;
     /** v1.6 strict mode — surfaces per-unit "tiene paper aceptado" checkbox. */
     strictMode?: boolean;
@@ -131,7 +135,7 @@ export function MicroResult({
                 return (
                     <div key={m.id}>
                         <p className="text-[11px] uppercase tracking-wide text-slate-400 font-medium mb-1.5">
-                            {m.title} <span className="font-mono normal-case text-slate-500">· {bookDisplay} {formatRange(m)}</span>
+                            {m.title} <span className="font-mono normal-case text-slate-500">· {bookDisplay} {formatRangeForReader(bookId, m)}</span>
                         </p>
                         <ul className="space-y-1.5">
                             {macroUnits.map((u) => (
@@ -144,7 +148,7 @@ export function MicroResult({
                                             {u.suggestedTitle}
                                         </span>
                                         <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                                            {bookDisplay} {formatRange(u.syntacticUnit)}
+                                            {bookDisplay} {formatRangeForReader(bookId, u.syntacticUnit)}
                                         </span>
                                         {strictMode && unitsConfirmedHavePapers && onToggleHasPaper && (
                                             <label className="ml-auto flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300 cursor-pointer select-none">

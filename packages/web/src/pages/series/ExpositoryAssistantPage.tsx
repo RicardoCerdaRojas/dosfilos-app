@@ -80,7 +80,7 @@ import {
 } from './expository/ctas';
 import {
     derivePassState,
-    formatRange,
+    formatRangeForReader,
 } from './expository/passState';
 import { useExpositoryViewPrefs } from './expository/useExpositoryViewPrefs';
 import { buildPassInput, sourceLanguageFromLoaded } from './expository/passInput';
@@ -635,7 +635,7 @@ export function ExpositoryAssistantPage() {
             const merged: PreachableUnit = {
                 id: crypto.randomUUID(),
                 title: `${a.title} + ${b.title}`,
-                passage: `${bookDisplay ?? ''} ${formatRange({
+                passage: `${bookDisplay ?? ''} ${formatRangeForReader(bookId, {
                     chapterStart: a.chapterStart,
                     verseStart: a.verseStart,
                     chapterEnd: b.chapterEnd,
@@ -694,7 +694,7 @@ export function ExpositoryAssistantPage() {
                 ...u,
                 id: crypto.randomUUID(),
                 title: `${u.title} (1)`,
-                passage: `${bookDisplay ?? ''} ${formatRange({
+                passage: `${bookDisplay ?? ''} ${formatRangeForReader(bookId, {
                     chapterStart: u.chapterStart,
                     verseStart: u.verseStart,
                     chapterEnd: u.chapterStart,
@@ -708,7 +708,7 @@ export function ExpositoryAssistantPage() {
                 ...u,
                 id: crypto.randomUUID(),
                 title: `${u.title} (2)`,
-                passage: `${bookDisplay ?? ''} ${formatRange({
+                passage: `${bookDisplay ?? ''} ${formatRangeForReader(bookId, {
                     chapterStart: u.chapterStart,
                     verseStart: atVerse + 1,
                     chapterEnd: u.chapterEnd,
@@ -1066,7 +1066,7 @@ export function ExpositoryAssistantPage() {
                         t={t}
                     >
                         {macroSections && bookDisplay && (
-                            <MacroResult sections={macroSections} bookDisplay={bookDisplay} t={t} />
+                            <MacroResult sections={macroSections} bookId={bookId} bookDisplay={bookDisplay} t={t} />
                         )}
                     </PassCard>
                 )}
@@ -1085,6 +1085,7 @@ export function ExpositoryAssistantPage() {
                                 <MicroResult
                                     units={exegeticalUnits}
                                     macros={macroSections}
+                                    bookId={bookId}
                                     bookDisplay={bookDisplay}
                                     strictMode={strictMode}
                                     unitsConfirmedHavePapers={unitsConfirmedHavePapers}
@@ -1117,6 +1118,7 @@ export function ExpositoryAssistantPage() {
                         {preachableUnits && bookDisplay && (
                             <PreachableResult
                                 units={preachableUnits}
+                                bookId={bookId}
                                 bookDisplay={bookDisplay}
                                 strictMode={strictMode}
                                 onUnitChange={(id, patch) => {

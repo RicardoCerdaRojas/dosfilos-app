@@ -337,6 +337,7 @@
                 },
                 "modifiedChip": "Modified by you",
                 "refineMarker": "Refine",
+                "versificationNote": "This division follows the original text, not your Bible\u2019s chapters. That is why the boundary does not line up: the Hebrew groups this passage differently. The numbers you see are already in your version.",
                 "refineBanner": "You changed the structure of this unit. Review and rewrite the propositions so they reflect the merged/split content before creating the series.",
                 "noChanges": "No manual changes. You can still re-validate to confirm the fidelity of the analysis.",
                 "modifiedCount_one": "1 unit modified by you. Re-validate to confirm the regroup respects the methodology.",
