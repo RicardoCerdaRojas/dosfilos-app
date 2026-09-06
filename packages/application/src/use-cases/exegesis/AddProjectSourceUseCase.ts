@@ -46,6 +46,9 @@ export class AddProjectSourceUseCase {
         return this.paperRepository.addSource(input.ownerId, input.paperId, {
             corpusId: input.corpusId,
             sourceType: input.sourceType,
+            // El rol viaja tal cual lo eligió el pastor. Sin elección
+            // queda null y lo resuelve el tipo, como antes del campo.
+            chosenRole: input.chosenRole ?? null,
             displayLabel: input.displayLabel,
             citationKey: input.citationKey ?? null,
             order,

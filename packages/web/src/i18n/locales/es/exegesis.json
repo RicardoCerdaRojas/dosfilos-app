@@ -750,6 +750,9 @@
                     "ownedNo": "Ya la tengo",
                     "searchLibrary": "Buscar en mi biblioteca",
                     "searchLibraryHint": "Abre la biblioteca con el título precargado en el filtro de búsqueda",
+                    "attachToCorpus": "Agregar al corpus",
+                    "attachedToast": "«{{title}}» agregada al corpus.",
+                    "attachFailedToast": "No se pudo agregar al corpus. Intenta de nuevo.",
                     "inLibrary": "✓ En tu biblioteca",
                     "inLibraryHint": "Coincide con: {{title}}",
                     "openInLibrary": "Abrir",
@@ -1041,7 +1044,13 @@
                     "needsIndexing": "Sin indexar",
                     "failed": "Falló"
                 },
-                "upload": {
+                "roles": {
+                    "anchor": "Ancla",
+                    "contrast": "Contraste",
+                    "technical": "Técnica",
+                    "none": "sin rol"
+                },
+                                "upload": {
                     "title": "Agregar fuente al corpus",
                     "dialogSubtitle": "Sube un nuevo PDF/EPUB o reusa uno de tu biblioteca. El tipo académico decide si cumple un requisito de la rúbrica.",
                     "modeUpload": "Subir nuevo",
@@ -1054,7 +1063,10 @@
                     "librarySearchEmpty": "No encontramos coincidencias. Prueba con otro término.",
                     "displayNameLabel": "Etiqueta para el corpus",
                     "displayNamePlaceholder": "Ej. Lane WBC 47a, pp. 1-30",
-                    "typeLabel": "Tipo académico",
+                    "roleLabel": "Rol en tu argumento",
+                    "roleFollowType": "Según el tipo · {{role}}",
+                    "roleDivergence": "Las obras de este tipo suelen ir de {{suggested}}. La dejo de {{chosen}} porque lo pediste — el tipo mide la rúbrica, el rol lo decides tú.",
+                                        "typeLabel": "Tipo académico",
                     "typeLabelBulk": "Tipo académico para las {{count}} fuentes",
                     "typeDescription": "Elegí el tipo que mejor describe la fuente. La rúbrica usa este tipo para decidir si cumple los mínimos.",
                     "typeDescriptionBulk": "Se aplica a todas las fuentes seleccionadas. Si necesitas tipos distintos, puedes ajustarlos uno por uno desde la lista del corpus.",
@@ -1085,7 +1097,9 @@
                     "removed": "Fuente quitada",
                     "removeFailed": "No se pudo quitar la fuente.",
                     "typeUpdated": "Tipo actualizado",
-                    "typeUpdateFailed": "No se pudo actualizar el tipo"
+                    "typeUpdateFailed": "No se pudo actualizar el tipo",
+                    "roleUpdated": "Rol actualizado",
+                    "roleUpdateFailed": "No se pudo actualizar el rol"
                 }
             },
             "corpus-plan": {
