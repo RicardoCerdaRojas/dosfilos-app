@@ -1793,7 +1793,11 @@
                 "failed": "No se pudo generar el .docx. Intenta de nuevo."
             }
         },
-        "startStudy": {
+        "versification": {
+                "inYourBible": "· en tu Biblia: {{passage}}",
+                "hint": "Este trabajo usa la numeración del texto original, que es la convención académica. Tu versión numera este pasaje distinto."
+            },
+                "startStudy": {
             "cta": "Llevar al estudio",
             "hint": "Abre el estudio de 8 pasos con lo que ya estableciste en este paper a la vista en cada paso.",
             "hintNoMaterial": "Abre el estudio de 8 pasos para este pasaje. Este paper todavía no tiene análisis aceptados que acompañen los pasos.",

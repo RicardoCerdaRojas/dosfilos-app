@@ -1,35 +1,44 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { type PreachableUnit } from '@dosfilos/domain';
-import { formatRange } from './passState';
+import { rangeToOriginal, rangeToReader, type BibleBookId, type PreachableUnit } from '@dosfilos/domain';
+import { formatRangeForReader } from './passState';
 
 export interface BoundaryEditPopoverProps {
     unit: PreachableUnit;
+    /** Necesario para traducir entre la numeración del original y la del lector. */
+    bookId: BibleBookId;
     bookDisplay: string;
     onCommit: (patch: Partial<PreachableUnit>) => void;
     t: (key: string, opts?: Record<string, unknown>) => string;
 }
 
-export function BoundaryEditPopover({ unit, bookDisplay, onCommit, t }: BoundaryEditPopoverProps) {
+export function BoundaryEditPopover({ unit, bookId, bookDisplay, onCommit, t }: BoundaryEditPopoverProps) {
+    // Los campos se editan EN LA NUMERACIÓN DEL PASTOR. La unidad viene en
+    // coordenadas del texto original —el detector divide sobre el hebreo—,
+    // así que se traduce al abrir y se vuelve a traducir al guardar. Sin esa
+    // vuelta, escribir «1:17» pensando en el pez de Jonás guardaría el 1:17
+    // del Masorético, que es otro versículo.
+    const readerUnit = rangeToReader(bookId, unit);
     const [open, setOpen] = useState(false);
-    const [cs, setCs] = useState(unit.chapterStart);
-    const [vs, setVs] = useState(unit.verseStart);
-    const [ce, setCe] = useState(unit.chapterEnd);
-    const [ve, setVe] = useState(unit.verseEnd);
+    const [cs, setCs] = useState(readerUnit.chapterStart);
+    const [vs, setVs] = useState(readerUnit.verseStart);
+    const [ce, setCe] = useState(readerUnit.chapterEnd);
+    const [ve, setVe] = useState(readerUnit.verseEnd);
     const [error, setError] = useState<string | null>(null);
 
     // Reset draft when the underlying unit changes (e.g. after a
     // refine round-trip) or when the popover reopens.
     useEffect(() => {
         if (open) {
-            setCs(unit.chapterStart);
-            setVs(unit.verseStart);
-            setCe(unit.chapterEnd);
-            setVe(unit.verseEnd);
+            const r = rangeToReader(bookId, unit);
+            setCs(r.chapterStart);
+            setVs(r.verseStart);
+            setCe(r.chapterEnd);
+            setVe(r.verseEnd);
             setError(null);
         }
-    }, [open, unit.chapterStart, unit.verseStart, unit.chapterEnd, unit.verseEnd]);
+    }, [open, bookId, unit]);
 
     const validate = (): string | null => {
         if (!Number.isFinite(cs) || !Number.isFinite(vs) || !Number.isFinite(ce) || !Number.isFinite(ve)) {
@@ -50,21 +59,26 @@ export function BoundaryEditPopover({ unit, bookDisplay, onCommit, t }: Boundary
     const handleApply = () => {
         const err = validate();
         if (err) { setError(err); return; }
-        // Recompute the passage label so downstream code that reads
-        // `unit.passage` (series creation, sermon enrichment) stays
-        // consistent without separate plumbing.
-        const range = formatRange({ chapterStart: cs, verseStart: vs, chapterEnd: ce, verseEnd: ve });
+        // De vuelta a coordenadas del original antes de guardar: esa es la
+        // forma en que el sistema almacena las perícopas.
+        const stored = rangeToOriginal(bookId, {
+            chapterStart: cs, verseStart: vs, chapterEnd: ce, verseEnd: ve,
+        });
+        // La etiqueta, en cambio, se recalcula en la numeración del pastor,
+        // porque es lo que él va a leer en la lista de la serie.
+        const range = formatRangeForReader(bookId, stored);
         onCommit({
-            chapterStart: cs,
-            verseStart: vs,
-            chapterEnd: ce,
-            verseEnd: ve,
+            chapterStart: stored.chapterStart,
+            verseStart: stored.verseStart,
+            chapterEnd: stored.chapterEnd,
+            verseEnd: stored.verseEnd,
             passage: `${bookDisplay} ${range}`,
         });
         setOpen(false);
     };
 
-    const dirty = cs !== unit.chapterStart || vs !== unit.verseStart || ce !== unit.chapterEnd || ve !== unit.verseEnd;
+    const dirty = cs !== readerUnit.chapterStart || vs !== readerUnit.verseStart
+        || ce !== readerUnit.chapterEnd || ve !== readerUnit.verseEnd;
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -74,7 +88,7 @@ export function BoundaryEditPopover({ unit, bookDisplay, onCommit, t }: Boundary
                     className="text-[11px] font-mono text-slate-500 dark:text-slate-400 shrink-0 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline focus:outline-none focus:underline transition-colors"
                     title={t('expository.results.preachable.boundary.editTooltip') as string}
                 >
-                    {unit.passage || `${bookDisplay} ${formatRange(unit)}`}
+                    {unit.passage || `${bookDisplay} ${formatRangeForReader(bookId, unit)}`}
                 </button>
             </PopoverTrigger>
             <PopoverContent className="w-72 p-3 space-y-2" align="start" sideOffset={4}>

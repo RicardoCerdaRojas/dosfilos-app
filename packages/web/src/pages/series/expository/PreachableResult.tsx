@@ -3,11 +3,12 @@ import { Loader2, AlertTriangle, Sparkles, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { type PreachableUnit } from '@dosfilos/domain';
+import { rangeToReader, type PreachableUnit, type BibleBookId } from '@dosfilos/domain';
 import { BoundaryEditPopover } from './BoundaryEditPopover';
 
 export function PreachableResult({
     units,
+    bookId,
     bookDisplay,
     strictMode,
     onUnitChange,
@@ -18,6 +19,7 @@ export function PreachableResult({
     t,
 }: {
     units: ReadonlyArray<PreachableUnit>;
+    bookId: BibleBookId;
     bookDisplay: string;
     strictMode?: boolean;
     onUnitChange: (id: string, patch: Partial<PreachableUnit>) => void;
@@ -71,6 +73,7 @@ export function PreachableResult({
                                     />
                                     <BoundaryEditPopover
                                         unit={u}
+                                        bookId={bookId}
                                         bookDisplay={bookDisplay}
                                         onCommit={(patch) => onUnitChange(u.id, patch)}
                                         t={t}
@@ -104,6 +107,13 @@ export function PreachableResult({
                                         {t('expository.results.preachable.refineBanner')}
                                     </div>
                                 )}
+                                {/* El corte se hizo sobre el texto original y acá se
+                                    muestra en la numeración del pastor. Cuando las dos
+                                    no coinciden hay que DECIR POR QUÉ: la nota no
+                                    traduce números —eso ya se hizo— sino que explica
+                                    que la división sigue al original y no a los
+                                    capítulos de su Biblia. */}
+                                <VersificationNote bookId={bookId} unit={u} t={t} />
                                 <EditablePropositionRow
                                     label={t('expository.results.preachable.exegeticalProp') as string}
                                     value={u.exegeticalProposition}
@@ -290,5 +300,35 @@ export function EditablePropositionRow({
                 style={{ fieldSizing: 'content' } as React.CSSProperties}
             />
         </div>
+    );
+}
+
+/**
+ * Explica por qué la perícopa no respeta la frontera de capítulo de la
+ * Biblia del pastor.
+ *
+ * Aparece sólo cuando la numeración del texto original y la del lector
+ * difieren en este tramo. No es una advertencia de error: el corte es
+ * correcto justamente porque sigue al original. Lo que sería un error es
+ * mostrarlo sin decirlo, que es lo que pasaba —«Jonás 2:1-10» del hebreo
+ * leído como RVR dejó el pez de 1:17 fuera de toda perícopa de la serie.
+ */
+function VersificationNote({
+    bookId,
+    unit,
+    t,
+}: {
+    bookId: BibleBookId;
+    unit: PreachableUnit;
+    t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+    const reader = rangeToReader(bookId, unit);
+    if (!reader.differsFromOriginal) return null;
+
+    return (
+        <p className="mb-2 text-[11px] leading-relaxed text-info inline-flex items-start gap-1.5">
+            <Sparkles className="h-3 w-3 mt-0.5 shrink-0" aria-hidden />
+            <span>{t('expository.results.preachable.versificationNote')}</span>
+        </p>
     );
 }

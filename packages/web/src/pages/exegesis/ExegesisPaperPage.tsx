@@ -61,6 +61,7 @@ import { exportPaperToDocx } from '@/lib/exegesis/exportPaperToDocx';
 import {
     exportPaperToMarkdown,
     formatPassageReference,
+    passageToReader,
     type ExegeticalPaper,
     type ProjectSource,
     type SupportedLanguage,
@@ -248,7 +249,16 @@ export function ExegesisPaperPage() {
 
     const passageShape = passageEligibleForGeneration(paper);
 
+    // El paper se queda en la numeración del TEXTO ORIGINAL, que es la
+    // convención académica para un trabajo sobre el hebreo o el griego: sus
+    // pasos, sus citas y su aparato hablan esa numeración. Lo que NO puede
+    // pasar es que el pastor no se entere, porque va a predicar desde su
+    // Biblia. Cuando difieren, se declara la equivalencia acá mismo.
     const passageDisplay = formatPassageReference(paper.passage, activeLanguage);
+    const readerPassage = passageToReader(paper.passage);
+    const readerPassageDisplay = readerPassage.differs
+        ? formatPassageReference(readerPassage.passage, activeLanguage)
+        : null;
     const titleDisplay = paper.title || passageDisplay;
 
     return (
@@ -270,6 +280,14 @@ export function ExegesisPaperPage() {
                         </h1>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                             {passageDisplay} · {t(`list.phase.${paper.phase}`)}
+                            {readerPassageDisplay && (
+                                <span
+                                    className="ml-2 text-info"
+                                    title={t('detail.versification.hint') as string}
+                                >
+                                    {t('detail.versification.inYourBible', { passage: readerPassageDisplay })}
+                                </span>
+                            )}
                         </p>
                     </div>
 

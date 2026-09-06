@@ -1,3 +1,4 @@
+import { rangeToReader, type BibleBookId, type VerseRange } from '@dosfilos/domain';
 import { CheckCircle2, CircleDashed, Loader2, AlertTriangle } from 'lucide-react';
 
 export type PassState = 'pending' | 'running' | 'done' | 'error';
@@ -50,10 +51,25 @@ export function derivePassState(
     return 'pending';
 }
 
-export function formatRange(s: { chapterStart: number; verseStart: number; chapterEnd: number; verseEnd: number }): string {
+function formatNumbers(s: VerseRange): string {
     if (s.chapterStart === s.chapterEnd) {
         if (s.verseStart === s.verseEnd) return `${s.chapterStart}:${s.verseStart}`;
         return `${s.chapterStart}:${s.verseStart}-${s.verseEnd}`;
     }
     return `${s.chapterStart}:${s.verseStart}-${s.chapterEnd}:${s.verseEnd}`;
+}
+
+/**
+ * Formatea un tramo EN LA NUMERACIÓN DE LA BIBLIA DEL PASTOR.
+ *
+ * El `bookId` es obligatorio y no es burocracia: sin él no se puede
+ * traducir, y este formateador es el punto exacto donde las coordenadas del
+ * Masorético —las que produce el detector de perícopas, que divide por
+ * gramática y no por capítulos modernos— se convertían en el rótulo que el
+ * pastor leía como si fuera su RVR. Así «Jonás 2:1-10» del hebreo se le
+ * mostró como si fuera castellano, y el pez de 1:17 quedó fuera de toda
+ * perícopa de la serie.
+ */
+export function formatRangeForReader(bookId: BibleBookId, s: VerseRange): string {
+    return formatNumbers(rangeToReader(bookId, s));
 }

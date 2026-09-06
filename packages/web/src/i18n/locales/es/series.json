@@ -337,6 +337,7 @@
                 },
                 "modifiedChip": "Modificado por ti",
                 "refineMarker": "Refinar",
+                "versificationNote": "Esta división sigue al texto original, no a los capítulos de tu Biblia. Por eso el corte no coincide: el hebreo agrupa este pasaje de otra manera. Los números que ves ya están en tu versión.",
                 "refineBanner": "Reescribiste la estructura de esta unidad. Revisa y reescribe las proposiciones para que reflejen el contenido combinado/dividido antes de crear la serie.",
                 "noChanges": "Sin cambios manuales. Puedes re-validar igual para confirmar la fidelidad del análisis.",
                 "modifiedCount_one": "1 unidad modificada por ti. Re-valida para confirmar que el regroup respeta la metodología.",
