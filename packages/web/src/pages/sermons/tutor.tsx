@@ -5,24 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader2, Send, Sparkles, BookOpen, Lightbulb, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Loader2, Send, Sparkles, BookOpen, Lightbulb, ArrowLeft } from 'lucide-react';
 import { useGeneratorChat } from '@/hooks/useGeneratorChat';
 import { QuickAction } from '@dosfilos/domain';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { sermonGeneratorService, sermonService, generatorChatService } from '@dosfilos/application';
+import { sermonService, generatorChatService } from '@dosfilos/application';
 import { toast } from 'sonner';
 import { useFirebase } from '@/context/firebase-context';
 
 export function SermonTutorPage() {
-    const { t, i18n } = useTranslation('sermons');
-    const activeLanguage: 'es' | 'en' = i18n.language?.split('-')[0] === 'en' ? 'en' : 'es';
+    const { t } = useTranslation('sermons');
     const navigate = useNavigate();
     const { user } = useFirebase();
     
     // State
     const [isGenerating, setIsGenerating] = useState(false);
-    const [generationStep, setGenerationStep] = useState<string>('');
     const [input, setInput] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<{passage: string, idea: string, hasDraft: boolean, title: string, contentMarkdown: string} | null>(null);
@@ -50,7 +48,6 @@ export function SermonTutorPage() {
     useEffect(() => {
         setMessages([]);
         setIsGenerating(false);
-        setGenerationStep('');
         setInput('');
         setAnalysisResult(null);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,112 +73,81 @@ export function SermonTutorPage() {
         }
     };
 
-    const handleSaveDraft = async () => {
-        if (!user?.uid || !analysisResult || !analysisResult.hasDraft) return;
-
-        setIsGenerating(true);
-        setGenerationStep('Guardando sermón...');
-        try {
-            const newSermon = await sermonService.createSermon({
-                userId: user.uid,
-                title: analysisResult.title || 'Sermón sin título',
-                content: analysisResult.contentMarkdown,
-                bibleReferences: analysisResult.passage ? [analysisResult.passage] : [],
-                status: 'draft',
-                tags: ['AI Generated'],
-            });
-            toast.success(t('sermonCreatedSuccess'));
-            navigate(`/dashboard/sermons/${newSermon.id}/edit`);
-        } catch (error) {
-            console.error('Save failed:', error);
-            toast.error('Error al guardar el sermón');
-        } finally {
-            setIsGenerating(false);
-            setGenerationStep('');
-        }
-    };
-
-    const handleExpressGeneration = async () => {
+    /**
+     * Lleva lo que salió de la conversación al estudio pastoral de 8 pasos.
+     *
+     * Acá vivían DOS caminos que creaban un sermón sintético y lo abrían en
+     * el editor, saltándose el estudio entero:
+     *
+     *   - `handleSaveDraft` guardaba como sermón el borrador que el chat
+     *     había redactado durante la conversación.
+     *   - `handleExpressGeneration` encadenaba tres llamadas al modelo
+     *     (exégesis → homilética → redacción) desde un pasaje y una idea, y
+     *     etiquetaba el resultado `AI Generated`.
+     *
+     * Ninguno creaba semilla, ninguno pasaba por el portón de fidelidad, y
+     * ambos desembocaban en `/edit` en vez del wizard. Era la última puerta
+     * del producto que producía un sermón sin que el pastor estudiara — y
+     * se le ofrecía al usuario recién terminado el onboarding.
+     *
+     * Lo que la conversación produjo NO se tira: el pasaje ancla el estudio,
+     * y la idea (más el borrador esbozado, si lo hubo) viaja a
+     * `preacherNotes`, que es el campo para "ideas a medio formar y material
+     * personal". Ahí lo tiene a mano cuando llegue al Paso 3, después del
+     * estudio — que es cuando el sermón se escribe.
+     */
+    const handleTakeToStudy = async () => {
         if (!user?.uid) {
-            toast.error('Debes iniciar sesión para guardar el sermón');
+            toast.error(t('tutor.errors.notSignedIn'));
             return;
         }
-
-        if (!analysisResult?.passage?.trim() || !analysisResult?.idea?.trim()) {
-            toast.error(t('tutor.errors.missingFields'));
+        if (!analysisResult?.passage?.trim()) {
+            toast.error(t('tutor.errors.missingPassage'));
             return;
         }
 
         setIsGenerating(true);
         try {
-            // Step 1: Exegesis
-            setGenerationStep(t('tutor.steps.exegesis'));
-            const { exegesis } = await sermonGeneratorService.generateExegesis(
-                analysisResult.passage,
-                { targetAudience: 'general', tone: 'pastoral', customInstructions: `Enfoque: ${analysisResult.idea}` },
-                undefined,
-                undefined,
-                activeLanguage,
-            );
+            const notes = [
+                analysisResult.idea?.trim()
+                    ? `${t('tutor.notes.ideaPrefix')} ${analysisResult.idea.trim()}`
+                    : '',
+                analysisResult.hasDraft && analysisResult.contentMarkdown?.trim()
+                    ? `${t('tutor.notes.draftPrefix')}\n\n${analysisResult.contentMarkdown.trim()}`
+                    : '',
+            ]
+                .filter(Boolean)
+                .join('\n\n');
 
-            // Step 2: Homiletics
-            setGenerationStep(t('tutor.steps.homiletics'));
-            const { homiletics } = await sermonGeneratorService.generateHomiletics(
-                exegesis,
-                { targetAudience: 'general', tone: 'pastoral', customInstructions: `Idea central: ${analysisResult.idea}` },
-                undefined,
-                undefined,
-                activeLanguage,
-            );
-
-            // Step 3: Drafting
-            setGenerationStep(t('tutor.steps.drafting'));
-            const { draft } = await sermonGeneratorService.generateSermonDraft(
-                homiletics,
-                { targetAudience: 'general', tone: 'pastoral' },
-                undefined,
-                undefined,
-                activeLanguage,
-            );
-
-            // Success
-            setGenerationStep(t('tutor.steps.success'));
-            
-            // Format for the editor
-            const fullContent = `
-                <h1>${draft.title}</h1>
-                <hr />
-                <h2>Introducción</h2>
-                ${draft.introduction}
-                <hr />
-                <h2>Desarrollo</h2>
-                ${draft.body.map(point => `
-                    <h3>${point.point}</h3>
-                    ${point.content}
-                `).join('')}
-                <hr />
-                <h2>Conclusión</h2>
-                ${draft.conclusion}
-            `;
+            // `SermonEntity` exige un título de 5 caracteres o más; los
+            // títulos cortos que devuelve el análisis (o su ausencia) se
+            // completan con el pasaje en vez de reventar la creación.
+            const rawTitle = analysisResult.title?.trim() || '';
+            const title = rawTitle.length >= 5 ? rawTitle : analysisResult.passage.trim();
 
             const newSermon = await sermonService.createSermon({
                 userId: user.uid,
-                title: draft.title,
-                content: fullContent,
-                bibleReferences: [analysisResult.passage],
+                title,
+                // Vacío a propósito: el cuerpo lo escribe el pastor en el
+                // Paso 3. Antes acá iba el sermón que el modelo redactó.
+                content: '',
+                bibleReferences: [analysisResult.passage.trim()],
                 status: 'draft',
-                tags: ['AI Generated'],
+                wizardProgress: {
+                    currentStep: 1,
+                    passage: analysisResult.passage.trim(),
+                    lastSaved: new Date(),
+                    ...(notes ? { personalization: { preacherNotes: notes } } : {}),
+                },
             });
-            
-            toast.success(t('sermonCreatedSuccess'));
-            navigate(`/dashboard/sermons/${newSermon.id}/edit`);
 
+            toast.success(t('tutor.toast.studyStarted'));
+            navigate(`/dashboard/sermons/generate?id=${newSermon.id}`);
         } catch (error) {
-            console.error('Generation failed:', error);
-            toast.error(t('tutor.errors.generationFailed'));
+            console.error('[tutor] take to study failed:', error);
+            toast.error(t('tutor.errors.studyStartFailed'));
         } finally {
             setIsGenerating(false);
-            setGenerationStep('');
         }
     };
 
@@ -344,9 +310,9 @@ export function SermonTutorPage() {
                                     <Sparkles className="h-6 w-6 text-indigo-500" />
                                 </div>
                                 <div className="space-y-2">
-                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Extraer de la conversación</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        Cuando tengas definido tu sermón en el chat, analiza la conversación para extraer el pasaje y la idea, o para guardar el sermón si ya está redactado.
+                                    <h4 className="font-semibold text-foreground">{t('tutor.extract.title')}</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                        {t('tutor.extract.body')}
                                     </p>
                                 </div>
                                 <Button 
@@ -354,88 +320,69 @@ export function SermonTutorPage() {
                                     onClick={handleAnalyze}
                                     disabled={messages.length === 0}
                                 >
-                                    Analizar Conversación
+                                    {t('tutor.extract.cta')}
                                 </Button>
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                {analysisResult.hasDraft ? (
-                                    <div className="space-y-4 p-5 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border border-green-200 dark:border-green-800 rounded-xl">
-                                        <div className="flex items-center gap-2 text-green-700 dark:text-green-400 mb-2">
-                                            <CheckCircle2 className="h-5 w-5" />
-                                            <h4 className="font-semibold">Borrador de Sermón Detectado</h4>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <Label className="text-xs font-bold text-slate-500">Título Sugerido</Label>
-                                            <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{analysisResult.title || 'Sermón sin título'}</p>
-                                        </div>
-                                        <Button 
-                                            className="w-full bg-green-600 hover:bg-green-700 text-white font-medium shadow-sm transition-all shadow-green-600/20" 
-                                            onClick={handleSaveDraft}
-                                            disabled={isGenerating}
-                                        >
-                                            {isGenerating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <BookOpen className="h-4 w-4 mr-2" />}
-                                            Guardar y Editar Sermón
+                                <div className="space-y-4 p-5 bg-card border border-border rounded-xl shadow-sm">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <h4 className="font-semibold text-foreground text-sm">
+                                            {t('tutor.extracted.title')}
+                                        </h4>
+                                        <Button variant="ghost" size="sm" onClick={handleAnalyze} className="h-8 text-xs px-2">
+                                            {t('tutor.extracted.reanalyze')}
                                         </Button>
                                     </div>
-                                ) : (
-                                    <div className="space-y-6">
-                                        <div className="space-y-4 p-5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-sm">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <h4 className="font-semibold text-slate-800 dark:text-slate-200 text-sm">Contexto Extraído</h4>
-                                                <Button variant="ghost" size="sm" onClick={handleAnalyze} className="h-8 text-xs px-2 text-indigo-600">Re-analizar</Button>
-                                            </div>
-                                            
-                                            <div className="space-y-1.5">
-                                                <Label className="text-xs font-bold text-slate-500">Pasaje Bíblico</Label>
-                                                <Input 
-                                                    value={analysisResult.passage}
-                                                    onChange={(e) => setAnalysisResult({...analysisResult, passage: e.target.value})}
-                                                    className="h-9 text-sm focus-visible:ring-indigo-500" 
-                                                    placeholder="Ej. Juan 3:16"
-                                                />
-                                            </div>
-                                            
-                                            <div className="space-y-1.5 pt-2">
-                                                <Label className="text-xs font-bold text-slate-500">Idea Central / Tema</Label>
-                                                <Textarea 
-                                                    value={analysisResult.idea}
-                                                    onChange={(e) => setAnalysisResult({...analysisResult, idea: e.target.value})}
-                                                    className="resize-none h-24 text-sm focus-visible:ring-indigo-500"
-                                                    placeholder="¿De qué trata el sermón?"
-                                                />
-                                            </div>
-                                        </div>
 
-                                        {isGenerating ? (
-                                            <div className="space-y-4 p-5 bg-gradient-to-br from-indigo-50/80 to-indigo-100/50 dark:from-indigo-950/40 dark:to-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 shadow-sm relative overflow-hidden">
-                                                <div className="absolute inset-0 bg-white/20 dark:bg-white/5 animate-pulse" />
-                                                <div className="flex items-center gap-3 text-indigo-700 dark:text-indigo-300 font-bold relative z-10 text-[15px]">
-                                                    <Loader2 className="h-5 w-5 animate-spin" />
-                                                    Creando borrador...
-                                                </div>
-                                                <div className="relative z-10">
-                                                    <div className="flex items-center gap-2 mb-2.5">
-                                                        <CheckCircle2 className="h-3.5 w-3.5 text-indigo-500" />
-                                                        <p className="text-[13px] font-medium text-indigo-800/80 dark:text-indigo-200/80">{generationStep || 'Analizando pasaje y teología'}</p>
-                                                    </div>
-                                                    <div className="h-2 bg-indigo-200/50 dark:bg-indigo-900/50 overflow-hidden rounded-full">
-                                                        <div className="h-full bg-indigo-500 rounded-full w-full animate-[pulse_1s_ease-in-out_infinite]" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <Button 
-                                                className="w-full h-14 gap-2 text-[15px] font-semibold bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-500/20 rounded-2xl transition-all hover:shadow-lg hover:shadow-indigo-500/30" 
-                                                onClick={handleExpressGeneration}
-                                                disabled={!analysisResult.passage || !analysisResult.idea || isChatLoading}
-                                            >
-                                                <Sparkles className="h-5 w-5" />
-                                                Generar Sermón
-                                            </Button>
-                                        )}
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-bold text-muted-foreground">
+                                            {t('tutor.passageLabel')}
+                                        </Label>
+                                        <Input
+                                            value={analysisResult.passage}
+                                            onChange={(e) => setAnalysisResult({ ...analysisResult, passage: e.target.value })}
+                                            className="h-9 text-sm"
+                                            placeholder={t('tutor.passagePlaceholder')}
+                                        />
                                     </div>
-                                )}
+
+                                    <div className="space-y-1.5 pt-2">
+                                        <Label className="text-xs font-bold text-muted-foreground">
+                                            {t('tutor.ideaLabel')}
+                                        </Label>
+                                        <Textarea
+                                            value={analysisResult.idea}
+                                            onChange={(e) => setAnalysisResult({ ...analysisResult, idea: e.target.value })}
+                                            className="resize-none h-24 text-sm"
+                                            placeholder={t('tutor.ideaPlaceholder')}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Una sola salida. Antes había dos —guardar el
+                                    borrador que el chat redactó, o generarlo
+                                    entero de una— y ninguna pasaba por el
+                                    estudio. Lo que salió de la conversación
+                                    entra como notas del predicador, no como
+                                    sermón. */}
+                                <div className="rounded-2xl border border-border bg-muted/40 p-4 space-y-3">
+                                    <p className="text-[13px] leading-relaxed text-muted-foreground">
+                                        {t('tutor.handoff.explainer')}
+                                    </p>
+                                    <Button
+                                        className="w-full h-12 gap-2 text-[15px] font-semibold rounded-xl"
+                                        onClick={handleTakeToStudy}
+                                        disabled={!analysisResult.passage.trim() || isGenerating || isChatLoading}
+                                    >
+                                        {isGenerating ? (
+                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                        ) : (
+                                            <BookOpen className="h-5 w-5" />
+                                        )}
+                                        {t('tutor.handoff.cta')}
+                                    </Button>
+                                </div>
                             </div>
                         )}
                     </div>

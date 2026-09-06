@@ -22,7 +22,11 @@ export function CelebrationModal({ isOpen, onClose }: CelebrationModalProps) {
         }
     }, [isOpen]);
 
-    const handleCreateAnother = () => {
+    // El tutor ya no genera sermones: entrega al estudio de 8 pasos. El
+    // texto del botón sigue a esa promesa — ofrecerle "crear otro sermón"
+    // a alguien que acaba de terminar el onboarding era, además, la
+    // entrada más temprana del producto a un sermón sin estudio.
+    const handleStartNextStudy = () => {
         onClose();
         navigate('/dashboard/sermons/tutor');
     };
@@ -119,11 +123,11 @@ export function CelebrationModal({ isOpen, onClose }: CelebrationModalProps) {
                             Explorar dashboard
                         </Button>
                         <Button
-                            onClick={handleCreateAnother}
+                            onClick={handleStartNextStudy}
                             className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                         >
                             <Sparkles className="h-4 w-4 mr-2" />
-                            Crear otro sermón
+                            Empezar otro estudio
                         </Button>
                     </div>
                 </DialogContent>

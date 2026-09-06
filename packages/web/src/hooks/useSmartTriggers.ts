@@ -63,11 +63,11 @@ function checkTriggers(context: TriggerContext, navigate: any) {
             },
             action: (nav) => {
                 toast("¿Predicas este domingo?", {
-                    description: "Prepara tu bosquejo en minutos con tu asistente.",
+                    description: "Empieza tu estudio con el tutor y llega al domingo con el texto trabajado.",
                     icon: React.createElement(Calendar, { className: "h-5 w-5 text-blue-500" }),
                     duration: 8000,
                     action: {
-                        label: "Crear Bosquejo",
+                        label: "Empezar estudio",
                         onClick: () => nav('/dashboard/sermons/tutor')
                     }
                 });
@@ -81,7 +81,7 @@ function checkTriggers(context: TriggerContext, navigate: any) {
             },
             action: (nav) => {
                 toast("¿Necesitas ayuda para empezar?", {
-                    description: "Mira cómo crear tu primer sermón paso a paso.",
+                    description: "Mira cómo estudiar tu primer pasaje paso a paso.",
                     icon: React.createElement(GraduationCap, { className: "h-5 w-5 text-yellow-500" }),
                     duration: 10000,
                     action: {

@@ -36,6 +36,27 @@ Cada item incluye: razón, severidad, fase en la que se ejecuta, plan de migraci
   hermanas. Al matar un camino conviene preguntar qué otra superficie llega al
   mismo destino sin pasar por el portón.
 
+### "Generación exprés" del tutor de sermones
+
+- **Estado actual**: ✅ **EJECUTADO** (2026-09-05).
+- **Conflicto**: era la ÚLTIMA puerta que producía un sermón sin estudio, y la
+  más temprana: `tutor.tsx` ofrecía dos salidas —guardar el borrador que el chat
+  había redactado, o encadenar tres llamadas al modelo (exégesis → homilética →
+  redacción) desde un pasaje y una idea— y ambas creaban el sermón con
+  `tags: ['AI Generated']` y abrían `/edit`. Sin semilla, sin portón, sin wizard.
+- **Severidad**: ALTA por ubicación. Una de sus cuatro entradas era el
+  `CelebrationModal` del onboarding: al usuario recién llegado se le ofrecía
+  generar un sermón sintético antes de haber estudiado nada.
+- **Ejecutado**: las dos salidas se reemplazan por **«Llevar al estudio»**. El
+  pasaje ancla el estudio de 8 pasos; la idea trabajada en la conversación (y el
+  esbozo, si lo hubo) viajan a `personalization.preacherNotes` — el campo de
+  "ideas a medio formar y material personal"— para que el pastor las tenga a
+  mano al redactar, **después** del estudio. No se pierde nada de lo que hizo.
+- **Copy alineado**: las cuatro entradas prometían generar. Ahora prometen
+  estudiar («Empezar con el tutor», «Empezar otro estudio», «Empezar estudio»).
+  La promesa de velocidad *«prepara tu bosquejo en minutos»* muere con ellas —
+  era exactamente la métrica de *time-to-publish* que esta lista condena.
+
 ### Pre-generación automática de bosquejos en el planner
 
 - **Estado actual**: Al asignar fecha a una perícopa en el series planner, el sistema puede pre-generar contenido.

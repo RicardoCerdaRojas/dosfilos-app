@@ -657,6 +657,9 @@
     "notes": "Notas del predicador",
     "notesPlaceholder": "Ideas sueltas, argumentos que quieras desarrollar, énfasis particulares…"
   },
+  "gate": {
+    "completeStudy": "Completa los {{count}} pasos de estudio antes de continuar al borrador."
+  },
   "paperReference": {
     "title": "De tu paper «{{paperTitle}}» · {{count}} para este paso",
     "disclaimer": "Esto es lo que tú ya estableciste en tu paper. Está acá para consultarlo, no para copiarlo: lo que escribas en este paso tiene que ser tuyo."
