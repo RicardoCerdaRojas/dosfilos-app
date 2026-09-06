@@ -37,35 +37,35 @@ export function PaperStudyReferencePanel({ reference, stepKey }: Props) {
     if (items.length === 0) return null;
 
     return (
-        <div className="rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50/60 dark:bg-amber-950/20 overflow-hidden">
+        <div className="rounded-lg border border-warning/30 bg-warning/5 overflow-hidden">
             <button
                 type="button"
                 onClick={() => setOpen(v => !v)}
                 aria-expanded={open}
-                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-amber-100/60 dark:hover:bg-amber-900/20 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-warning/10 transition-colors"
             >
-                <FileText className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
-                <span className="flex-1 text-sm font-medium text-amber-900 dark:text-amber-200">
+                <FileText className="h-4 w-4 shrink-0 text-warning" aria-hidden />
+                <span className="flex-1 text-sm font-medium text-foreground">
                     {t('paperReference.title', {
                         paperTitle: reference.paperTitle,
                         count: items.length,
                     })}
                 </span>
                 <ChevronDown
-                    className={`h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400 transition-transform ${open ? 'rotate-180' : ''}`}
+                    className={`h-4 w-4 shrink-0 text-warning transition-transform ${open ? 'rotate-180' : ''}`}
                 />
             </button>
 
             {open && (
                 <div className="px-3 pb-3 space-y-3">
-                    <p className="text-[11px] leading-relaxed text-amber-800/80 dark:text-amber-300/70">
+                    <p className="text-[11px] leading-relaxed text-muted-foreground">
                         {t('paperReference.disclaimer')}
                     </p>
                     <ul className="space-y-2.5">
                         {items.map((item, i) => (
                             <li
                                 key={`${item.verseLabel}-${item.label}-${i}`}
-                                className="rounded-md bg-background/70 border border-amber-200/70 dark:border-amber-900/40 px-3 py-2"
+                                className="rounded-md bg-background/70 border border-warning/20 px-3 py-2"
                             >
                                 <div className="flex items-baseline gap-2 flex-wrap">
                                     <span className="text-xs font-semibold text-foreground">
