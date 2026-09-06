@@ -3,7 +3,7 @@
     "title": "Sermons",
     "subtitle": "Manage your sermons and pastoral content",
     "newButton": "New Sermon",
-    "generateWithTutor": "Generate with Tutor",
+    "generateWithTutor": "Start with the tutor",
     "createBlank": "Blank Sermon",
     "createBlankHint": "I've already studied — I just want to write."
   },
@@ -28,18 +28,30 @@
     "passagePlaceholder": "e.g. John 3:16",
     "ideaLabel": "Central Idea / Theme",
     "ideaPlaceholder": "What do you want to preach about?",
-    "generating": "Generating Sermon...",
-    "generateButton": "Generate Full Sermon",
-    "disclaimer": "Generation will create a full exegetical and homiletical analysis in the background.",
-    "steps": {
-      "exegesis": "Performing exegetical analysis...",
-      "homiletics": "Structuring the sermon...",
-      "drafting": "Drafting full content...",
-      "success": "Sermon ready!"
+    "extract": {
+      "title": "Extract from the conversation",
+      "body": "Once the passage and the idea are clear, analyze the conversation to take them into the study.",
+      "cta": "Analyze conversation"
+    },
+    "extracted": {
+      "title": "Extracted context",
+      "reanalyze": "Re-analyze"
+    },
+    "handoff": {
+      "explainer": "The passage opens your 8-step study. The idea you worked on here travels as your own note, so you have it on hand when you draft — after the study.",
+      "cta": "Take to study"
+    },
+    "notes": {
+      "ideaPrefix": "Idea from the conversation:",
+      "draftPrefix": "Sketch worked out in the conversation:"
+    },
+    "toast": {
+      "studyStarted": "Your study is open. What you worked on is in your notes."
     },
     "errors": {
-      "missingFields": "Please define a passage and central idea first.",
-      "generationFailed": "Error generating sermon. Please try again."
+      "notSignedIn": "Sign in to open a study.",
+      "missingPassage": "Define a passage before taking it to the study.",
+      "studyStartFailed": "Could not open the study. Try again."
     }
   },
   "loading": "Loading sermons...",

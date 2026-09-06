@@ -643,15 +643,13 @@ export class SeriesService {
         return Promise.all(
             plannedSermons.map(async (planned) => {
                 if (planned.draftId) return planned;
-                // Pericopes with a linked paper get their sermon via
-                // the on-demand "Generar desde paper" CTA in the
-                // planner (or wizard auto-populate when opened). An
-                // empty placeholder here would make the planner row
-                // show "Abrir borrador" (because draftId exists) but
-                // open into an empty wizard — confusing UX. Skip the
-                // placeholder so the planner correctly offers
-                // "Generar desde paper" until the user triggers
-                // generation.
+                // Las perícopas con paper reciben su sermón por el CTA
+                // "Llevar al estudio" del planificador (o por la
+                // vinculación del wizard al abrirlo). Un marcador vacío
+                // acá haría que la fila muestre "Abrir borrador" —porque
+                // ya existe draftId— y abra un wizard en blanco. Saltarlo
+                // deja que el planificador ofrezca "Llevar al estudio"
+                // hasta que el pastor lo dispare.
                 if (planned.paperId) return planned;
                 // SermonEntity validates title >= 5 chars. Pad short pericope
                 // titles with the passage so we never throw on tiny labels

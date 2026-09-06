@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useCollapsedSidebar } from '@/hooks/useCollapsedSidebar';
+import { useTranslation } from '@/i18n';
 import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useWizard, WizardProvider } from './WizardContext';
 import { WizardHeader } from './WizardHeader';
@@ -10,7 +11,13 @@ import { StepDraft } from './StepDraft';
 import { SermonsInProgress } from './SermonInProgress';
 import { sermonService, exegesisService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
-import { SermonEntity, buildPaperStudyReference, evaluatePastoralSeed, type Sermon } from '@dosfilos/domain';
+import {
+    PASTORAL_SEED_STEP_ORDER,
+    SermonEntity,
+    buildPaperStudyReference,
+    evaluatePastoralSeed,
+    type Sermon,
+} from '@dosfilos/domain';
 import { migrateLegacyWizardProgress } from './migrateLegacyWizardProgress';
 import { usePastoralFidelityGate } from '@/hooks/usePastoralFidelityGate';
 import { useExegesisPaper } from '@/hooks/exegesis/useExegesisPaper';
@@ -24,6 +31,7 @@ function WizardContent() {
     // y se devuelve al salir.
     useCollapsedSidebar();
     const { step, setStep, passage, setPassage, setExegesis, setHomiletics, setDraft, sermonId, setSermonId, derivedContext, setDerivedContext, restoreSectionElements, restoreSectionProse, rules, setRules, reset } = useWizard();
+    const { t } = useTranslation('generator');
     const { user } = useFirebase();
     const [searchParams] = useSearchParams();
     const [inProgressSermons, setInProgressSermons] = useState<SermonEntity[]>([]);
@@ -417,7 +425,13 @@ function WizardContent() {
             .then((seed) => {
                 if (cancelled) return;
                 if (!seed || !evaluatePastoralSeed(seed).completed) {
-                    toast.warning('Completa los 6 pasos de estudio antes de continuar al borrador.');
+                    // El número sale de `PASTORAL_SEED_STEP_ORDER`, no de una
+                    // constante escrita a mano: el aviso decía 6 desde que la
+                    // espina creció a 8, y mandaba al pastor a buscar dos
+                    // pasos que ya había hecho.
+                    toast.warning(
+                        t('gate.completeStudy', { count: PASTORAL_SEED_STEP_ORDER.length }),
+                    );
                     setStep(1);
                 }
             })
@@ -425,7 +439,7 @@ function WizardContent() {
         return () => {
             cancelled = true;
         };
-    }, [usePastoralFlow, step, sermonId, setStep]);
+    }, [usePastoralFlow, step, sermonId, setStep, t]);
 
     // Mint the sermon doc eagerly when entering the seed wizard so the
     // seed has a `sermonId` to anchor to. Legacy flow defers creation

@@ -3,7 +3,7 @@
     "title": "Sermones",
     "subtitle": "Gestiona tus sermones y contenido pastoral",
     "newButton": "Nuevo Sermón",
-    "generateWithTutor": "Generar con el tutor",
+    "generateWithTutor": "Empezar con el tutor",
     "createBlank": "Sermón en blanco",
     "createBlankHint": "Ya estudié, solo quiero escribir."
   },
@@ -28,18 +28,30 @@
     "passagePlaceholder": "Ej. Juan 3:16",
     "ideaLabel": "Idea Central / Tema",
     "ideaPlaceholder": "¿De qué quieres hablar?",
-    "generating": "Generando Sermón...",
-    "generateButton": "Generar Sermón Completo",
-    "disclaimer": "Al generar, se creará un análisis exegético y homilético completo en segundo plano.",
-    "steps": {
-      "exegesis": "Realizando análisis exegético...",
-      "homiletics": "Estructurando el sermón...",
-      "drafting": "Redactando el contenido completo...",
-      "success": "¡Sermón listo!"
+    "extract": {
+      "title": "Extraer de la conversación",
+      "body": "Cuando tengas claro el pasaje y la idea, analiza la conversación para llevarlos al estudio.",
+      "cta": "Analizar conversación"
+    },
+    "extracted": {
+      "title": "Contexto extraído",
+      "reanalyze": "Re-analizar"
+    },
+    "handoff": {
+      "explainer": "El pasaje abre tu estudio de 8 pasos. La idea que trabajaste acá viaja como nota tuya, para que la tengas a mano cuando redactes — después del estudio.",
+      "cta": "Llevar al estudio"
+    },
+    "notes": {
+      "ideaPrefix": "Idea que salió de la conversación:",
+      "draftPrefix": "Esbozo trabajado en la conversación:"
+    },
+    "toast": {
+      "studyStarted": "Tu estudio está abierto. Lo que trabajaste quedó en tus notas."
     },
     "errors": {
-      "missingFields": "Por favor, define un pasaje y una idea principal primero.",
-      "generationFailed": "Error al generar el sermón. Por favor intenta de nuevo."
+      "notSignedIn": "Debes iniciar sesión para abrir un estudio.",
+      "missingPassage": "Define un pasaje antes de llevarlo al estudio.",
+      "studyStartFailed": "No se pudo abrir el estudio. Intenta de nuevo."
     }
   },
   "loading": "Cargando sermones...",
