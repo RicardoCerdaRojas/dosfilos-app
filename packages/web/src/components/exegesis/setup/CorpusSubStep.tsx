@@ -33,6 +33,7 @@ import {
     computeRoleCoverage,
     computeRoleExpectations,
     findMissingRoles,
+    resolveSourceRole,
     suggestRoleForType,
     formatPassageReference,
     getBookById,
@@ -358,7 +359,11 @@ function GroupedByRoleList({
             anchor: [], contrast: [], technical: [], unrolled: [],
         };
         for (const s of sources) {
-            const role = suggestRoleForType(s.sourceType);
+            // Por rol RESUELTO: si el pastor la puso de ancla, va a anclas
+            // aunque su tipo diga otra cosa. Antes acá mandaba el tipo y por
+            // eso la fuente aterrizaba en una sección que el pastor no había
+            // elegido.
+            const { role } = resolveSourceRole(s);
             buckets[role ?? 'unrolled'].push(s);
         }
         return buckets;
@@ -997,6 +1002,11 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
     // to review/edit.
     const [excerptsExpanded, setExcerptsExpanded] = useState(false);
 
+    const rowRole = resolveSourceRole(source);
+    const rowSuggestedRoleLabel = rowRole.suggested
+        ? t(`paperSetup.subSteps.corpus.roles.${rowRole.suggested}`)
+        : t('paperSetup.subSteps.corpus.roles.none');
+
     const handleTypeChange = async (next: SourceType) => {
         try {
             await updateSource.mutateAsync({
@@ -1008,6 +1018,26 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
         } catch (err) {
             console.error('[exegesis] update source type failed:', err);
             toast.error(t('paperSetup.subSteps.corpus.toast.typeUpdateFailed'));
+        }
+    };
+
+    /**
+     * Mueve la fuente de rol dialéctico sin tocar su tipo académico. El
+     * tipo sigue midiendo la rúbrica; el rol dice qué trabajo hace en el
+     * argumento, y esa decisión es del pastor. Cadena vacía = volver a lo
+     * que sugiera el tipo.
+     */
+    const handleRoleChange = async (next: SourceRole | null) => {
+        try {
+            await updateSource.mutateAsync({
+                paperId: paper.id,
+                sourceId: source.id,
+                chosenRole: next,
+            });
+            toast.success(t('paperSetup.subSteps.corpus.toast.roleUpdated'));
+        } catch (err) {
+            console.error('[exegesis] update source role failed:', err);
+            toast.error(t('paperSetup.subSteps.corpus.toast.roleUpdateFailed'));
         }
     };
 
@@ -1108,6 +1138,36 @@ function SourceRow({ paper, source }: { paper: ExegeticalPaper; source: ProjectS
                 disabled={updateSource.isPending}
                 className="w-full text-xs"
             />
+
+            {/* Mover de rol sin cambiar el tipo. Las dos preguntas viven
+                juntas porque se responden juntas, pero son distintas. */}
+            {isCitable && (
+                <div className="space-y-1">
+                    <select
+                        value={source.chosenRole ?? ''}
+                        onChange={(e) => handleRoleChange((e.target.value || null) as SourceRole | null)}
+                        disabled={updateSource.isPending}
+                        aria-label={t('paperSetup.subSteps.corpus.upload.roleLabel')}
+                        className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs"
+                    >
+                        <option value="">
+                            {t('paperSetup.subSteps.corpus.upload.roleFollowType', {
+                                role: rowSuggestedRoleLabel,
+                            })}
+                        </option>
+                        <option value="anchor">{t('paperSetup.subSteps.corpus.roles.anchor')}</option>
+                        <option value="contrast">{t('paperSetup.subSteps.corpus.roles.contrast')}</option>
+                        <option value="technical">{t('paperSetup.subSteps.corpus.roles.technical')}</option>
+                    </select>
+                    {rowRole.divergent && (
+                        <RoleDivergenceNote
+                            suggested={rowSuggestedRoleLabel}
+                            chosen={t(`paperSetup.subSteps.corpus.roles.${rowRole.role}`)}
+                            t={t}
+                        />
+                    )}
+                </div>
+            )}
             {!isCitable && (
                 <p className="text-[10px] text-warning-subtle-foreground inline-flex items-center gap-1">
                     <BookOpenText className="h-3 w-3" />
@@ -1375,6 +1435,11 @@ function AddSourceDialog({
     const [file, setFile] = useState<File | null>(null);
     const [displayName, setDisplayName] = useState('');
     const [sourceType, setSourceType] = useState<SourceType>('commentary-critical');
+    // El rol que el pastor eligió, independiente del tipo. `null` = no se
+    // pronunció y manda la sugerencia del tipo. Antes esto no existía: el
+    // botón «Elegir el ancla» sólo pre-filtraba y la fuente terminaba donde
+    // mandara su tipo, contradiciendo al pastor sin decírselo.
+    const [chosenRole, setChosenRole] = useState<SourceRole | null>(null);
     const [citationKey, setCitationKey] = useState('');
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState<number | null>(null);
@@ -1415,6 +1480,7 @@ function AddSourceDialog({
             setFile(null);
             setDisplayName('');
             setSourceType(initialType ?? 'commentary-critical');
+            setChosenRole(initialRole);
             setCitationKey('');
             setClassification(null);
             setPickedResourceIds(new Set());
@@ -1422,6 +1488,15 @@ function AddSourceDialog({
             setLibraryTypeFilter(seedFilter);
         }
     }, [open, initialType, initialRole]);
+
+    // Lo que el tipo sugeriría por su cuenta, y si la elección del pastor
+    // lo contradice. La divergencia NO bloquea: dispara un aviso que deja
+    // la decisión a la vista en vez de resolverla en silencio.
+    const suggestedRole = useMemo(() => suggestRoleForType(sourceType), [sourceType]);
+    const suggestedRoleLabel = suggestedRole
+        ? t(`paperSetup.subSteps.corpus.roles.${suggestedRole}`)
+        : t('paperSetup.subSteps.corpus.roles.none');
+    const roleDivergent = Boolean(chosenRole && suggestedRole && chosenRole !== suggestedRole);
 
     // Reads from the globally synced library cache (`useLibrarySync`
     // mounted at the dashboard shell). First open is instant for any
@@ -1597,6 +1672,7 @@ function AddSourceDialog({
                     paperId: paper.id,
                     corpusId: resource.id,
                     sourceType,
+                    chosenRole,
                     displayLabel: displayName.trim(),
                     citationKey: citationKey.trim() || undefined,
                 });
@@ -1618,6 +1694,7 @@ function AddSourceDialog({
                         paperId: paper.id,
                         libraryResourceId: r.id,
                         sourceType,
+                        chosenRole,
                         displayLabel: r.title || r.id,
                         citationKey: autoCite || undefined,
                         passage: paper.passage,
@@ -1634,6 +1711,7 @@ function AddSourceDialog({
                     paperId: paper.id,
                     libraryResourceId: onlyId,
                     sourceType,
+                    chosenRole,
                     displayLabel: displayName.trim(),
                     citationKey: citationKey.trim() || undefined,
                     passage: paper.passage,
@@ -1820,6 +1898,43 @@ function AddSourceDialog({
                                     </p>
                                 )}
                             </FieldGroup>
+
+                            {/* El rol es una pregunta DISTINTA del tipo. El
+                                tipo dice qué clase de obra es —y con eso se
+                                mide la rúbrica—; el rol dice qué trabajo hace
+                                en el argumento del pastor, y eso sólo lo sabe
+                                él. McComiskey es «exegético Y expositivo»: no
+                                hay mapa que decida por él. */}
+                            {isCitable && (
+                                <FieldGroup>
+                                    <FieldLabel htmlFor="addsource-role">
+                                        {t('paperSetup.subSteps.corpus.upload.roleLabel')}
+                                    </FieldLabel>
+                                    <select
+                                        id="addsource-role"
+                                        value={chosenRole ?? ''}
+                                        onChange={(e) => setChosenRole((e.target.value || null) as SourceRole | null)}
+                                        disabled={uploading}
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                    >
+                                        <option value="">
+                                            {t('paperSetup.subSteps.corpus.upload.roleFollowType', {
+                                                role: suggestedRoleLabel,
+                                            })}
+                                        </option>
+                                        <option value="anchor">{t('paperSetup.subSteps.corpus.roles.anchor')}</option>
+                                        <option value="contrast">{t('paperSetup.subSteps.corpus.roles.contrast')}</option>
+                                        <option value="technical">{t('paperSetup.subSteps.corpus.roles.technical')}</option>
+                                    </select>
+                                    {roleDivergent && (
+                                        <RoleDivergenceNote
+                                            suggested={suggestedRoleLabel}
+                                            chosen={t(`paperSetup.subSteps.corpus.roles.${chosenRole}`)}
+                                            t={t}
+                                        />
+                                    )}
+                                </FieldGroup>
+                            )}
 
                             {isCitable && !isBulkLibrary && (
                                 <FieldGroup>
@@ -2289,6 +2404,34 @@ function deriveCitationKeyFromAuthor(author: string): string {
  * the dropdown's helper area; clears as soon as the user manually
  * overrides the type.
  */
+/**
+ * Aviso de divergencia entre el rol que eligió el pastor y el que sugiere
+ * el tipo de la obra.
+ *
+ * NO bloquea, y esa es la mitad importante. Elegir un comentario crítico
+ * como ancla es una decisión legítima —McComiskey se llama «exegético Y
+ * expositivo», así que ningún mapa puede decidir por él—; lo que no puede
+ * pasar es que el sistema la revierta en silencio, que es lo que hacía
+ * antes. El aviso deja la decisión a la vista y sigue de largo.
+ */
+function RoleDivergenceNote({
+    suggested,
+    chosen,
+    t,
+}: {
+    suggested: string;
+    chosen: string;
+    t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+    return (
+        <p className="text-[11px] leading-relaxed text-info inline-flex items-start gap-1.5 mt-1">
+            <Sparkles className="h-3 w-3 mt-0.5 shrink-0" aria-hidden />
+            <span>{t('paperSetup.subSteps.corpus.upload.roleDivergence', { suggested, chosen })}</span>
+        </p>
+    );
+}
+
+
 function ClassificationChip({
     classification,
 }: {

@@ -1,4 +1,5 @@
 import type { SourceType } from './SourceType';
+import type { SourceRole } from './StepSourcePlan';
 import { isCitableSourceType } from './SourceType';
 
 /**
@@ -55,6 +56,35 @@ export interface ProjectSource {
      * `defaultCitationDiscipline: 'never-cite'`.
      */
     sourceType: SourceType;
+
+    /**
+     * Rol dialéctico que el PASTOR eligió para esta fuente: ancla,
+     * contraste o técnica.
+     *
+     * Existe porque el rol no se puede deducir del tipo. El tipo
+     * responde «¿qué clase de obra es esto?» —y con eso se mide el
+     * cumplimiento de la rúbrica—; el rol responde «¿qué trabajo hace
+     * en MI argumento?», y eso solo lo sabe quien está armando el
+     * trabajo. McComiskey, *The Minor Prophets: An Exegetical **and**
+     * Expository Commentary*, es literalmente las dos cosas: ningún
+     * mapa automático puede decidir si en este paper es el ancla o el
+     * contraste.
+     *
+     * Antes de este campo el corpus deducía el rol de `sourceType` vía
+     * `SUGGESTED_ROLE_BY_SOURCE_TYPE`, así que la interfaz ofrecía
+     * botones «Elegir el ancla» cuya elección después descartaba: la
+     * fuente aterrizaba donde mandara su tipo. El pastor elegía y el
+     * sistema lo ignoraba.
+     *
+     * `null`/ausente = el pastor no se pronunció, y vale la sugerencia
+     * del tipo. Así las fuentes anteriores a este campo siguen
+     * clasificándose igual que siempre. Ver `resolveSourceRole`.
+     *
+     * NO confundir con el `role` legado de 8 valores planos que
+     * `deserializeSource` migra a `sourceType`: ese campo murió, este
+     * es otra cosa y por eso lleva otro nombre.
+     */
+    chosenRole?: SourceRole | null;
 
     /**
      * Human label as the user typed it on upload — "Lane WBC 47a, pp. 1-30"

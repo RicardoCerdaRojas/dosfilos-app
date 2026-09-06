@@ -12,6 +12,11 @@ import type {
  *
  * Pass `citationKey: null` to clear an explicit override and let the
  * orchestrator derive the key from corpus metadata.
+ *
+ * `chosenRole` mueve la fuente de rol dialéctico (ancla / contraste /
+ * técnica) sin tocar su tipo académico: son dos preguntas distintas y el
+ * pastor puede querer un comentario crítico de ancla. `null` borra la
+ * elección y devuelve la fuente a lo que sugiera su tipo.
  */
 export class UpdateProjectSourceUseCase {
     constructor(private paperRepository: IExegeticalPaperRepository) { }
@@ -29,6 +34,7 @@ export class UpdateProjectSourceUseCase {
             input.sourceId,
             {
                 sourceType: input.sourceType,
+                chosenRole: input.chosenRole,
                 displayLabel: input.displayLabel,
                 citationKey: input.citationKey,
                 order: input.order,

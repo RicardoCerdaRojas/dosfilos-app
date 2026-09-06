@@ -20,6 +20,7 @@ import type {
     ProjectSourceMode,
 } from '../entities/ProjectSource';
 import type { SourceType } from '../entities/SourceType';
+import type { SourceRole } from '../entities/StepSourcePlan';
 
 // ── CreateExegeticalPaper ───────────────────────────────────────────────
 
@@ -303,6 +304,12 @@ export interface AddProjectSourceInput {
      */
     corpusId: string;
     sourceType: SourceType;
+    /**
+     * Rol dialéctico elegido por el pastor. Lo manda el botón desde el
+     * que abrió el diálogo («Elegir el ancla» → `'anchor'`). Omitirlo
+     * deja que el rol se deduzca del tipo, como antes.
+     */
+    chosenRole?: SourceRole | null;
     displayLabel: string;
     citationKey?: string;
     /**
@@ -331,6 +338,11 @@ export interface AddProjectSourceInput {
 export interface UpdateProjectSourceInput {
     sourceId: string;
     sourceType?: SourceType;
+    /**
+     * Mover la fuente de rol. `null` borra la elección y devuelve la
+     * fuente a lo que sugiera su tipo.
+     */
+    chosenRole?: SourceRole | null;
     displayLabel?: string;
     citationKey?: string | null;
     order?: number;

@@ -53,6 +53,50 @@ export function suggestRoleForType(type: SourceType): SourceRole | null {
     return SUGGESTED_ROLE_BY_SOURCE_TYPE[type] ?? null;
 }
 
+/** Qué rol juega una fuente, y de dónde salió esa respuesta. */
+export interface ResolvedSourceRole {
+    /** El rol efectivo. `null` sólo cuando el tipo no tiene rol y el pastor no eligió. */
+    role: SourceRole | null;
+    /** `'chosen'` cuando lo decidió el pastor; `'suggested'` cuando lo dedujo el tipo. */
+    origin: 'chosen' | 'suggested';
+    /** Lo que el tipo habría sugerido por su cuenta. */
+    suggested: SourceRole | null;
+    /**
+     * True cuando el pastor eligió un rol distinto del que sugiere el
+     * tipo. NO es un error: es la señal para avisarle —«los comentarios
+     * críticos suelen ir de contraste; queda de ancla porque lo pediste»—
+     * de modo que la decisión quede a la vista en vez de resolverse en
+     * silencio a espaldas suyas.
+     */
+    divergent: boolean;
+}
+
+/**
+ * Resuelve el rol de una fuente con una regla simple: **manda el pastor**.
+ *
+ * Si eligió un rol, ese es el rol. Si no se pronunció, vale la sugerencia
+ * del tipo. Antes no existía la primera mitad: el rol se deducía siempre
+ * del tipo, así que la interfaz invitaba a elegir algo que después
+ * descartaba.
+ */
+export function resolveSourceRole(
+    source: Pick<ProjectSource, 'sourceType'> & { chosenRole?: SourceRole | null },
+): ResolvedSourceRole {
+    const suggested = suggestRoleForType(source.sourceType);
+    const chosen = source.chosenRole ?? null;
+    if (!chosen) {
+        return { role: suggested, origin: 'suggested', suggested, divergent: false };
+    }
+    return {
+        role: chosen,
+        origin: 'chosen',
+        suggested,
+        // Un tipo sin rol sugerido (plantilla de estilo, «otro») no
+        // contradice nada: no tenía opinión que contradecir.
+        divergent: suggested !== null && suggested !== chosen,
+    };
+}
+
 export interface RoleCoverage {
     /** How many anchor-suggesting sources are in the corpus. */
     anchor: number;
@@ -75,14 +119,17 @@ export interface RoleCoverage {
  * by the planner / nudges to prioritize what's missing.
  */
 export function computeRoleCoverage(
-    sources: ReadonlyArray<Pick<ProjectSource, 'sourceType'>>,
+    sources: ReadonlyArray<Pick<ProjectSource, 'sourceType' | 'chosenRole'>>,
 ): RoleCoverage {
     let anchor = 0;
     let contrast = 0;
     let technical = 0;
     let unrolled = 0;
     for (const s of sources) {
-        const role = suggestRoleForType(s.sourceType);
+        // Por rol RESUELTO, no por tipo: si el pastor puso su comentario
+        // crítico de ancla, la cobertura tiene que contarlo de ancla o el
+        // indicador le discute su propia decisión.
+        const { role } = resolveSourceRole(s);
         if (role === 'anchor') anchor++;
         else if (role === 'contrast') contrast++;
         else if (role === 'technical') technical++;

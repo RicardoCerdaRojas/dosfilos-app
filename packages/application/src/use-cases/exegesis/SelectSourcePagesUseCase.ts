@@ -12,6 +12,7 @@ import {
     type ProjectSource,
     type ProjectSourceExcerpt,
     type SheetRange,
+    type SourceRole,
     type SourceType,
 } from '@dosfilos/domain';
 
@@ -40,6 +41,8 @@ export interface SelectSourcePagesInput {
     libraryResourceId: string;
     displayLabel: string;
     sourceType: SourceType;
+    /** Rol dialéctico elegido por el pastor. Sin él, lo resuelve el tipo. */
+    chosenRole?: SourceRole | null;
     citationKey?: string | null;
     /** Lo que quedó en el carrito. */
     sheetRanges: ReadonlyArray<SheetRange>;
@@ -170,6 +173,9 @@ export class SelectSourcePagesUseCase {
         if (existing) {
             await this.paperRepository.updateSource(input.ownerId, input.paperId, existing.id, {
                 sourceType: input.sourceType,
+                // Sólo se pisa el rol cuando el pastor eligió uno en esta
+                // pasada; si no, se respeta el que ya tuviera la fuente.
+                ...(input.chosenRole !== undefined ? { chosenRole: input.chosenRole } : {}),
                 displayLabel: input.displayLabel,
                 ...(input.citationKey !== undefined ? { citationKey: input.citationKey } : {}),
                 excerpts,
@@ -190,6 +196,7 @@ export class SelectSourcePagesUseCase {
         const created = await this.paperRepository.addSource(input.ownerId, input.paperId, {
             corpusId: input.libraryResourceId,
             sourceType: input.sourceType,
+            chosenRole: input.chosenRole ?? null,
             displayLabel: input.displayLabel,
             citationKey: input.citationKey ?? null,
             order: paper.sources.length,

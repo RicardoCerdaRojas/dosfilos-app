@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+import { toast } from 'sonner';
 import { CheckCircle2, AlertTriangle, Upload } from 'lucide-react';
 import {
     computeRubricCompliance,
@@ -8,6 +10,7 @@ import {
 } from '@dosfilos/domain';
 import { useTranslation } from '@/i18n';
 import { RecommendationsSection } from '../recommendations/RecommendationsSection';
+import { useAttachLibrarySource } from '@/hooks/exegesis/useAttachLibrarySource';
 
 /**
  * Visual gap analysis between the paper's corpus and its rubric.
@@ -122,6 +125,40 @@ export function RubricGapCard({ paper, onPickType }: RubricGapCardProps) {
     );
 }
 
+/**
+ * Adjunta al corpus una obra recomendada que el pastor YA tiene en su
+ * biblioteca, con el tipo del requisito que la tarjeta estaba cubriendo.
+ *
+ * El rol se deja sin elegir a propósito: la recomendación cubre un
+ * REQUISITO de la rúbrica (que se mide por tipo), y el rol dialéctico es
+ * una decisión aparte que el pastor toma en la lista de fuentes. Fijarlo
+ * acá sería volver a decidir por él.
+ */
+function useAttachRecommendationMatch(paper: ExegeticalPaper, sourceType: SourceType) {
+    const { t } = useTranslation('exegesis');
+    const attachLibrarySource = useAttachLibrarySource();
+    return useCallback(
+        async (libraryResourceId: string, title: string) => {
+            try {
+                await attachLibrarySource.attach({
+                    paperId: paper.id,
+                    libraryResourceId,
+                    sourceType,
+                    displayLabel: title,
+                    passage: paper.passage,
+                    assignmentBrief: paper.assignmentBrief,
+                    language: paper.displayLanguage,
+                });
+                toast.success(t('paperSetup.subSteps.corpus.recommendations.attachedToast', { title }));
+            } catch (err) {
+                console.error('[exegesis] attach recommendation match failed:', err);
+                toast.error(t('paperSetup.subSteps.corpus.recommendations.attachFailedToast'));
+            }
+        },
+        [attachLibrarySource, paper, sourceType, t],
+    );
+}
+
 function RequirementRow({
     check,
     paper,
@@ -132,6 +169,7 @@ function RequirementRow({
     onPickType?: (type: SourceType) => void;
 }) {
     const { t } = useTranslation('exegesis');
+    const attachMatch = useAttachRecommendationMatch(paper, check.sourceType);
     const label = t(`sourceTypes.${check.sourceType}.label`);
     const examples = t(`sourceTypes.${check.sourceType}.examples`);
 
@@ -180,6 +218,7 @@ function RequirementRow({
                     sourceType={check.sourceType}
                     paperLanguage={paper.displayLanguage}
                     paperId={paper.id}
+                    onAttachMatch={attachMatch}
                 />
             </div>
         </li>

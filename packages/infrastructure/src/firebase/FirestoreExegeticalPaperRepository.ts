@@ -294,6 +294,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             createdAt: new Date(),
             corpusId: source.corpusId,
             sourceType: source.sourceType,
+            chosenRole: source.chosenRole ?? null,
             displayLabel: source.displayLabel,
             citationKey: source.citationKey,
             order: source.order,
@@ -336,7 +337,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
         ownerId: string,
         paperId: string,
         sourceId: string,
-        patch: Partial<Pick<ProjectSource, 'sourceType' | 'displayLabel' | 'citationKey' | 'order' | 'excerpts' | 'excerptSelectionMode' | 'excerptRecipe' | 'extractedAt' | 'extractionFingerprint'>>
+        patch: Partial<Pick<ProjectSource, 'sourceType' | 'chosenRole' | 'displayLabel' | 'citationKey' | 'order' | 'excerpts' | 'excerptSelectionMode' | 'excerptRecipe' | 'extractedAt' | 'extractionFingerprint'>>
     ): Promise<ProjectSource> {
         const ref = this.docRef(paperId);
         let updated: ProjectSource | null = null;
@@ -362,6 +363,7 @@ export class FirestoreExegeticalPaperRepository implements IExegeticalPaperRepos
             // Only apply defined keys — undefined would erase the existing value.
             const merged: ProjectSource = { ...existing };
             if (patch.sourceType !== undefined) merged.sourceType = patch.sourceType;
+            if (patch.chosenRole !== undefined) merged.chosenRole = patch.chosenRole;
             if (patch.displayLabel !== undefined) merged.displayLabel = patch.displayLabel;
             if (patch.citationKey !== undefined) merged.citationKey = patch.citationKey;
             if (patch.order !== undefined) merged.order = patch.order;
@@ -849,6 +851,10 @@ function deserializeSource(raw: any): ProjectSource {
         paperId: raw.paperId,
         corpusId: raw.corpusId,
         sourceType,
+        // Ausente en las fuentes anteriores al campo: sin elección del
+        // pastor, `resolveSourceRole` vuelve a la sugerencia del tipo y
+        // se clasifican igual que siempre.
+        chosenRole: raw.chosenRole ?? null,
         displayLabel: raw.displayLabel ?? '',
         citationKey: raw.citationKey ?? null,
         order: typeof raw.order === 'number' ? raw.order : 0,
@@ -915,6 +921,7 @@ function serializeSource(source: ProjectSource): Serialized<ProjectSource> {
         paperId: source.paperId,
         corpusId: source.corpusId,
         sourceType: source.sourceType,
+        chosenRole: source.chosenRole ?? null,
         displayLabel: source.displayLabel,
         citationKey: source.citationKey ?? null,
         order: source.order,

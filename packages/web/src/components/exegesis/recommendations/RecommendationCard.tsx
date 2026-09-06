@@ -1,4 +1,5 @@
-import { Check, BookOpen, Search, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
+import { Check, BookOpen, Search, ExternalLink, Loader2, Plus } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -17,6 +18,15 @@ interface RecommendationCardProps {
     sourceType: SourceType;
     /** Paper id for telemetry. */
     paperId: string;
+    /**
+     * Adjunta al corpus la obra que YA está en la biblioteca del pastor.
+     *
+     * Sin esto la tarjeta le decía «✓ En tu biblioteca» y lo dejaba a pie:
+     * la única acción era abrir el recurso en otra pantalla y volver a
+     * buscarlo en el diálogo. Reconocer que la tiene y no dejar usarla es
+     * la mitad de un favor.
+     */
+    onAttachMatch?: (libraryResourceId: string, title: string) => Promise<void>;
 }
 
 /**
@@ -32,7 +42,8 @@ interface RecommendationCardProps {
  * Stateless beyond the owned toggle. Pure presentational + persistence
  * + telemetry. No data fetching here — the parent passes the shape.
  */
-export function RecommendationCard({ recommendation, sourceType, paperId }: RecommendationCardProps) {
+export function RecommendationCard({ recommendation, sourceType, paperId, onAttachMatch }: RecommendationCardProps) {
+    const [attaching, setAttaching] = useState(false);
     const { t, i18n } = useTranslation('exegesis');
     const navigate = useNavigate();
     const { isOwned, toggle } = useOwnedRecommendations();
@@ -153,6 +164,26 @@ export function RecommendationCard({ recommendation, sourceType, paperId }: Reco
                             <Check className="h-2.5 w-2.5" aria-hidden />
                             {t('paperSetup.subSteps.corpus.recommendations.inLibrary')}
                         </span>
+                        {onAttachMatch && (
+                            <button
+                                type="button"
+                                disabled={attaching}
+                                onClick={async () => {
+                                    setAttaching(true);
+                                    try {
+                                        await onAttachMatch(libraryMatch.id, libraryMatch.title);
+                                    } finally {
+                                        setAttaching(false);
+                                    }
+                                }}
+                                className="inline-flex items-center gap-1 text-[10.5px] px-1.5 py-0.5 rounded font-medium text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                            >
+                                {attaching
+                                    ? <Loader2 className="h-2.5 w-2.5 animate-spin" aria-hidden />
+                                    : <Plus className="h-2.5 w-2.5" aria-hidden />}
+                                {t('paperSetup.subSteps.corpus.recommendations.attachToCorpus')}
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={handleOpenMatch}

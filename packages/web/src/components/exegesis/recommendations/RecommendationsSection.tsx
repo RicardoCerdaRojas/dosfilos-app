@@ -14,6 +14,8 @@ interface RecommendationsSectionProps {
     sourceType: SourceType;
     paperLanguage: 'es' | 'en';
     paperId: string;
+    /** Adjunta al corpus una obra ya presente en la biblioteca. */
+    onAttachMatch?: (libraryResourceId: string, title: string) => Promise<void>;
 }
 
 /**
@@ -38,6 +40,7 @@ export function RecommendationsSection({
     sourceType,
     paperLanguage,
     paperId,
+    onAttachMatch,
 }: RecommendationsSectionProps) {
     const { t } = useTranslation('exegesis');
     const { trackActivity } = useTrackActivity();
@@ -114,6 +117,7 @@ export function RecommendationsSection({
                             recommendation={rec}
                             sourceType={sourceType}
                             paperId={paperId}
+                            onAttachMatch={onAttachMatch}
                         />
                     ))}
                 </div>

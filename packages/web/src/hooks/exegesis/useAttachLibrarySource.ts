@@ -4,7 +4,7 @@ import {
     proposeSheetRanges,
     type ProposalKind,
 } from '@dosfilos/infrastructure';
-import type { PassageReference, SheetRange, SourceType } from '@dosfilos/domain';
+import type { PassageReference, SheetRange, SourceRole, SourceType } from '@dosfilos/domain';
 import { useFirebase } from '@/context/firebase-context';
 import { useExegesisPapers } from './useExegesisPapers';
 import { useSelectSourcePages } from './useSelectSourcePages';
@@ -33,6 +33,8 @@ export interface AttachLibrarySourceInput {
     libraryResourceId: string;
     displayLabel: string;
     sourceType: SourceType;
+    /** Rol dialéctico elegido por el pastor. Sin él, lo resuelve el tipo. */
+    chosenRole?: SourceRole | null;
     citationKey?: string;
     passage: PassageReference;
     assignmentBrief: string | null;
@@ -68,6 +70,7 @@ export function useAttachLibrarySource() {
                     paperId: input.paperId,
                     corpusId: input.libraryResourceId,
                     sourceType: input.sourceType,
+                    chosenRole: input.chosenRole ?? null,
                     displayLabel: input.displayLabel,
                     citationKey: input.citationKey,
                 });
@@ -79,6 +82,7 @@ export function useAttachLibrarySource() {
                 libraryResourceId: input.libraryResourceId,
                 displayLabel: input.displayLabel,
                 sourceType: input.sourceType,
+                chosenRole: input.chosenRole ?? null,
                 citationKey: input.citationKey ?? null,
                 sheetRanges: proposal.ranges,
                 proposedRanges: proposal.ranges,

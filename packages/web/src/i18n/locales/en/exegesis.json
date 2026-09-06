@@ -750,6 +750,9 @@
                     "ownedNo": "I have it",
                     "searchLibrary": "Search my library",
                     "searchLibraryHint": "Open the library with the title pre-loaded in the search filter",
+                    "attachToCorpus": "Add to corpus",
+                    "attachedToast": "\u201c{{title}}\u201d added to the corpus.",
+                    "attachFailedToast": "Could not add it to the corpus. Try again.",
                     "inLibrary": "✓ In your library",
                     "inLibraryHint": "Matches: {{title}}",
                     "openInLibrary": "Open",
@@ -1041,7 +1044,13 @@
                     "needsIndexing": "Not indexed",
                     "failed": "Failed"
                 },
-                "upload": {
+                "roles": {
+                    "anchor": "Anchor",
+                    "contrast": "Contrast",
+                    "technical": "Technical",
+                    "none": "no role"
+                },
+                                "upload": {
                     "title": "Add a source to the corpus",
                     "dialogSubtitle": "Upload a new PDF/EPUB or reuse one from your library. The academic type decides whether it covers a rubric requirement.",
                     "modeUpload": "Upload new",
@@ -1054,7 +1063,10 @@
                     "librarySearchEmpty": "No matches. Try a different search term.",
                     "displayNameLabel": "Corpus label",
                     "displayNamePlaceholder": "e.g. Lane WBC 47a, pp. 1-30",
-                    "typeLabel": "Academic type",
+                    "roleLabel": "Role in your argument",
+                    "roleFollowType": "Follow the type \u00b7 {{role}}",
+                    "roleDivergence": "Works of this type usually serve as {{suggested}}. Keeping it as {{chosen}} because you asked \u2014 the type measures the rubric, the role is yours to decide.",
+                                        "typeLabel": "Academic type",
                     "typeLabelBulk": "Academic type for the {{count}} sources",
                     "typeDescription": "Pick the type that best describes the source. The rubric uses this type to decide whether it satisfies minimums.",
                     "typeDescriptionBulk": "Applies to every selected source. If you need different types, you can adjust them one by one from the corpus list afterwards.",
@@ -1085,7 +1097,9 @@
                     "removed": "Source removed",
                     "removeFailed": "Could not remove the source.",
                     "typeUpdated": "Type updated",
-                    "typeUpdateFailed": "Could not update the type"
+                    "typeUpdateFailed": "Could not update the type",
+                    "roleUpdated": "Role updated",
+                    "roleUpdateFailed": "Could not update the role"
                 }
             },
             "corpus-plan": {
