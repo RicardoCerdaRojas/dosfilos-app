@@ -40,7 +40,7 @@ import type { SaveSermonExtractionUseCase } from './SaveSermonExtractionUseCase'
  *
  * Series-planner integration: this path does NOT auto-link to a series.
  * Faculty sermons are typically ad-hoc, not series-driven (the series
- * path is paper-derived via `GenerateSermonFromPaperUseCase`).
+ * path opens the study from a paper via `StartStudyFromPaperUseCase`).
  */
 
 export interface BuildSermonFromFacultyOutlineInput {

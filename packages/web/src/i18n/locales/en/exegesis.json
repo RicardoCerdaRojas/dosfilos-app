@@ -1587,8 +1587,7 @@
             "extractRubricFromDocument": "Extract rubric (document)",
             "extractStyleGuideManifest": "Extract style-guide manifest",
             "classifySourceType": "Classify source type",
-            "generateStep": "Generate step (legacy)",
-            "generateSermonFromPaper": "Generate sermon from paper"
+            "generateStep": "Generate step (legacy)"
         }
     },
     "detail": {
@@ -1780,25 +1779,14 @@
                 "failed": "Could not generate the .docx. Try again."
             }
         },
-        "generateSermon": {
-            "cta": "Generate sermon",
-            "ctaShort": "Sermon",
-            "popoverTitle": "Generate a sermon from this paper",
-            "popoverHint": "Pick the homiletical tone. The full paper is transformed into a preachable sermon (~25-35 min).",
-            "tone": {
-                "pastoral": "Pastoral",
-                "pastoralHint": "Warm and oriented toward shepherding",
-                "expositivo": "Expository",
-                "expositivoHint": "Classical structure with clear divisions",
-                "narrativo": "Narrative",
-                "narrativoHint": "Built around the arc of the biblical story"
-            },
-            "generating": "Generating sermon...",
-            "disabledHint": "Available once the paper is assembled",
+        "startStudy": {
+            "cta": "Take to study",
+            "hint": "Opens the 8-step study with everything you already established in this paper on hand at each step.",
+            "hintNoMaterial": "Opens the 8-step study for this passage. This paper has no accepted analyses yet to accompany the steps.",
             "toast": {
-                "success": "Sermon generated. Taking you to the draft.",
-                "failed": "Couldn't generate the sermon. Try again.",
-                "overloaded": "Our analysis engine is overloaded. Try again in a minute."
+                "success": "Your study is open, with the paper material on hand.",
+                "successNoMaterial": "Your study is open. This paper has no accepted analyses yet to show alongside the steps.",
+                "failed": "Could not open the study. Try again."
             }
         }
     },

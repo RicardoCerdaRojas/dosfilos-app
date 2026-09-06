@@ -558,7 +558,7 @@
             "openPaper": "Open paper",
             "openDraft": "Open draft",
             "startDraft": "Start sermon",
-            "generateFromPaper": "Generate from paper",
+            "startStudyFromPaper": "Take to study",
             "startDraftWarning": {
                 "title": "You already have an exegetical paper in progress",
                 "description": "This pericope has an unfinished exegetical paper. If you start the sermon now, the wizard will open empty and will NOT use the paper as its base. We recommend completing the paper first — once assembled you can generate the sermon from it automatically.",
@@ -567,9 +567,8 @@
                 "tooltip": "You have a paper in progress — recommended to complete it before starting the sermon"
             },
             "toast": {
-                "sermonGenerated": "Sermon generated from the paper.",
-                "sermonOverloaded": "Service is busy. Try again in a few minutes.",
-                "sermonFailed": "Could not generate the sermon. Please try again."
+                "studyStarted": "Your study is open, with the paper material on hand.",
+                "studyStartFailed": "Could not open the study. Try again."
             },
             "moreActions": "More actions",
             "actionsLabel": "Actions",

@@ -5,7 +5,6 @@ import type {
     AddProjectSourceInput,
     CreateExegeticalPaperInput,
     ExtractRubricFromTextInput,
-    PaperToSermonTone,
     UpdateProjectSourceInput,
     UpdateRubricInput,
     UpdateStepPlanInput,
@@ -551,23 +550,24 @@ export function useExegesisPapers() {
         },
     });
 
-    // Bridge: paper → sermon. On success we invalidate the sermons cache too
-    // so the dashboard's "Material reciente" picks up the new draft without
-    // a manual refresh.
-    const generateSermonFromPaper = useMutation({
-        mutationFn: async ({ paperId, tone }: { paperId: string; tone: PaperToSermonTone }) => {
+    // Puente: paper → estudio pastoral de 8 pasos. No contacta ningún
+    // modelo (arma la referencia desde los análisis ya aceptados), así
+    // que responde al instante y no hay estado de "generando". Se
+    // invalida el caché de sermones para que "Material reciente" muestre
+    // el sermón recién vinculado sin refrescar a mano.
+    const startStudyFromPaper = useMutation({
+        mutationFn: async ({ paperId }: { paperId: string }) => {
             if (!user?.uid) throw new Error('User not authenticated');
-            return exegesisService.generateSermonFromPaper.execute({
+            return exegesisService.startStudyFromPaper.execute({
                 paperId,
-                tone,
                 actorUserId: user.uid,
             });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['sermons', user?.uid] });
-            // Series planner row flips from "Generar desde paper" to
-            // "Abrir borrador" once the use case patches
-            // plannedSermons[].draftId — refresh series cache.
+            // La fila del planificador pasa de "Llevar al estudio" a
+            // "Abrir estudio" cuando el caso de uso escribe
+            // plannedSermons[].draftId — refrescar el caché de series.
             queryClient.invalidateQueries({ queryKey: ['series'] });
         },
     });
@@ -625,7 +625,7 @@ export function useExegesisPapers() {
         verifyStepCitations,
         runCoherencePass,
         classifySourceType,
-        generateSermonFromPaper,
+        startStudyFromPaper,
         analyzeVerseCanonically,
         composeAcademicPaper,
         saveAssembledPaper,

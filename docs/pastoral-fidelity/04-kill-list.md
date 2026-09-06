@@ -18,6 +18,24 @@ Cada item incluye: razón, severidad, fase en la que se ejecuta, plan de migraci
   - Eventualmente: remover del codebase.
 - **Coherencia con memoria**: `priorities_repositioning` ya marcaba esto como pendiente.
 
+### Botón "Generar sermón" en el paper exegético
+
+- **Estado actual**: ✅ **EJECUTADO** (2026-09-05, [ADR-039](./decisions/ADR-039-paper-feeds-the-study-not-the-draft.md)).
+- **Conflicto**: la MISMA violación de P1/P2 que el wizard standalone, por otra
+  puerta. Esta lista no la había visto: condenaba el wizard y dejaba intacto un
+  botón del módulo de exégesis que hacía exactamente lo mismo —transformaba el
+  paper ensamblado en un sermón completo y aterrizaba al pastor en Redacción.
+- **Severidad**: ALTA — producía sermones publicables sin ningún estudio. Medido
+  en producción antes del retiro: 9 sermones nacidos de un paper, 1 con semilla,
+  3 publicados sin estudio.
+- **Ejecutado**: `GenerateSermonFromPaperUseCase`, `paperToWizardProgress` y el
+  transformador Gemini retirados. `StartStudyFromPaperUseCase` los reemplaza: el
+  paper abre el estudio de 8 pasos y sus análisis aceptados aparecen como
+  CONSULTA junto a cada paso, nunca como relleno de los campos.
+- **Lección de método**: una puerta condenada en la lista no cierra las puertas
+  hermanas. Al matar un camino conviene preguntar qué otra superficie llega al
+  mismo destino sin pasar por el portón.
+
 ### Pre-generación automática de bosquejos en el planner
 
 - **Estado actual**: Al asignar fecha a una perícopa en el series planner, el sistema puede pre-generar contenido.

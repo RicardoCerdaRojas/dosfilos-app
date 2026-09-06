@@ -10,9 +10,10 @@ import { StepDraft } from './StepDraft';
 import { SermonsInProgress } from './SermonInProgress';
 import { sermonService, exegesisService } from '@dosfilos/application';
 import { useFirebase } from '@/context/firebase-context';
-import { SermonEntity, evaluatePastoralSeed, type Sermon } from '@dosfilos/domain';
+import { SermonEntity, buildPaperStudyReference, evaluatePastoralSeed, type Sermon } from '@dosfilos/domain';
 import { migrateLegacyWizardProgress } from './migrateLegacyWizardProgress';
 import { usePastoralFidelityGate } from '@/hooks/usePastoralFidelityGate';
+import { useExegesisPaper } from '@/hooks/exegesis/useExegesisPaper';
 import { PastoralSeedWizard } from './pastoralSeed/PastoralSeedWizard';
 import { seedToExegesis } from './pastoralSeed/seedToExegesis';
 import { pastoralSeedService } from '@dosfilos/application';
@@ -28,7 +29,6 @@ function WizardContent() {
     const [inProgressSermons, setInProgressSermons] = useState<SermonEntity[]>([]);
     const [showResumePrompt, setShowResumePrompt] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [autoPopulating, setAutoPopulating] = useState(false);
     const [mintingSermon, setMintingSermon] = useState(false);
     const [publishingSermonId, setPublishingSermonId] = useState<string | null>(null);
     const location = useLocation();
@@ -110,12 +110,11 @@ function WizardContent() {
                             return;
                         }
 
-                        // Paper-linked empty placeholder recovery
-                        // (PR #216). If the sermon is empty + linked
-                        // to a paper, fire `generateSermonFromPaper`
-                        // against the existing sermonId so the
-                        // wizard's resume path sees populated state.
-                        const repopulated = await applyPaperAutoPopulationIfNeeded(sermon);
+                        // Recuperación del marcador vacío vinculado a un
+                        // paper (PR #216): se lo vincula a su estudio
+                        // contra el sermonId existente, así el camino de
+                        // reanudación encuentra estado.
+                        const repopulated = await applyPaperStudyLinkIfNeeded(sermon);
                         if (repopulated) sermon = repopulated;
 
                         // Runtime migration for legacy sermons (pre PRs
@@ -195,7 +194,7 @@ function WizardContent() {
         // URL-param load so resumed sermons get the same auto-populate
         // behavior. Use the freshly-loaded sermon when generation
         // succeeded.
-        const repopulated = await applyPaperAutoPopulationIfNeeded(sermon as Sermon);
+        const repopulated = await applyPaperStudyLinkIfNeeded(sermon as Sermon);
         const effective = repopulated ?? sermon;
 
         // Apply legacy migration (same path as URL-param load) so the
@@ -272,25 +271,22 @@ function WizardContent() {
     }
 
     /**
-     * Handles the "empty paper-linked placeholder" UX gap from PR #211:
-     * `autoCreateSermonPlaceholders` (pre PR #216) inserted empty
-     * sermons with `sourcePaperId` set, which made the planner show
-     * "Abrir borrador" while the wizard opened blank. Detect that
-     * state and auto-run `generateSermonFromPaper` against the
-     * existing sermon (via the new `targetSermonId` parameter) so the
-     * user lands in Step 3 with the paper-derived content instead of
-     * a blank Step 0.
+     * Recupera el marcador vacío vinculado a un paper (hueco de UX del
+     * PR #211): `autoCreateSermonPlaceholders`, antes del PR #216,
+     * insertaba sermones con `sourcePaperId` y sin contenido, así que el
+     * planificador mostraba "Abrir borrador" y el wizard abría en blanco.
      *
-     * Returns the freshly-loaded sermon when auto-population happened
-     * (caller restores wizard state from it). Returns null when no
-     * auto-population was needed.
+     * Antes esto disparaba `generateSermonFromPaper` y depositaba al
+     * pastor en el Paso 3 con un borrador que no había escrito. Ahora
+     * vincula el paper al ESTUDIO: el sermón queda en el Paso 1 con el
+     * material del paper a la vista. Al no haber modelo de por medio la
+     * operación es instantánea, y por eso ya no hace falta el estado de
+     * espera que anunciaba "esto puede tomar ~30 segundos".
      *
-     * One-shot: PR #216 also fixed `autoCreateSermonPlaceholders` to
-     * skip pericopes with linked papers, so future series won't
-     * produce these placeholders. This handler exists to recover
-     * sermons created before that fix landed.
+     * Devuelve el sermón recargado cuando hubo vinculación; `null`
+     * cuando no hacía falta.
      */
-    async function applyPaperAutoPopulationIfNeeded(sermon: Sermon): Promise<Sermon | null> {
+    async function applyPaperStudyLinkIfNeeded(sermon: Sermon): Promise<Sermon | null> {
         const eligible =
             !sermon.content?.trim()
             && !sermon.wizardProgress?.draft
@@ -299,32 +295,25 @@ function WizardContent() {
             && Boolean(user?.uid);
         if (!eligible) return null;
 
-        console.info('[SermonWizard] Auto-populating empty paper-linked placeholder', {
+        console.info('[SermonWizard] Linking empty paper-backed placeholder to its study', {
             sermonId: sermon.id,
             paperId: sermon.sourcePaperId,
         });
-        setAutoPopulating(true);
         try {
-            await exegesisService.generateSermonFromPaper.execute({
+            await exegesisService.startStudyFromPaper.execute({
                 paperId: sermon.sourcePaperId!,
                 actorUserId: user!.uid,
-                tone: 'pastoral',
                 targetSermonId: sermon.id,
             });
-            // Re-fetch the sermon so the caller restores wizardProgress
-            // from the freshly-populated doc instead of the stale
-            // in-memory copy.
+            // Recargar para que el llamador restaure `wizardProgress`
+            // del documento recién escrito y no de la copia en memoria.
             const refreshed = await sermonService.getSermon(sermon.id);
             return refreshed ?? null;
         } catch (err) {
-            // Auto-populate is best-effort — if generation fails
-            // (overload, no paper, etc.), fall back to the empty
-            // wizard so the user can still work manually. Surface the
-            // failure in the console for debugging.
-            console.warn('[SermonWizard] Auto-populate from paper failed; continuing with empty wizard', err);
+            // Best-effort: si falla (paper borrado, permiso), se sigue
+            // con el wizard vacío y el pastor trabaja a mano.
+            console.warn('[SermonWizard] Paper study link failed; continuing with empty wizard', err);
             return null;
-        } finally {
-            setAutoPopulating(false);
         }
     }
 
@@ -459,6 +448,20 @@ function WizardContent() {
             .finally(() => setMintingSermon(false));
     }, [usePastoralFlow, step, passage, sermonId, user, mintingSermon, setSermonId]);
 
+    // Material del paper para el estudio. Se carga solo cuando el sermón
+    // viene de un paper; el hook queda deshabilitado (paperId undefined)
+    // en cualquier otro origen, así que no cuesta una lectura de más.
+    //
+    // Se arma acá y no dentro del wizard de la semilla porque el paper es
+    // del sermón, no del paso: cargarlo una vez y repartirlo por paso
+    // evita una lectura por navegación entre pasos.
+    const paperIdForStudy = derivedContext?.kind === 'paper' ? derivedContext.paperId : undefined;
+    const { paper: studyPaper } = useExegesisPaper(paperIdForStudy);
+    const paperReference = useMemo(
+        () => (studyPaper ? buildPaperStudyReference(studyPaper) : undefined),
+        [studyPaper],
+    );
+
     // Build the pre-fill hint when a paper/Faculty origin is known.
     // Option B (decision 2026-05-25): pre-poblar como sugerencias
     // editables, no autocompletar. Pastor confirma o reescribe.
@@ -466,7 +469,11 @@ function WizardContent() {
         if (!derivedContext) return undefined;
         if (derivedContext.kind === 'paper') {
             return {
-                note: `El paper "${derivedContext.paperTitle}" alimentó este sermón. Sus secciones aparecen como sugerencias en los pasos, pero la idea central, observaciones, anécdota y aplicación doxológica del Paso 6 las escribes tú.`,
+                // El aviso ya no promete un sermón derivado del paper:
+                // el paper acompaña el estudio, no lo reemplaza. Y lo
+                // que el pastor escribe sigue siendo enteramente suyo
+                // en los ocho pasos, no solo en el último.
+                note: `Tu paper "${derivedContext.paperTitle}" te acompaña en este estudio: lo que ya estableciste aparece como consulta junto a cada paso. Nada de eso se copia solo — el estudio, y el sermón que salga de él, los escribes tú.`,
             };
         }
         return {
@@ -474,27 +481,16 @@ function WizardContent() {
         };
     }, [derivedContext]);
 
-    if (loading || autoPopulating) {
-        // `autoPopulating` is the longer wait — we're running the
-        // paper→sermon transformer (~30-45s) to fill a previously
-        // empty placeholder. Surface that explicitly so the user
-        // doesn't think the page is stuck on a generic spinner.
+    // Acá vivía un estado de espera de ~30-45 s que anunciaba "Generando
+    // sermón desde el paper…". Murió con el transformador: vincular el
+    // paper al estudio no contacta ningún modelo, así que la espera es
+    // la de una escritura en Firestore y el spinner genérico alcanza.
+    if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
                 <div className="text-center max-w-md px-6">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                    {autoPopulating ? (
-                        <>
-                            <p className="text-foreground font-medium mb-1">
-                                Generando sermón desde el paper…
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Estamos transformando tu paper exegético en un borrador de sermón. Esto puede tomar ~30 segundos.
-                            </p>
-                        </>
-                    ) : (
-                        <p className="text-muted-foreground">Cargando...</p>
-                    )}
+                    <p className="text-muted-foreground">Cargando...</p>
                 </div>
             </div>
         );
@@ -547,6 +543,7 @@ function WizardContent() {
                             setStep(2);
                         }}
                         derivedSuggestions={derivedSuggestions}
+                        paperReference={paperReference}
                     />
                 )}
                 {step === 1 && !usePastoralFlow && <StepExegesis />}

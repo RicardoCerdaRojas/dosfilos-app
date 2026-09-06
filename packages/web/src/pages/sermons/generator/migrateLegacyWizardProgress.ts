@@ -125,7 +125,8 @@ export function migrateLegacyWizardProgress(sermon: Sermon): MigrationResult | n
  * shape compatible with StepDraft. Detects intro / body / conclusion /
  * call-to-action sections by heading text.
  *
- * Heuristic shared with `paperToWizardProgress.parseDraftFromMarkdown`
+ * Heurística que compartía con `paperToWizardProgress.parseDraftFromMarkdown`
+ * (retirado con el transformador paper→sermón)
  * + `BuildSermonFromFacultyOutlineUseCase.parseDraftFromSermonMarkdown`:
  * keep it lightweight and tolerant of structural variation since
  * pre-convergence content came from two distinct prompt templates with

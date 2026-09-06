@@ -657,6 +657,10 @@
     "notes": "Notas del predicador",
     "notesPlaceholder": "Ideas sueltas, argumentos que quieras desarrollar, énfasis particulares…"
   },
+  "paperReference": {
+    "title": "De tu paper «{{paperTitle}}» · {{count}} para este paso",
+    "disclaimer": "Esto es lo que tú ya estableciste en tu paper. Está acá para consultarlo, no para copiarlo: lo que escribas en este paso tiene que ser tuyo."
+  },
   "citations": {
     "translate": "Ver en español",
     "seeTranslation": "Ver traducción",

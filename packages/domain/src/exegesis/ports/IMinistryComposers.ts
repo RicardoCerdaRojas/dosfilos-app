@@ -2,7 +2,19 @@ import type { PassageReference } from '../../bible/canon/passage-reference';
 import type { CanonicalVerseAnalysis } from '../entities/CanonicalVerseAnalysis';
 import type { StyleGuideManifest } from '../entities/StyleGuideManifest';
 import type { ComposerSourceMetadata } from './IAcademicComposer';
-import type { PaperToSermonTone } from './IPaperToSermonTransformer';
+
+/**
+ * Registro homilético del sermón ministerial.
+ *
+ * Vivía en `IPaperToSermonTransformer`, el port del transformador
+ * paper→sermón que se retiró cuando el paper dejó de producir
+ * borradores (el paper alimenta el estudio de 8 pasos; no lo saltea).
+ * El único consumidor que quedaba era el composer ministerial, así que
+ * el tipo se mudó acá, con su dueño. El nombre se conserva porque está
+ * persistido en `Sermon.wizardProgress.derivedContext.tone` de los
+ * sermones ya generados.
+ */
+export type PaperToSermonTone = 'pastoral' | 'expositivo' | 'narrativo';
 
 /**
  * Ports for the parallel ministry composers — produce non-academic

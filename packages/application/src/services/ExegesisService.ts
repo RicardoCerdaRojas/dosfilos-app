@@ -18,7 +18,6 @@ import {
     GeminiSermonComposer,
     GeminiStudyGuideComposer,
     GeminiPaperRubricExtractor,
-    GeminiPaperToSermonTransformer,
     GeminiStyleGuideManifestExtractor,
     DeterministicStyleFormatter,
     FuzzyCitationVerifier,
@@ -107,7 +106,7 @@ import {
     VerifyStepCitationsUseCase,
     RunCoherencePassUseCase,
     ClassifySourceTypeUseCase,
-    GenerateSermonFromPaperUseCase,
+    StartStudyFromPaperUseCase,
     SaveExegesisArtifactExtractionUseCase,
     ListPaperDerivedArtifactsUseCase,
     VerifySermonCitationsUseCase,
@@ -242,7 +241,7 @@ class ExegesisService {
     public composeStudyGuideFromAnalyses: ComposeStudyGuideFromAnalysesUseCase;
 
     // Bridge: paper → sermon
-    public generateSermonFromPaper: GenerateSermonFromPaperUseCase;
+    public startStudyFromPaper: StartStudyFromPaperUseCase;
 
     // Persist composition outputs (academic / ministry) as Extractions
     // so they show up in Mis Recursos and the per-paper "Artefactos
@@ -588,17 +587,15 @@ class ExegesisService {
         // legacy sermon module; the use case persists a draft with
         // sourcePaperId set so the sermon detail view can deep-link back.
         const sermonRepository = new FirebaseSermonRepository();
-        const paperToSermonTransformer = new GeminiPaperToSermonTransformer(exegesisModelId);
         // Series repo is wired so the use case can patch the
         // originating series' planned-sermon entry (draftId + status)
         // when the paper came from a pericope. Without this the
         // planner shows "Iniciar borrador" indefinitely and clicking
         // creates a duplicate empty sermon — the bug Phase A fixes.
         const seriesRepository = new FirebaseSeriesRepository();
-        this.generateSermonFromPaper = new GenerateSermonFromPaperUseCase(
+        this.startStudyFromPaper = new StartStudyFromPaperUseCase(
             paperRepository,
             sermonRepository,
-            paperToSermonTransformer,
             seriesRepository,
         );
 
