@@ -558,7 +558,7 @@
             "openPaper": "Abrir paper",
             "openDraft": "Abrir borrador",
             "startDraft": "Iniciar sermón",
-            "generateFromPaper": "Generar desde paper",
+            "startStudyFromPaper": "Llevar al estudio",
             "startDraftWarning": {
                 "title": "Ya tienes un paper exegético en progreso",
                 "description": "Esta perícopa tiene un paper exegético sin terminar. Si inicias el sermón ahora, el wizard se abrirá vacío y NO usará el trabajo del paper como base. Te recomendamos completar el paper primero — al ensamblarlo podrás generar el sermón desde él automáticamente.",
@@ -567,9 +567,8 @@
                 "tooltip": "Tienes un paper en progreso — recomendado completarlo antes de iniciar el sermón"
             },
             "toast": {
-                "sermonGenerated": "Sermón generado desde el paper.",
-                "sermonOverloaded": "El servicio está ocupado. Intenta de nuevo en unos minutos.",
-                "sermonFailed": "No se pudo generar el sermón. Intenta de nuevo."
+                "studyStarted": "Tu estudio está abierto, con el material del paper a la vista.",
+                "studyStartFailed": "No se pudo abrir el estudio. Intenta de nuevo."
             },
             "moreActions": "Más acciones",
             "actionsLabel": "Acciones",

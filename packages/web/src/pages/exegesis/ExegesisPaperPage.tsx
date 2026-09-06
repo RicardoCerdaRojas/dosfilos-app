@@ -26,7 +26,6 @@ import {
     Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -63,7 +62,6 @@ import {
     exportPaperToMarkdown,
     formatPassageReference,
     type ExegeticalPaper,
-    type PaperToSermonTone,
     type ProjectSource,
     type SupportedLanguage,
 } from '@dosfilos/domain';
@@ -97,7 +95,7 @@ export function ExegesisPaperPage() {
         archivePaper,
         removeSource,
         seedSteps,
-        generateSermonFromPaper,
+        startStudyFromPaper,
     } = useExegesisPapers();
     // El paper COMPLETO, no el resumen de la lista. `listPaperSummaries` recorta
     // `sources`, `steps` y `assembledMarkdown` para que la lista cargue rápido
@@ -173,26 +171,25 @@ export function ExegesisPaperPage() {
         }
     };
 
-    const handleGenerateSermon = async (tone: PaperToSermonTone) => {
+    const handleStartStudy = async () => {
         try {
-            const result = await generateSermonFromPaper.mutateAsync({
-                paperId: paper.id,
-                tone,
-            });
-            toast.success(t('detail.generateSermon.toast.success'));
-            // Land the user in the wizard's Draft step with all paper-
-            // derived content pre-loaded (see paperToWizardProgress.ts
-            // for the mapping). The legacy `/dashboard/sermons/{id}`
-            // surface still works and is reachable from "Mis sermones",
-            // but the wizard is now the canonical refinement surface
-            // for paper-derived sermons.
+            const result = await startStudyFromPaper.mutateAsync({ paperId: paper.id });
+            // El aviso distingue los dos casos. Un paper sin análisis
+            // aceptados abre el estudio igual —el pasaje ya es algo—
+            // pero decirle "tu paper te acompaña" sería mentira: no
+            // hay nada que mostrar al lado de los pasos todavía.
+            toast.success(
+                result.hasStudyMaterial
+                    ? t('detail.startStudy.toast.success')
+                    : t('detail.startStudy.toast.successNoMaterial'),
+            );
+            // Paso 1 del estudio pastoral, con el material del paper a
+            // la vista en cada paso. El paper NO redacta el sermón: lo
+            // escribe el pastor en el Paso 3, después del estudio.
             navigate(`/dashboard/sermons/generate?id=${result.sermonId}`);
-        } catch (err: any) {
-            console.error('[exegesis] generateSermonFromPaper failed:', err);
-            const msg = err?.isExegesisOverload
-                ? t('detail.generateSermon.toast.overloaded')
-                : t('detail.generateSermon.toast.failed');
-            toast.error(msg);
+        } catch (err) {
+            console.error('[exegesis] startStudyFromPaper failed:', err);
+            toast.error(t('detail.startStudy.toast.failed'));
         }
     };
 
@@ -381,12 +378,12 @@ export function ExegesisPaperPage() {
                         })()}
                     </div>
 
-                    {/* Primary action — keeps text label since this is the
-                        headline action that drives the whole module. */}
-                    <GenerateSermonButton
+                    {/* Acción principal — conserva la etiqueta de texto
+                        porque es la que dirige el módulo entero. */}
+                    <StartStudyButton
                         paper={paper}
-                        onGenerate={handleGenerateSermon}
-                        pending={generateSermonFromPaper.isPending}
+                        onStart={handleStartStudy}
+                        pending={startStudyFromPaper.isPending}
                         t={t}
                     />
 
@@ -526,77 +523,56 @@ export function ExegesisPaperPage() {
 
 // ── Header pieces ───────────────────────────────────────────────────────
 
-const SERMON_TONES: PaperToSermonTone[] = ['pastoral', 'expositivo', 'narrativo'];
-
-function GenerateSermonButton({
+/**
+ * Lleva el paper al estudio pastoral de 8 pasos.
+ *
+ * Antes era "Generar sermón": un popover de tonos que disparaba el
+ * transformador paper→sermón y prometía "un sermón listo para predicar".
+ * Ese botón se retiró — producía el output antes que la labor, y el
+ * portón del wizard lo rebotaba igual. Ya no hay tono que elegir porque
+ * ya no se redacta nada acá: el paper entra al estudio como material de
+ * consulta, y el sermón lo escribe el pastor al final.
+ *
+ * Por eso tampoco exige `phase === 'assembled'`. El estudio se nutre de
+ * los análisis aceptados verso a verso, que existen mucho antes del
+ * ensamble, y empezar el estudio temprano es exactamente lo que el
+ * producto quiere fomentar.
+ */
+function StartStudyButton({
     paper,
-    onGenerate,
+    onStart,
     pending,
     t,
 }: {
     paper: ExegeticalPaper;
-    onGenerate: (tone: PaperToSermonTone) => void;
+    onStart: () => void;
     pending: boolean;
     t: (key: string) => string;
 }) {
-    const [open, setOpen] = useState(false);
-    // Only available once the paper is fully assembled — anything earlier
-    // would transform a half-baked draft into a half-baked sermon.
-    const enabled = paper.phase === 'assembled' && paper.assembledMarkdown !== null;
+    const hasAcceptedAnalysis = paper.steps.some(
+        (step) => step.kind === 'verse' && Boolean(step.accepted?.canonicalAnalysis),
+    );
 
-    const trigger = (
+    return (
         <Button
             variant="outline"
             size="sm"
-            disabled={!enabled || pending}
+            disabled={pending}
+            onClick={onStart}
             className="text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800/60 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 disabled:opacity-50"
-            title={enabled ? undefined : t('detail.generateSermon.disabledHint')}
+            title={
+                hasAcceptedAnalysis
+                    ? t('detail.startStudy.hint')
+                    : t('detail.startStudy.hintNoMaterial')
+            }
         >
             {pending ? (
                 <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
             ) : (
                 <Mic className="h-3.5 w-3.5 mr-1.5" />
             )}
-            {pending ? t('detail.generateSermon.generating') : t('detail.generateSermon.cta')}
+            {t('detail.startStudy.cta')}
         </Button>
-    );
-
-    if (!enabled) return trigger;
-
-    return (
-        <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-            <PopoverContent align="end" className="w-72 p-0">
-                <div className="px-4 py-3 border-b border-border">
-                    <p className="text-sm font-semibold text-foreground">
-                        {t('detail.generateSermon.popoverTitle')}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        {t('detail.generateSermon.popoverHint')}
-                    </p>
-                </div>
-                <div className="py-1">
-                    {SERMON_TONES.map((tone) => (
-                        <button
-                            key={tone}
-                            type="button"
-                            onClick={() => {
-                                setOpen(false);
-                                onGenerate(tone);
-                            }}
-                            className="w-full flex flex-col items-start gap-0.5 px-4 py-2.5 text-left hover:bg-accent transition-colors"
-                        >
-                            <span className="text-sm font-medium text-foreground">
-                                {t(`detail.generateSermon.tone.${tone}`)}
-                            </span>
-                            <span className="text-[11px] text-muted-foreground">
-                                {t(`detail.generateSermon.tone.${tone}Hint`)}
-                            </span>
-                        </button>
-                    ))}
-                </div>
-            </PopoverContent>
-        </Popover>
     );
 }
 

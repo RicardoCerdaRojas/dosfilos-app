@@ -205,7 +205,7 @@ export interface ExegeticalPaper {
     /**
      * Denormalized back-reference when the paper was auto-created by a
      * `SermonSeries` pericope (planner pipeline). Lets downstream use
-     * cases — notably `GenerateSermonFromPaperUseCase` — patch the
+     * cases — notably `StartStudyFromPaperUseCase` — patch the
      * originating series so the planner's `plannedSermons[].draftId`
      * stays in sync after a sermon is generated from the paper.
      *

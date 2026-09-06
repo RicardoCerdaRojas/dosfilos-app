@@ -142,41 +142,35 @@ export function SeriesDetail() {
         : (t('detail.header.noStart') as string);
 
     /**
-     * Generate a sermon draft from an already-assembled paper. Used when
-     * the pipeline shows paper=done / draft=missing — instead of the
-     * legacy "Iniciar borrador" wizard (empty shell), we kick the
-     * paper-to-sermon transformer and land the user on the populated
-     * draft. The use case patches `plannedSermons[].draftId` server-side
-     * so the planner row flips to "Abrir borrador" on reload.
+     * Lleva al estudio pastoral el paper de una perícopa. Se usa cuando
+     * el pipeline muestra paper=hecho / borrador=falta.
+     *
+     * Antes esta fila disparaba el transformador paper→sermón y dejaba
+     * al pastor sobre un borrador ya redactado. Se retiró: producía el
+     * output antes que la labor y el portón del wizard lo rebotaba
+     * igual. Ahora abre el estudio de 8 pasos con el material del paper
+     * a la vista, sin contactar ningún modelo — de ahí que no haya tono
+     * que elegir ni error de saturación que atrapar.
+     *
+     * El caso de uso escribe `plannedSermons[].draftId` del lado del
+     * servidor, así que la fila pasa a "Abrir estudio" al recargar.
      */
-    const handleGenerateFromPaper = async (
+    const handleStartStudyFromPaper = async (
         planned: PlannedSermon & { paperId: string },
     ) => {
         if (!user?.uid || !series) return;
         setGeneratingSermonFor(planned.id);
         try {
-            const result = await exegesisService.generateSermonFromPaper.execute({
+            const result = await exegesisService.startStudyFromPaper.execute({
                 paperId: planned.paperId,
                 actorUserId: user.uid,
-                // Pastoral is the safe default for the planner — series
-                // are typically expository pastoral preaching. The paper
-                // detail page exposes the full tone selector for users
-                // who want to override.
-                tone: 'pastoral',
             });
-            toast.success(t('detail.table.toast.sermonGenerated') as string);
+            toast.success(t('detail.table.toast.studyStarted') as string);
             await reloadData();
-            // Land in the wizard's Draft step so the user can refine
-            // via chat / publish from the same surface as wizard-native
-            // sermons. Pre-population happens server-side via
-            // wizardProgress (see GenerateSermonFromPaperUseCase).
             navigate(`/dashboard/sermons/generate?id=${result.sermonId}`);
-        } catch (err: any) {
-            console.error('[seriesDetail] generateSermonFromPaper failed:', err);
-            const msg = err?.isExegesisOverload
-                ? (t('detail.table.toast.sermonOverloaded') as string)
-                : (t('detail.table.toast.sermonFailed') as string);
-            toast.error(msg);
+        } catch (err) {
+            console.error('[seriesDetail] startStudyFromPaper failed:', err);
+            toast.error(t('detail.table.toast.studyStartFailed') as string);
         } finally {
             setGeneratingSermonFor(null);
         }
@@ -376,7 +370,7 @@ export function SeriesDetail() {
                                     seriesId={series.id}
                                     onUpdateDate={(d) => handleUpdateSermonDate(item.id, d)}
                                     onStartDraft={() => handleStartDraft(item)}
-                                    onGenerateFromPaper={() => planned?.paperId && handleGenerateFromPaper(planned as PlannedSermon & { paperId: string })}
+                                    onStartStudyFromPaper={() => planned?.paperId && handleStartStudyFromPaper(planned as PlannedSermon & { paperId: string })}
                                     onContinueEditing={() => item.draftId && handleContinueEditing(item.draftId)}
                                     onEdit={() => setEditingSermon(item)}
                                     onDelete={() => handleDeleteSermon(item.id)}
@@ -459,7 +453,7 @@ interface SermonRowProps {
     seriesId: string;
     onUpdateDate: (d: Date | null) => Promise<void>;
     onStartDraft: () => Promise<void>;
-    onGenerateFromPaper: () => Promise<void> | void;
+    onStartStudyFromPaper: () => Promise<void> | void;
     onContinueEditing: () => void;
     onEdit: () => void;
     onDelete: () => Promise<void>;
@@ -482,7 +476,7 @@ function SermonRow({
     paperPhase,
     onUpdateDate,
     onStartDraft,
-    onGenerateFromPaper,
+    onStartStudyFromPaper,
     onContinueEditing,
     onEdit,
     onDelete,
@@ -608,15 +602,17 @@ function SermonRow({
                             <Mic className="h-3 w-3 mr-1" />
                             {t('detail.table.openDraft')}
                         </Button>
-                    ) : item.status === 'planned' && hasPaper && paperPhase === 'assembled' ? (
-                        // Paper is ready — prefer generating the sermon
-                        // from the assembled exegesis instead of opening
-                        // an empty wizard. Backend use case patches the
-                        // pericope's draftId on success so reload flips
-                        // this row to "Abrir borrador" automatically.
+                    ) : item.status === 'planned' && hasPaper ? (
+                        // Hay paper — vale más entrar al estudio con su
+                        // material a la vista que abrir un wizard en
+                        // blanco. Ya no se exige `assembled`: el estudio
+                        // se nutre de los análisis aceptados verso a
+                        // verso, que existen antes del ensamble. El caso
+                        // de uso escribe el draftId de la perícopa, así
+                        // que al recargar la fila pasa a "Abrir estudio".
                         <Button
                             size="sm"
-                            onClick={onGenerateFromPaper}
+                            onClick={onStartStudyFromPaper}
                             disabled={isGeneratingSermon}
                             className="h-7 text-[11.5px]"
                         >
@@ -625,7 +621,7 @@ function SermonRow({
                             ) : (
                                 <Mic className="h-3 w-3 mr-1" />
                             )}
-                            {t('detail.table.generateFromPaper')}
+                            {t('detail.table.startStudyFromPaper')}
                         </Button>
                     ) : item.status === 'planned' && (
                         <Button

@@ -1587,8 +1587,7 @@
             "extractRubricFromDocument": "Extraer rúbrica (documento)",
             "extractStyleGuideManifest": "Extraer manifest de guía de estilo",
             "classifySourceType": "Clasificar tipo de fuente",
-            "generateStep": "Generar paso (legacy)",
-            "generateSermonFromPaper": "Generar sermón desde paper"
+            "generateStep": "Generar paso (legacy)"
         }
     },
     "detail": {
@@ -1780,25 +1779,14 @@
                 "failed": "No se pudo generar el .docx. Intenta de nuevo."
             }
         },
-        "generateSermon": {
-            "cta": "Generar sermón",
-            "ctaShort": "Sermón",
-            "popoverTitle": "Genera un sermón desde este paper",
-            "popoverHint": "Elige el tono homilético. El paper completo se transforma en un sermón listo para predicar (~25-35 min).",
-            "tone": {
-                "pastoral": "Pastoral",
-                "pastoralHint": "Cercano y orientado al cuidado de la grey",
-                "expositivo": "Expositivo",
-                "expositivoHint": "Estructura clásica con divisiones claras",
-                "narrativo": "Narrativo",
-                "narrativoHint": "Construido sobre el arco del relato bíblico"
-            },
-            "generating": "Generando sermón...",
-            "disabledHint": "Disponible cuando el paper esté ensamblado",
+        "startStudy": {
+            "cta": "Llevar al estudio",
+            "hint": "Abre el estudio de 8 pasos con lo que ya estableciste en este paper a la vista en cada paso.",
+            "hintNoMaterial": "Abre el estudio de 8 pasos para este pasaje. Este paper todavía no tiene análisis aceptados que acompañen los pasos.",
             "toast": {
-                "success": "Sermón generado. Te llevamos al borrador.",
-                "failed": "No se pudo generar el sermón. Intenta de nuevo.",
-                "overloaded": "Nuestro motor de análisis está saturado. Intenta en un minuto."
+                "success": "Tu estudio está abierto, con el material del paper a la vista.",
+                "successNoMaterial": "Tu estudio está abierto. Este paper aún no tiene análisis aceptados que mostrar junto a los pasos.",
+                "failed": "No se pudo abrir el estudio. Intenta de nuevo."
             }
         }
     },

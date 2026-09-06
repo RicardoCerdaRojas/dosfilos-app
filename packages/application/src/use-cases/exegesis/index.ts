@@ -136,12 +136,13 @@ export {
     type ClassifySourceTypeUseCaseOutput,
 } from './ClassifySourceTypeUseCase';
 
-// Bridge: paper → sermon (Phase 2 of the sermon-series pipeline)
+// Puente: paper → estudio pastoral de 8 pasos. El paper alimenta el
+// estudio; no lo saltea (reemplaza a `GenerateSermonFromPaperUseCase`).
 export {
-    GenerateSermonFromPaperUseCase,
-    type GenerateSermonFromPaperInput,
-    type GenerateSermonFromPaperOutput,
-} from './GenerateSermonFromPaperUseCase';
+    StartStudyFromPaperUseCase,
+    type StartStudyFromPaperInput,
+    type StartStudyFromPaperOutput,
+} from './StartStudyFromPaperUseCase';
 export {
     SaveExegesisArtifactExtractionUseCase,
     type SaveExegesisArtifactExtractionInput,

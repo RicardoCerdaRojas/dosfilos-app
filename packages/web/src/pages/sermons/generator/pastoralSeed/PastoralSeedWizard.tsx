@@ -10,6 +10,7 @@ import { useWizard } from '../WizardContext';
 import { PASTORAL_SEED_STEP_ORDER, PastoralSeedStepKey, detectMethodErrorForStep } from '@dosfilos/domain';
 import { StudyDepthBadge } from './StudyDepthBadge';
 import { MethodErrorNote } from './MethodErrorNote';
+import { PaperStudyReferencePanel } from './PaperStudyReferencePanel';
 import { StepCompanion } from './StepCompanion';
 import { ORIENTABLE_STEPS, pastorInputForStep } from './stepCompanionWiring';
 import { StudyDepthPreGenerationGate } from './StudyDepthPreGenerationGate';
@@ -68,6 +69,12 @@ interface Props {
     };
     /** Optional banner above the wizard summarising the origin (paper / Faculty). */
     headerBanner?: React.ReactNode;
+    /**
+     * Material que el paper exegético del pastor ya estableció, indexado
+     * por paso. Se MUESTRA junto al paso; nunca se escribe en la
+     * semilla. Ausente cuando el sermón no viene de un paper.
+     */
+    paperReference?: import('@dosfilos/domain').PaperStudyReference;
 }
 
 /**
@@ -83,6 +90,7 @@ export function PastoralSeedWizard({
     onSeedCompleted,
     derivedSuggestions,
     headerBanner,
+    paperReference,
 }: Props) {
     const [currentIndex, setCurrentIndex] = useState(0);
     // Phase 2 (ADR-011): after the six-step seed completes, the wizard
@@ -484,6 +492,14 @@ export function PastoralSeedWizard({
                     )}
 
                     <Card className="p-6">{renderStep()}</Card>
+
+                    {/* Debajo del paso, no encima: el pastor lee la
+                        pregunta antes que el material. Plegado por
+                        defecto, y ausente en los pasos que el paper no
+                        alimenta. */}
+                    {paperReference && currentKey && (
+                        <PaperStudyReferencePanel reference={paperReference} stepKey={currentKey} />
+                    )}
 
                     {methodError && <MethodErrorNote description={methodError.description} />}
 

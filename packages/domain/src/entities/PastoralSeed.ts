@@ -720,7 +720,7 @@ export function isPastorVoiceStep(step: PastoralSeedStepKey): boolean {
  * the seed from derived contexts (paper / Faculty) MUST NOT write to
  * these fields automatically — the pastor's own voice goes there.
  *
- * Surfaced as a runtime guard for `paperToWizardProgress`-style mappers
+ * Surfaced as a runtime guard for paper→semilla mappers
  * and documented in the manifesto + ADR-002 / ADR-022.
  *
  * Cubre exactamente los `PASTOR_VOICE_STEPS` (test de paridad). `reading` entró

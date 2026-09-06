@@ -125,9 +125,19 @@ export interface Sermon {
                   kind: 'paper';
                   paperId: string;
                   paperTitle: string;
-                  tone: 'pastoral' | 'expositivo' | 'narrativo';
+                  /**
+                   * Registro homilético pedido al transformador
+                   * paper→sermón. OPCIONAL: ese transformador se
+                   * retiró — el paper ahora alimenta el estudio de 8
+                   * pasos en vez de producir un borrador, y ese
+                   * camino no elige tono porque no redacta nada.
+                   * Sigue presente en los sermones generados antes
+                   * del cambio.
+                   */
+                  tone?: 'pastoral' | 'expositivo' | 'narrativo';
                   generatedAt: Date;
-                  transformerModelId: string;
+                  /** Ídem: solo los sermones del transformador retirado lo traen. */
+                  transformerModelId?: string;
               }
             | {
                   kind: 'faculty';

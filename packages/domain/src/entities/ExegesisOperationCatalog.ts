@@ -47,8 +47,13 @@ export type ExegesisOperationKey =
     | 'extractRubricPreviewFromImage'
     | 'extractStyleGuideManifest'
     | 'classifySourceType'
-    | 'generateStep'
-    | 'generateSermonFromPaper';
+    // `generateSermonFromPaper` cerraba esta unión. Se retiró con el
+    // transformador paper→sermón: el paper ahora alimenta el estudio de
+    // 8 pasos leyendo los análisis que el pastor ya aceptó, sin contactar
+    // ningún modelo, así que no hay operación que tarifar. Los registros
+    // históricos con esa clave siguen resolviendo a costo 0 vía
+    // `getExegesisOperationCostUsd`, que no tira ante claves desconocidas.
+    | 'generateStep';
 
 export interface ExegesisOperationDefinition {
     key: ExegesisOperationKey;
@@ -186,12 +191,6 @@ export const EXEGESIS_OPERATION_CATALOG: Readonly<Record<ExegesisOperationKey, E
         // ops (composeAcademicPaper, runCoherencePass).
         requiresPreConfirm: false,
         displayKeyI18n: 'studies.operations.generateStep',
-    },
-    generateSermonFromPaper: {
-        key: 'generateSermonFromPaper',
-        estimatedCostUsd: 0.05,
-        requiresPreConfirm: false,
-        displayKeyI18n: 'studies.operations.generateSermonFromPaper',
     },
 };
 
