@@ -110,7 +110,11 @@ export const SearchSidebar: React.FC<SearchSidebarProps> = ({ className, onClose
                                     className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        const cleanText = result.text.replace(/\/n/g, '\n').trim();
+                                        // El asset traía el literal `/n` y esta era la
+                                        // única superficie que lo limpiaba; el resto de la
+                                        // app lo mostraba tal cual. Ahora el dato viene con
+                                        // saltos reales, así que sólo queda recortar.
+                                        const cleanText = result.text.trim();
                                         navigator.clipboard.writeText(`${cleanText}\n\n${result.reference} - RVR1960`);
                                         toast.success('Pasaje copiado');
                                     }}
