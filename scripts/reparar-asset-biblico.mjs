@@ -16,12 +16,9 @@
  *    capítulo tiene 10 donde la RVR tiene 9. Se unen los dos pedazos que ya
  *    están en el archivo: no se escribe texto nuevo, se deshace un corte.
  *
- * Lo que NO arregla, a propósito: falta **Génesis 33:12** (la invitación de
- * Esaú, «Anda, vamos; y yo iré delante de ti» — cf. ASV 33:12 «Let us take
- * our journey…»). Restaurarlo pide el texto de la RVR1960, que es material
- * con derechos y no está en el repositorio. Escribirlo de memoria dentro de
- * una Biblia es exactamente lo que no se hace. Queda reportado para que el
- * fundador pegue la línea correcta.
+ * 3. **Génesis 33:12.** Faltaba la invitación de Esaú. El texto lo aportó el
+ *    fundador desde su RVR1960 impresa; no se escribió de memoria ni se
+ *    tradujo de otra versión.
  *
  * Correr: node scripts/reparar-asset-biblico.mjs
  * Es idempotente: correrlo dos veces no cambia nada la segunda.
@@ -68,7 +65,31 @@ for (const libro of biblia) {
     );
 }
 
-// ── 2. El corte de más en el Salmo 47 ─────────────────────────────────
+// ── 2. El versículo perdido de Génesis 33 ─────────────────────────────
+//
+// Falta 33:12, la invitación de Esaú. El asset salta de «Acepta, te ruego, mi
+// presente…» (v11) a la respuesta de Jacob sobre los niños tiernos, que es el
+// 33:13 real — por eso la respuesta parecía venir de la nada.
+//
+// El texto lo aportó el fundador desde su RVR1960 impresa. NO se escribió de
+// memoria ni se tradujo de otra versión: insertar Escritura inventada en una
+// Biblia es la línea que no se cruza. Se verificó contra la ASV del propio
+// repositorio, cuyo 33:12 dice «And he said, Let us take our journey, and let
+// us go, and I will go before thee».
+const GENESIS_33_12 = 'Y Esaú dijo: Anda, vamos; y yo iré delante de ti.';
+const genesis = porId['gn'];
+const genesis33 = genesis.chapters[32];
+let insertado = false;
+if (genesis33.length === 19 && !genesis33[11].startsWith('Y Esaú dijo: Anda')) {
+    genesis.chapters[32] = [
+        ...genesis33.slice(0, 11),
+        GENESIS_33_12,
+        ...genesis33.slice(11),
+    ];
+    insertado = true;
+}
+
+// ── 3. El corte de más en el Salmo 47 ─────────────────────────────────
 const salmos = porId['ps'];
 const salmo47 = salmos.chapters[46];
 let unido = false;
@@ -82,11 +103,8 @@ fs.writeFileSync(RUTA, JSON.stringify(biblia));
 
 console.log(`${RUTA}`);
 console.log(`   1. literal "/n" corregido en ${tocados} versículo(s).`);
-console.log(`   2. Salmo 47: ${unido ? 'versículo 9 reunificado (10 → 9)' : 'ya estaba en 9, sin cambios'}.`);
+console.log(`   2. Génesis 33:12: ${insertado ? 'restaurado (19 → 20)' : 'ya estaba, sin cambios'}.`);
+console.log(`   3. Salmo 47: ${unido ? 'versículo 9 reunificado (10 → 9)' : 'ya estaba en 9, sin cambios'}.`);
 }
 
-console.log('\nPENDIENTE, requiere el texto de la RVR1960:');
-console.log('   Génesis 33 tiene 19 versículos y debería tener 20.');
-console.log('   Falta 33:12 — la invitación de Esaú. El asset salta del actual v11');
-console.log('   ("Acepta, te ruego, mi presente…") a la respuesta de Jacob sobre los');
-console.log('   niños tiernos, que es el 33:13 real. Cf. ASV 33:12.');
+console.log('\nSin pendientes.');

@@ -41,20 +41,15 @@ const DIFERENCIAS_LEGITIMAS: Readonly<Record<string, number>> = {
 };
 
 /**
- * Defecto conocido y todavía sin reparar: falta **Génesis 33:12**, la
- * invitación de Esaú («Anda, vamos; y yo iré delante de ti» — cf. ASV 33:12
- * «Let us take our journey…»). El asset salta de «Acepta, te ruego, mi
- * presente…» a la respuesta de Jacob sobre los niños tiernos.
+ * Génesis 33 estuvo incompleto: le faltaba el 33:12, la invitación de Esaú
+ * («Anda, vamos; y yo iré delante de ti»). El asset saltaba de «Acepta, te
+ * ruego, mi presente…» a la respuesta de Jacob sobre los niños tiernos, que
+ * es el 33:13 real — por eso la respuesta parecía venir de la nada.
  *
- * No se repara desde acá porque restaurarlo pide el texto de la RVR1960, que
- * tiene derechos y no está en el repositorio; escribirlo de memoria dentro de
- * una Biblia es justamente lo que no se hace. Queda anotado y medido: el día
- * que se pegue la línea correcta, esta excepción se borra y la prueba lo
- * confirma sola.
+ * Se restauró con el texto que el fundador aportó desde su RVR1960 impresa,
+ * verificado contra la ASV del propio repositorio. Esta comprobación queda
+ * para que no se vuelva a perder.
  */
-const DEFECTO_PENDIENTE: Readonly<Record<string, number>> = {
-    'gn:33': 19, // debería ser 20
-};
 
 describe('integridad del asset rvr1960.json', () => {
     it('trae los 66 libros', () => {
@@ -94,14 +89,11 @@ describe('integridad del asset rvr1960.json', () => {
         expect(salmos.chapters[46]).toHaveLength(9);
     });
 
-    it('los capítulos conocidos por sus defectos quedan medidos', () => {
-        // Mientras Génesis 33 siga incompleto, esta prueba lo declara en vez
-        // de dejarlo pasar en silencio. Al repararlo, falla y se actualiza.
-        for (const [clave, esperado] of Object.entries(DEFECTO_PENDIENTE)) {
-            const [id, cap] = clave.split(':');
-            const libro = LIBROS.find(l => l.id === id)!;
-            expect(libro.chapters[Number(cap) - 1]).toHaveLength(esperado);
-        }
+    it('Génesis 33 tiene sus 20 versículos, con la invitación de Esaú en el 12', () => {
+        const genesis = LIBROS.find(l => l.id === 'gn')!;
+        const cap33 = genesis.chapters[32]!;
+        expect(cap33).toHaveLength(20);
+        expect(cap33[11]).toContain('Anda, vamos');
     });
 
     it('las diferencias legítimas de versificación siguen siendo las declaradas', () => {
@@ -122,8 +114,6 @@ describe('integridad del asset rvr1960.json', () => {
         // textual, así que el número correcto no se puede postular de memoria.
         // Lo que sí se puede es exigir que no cambie por accidente. Las
         // comprobaciones por capítulo de arriba son la garantía real.
-        //
-        // Subirá a 31.103 el día que se restaure Génesis 33:12.
-        expect(total).toBe(31102);
+        expect(total).toBe(31103);
     });
 });
