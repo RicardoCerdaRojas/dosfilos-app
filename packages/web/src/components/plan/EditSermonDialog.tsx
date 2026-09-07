@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PlannedSermon, SermonSeriesEntity } from '@dosfilos/domain';
+import { syncSyntacticUnit } from './syncSyntacticUnit';
 import { seriesService } from '@dosfilos/application';
 import {
   Dialog,
@@ -52,17 +53,18 @@ export function EditSermonDialog({
     setSaving(true);
     try {
       const plannedSermons = series.metadata?.plannedSermons || [];
-      const updatedSermons = plannedSermons.map(s => 
-        s.id === sermon.id 
-          ? { 
-              ...s, 
-              title: title.trim(),
-              description: description.trim(),
-              passage: passage.trim(),
-              scheduledDate: scheduledDate ? new Date(scheduledDate) : undefined
-            }
-          : s
-      );
+      const updatedSermons = plannedSermons.map(s => {
+        if (s.id !== sermon.id) return s;
+        const unidad = syncSyntacticUnit(s.syntacticUnit, passage.trim());
+        return {
+          ...s,
+          title: title.trim(),
+          description: description.trim(),
+          passage: passage.trim(),
+          scheduledDate: scheduledDate ? new Date(scheduledDate) : undefined,
+          ...(unidad ? { syntacticUnit: unidad } : {}),
+        };
+      });
 
       await seriesService.updateSeries(series.id, {
         metadata: {
