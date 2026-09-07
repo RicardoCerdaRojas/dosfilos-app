@@ -28,7 +28,22 @@
  */
 import fs from 'fs';
 
-const RUTA = 'packages/web/src/assets/bible/rvr1960.json';
+/**
+ * El mismo archivo vive TRES veces —web, infraestructura y mobile—, cada una
+ * cargada por su paquete. Repararlo en una sola las hace divergir, que es
+ * peor que el defecto original: dos superficies mostrando Biblias distintas
+ * sin que nadie lo note. Se reparan las tres de una, y una prueba de paridad
+ * exige que sigan idénticas.
+ */
+const RUTAS = [
+    'packages/web/src/assets/bible/rvr1960.json',
+    'packages/infrastructure/src/bible/data/rvr1960.json',
+    'packages/mobile/assets/bible/rvr1960.json',
+];
+
+for (const RUTA of RUTAS) repararArchivo(RUTA);
+
+function repararArchivo(RUTA) {
 const biblia = JSON.parse(fs.readFileSync(RUTA, 'utf8'));
 const porId = Object.fromEntries(biblia.map(b => [b.id, b]));
 
@@ -65,8 +80,11 @@ if (salmo47.length === 10) {
 
 fs.writeFileSync(RUTA, JSON.stringify(biblia));
 
-console.log(`1. literal "/n" corregido en ${tocados} versículo(s).`);
-console.log(`2. Salmo 47: ${unido ? 'versículo 9 reunificado (10 → 9)' : 'ya estaba en 9, sin cambios'}.`);
+console.log(`${RUTA}`);
+console.log(`   1. literal "/n" corregido en ${tocados} versículo(s).`);
+console.log(`   2. Salmo 47: ${unido ? 'versículo 9 reunificado (10 → 9)' : 'ya estaba en 9, sin cambios'}.`);
+}
+
 console.log('\nPENDIENTE, requiere el texto de la RVR1960:');
 console.log('   Génesis 33 tiene 19 versículos y debería tener 20.');
 console.log('   Falta 33:12 — la invitación de Esaú. El asset salta del actual v11');
