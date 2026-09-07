@@ -866,8 +866,37 @@ export function ExpositoryAssistantPage() {
                 .map((id) => exegeticalUnits?.find((u) => u.id === id))
                 .filter((u): u is ExegeticalUnit => Boolean(u));
             const firstSourced = sourced[0];
+            // La unidad sintáctica se arma con las FRONTERAS DE LA PERÍCOPA,
+            // no con las de la primera unidad exegética que la alimentó.
+            //
+            // Antes se copiaba `firstSourced.syntacticUnit` tal cual, y por eso
+            // el registro quedaba viejo apenas el pastor fusionaba, partía o
+            // corría una frontera en el Paso 5: la perícopa decía «Jonás 1:4-16»
+            // y su unidad guardada decía 1:1-3. Medido en la serie de Jonás del
+            // fundador: desincronizado en 4 de 6. Al perderse el vínculo entre
+            // lo que el asistente propuso y lo que él planificó, nada podía
+            // después explicarle por qué el corte iba donde iba.
+            //
+            // La justificación se junta de TODAS las unidades que la perícopa
+            // abarca, no sólo de la primera: si fusionó dos, las dos razones
+            // cuentan, y quedarse con una sería contar media historia.
+            const justificaciones = sourced
+                .map((u) => u.syntacticUnit.justification?.trim())
+                .filter((j): j is string => Boolean(j));
             const syntactic: SyntacticUnit | undefined = firstSourced
-                ? firstSourced.syntacticUnit
+                ? {
+                    book: firstSourced.syntacticUnit.book,
+                    chapterStart: p.chapterStart,
+                    verseStart: p.verseStart,
+                    chapterEnd: p.chapterEnd,
+                    verseEnd: p.verseEnd,
+                    ...(firstSourced.syntacticUnit.originalLanguage
+                        ? { originalLanguage: firstSourced.syntacticUnit.originalLanguage }
+                        : {}),
+                    ...(justificaciones.length
+                        ? { justification: [...new Set(justificaciones)].join(' ') }
+                        : {}),
+                }
                 : undefined;
 
             const enrichment: PlannedSermonExpositoryEnrichment = {
